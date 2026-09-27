@@ -1910,7 +1910,9 @@ static TA_RangeStability stability_class(const TA_FuncInfo *funcInfo)
         /* comparison-selected window extrema (cached min/max, no FP accumulation) */
         "MIN", "MAX", "MINMAX", "MIDPOINT", "MIDPRICE", "WILLR", "AROON", "AROONOSC",
         /* fresh per-bar rescan (window re-summed in bar-absolute order each output) */
-        "AVGDEV", "CG",
+        "AVGDEV",
+        /* running sums held exactly, so no rounding is carried across bars */
+        "CG",
         /* fresh per-bar rescan, integer count -- no FP total carried across bars */
         "PERCENTRANK",
         /* incrementally maintained sorted window -- the state is exact copies

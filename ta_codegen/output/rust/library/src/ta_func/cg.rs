@@ -52,6 +52,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  092526 MF,CC  Initial version (#450).
+ *  092626 MF,CC  O(1) per bar over exact sums (#453).
  */
 
 // Import types from parent module
@@ -117,9 +118,54 @@ impl Core {
         let mut today: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
-        let mut i: usize = 0_usize;
+        let mut trailingIdx: usize = 0_usize;
+        let mut j: usize = 0_usize;
+        let mut k: usize = 0_usize;
+        let mut limbs: usize = 0_usize;
+        let mut fits: usize = 0_usize;
+        let mut maxAt: usize = 0_usize;
+        let mut failAt: i32 = 0_i32;
+        let mut stickyBars: usize = 0_usize;
+        let mut fit2Mid: usize = 0_usize;
+        let mut fit2Lo: usize = 0_usize;
+        let mut fit3Mid: usize = 0_usize;
         let mut num: f64 = 0.0_f64;
         let mut den: f64 = 0.0_f64;
+        let mut value: f64 = 0.0_f64;
+        let mut periodDouble: f64 = 0.0_f64;
+        let mut flatValue: f64 = 0.0_f64;
+        let mut weightTotal: f64 = 0.0_f64;
+        let mut width2: f64 = 0.0_f64;
+        let mut width3: f64 = 0.0_f64;
+        let mut ylim2: f64 = 0.0_f64;
+        let mut ylim3: f64 = 0.0_f64;
+        let mut head2: f64 = 0.0_f64;
+        let mut head3: f64 = 0.0_f64;
+        let mut scale: f64 = 0.0_f64;
+        let mut width: f64 = 0.0_f64;
+        let mut invWidth: f64 = 0.0_f64;
+        let mut widthSq: f64 = 0.0_f64;
+        let mut invWidthSq: f64 = 0.0_f64;
+        let mut ylim: f64 = 0.0_f64;
+        let mut maxAbs: f64 = 0.0_f64;
+        let mut half: f64 = 0.0_f64;
+        let mut scale2Mid: f64 = 0.0_f64;
+        let mut scale2Lo: f64 = 0.0_f64;
+        let mut scale3Mid: f64 = 0.0_f64;
+        let mut scale3Lo: f64 = 0.0_f64;
+        let mut x: f64 = 0.0_f64;
+        let mut y: f64 = 0.0_f64;
+        let mut a: f64 = 0.0_f64;
+        let mut b: f64 = 0.0_f64;
+        let mut c: f64 = 0.0_f64;
+        let mut q: f64 = 0.0_f64;
+        let mut t: f64 = 0.0_f64;
+        let mut denA: f64 = 0.0_f64;
+        let mut denB: f64 = 0.0_f64;
+        let mut denC: f64 = 0.0_f64;
+        let mut numA: f64 = 0.0_f64;
+        let mut numB: f64 = 0.0_f64;
+        let mut numC: f64 = 0.0_f64;
         (*outBegIdx) = 0;
         (*outNBElement) = 0;
         lookbackTotal = self.cg_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -130,31 +176,347 @@ impl Core {
             return RetCode::Success;
         }
         let inReal = &inReal[..=endIdx];
+        periodDouble = optInTimePeriod as f64;
+        flatValue = (0_f64 - (periodDouble + 1.0)) * 0.5;
+        // Each window value is held as y = x*scale, an integer, split into 2 or 3
+        // integer-valued limbs of `width`. The bounds keep every limb of both the
+        // weighted and the plain sum below 2^53 while the total weight is at most
+        // 2^tb, so every add and subtract below is exact, and every product is by a
+        // power of two or of two integers whose result is below 2^53. That makes
+        // each output depend on its window alone, whatever scale or limb count the
+        // call reached it with. Keep it that way: a rounded operation anywhere in
+        // the limb arithmetic makes the output depend on the start index.
+        //
+        // 2 limbs: width 2^(53-tb), |y| < 2^(104-2tb).
+        // 3 limbs: width min(2^(53-tb), 2^26), |y| < 2^(51-tb) * width^2.
+        //
+        // Keep every product out of an addition in the same expression: each
+        // product is exact, so fusing would change no value, only cost a call
+        // where FMA is not inlined.
+        weightTotal = 1.0;
+        while weightTotal < periodDouble * (periodDouble + 1.0) * 0.5 {
+            weightTotal *= 2.0;
+        }
+        width2 = 9.007199254740992e15 / weightTotal;
+        ylim2 = 0.25 * width2 * width2;
+        width3 = width2;
+        if width3 > 67108864.0 {
+            width3 = 67108864.0;
+        }
+        ylim3 = 0.25 * width2 * width3 * width3;
+        // A scale below the largest that fits leaves room for the window's
+        // magnitude to grow before a rebuild, split evenly with the room left for
+        // finer values.
+        head2 = 1.0;
+        while head2 * head2 * 9.007199254740992e15 < ylim2 {
+            head2 *= 2.0;
+        }
+        head3 = 1.0;
+        while head3 * head3 * 9.007199254740992e15 < ylim3 {
+            head3 *= 2.0;
+        }
+        limbs = 0;
+        stickyBars = 0;
+        scale = 1.0;
+        width = 1.0;
+        invWidth = 1.0;
+        widthSq = 1.0;
+        invWidthSq = 1.0;
+        ylim = 0.0;
+        half = 1.0;
+        denA = 0.0;
+        denB = 0.0;
+        denC = 0.0;
+        numA = 0.0;
+        numB = 0.0;
+        numC = 0.0;
+        num = 0.0;
+        den = 0.0;
         outIdx = 0;
         today = startIdx;
+        trailingIdx = startIdx - lookbackTotal;
         while today <= endIdx {
-            // Oldest first, the value i bars ago is in den for the last i+1
-            // additions to num, which is its weight in the listing. Walking the
-            // window newest first would reverse every weight.
-            num = 0.0;
-            den = 0.0;
-            // for( i = optInTimePeriod - 1; i >= 0; i -= 1 )
-            i = (optInTimePeriod - 1) as usize;
-            loop {
-                den += inReal[today - i];
-                num += den;
-                if i == 0 { break; }
-                i -= 1;
+            // Between bars the sums hold the window less its oldest value.
+            fits = 0;
+            x = inReal[today];
+            y = x * scale;
+            if limbs == 2 {
+                if (y).abs() < ylim && (y != 0.0 || x == 0.0) {
+                    t = y * invWidth;
+                    a = t + 6.755399441055744e15 - 6.755399441055744e15;
+                    t = a * width;
+                    c = y - t;
+                    if c + 6.755399441055744e15 - 6.755399441055744e15 == c {
+                        denA += a;
+                        denC += c;
+                        numA += denA;
+                        numC += denC;
+                        fits = 1;
+                    }
+                }
+            } else if limbs == 3 {
+                if (y).abs() < ylim && (y != 0.0 || x == 0.0) {
+                    t = y * invWidthSq;
+                    a = t + 6.755399441055744e15 - 6.755399441055744e15;
+                    t = a * widthSq;
+                    q = y - t;
+                    t = q * invWidth;
+                    b = t + 6.755399441055744e15 - 6.755399441055744e15;
+                    t = b * width;
+                    c = q - t;
+                    if c + 6.755399441055744e15 - 6.755399441055744e15 == c {
+                        denA += a;
+                        denB += b;
+                        denC += c;
+                        numA += denA;
+                        numB += denB;
+                        numC += denC;
+                        fits = 1;
+                    }
+                }
+            }
+            if fits == 0 && limbs == 0 && stickyBars > 0 {
+                // Both witnesses of the last failed fit are still in the window, so
+                // it cannot fit either: its largest value can only be larger, which
+                // only coarsens the scale the failing value already missed.
+                stickyBars -= 1;
+                num = 0.0;
+                den = 0.0;
+                for j in (today - lookbackTotal as usize)..(today as usize) + 1 {
+                    den += inReal[j];
+                    num += den;
+                }
+                j = (today as usize) + 1;
+            } else if fits == 0 {
+                // The incoming value does not fit the scale: pick one from the
+                // window alone.
+                maxAbs = 0.0;
+                maxAt = 0;
+                k = 0;
+                for j in (today - lookbackTotal as usize)..(today as usize) + 1 {
+                    x = (inReal[j]).abs();
+                    if x >= maxAbs {
+                        maxAbs = x;
+                        maxAt = k;
+                    }
+                    k += 1;
+                }
+                j = (today as usize) + 1;
+                // The largest power of two not above the window's largest
+                // magnitude. The search may start from any finite power of two, so
+                // it starts from the last window's; keep it uncapped, or a start far
+                // from the answer stops short and the fit then depends on the
+                // previous window. A window with an infinite magnitude fails the fit
+                // at any scale, so it keeps the last one.
+                if maxAbs > 0.0 && maxAbs <= 1.7976931348623157e308 {
+                    while half * 65536.0 <= maxAbs {
+                        half *= 65536.0;
+                    }
+                    while half * 2.0 <= maxAbs {
+                        half *= 2.0;
+                    }
+                    while half > maxAbs * 65536.0 {
+                        half *= 0.0000152587890625;
+                    }
+                    while half > maxAbs {
+                        half *= 0.5;
+                    }
+                }
+                // The largest scale each limb count allows, and the same with
+                // headroom, at most 2^1022 so that the scale itself is finite. The
+                // largest 3-limb scale is the most permissive there is: the window
+                // fits some scale only if every value is an integer at that one. A
+                // scale below 1 can round a small value to 0, which is not a fit.
+                scale2Lo = ylim2 * 0.5 / half;
+                if scale2Lo > 4.49423283715579e307 {
+                    scale2Lo = 4.49423283715579e307;
+                }
+                scale2Mid = scale2Lo / head2;
+                scale3Lo = ylim3 * 0.5 / half;
+                if scale3Lo > 4.49423283715579e307 {
+                    scale3Lo = 4.49423283715579e307;
+                }
+                scale3Mid = scale3Lo / head3;
+                // The same pass sums the window as it stands, oldest first, for when
+                // nothing fits: non-finite values, bits below 2^-1022, or too wide a
+                // span of magnitudes.
+                fit2Mid = 1;
+                fit2Lo = 1;
+                fit3Mid = 1;
+                failAt = 0 - 1;
+                num = 0.0;
+                den = 0.0;
+                k = 0;
+                for j in (today - lookbackTotal as usize)..(today as usize) + 1 {
+                    x = inReal[j];
+                    den += x;
+                    num += den;
+                    y = (x * scale2Mid).abs();
+                    if !(y < ylim2) || y < 4.503599627370496e15 && y + 4.503599627370496e15 - 4.503599627370496e15 != y || y == 0.0 && x != 0.0 {
+                        fit2Mid = 0;
+                    }
+                    y = (x * scale2Lo).abs();
+                    if !(y < ylim2) || y < 4.503599627370496e15 && y + 4.503599627370496e15 - 4.503599627370496e15 != y || y == 0.0 && x != 0.0 {
+                        fit2Lo = 0;
+                    }
+                    y = (x * scale3Mid).abs();
+                    if !(y < ylim3) || y < 4.503599627370496e15 && y + 4.503599627370496e15 - 4.503599627370496e15 != y || y == 0.0 && x != 0.0 {
+                        fit3Mid = 0;
+                    }
+                    y = (x * scale3Lo).abs();
+                    if !(y < ylim3) || y < 4.503599627370496e15 && y + 4.503599627370496e15 - 4.503599627370496e15 != y || y == 0.0 && x != 0.0 {
+                        failAt = (k) as i32;
+                    }
+                    k += 1;
+                }
+                j = (today as usize) + 1;
+                limbs = 0;
+                if failAt >= 0 {
+                    if failAt < ((maxAt) as i32) {
+                        stickyBars = (failAt) as usize;
+                    } else {
+                        stickyBars = maxAt;
+                    }
+                } else {
+                    if fit2Mid == 1 || fit2Lo == 1 {
+                        limbs = 2;
+                        width = width2;
+                        ylim = ylim2;
+                        if fit2Mid == 1 {
+                            scale = scale2Mid;
+                        } else {
+                            scale = scale2Lo;
+                        }
+                    } else {
+                        limbs = 3;
+                        width = width3;
+                        ylim = ylim3;
+                        if fit3Mid == 1 {
+                            scale = scale3Mid;
+                        } else {
+                            scale = scale3Lo;
+                        }
+                    }
+                    invWidth = 1.0 / width;
+                    widthSq = width * width;
+                    invWidthSq = invWidth * invWidth;
+                    denA = 0.0;
+                    denB = 0.0;
+                    denC = 0.0;
+                    numA = 0.0;
+                    numB = 0.0;
+                    numC = 0.0;
+                    if limbs == 2 {
+                        for j in (today - lookbackTotal as usize)..(today as usize) + 1 {
+                            y = inReal[j] * scale;
+                            t = y * invWidth;
+                            a = t + 6.755399441055744e15 - 6.755399441055744e15;
+                            t = a * width;
+                            c = y - t;
+                            denA += a;
+                            denC += c;
+                            numA += denA;
+                            numC += denC;
+                        }
+                        j = (today as usize) + 1;
+                    } else {
+                        for j in (today - lookbackTotal as usize)..(today as usize) + 1 {
+                            y = inReal[j] * scale;
+                            t = y * invWidthSq;
+                            a = t + 6.755399441055744e15 - 6.755399441055744e15;
+                            t = a * widthSq;
+                            q = y - t;
+                            t = q * invWidth;
+                            b = t + 6.755399441055744e15 - 6.755399441055744e15;
+                            t = b * width;
+                            c = q - t;
+                            denA += a;
+                            denB += b;
+                            denC += c;
+                            numA += denA;
+                            numB += denB;
+                            numC += denC;
+                        }
+                        j = (today as usize) + 1;
+                    }
+                }
+            }
+            // One rounding each: the limbs are carried into range first, so the
+            // last add sees two exact values.
+            if limbs == 2 {
+                t = denA * width;
+                den = t + denC;
+                t = numA * width;
+                num = t + numC;
+            } else if limbs == 3 {
+                t = denC * invWidth;
+                q = t + 6.755399441055744e15 - 6.755399441055744e15;
+                b = denB + q;
+                t = q * width;
+                c = denC - t;
+                t = b * invWidth;
+                q = t + 6.755399441055744e15 - 6.755399441055744e15;
+                t = q * width;
+                b = b - t;
+                t = b * width;
+                c = t + c;
+                t = denA + q;
+                t = t * widthSq;
+                den = t + c;
+                t = numC * invWidth;
+                q = t + 6.755399441055744e15 - 6.755399441055744e15;
+                b = numB + q;
+                t = q * width;
+                c = numC - t;
+                t = b * invWidth;
+                q = t + 6.755399441055744e15 - 6.755399441055744e15;
+                t = q * width;
+                b = b - t;
+                t = b * width;
+                c = t + c;
+                t = numA + q;
+                t = t * widthSq;
+                num = t + c;
             }
             // The denominator is a signed sum, so only an exact zero is degenerate.
             // It is answered with the flat-window value, which keeps every output a
             // function of its own window; an epsilon band would carry the quote unit
             // (#253).
             if den != 0.0 {
-                outReal[outIdx] = (0_f64 - num) / den;
+                value = (0_f64 - num) / den;
             } else {
-                outReal[outIdx] = (0_f64 - ((optInTimePeriod as f64) + 1.0)) * 0.5;
+                value = flatValue;
             }
+            if limbs == 2 {
+                y = inReal[trailingIdx] * scale;
+                t = y * invWidth;
+                a = t + 6.755399441055744e15 - 6.755399441055744e15;
+                t = a * width;
+                c = y - t;
+                denA -= a;
+                denC -= c;
+                numA -= periodDouble * a;
+                numC -= periodDouble * c;
+            } else if limbs == 3 {
+                y = inReal[trailingIdx] * scale;
+                t = y * invWidthSq;
+                a = t + 6.755399441055744e15 - 6.755399441055744e15;
+                t = a * widthSq;
+                q = y - t;
+                t = q * invWidth;
+                b = t + 6.755399441055744e15 - 6.755399441055744e15;
+                t = b * width;
+                c = q - t;
+                denA -= a;
+                denB -= b;
+                denC -= c;
+                numA -= periodDouble * a;
+                numB -= periodDouble * b;
+                numC -= periodDouble * c;
+            }
+            // After the trailing value is read: outReal may be inReal.
+            outReal[outIdx] = value;
+            trailingIdx += 1;
             outIdx += 1;
             today += 1;
         }
@@ -289,9 +651,38 @@ pub struct CgStream {
 #[allow(non_snake_case, dead_code)]
 struct CgStreamState {
     optInTimePeriod: i32,
-    winPos_i: usize,
-    winCap_i: usize,
-    win_i_inReal: Vec<f64>,
+    lookbackTotal: usize,
+    limbs: usize,
+    stickyBars: usize,
+    num: f64,
+    den: f64,
+    periodDouble: f64,
+    flatValue: f64,
+    width2: f64,
+    width3: f64,
+    ylim2: f64,
+    ylim3: f64,
+    head2: f64,
+    head3: f64,
+    scale: f64,
+    width: f64,
+    invWidth: f64,
+    widthSq: f64,
+    invWidthSq: f64,
+    ylim: f64,
+    half: f64,
+    denA: f64,
+    denB: f64,
+    denC: f64,
+    numA: f64,
+    numB: f64,
+    numC: f64,
+    ringPos_trailingIdx: usize,
+    ringCap_trailingIdx: usize,
+    ring_trailingIdx_inReal: Vec<f64>,
+    winPos_j: usize,
+    winCap_j: usize,
+    win_j_inReal: Vec<f64>,
     cur_outReal: f64,
 }
 
@@ -302,36 +693,335 @@ struct CgStreamState {
 #[allow(unused_parens)]
 impl Core {
     fn cg_step_impl(sp: &mut CgStreamState, inReal: f64, outReal: &mut f64) {
-        let mut i: usize = 0_usize;
-        let mut num: f64 = 0.0_f64;
-        let mut den: f64 = 0.0_f64;
-        sp.win_i_inReal[sp.winPos_i] = inReal;
-        // Oldest first, the value i bars ago is in den for the last i+1
-        // additions to num, which is its weight in the listing. Walking the
-        // window newest first would reverse every weight.
-        num = 0.0;
-        den = 0.0;
-        // for( i = sp.optInTimePeriod - 1; i >= 0; i -= 1 )
-        i = (sp.optInTimePeriod - 1) as usize;
-        loop {
-            den += sp.win_i_inReal[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize];
-            num += den;
-            if i == 0 { break; }
-            i -= 1;
+        let mut j: usize = 0_usize;
+        let mut k: usize = 0_usize;
+        let mut fits: usize = 0_usize;
+        let mut maxAt: usize = 0_usize;
+        let mut failAt: i32 = 0_i32;
+        let mut fit2Mid: usize = 0_usize;
+        let mut fit2Lo: usize = 0_usize;
+        let mut fit3Mid: usize = 0_usize;
+        let mut value: f64 = 0.0_f64;
+        let mut maxAbs: f64 = 0.0_f64;
+        let mut scale2Mid: f64 = 0.0_f64;
+        let mut scale2Lo: f64 = 0.0_f64;
+        let mut scale3Mid: f64 = 0.0_f64;
+        let mut scale3Lo: f64 = 0.0_f64;
+        let mut x: f64 = 0.0_f64;
+        let mut y: f64 = 0.0_f64;
+        let mut a: f64 = 0.0_f64;
+        let mut b: f64 = 0.0_f64;
+        let mut c: f64 = 0.0_f64;
+        let mut q: f64 = 0.0_f64;
+        let mut t: f64 = 0.0_f64;
+        if sp.ringCap_trailingIdx == 0 {
+            sp.ring_trailingIdx_inReal[0] = inReal;
+        }
+        sp.win_j_inReal[sp.winPos_j] = inReal;
+        // Between bars the sums hold the window less its oldest value.
+        fits = 0;
+        x = inReal;
+        y = x * sp.scale;
+        if sp.limbs == 2 {
+            if (y).abs() < sp.ylim && (y != 0.0 || x == 0.0) {
+                t = y * sp.invWidth;
+                a = t + 6.755399441055744e15 - 6.755399441055744e15;
+                t = a * sp.width;
+                c = y - t;
+                if c + 6.755399441055744e15 - 6.755399441055744e15 == c {
+                    sp.denA += a;
+                    sp.denC += c;
+                    sp.numA += sp.denA;
+                    sp.numC += sp.denC;
+                    fits = 1;
+                }
+            }
+        } else if sp.limbs == 3 {
+            if (y).abs() < sp.ylim && (y != 0.0 || x == 0.0) {
+                t = y * sp.invWidthSq;
+                a = t + 6.755399441055744e15 - 6.755399441055744e15;
+                t = a * sp.widthSq;
+                q = y - t;
+                t = q * sp.invWidth;
+                b = t + 6.755399441055744e15 - 6.755399441055744e15;
+                t = b * sp.width;
+                c = q - t;
+                if c + 6.755399441055744e15 - 6.755399441055744e15 == c {
+                    sp.denA += a;
+                    sp.denB += b;
+                    sp.denC += c;
+                    sp.numA += sp.denA;
+                    sp.numB += sp.denB;
+                    sp.numC += sp.denC;
+                    fits = 1;
+                }
+            }
+        }
+        if fits == 0 && sp.limbs == 0 && sp.stickyBars > 0 {
+            // Both witnesses of the last failed fit are still in the window, so
+            // it cannot fit either: its largest value can only be larger, which
+            // only coarsens the scale the failing value already missed.
+            sp.stickyBars -= 1;
+            sp.num = 0.0;
+            sp.den = 0.0;
+            // for( j = sp.lookbackTotal; j >= 0; j -= 1 )
+            j = sp.lookbackTotal;
+            loop {
+                sp.den += sp.win_j_inReal[((if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j })) as usize];
+                sp.num += sp.den;
+                if j == 0 { break; }
+                j -= 1;
+            }
+        } else if fits == 0 {
+            // The incoming value does not fit the scale: pick one from the
+            // window alone.
+            maxAbs = 0.0;
+            maxAt = 0;
+            k = 0;
+            // for( j = sp.lookbackTotal; j >= 0; j -= 1 )
+            j = sp.lookbackTotal;
+            loop {
+                x = (sp.win_j_inReal[((if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j })) as usize]).abs();
+                if x >= maxAbs {
+                    maxAbs = x;
+                    maxAt = k;
+                }
+                k += 1;
+                if j == 0 { break; }
+                j -= 1;
+            }
+            // The largest power of two not above the window's largest
+            // magnitude. The search may start from any finite power of two, so
+            // it starts from the last window's; keep it uncapped, or a start far
+            // from the answer stops short and the fit then depends on the
+            // previous window. A window with an infinite magnitude fails the fit
+            // at any scale, so it keeps the last one.
+            if maxAbs > 0.0 && maxAbs <= 1.7976931348623157e308 {
+                while sp.half * 65536.0 <= maxAbs {
+                    sp.half *= 65536.0;
+                }
+                while sp.half * 2.0 <= maxAbs {
+                    sp.half *= 2.0;
+                }
+                while sp.half > maxAbs * 65536.0 {
+                    sp.half *= 0.0000152587890625;
+                }
+                while sp.half > maxAbs {
+                    sp.half *= 0.5;
+                }
+            }
+            // The largest scale each limb count allows, and the same with
+            // headroom, at most 2^1022 so that the scale itself is finite. The
+            // largest 3-limb scale is the most permissive there is: the window
+            // fits some scale only if every value is an integer at that one. A
+            // scale below 1 can round a small value to 0, which is not a fit.
+            scale2Lo = sp.ylim2 * 0.5 / sp.half;
+            if scale2Lo > 4.49423283715579e307 {
+                scale2Lo = 4.49423283715579e307;
+            }
+            scale2Mid = scale2Lo / sp.head2;
+            scale3Lo = sp.ylim3 * 0.5 / sp.half;
+            if scale3Lo > 4.49423283715579e307 {
+                scale3Lo = 4.49423283715579e307;
+            }
+            scale3Mid = scale3Lo / sp.head3;
+            // The same pass sums the window as it stands, oldest first, for when
+            // nothing fits: non-finite values, bits below 2^-1022, or too wide a
+            // span of magnitudes.
+            fit2Mid = 1;
+            fit2Lo = 1;
+            fit3Mid = 1;
+            failAt = 0 - 1;
+            sp.num = 0.0;
+            sp.den = 0.0;
+            k = 0;
+            // for( j = sp.lookbackTotal; j >= 0; j -= 1 )
+            j = sp.lookbackTotal;
+            loop {
+                x = sp.win_j_inReal[((if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j })) as usize];
+                sp.den += x;
+                sp.num += sp.den;
+                y = (x * scale2Mid).abs();
+                if !(y < sp.ylim2) || y < 4.503599627370496e15 && y + 4.503599627370496e15 - 4.503599627370496e15 != y || y == 0.0 && x != 0.0 {
+                    fit2Mid = 0;
+                }
+                y = (x * scale2Lo).abs();
+                if !(y < sp.ylim2) || y < 4.503599627370496e15 && y + 4.503599627370496e15 - 4.503599627370496e15 != y || y == 0.0 && x != 0.0 {
+                    fit2Lo = 0;
+                }
+                y = (x * scale3Mid).abs();
+                if !(y < sp.ylim3) || y < 4.503599627370496e15 && y + 4.503599627370496e15 - 4.503599627370496e15 != y || y == 0.0 && x != 0.0 {
+                    fit3Mid = 0;
+                }
+                y = (x * scale3Lo).abs();
+                if !(y < sp.ylim3) || y < 4.503599627370496e15 && y + 4.503599627370496e15 - 4.503599627370496e15 != y || y == 0.0 && x != 0.0 {
+                    failAt = (k) as i32;
+                }
+                k += 1;
+                if j == 0 { break; }
+                j -= 1;
+            }
+            sp.limbs = 0;
+            if failAt >= 0 {
+                if failAt < ((maxAt) as i32) {
+                    sp.stickyBars = (failAt) as usize;
+                } else {
+                    sp.stickyBars = maxAt;
+                }
+            } else {
+                if fit2Mid == 1 || fit2Lo == 1 {
+                    sp.limbs = 2;
+                    sp.width = sp.width2;
+                    sp.ylim = sp.ylim2;
+                    if fit2Mid == 1 {
+                        sp.scale = scale2Mid;
+                    } else {
+                        sp.scale = scale2Lo;
+                    }
+                } else {
+                    sp.limbs = 3;
+                    sp.width = sp.width3;
+                    sp.ylim = sp.ylim3;
+                    if fit3Mid == 1 {
+                        sp.scale = scale3Mid;
+                    } else {
+                        sp.scale = scale3Lo;
+                    }
+                }
+                sp.invWidth = 1.0 / sp.width;
+                sp.widthSq = sp.width * sp.width;
+                sp.invWidthSq = sp.invWidth * sp.invWidth;
+                sp.denA = 0.0;
+                sp.denB = 0.0;
+                sp.denC = 0.0;
+                sp.numA = 0.0;
+                sp.numB = 0.0;
+                sp.numC = 0.0;
+                if sp.limbs == 2 {
+                    // for( j = sp.lookbackTotal; j >= 0; j -= 1 )
+                    j = sp.lookbackTotal;
+                    loop {
+                        y = sp.win_j_inReal[((if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j })) as usize] * sp.scale;
+                        t = y * sp.invWidth;
+                        a = t + 6.755399441055744e15 - 6.755399441055744e15;
+                        t = a * sp.width;
+                        c = y - t;
+                        sp.denA += a;
+                        sp.denC += c;
+                        sp.numA += sp.denA;
+                        sp.numC += sp.denC;
+                        if j == 0 { break; }
+                        j -= 1;
+                    }
+                } else {
+                    // for( j = sp.lookbackTotal; j >= 0; j -= 1 )
+                    j = sp.lookbackTotal;
+                    loop {
+                        y = sp.win_j_inReal[((if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j })) as usize] * sp.scale;
+                        t = y * sp.invWidthSq;
+                        a = t + 6.755399441055744e15 - 6.755399441055744e15;
+                        t = a * sp.widthSq;
+                        q = y - t;
+                        t = q * sp.invWidth;
+                        b = t + 6.755399441055744e15 - 6.755399441055744e15;
+                        t = b * sp.width;
+                        c = q - t;
+                        sp.denA += a;
+                        sp.denB += b;
+                        sp.denC += c;
+                        sp.numA += sp.denA;
+                        sp.numB += sp.denB;
+                        sp.numC += sp.denC;
+                        if j == 0 { break; }
+                        j -= 1;
+                    }
+                }
+            }
+        }
+        // One rounding each: the limbs are carried into range first, so the
+        // last add sees two exact values.
+        if sp.limbs == 2 {
+            t = sp.denA * sp.width;
+            sp.den = t + sp.denC;
+            t = sp.numA * sp.width;
+            sp.num = t + sp.numC;
+        } else if sp.limbs == 3 {
+            t = sp.denC * sp.invWidth;
+            q = t + 6.755399441055744e15 - 6.755399441055744e15;
+            b = sp.denB + q;
+            t = q * sp.width;
+            c = sp.denC - t;
+            t = b * sp.invWidth;
+            q = t + 6.755399441055744e15 - 6.755399441055744e15;
+            t = q * sp.width;
+            b = b - t;
+            t = b * sp.width;
+            c = t + c;
+            t = sp.denA + q;
+            t = t * sp.widthSq;
+            sp.den = t + c;
+            t = sp.numC * sp.invWidth;
+            q = t + 6.755399441055744e15 - 6.755399441055744e15;
+            b = sp.numB + q;
+            t = q * sp.width;
+            c = sp.numC - t;
+            t = b * sp.invWidth;
+            q = t + 6.755399441055744e15 - 6.755399441055744e15;
+            t = q * sp.width;
+            b = b - t;
+            t = b * sp.width;
+            c = t + c;
+            t = sp.numA + q;
+            t = t * sp.widthSq;
+            sp.num = t + c;
         }
         // The denominator is a signed sum, so only an exact zero is degenerate.
         // It is answered with the flat-window value, which keeps every output a
         // function of its own window; an epsilon band would carry the quote unit
         // (#253).
-        if den != 0.0 {
-            (*outReal) = (0_f64 - num) / den;
+        if sp.den != 0.0 {
+            value = (0_f64 - sp.num) / sp.den;
         } else {
-            (*outReal) = (0_f64 - ((sp.optInTimePeriod as f64) + 1.0)) * 0.5;
+            value = sp.flatValue;
         }
+        if sp.limbs == 2 {
+            y = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] * sp.scale;
+            t = y * sp.invWidth;
+            a = t + 6.755399441055744e15 - 6.755399441055744e15;
+            t = a * sp.width;
+            c = y - t;
+            sp.denA -= a;
+            sp.denC -= c;
+            sp.numA -= sp.periodDouble * a;
+            sp.numC -= sp.periodDouble * c;
+        } else if sp.limbs == 3 {
+            y = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] * sp.scale;
+            t = y * sp.invWidthSq;
+            a = t + 6.755399441055744e15 - 6.755399441055744e15;
+            t = a * sp.widthSq;
+            q = y - t;
+            t = q * sp.invWidth;
+            b = t + 6.755399441055744e15 - 6.755399441055744e15;
+            t = b * sp.width;
+            c = q - t;
+            sp.denA -= a;
+            sp.denB -= b;
+            sp.denC -= c;
+            sp.numA -= sp.periodDouble * a;
+            sp.numB -= sp.periodDouble * b;
+            sp.numC -= sp.periodDouble * c;
+        }
+        // After the trailing value is read: outReal may be inReal.
+        (*outReal) = value;
         sp.cur_outReal = (*outReal);
-        sp.winPos_i = sp.winPos_i + 1;
-        if sp.winPos_i >= sp.winCap_i {
-            sp.winPos_i = 0;
+        sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
+        sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
+        if sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx {
+            sp.ringPos_trailingIdx = 0;
+        }
+        sp.winPos_j = sp.winPos_j + 1;
+        if sp.winPos_j >= sp.winCap_j {
+            sp.winPos_j = 0;
         }
     }
 
@@ -364,9 +1054,54 @@ impl Core {
         let mut today: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
-        let mut i: usize = 0_usize;
+        let mut trailingIdx: usize = 0_usize;
+        let mut j: usize = 0_usize;
+        let mut k: usize = 0_usize;
+        let mut limbs: usize = 0_usize;
+        let mut fits: usize = 0_usize;
+        let mut maxAt: usize = 0_usize;
+        let mut failAt: i32 = 0_i32;
+        let mut stickyBars: usize = 0_usize;
+        let mut fit2Mid: usize = 0_usize;
+        let mut fit2Lo: usize = 0_usize;
+        let mut fit3Mid: usize = 0_usize;
         let mut num: f64 = 0.0_f64;
         let mut den: f64 = 0.0_f64;
+        let mut value: f64 = 0.0_f64;
+        let mut periodDouble: f64 = 0.0_f64;
+        let mut flatValue: f64 = 0.0_f64;
+        let mut weightTotal: f64 = 0.0_f64;
+        let mut width2: f64 = 0.0_f64;
+        let mut width3: f64 = 0.0_f64;
+        let mut ylim2: f64 = 0.0_f64;
+        let mut ylim3: f64 = 0.0_f64;
+        let mut head2: f64 = 0.0_f64;
+        let mut head3: f64 = 0.0_f64;
+        let mut scale: f64 = 0.0_f64;
+        let mut width: f64 = 0.0_f64;
+        let mut invWidth: f64 = 0.0_f64;
+        let mut widthSq: f64 = 0.0_f64;
+        let mut invWidthSq: f64 = 0.0_f64;
+        let mut ylim: f64 = 0.0_f64;
+        let mut maxAbs: f64 = 0.0_f64;
+        let mut half: f64 = 0.0_f64;
+        let mut scale2Mid: f64 = 0.0_f64;
+        let mut scale2Lo: f64 = 0.0_f64;
+        let mut scale3Mid: f64 = 0.0_f64;
+        let mut scale3Lo: f64 = 0.0_f64;
+        let mut x: f64 = 0.0_f64;
+        let mut y: f64 = 0.0_f64;
+        let mut a: f64 = 0.0_f64;
+        let mut b: f64 = 0.0_f64;
+        let mut c: f64 = 0.0_f64;
+        let mut q: f64 = 0.0_f64;
+        let mut t: f64 = 0.0_f64;
+        let mut denA: f64 = 0.0_f64;
+        let mut denB: f64 = 0.0_f64;
+        let mut denC: f64 = 0.0_f64;
+        let mut numA: f64 = 0.0_f64;
+        let mut numB: f64 = 0.0_f64;
+        let mut numC: f64 = 0.0_f64;
         (*outBegIdx) = 0;
         (*outNBElement) = 0;
         lookbackTotal = self.cg_lookback(optInTimePeriod)?;
@@ -376,31 +1111,347 @@ impl Core {
         if startIdx > endIdx {
             return Err(RetCode::InsufficientHistory);
         }
+        periodDouble = optInTimePeriod as f64;
+        flatValue = (0_f64 - (periodDouble + 1.0)) * 0.5;
+        // Each window value is held as y = x*scale, an integer, split into 2 or 3
+        // integer-valued limbs of `width`. The bounds keep every limb of both the
+        // weighted and the plain sum below 2^53 while the total weight is at most
+        // 2^tb, so every add and subtract below is exact, and every product is by a
+        // power of two or of two integers whose result is below 2^53. That makes
+        // each output depend on its window alone, whatever scale or limb count the
+        // call reached it with. Keep it that way: a rounded operation anywhere in
+        // the limb arithmetic makes the output depend on the start index.
+        //
+        // 2 limbs: width 2^(53-tb), |y| < 2^(104-2tb).
+        // 3 limbs: width min(2^(53-tb), 2^26), |y| < 2^(51-tb) * width^2.
+        //
+        // Keep every product out of an addition in the same expression: each
+        // product is exact, so fusing would change no value, only cost a call
+        // where FMA is not inlined.
+        weightTotal = 1.0;
+        while weightTotal < periodDouble * (periodDouble + 1.0) * 0.5 {
+            weightTotal *= 2.0;
+        }
+        width2 = 9.007199254740992e15 / weightTotal;
+        ylim2 = 0.25 * width2 * width2;
+        width3 = width2;
+        if width3 > 67108864.0 {
+            width3 = 67108864.0;
+        }
+        ylim3 = 0.25 * width2 * width3 * width3;
+        // A scale below the largest that fits leaves room for the window's
+        // magnitude to grow before a rebuild, split evenly with the room left for
+        // finer values.
+        head2 = 1.0;
+        while head2 * head2 * 9.007199254740992e15 < ylim2 {
+            head2 *= 2.0;
+        }
+        head3 = 1.0;
+        while head3 * head3 * 9.007199254740992e15 < ylim3 {
+            head3 *= 2.0;
+        }
+        limbs = 0;
+        stickyBars = 0;
+        scale = 1.0;
+        width = 1.0;
+        invWidth = 1.0;
+        widthSq = 1.0;
+        invWidthSq = 1.0;
+        ylim = 0.0;
+        half = 1.0;
+        denA = 0.0;
+        denB = 0.0;
+        denC = 0.0;
+        numA = 0.0;
+        numB = 0.0;
+        numC = 0.0;
+        num = 0.0;
+        den = 0.0;
         outIdx = 0;
         today = startIdx;
+        trailingIdx = startIdx - lookbackTotal;
         while today <= endIdx {
-            // Oldest first, the value i bars ago is in den for the last i+1
-            // additions to num, which is its weight in the listing. Walking the
-            // window newest first would reverse every weight.
-            num = 0.0;
-            den = 0.0;
-            // for( i = optInTimePeriod - 1; i >= 0; i -= 1 )
-            i = (optInTimePeriod - 1) as usize;
-            loop {
-                den += inReal[today - i];
-                num += den;
-                if i == 0 { break; }
-                i -= 1;
+            // Between bars the sums hold the window less its oldest value.
+            fits = 0;
+            x = inReal[today];
+            y = x * scale;
+            if limbs == 2 {
+                if (y).abs() < ylim && (y != 0.0 || x == 0.0) {
+                    t = y * invWidth;
+                    a = t + 6.755399441055744e15 - 6.755399441055744e15;
+                    t = a * width;
+                    c = y - t;
+                    if c + 6.755399441055744e15 - 6.755399441055744e15 == c {
+                        denA += a;
+                        denC += c;
+                        numA += denA;
+                        numC += denC;
+                        fits = 1;
+                    }
+                }
+            } else if limbs == 3 {
+                if (y).abs() < ylim && (y != 0.0 || x == 0.0) {
+                    t = y * invWidthSq;
+                    a = t + 6.755399441055744e15 - 6.755399441055744e15;
+                    t = a * widthSq;
+                    q = y - t;
+                    t = q * invWidth;
+                    b = t + 6.755399441055744e15 - 6.755399441055744e15;
+                    t = b * width;
+                    c = q - t;
+                    if c + 6.755399441055744e15 - 6.755399441055744e15 == c {
+                        denA += a;
+                        denB += b;
+                        denC += c;
+                        numA += denA;
+                        numB += denB;
+                        numC += denC;
+                        fits = 1;
+                    }
+                }
+            }
+            if fits == 0 && limbs == 0 && stickyBars > 0 {
+                // Both witnesses of the last failed fit are still in the window, so
+                // it cannot fit either: its largest value can only be larger, which
+                // only coarsens the scale the failing value already missed.
+                stickyBars -= 1;
+                num = 0.0;
+                den = 0.0;
+                for j in (today - lookbackTotal as usize)..(today as usize) + 1 {
+                    den += inReal[j];
+                    num += den;
+                }
+                j = (today as usize) + 1;
+            } else if fits == 0 {
+                // The incoming value does not fit the scale: pick one from the
+                // window alone.
+                maxAbs = 0.0;
+                maxAt = 0;
+                k = 0;
+                for j in (today - lookbackTotal as usize)..(today as usize) + 1 {
+                    x = (inReal[j]).abs();
+                    if x >= maxAbs {
+                        maxAbs = x;
+                        maxAt = k;
+                    }
+                    k += 1;
+                }
+                j = (today as usize) + 1;
+                // The largest power of two not above the window's largest
+                // magnitude. The search may start from any finite power of two, so
+                // it starts from the last window's; keep it uncapped, or a start far
+                // from the answer stops short and the fit then depends on the
+                // previous window. A window with an infinite magnitude fails the fit
+                // at any scale, so it keeps the last one.
+                if maxAbs > 0.0 && maxAbs <= 1.7976931348623157e308 {
+                    while half * 65536.0 <= maxAbs {
+                        half *= 65536.0;
+                    }
+                    while half * 2.0 <= maxAbs {
+                        half *= 2.0;
+                    }
+                    while half > maxAbs * 65536.0 {
+                        half *= 0.0000152587890625;
+                    }
+                    while half > maxAbs {
+                        half *= 0.5;
+                    }
+                }
+                // The largest scale each limb count allows, and the same with
+                // headroom, at most 2^1022 so that the scale itself is finite. The
+                // largest 3-limb scale is the most permissive there is: the window
+                // fits some scale only if every value is an integer at that one. A
+                // scale below 1 can round a small value to 0, which is not a fit.
+                scale2Lo = ylim2 * 0.5 / half;
+                if scale2Lo > 4.49423283715579e307 {
+                    scale2Lo = 4.49423283715579e307;
+                }
+                scale2Mid = scale2Lo / head2;
+                scale3Lo = ylim3 * 0.5 / half;
+                if scale3Lo > 4.49423283715579e307 {
+                    scale3Lo = 4.49423283715579e307;
+                }
+                scale3Mid = scale3Lo / head3;
+                // The same pass sums the window as it stands, oldest first, for when
+                // nothing fits: non-finite values, bits below 2^-1022, or too wide a
+                // span of magnitudes.
+                fit2Mid = 1;
+                fit2Lo = 1;
+                fit3Mid = 1;
+                failAt = 0 - 1;
+                num = 0.0;
+                den = 0.0;
+                k = 0;
+                for j in (today - lookbackTotal as usize)..(today as usize) + 1 {
+                    x = inReal[j];
+                    den += x;
+                    num += den;
+                    y = (x * scale2Mid).abs();
+                    if !(y < ylim2) || y < 4.503599627370496e15 && y + 4.503599627370496e15 - 4.503599627370496e15 != y || y == 0.0 && x != 0.0 {
+                        fit2Mid = 0;
+                    }
+                    y = (x * scale2Lo).abs();
+                    if !(y < ylim2) || y < 4.503599627370496e15 && y + 4.503599627370496e15 - 4.503599627370496e15 != y || y == 0.0 && x != 0.0 {
+                        fit2Lo = 0;
+                    }
+                    y = (x * scale3Mid).abs();
+                    if !(y < ylim3) || y < 4.503599627370496e15 && y + 4.503599627370496e15 - 4.503599627370496e15 != y || y == 0.0 && x != 0.0 {
+                        fit3Mid = 0;
+                    }
+                    y = (x * scale3Lo).abs();
+                    if !(y < ylim3) || y < 4.503599627370496e15 && y + 4.503599627370496e15 - 4.503599627370496e15 != y || y == 0.0 && x != 0.0 {
+                        failAt = (k) as i32;
+                    }
+                    k += 1;
+                }
+                j = (today as usize) + 1;
+                limbs = 0;
+                if failAt >= 0 {
+                    if failAt < ((maxAt) as i32) {
+                        stickyBars = (failAt) as usize;
+                    } else {
+                        stickyBars = maxAt;
+                    }
+                } else {
+                    if fit2Mid == 1 || fit2Lo == 1 {
+                        limbs = 2;
+                        width = width2;
+                        ylim = ylim2;
+                        if fit2Mid == 1 {
+                            scale = scale2Mid;
+                        } else {
+                            scale = scale2Lo;
+                        }
+                    } else {
+                        limbs = 3;
+                        width = width3;
+                        ylim = ylim3;
+                        if fit3Mid == 1 {
+                            scale = scale3Mid;
+                        } else {
+                            scale = scale3Lo;
+                        }
+                    }
+                    invWidth = 1.0 / width;
+                    widthSq = width * width;
+                    invWidthSq = invWidth * invWidth;
+                    denA = 0.0;
+                    denB = 0.0;
+                    denC = 0.0;
+                    numA = 0.0;
+                    numB = 0.0;
+                    numC = 0.0;
+                    if limbs == 2 {
+                        for j in (today - lookbackTotal as usize)..(today as usize) + 1 {
+                            y = inReal[j] * scale;
+                            t = y * invWidth;
+                            a = t + 6.755399441055744e15 - 6.755399441055744e15;
+                            t = a * width;
+                            c = y - t;
+                            denA += a;
+                            denC += c;
+                            numA += denA;
+                            numC += denC;
+                        }
+                        j = (today as usize) + 1;
+                    } else {
+                        for j in (today - lookbackTotal as usize)..(today as usize) + 1 {
+                            y = inReal[j] * scale;
+                            t = y * invWidthSq;
+                            a = t + 6.755399441055744e15 - 6.755399441055744e15;
+                            t = a * widthSq;
+                            q = y - t;
+                            t = q * invWidth;
+                            b = t + 6.755399441055744e15 - 6.755399441055744e15;
+                            t = b * width;
+                            c = q - t;
+                            denA += a;
+                            denB += b;
+                            denC += c;
+                            numA += denA;
+                            numB += denB;
+                            numC += denC;
+                        }
+                        j = (today as usize) + 1;
+                    }
+                }
+            }
+            // One rounding each: the limbs are carried into range first, so the
+            // last add sees two exact values.
+            if limbs == 2 {
+                t = denA * width;
+                den = t + denC;
+                t = numA * width;
+                num = t + numC;
+            } else if limbs == 3 {
+                t = denC * invWidth;
+                q = t + 6.755399441055744e15 - 6.755399441055744e15;
+                b = denB + q;
+                t = q * width;
+                c = denC - t;
+                t = b * invWidth;
+                q = t + 6.755399441055744e15 - 6.755399441055744e15;
+                t = q * width;
+                b = b - t;
+                t = b * width;
+                c = t + c;
+                t = denA + q;
+                t = t * widthSq;
+                den = t + c;
+                t = numC * invWidth;
+                q = t + 6.755399441055744e15 - 6.755399441055744e15;
+                b = numB + q;
+                t = q * width;
+                c = numC - t;
+                t = b * invWidth;
+                q = t + 6.755399441055744e15 - 6.755399441055744e15;
+                t = q * width;
+                b = b - t;
+                t = b * width;
+                c = t + c;
+                t = numA + q;
+                t = t * widthSq;
+                num = t + c;
             }
             // The denominator is a signed sum, so only an exact zero is degenerate.
             // It is answered with the flat-window value, which keeps every output a
             // function of its own window; an epsilon band would carry the quote unit
             // (#253).
             if den != 0.0 {
-                outReal[(outIdx * outStride) as usize] = (0_f64 - num) / den;
+                value = (0_f64 - num) / den;
             } else {
-                outReal[(outIdx * outStride) as usize] = (0_f64 - ((optInTimePeriod as f64) + 1.0)) * 0.5;
+                value = flatValue;
             }
+            if limbs == 2 {
+                y = inReal[trailingIdx] * scale;
+                t = y * invWidth;
+                a = t + 6.755399441055744e15 - 6.755399441055744e15;
+                t = a * width;
+                c = y - t;
+                denA -= a;
+                denC -= c;
+                numA -= periodDouble * a;
+                numC -= periodDouble * c;
+            } else if limbs == 3 {
+                y = inReal[trailingIdx] * scale;
+                t = y * invWidthSq;
+                a = t + 6.755399441055744e15 - 6.755399441055744e15;
+                t = a * widthSq;
+                q = y - t;
+                t = q * invWidth;
+                b = t + 6.755399441055744e15 - 6.755399441055744e15;
+                t = b * width;
+                c = q - t;
+                denA -= a;
+                denB -= b;
+                denC -= c;
+                numA -= periodDouble * a;
+                numB -= periodDouble * b;
+                numC -= periodDouble * c;
+            }
+            // After the trailing value is read: outReal may be inReal.
+            outReal[(outIdx * outStride) as usize] = value;
+            trailingIdx += 1;
             outIdx += 1;
             today += 1;
         }
@@ -408,18 +1459,55 @@ impl Core {
         (*outNBElement) = outIdx;
 
         // Capture the live batch state into the handle.
-        let cap_i: i64 = (optInTimePeriod - 1 + 1) as i64;
-        if cap_i < 1 || cap_i > historyLen as i64 {
+        let cap_trailingIdx: i64 = (today as i64) - (trailingIdx as i64);
+        if cap_trailingIdx < 0 || cap_trailingIdx > historyLen as i64 {
             return Err(RetCode::InternalError);
         }
-        let mut win_i_inReal: Vec<f64> = vec![0.0_f64; cap_i as usize];
-        win_i_inReal.copy_from_slice(&inReal[historyLen - cap_i as usize..]);
+        let allocN_trailingIdx: usize = if cap_trailingIdx > 0 { cap_trailingIdx as usize } else { 1 };
+        let mut ring_trailingIdx_inReal: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
+        ring_trailingIdx_inReal[..cap_trailingIdx as usize]
+            .copy_from_slice(&inReal[historyLen - cap_trailingIdx as usize..]);
+        let cap_j: i64 = (lookbackTotal + 1) as i64;
+        if cap_j < 1 || cap_j > historyLen as i64 {
+            return Err(RetCode::InternalError);
+        }
+        let mut win_j_inReal: Vec<f64> = vec![0.0_f64; cap_j as usize];
+        win_j_inReal.copy_from_slice(&inReal[historyLen - cap_j as usize..]);
         let state = CgStreamState {
             optInTimePeriod,
+            lookbackTotal,
+            limbs,
+            stickyBars,
+            num,
+            den,
+            periodDouble,
+            flatValue,
+            width2,
+            width3,
+            ylim2,
+            ylim3,
+            head2,
+            head3,
+            scale,
+            width,
+            invWidth,
+            widthSq,
+            invWidthSq,
+            ylim,
+            half,
+            denA,
+            denB,
+            denC,
+            numA,
+            numB,
+            numC,
             cur_outReal: outReal[(*outNBElement - 1) * outStride],
-            winPos_i: 0_usize,
-            winCap_i: cap_i as usize,
-            win_i_inReal,
+            ringPos_trailingIdx: 0_usize,
+            ringCap_trailingIdx: cap_trailingIdx as usize,
+            ring_trailingIdx_inReal,
+            winPos_j: 0_usize,
+            winCap_j: cap_j as usize,
+            win_j_inReal,
         };
         Ok(CgStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
@@ -586,35 +1674,349 @@ impl CgStream {
         {
             let sp = &self.state;
             let outReal = &mut outReal;
-            let mut i: usize = 0_usize;
-            let mut num: f64 = 0.0_f64;
-            let mut den: f64 = 0.0_f64;
+            let mut j: usize = 0_usize;
+            let mut k: usize = 0_usize;
+            let mut fits: usize = 0_usize;
+            let mut maxAt: usize = 0_usize;
+            let mut failAt: i32 = 0_i32;
+            let mut fit2Mid: usize = 0_usize;
+            let mut fit2Lo: usize = 0_usize;
+            let mut fit3Mid: usize = 0_usize;
+            let mut value: f64 = 0.0_f64;
+            let mut maxAbs: f64 = 0.0_f64;
+            let mut scale2Mid: f64 = 0.0_f64;
+            let mut scale2Lo: f64 = 0.0_f64;
+            let mut scale3Mid: f64 = 0.0_f64;
+            let mut scale3Lo: f64 = 0.0_f64;
+            let mut x: f64 = 0.0_f64;
+            let mut y: f64 = 0.0_f64;
+            let mut a: f64 = 0.0_f64;
+            let mut b: f64 = 0.0_f64;
+            let mut c: f64 = 0.0_f64;
+            let mut q: f64 = 0.0_f64;
+            let mut t: f64 = 0.0_f64;
+            let mut den = sp.den;
+            let mut denA = sp.denA;
+            let mut denB = sp.denB;
+            let mut denC = sp.denC;
+            let mut half = sp.half;
+            let mut invWidth = sp.invWidth;
+            let mut invWidthSq = sp.invWidthSq;
+            let mut limbs = sp.limbs;
+            let mut num = sp.num;
+            let mut numA = sp.numA;
+            let mut numB = sp.numB;
+            let mut numC = sp.numC;
+            let mut scale = sp.scale;
+            let mut stickyBars = sp.stickyBars;
+            let mut width = sp.width;
+            let mut widthSq = sp.widthSq;
+            let mut ylim = sp.ylim;
             let mut pkSlot0: usize = usize::MAX;
             let mut pkVal0: f64 = 0.0_f64;
-            pkSlot0 = sp.winPos_i as usize;
-            pkVal0 = inReal;
-            // Oldest first, the value i bars ago is in den for the last i+1
-            // additions to num, which is its weight in the listing. Walking the
-            // window newest first would reverse every weight.
-            num = 0.0;
-            den = 0.0;
-            // for( i = sp.optInTimePeriod - 1; i >= 0; i -= 1 )
-            i = (sp.optInTimePeriod - 1) as usize;
-            loop {
-                den += (if ((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize) != pkSlot0 { sp.win_i_inReal[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize] } else { pkVal0 });
-                num += den;
-                if i == 0 { break; }
-                i -= 1;
+            let mut pkSlot1: usize = usize::MAX;
+            let mut pkVal1: f64 = 0.0_f64;
+            if sp.ringCap_trailingIdx == 0 {
+                pkSlot0 = 0;
+                pkVal0 = inReal;
+            }
+            pkSlot1 = sp.winPos_j as usize;
+            pkVal1 = inReal;
+            // Between bars the sums hold the window less its oldest value.
+            fits = 0;
+            x = inReal;
+            y = x * scale;
+            if limbs == 2 {
+                if (y).abs() < ylim && (y != 0.0 || x == 0.0) {
+                    t = y * invWidth;
+                    a = t + 6.755399441055744e15 - 6.755399441055744e15;
+                    t = a * width;
+                    c = y - t;
+                    if c + 6.755399441055744e15 - 6.755399441055744e15 == c {
+                        denA += a;
+                        denC += c;
+                        numA += denA;
+                        numC += denC;
+                        fits = 1;
+                    }
+                }
+            } else if limbs == 3 {
+                if (y).abs() < ylim && (y != 0.0 || x == 0.0) {
+                    t = y * invWidthSq;
+                    a = t + 6.755399441055744e15 - 6.755399441055744e15;
+                    t = a * widthSq;
+                    q = y - t;
+                    t = q * invWidth;
+                    b = t + 6.755399441055744e15 - 6.755399441055744e15;
+                    t = b * width;
+                    c = q - t;
+                    if c + 6.755399441055744e15 - 6.755399441055744e15 == c {
+                        denA += a;
+                        denB += b;
+                        denC += c;
+                        numA += denA;
+                        numB += denB;
+                        numC += denC;
+                        fits = 1;
+                    }
+                }
+            }
+            if fits == 0 && limbs == 0 && stickyBars > 0 {
+                // Both witnesses of the last failed fit are still in the window, so
+                // it cannot fit either: its largest value can only be larger, which
+                // only coarsens the scale the failing value already missed.
+                stickyBars -= 1;
+                num = 0.0;
+                den = 0.0;
+                // for( j = sp.lookbackTotal; j >= 0; j -= 1 )
+                j = sp.lookbackTotal;
+                loop {
+                    den += (if ((if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j }) as usize) != pkSlot1 { sp.win_j_inReal[((if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j })) as usize] } else { pkVal1 });
+                    num += den;
+                    if j == 0 { break; }
+                    j -= 1;
+                }
+            } else if fits == 0 {
+                // The incoming value does not fit the scale: pick one from the
+                // window alone.
+                maxAbs = 0.0;
+                maxAt = 0;
+                k = 0;
+                // for( j = sp.lookbackTotal; j >= 0; j -= 1 )
+                j = sp.lookbackTotal;
+                loop {
+                    x = ((if ((if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j }) as usize) != pkSlot1 { sp.win_j_inReal[((if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j })) as usize] } else { pkVal1 })).abs();
+                    if x >= maxAbs {
+                        maxAbs = x;
+                        maxAt = k;
+                    }
+                    k += 1;
+                    if j == 0 { break; }
+                    j -= 1;
+                }
+                // The largest power of two not above the window's largest
+                // magnitude. The search may start from any finite power of two, so
+                // it starts from the last window's; keep it uncapped, or a start far
+                // from the answer stops short and the fit then depends on the
+                // previous window. A window with an infinite magnitude fails the fit
+                // at any scale, so it keeps the last one.
+                if maxAbs > 0.0 && maxAbs <= 1.7976931348623157e308 {
+                    while half * 65536.0 <= maxAbs {
+                        half *= 65536.0;
+                    }
+                    while half * 2.0 <= maxAbs {
+                        half *= 2.0;
+                    }
+                    while half > maxAbs * 65536.0 {
+                        half *= 0.0000152587890625;
+                    }
+                    while half > maxAbs {
+                        half *= 0.5;
+                    }
+                }
+                // The largest scale each limb count allows, and the same with
+                // headroom, at most 2^1022 so that the scale itself is finite. The
+                // largest 3-limb scale is the most permissive there is: the window
+                // fits some scale only if every value is an integer at that one. A
+                // scale below 1 can round a small value to 0, which is not a fit.
+                scale2Lo = sp.ylim2 * 0.5 / half;
+                if scale2Lo > 4.49423283715579e307 {
+                    scale2Lo = 4.49423283715579e307;
+                }
+                scale2Mid = scale2Lo / sp.head2;
+                scale3Lo = sp.ylim3 * 0.5 / half;
+                if scale3Lo > 4.49423283715579e307 {
+                    scale3Lo = 4.49423283715579e307;
+                }
+                scale3Mid = scale3Lo / sp.head3;
+                // The same pass sums the window as it stands, oldest first, for when
+                // nothing fits: non-finite values, bits below 2^-1022, or too wide a
+                // span of magnitudes.
+                fit2Mid = 1;
+                fit2Lo = 1;
+                fit3Mid = 1;
+                failAt = 0 - 1;
+                num = 0.0;
+                den = 0.0;
+                k = 0;
+                // for( j = sp.lookbackTotal; j >= 0; j -= 1 )
+                j = sp.lookbackTotal;
+                loop {
+                    x = (if ((if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j }) as usize) != pkSlot1 { sp.win_j_inReal[((if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j })) as usize] } else { pkVal1 });
+                    den += x;
+                    num += den;
+                    y = (x * scale2Mid).abs();
+                    if !(y < sp.ylim2) || y < 4.503599627370496e15 && y + 4.503599627370496e15 - 4.503599627370496e15 != y || y == 0.0 && x != 0.0 {
+                        fit2Mid = 0;
+                    }
+                    y = (x * scale2Lo).abs();
+                    if !(y < sp.ylim2) || y < 4.503599627370496e15 && y + 4.503599627370496e15 - 4.503599627370496e15 != y || y == 0.0 && x != 0.0 {
+                        fit2Lo = 0;
+                    }
+                    y = (x * scale3Mid).abs();
+                    if !(y < sp.ylim3) || y < 4.503599627370496e15 && y + 4.503599627370496e15 - 4.503599627370496e15 != y || y == 0.0 && x != 0.0 {
+                        fit3Mid = 0;
+                    }
+                    y = (x * scale3Lo).abs();
+                    if !(y < sp.ylim3) || y < 4.503599627370496e15 && y + 4.503599627370496e15 - 4.503599627370496e15 != y || y == 0.0 && x != 0.0 {
+                        failAt = (k) as i32;
+                    }
+                    k += 1;
+                    if j == 0 { break; }
+                    j -= 1;
+                }
+                limbs = 0;
+                if failAt >= 0 {
+                    if failAt < ((maxAt) as i32) {
+                        stickyBars = (failAt) as usize;
+                    } else {
+                        stickyBars = maxAt;
+                    }
+                } else {
+                    if fit2Mid == 1 || fit2Lo == 1 {
+                        limbs = 2;
+                        width = sp.width2;
+                        ylim = sp.ylim2;
+                        if fit2Mid == 1 {
+                            scale = scale2Mid;
+                        } else {
+                            scale = scale2Lo;
+                        }
+                    } else {
+                        limbs = 3;
+                        width = sp.width3;
+                        ylim = sp.ylim3;
+                        if fit3Mid == 1 {
+                            scale = scale3Mid;
+                        } else {
+                            scale = scale3Lo;
+                        }
+                    }
+                    invWidth = 1.0 / width;
+                    widthSq = width * width;
+                    invWidthSq = invWidth * invWidth;
+                    denA = 0.0;
+                    denB = 0.0;
+                    denC = 0.0;
+                    numA = 0.0;
+                    numB = 0.0;
+                    numC = 0.0;
+                    if limbs == 2 {
+                        // for( j = sp.lookbackTotal; j >= 0; j -= 1 )
+                        j = sp.lookbackTotal;
+                        loop {
+                            y = (if ((if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j }) as usize) != pkSlot1 { sp.win_j_inReal[((if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j })) as usize] } else { pkVal1 }) * scale;
+                            t = y * invWidth;
+                            a = t + 6.755399441055744e15 - 6.755399441055744e15;
+                            t = a * width;
+                            c = y - t;
+                            denA += a;
+                            denC += c;
+                            numA += denA;
+                            numC += denC;
+                            if j == 0 { break; }
+                            j -= 1;
+                        }
+                    } else {
+                        // for( j = sp.lookbackTotal; j >= 0; j -= 1 )
+                        j = sp.lookbackTotal;
+                        loop {
+                            y = (if ((if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j }) as usize) != pkSlot1 { sp.win_j_inReal[((if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j })) as usize] } else { pkVal1 }) * scale;
+                            t = y * invWidthSq;
+                            a = t + 6.755399441055744e15 - 6.755399441055744e15;
+                            t = a * widthSq;
+                            q = y - t;
+                            t = q * invWidth;
+                            b = t + 6.755399441055744e15 - 6.755399441055744e15;
+                            t = b * width;
+                            c = q - t;
+                            denA += a;
+                            denB += b;
+                            denC += c;
+                            numA += denA;
+                            numB += denB;
+                            numC += denC;
+                            if j == 0 { break; }
+                            j -= 1;
+                        }
+                    }
+                }
+            }
+            // One rounding each: the limbs are carried into range first, so the
+            // last add sees two exact values.
+            if limbs == 2 {
+                t = denA * width;
+                den = t + denC;
+                t = numA * width;
+                num = t + numC;
+            } else if limbs == 3 {
+                t = denC * invWidth;
+                q = t + 6.755399441055744e15 - 6.755399441055744e15;
+                b = denB + q;
+                t = q * width;
+                c = denC - t;
+                t = b * invWidth;
+                q = t + 6.755399441055744e15 - 6.755399441055744e15;
+                t = q * width;
+                b = b - t;
+                t = b * width;
+                c = t + c;
+                t = denA + q;
+                t = t * widthSq;
+                den = t + c;
+                t = numC * invWidth;
+                q = t + 6.755399441055744e15 - 6.755399441055744e15;
+                b = numB + q;
+                t = q * width;
+                c = numC - t;
+                t = b * invWidth;
+                q = t + 6.755399441055744e15 - 6.755399441055744e15;
+                t = q * width;
+                b = b - t;
+                t = b * width;
+                c = t + c;
+                t = numA + q;
+                t = t * widthSq;
+                num = t + c;
             }
             // The denominator is a signed sum, so only an exact zero is degenerate.
             // It is answered with the flat-window value, which keeps every output a
             // function of its own window; an epsilon band would carry the quote unit
             // (#253).
             if den != 0.0 {
-                (*outReal) = (0_f64 - num) / den;
+                value = (0_f64 - num) / den;
             } else {
-                (*outReal) = (0_f64 - ((sp.optInTimePeriod as f64) + 1.0)) * 0.5;
+                value = sp.flatValue;
             }
+            if limbs == 2 {
+                y = (if (sp.ringPos_trailingIdx as usize) != pkSlot0 { sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] } else { pkVal0 }) * scale;
+                t = y * invWidth;
+                a = t + 6.755399441055744e15 - 6.755399441055744e15;
+                t = a * width;
+                c = y - t;
+                denA -= a;
+                denC -= c;
+                numA -= sp.periodDouble * a;
+                numC -= sp.periodDouble * c;
+            } else if limbs == 3 {
+                y = (if (sp.ringPos_trailingIdx as usize) != pkSlot0 { sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] } else { pkVal0 }) * scale;
+                t = y * invWidthSq;
+                a = t + 6.755399441055744e15 - 6.755399441055744e15;
+                t = a * widthSq;
+                q = y - t;
+                t = q * invWidth;
+                b = t + 6.755399441055744e15 - 6.755399441055744e15;
+                t = b * width;
+                c = q - t;
+                denA -= a;
+                denB -= b;
+                denC -= c;
+                numA -= sp.periodDouble * a;
+                numB -= sp.periodDouble * b;
+                numC -= sp.periodDouble * c;
+            }
+            // After the trailing value is read: outReal may be inReal.
+            (*outReal) = value;
         }
         Ok(outReal)
     }

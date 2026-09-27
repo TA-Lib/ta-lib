@@ -71,35 +71,43 @@
  *     8. Lookback values, the parameter range, the default, the empty and
  *        one-bar ranges, and a stream opened on too few bars.
  *     9. The startIdx/endIdx range sweep in the EXACT class.
+ *    10. Bitwise against an exact reference on series that reach every path of
+ *        the running sums, through the batch call from several starts and a
+ *        stream's Peek and Update.
  *
- *   WHAT EACH LEG CAN SEE, measured by mutating ta_codegen/input/cg/cg.c (the
- *   default, cg.yaml) and regenerating: every leg that went red.
+ *   WHAT EACH LEG CAN SEE, measured by mutating ta_codegen/input/cg/cg.c and
+ *   regenerating: the first leg that went red (the suite stops there).
  *
- *     window one bar short                         1 2 3 4 7
- *     newest bar first, weights reversed           1 2 3 4
- *     num += den before den += x (weight i)        1 2 3 4
- *     sign dropped                                 1 2 3 4
- *     Den / n as the denominator                   1 2 3 4
- *     Den == 0 guard dropped                       2 3 4 5, test_abstract
- *     Den > 0 as the guard                         2 3 4 5 7
- *     |Den| > 1e-14 as the guard                   3 4 7
- *     -(n+1)/2 where |Den| <= 1e-9*sum|x|          4
- *     -(n-1)/2 at Den == 0                         2 3 4
- *     0.0 at Den == 0                              2 3 4
- *     lookback n                                   1 2 3 4 7 8
- *     default 14                                   8
- *     WMA-style running sums from startIdx         3 4 7 9
- *     fallback stored before the window is read    6, test_abstract
+ *     sign dropped                                 1
+ *     Den == 0 guard dropped                       test_abstract
+ *     Den > 0 as the guard                         2
+ *     |Den| > 1e-14 as the guard                   7
+ *     -(n-1)/2 or 0.0 at Den == 0                  2
+ *     lookback n                                   1
+ *     output stored before the trailing read       test_abstract (in-place)
+ *     trailing value removed with weight n-1       1
+ *     integrality check dropped, 2 or 3 limbs      10
+ *     magnitude check dropped, 2 limbs             10
+ *     3-limb read without the carry                10
+ *     3-limb bound 4x too loose, or width 2^27     10
+ *     fit tested at a scale with headroom          10
+ *     underflow-to-zero check dropped              10
+ *     power-of-two search capped                   10
+ *     fallback weights shifted by one              10
+ *     fallback kept past its witnesses             7
+ *     fallback kept without the max witness        10
  *
- *   Two survive, both equivalent: num / -den moves only the sign of an exact
- *   0, which the contract leaves unpinned, and a partial store inside the
- *   loop lands on the window's oldest input, already read, before the final
- *   store replaces it.
+ *   Three survive: dropping the headroom or restarting the power-of-two
+ *   search from 1 only costs time, and a 2-limb bound 4x looser still keeps
+ *   every limb sum below 2^53, because n(n+1)/2 is never a power of two.
  *
- *   SERVER_VERIFY: every call of legs 2, 3 and 4 and one anchored call per
- *   period of leg 7. A call longer than one 256 KB request goes as the series
- *   cut at startIdx - lookback; long-n100000, flat01-n100000, flat12345-n100000
- *   and leg 2 at n = 100000 do not fit even then.
+ *   SERVER_VERIFY: every call of legs 2, 3 and 4, one anchored call per
+ *   period of leg 7, and every full call of leg 10 but those on the
+ *   non-finite series, whose NaN outputs carry no sign or payload contract
+ *   across languages that a bitwise hash could skip. A call longer than one
+ *   256 KB request goes as the series cut at startIdx - lookback;
+ *   long-n100000, flat01-n100000, flat12345-n100000 and leg 2 at n = 100000 do
+ *   not fit even then.
  */
 
 /**** Headers ****/
@@ -964,6 +972,11 @@ static int g_cgAliasCmp;
 static int g_cgLocalCmp;
 static int g_cgNanCmp;
 static int g_cgParamCmp;
+static int g_cgExactCmp;
+static int g_cgExactFit;
+static int g_cgExactFallback;
+static int g_cgExactDen0;
+static int g_cgExactNum0;
 
 /**** Local functions declarations. ****/
 static ErrorNumber cg_build_series( const TA_History *history );
@@ -977,6 +990,7 @@ static ErrorNumber test_cg_alias( void );
 static ErrorNumber test_cg_locality( void );
 static ErrorNumber test_cg_params( void );
 static ErrorNumber test_cg_range( void );
+static ErrorNumber test_cg_exact( void );
 
 /**** Global functions definitions. ****/
 ErrorNumber test_func_cg( TA_History *history )
@@ -1014,12 +1028,18 @@ static ErrorNumber test_cg_all( void )
       { "anchor",        101417, &g_cgLocalCmp   },
       { "NaN",             2760, &g_cgNanCmp     },
       { "parameters",       283, &g_cgParamCmp   },
+      { "exact",         888055, &g_cgExactCmp   },
+      { "exact fit",      98659, &g_cgExactFit   },
+      { "exact fallback", 47861, &g_cgExactFallback },
+      { "exact Den == 0",  9136, &g_cgExactDen0  },
+      { "exact Num == 0",  1200, &g_cgExactNum0  },
    };
    ErrorNumber err;
    unsigned int k;
 
    g_cgDiffCmp = g_cgIntCmp = g_cgIntDen0 = g_cgIntDenNeg = g_cgGoldenCmp = 0;
    g_cgEdgeCmp = g_cgNegCmp = g_cgAliasCmp = g_cgLocalCmp = g_cgNanCmp = g_cgParamCmp = 0;
+   g_cgExactCmp = g_cgExactFit = g_cgExactFallback = g_cgExactDen0 = g_cgExactNum0 = 0;
 
    err = test_cg_differential();
    if( err != TA_TEST_PASS ) return err;
@@ -1038,6 +1058,8 @@ static ErrorNumber test_cg_all( void )
    err = test_cg_params();
    if( err != TA_TEST_PASS ) return err;
    err = test_cg_range();
+   if( err != TA_TEST_PASS ) return err;
+   err = test_cg_exact();
    if( err != TA_TEST_PASS ) return err;
 
    /* Literal: every leg is deterministic, and a leg that compared nothing
@@ -1837,4 +1859,341 @@ static ErrorNumber test_cg_range( void )
    return doRangeTestEx( cgRangeTestFunction,
                          TA_STABLE_EXACT, TA_TEST_UNST_NONE,
                          (void *)&param, 1, 0 );
+}
+
+/* (10) Bitwise against an exact reference, on series that reach every path of
+ * the running sums: rebuilds, both limb counts, zero-sum windows, and windows
+ * no scale fits, which answer with the window summed oldest first.
+ *
+ * A window fits when some power-of-two scale 2^-s, s >= -1022, makes every
+ * value an integer below 2^Y3 in magnitude (Y3 as in cg.c; any window
+ * that fits 2 limbs fits 3). The reference then sums x*2^-lmin exactly, in
+ * 24-bit chunks, and rounds Num and Den once each before the divide. */
+#define CGX_N     2400
+#define CGX_CHUNK 7
+
+enum { CGX_CANCEL, CGX_MIXED, CGX_SLIDE, CGX_WIDE, CGX_NEARMAX, CGX_SUBNORM, CGX_FRACVOL,
+       CGX_HUGETINY, CGX_SUBHUGE, CGX_ZERONUM, CGX_SPECIAL, CGX_NB };
+
+static double cgEx[CGX_NB][CGX_N];
+static const char *const cgExName[CGX_NB] = { "cancel", "mixed", "slide", "wide", "nearmax",
+                                              "subnormal", "fracvol", "hugetiny", "subhuge",
+                                              "zeronum", "special" };
+static const int cgExPeriods[6] = { 2, 3, 10, 14, 57, 1000 };
+
+
+static void cg_build_exact_series( void )
+{
+   double v;
+   int i, j, run;
+
+   ta_test_ref_lcg_seed( 0x4530u );
+   for( i = 0; i < CGX_N; i += 10 )
+      for( j = 0; j < 5; j++ )
+      {
+         v = (double)(int)( 50000.0 * ta_test_ref_lcg_sym() ) / 1000.0;
+         cgEx[CGX_CANCEL][i+j]   = v;
+         cgEx[CGX_CANCEL][i+j+5] = -v;
+      }
+
+   ta_test_ref_lcg_seed( 0x4531u );
+   for( i = 0; i < CGX_N; i++ )
+   {
+      v = pow( 10.0, 8.0 * ta_test_ref_lcg_sym() );
+      cgEx[CGX_MIXED][i] = ta_test_ref_lcg_sym() < 0.0 ? -v : v;
+      cgEx[CGX_SLIDE][i] = ldexp( 1.5 + 0.5 * ta_test_ref_lcg_sym(), -( ( i % 200 ) / 4 ) );
+      cgEx[CGX_WIDE][i]  = ldexp( 1.0 + floor( 1048576.0 * ( 0.5 + ta_test_ref_lcg_half() ) ) / 1048576.0,
+                                  (int)( 60.0 * ta_test_ref_lcg_sym() ) );
+      cgEx[CGX_NEARMAX][i] = ( 0.75 + 0.25 * ta_test_ref_lcg_sym() ) * 1.7e308
+                             * ( ta_test_ref_lcg_sym() < 0.8 ? 1.0 : -1.0 );
+      v = ta_test_ref_lcg_sym();
+      cgEx[CGX_SUBNORM][i] = v < 0.0 ? ldexp( floor( 1.0e9 * v ), -1074 )
+                                     : ( v < 0.5 ? 0.0 : 4.0 * DBL_MIN * v );
+   }
+
+   ta_test_ref_lcg_seed( 0x4532u );
+   for( i = 0; i < CGX_N; )
+   {
+      run = 20 + (int)( 180.0 * ( 0.5 + ta_test_ref_lcg_half() ) );
+      for( j = 0; j < run && i < CGX_N; j++, i++ )
+         cgEx[CGX_FRACVOL][i] = (double)(int)( 100000.0 * ( 0.5 + ta_test_ref_lcg_half() ) ) / 1000.0;
+      run = 1 + (int)( 1200.0 * ( 0.5 + ta_test_ref_lcg_half() ) );
+      for( j = 0; j < run && i < CGX_N; j++, i++ )
+         cgEx[CGX_FRACVOL][i] = 0.0;
+   }
+
+   ta_test_ref_lcg_seed( 0x4533u );
+   v = 100.0;
+   for( i = 0; i < CGX_N; i++ )
+   {
+      v += (double)(int)( 100.0 * ta_test_ref_lcg_sym() ) / 100.0;
+      cgEx[CGX_HUGETINY][i] = ( i / 150 ) % 3 == 1 ? ldexp( v, 1000 )
+                              : ( ( i / 150 ) % 3 == 2 ? ldexp( v, -1000 ) : v );
+      cgEx[CGX_SPECIAL][i]  = i % 97 == 50 ? NAN : ( i % 331 == 7 ? INFINITY
+                              : ( i % 331 == 9 ? -INFINITY : v ) );
+   }
+
+   /* Runs of 2^-1074, then of values near 2^990 that fit but that the
+    * oldest-first sum rounds: a scale search over 2000 powers of two, with
+    * every sum of the rescan still finite. */
+   ta_test_ref_lcg_seed( 0x4534u );
+   for( i = 0; i < CGX_N; i++ )
+   {
+      v = 0.5 + ta_test_ref_lcg_half();
+      v += ldexp( 0.5 + ta_test_ref_lcg_half(), -24 );
+      cgEx[CGX_SUBHUGE][i] = ( i / 40 ) % 2 == 0 ? ldexp( 1.0, -1074 )
+                             : ldexp( ( i % 3 == 0 ? -1.0 : 1.0 ) * ( 1.0 + v ), 980 + i % 11 );
+   }
+
+   /* [v, -2v] has Num == 0 at n = 2, so the output is a zero whose sign
+    * follows Den. */
+   ta_test_ref_lcg_seed( 0x4535u );
+   for( i = 0; i < CGX_N; i += 2 )
+   {
+      v = (double)(int)( 50000.0 * ta_test_ref_lcg_sym() ) / 1000.0;
+      cgEx[CGX_ZERONUM][i]   = v;
+      cgEx[CGX_ZERONUM][i+1] = -2.0 * v;
+   }
+}
+
+/* The highest and lowest set bits of |v|: 1 for a normal value, 0 for a zero,
+ * -1 for a value no scale in range makes an integer. */
+static int cg_bits( double v, int *msb, int *lsb )
+{
+   unsigned long long mant;
+   double m;
+   int e;
+
+   if( v == 0.0 )
+      return 0;
+   if( !isfinite( v ) || fabs( v ) < DBL_MIN )
+      return -1;
+   m = frexp( fabs( v ), &e );
+   mant = (unsigned long long)ldexp( m, 53 );
+   *msb = e - 1;
+   *lsb = e - 53;
+   while( !( mant & 1ULL ) )
+   {
+      mant >>= 1;
+      (*lsb)++;
+   }
+   return 1;
+}
+
+static void cg_chunks_add( long long *acc, double y, long long w )
+{
+   double mag = fabs( y ), unit, q;
+   long long sgn = y < 0.0 ? -1 : 1;
+   int k;
+
+   for( k = 4; k >= 0; k-- )
+   {
+      unit = ldexp( 1.0, 24 * k );
+      q = floor( mag / unit );
+      mag -= q * unit;
+      acc[k] += sgn * w * (long long)q;
+   }
+}
+
+/* Round-to-nearest-even of sum(acc[k] * 2^(24k)), as a double. */
+static double cg_chunks_rn( const long long *acc )
+{
+   long long c[CGX_CHUNK], carry, v;
+   unsigned long long mant;
+   int k, neg, pass, top, nbits, i, guard, sticky;
+
+   neg = 0;
+   for( pass = 0; pass < 2; pass++ )
+   {
+      carry = 0;
+      for( k = 0; k < CGX_CHUNK; k++ )
+      {
+         v = ( k < 5 ? ( neg ? -acc[k] : acc[k] ) : 0 ) + carry;
+         carry = v >= 0 ? v >> 24 : -( ( -v + 0xFFFFFF ) >> 24 );
+         c[k] = v - carry * ( 1LL << 24 );
+      }
+      if( carry >= 0 )
+         break;
+      neg = 1;
+   }
+
+   for( top = CGX_CHUNK - 1; top >= 0 && c[top] == 0; top-- )
+      ;
+   if( top < 0 )
+      return 0.0;
+   for( nbits = 24 * top; ( c[top] >> ( nbits - 24 * top ) ) != 0; nbits++ )
+      ;
+
+#define CG_BIT(b) ( (int)( ( c[(b) / 24] >> ( (b) % 24 ) ) & 1 ) )
+   mant = 0;
+   for( i = nbits - 1; i >= 0 && i >= nbits - 53; i-- )
+      mant = ( mant << 1 ) | (unsigned long long)CG_BIT( i );
+   if( nbits <= 53 )
+      return ldexp( neg ? -(double)mant : (double)mant, 0 );
+   guard = CG_BIT( nbits - 54 );
+   sticky = 0;
+   for( i = nbits - 55; i >= 0; i-- )
+      sticky |= CG_BIT( i );
+#undef CG_BIT
+   if( guard && ( sticky || ( mant & 1ULL ) ) )
+      mant++;
+   return ldexp( neg ? -(double)mant : (double)mant, nbits - 53 );
+}
+
+static double cg_exact_reference( const double *x, int t, int n, int *fit, int *den0 )
+{
+   long long numAcc[5], denAcc[5];
+   double num, den, y;
+   int i, k, st, msb, lsb, tmax, lmin, bad, nz, tb, k3, y3, lo;
+
+   *den0 = 0;
+   bad = nz = 0;
+   tmax = -2000;
+   lmin = 2000;
+   for( i = t - n + 1; i <= t; i++ )
+   {
+      st = cg_bits( x[i], &msb, &lsb );
+      if( st < 0 )
+         bad = 1;
+      else if( st > 0 )
+      {
+         nz++;
+         tmax = msb > tmax ? msb : tmax;
+         lmin = lsb < lmin ? lsb : lmin;
+      }
+   }
+   for( tb = 0; ldexp( 1.0, tb ) < (double)n * ( (double)n + 1.0 ) * 0.5; tb++ )
+      ;
+   k3 = 53 - tb < 26 ? 53 - tb : 26;
+   y3 = 51 - tb + 2 * k3;
+   lo = tmax + 1 - y3 > -1022 ? tmax + 1 - y3 : -1022;
+   *fit = !bad && ( nz == 0 || lo <= lmin );
+
+   if( !*fit )
+   {
+      num = den = 0.0;
+      for( i = t - n + 1; i <= t; i++ )
+      {
+         den += x[i];
+         num += den;
+      }
+      return den != 0.0 ? ( 0 - num ) / den : -( (double)n + 1.0 ) * 0.5;
+   }
+
+   for( k = 0; k < 5; k++ )
+      numAcc[k] = denAcc[k] = 0;
+   for( i = 0; i < n && nz > 0; i++ )
+   {
+      y = ldexp( x[t-i], -lmin );
+      cg_chunks_add( denAcc, y, 1 );
+      cg_chunks_add( numAcc, y, i + 1 );
+   }
+   den = cg_chunks_rn( denAcc );
+   num = cg_chunks_rn( numAcc );
+   if( den == 0.0 )
+   {
+      *den0 = 1;
+      return -( (double)n + 1.0 ) * 0.5;
+   }
+   if( num == 0.0 )
+      g_cgExactNum0++;
+   return num == 0.0 ? 0.0 / den : -num / den;
+}
+
+static ErrorNumber test_cg_exact( void )
+{
+   static double full[CGX_N], got[CGX_N];
+   TA_CG_Stream *stream;
+   TA_Integer beg, nb, b2, n2;
+   TA_RetCode rc;
+   ErrorNumber err;
+   double want, peeked, updated;
+   int d, p, n, i, fit, den0, s0, h;
+
+   cg_build_exact_series();
+
+   for( d = 0; d < CGX_NB; d++ )
+   for( p = 0; p < 6; p++ )
+   {
+      const double *x = cgEx[d];
+
+      n = cgExPeriods[p];
+      rc = TA_CG( 0, CGX_N-1, x, n, &beg, &nb, full );
+      if( rc != TA_SUCCESS || beg != n-1 || nb != CGX_N - (n-1) )
+      {
+         printf( "CG exact Fail [%s n=%d]: rc=%d (%d,%d)\n", cgExName[d], n, (int)rc, beg, nb );
+         return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+      }
+      for( i = 0; i < nb; i++ )
+      {
+         want = cg_exact_reference( x, beg + i, n, &fit, &den0 );
+         g_cgExactCmp++;
+         if( fit )
+            g_cgExactFit++;
+         else
+            g_cgExactFallback++;
+         g_cgExactDen0 += den0;
+         if( !cg_same( full[i], want ) )
+         {
+            printf( "CG exact Fail [%s n=%d] at bar %d: %.17g, the %s gives %.17g\n",
+                    cgExName[d], n, beg + i, full[i],
+                    fit ? "exact sums" : "window summed oldest first", want );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+      }
+      err = d == CGX_SPECIAL ? TA_TEST_PASS
+                             : cg_route( cgExName[d], 0, CGX_N-1, x, n, rc, beg, nb, full );
+      if( err != TA_TEST_PASS )
+      {
+         printf( "CG exact Fail [%s n=%d]: server_verify failed\n", cgExName[d], n );
+         return err;
+      }
+
+      for( s0 = n; s0 < CGX_N; s0 += 409 )
+      {
+         rc = TA_CG( s0, CGX_N-1, x, n, &b2, &n2, got );
+         for( i = 0; i < n2; i++ )
+         {
+            g_cgExactCmp++;
+            if( rc != TA_SUCCESS || !cg_same( got[i], full[b2 - beg + i] ) )
+            {
+               printf( "CG exact Fail [%s n=%d] from %d at bar %d: %.17g, the full call "
+                       "gives %.17g\n", cgExName[d], n, s0, b2 + i, got[i], full[b2 - beg + i] );
+               return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+            }
+         }
+      }
+
+      if( d == CGX_SPECIAL )
+         continue;
+      for( h = n; h < CGX_N; h += 797 )
+      {
+         stream = NULL;
+         rc = TA_CG_Open( &stream, x, h, n, &updated );
+         if( rc != TA_SUCCESS || !stream )
+         {
+            printf( "CG exact Fail [%s n=%d]: TA_CG_Open on %d bars rc=%d\n", cgExName[d], n, h,
+                    (int)rc );
+            return TA_TESTUTIL_TFRR_BAD_RETCODE;
+         }
+         for( i = h; i < CGX_N && rc == TA_SUCCESS; i++ )
+         {
+            rc = TA_CG_Peek( stream, x[i], &peeked );
+            if( rc == TA_SUCCESS )
+               rc = TA_CG_Update( stream, x[i], &updated );
+            g_cgExactCmp++;
+            if( rc != TA_SUCCESS || !cg_same( peeked, full[i - beg] ) || !cg_same( updated, full[i - beg] ) )
+            {
+               printf( "CG exact Fail [%s n=%d] stream opened on %d bars, at bar %d: rc=%d, "
+                       "Peek %.17g, Update %.17g, batch %.17g\n", cgExName[d], n, h, i, (int)rc,
+                       peeked, updated, full[i - beg] );
+               TA_CG_Close( stream );
+               return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+            }
+         }
+         TA_CG_Close( stream );
+      }
+   }
+
+   return TA_TEST_PASS;
 }

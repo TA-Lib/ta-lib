@@ -3312,13 +3312,47 @@ static int sv_steq_TA_CG( const struct TA_CG_Stream *a, const struct TA_CG_Strea
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
-   if( a->winCap_i != b->winCap_i ) { *w = "winCap_i"; return 1; }
-   if( (a->win_i_inReal == NULL) != (b->win_i_inReal == NULL) ) { *w = "win_i_inReal"; return 1; }
-   if( a->win_i_inReal ) for( k = 0; k < a->winCap_i; k++ )
+   if( a->lookbackTotal != b->lookbackTotal ) { *w = "lookbackTotal"; return 1; }
+   if( a->limbs != b->limbs ) { *w = "limbs"; return 1; }
+   if( a->stickyBars != b->stickyBars ) { *w = "stickyBars"; return 1; }
+   if( sv_xtier_ne(a->num, b->num, z) ) { *w = "num"; return 1; }
+   if( sv_xtier_ne(a->den, b->den, z) ) { *w = "den"; return 1; }
+   if( sv_xtier_ne(a->periodDouble, b->periodDouble, z) ) { *w = "periodDouble"; return 1; }
+   if( sv_xtier_ne(a->flatValue, b->flatValue, z) ) { *w = "flatValue"; return 1; }
+   if( sv_xtier_ne(a->width2, b->width2, z) ) { *w = "width2"; return 1; }
+   if( sv_xtier_ne(a->width3, b->width3, z) ) { *w = "width3"; return 1; }
+   if( sv_xtier_ne(a->ylim2, b->ylim2, z) ) { *w = "ylim2"; return 1; }
+   if( sv_xtier_ne(a->ylim3, b->ylim3, z) ) { *w = "ylim3"; return 1; }
+   if( sv_xtier_ne(a->head2, b->head2, z) ) { *w = "head2"; return 1; }
+   if( sv_xtier_ne(a->head3, b->head3, z) ) { *w = "head3"; return 1; }
+   if( sv_xtier_ne(a->scale, b->scale, z) ) { *w = "scale"; return 1; }
+   if( sv_xtier_ne(a->width, b->width, z) ) { *w = "width"; return 1; }
+   if( sv_xtier_ne(a->invWidth, b->invWidth, z) ) { *w = "invWidth"; return 1; }
+   if( sv_xtier_ne(a->widthSq, b->widthSq, z) ) { *w = "widthSq"; return 1; }
+   if( sv_xtier_ne(a->invWidthSq, b->invWidthSq, z) ) { *w = "invWidthSq"; return 1; }
+   if( sv_xtier_ne(a->ylim, b->ylim, z) ) { *w = "ylim"; return 1; }
+   if( sv_xtier_ne(a->half, b->half, z) ) { *w = "half"; return 1; }
+   if( sv_xtier_ne(a->denA, b->denA, z) ) { *w = "denA"; return 1; }
+   if( sv_xtier_ne(a->denB, b->denB, z) ) { *w = "denB"; return 1; }
+   if( sv_xtier_ne(a->denC, b->denC, z) ) { *w = "denC"; return 1; }
+   if( sv_xtier_ne(a->numA, b->numA, z) ) { *w = "numA"; return 1; }
+   if( sv_xtier_ne(a->numB, b->numB, z) ) { *w = "numB"; return 1; }
+   if( sv_xtier_ne(a->numC, b->numC, z) ) { *w = "numC"; return 1; }
+   if( a->ringCap_trailingIdx != b->ringCap_trailingIdx ) { *w = "ringCap_trailingIdx"; return 1; }
+   if( (a->ring_trailingIdx_inReal == NULL) != (b->ring_trailingIdx_inReal == NULL) ) { *w = "ring_trailingIdx_inReal"; return 1; }
+   if( a->ring_trailingIdx_inReal ) for( k = 0; k < a->ringCap_trailingIdx; k++ )
    {
-      ia = (a->winPos_i + k) % a->winCap_i;
-      ib = (b->winPos_i + k) % b->winCap_i;
-      if( sv_xtier_ne(a->win_i_inReal[ia], b->win_i_inReal[ib], z) ) { *w = "win_i_inReal"; return 1; }
+      ia = (a->ringPos_trailingIdx + k) % a->ringCap_trailingIdx;
+      ib = (b->ringPos_trailingIdx + k) % b->ringCap_trailingIdx;
+      if( sv_xtier_ne(a->ring_trailingIdx_inReal[ia], b->ring_trailingIdx_inReal[ib], z) ) { *w = "ring_trailingIdx_inReal"; return 1; }
+   }
+   if( a->winCap_j != b->winCap_j ) { *w = "winCap_j"; return 1; }
+   if( (a->win_j_inReal == NULL) != (b->win_j_inReal == NULL) ) { *w = "win_j_inReal"; return 1; }
+   if( a->win_j_inReal ) for( k = 0; k < a->winCap_j; k++ )
+   {
+      ia = (a->winPos_j + k) % a->winCap_j;
+      ib = (b->winPos_j + k) % b->winCap_j;
+      if( sv_xtier_ne(a->win_j_inReal[ia], b->win_j_inReal[ib], z) ) { *w = "win_j_inReal"; return 1; }
    }
    return 0;
 }
