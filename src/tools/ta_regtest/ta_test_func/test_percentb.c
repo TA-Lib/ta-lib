@@ -1246,7 +1246,7 @@ static ErrorNumber test_pctb_all( void )
    static const struct { const char *leg; int want; const int *got; } cov[] = {
       { "golden exact",            616, &g_pctbGoldenCmp   },
       { "composition",        58592010, &g_pctbDiffCmp     },
-      { "zero width",         20928178, &g_pctbDiffZero    },
+      { "zero width",          8659036, &g_pctbDiffZero    },
       { "NaN and Inf input",     76868, &g_pctbNanCmp      },
       { "float tier",            25912, &g_pctbFloatCmp    },
       { "author's identity",    936174, &g_pctbIdentCmp    },
@@ -1546,6 +1546,17 @@ static ErrorNumber test_pctb_goldens( void )
    return TA_TEST_PASS;
 }
 
+/* Opposite k, each 0 or a power of two: k*sd is exact, so U and L are one
+ * rounding of the same sum on every float path. Any other zero width is a
+ * near-flat window rounding to 0, which FMA dispatch, libm and the compiler
+ * each move, so the zero-width census counts only these. */
+static int pctb_bands_coincide( double kUp, double kDn )
+{
+   int e;
+
+   return kUp == -kDn && ( kDn == 0.0 || frexp( fabs( kDn ), &e ) == 0.5 );
+}
+
 /* TA_PERCENTB against (x - L) / (U - L) over TA_BBANDS' outputs, and 0.5
  * where U - L is 0, bitwise; NaN where the composition is NaN. */
 static ErrorNumber pctb_vs_bbands( const char *tag, const PctbSeries *s,
@@ -1573,7 +1584,7 @@ static ErrorNumber pctb_vs_bbands( const char *tag, const PctbSeries *s,
    {
       den  = up[i] - lo[i];
       want = ( den == 0.0 ) ? 0.5 : ( s->x[begB + i] - lo[i] ) / den;
-      if( den == 0.0 )
+      if( den == 0.0 && pctb_bands_coincide( kUp, kDn ) )
          g_pctbDiffZero++;
       if( isnan( want ) )
          g_pctbNanCmp++;
