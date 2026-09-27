@@ -2957,6 +2957,7 @@ impl RustStmt<'_, '_> {
     /// written. `as_written` is the loop after any `for` init, for a failed
     /// guard the loop may still pass. A `do_while` runs the pass the guard
     /// counts, and one more when the guard fails.
+    #[allow(clippy::too_many_lines)]
     fn windowed(
         &self,
         condition: &Expr,
@@ -2996,10 +2997,10 @@ impl RustStmt<'_, '_> {
         // `as_written` is a `for` loop past its init: the range lowering would
         // restart it from the counter's declaration.
         let unwindowed = |indent: usize| {
-            let mut plain = ctx.clone();
-            plain.window_loops = false;
-            plain.for_range_lowering = false;
-            RustStmt { ctx: &plain, ..*self }.walk_stmt(as_written, indent)
+            let mut as_is = ctx.clone();
+            as_is.window_loops = false;
+            as_is.for_range_lowering = false;
+            RustStmt { ctx: &as_is, ..*self }.walk_stmt(as_written, indent)
         };
 
         let mut inner = ctx.clone();

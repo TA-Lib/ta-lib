@@ -94,18 +94,6 @@ pub(crate) struct Names<'a> {
 /// `while( cond ) body`, or with `update`, the rest of
 /// `for( init; cond; update ) body` once `init` has run.
 pub(crate) fn plan(cond: &Expr, body: &[Statement], update: Option<&Statement>, names: &Names) -> Option<Plan> {
-    let form = form(cond, names)?;
-    // The condition's own step comes first in every pass.
-    let mut pass: Vec<Statement> = form.cond_step.iter().map(|c| step(c, -1)).collect();
-    pass.extend(body.iter().cloned());
-    pass.extend(update.cloned());
-    let pass = flat(&pass)?;
-    if mentions_reserved(cond, &pass) {
-        return None;
-    }
-
-    let mut facts = Facts::of(&pass);
-    // A ring's wrap reads its storage, which a `&mut` window would lock.
     fn advanced(pass: &[Statement], out: &mut Vec<String>) {
         for s in pass {
             match s {
@@ -118,6 +106,19 @@ pub(crate) fn plan(cond: &Expr, body: &[Statement], update: Option<&Statement>, 
             }
         }
     }
+
+    let form = form(cond, names)?;
+    // The condition's own step comes first in every pass.
+    let mut pass: Vec<Statement> = form.cond_step.iter().map(|c| step(c, -1)).collect();
+    pass.extend(body.iter().cloned());
+    pass.extend(update.cloned());
+    let pass = flat(&pass)?;
+    if mentions_reserved(cond, &pass) {
+        return None;
+    }
+
+    let mut facts = Facts::of(&pass);
+    // A ring's wrap reads its storage, which a `&mut` window would lock.
     let mut rings = Vec::new();
     advanced(&pass, &mut rings);
     for id in &rings {
@@ -265,10 +266,10 @@ fn unrolled(init: &Statement, cond: &Expr, update: &Statement, body: &[Statement
     let Statement::Assign { target: Expr::Var(v), value: Expr::IntLiteral(a), compound: false } = init else {
         return None;
     };
-    let Expr::BinOp(l, BinOp::GreaterEq, r) = cond else { return None };
-    let (Expr::Var(c), Expr::IntLiteral(b)) = (l.as_ref(), r.as_ref()) else { return None };
+    let Expr::BinOp(lhs, BinOp::GreaterEq, rhs) = cond else { return None };
+    let (Expr::Var(tested), Expr::IntLiteral(b)) = (lhs.as_ref(), rhs.as_ref()) else { return None };
     let body = flat(body)?;
-    if c != v || as_step(update) != Some((v.as_str(), -1)) || a < b || a - b >= MAX_PASSES || Facts::of(&body).assigned.contains(v) {
+    if tested != v || as_step(update) != Some((v.as_str(), -1)) || a < b || a - b >= MAX_PASSES || Facts::of(&body).assigned.contains(v) {
         return None;
     }
     let mut out = Vec::new();
@@ -299,17 +300,6 @@ fn substitute_stmt(s: &Statement, v: &str, with: &Expr) -> Statement {
 
 /// A body naming one of the emitted names would read ours.
 fn mentions_reserved(cond: &Expr, body: &[Statement]) -> bool {
-    let emitted = |n: &str| {
-        n == TRIP || n == PASS || n.strip_prefix("_w").is_some_and(|j| !j.is_empty() && j.bytes().all(|b| b.is_ascii_digit()))
-    };
-    let mut found = false;
-    let mut check = |e: &Expr| {
-        crate::streaming::walk_expr(e, &mut |x| {
-            if let Expr::Var(n) | Expr::ArrayAccess(n, _) | Expr::PointerDeref(n) = x {
-                found |= emitted(n);
-            }
-        });
-    };
     fn walk(body: &[Statement], check: &mut dyn FnMut(&Expr)) {
         for s in body {
             match s {
@@ -327,6 +317,18 @@ fn mentions_reserved(cond: &Expr, body: &[Statement]) -> bool {
             }
         }
     }
+
+    let emitted = |n: &str| {
+        n == TRIP || n == PASS || n.strip_prefix("_w").is_some_and(|j| !j.is_empty() && j.bytes().all(|b| b.is_ascii_digit()))
+    };
+    let mut found = false;
+    let mut check = |e: &Expr| {
+        crate::streaming::walk_expr(e, &mut |x| {
+            if let Expr::Var(n) | Expr::ArrayAccess(n, _) | Expr::PointerDeref(n) = x {
+                found |= emitted(n);
+            }
+        });
+    };
     check(cond);
     walk(body, &mut check);
     found
@@ -1275,7 +1277,16 @@ mod tests {
     #[test]
     fn a_branch_reading_only_at_or_behind_the_counter_stays_as_written() {
         // while( i < e ) { if( in[i] > in[i - 1] && c > in[i - 2] ) out[k] = 1; else out[k] = 0; k++; i++; }
-        let at_i = |d: i64| at("in", if d == 0 { v("i") } else if d > 0 { plus(v("i"), int(d)) } else { bin(v("i"), BinOp::Sub, int(-d)) });
+        let at_i = |d: i64| {
+            at(
+                "in",
+                match d.cmp(&0) {
+                    std::cmp::Ordering::Equal => v("i"),
+                    std::cmp::Ordering::Greater => plus(v("i"), int(d)),
+                    std::cmp::Ordering::Less => bin(v("i"), BinOp::Sub, int(-d)),
+                },
+            )
+        };
         let body = |far: i64| {
             [
                 branch(
