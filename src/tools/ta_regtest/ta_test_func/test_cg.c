@@ -1029,8 +1029,8 @@ static ErrorNumber test_cg_all( void )
       { "NaN",             2760, &g_cgNanCmp     },
       { "parameters",       283, &g_cgParamCmp   },
       { "exact",         888055, &g_cgExactCmp   },
-      { "exact fit",      98659, &g_cgExactFit   },
-      { "exact fallback", 47861, &g_cgExactFallback },
+      { "exact fit",     100144, &g_cgExactFit   },
+      { "exact fallback", 46376, &g_cgExactFallback },
       { "exact Den == 0",  9136, &g_cgExactDen0  },
       { "exact Num == 0",  1200, &g_cgExactNum0  },
    };
@@ -1899,7 +1899,13 @@ static void cg_build_exact_series( void )
    ta_test_ref_lcg_seed( 0x4531u );
    for( i = 0; i < CGX_N; i++ )
    {
-      v = pow( 10.0, 8.0 * ta_test_ref_lcg_sym() );
+      /* 10^(8y) up to a straight line across each octave, from IEEE
+       * operations alone: an ulp of pow() moves a value's lowest set bit,
+       * which decides whether a window fits, and pow() is not correctly
+       * rounded everywhere. */
+      v = 26.575424759098897 * ta_test_ref_lcg_sym();
+      e = (int)floor( v );
+      v = ldexp( 1.0 + ( v - e ), e );
       cgEx[CGX_MIXED][i] = ta_test_ref_lcg_sym() < 0.0 ? -v : v;
       cgEx[CGX_SLIDE][i] = ldexp( 1.5 + 0.5 * ta_test_ref_lcg_sym(), -( ( i % 200 ) / 4 ) );
       e = (int)( 60.0 * ta_test_ref_lcg_sym() );
