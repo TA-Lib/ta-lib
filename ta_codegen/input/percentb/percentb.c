@@ -305,7 +305,8 @@ TA_RetCode percentb(int startIdx, int endIdx,
  * one body goes into all three.
  *
  * The equal-k upper band is written tempReal + middle: spelled middle + tempReal,
- * that map compiles scalar after some JIT histories, silently.
+ * JDK 21 compiles that map scalar, silently. No operand order is safe on every
+ * JDK, so re-check vectorization on 17 and 21 after any edit to these maps.
  */
 /* PRAGMA TA_ALT={BATCH,JAVA} */
 TA_RetCode percentb_ALT1(int startIdx, int endIdx,
