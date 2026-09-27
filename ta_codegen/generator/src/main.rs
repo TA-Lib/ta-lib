@@ -985,7 +985,7 @@ fn generate_bench(backend_filter: Option<&str>) {
 const COMMON_GCC_FLAGS: &[&str] = &[
     "-lm",
     "-O3",
-    "-flto",
+    "-flto=auto",
     "-DNDEBUG",
     "-ffp-contract=off",
     "-fno-math-errno",
