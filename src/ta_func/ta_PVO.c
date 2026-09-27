@@ -54,6 +54,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  071626 MF,CC  Initial version (#119).
+ *  092726 MF,CC  0 on a slow window of zero bars for the windowed MA types (#454).
  */
 
 TA_LIB_API int TA_PVO_Lookback( int optInFastPeriod, int optInSlowPeriod, TA_MAType optInMAType )
@@ -91,6 +92,9 @@ TA_LIB_API TA_RetCode TA_PVO( int    startIdx,
    int fastBeg;
    int fastNb;
    int offset;
+   int slowLookback;
+   int windowed;
+   int zeroRun;
    int i;
 
    if( (startIdx < 0) || (startIdx > TA_INDEX_MAX) )
@@ -172,16 +176,51 @@ TA_LIB_API TA_RetCode TA_PVO( int    startIdx,
     * outReal[i], with a non-negative index. An empty slow MA skips the loop.
     */
    offset = fastNb - *outNBElement;
-   /* Calculate ((fast MA)-(slow MA))/(slow MA) in the output. */
-   for( i = 0; i < (int)*outNBElement; i += 1 )
+   /* A windowed slow MA (SMA, WMA, TRIMA, HMA) over bars that are all exactly
+    * zero is exactly zero, but its running sums leave residue there that
+    * TA_IS_ZERO does not catch, and residue over residue is noise where 0 is
+    * documented. zeroRun counts the trailing zero bars, held at slowLookback once
+    * the window is dead. The recursive MA types really are nonzero on such a
+    * window, so they keep the plain loop.
+    */
+   slowLookback = TA_MA_Lookback(optInSlowPeriod,optInMAType);
+   windowed = (optInMAType == TA_MAType_SMA || optInMAType == TA_MAType_WMA || optInMAType == TA_MAType_TRIMA || optInMAType == TA_MAType_HMA) ? 1 : 0;
+   zeroRun = 0;
+   for( i = *outBegIdx - slowLookback; i < *outBegIdx; i += 1 )
    {
-      tempReal = outReal[i];
-      if( !TA_IS_ZERO(tempReal) )
+      zeroRun = (fabs(inVolume[i]) <= 0.0) ? zeroRun + 1 : 0;
+   }
+   if( windowed != 0 )
+   {
+      for( i = 0; i < (int)*outNBElement; i += 1 )
       {
-         outReal[i] = (tempBuffer[i + offset] - tempReal) / tempReal * 100.0;
-      } else 
+         zeroRun = (fabs(inVolume[*outBegIdx + i]) <= 0.0) ? zeroRun + 1 : 0;
+         tempReal = outReal[i];
+         if( zeroRun > slowLookback )
+         {
+            zeroRun = slowLookback;
+            outReal[i] = 0.0;
+         } else if( !TA_IS_ZERO(tempReal) )
+         {
+            outReal[i] = (tempBuffer[i + offset] - tempReal) / tempReal * 100.0;
+         } else 
+         {
+            outReal[i] = 0.0;
+         }
+      }
+   } else 
+   {
+      /* Calculate ((fast MA)-(slow MA))/(slow MA) in the output. */
+      for( i = 0; i < (int)*outNBElement; i += 1 )
       {
-         outReal[i] = 0.0;
+         tempReal = outReal[i];
+         if( !TA_IS_ZERO(tempReal) )
+         {
+            outReal[i] = (tempBuffer[i + offset] - tempReal) / tempReal * 100.0;
+         } else 
+         {
+            outReal[i] = 0.0;
+         }
       }
    }
    free(tempBuffer);
@@ -205,6 +244,9 @@ TA_RetCode TA_S_PVO( int    startIdx,
    int fastBeg;
    int fastNb;
    int offset;
+   int slowLookback;
+   int windowed;
+   int zeroRun;
    int i;
 
    if( (startIdx < 0) || (startIdx > TA_INDEX_MAX) )
@@ -263,15 +305,43 @@ TA_RetCode TA_S_PVO( int    startIdx,
       return retCode;
    }
    offset = fastNb - *outNBElement;
-   for( i = 0; i < (int)*outNBElement; i += 1 )
+   slowLookback = TA_MA_Lookback(optInSlowPeriod,optInMAType);
+   windowed = (optInMAType == TA_MAType_SMA || optInMAType == TA_MAType_WMA || optInMAType == TA_MAType_TRIMA || optInMAType == TA_MAType_HMA) ? 1 : 0;
+   zeroRun = 0;
+   for( i = *outBegIdx - slowLookback; i < *outBegIdx; i += 1 )
    {
-      tempReal = outReal[i];
-      if( !TA_IS_ZERO(tempReal) )
+      zeroRun = (fabs((double)inVolume[i]) <= 0.0) ? zeroRun + 1 : 0;
+   }
+   if( windowed != 0 )
+   {
+      for( i = 0; i < (int)*outNBElement; i += 1 )
       {
-         outReal[i] = (tempBuffer[i + offset] - tempReal) / tempReal * 100.0;
-      } else 
+         zeroRun = (fabs((double)inVolume[*outBegIdx + i]) <= 0.0) ? zeroRun + 1 : 0;
+         tempReal = outReal[i];
+         if( zeroRun > slowLookback )
+         {
+            zeroRun = slowLookback;
+            outReal[i] = 0.0;
+         } else if( !TA_IS_ZERO(tempReal) )
+         {
+            outReal[i] = (tempBuffer[i + offset] - tempReal) / tempReal * 100.0;
+         } else 
+         {
+            outReal[i] = 0.0;
+         }
+      }
+   } else 
+   {
+      for( i = 0; i < (int)*outNBElement; i += 1 )
       {
-         outReal[i] = 0.0;
+         tempReal = outReal[i];
+         if( !TA_IS_ZERO(tempReal) )
+         {
+            outReal[i] = (tempBuffer[i + offset] - tempReal) / tempReal * 100.0;
+         } else 
+         {
+            outReal[i] = 0.0;
+         }
       }
    }
    free(tempBuffer);
@@ -291,12 +361,18 @@ struct TA_PVO_Stream {
    TA_MAType optInMAType;
    TA_MA_Stream *sub0;
    TA_MA_Stream *sub1;
+   int slowLookback;
+   int windowed;
+   int zeroRun;
 };
 
 /* Private function, not in public API. */
 static TA_RetCode TA_PVO_StepImpl( struct TA_PVO_Stream *sp, double inVolume, double *outReal )
 {
    double tempReal;
+   int slowLookback;
+   int windowed;
+   int zeroRun;
    double cur_tempBuffer = 0.0;
    double cur_outReal = 0.0;
 
@@ -310,15 +386,38 @@ static TA_RetCode TA_PVO_StepImpl( struct TA_PVO_Stream *sp, double inVolume, do
       TA_RetCode subRc = TA_MA_Update( sp->sub1, inVolume, &cur_outReal );
       if( subRc != TA_SUCCESS ) return subRc;
    }
+   slowLookback = sp->slowLookback;
+   windowed = sp->windowed;
+   zeroRun = sp->zeroRun;
    /* Combine map (batch tail, per bar). */
-   tempReal = cur_outReal;
-   if( !TA_IS_ZERO(tempReal) )
+   if( windowed != 0 )
    {
-      cur_outReal = (cur_tempBuffer - tempReal) / tempReal * 100.0;
+      zeroRun = (fabs(inVolume) <= 0.0) ? zeroRun + 1 : 0;
+      tempReal = cur_outReal;
+      if( zeroRun > slowLookback )
+      {
+         zeroRun = slowLookback;
+         cur_outReal = 0.0;
+      } else if( !TA_IS_ZERO(tempReal) )
+      {
+         cur_outReal = (cur_tempBuffer - tempReal) / tempReal * 100.0;
+      } else 
+      {
+         cur_outReal = 0.0;
+      }
    } else 
    {
-      cur_outReal = 0.0;
+      /* Calculate ((fast MA)-(slow MA))/(slow MA) in the output. */
+      tempReal = cur_outReal;
+      if( !TA_IS_ZERO(tempReal) )
+      {
+         cur_outReal = (cur_tempBuffer - tempReal) / tempReal * 100.0;
+      } else 
+      {
+         cur_outReal = 0.0;
+      }
    }
+   sp->zeroRun = zeroRun;
    *outReal = cur_outReal;
    return TA_SUCCESS;
 }
@@ -379,6 +478,9 @@ static TA_RetCode TA_PVO_OpenImpl( struct TA_PVO_Stream **stream, const double i
       int fastBeg;
       int fastNb;
       int offset;
+      int slowLookback;
+      int windowed;
+      int zeroRun;
       int i;
       /* Nothing to produce: the range ends before the lookback. Return before
        * touching anything.
@@ -460,16 +562,51 @@ static TA_RetCode TA_PVO_OpenImpl( struct TA_PVO_Stream **stream, const double i
        * outReal[i], with a non-negative index. An empty slow MA skips the loop.
        */
       offset = fastNb - dummyNBElement;
-      /* Calculate ((fast MA)-(slow MA))/(slow MA) in the output. */
-      for( i = 0; i < (int)dummyNBElement; i += 1 )
+      /* A windowed slow MA (SMA, WMA, TRIMA, HMA) over bars that are all exactly
+       * zero is exactly zero, but its running sums leave residue there that
+       * TA_IS_ZERO does not catch, and residue over residue is noise where 0 is
+       * documented. zeroRun counts the trailing zero bars, held at slowLookback once
+       * the window is dead. The recursive MA types really are nonzero on such a
+       * window, so they keep the plain loop.
+       */
+      slowLookback = TA_MA_Lookback(optInSlowPeriod,optInMAType);
+      windowed = (optInMAType == TA_MAType_SMA || optInMAType == TA_MAType_WMA || optInMAType == TA_MAType_TRIMA || optInMAType == TA_MAType_HMA) ? 1 : 0;
+      zeroRun = 0;
+      for( i = dummyBegIdx - slowLookback; i < dummyBegIdx; i += 1 )
       {
-         tempReal = sc_outReal[i];
-         if( !TA_IS_ZERO(tempReal) )
+         zeroRun = (fabs(inVolume[i]) <= 0.0) ? zeroRun + 1 : 0;
+      }
+      if( windowed != 0 )
+      {
+         for( i = 0; i < (int)dummyNBElement; i += 1 )
          {
-            sc_outReal[i] = (tempBuffer[i + offset] - tempReal) / tempReal * 100.0;
-         } else 
+            zeroRun = (fabs(inVolume[dummyBegIdx + i]) <= 0.0) ? zeroRun + 1 : 0;
+            tempReal = sc_outReal[i];
+            if( zeroRun > slowLookback )
+            {
+               zeroRun = slowLookback;
+               sc_outReal[i] = 0.0;
+            } else if( !TA_IS_ZERO(tempReal) )
+            {
+               sc_outReal[i] = (tempBuffer[i + offset] - tempReal) / tempReal * 100.0;
+            } else 
+            {
+               sc_outReal[i] = 0.0;
+            }
+         }
+      } else 
+      {
+         /* Calculate ((fast MA)-(slow MA))/(slow MA) in the output. */
+         for( i = 0; i < (int)dummyNBElement; i += 1 )
          {
-            sc_outReal[i] = 0.0;
+            tempReal = sc_outReal[i];
+            if( !TA_IS_ZERO(tempReal) )
+            {
+               sc_outReal[i] = (tempBuffer[i + offset] - tempReal) / tempReal * 100.0;
+            } else 
+            {
+               sc_outReal[i] = 0.0;
+            }
          }
       }
       free(tempBuffer);
@@ -482,6 +619,9 @@ static TA_RetCode TA_PVO_OpenImpl( struct TA_PVO_Stream **stream, const double i
       sp->optInFastPeriod = optInFastPeriod;
       sp->optInSlowPeriod = optInSlowPeriod;
       sp->optInMAType = optInMAType;
+      sp->slowLookback = slowLookback;
+      sp->windowed = windowed;
+      sp->zeroRun = zeroRun;
       sp->sub0 = sub0;
       sp->sub1 = sub1;
       *outBegIdx = dummyBegIdx;
@@ -558,6 +698,9 @@ TA_LIB_API TA_RetCode TA_PVO_Peek( const TA_PVO_Stream *stream, double inVolume,
 {
    const struct TA_PVO_Stream *sp = stream;
    double tempReal;
+   int slowLookback;
+   int windowed;
+   int zeroRun;
    double cur_tempBuffer = 0.0;
    double cur_outReal = 0.0;
 
@@ -573,14 +716,36 @@ TA_LIB_API TA_RetCode TA_PVO_Peek( const TA_PVO_Stream *stream, double inVolume,
       TA_RetCode subRc = TA_MA_Peek( (const TA_MA_Stream *)sp->sub1, inVolume, &cur_outReal );
       if( subRc != TA_SUCCESS ) return subRc;
    }
+   slowLookback = sp->slowLookback;
+   windowed = sp->windowed;
+   zeroRun = sp->zeroRun;
    /* Combine map (batch tail, per bar). */
-   tempReal = cur_outReal;
-   if( !TA_IS_ZERO(tempReal) )
+   if( windowed != 0 )
    {
-      cur_outReal = (cur_tempBuffer - tempReal) / tempReal * 100.0;
+      zeroRun = (fabs(inVolume) <= 0.0) ? zeroRun + 1 : 0;
+      tempReal = cur_outReal;
+      if( zeroRun > slowLookback )
+      {
+         zeroRun = slowLookback;
+         cur_outReal = 0.0;
+      } else if( !TA_IS_ZERO(tempReal) )
+      {
+         cur_outReal = (cur_tempBuffer - tempReal) / tempReal * 100.0;
+      } else 
+      {
+         cur_outReal = 0.0;
+      }
    } else 
    {
-      cur_outReal = 0.0;
+      /* Calculate ((fast MA)-(slow MA))/(slow MA) in the output. */
+      tempReal = cur_outReal;
+      if( !TA_IS_ZERO(tempReal) )
+      {
+         cur_outReal = (cur_tempBuffer - tempReal) / tempReal * 100.0;
+      } else 
+      {
+         cur_outReal = 0.0;
+      }
    }
    *outReal = cur_outReal;
    return TA_SUCCESS;

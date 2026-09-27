@@ -54,6 +54,7 @@ public partial class Core
     *  MMDDYY BY     Description
     *  -------------------------------------------------------------------
     *  071626 MF,CC  Initial version (#119).
+    *  092726 MF,CC  0 on a slow window of zero bars for the windowed MA types (#454).
     */
    /// <summary>
    /// Number of leading input bars <c>Pvo</c> consumes before it can produce its
@@ -113,6 +114,9 @@ public partial class Core
       int fastBeg = 0;
       int fastNb = 0;
       int offset = 0;
+      int slowLookback = 0;
+      int windowed = 0;
+      int zeroRun = 0;
       int i = 0;
       if( (startIdx < 0) || (startIdx > IndexMax) ) {
          return RetCode.OutOfRangeStartIndex ;
@@ -181,13 +185,41 @@ public partial class Core
        * outReal[i], with a non-negative index. An empty slow MA skips the loop.
        */
       offset = fastNb - outNBElement;
-      /* Calculate ((fast MA)-(slow MA))/(slow MA) in the output. */
-      for( i = 0; i < (int)outNBElement; i += 1 ) {
-         tempReal = outReal[i];
-         if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
-            outReal[i] = (tempBuffer[i + offset] - tempReal) / tempReal * 100.0;
-         } else {
-            outReal[i] = 0.0;
+      /* A windowed slow MA (SMA, WMA, TRIMA, HMA) over bars that are all exactly
+       * zero is exactly zero, but its running sums leave residue there that
+       * TA_IS_ZERO does not catch, and residue over residue is noise where 0 is
+       * documented. zeroRun counts the trailing zero bars, held at slowLookback once
+       * the window is dead. The recursive MA types really are nonzero on such a
+       * window, so they keep the plain loop.
+       */
+      slowLookback = MaLookback(optInSlowPeriod, optInMAType);
+      windowed = (optInMAType == MAType.SMA || optInMAType == MAType.WMA || optInMAType == MAType.TRIMA || optInMAType == MAType.HMA) ? 1 : 0;
+      zeroRun = 0;
+      for( i = outBegIdx - slowLookback; i < outBegIdx; i += 1 ) {
+         zeroRun = (Math.Abs(inVolume[i]) <= 0.0) ? zeroRun + 1 : 0;
+      }
+      if( windowed != 0 ) {
+         for( i = 0; i < (int)outNBElement; i += 1 ) {
+            zeroRun = (Math.Abs(inVolume[outBegIdx + i]) <= 0.0) ? zeroRun + 1 : 0;
+            tempReal = outReal[i];
+            if( zeroRun > slowLookback ) {
+               zeroRun = slowLookback;
+               outReal[i] = 0.0;
+            } else if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+               outReal[i] = (tempBuffer[i + offset] - tempReal) / tempReal * 100.0;
+            } else {
+               outReal[i] = 0.0;
+            }
+         }
+      } else {
+         /* Calculate ((fast MA)-(slow MA))/(slow MA) in the output. */
+         for( i = 0; i < (int)outNBElement; i += 1 ) {
+            tempReal = outReal[i];
+            if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+               outReal[i] = (tempBuffer[i + offset] - tempReal) / tempReal * 100.0;
+            } else {
+               outReal[i] = 0.0;
+            }
          }
       }
       return RetCode.Success ;
@@ -211,6 +243,9 @@ public partial class Core
       int fastBeg = 0;
       int fastNb = 0;
       int offset = 0;
+      int slowLookback = 0;
+      int windowed = 0;
+      int zeroRun = 0;
       int i = 0;
       if( (startIdx < 0) || (startIdx > IndexMax) ) {
          return RetCode.OutOfRangeStartIndex ;
@@ -256,12 +291,33 @@ public partial class Core
       outNBElement = _xr1.Count;
       retCode = RetCode.Success;
       offset = fastNb - outNBElement;
-      for( i = 0; i < (int)outNBElement; i += 1 ) {
-         tempReal = outReal[i];
-         if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
-            outReal[i] = (tempBuffer[i + offset] - tempReal) / tempReal * 100.0;
-         } else {
-            outReal[i] = 0.0;
+      slowLookback = MaLookback(optInSlowPeriod, optInMAType);
+      windowed = (optInMAType == MAType.SMA || optInMAType == MAType.WMA || optInMAType == MAType.TRIMA || optInMAType == MAType.HMA) ? 1 : 0;
+      zeroRun = 0;
+      for( i = outBegIdx - slowLookback; i < outBegIdx; i += 1 ) {
+         zeroRun = (Math.Abs((double)inVolume[i]) <= 0.0) ? zeroRun + 1 : 0;
+      }
+      if( windowed != 0 ) {
+         for( i = 0; i < (int)outNBElement; i += 1 ) {
+            zeroRun = (Math.Abs((double)inVolume[outBegIdx + i]) <= 0.0) ? zeroRun + 1 : 0;
+            tempReal = outReal[i];
+            if( zeroRun > slowLookback ) {
+               zeroRun = slowLookback;
+               outReal[i] = 0.0;
+            } else if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+               outReal[i] = (tempBuffer[i + offset] - tempReal) / tempReal * 100.0;
+            } else {
+               outReal[i] = 0.0;
+            }
+         }
+      } else {
+         for( i = 0; i < (int)outNBElement; i += 1 ) {
+            tempReal = outReal[i];
+            if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+               outReal[i] = (tempBuffer[i + offset] - tempReal) / tempReal * 100.0;
+            } else {
+               outReal[i] = 0.0;
+            }
          }
       }
       return RetCode.Success ;
@@ -477,6 +533,9 @@ public partial class Core
       internal int optInSlowPeriod;
       internal MAType optInMAType;
       internal double cur_outReal;
+      internal int slowLookback;
+      internal int windowed;
+      internal int zeroRun;
       internal MaStream sub0 = null!;
       internal MaStream sub1 = null!;
       internal int outRangeBegIdx;
@@ -524,6 +583,9 @@ public partial class Core
          this.optInSlowPeriod = other.optInSlowPeriod;
          this.optInMAType = other.optInMAType;
          this.cur_outReal = other.cur_outReal;
+         this.slowLookback = other.slowLookback;
+         this.windowed = other.windowed;
+         this.zeroRun = other.zeroRun;
          this.sub0 = new MaStream(other.sub0);
          this.sub1 = new MaStream(other.sub1);
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -581,12 +643,29 @@ public partial class Core
          /* Pipeline the new bar through the sub-streams (batch tail order). */
          cur_tempBuffer = sp.sub0.Peek(inVolume);
          cur_outReal = sp.sub1.Peek(inVolume);
+         int slowLookback = sp.slowLookback;
+         int windowed = sp.windowed;
+         int zeroRun = sp.zeroRun;
          /* Combine map (batch tail, per bar). */
-         tempReal = cur_outReal;
-         if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
-            cur_outReal = (cur_tempBuffer - tempReal) / tempReal * 100.0;
+         if( windowed != 0 ) {
+            zeroRun = (Math.Abs(inVolume) <= 0.0) ? zeroRun + 1 : 0;
+            tempReal = cur_outReal;
+            if( zeroRun > slowLookback ) {
+               zeroRun = slowLookback;
+               cur_outReal = 0.0;
+            } else if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+               cur_outReal = (cur_tempBuffer - tempReal) / tempReal * 100.0;
+            } else {
+               cur_outReal = 0.0;
+            }
          } else {
-            cur_outReal = 0.0;
+            /* Calculate ((fast MA)-(slow MA))/(slow MA) in the output. */
+            tempReal = cur_outReal;
+            if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+               cur_outReal = (cur_tempBuffer - tempReal) / tempReal * 100.0;
+            } else {
+               cur_outReal = 0.0;
+            }
          }
          return cur_outReal;
       }
@@ -616,13 +695,31 @@ public partial class Core
       /* Pipeline the new bar through the sub-streams (batch tail order). */
       cur_tempBuffer = sp.sub0.Update(inVolume);
       cur_outReal = sp.sub1.Update(inVolume);
+      int slowLookback = sp.slowLookback;
+      int windowed = sp.windowed;
+      int zeroRun = sp.zeroRun;
       /* Combine map (batch tail, per bar). */
-      tempReal = cur_outReal;
-      if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
-         cur_outReal = (cur_tempBuffer - tempReal) / tempReal * 100.0;
+      if( windowed != 0 ) {
+         zeroRun = (Math.Abs(inVolume) <= 0.0) ? zeroRun + 1 : 0;
+         tempReal = cur_outReal;
+         if( zeroRun > slowLookback ) {
+            zeroRun = slowLookback;
+            cur_outReal = 0.0;
+         } else if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+            cur_outReal = (cur_tempBuffer - tempReal) / tempReal * 100.0;
+         } else {
+            cur_outReal = 0.0;
+         }
       } else {
-         cur_outReal = 0.0;
+         /* Calculate ((fast MA)-(slow MA))/(slow MA) in the output. */
+         tempReal = cur_outReal;
+         if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+            cur_outReal = (cur_tempBuffer - tempReal) / tempReal * 100.0;
+         } else {
+            cur_outReal = 0.0;
+         }
       }
+      sp.zeroRun = zeroRun;
       sp.cur_outReal = cur_outReal;
    }
 
@@ -637,6 +734,9 @@ public partial class Core
       int fastBeg = 0;
       int fastNb = 0;
       int offset = 0;
+      int slowLookback = 0;
+      int windowed = 0;
+      int zeroRun = 0;
       int i = 0;
       int historyLen = inVolume.Length;
       int endIdx = historyLen - 1;
@@ -713,13 +813,41 @@ public partial class Core
        * outReal[i], with a non-negative index. An empty slow MA skips the loop.
        */
       offset = fastNb - outNBElement;
-      /* Calculate ((fast MA)-(slow MA))/(slow MA) in the output. */
-      for( i = 0; i < (int)outNBElement; i += 1 ) {
-         tempReal = sc_outReal[i];
-         if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
-            sc_outReal[i] = (tempBuffer[i + offset] - tempReal) / tempReal * 100.0;
-         } else {
-            sc_outReal[i] = 0.0;
+      /* A windowed slow MA (SMA, WMA, TRIMA, HMA) over bars that are all exactly
+       * zero is exactly zero, but its running sums leave residue there that
+       * TA_IS_ZERO does not catch, and residue over residue is noise where 0 is
+       * documented. zeroRun counts the trailing zero bars, held at slowLookback once
+       * the window is dead. The recursive MA types really are nonzero on such a
+       * window, so they keep the plain loop.
+       */
+      slowLookback = MaLookback(optInSlowPeriod, optInMAType);
+      windowed = (optInMAType == MAType.SMA || optInMAType == MAType.WMA || optInMAType == MAType.TRIMA || optInMAType == MAType.HMA) ? 1 : 0;
+      zeroRun = 0;
+      for( i = outBegIdx - slowLookback; i < outBegIdx; i += 1 ) {
+         zeroRun = (Math.Abs(inVolume[i]) <= 0.0) ? zeroRun + 1 : 0;
+      }
+      if( windowed != 0 ) {
+         for( i = 0; i < (int)outNBElement; i += 1 ) {
+            zeroRun = (Math.Abs(inVolume[outBegIdx + i]) <= 0.0) ? zeroRun + 1 : 0;
+            tempReal = sc_outReal[i];
+            if( zeroRun > slowLookback ) {
+               zeroRun = slowLookback;
+               sc_outReal[i] = 0.0;
+            } else if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+               sc_outReal[i] = (tempBuffer[i + offset] - tempReal) / tempReal * 100.0;
+            } else {
+               sc_outReal[i] = 0.0;
+            }
+         }
+      } else {
+         /* Calculate ((fast MA)-(slow MA))/(slow MA) in the output. */
+         for( i = 0; i < (int)outNBElement; i += 1 ) {
+            tempReal = sc_outReal[i];
+            if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+               sc_outReal[i] = (tempBuffer[i + offset] - tempReal) / tempReal * 100.0;
+            } else {
+               sc_outReal[i] = 0.0;
+            }
          }
       }
       /* Capture the live producer state + sub handles. */
@@ -731,6 +859,9 @@ public partial class Core
       sp.optInMAType = optInMAType;
       sp.sub0 = sub0;
       sp.sub1 = sub1;
+      sp.slowLookback = slowLookback;
+      sp.windowed = windowed;
+      sp.zeroRun = zeroRun;
       sp.cur_outReal = sc_outReal[outNBElement - 1];
       return RetCode.Success;
    }

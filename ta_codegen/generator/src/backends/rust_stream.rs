@@ -4799,7 +4799,8 @@ fn composed_step_ctx(
             ctx.real_vars.insert(format!("cur_{name}"));
         }
     }
-    for (name, ty) in &cp.map_temps {
+    let state = cp.map_state.iter().map(|st| (&st.name, &st.ty));
+    for (name, ty) in cp.map_temps.iter().map(|(n, t)| (n, t)).chain(state) {
         match ty {
             VarType::Real => {
                 ctx.real_vars.insert(name.clone());
@@ -4847,7 +4848,13 @@ fn emit_composed_step(
     if !frame {
         emit_step_sig(o, func, split, true);
         let producer_temps = cp.producer.iter().flat_map(|m| &m.temps);
-        split.assert_unshadowed(func, producer_temps.chain(&cp.map_temps).map(|(n, _)| n));
+        split.assert_unshadowed(
+            func,
+            producer_temps
+                .chain(&cp.map_temps)
+                .map(|(n, _)| n)
+                .chain(cp.map_state.iter().map(|st| &st.name)),
+        );
     }
     let cur_scalars = composed_cur_scalars(cp, inputs, outputs);
     let ctx = composed_step_ctx(func, cp, typing, &cur_scalars);
@@ -4928,6 +4935,8 @@ fn emit_composed_step(
     let _ = writeln!(o, "\n{pad}// Pipeline the new bar through the sub-streams (batch tail order).");
     let params: std::collections::BTreeSet<String> =
         func.optional_inputs.iter().map(|p| p.name.clone()).collect();
+    // Loaded after the sub-calls, so nothing holds it across them.
+    let mut state_loaded = false;
     for step in &cp.steps {
         match step {
             streaming::UpdateStep::Sub { sub_idx } => {
@@ -4958,6 +4967,13 @@ fn emit_composed_step(
                 cur.insert(dst.clone(), alias);
             }
             streaming::UpdateStep::Map { tail_idx } => {
+                if !std::mem::replace(&mut state_loaded, true) {
+                    for st in &cp.map_state {
+                        let (rty, _) = field_type_and_default(typing, &st.name, &st.ty, false);
+                        let mutable = if st.carried { "mut " } else { "" };
+                        let _ = writeln!(o, "{pad}let {mutable}{0}: {rty} = sp.{0};", st.name);
+                    }
+                }
                 for out in streaming::map_output_writes(&cp.tail[*tail_idx], outputs) {
                     cur.entry(out.clone()).or_insert_with(|| format!("cur_{out}"));
                 }
@@ -4983,6 +4999,9 @@ fn emit_composed_step(
                 o,
                 "{pad}sp.lagRingPos_{sn} = (sp.lagRingPos_{sn} + 1) % sp.lagRingCap_{sn};"
             );
+        }
+        for st in cp.map_state.iter().filter(|st| st.carried) {
+            let _ = writeln!(o, "{pad}sp.{0} = {0};", st.name);
         }
     }
     for out in outputs {
@@ -5262,6 +5281,7 @@ fn emit_composed_open(
         extra.push(format!("lagRingCap_{sr}: lagCap_{sr}"));
         extra.push(format!("lagRing_{sr}"));
     }
+    extra.extend(cp.map_state.iter().map(|st| st.name.clone()));
     if let Some(model) = &cp.producer {
         emit_capture(
             o, func, model, &model.state, typing, split, registry, helpers, counter, &extra,
@@ -5455,6 +5475,7 @@ fn emit_composed(
         .collect();
     let models: Vec<&StreamModel> = cp.producer.iter().collect();
     let mut typing = build_typing_from(func, &combined, &models);
+    typing.ctx.matype_map = crate::backends::rust_lang::build_matype_map(enums);
     for out in &outputs {
         // `vec_vars` is about the scratch being a Vec and holds for both element
         // types; `real_array_vars` is about the ELEMENT, so an integer output's
@@ -5506,6 +5527,10 @@ fn emit_composed(
         fields.push((format!("lagRingPos_{sr}"), "usize".into(), String::new()));
         fields.push((format!("lagRingCap_{sr}"), "usize".into(), String::new()));
         fields.push((format!("lagRing_{sr}"), "Vec<f64>".into(), String::new()));
+    }
+    for st in &cp.map_state {
+        let (rty, _) = field_type_and_default(&typing, &st.name, &st.ty, false);
+        fields.push((st.name.clone(), rty, String::new()));
     }
     let models: Vec<&StreamModel> = cp.producer.iter().collect();
     let split = StateSplit::of(func, &fields, &models);

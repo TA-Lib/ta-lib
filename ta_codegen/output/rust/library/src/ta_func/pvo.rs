@@ -52,6 +52,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  071626 MF,CC  Initial version (#119).
+ *  092726 MF,CC  0 on a slow window of zero bars for the windowed MA types (#454).
  */
 
 // Import types from parent module
@@ -144,6 +145,9 @@ impl Core {
         let mut fastBeg: usize = 0_usize;
         let mut fastNb: usize = 0_usize;
         let mut offset: usize = 0_usize;
+        let mut slowLookback: usize = 0_usize;
+        let mut windowed: usize = 0_usize;
+        let mut zeroRun: usize = 0_usize;
         let mut i: usize = 0_usize;
         // Nothing to produce: the range ends before the lookback. Return before
         // touching anything.
@@ -185,17 +189,50 @@ impl Core {
         // many outputs), so tempBuffer[i+offset] is the fast MA at the same bar as
         // outReal[i], with a non-negative index. An empty slow MA skips the loop.
         offset = fastNb - (*outNBElement);
-        // Calculate ((fast MA)-(slow MA))/(slow MA) in the output.
-        // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
-        i = 0;
-        while i < ((((*outNBElement) as usize)) as usize) {
-            tempReal = outReal[i];
-            if !((tempReal).abs() < 1e-14) {
-                outReal[i] = (((tempBuffer[i + offset] - tempReal) / tempReal * 100.0) as f64);
-            } else {
-                outReal[i] = 0.0;
-            }
+        // A windowed slow MA (SMA, WMA, TRIMA, HMA) over bars that are all exactly
+        // zero is exactly zero, but its running sums leave residue there that
+        // TA_IS_ZERO does not catch, and residue over residue is noise where 0 is
+        // documented. zeroRun counts the trailing zero bars, held at slowLookback once
+        // the window is dead. The recursive MA types really are nonzero on such a
+        // window, so they keep the plain loop.
+        slowLookback = self.ma_lookback(optInSlowPeriod, optInMAType).unwrap_or(usize::MAX);
+        windowed = (if optInMAType == MAType::SMA || optInMAType == MAType::WMA || optInMAType == MAType::TRIMA || optInMAType == MAType::HMA { 1 } else { 0 });
+        zeroRun = 0;
+        // for( i = (*outBegIdx) - slowLookback; i < (*outBegIdx); i += 1 )
+        i = (*outBegIdx) - slowLookback;
+        while i < (*outBegIdx) {
+            zeroRun = (if (inVolume[i]).abs() <= 0.0 { zeroRun + 1 } else { 0 });
             i += 1;
+        }
+        if windowed != 0 {
+            // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
+            i = 0;
+            while i < ((((*outNBElement) as usize)) as usize) {
+                zeroRun = (if (inVolume[((*outBegIdx) + i) as usize]).abs() <= 0.0 { zeroRun + 1 } else { 0 });
+                tempReal = outReal[i];
+                if zeroRun > slowLookback {
+                    zeroRun = slowLookback;
+                    outReal[i] = 0.0;
+                } else if !((tempReal).abs() < 1e-14) {
+                    outReal[i] = (((tempBuffer[i + offset] - tempReal) / tempReal * 100.0) as f64);
+                } else {
+                    outReal[i] = 0.0;
+                }
+                i += 1;
+            }
+        } else {
+            // Calculate ((fast MA)-(slow MA))/(slow MA) in the output.
+            // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
+            i = 0;
+            while i < ((((*outNBElement) as usize)) as usize) {
+                tempReal = outReal[i];
+                if !((tempReal).abs() < 1e-14) {
+                    outReal[i] = (((tempBuffer[i + offset] - tempReal) / tempReal * 100.0) as f64);
+                } else {
+                    outReal[i] = 0.0;
+                }
+                i += 1;
+            }
         }
         return RetCode::Success;
     }
@@ -341,6 +378,9 @@ struct PvoStreamState {
     optInMAType: MAType,
     sub0: MaStream,
     sub1: MaStream,
+    slowLookback: usize,
+    windowed: usize,
+    zeroRun: usize,
     cur_outReal: f64,
 }
 
@@ -358,13 +398,31 @@ impl Core {
         // Pipeline the new bar through the sub-streams (batch tail order).
         cur_tempBuffer = sp.sub0.update(inVolume)?;
         cur_outReal = sp.sub1.update(inVolume)?;
+        let slowLookback: usize = sp.slowLookback;
+        let windowed: usize = sp.windowed;
+        let mut zeroRun: usize = sp.zeroRun;
         // Combine map (batch tail, per bar).
-        tempReal = cur_outReal;
-        if !((tempReal).abs() < 1e-14) {
-            cur_outReal = (cur_tempBuffer - tempReal) / tempReal * 100.0;
+        if windowed != 0 {
+            zeroRun = (if (inVolume).abs() <= 0.0 { zeroRun + 1 } else { 0 });
+            tempReal = cur_outReal;
+            if zeroRun > slowLookback {
+                zeroRun = slowLookback;
+                cur_outReal = 0.0;
+            } else if !((tempReal).abs() < 1e-14) {
+                cur_outReal = (cur_tempBuffer - tempReal) / tempReal * 100.0;
+            } else {
+                cur_outReal = 0.0;
+            }
         } else {
-            cur_outReal = 0.0;
+            // Calculate ((fast MA)-(slow MA))/(slow MA) in the output.
+            tempReal = cur_outReal;
+            if !((tempReal).abs() < 1e-14) {
+                cur_outReal = (cur_tempBuffer - tempReal) / tempReal * 100.0;
+            } else {
+                cur_outReal = 0.0;
+            }
         }
+        sp.zeroRun = zeroRun;
         (*outReal) = cur_outReal;
         Ok(())
     }
@@ -414,6 +472,9 @@ impl Core {
         let mut fastBeg: usize = 0_usize;
         let mut fastNb: usize = 0_usize;
         let mut offset: usize = 0_usize;
+        let mut slowLookback: usize = 0_usize;
+        let mut windowed: usize = 0_usize;
+        let mut zeroRun: usize = 0_usize;
         let mut i: usize = 0_usize;
         // Nothing to produce: the range ends before the lookback. Return before
         // touching anything.
@@ -455,17 +516,50 @@ impl Core {
         // many outputs), so tempBuffer[i+offset] is the fast MA at the same bar as
         // outReal[i], with a non-negative index. An empty slow MA skips the loop.
         offset = fastNb - (*outNBElement);
-        // Calculate ((fast MA)-(slow MA))/(slow MA) in the output.
-        // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
-        i = 0;
-        while i < ((((*outNBElement) as usize)) as usize) {
-            tempReal = sc_outReal[i];
-            if !((tempReal).abs() < 1e-14) {
-                sc_outReal[i] = (tempBuffer[i + offset] - tempReal) / tempReal * 100.0;
-            } else {
-                sc_outReal[i] = 0.0;
-            }
+        // A windowed slow MA (SMA, WMA, TRIMA, HMA) over bars that are all exactly
+        // zero is exactly zero, but its running sums leave residue there that
+        // TA_IS_ZERO does not catch, and residue over residue is noise where 0 is
+        // documented. zeroRun counts the trailing zero bars, held at slowLookback once
+        // the window is dead. The recursive MA types really are nonzero on such a
+        // window, so they keep the plain loop.
+        slowLookback = self.ma_lookback(optInSlowPeriod, optInMAType)?;
+        windowed = (if optInMAType == MAType::SMA || optInMAType == MAType::WMA || optInMAType == MAType::TRIMA || optInMAType == MAType::HMA { 1 } else { 0 });
+        zeroRun = 0;
+        // for( i = (*outBegIdx) - slowLookback; i < (*outBegIdx); i += 1 )
+        i = (*outBegIdx) - slowLookback;
+        while i < (*outBegIdx) {
+            zeroRun = (if (inVolume[i]).abs() <= 0.0 { zeroRun + 1 } else { 0 });
             i += 1;
+        }
+        if windowed != 0 {
+            // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
+            i = 0;
+            while i < ((((*outNBElement) as usize)) as usize) {
+                zeroRun = (if (inVolume[((*outBegIdx) + i) as usize]).abs() <= 0.0 { zeroRun + 1 } else { 0 });
+                tempReal = sc_outReal[i];
+                if zeroRun > slowLookback {
+                    zeroRun = slowLookback;
+                    sc_outReal[i] = 0.0;
+                } else if !((tempReal).abs() < 1e-14) {
+                    sc_outReal[i] = (tempBuffer[i + offset] - tempReal) / tempReal * 100.0;
+                } else {
+                    sc_outReal[i] = 0.0;
+                }
+                i += 1;
+            }
+        } else {
+            // Calculate ((fast MA)-(slow MA))/(slow MA) in the output.
+            // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
+            i = 0;
+            while i < ((((*outNBElement) as usize)) as usize) {
+                tempReal = sc_outReal[i];
+                if !((tempReal).abs() < 1e-14) {
+                    sc_outReal[i] = (tempBuffer[i + offset] - tempReal) / tempReal * 100.0;
+                } else {
+                    sc_outReal[i] = 0.0;
+                }
+                i += 1;
+            }
         }
 
         // Capture the live producer state + sub handles.
@@ -479,6 +573,9 @@ impl Core {
             optInMAType,
             sub0,
             sub1,
+            slowLookback,
+            windowed,
+            zeroRun,
         };
         state.cur_outReal = sc_outReal[*outNBElement - 1];
         if outStride != 1 && *outNBElement > 0 {
@@ -662,12 +759,29 @@ impl PvoStream {
             // Pipeline the new bar through the sub-streams (batch tail order).
             cur_tempBuffer = sp.sub0.peek(inVolume)?;
             cur_outReal = sp.sub1.peek(inVolume)?;
+            let slowLookback: usize = sp.slowLookback;
+            let windowed: usize = sp.windowed;
+            let mut zeroRun: usize = sp.zeroRun;
             // Combine map (batch tail, per bar).
-            tempReal = cur_outReal;
-            if !((tempReal).abs() < 1e-14) {
-                cur_outReal = (cur_tempBuffer - tempReal) / tempReal * 100.0;
+            if windowed != 0 {
+                zeroRun = (if (inVolume).abs() <= 0.0 { zeroRun + 1 } else { 0 });
+                tempReal = cur_outReal;
+                if zeroRun > slowLookback {
+                    zeroRun = slowLookback;
+                    cur_outReal = 0.0;
+                } else if !((tempReal).abs() < 1e-14) {
+                    cur_outReal = (cur_tempBuffer - tempReal) / tempReal * 100.0;
+                } else {
+                    cur_outReal = 0.0;
+                }
             } else {
-                cur_outReal = 0.0;
+                // Calculate ((fast MA)-(slow MA))/(slow MA) in the output.
+                tempReal = cur_outReal;
+                if !((tempReal).abs() < 1e-14) {
+                    cur_outReal = (cur_tempBuffer - tempReal) / tempReal * 100.0;
+                } else {
+                    cur_outReal = 0.0;
+                }
             }
             (*outReal) = cur_outReal;
         }

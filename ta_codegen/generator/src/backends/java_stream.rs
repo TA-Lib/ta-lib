@@ -1182,7 +1182,8 @@ fn stream_ctx<'a>(
         // The streaming tier keeps every output required, so no store is guarded.
         nullable_outputs: empty,
         nullable_shadow: false,
-        // Stream bodies dispatch MA-type structurally, never via `== TA_MAType_*`.
+        // A transition dispatches MA-type structurally. The Open region sets
+        // this, since the batch region it transcribes may compare `== TA_MAType_*`.
         matype_map: HashMap::new(),
     }
 }
@@ -2176,7 +2177,7 @@ fn emit_open_region(
         float_input_params: &empty,
         inline_counter: counter,
         fma: Some(stream_fma),
-        matype_map: HashMap::new(),
+        matype_map: build_matype_map(enums),
     };
 
     // VarDecl initializations (mirrors gen_func_inner).
@@ -4181,6 +4182,7 @@ fn emit_composed_step(
                 .chain(aliased.iter())
                 .map(|n| format!("cur_{n}"))
                 .chain(cp.map_temps.iter().map(|(n, _)| n.clone()))
+                .chain(cp.map_state.iter().map(|st| st.name.clone()))
                 .collect();
             o.push_str(&peek_frame_arm_named(
                 func, model, &names, fields, step_settings, stream_fma, enums, registry, helpers,
@@ -4206,6 +4208,8 @@ fn emit_composed_step(
     let verb = if frame { "peek" } else { "update" };
     let _ = writeln!(o, "{pad}/* Pipeline the new bar through the sub-streams (batch tail order). */");
     let params: BTreeSet<String> = func.optional_inputs.iter().map(|p| p.name.clone()).collect();
+    // Loaded after the sub-calls, so nothing holds it across them.
+    let mut state_loaded = false;
     for step in &cp.steps {
         match step {
             streaming::UpdateStep::Sub { sub_idx } => {
@@ -4251,6 +4255,12 @@ fn emit_composed_step(
                 cur.insert(dst.clone(), alias);
             }
             streaming::UpdateStep::Map { tail_idx } => {
+                if !std::mem::replace(&mut state_loaded, true) {
+                    for st in &cp.map_state {
+                        let (jty, _) = field_type_and_default(&st.ty);
+                        let _ = writeln!(o, "{pad}{jty} {0} = sp.{0};", st.name);
+                    }
+                }
                 for out in streaming::map_output_writes(&cp.tail[*tail_idx], outputs) {
                     cur.entry(out.clone()).or_insert_with(|| format!("cur_{out}"));
                 }
@@ -4272,6 +4282,9 @@ fn emit_composed_step(
                 o,
                 "{pad}sp.lagRingPos_{sn} = (sp.lagRingPos_{sn} + 1) % sp.lagRingCap_{sn};"
             );
+        }
+        for st in cp.map_state.iter().filter(|st| st.carried) {
+            let _ = writeln!(o, "{pad}sp.{0} = {0};", st.name);
         }
     }
     let target = if frame { "" } else { "sp." };
@@ -4553,6 +4566,9 @@ fn emit_composed_open(
         let _ = writeln!(extra, "      sp.lagRingCap_{sr} = lagCap_{sr};");
         let _ = writeln!(extra, "      sp.lagRing_{sr} = lagRing_{sr};");
     }
+    for st in &cp.map_state {
+        let _ = writeln!(extra, "      sp.{0} = {0};", st.name);
+    }
     if let Some(model) = &cp.producer {
         // The producer's own "output" is the intermediate series, so its
         // cur seeding is suppressed; the real outputs seed from sc_ below.
@@ -4618,6 +4634,10 @@ fn emit_composed(
         fields.push((format!("lagRingPos_{sr}"), "int".into(), "0".into()));
         fields.push((format!("lagRingCap_{sr}"), "int".into(), "1".into()));
         fields.push((format!("lagRing_{sr}"), "double[]".into(), "new double[1]".into()));
+    }
+    for st in &cp.map_state {
+        let (jty, default) = field_type_and_default(&st.ty);
+        fields.push((st.name.clone(), jty, default));
     }
     let mut extra_members = String::new();
     let mut copy_extra = String::new();

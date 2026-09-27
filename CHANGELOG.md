@@ -60,6 +60,10 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   due. Bars after a dead window move too, VWMA's and CMF's even on whole-number volume, by at
   most 1e-10 relative (CMF 3e-11 on its -1 to +1 scale) on a test corpus, more when volume
   resumes far below its earlier level.
+- (#454) PPO and PVO with `optInMAType` SMA, WMA, TRIMA or HMA return their documented 0 once
+  the slow window holds only zero bars after fractional values. They divided rounding residue
+  by rounding residue there, e.g. PVO -113.9 with TRIMA, up to 3.2e6 at large volume scales.
+  Every other value is unchanged.
 - `ta_func.h` is plain ASCII again. In 0.8.1 its comments had non-ASCII characters, so MSVC could warn (C4819) when reading it under a Chinese, Japanese or Korean code page.
 - CMake on Windows no longer stops at configure when the `Platform` environment variable (set by vcvarsall) is missing or holds another value.
 - MAVP stream `OpenAndFill` matches the batch when the history holds a NaN or infinite price.

@@ -10,6 +10,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  071626 MF,CC  Initial version (#119).
+ *  092726 MF,CC  0 on a slow window of zero bars for the windowed MA types (#454).
  */
 
    /**
@@ -65,6 +66,9 @@
       MInteger fastBeg = new MInteger();
       MInteger fastNb = new MInteger();
       int offset = 0;
+      int slowLookback = 0;
+      int windowed = 0;
+      int zeroRun = 0;
       int i = 0;
       if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
          return RetCode.OUT_OF_RANGE_START_INDEX ;
@@ -128,13 +132,41 @@
        * outReal[i], with a non-negative index. An empty slow MA skips the loop.
        */
       offset = fastNb.value - outNBElement.value;
-      /* Calculate ((fast MA)-(slow MA))/(slow MA) in the output. */
-      for( i = 0; i < (int)outNBElement.value; i += 1 ) {
-         tempReal = outReal[i];
-         if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
-            outReal[i] = (tempBuffer[i + offset] - tempReal) / tempReal * 100.0;
-         } else {
-            outReal[i] = 0.0;
+      /* A windowed slow MA (SMA, WMA, TRIMA, HMA) over bars that are all exactly
+       * zero is exactly zero, but its running sums leave residue there that
+       * TA_IS_ZERO does not catch, and residue over residue is noise where 0 is
+       * documented. zeroRun counts the trailing zero bars, held at slowLookback once
+       * the window is dead. The recursive MA types really are nonzero on such a
+       * window, so they keep the plain loop.
+       */
+      slowLookback = maLookback(optInSlowPeriod, optInMAType);
+      windowed = (optInMAType == MAType.SMA || optInMAType == MAType.WMA || optInMAType == MAType.TRIMA || optInMAType == MAType.HMA) ? 1 : 0;
+      zeroRun = 0;
+      for( i = outBegIdx.value - slowLookback; i < outBegIdx.value; i += 1 ) {
+         zeroRun = (Math.abs(inVolume[i]) <= 0.0) ? zeroRun + 1 : 0;
+      }
+      if( windowed != 0 ) {
+         for( i = 0; i < (int)outNBElement.value; i += 1 ) {
+            zeroRun = (Math.abs(inVolume[outBegIdx.value + i]) <= 0.0) ? zeroRun + 1 : 0;
+            tempReal = outReal[i];
+            if( zeroRun > slowLookback ) {
+               zeroRun = slowLookback;
+               outReal[i] = 0.0;
+            } else if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+               outReal[i] = (tempBuffer[i + offset] - tempReal) / tempReal * 100.0;
+            } else {
+               outReal[i] = 0.0;
+            }
+         }
+      } else {
+         /* Calculate ((fast MA)-(slow MA))/(slow MA) in the output. */
+         for( i = 0; i < (int)outNBElement.value; i += 1 ) {
+            tempReal = outReal[i];
+            if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+               outReal[i] = (tempBuffer[i + offset] - tempReal) / tempReal * 100.0;
+            } else {
+               outReal[i] = 0.0;
+            }
          }
       }
       return RetCode.SUCCESS ;
@@ -156,6 +188,9 @@
       MInteger fastBeg = new MInteger();
       MInteger fastNb = new MInteger();
       int offset = 0;
+      int slowLookback = 0;
+      int windowed = 0;
+      int zeroRun = 0;
       int i = 0;
       if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
          return RetCode.OUT_OF_RANGE_START_INDEX ;
@@ -196,12 +231,33 @@
       outNBElement.value = _xr1.count();
       retCode = RetCode.SUCCESS;
       offset = fastNb.value - outNBElement.value;
-      for( i = 0; i < (int)outNBElement.value; i += 1 ) {
-         tempReal = outReal[i];
-         if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
-            outReal[i] = (tempBuffer[i + offset] - tempReal) / tempReal * 100.0;
-         } else {
-            outReal[i] = 0.0;
+      slowLookback = maLookback(optInSlowPeriod, optInMAType);
+      windowed = (optInMAType == MAType.SMA || optInMAType == MAType.WMA || optInMAType == MAType.TRIMA || optInMAType == MAType.HMA) ? 1 : 0;
+      zeroRun = 0;
+      for( i = outBegIdx.value - slowLookback; i < outBegIdx.value; i += 1 ) {
+         zeroRun = (Math.abs((double)inVolume[i]) <= 0.0) ? zeroRun + 1 : 0;
+      }
+      if( windowed != 0 ) {
+         for( i = 0; i < (int)outNBElement.value; i += 1 ) {
+            zeroRun = (Math.abs((double)inVolume[outBegIdx.value + i]) <= 0.0) ? zeroRun + 1 : 0;
+            tempReal = outReal[i];
+            if( zeroRun > slowLookback ) {
+               zeroRun = slowLookback;
+               outReal[i] = 0.0;
+            } else if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+               outReal[i] = (tempBuffer[i + offset] - tempReal) / tempReal * 100.0;
+            } else {
+               outReal[i] = 0.0;
+            }
+         }
+      } else {
+         for( i = 0; i < (int)outNBElement.value; i += 1 ) {
+            tempReal = outReal[i];
+            if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+               outReal[i] = (tempBuffer[i + offset] - tempReal) / tempReal * 100.0;
+            } else {
+               outReal[i] = 0.0;
+            }
          }
       }
       return RetCode.SUCCESS ;
@@ -381,6 +437,9 @@
       private int optInSlowPeriod;
       private MAType optInMAType;
       private double cur_outReal;
+      private int slowLookback;
+      private int windowed;
+      private int zeroRun;
       private MaStream sub0;
       private MaStream sub1;
       private int outRangeBegIdx;
@@ -428,6 +487,9 @@
          this.optInSlowPeriod = other.optInSlowPeriod;
          this.optInMAType = other.optInMAType;
          this.cur_outReal = other.cur_outReal;
+         this.slowLookback = other.slowLookback;
+         this.windowed = other.windowed;
+         this.zeroRun = other.zeroRun;
          this.sub0 = new MaStream(other.sub0);
          this.sub1 = new MaStream(other.sub1);
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -480,12 +542,29 @@
          /* Pipeline the new bar through the sub-streams (batch tail order). */
          cur_tempBuffer = sp.sub0.peek(inVolume);
          cur_outReal = sp.sub1.peek(inVolume);
+         int slowLookback = sp.slowLookback;
+         int windowed = sp.windowed;
+         int zeroRun = sp.zeroRun;
          /* Combine map (batch tail, per bar). */
-         tempReal = cur_outReal;
-         if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
-            cur_outReal = (cur_tempBuffer - tempReal) / tempReal * 100.0;
+         if( windowed != 0 ) {
+            zeroRun = (Math.abs(inVolume) <= 0.0) ? zeroRun + 1 : 0;
+            tempReal = cur_outReal;
+            if( zeroRun > slowLookback ) {
+               zeroRun = slowLookback;
+               cur_outReal = 0.0;
+            } else if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+               cur_outReal = (cur_tempBuffer - tempReal) / tempReal * 100.0;
+            } else {
+               cur_outReal = 0.0;
+            }
          } else {
-            cur_outReal = 0.0;
+            /* Calculate ((fast MA)-(slow MA))/(slow MA) in the output. */
+            tempReal = cur_outReal;
+            if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+               cur_outReal = (cur_tempBuffer - tempReal) / tempReal * 100.0;
+            } else {
+               cur_outReal = 0.0;
+            }
          }
          return cur_outReal;
       }
@@ -524,13 +603,31 @@
       /* Pipeline the new bar through the sub-streams (batch tail order). */
       cur_tempBuffer = sp.sub0.update(inVolume);
       cur_outReal = sp.sub1.update(inVolume);
+      int slowLookback = sp.slowLookback;
+      int windowed = sp.windowed;
+      int zeroRun = sp.zeroRun;
       /* Combine map (batch tail, per bar). */
-      tempReal = cur_outReal;
-      if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
-         cur_outReal = (cur_tempBuffer - tempReal) / tempReal * 100.0;
+      if( windowed != 0 ) {
+         zeroRun = (Math.abs(inVolume) <= 0.0) ? zeroRun + 1 : 0;
+         tempReal = cur_outReal;
+         if( zeroRun > slowLookback ) {
+            zeroRun = slowLookback;
+            cur_outReal = 0.0;
+         } else if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+            cur_outReal = (cur_tempBuffer - tempReal) / tempReal * 100.0;
+         } else {
+            cur_outReal = 0.0;
+         }
       } else {
-         cur_outReal = 0.0;
+         /* Calculate ((fast MA)-(slow MA))/(slow MA) in the output. */
+         tempReal = cur_outReal;
+         if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+            cur_outReal = (cur_tempBuffer - tempReal) / tempReal * 100.0;
+         } else {
+            cur_outReal = 0.0;
+         }
       }
+      sp.zeroRun = zeroRun;
       sp.cur_outReal = cur_outReal;
    }
    private RetCode pvoOpenImpl( PvoStream sp, double inVolume[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
@@ -542,6 +639,9 @@
       MInteger fastBeg = new MInteger();
       MInteger fastNb = new MInteger();
       int offset = 0;
+      int slowLookback = 0;
+      int windowed = 0;
+      int zeroRun = 0;
       int i = 0;
       int historyLen = inVolume.length;
       int endIdx = historyLen - 1;
@@ -616,13 +716,41 @@
        * outReal[i], with a non-negative index. An empty slow MA skips the loop.
        */
       offset = fastNb.value - outNBElement.value;
-      /* Calculate ((fast MA)-(slow MA))/(slow MA) in the output. */
-      for( i = 0; i < (int)outNBElement.value; i += 1 ) {
-         tempReal = sc_outReal[i];
-         if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
-            sc_outReal[i] = (tempBuffer[i + offset] - tempReal) / tempReal * 100.0;
-         } else {
-            sc_outReal[i] = 0.0;
+      /* A windowed slow MA (SMA, WMA, TRIMA, HMA) over bars that are all exactly
+       * zero is exactly zero, but its running sums leave residue there that
+       * TA_IS_ZERO does not catch, and residue over residue is noise where 0 is
+       * documented. zeroRun counts the trailing zero bars, held at slowLookback once
+       * the window is dead. The recursive MA types really are nonzero on such a
+       * window, so they keep the plain loop.
+       */
+      slowLookback = maLookback(optInSlowPeriod, optInMAType);
+      windowed = (optInMAType == MAType.SMA || optInMAType == MAType.WMA || optInMAType == MAType.TRIMA || optInMAType == MAType.HMA) ? 1 : 0;
+      zeroRun = 0;
+      for( i = outBegIdx.value - slowLookback; i < outBegIdx.value; i += 1 ) {
+         zeroRun = (Math.abs(inVolume[i]) <= 0.0) ? zeroRun + 1 : 0;
+      }
+      if( windowed != 0 ) {
+         for( i = 0; i < (int)outNBElement.value; i += 1 ) {
+            zeroRun = (Math.abs(inVolume[outBegIdx.value + i]) <= 0.0) ? zeroRun + 1 : 0;
+            tempReal = sc_outReal[i];
+            if( zeroRun > slowLookback ) {
+               zeroRun = slowLookback;
+               sc_outReal[i] = 0.0;
+            } else if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+               sc_outReal[i] = (tempBuffer[i + offset] - tempReal) / tempReal * 100.0;
+            } else {
+               sc_outReal[i] = 0.0;
+            }
+         }
+      } else {
+         /* Calculate ((fast MA)-(slow MA))/(slow MA) in the output. */
+         for( i = 0; i < (int)outNBElement.value; i += 1 ) {
+            tempReal = sc_outReal[i];
+            if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+               sc_outReal[i] = (tempBuffer[i + offset] - tempReal) / tempReal * 100.0;
+            } else {
+               sc_outReal[i] = 0.0;
+            }
          }
       }
       /* Capture the live producer state + sub handles. */
@@ -634,6 +762,9 @@
       sp.optInMAType = optInMAType;
       sp.sub0 = sub0;
       sp.sub1 = sub1;
+      sp.slowLookback = slowLookback;
+      sp.windowed = windowed;
+      sp.zeroRun = zeroRun;
       sp.cur_outReal = sc_outReal[outNBElement.value - 1];
       return RetCode.SUCCESS;
    }

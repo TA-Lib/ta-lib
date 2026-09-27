@@ -1530,6 +1530,9 @@ fn emit_composed_frame_body(
     for (name, ty) in &cp.map_temps {
         let _ = writeln!(decls, "   {};", c_decl(ty, name));
     }
+    for st in &cp.map_state {
+        let _ = writeln!(decls, "   {};", c_decl(&st.ty, &st.name));
+    }
     let cur_scalars = composed_cur_scalars(cp, inputs, outputs);
     for name in &cur_scalars {
         // Typed by what the scalar STANDS FOR: an output's own element type when
@@ -1603,6 +1606,8 @@ fn emit_composed_frame_body(
     let _ = writeln!(o, "\n   /* Pipeline the new bar through the sub-streams (batch tail order). */");
     let params: std::collections::BTreeSet<String> =
         func.optional_inputs.iter().map(|p| p.name.clone()).collect();
+    // Loaded after the sub-calls, so nothing holds it across them.
+    let mut state_loaded = false;
     for step in &cp.steps {
         match step {
             streaming::UpdateStep::Sub { sub_idx } => {
@@ -1648,6 +1653,11 @@ fn emit_composed_frame_body(
                 cur.insert(dst.clone(), alias);
             }
             streaming::UpdateStep::Map { tail_idx } => {
+                if !std::mem::replace(&mut state_loaded, true) {
+                    for st in &cp.map_state {
+                        let _ = writeln!(o, "   {0} = sp->{0};", st.name);
+                    }
+                }
                 // A map may DEFINE outputs (ADXR's outReal from the lag ring):
                 // register them so the write becomes `cur_<out> = ...`.
                 for o in streaming::map_output_writes(&cp.tail[*tail_idx], outputs) {
@@ -1671,6 +1681,9 @@ fn emit_composed_frame_body(
                 o,
                 "   sp->lagRingPos_{s} = (sp->lagRingPos_{s} + 1) % sp->lagRingCap_{s};"
             );
+        }
+        for st in cp.map_state.iter().filter(|st| st.carried) {
+            let _ = writeln!(o, "   sp->{0} = {0};", st.name);
         }
     }
     for out in outputs {
@@ -1782,6 +1795,9 @@ fn composed_extra_fields(cp: &streaming::ComposedPlan) -> String {
         let _ = writeln!(extra, "   int lagRingPos_{s};");
         let _ = writeln!(extra, "   int lagRingCap_{s};");
         let _ = writeln!(extra, "   double *lagRing_{s};");
+    }
+    for st in &cp.map_state {
+        let _ = writeln!(extra, "   {};", c_decl(&st.ty, &st.name));
     }
     extra
 }
@@ -2167,6 +2183,9 @@ fn emit_composed_open_body(
         for (name, _) in &func.private_extra_params {
             let _ = writeln!(o, "      sp->{name} = {name};");
         }
+    }
+    for st in &cp.map_state {
+        let _ = writeln!(o, "      sp->{0} = {0};", st.name);
     }
     // Sub-output lag rings: allocate, then seed from the tail of the (still
     // live — its free was withheld) intermediate buffer. `dummyNBElement` here

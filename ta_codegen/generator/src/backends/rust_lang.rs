@@ -139,11 +139,11 @@ pub struct RustRenderCtx {
     pub result_error_returns: bool,
     /// Fully-qualified MAType constant (`TA_MAType_SMA`) → its Rust rendering
     /// (`matype::SMA`, the generated crate-internal value), derived by
-    /// [`build_matype_map`]. Populated for batch/lookback bodies — the only
-    /// place `optInMAType == TA_MAType_*` comparisons render; stream bodies
-    /// dispatch MA-type structurally (case labels / sub-opens) and leave this
-    /// empty. Empty ⇒ the constant renders literally (unresolved), which a
-    /// build catches immediately.
+    /// [`build_matype_map`]. Populated for batch/lookback bodies and composed
+    /// streams, whose Open transcribes a batch tail that may compare MA types;
+    /// the other stream bodies dispatch MA-type structurally (case labels /
+    /// sub-opens) and leave this empty. Empty ⇒ the constant renders literally
+    /// (unresolved), which a build catches immediately.
     pub matype_map: std::collections::HashMap<String, String>,
     /// CIRCBUF ids rendered with the C-style hybrid storage (stack array up to
     /// the PROLOG static size, heap `Vec` above it), mapped to that static

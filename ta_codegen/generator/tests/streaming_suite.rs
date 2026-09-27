@@ -1409,6 +1409,74 @@ fn ppo_derives_composed_plan_with_division_map() {
     assert_eq!(cp.subs[1].dsts, ["outReal"]);
     assert!(matches!(cp.steps[2], streaming::UpdateStep::Map { .. }));
     assert!(cp.map_temps.iter().any(|(n, _)| n == "tempReal"));
+    // The dead-window counter. `windowed` selects the map variant: decided at
+    // Open, it is state no map moves, as is `slowLookback`; only `zeroRun` moves
+    // bar to bar, so only it is stored back per step.
+    let state: Vec<(&str, bool)> =
+        cp.map_state.iter().map(|st| (st.name.as_str(), st.carried)).collect();
+    assert_eq!(state, [("slowLookback", false), ("windowed", false), ("zeroRun", true)]);
+}
+
+/// PPO's shipped source with `from` replaced by `to`, for the refusals below.
+fn ppo_variant(from: &str, to: &str) -> FuncDef {
+    let src = std::fs::read_to_string(input_dir().join("ppo").join("ppo.c")).expect("ppo.c");
+    assert!(src.contains(from), "the PPO source no longer contains {from:?}");
+    load_with_source("ppo", &src.replacen(from, to, 1))
+}
+
+fn assert_refused(f: &FuncDef, needle: &str) {
+    match streaming::analyze_composed(f, &lookup()) {
+        Err(StreamError::Unsupported(m)) if m.contains(needle) => {}
+        other => panic!("expected a refusal naming {needle:?}, got {other:?}"),
+    }
+}
+
+#[test]
+fn composed_map_reads_a_bar_input_only_at_the_begidx_of_what_it_writes() {
+    // At the plain cursor the input is `begIdx` bars behind the output; at the
+    // fast MA's begIdx it is the fast MA's bar, not the slow one's.
+    let read = "fabs(inReal[*outBegIdx + i])";
+    assert_refused(&ppo_variant(read, "fabs(inReal[i])"), "bar input `inReal`");
+    assert_refused(&ppo_variant(read, "fabs(inReal[fastBeg + i])"), "bar input `inReal`");
+}
+
+#[test]
+fn composed_map_state_is_set_only_before_the_maps() {
+    // Open would see a write that follows a map; a step never runs it.
+    let warm = "   for( i = *outBegIdx - slowLookback; i < *outBegIdx; i++ )\n      \
+                zeroRun = fabs(inReal[i]) <= 0.0 ? zeroRun + 1 : 0;\n";
+    let src = std::fs::read_to_string(input_dir().join("ppo").join("ppo.c")).expect("ppo.c");
+    assert!(src.contains(warm), "the PPO warm-up loop moved");
+    let tail = "   free( tempBuffer );\n\n   return";
+    let moved = src.replacen(warm, "", 1).replacen(tail, &format!("{warm}{tail}"), 1);
+    assert_refused(&load_with_source("ppo", &moved), "after a map has run");
+    assert_refused(
+        &ppo_variant(tail, &format!("   zeroRun = 0;\n{tail}")),
+        "after a map has run",
+    );
+}
+
+#[test]
+fn composed_map_variant_selector_reads_only_what_the_handle_fixes() {
+    let sel = "if( windowed != 0 )";
+    // A value a map moves would select per bar in a step, once in batch.
+    assert_refused(&ppo_variant(sel, "if( zeroRun != 0 )"), "which a map moves");
+    // A signature name is not a handle constant.
+    assert_refused(&ppo_variant(sel, "if( endIdx != 0 )"), "not param-pure");
+}
+
+#[test]
+fn composed_map_state_moves_bar_to_bar_in_one_map_only() {
+    // Batch runs the first map over every bar before the second; a step runs
+    // both on one bar, so the second would see a different count.
+    assert_refused(
+        &ppo_variant(
+            "   free( tempBuffer );\n\n   return",
+            "   for( i=0; i < (int)*outNBElement; i++ )\n   {\n      zeroRun = zeroRun + 1;\n      \
+             outReal[i] = outReal[i] + 0.0 * zeroRun;\n   }\n   free( tempBuffer );\n\n   return",
+        ),
+        "more than one map",
+    );
 }
 
 #[test]

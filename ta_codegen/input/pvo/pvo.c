@@ -10,6 +10,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  071626 MF,CC  Initial version (#119).
+ *  092726 MF,CC  0 on a slow window of zero bars for the windowed MA types (#454).
  */
 
 int pvo_lookback(int optInFastPeriod, int optInSlowPeriod, TA_MAType optInMAType)
@@ -32,6 +33,9 @@ TA_RetCode pvo(int startIdx, int endIdx,
    int tempInteger;
    int fastBeg, fastNb;
    int offset;
+   int slowLookback;
+   int windowed;
+   int zeroRun;
    int i;
 
    /* Nothing to produce: the range ends before the lookback. Return before
@@ -105,14 +109,48 @@ TA_RetCode pvo(int startIdx, int endIdx,
     */
    offset = fastNb - *outNBElement;
 
-   /* Calculate ((fast MA)-(slow MA))/(slow MA) in the output. */
-   for( i=0; i < (int)*outNBElement; i++ )
+   /* A windowed slow MA (SMA, WMA, TRIMA, HMA) over bars that are all exactly
+    * zero is exactly zero, but its running sums leave residue there that
+    * TA_IS_ZERO does not catch, and residue over residue is noise where 0 is
+    * documented. zeroRun counts the trailing zero bars, held at slowLookback once
+    * the window is dead. The recursive MA types really are nonzero on such a
+    * window, so they keep the plain loop.
+    */
+   slowLookback = ma_lookback( optInSlowPeriod, optInMAType );
+   windowed = ( optInMAType == TA_MAType_SMA || optInMAType == TA_MAType_WMA ||
+      optInMAType == TA_MAType_TRIMA || optInMAType == TA_MAType_HMA ) ? 1 : 0;
+   zeroRun = 0;
+   for( i = *outBegIdx - slowLookback; i < *outBegIdx; i++ )
+      zeroRun = fabs(inVolume[i]) <= 0.0 ? zeroRun + 1 : 0;
+
+   if( windowed != 0 )
    {
-      tempReal = outReal[i];
-      if( !TA_IS_ZERO(tempReal) )
-         outReal[i] = ((tempBuffer[i+offset]-tempReal)/tempReal)*100.0;
-      else
-         outReal[i] = 0.0;
+      for( i=0; i < (int)*outNBElement; i++ )
+      {
+         zeroRun = fabs(inVolume[*outBegIdx + i]) <= 0.0 ? zeroRun + 1 : 0;
+         tempReal = outReal[i];
+         if( zeroRun > slowLookback )
+         {
+            zeroRun = slowLookback;
+            outReal[i] = 0.0;
+         }
+         else if( !TA_IS_ZERO(tempReal) )
+            outReal[i] = ((tempBuffer[i+offset]-tempReal)/tempReal)*100.0;
+         else
+            outReal[i] = 0.0;
+      }
+   }
+   else
+   {
+      /* Calculate ((fast MA)-(slow MA))/(slow MA) in the output. */
+      for( i=0; i < (int)*outNBElement; i++ )
+      {
+         tempReal = outReal[i];
+         if( !TA_IS_ZERO(tempReal) )
+            outReal[i] = ((tempBuffer[i+offset]-tempReal)/tempReal)*100.0;
+         else
+            outReal[i] = 0.0;
+      }
    }
 
    free( tempBuffer );

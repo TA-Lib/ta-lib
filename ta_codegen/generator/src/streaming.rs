@@ -472,6 +472,15 @@ pub enum UpdateStep {
     Map { tail_idx: usize },
 }
 
+/// One scalar of [`ComposedPlan::map_state`].
+#[derive(Debug, Clone)]
+pub struct MapState {
+    pub name: String,
+    pub ty: VarType,
+    /// A map assigns it, so the value moves bar to bar.
+    pub carried: bool,
+}
+
 /// A non-returning free of an intermediate series in the tail: the
 /// series' liveness boundary AND the statement inserted failure returns
 /// replay (frees inside returning guards never affect fall-through
@@ -525,6 +534,10 @@ pub struct ComposedPlan<'a> {
     pub series_frees: Vec<SeriesFree>,
     /// Function-local temps referenced by Map steps (step-local decls).
     pub map_temps: Vec<(String, VarType)>,
+    /// Scalars a map reads that the tail sets outside the maps. The handle
+    /// holds each one, Open captures it after the batch tail, and a step loads
+    /// it into a local; only a commit stores a `carried` one back.
+    pub map_state: Vec<MapState>,
     /// Sub-output self-lag rings a combine map reads (ADXR's ADX lag). Empty
     /// for the same-bar-only combines (APO/PPO/STDDEV).
     pub sub_lag_rings: Vec<SubLagRing>,
@@ -2327,8 +2340,17 @@ pub fn analyze_composed<'a>(
     let mut series_frees: Vec<SeriesFree> = Vec::new();
     let mut freed: BTreeSet<String> = BTreeSet::new();
     let mut map_temp_names: BTreeSet<String> = BTreeSet::new();
+    // Scalars the tail sets outside any map: a map reading one reads the value
+    // the batch left there, so the stream carries it in the handle.
+    let mut tail_scalars: BTreeSet<String> = BTreeSet::new();
+    // Set after a map has run: Open would see the write and a step never would.
+    let mut late_scalars: BTreeSet<String> = BTreeSet::new();
     let mut sub_lag_rings: Vec<SubLagRing> = Vec::new();
     let mut defined: BTreeSet<String> = intermediates.iter().cloned().collect();
+    let mut decls: BTreeMap<String, VarType> = BTreeMap::new();
+    collect_var_decls(body, &mut decls);
+    // Tail scalars a variant selector reads: map state no map may move.
+    let mut selector_state: BTreeSet<String> = BTreeSet::new();
     let mut facts = SameBarFacts::default();
     let aliased = pointer_copied(body);
     let trusted = |s: &str| !aliased.contains(s);
@@ -2420,6 +2442,8 @@ pub fn analyze_composed<'a>(
                         }
                     });
                 let (mut written, _) = fallthrough_writes(std::slice::from_ref(st));
+                let reads_bar_inputs = srcs.iter().all(|src| direct_inputs.contains(src));
+                let beg = beg_recv.clone().filter(|_| reads_bar_inputs);
                 let nb = match (beg_recv, nb_recv) {
                     (Some(b), Some(n)) if b != n => {
                         written.extend([b, n.clone()]);
@@ -2441,6 +2465,9 @@ pub fn analyze_composed<'a>(
                         continue;
                     };
                     facts.nbelem.insert(d.clone(), nb.clone());
+                    if let Some(b) = &beg {
+                        facts.begs.insert(d.clone(), b.clone());
+                    }
                     if !e_arg_stale {
                         facts.endidx.insert(d.clone(), args[1].clone());
                     }
@@ -2499,12 +2526,20 @@ pub fn analyze_composed<'a>(
             }
             // Per-bar combine map over materialized series (STDDEV's sqrt
             // variants), possibly wrapped in a param-selected If.
+            Statement::ForC { .. } if is_map_prelude_loop(st, lookup) => {
+                facts.forget_writes(st);
+                collect_scalar_writes(st, &mut tail_scalars);
+                if steps.iter().any(|s| matches!(s, UpdateStep::Map { .. })) {
+                    collect_scalar_writes(st, &mut late_scalars);
+                }
+            }
             Statement::ForC { .. } => {
                 check_map_step(
                     st,
                     &defined,
                     &outputs,
                     &params,
+                    &direct_inputs,
                     lookup,
                     &mut map_temp_names,
                     &facts,
@@ -2522,13 +2557,15 @@ pub fn analyze_composed<'a>(
                 else_body,
                 ..
             } if is_map_variant_if(then_body, else_body) => {
-                let mut names = BTreeSet::new();
-                expr_var_names(condition, &mut names);
-                if !names.iter().all(|nm| params.contains(nm)) {
+                let Some(state) =
+                    variant_condition_state(condition, func, &params, &decls, &tail_scalars)
+                else {
                     return Err(StreamError::Unsupported(
                         "composed map variant condition is not param-pure".into(),
                     ));
-                }
+                };
+                map_temp_names.extend(state.iter().cloned());
+                selector_state.extend(state);
                 for branch in [then_body, else_body] {
                     for bst in branch.iter().filter(|x| !matches!(x, Statement::Comment(_))) {
                         check_map_step(
@@ -2536,6 +2573,7 @@ pub fn analyze_composed<'a>(
                             &defined,
                             &outputs,
                             &params,
+                            &direct_inputs,
                             lookup,
                             &mut map_temp_names,
                             &facts,
@@ -2580,6 +2618,10 @@ pub fn analyze_composed<'a>(
                 ..
             } if !defined.contains(v) && !outputs.contains(v) => {
                 facts.forget_writes(st);
+                tail_scalars.insert(v.clone());
+                if steps.iter().any(|s| matches!(s, UpdateStep::Map { .. })) {
+                    late_scalars.insert(v.clone());
+                }
                 let known: Vec<RecvVar> = facts.nbelem.values().cloned().collect();
                 if let Some(prov) = nb_difference(value, &known) {
                     facts.diffs.insert(v.clone(), prov);
@@ -2632,17 +2674,56 @@ pub fn analyze_composed<'a>(
         }
     }
     // Map temps: function-local scalars the maps reference; resolve types
-    // from the body's declarations.
-    let mut decls: BTreeMap<String, VarType> = BTreeMap::new();
-    collect_var_decls(body, &mut decls);
+    // from the body's declarations. One the tail also sets outside the maps is
+    // map state instead.
     let mut map_temps: Vec<(String, VarType)> = Vec::new();
+    let mut map_state: Vec<MapState> = Vec::new();
+    let mut map_writes: BTreeSet<String> = BTreeSet::new();
+    let mut map_uses: BTreeMap<String, usize> = BTreeMap::new();
+    for step in &steps {
+        if let UpdateStep::Map { tail_idx } = step {
+            collect_scalar_writes(&tail[*tail_idx], &mut map_writes);
+            let mut names = BTreeSet::new();
+            stmt_var_names_deep(&tail[*tail_idx], &mut names);
+            for n in names {
+                *map_uses.entry(n).or_default() += 1;
+            }
+        }
+    }
     for name in &map_temp_names {
         let Some(ty) = decls.get(name) else {
             return Err(StreamError::Unsupported(format!(
                 "composed map references `{name}` with no visible declaration"
             )));
         };
-        map_temps.push((name.clone(), ty.clone()));
+        if tail_scalars.contains(name) {
+            if late_scalars.contains(name) {
+                return Err(StreamError::Unsupported(format!(
+                    "composed tail sets map state `{name}` after a map has run: Open would \
+                     see the write and a step never would"
+                )));
+            }
+            if selector_state.contains(name) && map_writes.contains(name) {
+                return Err(StreamError::Unsupported(format!(
+                    "composed map variant condition reads `{name}`, which a map moves: batch \
+                     selects the variant once, a step on every bar"
+                )));
+            }
+            // Batch runs each map over every bar before the next; a step runs
+            // them all on one bar. Only one map may move a value between bars.
+            if map_writes.contains(name) && map_uses.get(name).copied().unwrap_or(0) > 1 {
+                return Err(StreamError::Unsupported(format!(
+                    "composed map state `{name}` moves bar to bar in more than one map"
+                )));
+            }
+            map_state.push(MapState {
+                name: name.clone(),
+                ty: ty.clone(),
+                carried: map_writes.contains(name),
+            });
+        } else {
+            map_temps.push((name.clone(), ty.clone()));
+        }
     }
     Ok(ComposedPlan {
         func,
@@ -2655,6 +2736,7 @@ pub fn analyze_composed<'a>(
         region: region_open,
         series_frees,
         map_temps,
+        map_state,
         sub_lag_rings,
     })
 }
@@ -2727,6 +2809,75 @@ fn is_map_variant_if(then_body: &[Statement], else_body: &[Statement]) -> bool {
     only_maps(then_body) && (else_body.is_empty() || only_maps(else_body))
 }
 
+/// A tail loop that writes no array and calls no indicator (PVO's zero-run
+/// warm-up over the bars before the first output): it only sets scalars, so
+/// Open runs it and the step never does. A map reading what it set reads map
+/// state.
+fn is_map_prelude_loop(st: &Statement, lookup: &dyn CalleeLookup) -> bool {
+    if !matches!(st, Statement::ForC { .. }) {
+        return false;
+    }
+    let mut writes_array = false;
+    walk_assign_targets(st, &mut |t| {
+        if matches!(t, Expr::ArrayAccess(..) | Expr::PointerDeref(_)) {
+            writes_array = true;
+        }
+    });
+    !writes_array && find_indicator_calls(std::slice::from_ref(st), lookup).is_empty()
+}
+
+fn stmt_var_names_deep(st: &Statement, out: &mut BTreeSet<String>) {
+    walk_stmt_exprs_deep(st, &mut |e| {
+        if let Expr::Var(v) = e {
+            out.insert(v.clone());
+        }
+    });
+}
+
+/// The tail scalars a map variant selector reads, or None when the selector
+/// is not fixed for the life of a handle. It may read parameters, named
+/// constants (`TA_MAType_SMA`), and scalars the tail set before the maps,
+/// which the handle then carries as map state (a decision Open takes once).
+/// Never a signature name, a series or a call.
+fn variant_condition_state(
+    cond: &Expr,
+    func: &FuncDef,
+    params: &BTreeSet<String>,
+    decls: &BTreeMap<String, VarType>,
+    tail_scalars: &BTreeSet<String>,
+) -> Option<BTreeSet<String>> {
+    let signature: BTreeSet<String> = input_array_names(func)
+        .into_iter()
+        .chain(func.outputs.iter().map(|o| o.name.clone()))
+        .chain(func.private_extra_params.iter().map(|(n, _)| n.clone()))
+        .chain(
+            ["startIdx", "endIdx", "outBegIdx", "outNBElement"]
+                .into_iter()
+                .map(String::from),
+        )
+        .collect();
+    let mut ok = true;
+    let mut state = BTreeSet::new();
+    walk_expr(cond, &mut |x| match x {
+        Expr::Var(v) if params.contains(v) => {}
+        Expr::Var(v) if tail_scalars.contains(v) => {
+            state.insert(v.clone());
+        }
+        Expr::Var(v) if decls.contains_key(v) || signature.contains(v) => ok = false,
+        Expr::ArrayAccess(..) | Expr::PointerDeref(_) | Expr::FuncCall(..) => ok = false,
+        _ => {}
+    });
+    ok.then_some(state)
+}
+
+fn collect_scalar_writes(st: &Statement, out: &mut BTreeSet<String>) {
+    walk_assign_targets(st, &mut |t| {
+        if let Expr::Var(v) = t {
+            out.insert(v.clone());
+        }
+    });
+}
+
 /// An out-meta receiver — where a sub-call writes its `outBegIdx` or
 /// `outNBElement`. Two spellings occur and the read form is part of the
 /// identity: `&fastNb` (an int local, read back as `fastNb`) versus the
@@ -2783,6 +2934,9 @@ fn last_index_of(count: Expr) -> Expr {
 struct SameBarFacts {
     /// Each series' element-count receiver.
     nbelem: BTreeMap<String, RecvVar>,
+    /// Each series' begIdx receiver, recorded only when that begIdx is an
+    /// absolute bar: the sub-call read the caller's own bar inputs.
+    begs: BTreeMap<String, RecvVar>,
     /// Each series' producing endIdx argument.
     endidx: BTreeMap<String, Expr>,
     /// Series whose last element is the `endIdx` bar, keyed to the expression
@@ -2795,12 +2949,14 @@ struct SameBarFacts {
 impl SameBarFacts {
     fn forget_series(&mut self, s: &str) {
         self.nbelem.remove(s);
+        self.begs.remove(s);
         self.endidx.remove(s);
         self.end_last.remove(s);
     }
 
     fn forget_scalar(&mut self, w: &RecvVar) {
         self.nbelem.retain(|_, r| !clobbers(w, r));
+        self.begs.retain(|_, r| !clobbers(w, r));
         self.diffs.retain(|k, (a, b)| {
             !clobbers(w, a) && !clobbers(w, b) && !matches!(w, RecvVar::Local(v) if v == k)
         });
@@ -3231,12 +3387,13 @@ fn walk_stmt_exprs_deep(s: &Statement, f: &mut dyn FnMut(&Expr)) {
 /// later drops the shell and turns EVERY series access into a current scalar
 /// (it is index-blind), so the soundness that the shifted read really is
 /// same-bar has to be proven HERE; everything checked makes that faithful.
-#[allow(clippy::too_many_lines)]
+#[allow(clippy::too_many_lines, clippy::too_many_arguments)]
 fn check_map_step(
     st: &Statement,
     defined: &BTreeSet<String>,
     outputs: &[String],
     params: &BTreeSet<String>,
+    bar_inputs: &BTreeSet<String>,
     lookup: &dyn CalleeLookup,
     temps: &mut BTreeSet<String>,
     facts: &SameBarFacts,
@@ -3365,6 +3522,21 @@ fn check_map_step(
                             err = Some(StreamError::Unsupported(format!(
                                 "composed map reads lag-ring series `{name}` at an offset other \
                                  than the current bar or its fixed lag"
+                            )));
+                        }
+                    } else if bar_inputs.contains(name) {
+                        // The begIdx is an absolute bar, so `beg + cursor` is
+                        // the bar the map is producing: the update's input.
+                        let same_bar = primary_out
+                            .and_then(|po| facts.begs.get(po))
+                            .is_some_and(|beg| {
+                                cursor_plus_expr(idx, &cursors)
+                                    .is_some_and(|off| recv_read(&off).as_ref() == Some(beg))
+                            });
+                        if !same_bar {
+                            err = Some(StreamError::Unsupported(format!(
+                                "composed map reads bar input `{name}` other than at the begIdx \
+                                 of the series it writes plus the cursor"
                             )));
                         }
                     } else {

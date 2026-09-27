@@ -5359,6 +5359,9 @@ static int sv_steq_TA_PPO( const struct TA_PPO_Stream *a, const struct TA_PPO_St
    if( a->sub0 && sv_steq_TA_MA( a->sub0, b->sub0, w, z ) ) return 1;
    if( (a->sub1 == NULL) != (b->sub1 == NULL) ) { *w = "sub1"; return 1; }
    if( a->sub1 && sv_steq_TA_MA( a->sub1, b->sub1, w, z ) ) return 1;
+   if( a->slowLookback != b->slowLookback ) { *w = "slowLookback"; return 1; }
+   if( a->windowed != b->windowed ) { *w = "windowed"; return 1; }
+   if( a->zeroRun != b->zeroRun ) { *w = "zeroRun"; return 1; }
    return 0;
 }
 
@@ -5389,6 +5392,9 @@ static int sv_steq_TA_PVO( const struct TA_PVO_Stream *a, const struct TA_PVO_St
    if( a->sub0 && sv_steq_TA_MA( a->sub0, b->sub0, w, z ) ) return 1;
    if( (a->sub1 == NULL) != (b->sub1 == NULL) ) { *w = "sub1"; return 1; }
    if( a->sub1 && sv_steq_TA_MA( a->sub1, b->sub1, w, z ) ) return 1;
+   if( a->slowLookback != b->slowLookback ) { *w = "slowLookback"; return 1; }
+   if( a->windowed != b->windowed ) { *w = "windowed"; return 1; }
+   if( a->zeroRun != b->zeroRun ) { *w = "zeroRun"; return 1; }
    return 0;
 }
 
