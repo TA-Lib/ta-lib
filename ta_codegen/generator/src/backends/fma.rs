@@ -33,12 +33,12 @@
 /// Deliberately not accompanied by a count: a number written next to a list
 /// that grows is a comment that goes stale on the next indicator.
 pub const FUSING_INVENTORY: &[&str] = &[
-    "adosc", "atr", "bbands", "bbw", "cdlabandonedbaby", "cdlmorningdojistar",
-    "cdlmorningstar", "cdlpiercing", "cdlthrusting", "cvi", "dema", "efi",
-    "ema", "eri", "fosc", "ht_dcperiod", "ht_dcphase", "ht_phasor", "ht_sine",
+    "adosc", "apo", "atr", "bbands", "bbw", "cdlabandonedbaby",
+    "cdlmorningdojistar", "cdlmorningstar", "cdlpiercing", "cdlthrusting", "cvi",
+    "dema", "efi", "ema", "eri", "fosc", "ht_dcperiod", "ht_dcphase", "ht_phasor", "ht_sine",
     "ht_trendline", "ht_trendmode", "kama", "kurtosis", "linearreg", "macd",
-    "macdfix", "mama", "massi", "natr", "percentb", "rma", "rvi", "sar",
-    "sarext", "smi", "supertrend",
+    "macdfix", "mama", "massi", "natr", "percentb", "ppo", "pvo", "rma", "rvi",
+    "sar", "sarext", "smi", "supertrend",
     "t3", "tema", "trix", "tsf", "tsi", "wclprice", "zlema",
 ];
 

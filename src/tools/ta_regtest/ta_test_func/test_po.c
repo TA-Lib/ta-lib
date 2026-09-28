@@ -114,7 +114,13 @@ static ErrorNumber test_default_is_ema( const TA_History *history,
                                         int doPercentage );
 
 static ErrorNumber test_dead_after_fractional( int pvo );
-static ErrorNumber test_sma_fusion( void );
+static ErrorNumber test_ma_fusion( TA_MAType maType, int unstable, int expectCmp );
+
+/* Comparisons test_ma_fusion makes per case; a leg that compared nothing prints nothing. */
+#define PO_FUSE_SMA_CMP  96240
+#define PO_FUSE_EMA_CMP0 96240
+#define PO_FUSE_EMA_CMP7 95664
+static ErrorNumber test_ma_fusion_body( TA_MAType maType, int expectCmp );
 
 /**** Local variables definitions.     ****/
 static TA_Test tableTest[] =
@@ -242,10 +248,16 @@ ErrorNumber test_func_po( TA_History *history )
    if( retValue != 0 )
       return retValue;
 
-   /* #459: APO, PPO and PVO compute their two SMAs in one pass. This proves
-    * that path bit-identical to the two-TA_MA path it replaced.
+   /* #459: APO, PPO and PVO compute their two SMAs, or their two EMAs, in one
+    * pass. This proves each path bit-identical to the two-TA_MA path.
     */
-   retValue = test_sma_fusion();
+   retValue = test_ma_fusion( TA_MAType_SMA, 0, PO_FUSE_SMA_CMP );
+   if( retValue != 0 )
+      return retValue;
+   retValue = test_ma_fusion( TA_MAType_EMA, 0, PO_FUSE_EMA_CMP0 );
+   if( retValue != 0 )
+      return retValue;
+   retValue = test_ma_fusion( TA_MAType_EMA, 7, PO_FUSE_EMA_CMP7 );
    if( retValue != 0 )
       return retValue;
 
@@ -852,34 +864,46 @@ static ErrorNumber test_dead_after_fractional( int pvo )
 #undef DW_FAST
 #undef DW_SLOW
 
-/* #459: the SMA fast path of APO, PPO and PVO computes the fast and the slow
- * moving average in ONE pass over the input, where the general MA path calls
- * TA_MA twice and allocates the fast MA in full. This leg is that path's
- * oracle: the same output assembled from two TA_SMA calls and the same
- * dead-window rule the general path applies (#454), compared BIT FOR BIT.
+/* #459: the SMA and EMA fast paths of APO, PPO and PVO compute the fast and
+ * the slow moving average in ONE pass over the input, where the general MA path
+ * calls TA_MA twice and allocates the fast MA in full. This leg is their
+ * oracle: the same output assembled from two TA_MA calls and the same
+ * dead-window rule the general path applies to SMA (#454), compared BIT FOR BIT.
+ * EMA runs at a zero and a nonzero unstable period, which move its seed bars.
  *
- * Exact equality is the point. Each running sum is path-dependent, so a fused
- * sum that reached its first output bar by a shorter route than TA_SMA takes
- * still agrees to about fifteen digits; the tableTest entries above, which
+ * Exact equality is the point. Each running sum and each EMA seed is
+ * path-dependent, so a fused MA that reached its first output bar by a shorter
+ * route still agrees to about fifteen digits; the tableTest entries above, which
  * match to five, would not notice. The cases sweep the swap (fast > slow), the
  * equal-period degenerate, startIdx below / at / above each lookback, and a run
- * of zeros so PPO and PVO reach both their TA_IS_ZERO arm and their dead window.
+ * of zeros so PPO and PVO reach their dead window for SMA, and a startIdx inside
+ * that run so EMA is seeded on zeros and reaches their TA_IS_ZERO arm. SMA never
+ * reaches TA_IS_ZERO here: an all-zero window is dead first.
  */
 #define PO_FUSE_N   600
-#define PO_FUSE_CMP 85200
 
-static ErrorNumber test_sma_fusion( void )
+static ErrorNumber test_ma_fusion( TA_MAType maType, int unstable, int expectCmp )
+{
+   ErrorNumber retValue;
+
+   TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, unstable );
+   retValue = test_ma_fusion_body( maType, expectCmp );
+   TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, 0 );
+   return retValue;
+}
+
+static ErrorNumber test_ma_fusion_body( TA_MAType maType, int expectCmp )
 {
    static const struct { int fast, slow; } pairs[] = {
       { 2, 3 }, { 3, 2 }, { 12, 26 }, { 26, 12 }, { 5, 5 }, { 2, 100 }, { 99, 100 }, { 2, 2 }
    };
-   static const int starts[] = { 0, 1, 25, 26, 99, 100, 300, PO_FUSE_N-1 };
+   static const int starts[] = { 0, 1, 25, 26, 99, 100, 140, 300, PO_FUSE_N-1 };
    static double in[PO_FUSE_N], fastBuf[PO_FUSE_N], slowBuf[PO_FUSE_N], got[PO_FUSE_N];
    TA_RetCode rc;
    TA_Integer beg, nb, fastBeg, fastNb, slowBeg, slowNb;
    const char *name;
    double want, slowMA;
-   int p, st, which, i, k, fast, slow, offset, swap, nbCmp, slowLookback, zeroRun;
+   int p, st, which, i, k, fast, slow, offset, swap, nbCmp, nbZeroArm, slowLookback, zeroRun, windowed;
 
    /* The corpus has to make a running sum ROUND, or this leg proves nothing:
     * 100.0 + 50.0*lcg_sym() is an integer over 2^23, every partial sum of it is
@@ -900,6 +924,7 @@ static ErrorNumber test_sma_fusion( void )
       in[i] = 12.5;
 
    nbCmp = 0;
+   nbZeroArm = 0;
    for( p = 0; p < (int)(sizeof(pairs)/sizeof(pairs[0])); p++ )
    for( st = 0; st < (int)(sizeof(starts)/sizeof(starts[0])); st++ )
    for( which = 0; which < 3; which++ )
@@ -911,15 +936,15 @@ static ErrorNumber test_sma_fusion( void )
       {
       case 0:
          name = "APO";
-         rc = TA_APO( starts[st], PO_FUSE_N-1, in, fast, slow, TA_MAType_SMA, &beg, &nb, got );
+         rc = TA_APO( starts[st], PO_FUSE_N-1, in, fast, slow, maType, &beg, &nb, got );
          break;
       case 1:
          name = "PPO";
-         rc = TA_PPO( starts[st], PO_FUSE_N-1, in, fast, slow, TA_MAType_SMA, &beg, &nb, got );
+         rc = TA_PPO( starts[st], PO_FUSE_N-1, in, fast, slow, maType, &beg, &nb, got );
          break;
       default:
          name = "PVO";
-         rc = TA_PVO( starts[st], PO_FUSE_N-1, in, fast, slow, TA_MAType_SMA, &beg, &nb, got );
+         rc = TA_PVO( starts[st], PO_FUSE_N-1, in, fast, slow, maType, &beg, &nb, got );
          break;
       }
       if( rc != TA_SUCCESS )
@@ -934,9 +959,9 @@ static ErrorNumber test_sma_fusion( void )
       {
          swap = slow; slow = fast; fast = swap;
       }
-      rc = TA_SMA( starts[st], PO_FUSE_N-1, in, fast, &fastBeg, &fastNb, fastBuf );
+      rc = TA_MA( starts[st], PO_FUSE_N-1, in, fast, maType, &fastBeg, &fastNb, fastBuf );
       if( rc == TA_SUCCESS )
-         rc = TA_SMA( starts[st], PO_FUSE_N-1, in, slow, &slowBeg, &slowNb, slowBuf );
+         rc = TA_MA( starts[st], PO_FUSE_N-1, in, slow, maType, &slowBeg, &slowNb, slowBuf );
       if( rc != TA_SUCCESS )
       {
          printf( "%s fusion Fail [f=%d s=%d start=%d]: oracle rc=%d\n",
@@ -951,7 +976,8 @@ static ErrorNumber test_sma_fusion( void )
       }
 
       offset = fastNb - slowNb;
-      slowLookback = slow - 1;
+      slowLookback = TA_MA_Lookback( slow, maType );
+      windowed = maType == TA_MAType_SMA;
       zeroRun = 0;
       for( k = slowBeg - slowLookback; k < slowBeg; k++ )
          zeroRun = fabs(in[k]) <= 0.0 ? zeroRun + 1 : 0;
@@ -962,31 +988,40 @@ static ErrorNumber test_sma_fusion( void )
          slowMA = slowBuf[i];
          if( which == 0 )
             want = fastBuf[i+offset] - slowMA;
-         else if( zeroRun > slowLookback )
+         else if( windowed && zeroRun > slowLookback )
          {
             zeroRun = slowLookback;
             want = 0.0;
+            nbZeroArm++;
          }
          else if( !TA_IS_ZERO(slowMA) )
             want = ((fastBuf[i+offset]-slowMA)/slowMA)*100.0;
          else
+         {
             want = 0.0;
+            nbZeroArm++;
+         }
 
          nbCmp++;
          if( got[i] != want )
          {
-            printf( "%s fusion Fail [f=%d s=%d start=%d i=%d]: %.17g, expected %.17g\n",
-                    name, fast, slow, starts[st], i, got[i], want );
+            printf( "%s fusion Fail [type %d f=%d s=%d start=%d i=%d]: %.17g, expected %.17g\n",
+                    name, (int)maType, fast, slow, starts[st], i, got[i], want );
             return TA_TESTUTIL_TFRR_BAD_CALCULATION;
          }
       }
    }
 
    /* Literal: a leg that compared nothing prints nothing either. */
-   if( nbCmp != PO_FUSE_CMP )
+   if( nbCmp != expectCmp )
    {
-      printf( "SMA fusion Fail: compared %d times, not the %d this file was written with\n",
-              nbCmp, PO_FUSE_CMP );
+      printf( "MA type %d fusion Fail: compared %d times, not the %d this file was written with\n",
+              (int)maType, nbCmp, expectCmp );
+      return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+   }
+   if( nbZeroArm == 0 )
+   {
+      printf( "MA type %d fusion Fail: no case reached the zero arm (dead window for SMA, TA_IS_ZERO for EMA)\n", (int)maType );
       return TA_TESTUTIL_TFRR_BAD_CALCULATION;
    }
 

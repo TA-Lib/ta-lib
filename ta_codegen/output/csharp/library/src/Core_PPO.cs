@@ -64,6 +64,7 @@ public partial class Core
     *  092826 MF,CC  #459 fuse the fast and slow SMA into one pass over the input:
     *                two running sums, no intermediate buffer, no allocation.
     *                Bit-identical.
+    *  092826 MF,CC  Fuse the fast and slow EMA into one pass (#459).
     */
    /// <summary>
    /// Number of leading input bars <c>Ppo</c> consumes before it can produce its
@@ -278,6 +279,79 @@ public partial class Core
          outNBElement = _outIdx;
          return RetCode.Success ;
       }
+      if( optInMAType == MAType.EMA ) {
+         /* EMA fast path: both recursions in one loop, no buffer. Bit-identical to
+          * the general path only while each EMA is seeded at its OWN lookback and
+          * keeps ema.c's recursion spelling: the fast EMA starts earlier than the
+          * slow one, and a shared seed bar would change every output.
+          */
+         double _eFastK;
+         double _eSlowK;
+         double _eFast;
+         double _eSlow;
+         double _eX;
+         int _eN;
+         int _eToday;
+         int _eFastToday;
+         int _eSlowToday;
+         int _eSlowStart;
+         int _eOutIdx;
+         if( optInSlowPeriod < optInFastPeriod ) {
+            tempInteger = optInSlowPeriod;
+            optInSlowPeriod = optInFastPeriod;
+            optInFastPeriod = tempInteger;
+         }
+         _eFastK = 2.0 / (double)(optInFastPeriod + 1);
+         _eSlowK = 2.0 / (double)(optInSlowPeriod + 1);
+         _eFastToday = EmaLookback(optInFastPeriod);
+         if( _eFastToday < startIdx ) {
+            _eFastToday = startIdx;
+         }
+         _eFastToday -= EmaLookback(optInFastPeriod);
+         _eSlowStart = EmaLookback(optInSlowPeriod);
+         if( _eSlowStart < startIdx ) {
+            _eSlowStart = startIdx;
+         }
+         _eSlowToday = _eSlowStart - EmaLookback(optInSlowPeriod);
+         _eFast = 0.0;
+         for( _eN = 0; _eN < optInFastPeriod; _eN += 1 ) {
+            _eFast += inReal[_eFastToday++];
+         }
+         _eFast = _eFast / optInFastPeriod;
+         while( _eFastToday <= _eSlowStart ) {
+            _eFast = Math.FusedMultiplyAdd(inReal[_eFastToday++] - _eFast, _eFastK, _eFast);
+         }
+         _eSlow = 0.0;
+         for( _eN = 0; _eN < optInSlowPeriod; _eN += 1 ) {
+            _eSlow += inReal[_eSlowToday++];
+         }
+         _eSlow = _eSlow / optInSlowPeriod;
+         while( _eSlowToday <= _eSlowStart ) {
+            _eSlow = Math.FusedMultiplyAdd(inReal[_eSlowToday++] - _eSlow, _eSlowK, _eSlow);
+         }
+         _eOutIdx = 0;
+         if( !((-0.00000000000001 < _eSlow) && (_eSlow < 0.00000000000001)) ) {
+            outReal[_eOutIdx] = (_eFast - _eSlow) / _eSlow * 100.0;
+         } else {
+            outReal[_eOutIdx] = 0.0;
+         }
+         _eOutIdx += 1;
+         _eToday = _eSlowStart + 1;
+         while( _eToday <= endIdx ) {
+            _eX = inReal[_eToday++];
+            _eFast = Math.FusedMultiplyAdd(_eX - _eFast, _eFastK, _eFast);
+            _eSlow = Math.FusedMultiplyAdd(_eX - _eSlow, _eSlowK, _eSlow);
+            if( !((-0.00000000000001 < _eSlow) && (_eSlow < 0.00000000000001)) ) {
+               outReal[_eOutIdx] = (_eFast - _eSlow) / _eSlow * 100.0;
+            } else {
+               outReal[_eOutIdx] = 0.0;
+            }
+            _eOutIdx += 1;
+         }
+         outBegIdx = _eSlowStart;
+         outNBElement = _eOutIdx;
+         return RetCode.Success ;
+      }
       /* Allocate an intermediate buffer. */
       tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
       /* Make sure slow is really slower than
@@ -465,6 +539,74 @@ public partial class Core
          }
          outBegIdx = _slowStart;
          outNBElement = _outIdx;
+         return RetCode.Success ;
+      }
+      if( optInMAType == MAType.EMA ) {
+         double _eFastK;
+         double _eSlowK;
+         double _eFast;
+         double _eSlow;
+         double _eX;
+         int _eN;
+         int _eToday;
+         int _eFastToday;
+         int _eSlowToday;
+         int _eSlowStart;
+         int _eOutIdx;
+         if( optInSlowPeriod < optInFastPeriod ) {
+            tempInteger = optInSlowPeriod;
+            optInSlowPeriod = optInFastPeriod;
+            optInFastPeriod = tempInteger;
+         }
+         _eFastK = 2.0 / (double)(optInFastPeriod + 1);
+         _eSlowK = 2.0 / (double)(optInSlowPeriod + 1);
+         _eFastToday = EmaLookback(optInFastPeriod);
+         if( _eFastToday < startIdx ) {
+            _eFastToday = startIdx;
+         }
+         _eFastToday -= EmaLookback(optInFastPeriod);
+         _eSlowStart = EmaLookback(optInSlowPeriod);
+         if( _eSlowStart < startIdx ) {
+            _eSlowStart = startIdx;
+         }
+         _eSlowToday = _eSlowStart - EmaLookback(optInSlowPeriod);
+         _eFast = 0.0;
+         for( _eN = 0; _eN < optInFastPeriod; _eN += 1 ) {
+            _eFast += (double)inReal[_eFastToday++];
+         }
+         _eFast = _eFast / optInFastPeriod;
+         while( _eFastToday <= _eSlowStart ) {
+            _eFast = Math.FusedMultiplyAdd((double)inReal[_eFastToday++] - _eFast, _eFastK, _eFast);
+         }
+         _eSlow = 0.0;
+         for( _eN = 0; _eN < optInSlowPeriod; _eN += 1 ) {
+            _eSlow += (double)inReal[_eSlowToday++];
+         }
+         _eSlow = _eSlow / optInSlowPeriod;
+         while( _eSlowToday <= _eSlowStart ) {
+            _eSlow = Math.FusedMultiplyAdd((double)inReal[_eSlowToday++] - _eSlow, _eSlowK, _eSlow);
+         }
+         _eOutIdx = 0;
+         if( !((-0.00000000000001 < _eSlow) && (_eSlow < 0.00000000000001)) ) {
+            outReal[_eOutIdx] = (_eFast - _eSlow) / _eSlow * 100.0;
+         } else {
+            outReal[_eOutIdx] = 0.0;
+         }
+         _eOutIdx += 1;
+         _eToday = _eSlowStart + 1;
+         while( _eToday <= endIdx ) {
+            _eX = (double)inReal[_eToday++];
+            _eFast = Math.FusedMultiplyAdd(_eX - _eFast, _eFastK, _eFast);
+            _eSlow = Math.FusedMultiplyAdd(_eX - _eSlow, _eSlowK, _eSlow);
+            if( !((-0.00000000000001 < _eSlow) && (_eSlow < 0.00000000000001)) ) {
+               outReal[_eOutIdx] = (_eFast - _eSlow) / _eSlow * 100.0;
+            } else {
+               outReal[_eOutIdx] = 0.0;
+            }
+            _eOutIdx += 1;
+         }
+         outBegIdx = _eSlowStart;
+         outNBElement = _eOutIdx;
          return RetCode.Success ;
       }
       tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];

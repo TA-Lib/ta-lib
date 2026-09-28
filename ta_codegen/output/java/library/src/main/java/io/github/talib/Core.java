@@ -8761,6 +8761,7 @@ public final class Core {
  *  092826 MF,CC  #459 fuse the fast and slow SMA into one pass over the input:
  *                two running sums, no intermediate buffer, no allocation.
  *                Bit-identical.
+ *  092826 MF,CC  Fuse the fast and slow EMA into one pass (#459).
  */
 
    /**
@@ -8938,6 +8939,71 @@ public final class Core {
          outNBElement.value = _outIdx;
          return RetCode.SUCCESS ;
       }
+      if( optInMAType == MAType.EMA ) {
+         /* EMA fast path: both recursions in one loop, no buffer. Bit-identical to
+          * the general path only while each EMA is seeded at its OWN lookback and
+          * keeps ema.c's recursion spelling: the fast EMA starts earlier than the
+          * slow one, and a shared seed bar would change every output.
+          */
+         double _eFastK;
+         double _eSlowK;
+         double _eFast;
+         double _eSlow;
+         double _eX;
+         int _eN;
+         int _eToday;
+         int _eFastToday;
+         int _eSlowToday;
+         int _eSlowStart;
+         int _eOutIdx;
+         if( optInSlowPeriod < optInFastPeriod ) {
+            tempInteger = optInSlowPeriod;
+            optInSlowPeriod = optInFastPeriod;
+            optInFastPeriod = tempInteger;
+         }
+         _eFastK = 2.0 / (double)(optInFastPeriod + 1);
+         _eSlowK = 2.0 / (double)(optInSlowPeriod + 1);
+         _eFastToday = emaLookback(optInFastPeriod);
+         if( _eFastToday < startIdx ) {
+            _eFastToday = startIdx;
+         }
+         _eFastToday -= emaLookback(optInFastPeriod);
+         _eSlowStart = emaLookback(optInSlowPeriod);
+         if( _eSlowStart < startIdx ) {
+            _eSlowStart = startIdx;
+         }
+         _eSlowToday = _eSlowStart - emaLookback(optInSlowPeriod);
+         _eFast = 0.0;
+         for( _eN = 0; _eN < optInFastPeriod; _eN += 1 ) {
+            _eFast += inReal[_eFastToday++];
+         }
+         _eFast = _eFast / optInFastPeriod;
+         while( _eFastToday <= _eSlowStart ) {
+            _eFast = Math.fma(inReal[_eFastToday++] - _eFast, _eFastK, _eFast);
+         }
+         _eSlow = 0.0;
+         for( _eN = 0; _eN < optInSlowPeriod; _eN += 1 ) {
+            _eSlow += inReal[_eSlowToday++];
+         }
+         _eSlow = _eSlow / optInSlowPeriod;
+         while( _eSlowToday <= _eSlowStart ) {
+            _eSlow = Math.fma(inReal[_eSlowToday++] - _eSlow, _eSlowK, _eSlow);
+         }
+         _eOutIdx = 0;
+         outReal[_eOutIdx] = _eFast - _eSlow;
+         _eOutIdx += 1;
+         _eToday = _eSlowStart + 1;
+         while( _eToday <= endIdx ) {
+            _eX = inReal[_eToday++];
+            _eFast = Math.fma(_eX - _eFast, _eFastK, _eFast);
+            _eSlow = Math.fma(_eX - _eSlow, _eSlowK, _eSlow);
+            outReal[_eOutIdx] = _eFast - _eSlow;
+            _eOutIdx += 1;
+         }
+         outBegIdx.value = _eSlowStart;
+         outNBElement.value = _eOutIdx;
+         return RetCode.SUCCESS ;
+      }
       /* Allocate an intermediate buffer. */
       tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
       /* Make sure slow is really slower than
@@ -9066,6 +9132,66 @@ public final class Core {
          }
          outBegIdx.value = _slowStart;
          outNBElement.value = _outIdx;
+         return RetCode.SUCCESS ;
+      }
+      if( optInMAType == MAType.EMA ) {
+         double _eFastK;
+         double _eSlowK;
+         double _eFast;
+         double _eSlow;
+         double _eX;
+         int _eN;
+         int _eToday;
+         int _eFastToday;
+         int _eSlowToday;
+         int _eSlowStart;
+         int _eOutIdx;
+         if( optInSlowPeriod < optInFastPeriod ) {
+            tempInteger = optInSlowPeriod;
+            optInSlowPeriod = optInFastPeriod;
+            optInFastPeriod = tempInteger;
+         }
+         _eFastK = 2.0 / (double)(optInFastPeriod + 1);
+         _eSlowK = 2.0 / (double)(optInSlowPeriod + 1);
+         _eFastToday = emaLookback(optInFastPeriod);
+         if( _eFastToday < startIdx ) {
+            _eFastToday = startIdx;
+         }
+         _eFastToday -= emaLookback(optInFastPeriod);
+         _eSlowStart = emaLookback(optInSlowPeriod);
+         if( _eSlowStart < startIdx ) {
+            _eSlowStart = startIdx;
+         }
+         _eSlowToday = _eSlowStart - emaLookback(optInSlowPeriod);
+         _eFast = 0.0;
+         for( _eN = 0; _eN < optInFastPeriod; _eN += 1 ) {
+            _eFast += (double)inReal[_eFastToday++];
+         }
+         _eFast = _eFast / optInFastPeriod;
+         while( _eFastToday <= _eSlowStart ) {
+            _eFast = Math.fma((double)inReal[_eFastToday++] - _eFast, _eFastK, _eFast);
+         }
+         _eSlow = 0.0;
+         for( _eN = 0; _eN < optInSlowPeriod; _eN += 1 ) {
+            _eSlow += (double)inReal[_eSlowToday++];
+         }
+         _eSlow = _eSlow / optInSlowPeriod;
+         while( _eSlowToday <= _eSlowStart ) {
+            _eSlow = Math.fma((double)inReal[_eSlowToday++] - _eSlow, _eSlowK, _eSlow);
+         }
+         _eOutIdx = 0;
+         outReal[_eOutIdx] = _eFast - _eSlow;
+         _eOutIdx += 1;
+         _eToday = _eSlowStart + 1;
+         while( _eToday <= endIdx ) {
+            _eX = (double)inReal[_eToday++];
+            _eFast = Math.fma(_eX - _eFast, _eFastK, _eFast);
+            _eSlow = Math.fma(_eX - _eSlow, _eSlowK, _eSlow);
+            outReal[_eOutIdx] = _eFast - _eSlow;
+            _eOutIdx += 1;
+         }
+         outBegIdx.value = _eSlowStart;
+         outNBElement.value = _eOutIdx;
          return RetCode.SUCCESS ;
       }
       tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
@@ -151008,6 +151134,7 @@ public final class Core {
  *  092826 MF,CC  #459 fuse the fast and slow SMA into one pass over the input:
  *                two running sums, no intermediate buffer, no allocation.
  *                Bit-identical.
+ *  092826 MF,CC  Fuse the fast and slow EMA into one pass (#459).
  */
 
    /**
@@ -151213,6 +151340,79 @@ public final class Core {
          outNBElement.value = _outIdx;
          return RetCode.SUCCESS ;
       }
+      if( optInMAType == MAType.EMA ) {
+         /* EMA fast path: both recursions in one loop, no buffer. Bit-identical to
+          * the general path only while each EMA is seeded at its OWN lookback and
+          * keeps ema.c's recursion spelling: the fast EMA starts earlier than the
+          * slow one, and a shared seed bar would change every output.
+          */
+         double _eFastK;
+         double _eSlowK;
+         double _eFast;
+         double _eSlow;
+         double _eX;
+         int _eN;
+         int _eToday;
+         int _eFastToday;
+         int _eSlowToday;
+         int _eSlowStart;
+         int _eOutIdx;
+         if( optInSlowPeriod < optInFastPeriod ) {
+            tempInteger = optInSlowPeriod;
+            optInSlowPeriod = optInFastPeriod;
+            optInFastPeriod = tempInteger;
+         }
+         _eFastK = 2.0 / (double)(optInFastPeriod + 1);
+         _eSlowK = 2.0 / (double)(optInSlowPeriod + 1);
+         _eFastToday = emaLookback(optInFastPeriod);
+         if( _eFastToday < startIdx ) {
+            _eFastToday = startIdx;
+         }
+         _eFastToday -= emaLookback(optInFastPeriod);
+         _eSlowStart = emaLookback(optInSlowPeriod);
+         if( _eSlowStart < startIdx ) {
+            _eSlowStart = startIdx;
+         }
+         _eSlowToday = _eSlowStart - emaLookback(optInSlowPeriod);
+         _eFast = 0.0;
+         for( _eN = 0; _eN < optInFastPeriod; _eN += 1 ) {
+            _eFast += inReal[_eFastToday++];
+         }
+         _eFast = _eFast / optInFastPeriod;
+         while( _eFastToday <= _eSlowStart ) {
+            _eFast = Math.fma(inReal[_eFastToday++] - _eFast, _eFastK, _eFast);
+         }
+         _eSlow = 0.0;
+         for( _eN = 0; _eN < optInSlowPeriod; _eN += 1 ) {
+            _eSlow += inReal[_eSlowToday++];
+         }
+         _eSlow = _eSlow / optInSlowPeriod;
+         while( _eSlowToday <= _eSlowStart ) {
+            _eSlow = Math.fma(inReal[_eSlowToday++] - _eSlow, _eSlowK, _eSlow);
+         }
+         _eOutIdx = 0;
+         if( !((-0.00000000000001 < _eSlow) && (_eSlow < 0.00000000000001)) ) {
+            outReal[_eOutIdx] = (_eFast - _eSlow) / _eSlow * 100.0;
+         } else {
+            outReal[_eOutIdx] = 0.0;
+         }
+         _eOutIdx += 1;
+         _eToday = _eSlowStart + 1;
+         while( _eToday <= endIdx ) {
+            _eX = inReal[_eToday++];
+            _eFast = Math.fma(_eX - _eFast, _eFastK, _eFast);
+            _eSlow = Math.fma(_eX - _eSlow, _eSlowK, _eSlow);
+            if( !((-0.00000000000001 < _eSlow) && (_eSlow < 0.00000000000001)) ) {
+               outReal[_eOutIdx] = (_eFast - _eSlow) / _eSlow * 100.0;
+            } else {
+               outReal[_eOutIdx] = 0.0;
+            }
+            _eOutIdx += 1;
+         }
+         outBegIdx.value = _eSlowStart;
+         outNBElement.value = _eOutIdx;
+         return RetCode.SUCCESS ;
+      }
       /* Allocate an intermediate buffer. */
       tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
       /* Make sure slow is really slower than
@@ -151393,6 +151593,74 @@ public final class Core {
          }
          outBegIdx.value = _slowStart;
          outNBElement.value = _outIdx;
+         return RetCode.SUCCESS ;
+      }
+      if( optInMAType == MAType.EMA ) {
+         double _eFastK;
+         double _eSlowK;
+         double _eFast;
+         double _eSlow;
+         double _eX;
+         int _eN;
+         int _eToday;
+         int _eFastToday;
+         int _eSlowToday;
+         int _eSlowStart;
+         int _eOutIdx;
+         if( optInSlowPeriod < optInFastPeriod ) {
+            tempInteger = optInSlowPeriod;
+            optInSlowPeriod = optInFastPeriod;
+            optInFastPeriod = tempInteger;
+         }
+         _eFastK = 2.0 / (double)(optInFastPeriod + 1);
+         _eSlowK = 2.0 / (double)(optInSlowPeriod + 1);
+         _eFastToday = emaLookback(optInFastPeriod);
+         if( _eFastToday < startIdx ) {
+            _eFastToday = startIdx;
+         }
+         _eFastToday -= emaLookback(optInFastPeriod);
+         _eSlowStart = emaLookback(optInSlowPeriod);
+         if( _eSlowStart < startIdx ) {
+            _eSlowStart = startIdx;
+         }
+         _eSlowToday = _eSlowStart - emaLookback(optInSlowPeriod);
+         _eFast = 0.0;
+         for( _eN = 0; _eN < optInFastPeriod; _eN += 1 ) {
+            _eFast += (double)inReal[_eFastToday++];
+         }
+         _eFast = _eFast / optInFastPeriod;
+         while( _eFastToday <= _eSlowStart ) {
+            _eFast = Math.fma((double)inReal[_eFastToday++] - _eFast, _eFastK, _eFast);
+         }
+         _eSlow = 0.0;
+         for( _eN = 0; _eN < optInSlowPeriod; _eN += 1 ) {
+            _eSlow += (double)inReal[_eSlowToday++];
+         }
+         _eSlow = _eSlow / optInSlowPeriod;
+         while( _eSlowToday <= _eSlowStart ) {
+            _eSlow = Math.fma((double)inReal[_eSlowToday++] - _eSlow, _eSlowK, _eSlow);
+         }
+         _eOutIdx = 0;
+         if( !((-0.00000000000001 < _eSlow) && (_eSlow < 0.00000000000001)) ) {
+            outReal[_eOutIdx] = (_eFast - _eSlow) / _eSlow * 100.0;
+         } else {
+            outReal[_eOutIdx] = 0.0;
+         }
+         _eOutIdx += 1;
+         _eToday = _eSlowStart + 1;
+         while( _eToday <= endIdx ) {
+            _eX = (double)inReal[_eToday++];
+            _eFast = Math.fma(_eX - _eFast, _eFastK, _eFast);
+            _eSlow = Math.fma(_eX - _eSlow, _eSlowK, _eSlow);
+            if( !((-0.00000000000001 < _eSlow) && (_eSlow < 0.00000000000001)) ) {
+               outReal[_eOutIdx] = (_eFast - _eSlow) / _eSlow * 100.0;
+            } else {
+               outReal[_eOutIdx] = 0.0;
+            }
+            _eOutIdx += 1;
+         }
+         outBegIdx.value = _eSlowStart;
+         outNBElement.value = _eOutIdx;
          return RetCode.SUCCESS ;
       }
       tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
@@ -152648,6 +152916,7 @@ public final class Core {
  *  092826 MF,CC  #459 fuse the fast and slow SMA into one pass over the input:
  *                two running sums, no intermediate buffer, no allocation.
  *                Bit-identical.
+ *  092826 MF,CC  Fuse the fast and slow EMA into one pass (#459).
  */
 
    /**
@@ -152853,6 +153122,79 @@ public final class Core {
          outNBElement.value = _outIdx;
          return RetCode.SUCCESS ;
       }
+      if( optInMAType == MAType.EMA ) {
+         /* EMA fast path: both recursions in one loop, no buffer. Bit-identical to
+          * the general path only while each EMA is seeded at its OWN lookback and
+          * keeps ema.c's recursion spelling: the fast EMA starts earlier than the
+          * slow one, and a shared seed bar would change every output.
+          */
+         double _eFastK;
+         double _eSlowK;
+         double _eFast;
+         double _eSlow;
+         double _eX;
+         int _eN;
+         int _eToday;
+         int _eFastToday;
+         int _eSlowToday;
+         int _eSlowStart;
+         int _eOutIdx;
+         if( optInSlowPeriod < optInFastPeriod ) {
+            tempInteger = optInSlowPeriod;
+            optInSlowPeriod = optInFastPeriod;
+            optInFastPeriod = tempInteger;
+         }
+         _eFastK = 2.0 / (double)(optInFastPeriod + 1);
+         _eSlowK = 2.0 / (double)(optInSlowPeriod + 1);
+         _eFastToday = emaLookback(optInFastPeriod);
+         if( _eFastToday < startIdx ) {
+            _eFastToday = startIdx;
+         }
+         _eFastToday -= emaLookback(optInFastPeriod);
+         _eSlowStart = emaLookback(optInSlowPeriod);
+         if( _eSlowStart < startIdx ) {
+            _eSlowStart = startIdx;
+         }
+         _eSlowToday = _eSlowStart - emaLookback(optInSlowPeriod);
+         _eFast = 0.0;
+         for( _eN = 0; _eN < optInFastPeriod; _eN += 1 ) {
+            _eFast += inVolume[_eFastToday++];
+         }
+         _eFast = _eFast / optInFastPeriod;
+         while( _eFastToday <= _eSlowStart ) {
+            _eFast = Math.fma(inVolume[_eFastToday++] - _eFast, _eFastK, _eFast);
+         }
+         _eSlow = 0.0;
+         for( _eN = 0; _eN < optInSlowPeriod; _eN += 1 ) {
+            _eSlow += inVolume[_eSlowToday++];
+         }
+         _eSlow = _eSlow / optInSlowPeriod;
+         while( _eSlowToday <= _eSlowStart ) {
+            _eSlow = Math.fma(inVolume[_eSlowToday++] - _eSlow, _eSlowK, _eSlow);
+         }
+         _eOutIdx = 0;
+         if( !((-0.00000000000001 < _eSlow) && (_eSlow < 0.00000000000001)) ) {
+            outReal[_eOutIdx] = (_eFast - _eSlow) / _eSlow * 100.0;
+         } else {
+            outReal[_eOutIdx] = 0.0;
+         }
+         _eOutIdx += 1;
+         _eToday = _eSlowStart + 1;
+         while( _eToday <= endIdx ) {
+            _eX = inVolume[_eToday++];
+            _eFast = Math.fma(_eX - _eFast, _eFastK, _eFast);
+            _eSlow = Math.fma(_eX - _eSlow, _eSlowK, _eSlow);
+            if( !((-0.00000000000001 < _eSlow) && (_eSlow < 0.00000000000001)) ) {
+               outReal[_eOutIdx] = (_eFast - _eSlow) / _eSlow * 100.0;
+            } else {
+               outReal[_eOutIdx] = 0.0;
+            }
+            _eOutIdx += 1;
+         }
+         outBegIdx.value = _eSlowStart;
+         outNBElement.value = _eOutIdx;
+         return RetCode.SUCCESS ;
+      }
       /* Allocate an intermediate buffer. */
       tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
       /* Make sure slow is really slower than
@@ -153033,6 +153375,74 @@ public final class Core {
          }
          outBegIdx.value = _slowStart;
          outNBElement.value = _outIdx;
+         return RetCode.SUCCESS ;
+      }
+      if( optInMAType == MAType.EMA ) {
+         double _eFastK;
+         double _eSlowK;
+         double _eFast;
+         double _eSlow;
+         double _eX;
+         int _eN;
+         int _eToday;
+         int _eFastToday;
+         int _eSlowToday;
+         int _eSlowStart;
+         int _eOutIdx;
+         if( optInSlowPeriod < optInFastPeriod ) {
+            tempInteger = optInSlowPeriod;
+            optInSlowPeriod = optInFastPeriod;
+            optInFastPeriod = tempInteger;
+         }
+         _eFastK = 2.0 / (double)(optInFastPeriod + 1);
+         _eSlowK = 2.0 / (double)(optInSlowPeriod + 1);
+         _eFastToday = emaLookback(optInFastPeriod);
+         if( _eFastToday < startIdx ) {
+            _eFastToday = startIdx;
+         }
+         _eFastToday -= emaLookback(optInFastPeriod);
+         _eSlowStart = emaLookback(optInSlowPeriod);
+         if( _eSlowStart < startIdx ) {
+            _eSlowStart = startIdx;
+         }
+         _eSlowToday = _eSlowStart - emaLookback(optInSlowPeriod);
+         _eFast = 0.0;
+         for( _eN = 0; _eN < optInFastPeriod; _eN += 1 ) {
+            _eFast += (double)inVolume[_eFastToday++];
+         }
+         _eFast = _eFast / optInFastPeriod;
+         while( _eFastToday <= _eSlowStart ) {
+            _eFast = Math.fma((double)inVolume[_eFastToday++] - _eFast, _eFastK, _eFast);
+         }
+         _eSlow = 0.0;
+         for( _eN = 0; _eN < optInSlowPeriod; _eN += 1 ) {
+            _eSlow += (double)inVolume[_eSlowToday++];
+         }
+         _eSlow = _eSlow / optInSlowPeriod;
+         while( _eSlowToday <= _eSlowStart ) {
+            _eSlow = Math.fma((double)inVolume[_eSlowToday++] - _eSlow, _eSlowK, _eSlow);
+         }
+         _eOutIdx = 0;
+         if( !((-0.00000000000001 < _eSlow) && (_eSlow < 0.00000000000001)) ) {
+            outReal[_eOutIdx] = (_eFast - _eSlow) / _eSlow * 100.0;
+         } else {
+            outReal[_eOutIdx] = 0.0;
+         }
+         _eOutIdx += 1;
+         _eToday = _eSlowStart + 1;
+         while( _eToday <= endIdx ) {
+            _eX = (double)inVolume[_eToday++];
+            _eFast = Math.fma(_eX - _eFast, _eFastK, _eFast);
+            _eSlow = Math.fma(_eX - _eSlow, _eSlowK, _eSlow);
+            if( !((-0.00000000000001 < _eSlow) && (_eSlow < 0.00000000000001)) ) {
+               outReal[_eOutIdx] = (_eFast - _eSlow) / _eSlow * 100.0;
+            } else {
+               outReal[_eOutIdx] = 0.0;
+            }
+            _eOutIdx += 1;
+         }
+         outBegIdx.value = _eSlowStart;
+         outNBElement.value = _eOutIdx;
          return RetCode.SUCCESS ;
       }
       tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];

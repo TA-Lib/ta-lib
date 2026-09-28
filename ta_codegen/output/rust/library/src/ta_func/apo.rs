@@ -62,6 +62,7 @@
  *  092826 MF,CC  #459 fuse the fast and slow SMA into one pass over the input:
  *                two running sums, no intermediate buffer, no allocation.
  *                Bit-identical.
+ *  092826 MF,CC  Fuse the fast and slow EMA into one pass (#459).
  */
 
 // Import types from parent module
@@ -112,6 +113,40 @@ impl Core {
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.
     pub(crate) fn apo_impl(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inReal: &[f64],
+        optInFastPeriod: i32,
+        optInSlowPeriod: i32,
+        optInMAType: MAType,
+        outBegIdx: &mut usize,
+        outNBElement: &mut usize,
+        outReal: &mut [f64],
+    ) -> RetCode {
+        #[cfg(target_arch = "x86_64")]
+        return ta_lib_dispatch::dispatch_fma!(self, apo_impl_fma, apo_impl_scalar, (startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal));
+        #[cfg(not(target_arch = "x86_64"))]
+        self.apo_impl_scalar(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal)
+    }
+    #[cfg(target_arch = "x86_64")]
+    #[target_feature(enable = "fma")]
+    fn apo_impl_fma(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inReal: &[f64],
+        optInFastPeriod: i32,
+        optInSlowPeriod: i32,
+        optInMAType: MAType,
+        outBegIdx: &mut usize,
+        outNBElement: &mut usize,
+        outReal: &mut [f64],
+    ) -> RetCode {
+        self.apo_impl_scalar(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal)
+    }
+    #[inline(always)]
+    fn apo_impl_scalar(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -280,6 +315,82 @@ impl Core {
             }
             (*outBegIdx) = _slowStart;
             (*outNBElement) = _outIdx;
+            return RetCode::Success;
+        }
+        if optInMAType == MAType::EMA {
+            // EMA fast path: both recursions in one loop, no buffer. Bit-identical to
+            // the general path only while each EMA is seeded at its OWN lookback and
+            // keeps ema.c's recursion spelling: the fast EMA starts earlier than the
+            // slow one, and a shared seed bar would change every output.
+            let mut _eFastK: f64 = 0.0_f64;
+            let mut _eSlowK: f64 = 0.0_f64;
+            let mut _eFast: f64 = 0.0_f64;
+            let mut _eSlow: f64 = 0.0_f64;
+            let mut _eX: f64 = 0.0_f64;
+            let mut _eN: usize = 0_usize;
+            let mut _eToday: usize = 0_usize;
+            let mut _eFastToday: usize = 0_usize;
+            let mut _eSlowToday: usize = 0_usize;
+            let mut _eSlowStart: usize = 0_usize;
+            let mut _eOutIdx: usize = 0_usize;
+            if optInSlowPeriod < optInFastPeriod {
+                tempInteger = (optInSlowPeriod) as usize;
+                optInSlowPeriod = optInFastPeriod;
+                optInFastPeriod = (tempInteger) as i32;
+            }
+            _eFastK = 2.0 / ((optInFastPeriod + 1) as f64);
+            _eSlowK = 2.0 / ((optInSlowPeriod + 1) as f64);
+            _eFastToday = self.ema_lookback(optInFastPeriod).unwrap_or(usize::MAX);
+            if _eFastToday < startIdx {
+                _eFastToday = startIdx;
+            }
+            _eFastToday -= self.ema_lookback(optInFastPeriod).unwrap_or(usize::MAX);
+            _eSlowStart = self.ema_lookback(optInSlowPeriod).unwrap_or(usize::MAX);
+            if _eSlowStart < startIdx {
+                _eSlowStart = startIdx;
+            }
+            _eSlowToday = _eSlowStart - self.ema_lookback(optInSlowPeriod).unwrap_or(usize::MAX);
+            _eFast = 0.0;
+            // for( _eN = 0; _eN < ((optInFastPeriod) as usize); _eN += 1 )
+            _eN = 0;
+            while _eN < ((optInFastPeriod) as usize) {
+                _eFast += inReal[{ let _v = _eFastToday; _eFastToday += 1; _v }];
+                _eN += 1;
+            }
+            _eFast = _eFast / ((optInFastPeriod) as f64);
+            while _eFastToday <= _eSlowStart {
+                _eFast = (inReal[{ let _v = _eFastToday; _eFastToday += 1; _v }] - _eFast as f64).mul_add(_eFastK, _eFast);
+            }
+            _eSlow = 0.0;
+            // for( _eN = 0; _eN < ((optInSlowPeriod) as usize); _eN += 1 )
+            _eN = 0;
+            while _eN < ((optInSlowPeriod) as usize) {
+                _eSlow += inReal[{ let _v = _eSlowToday; _eSlowToday += 1; _v }];
+                _eN += 1;
+            }
+            _eSlow = _eSlow / ((optInSlowPeriod) as f64);
+            while _eSlowToday <= _eSlowStart {
+                _eSlow = (inReal[{ let _v = _eSlowToday; _eSlowToday += 1; _v }] - _eSlow as f64).mul_add(_eSlowK, _eSlow);
+            }
+            _eOutIdx = 0;
+            outReal[_eOutIdx] = _eFast - _eSlow;
+            _eOutIdx += 1;
+            _eToday = _eSlowStart + 1;
+            if _eToday <= endIdx {
+                let _wn: usize = endIdx - _eToday + 1;
+                let _w0 = &inReal[_eToday..][.._wn];
+                let _w1 = &mut outReal[_eOutIdx..][.._wn];
+                for _wk in 0.._wn {
+                    _eX = _w0[_wk];
+                    _eToday += 1;
+                    _eFast = (_eX - _eFast as f64).mul_add(_eFastK, _eFast);
+                    _eSlow = (_eX - _eSlow as f64).mul_add(_eSlowK, _eSlow);
+                    _w1[_wk] = _eFast - _eSlow;
+                    _eOutIdx += 1;
+                }
+            }
+            (*outBegIdx) = _eSlowStart;
+            (*outNBElement) = _eOutIdx;
             return RetCode::Success;
         }
         // Allocate an intermediate buffer.
