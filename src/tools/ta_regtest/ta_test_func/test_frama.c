@@ -448,12 +448,12 @@ static const FramaEhlersRow framaEhlers[] =
 
 /* framaDegenerate at N=16, the rows after each run, from the same Formula as
  * framaGolden. Holding the last dimension across a flat half instead moves
- * them by up to 6e-2. */
+ * every one of them, bar 340 by 8.4. */
 static const struct { int bar; double want; } framaDegenGolden[] = {
    { 340, 140.68349017364477 }, { 348, 146.3430860999008 },
    { 356, 157.42639621955547 }, { 508, 178.36793122443183 },
    { 516, 165.72283218257962 }, { 530, 180.17789386572946 },
-   { 716, 216.625638264348   }, { 724, 212.23937773903373 },
+   { 708, 123.36513054512656 }, { 711, 124.94284920105864 },
 };
 #define NB_FRAMA_DEGEN_GOLDEN ((int)(sizeof(framaDegenGolden)/sizeof(framaDegenGolden[0])))
 
