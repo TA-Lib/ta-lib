@@ -240,6 +240,8 @@ static int ta_ref_waived( const char *json, const TA_FuncHandle *handle, const T
       names[i]  = oi->paramName;
       values[i] = (oi->type == TA_OptInput_RealRange || oi->type == TA_OptInput_RealList)
                   ? json_find_double( json, oi->paramName )
+                  : (oi->type == TA_OptInput_IntegerList && !json_has_field( json, oi->paramName ))
+                  ? oi->defaultValue
                   : (double)json_find_int( json, oi->paramName );
    }
    c.func     = fi->name;

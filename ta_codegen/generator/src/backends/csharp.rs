@@ -352,8 +352,7 @@ fn csharp_enum_literal(enum_name: &str, value: i32, enums: &HashMap<String, Enum
 /// functions fail with `RetCode.BadParam`, lookback functions fail with `-1`.
 ///
 /// `enum:` params get the same treatment, because a C# enum is an `int` with
-/// names: `(MAType)int.MinValue` is a value a caller — or the generated server's
-/// `(MAType)GetInt(p, "optInMAType", 0)` — can produce, so it must resolve the way
+/// names: `(MAType)int.MinValue` is a value a caller can produce, so it must resolve the way
 /// C's `if( (int)optInMAType == TA_INTEGER_DEFAULT )` does. The substituted value is
 /// that parameter's declared default, never a fixed 0: APO, PPO and PVO default to
 /// EMA, the other ten to SMA.

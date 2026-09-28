@@ -6,7 +6,7 @@
  *
  * This file is #included by the generated server (ta_codegen_serve.c).
  * It depends on:
- *   - JSON helpers: json_find_string, json_find_int, json_find_double,
+ *   - JSON helpers: json_find_string, json_find_int, json_has_field, json_find_double,
  *     json_find_double_array, json_write_double_array, json_write_int_array,
  *     json_appendf (bounded formatted append)
  *   - Global buffers: g_inBuf0..5, g_outBuf0..2, g_outIntBuf0..1, MAX_ARRAY_SIZE
@@ -114,6 +114,9 @@ static void handle_abstract_get_lookback(const char *json, char *resp, int resp_
          }
          case TA_OptInput_IntegerRange:
             case TA_OptInput_IntegerList: {
+            /* An absent field keeps the holder's declared default. */
+            if( optInfo->type == TA_OptInput_IntegerList && !json_has_field(json, optInfo->paramName) )
+               break;
             int v = json_find_int(json, optInfo->paramName);
             TA_SetOptInputParamInteger(params, i, v);
             break;
@@ -261,6 +264,9 @@ static void handle_abstract_call(const char *json, char *resp, int resp_size) {
          }
          case TA_OptInput_IntegerRange:
             case TA_OptInput_IntegerList: {
+            /* An absent field keeps the holder's declared default. */
+            if( optInfo->type == TA_OptInput_IntegerList && !json_has_field(json, optInfo->paramName) )
+               break;
             int v = json_find_int(json, optInfo->paramName);
             TA_SetOptInputParamInteger(params, i, v);
             break;

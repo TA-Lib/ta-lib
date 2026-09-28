@@ -3241,7 +3241,7 @@ public class TaCodegenServe {
         int svK = GetInt(req, "unstablePeriod", 0);
         int optInFastPeriod = GetInt(req, "optInFastPeriod", 12);
         int optInSlowPeriod = GetInt(req, "optInSlowPeriod", 26);
-        int _raw_optInMAType = GetInt(req, "optInMAType", 1);
+        int _raw_optInMAType = GetInt(req, "optInMAType", (int)MAType.DEFAULT);
         MAType optInMAType = (MAType)_raw_optInMAType;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -5071,7 +5071,7 @@ public class TaCodegenServe {
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 20);
         double optInNbDevUp = GetDouble(req, "optInNbDevUp", 2e0);
         double optInNbDevDn = GetDouble(req, "optInNbDevDn", 2e0);
-        int _raw_optInMAType = GetInt(req, "optInMAType", 0);
+        int _raw_optInMAType = GetInt(req, "optInMAType", (int)MAType.DEFAULT);
         MAType optInMAType = (MAType)_raw_optInMAType;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -5352,7 +5352,7 @@ public class TaCodegenServe {
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 20);
         double optInNbDevUp = GetDouble(req, "optInNbDevUp", 2e0);
         double optInNbDevDn = GetDouble(req, "optInNbDevDn", 2e0);
-        int _raw_optInMAType = GetInt(req, "optInMAType", 0);
+        int _raw_optInMAType = GetInt(req, "optInMAType", (int)MAType.DEFAULT);
         MAType optInMAType = (MAType)_raw_optInMAType;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -27175,10 +27175,10 @@ public class TaCodegenServe {
         int svK = GetInt(req, "unstablePeriod", 0);
         int optInFastK_Period = GetInt(req, "optInFastK_Period", 9);
         int optInSlowK_Period = GetInt(req, "optInSlowK_Period", 3);
-        int _raw_optInSlowK_MAType = GetInt(req, "optInSlowK_MAType", 13);
+        int _raw_optInSlowK_MAType = GetInt(req, "optInSlowK_MAType", (int)MAType.DEFAULT);
         MAType optInSlowK_MAType = (MAType)_raw_optInSlowK_MAType;
         int optInSlowD_Period = GetInt(req, "optInSlowD_Period", 3);
-        int _raw_optInSlowD_MAType = GetInt(req, "optInSlowD_MAType", 13);
+        int _raw_optInSlowD_MAType = GetInt(req, "optInSlowD_MAType", (int)MAType.DEFAULT);
         MAType optInSlowD_MAType = (MAType)_raw_optInSlowD_MAType;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -28846,7 +28846,7 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 30);
-        int _raw_optInMAType = GetInt(req, "optInMAType", 0);
+        int _raw_optInMAType = GetInt(req, "optInMAType", (int)MAType.DEFAULT);
         MAType optInMAType = (MAType)_raw_optInMAType;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -29323,13 +29323,13 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
         int optInFastPeriod = GetInt(req, "optInFastPeriod", 12);
-        int _raw_optInFastMAType = GetInt(req, "optInFastMAType", 0);
+        int _raw_optInFastMAType = GetInt(req, "optInFastMAType", (int)MAType.DEFAULT);
         MAType optInFastMAType = (MAType)_raw_optInFastMAType;
         int optInSlowPeriod = GetInt(req, "optInSlowPeriod", 26);
-        int _raw_optInSlowMAType = GetInt(req, "optInSlowMAType", 0);
+        int _raw_optInSlowMAType = GetInt(req, "optInSlowMAType", (int)MAType.DEFAULT);
         MAType optInSlowMAType = (MAType)_raw_optInSlowMAType;
         int optInSignalPeriod = GetInt(req, "optInSignalPeriod", 9);
-        int _raw_optInSignalMAType = GetInt(req, "optInSignalMAType", 0);
+        int _raw_optInSignalMAType = GetInt(req, "optInSignalMAType", (int)MAType.DEFAULT);
         MAType optInSignalMAType = (MAType)_raw_optInSignalMAType;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -30483,7 +30483,7 @@ public class TaCodegenServe {
         int svK = GetInt(req, "unstablePeriod", 0);
         int optInMinPeriod = GetInt(req, "optInMinPeriod", 2);
         int optInMaxPeriod = GetInt(req, "optInMaxPeriod", 30);
-        int _raw_optInMAType = GetInt(req, "optInMAType", 0);
+        int _raw_optInMAType = GetInt(req, "optInMAType", (int)MAType.DEFAULT);
         MAType optInMAType = (MAType)_raw_optInMAType;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -34315,7 +34315,7 @@ public class TaCodegenServe {
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 20);
         double optInNbDevUp = GetDouble(req, "optInNbDevUp", 2e0);
         double optInNbDevDn = GetDouble(req, "optInNbDevDn", 2e0);
-        int _raw_optInMAType = GetInt(req, "optInMAType", 0);
+        int _raw_optInMAType = GetInt(req, "optInMAType", (int)MAType.DEFAULT);
         MAType optInMAType = (MAType)_raw_optInMAType;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -35339,7 +35339,7 @@ public class TaCodegenServe {
         int svK = GetInt(req, "unstablePeriod", 0);
         int optInFastPeriod = GetInt(req, "optInFastPeriod", 12);
         int optInSlowPeriod = GetInt(req, "optInSlowPeriod", 26);
-        int _raw_optInMAType = GetInt(req, "optInMAType", 1);
+        int _raw_optInMAType = GetInt(req, "optInMAType", (int)MAType.DEFAULT);
         MAType optInMAType = (MAType)_raw_optInMAType;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -35751,7 +35751,7 @@ public class TaCodegenServe {
         int svK = GetInt(req, "unstablePeriod", 0);
         int optInFastPeriod = GetInt(req, "optInFastPeriod", 12);
         int optInSlowPeriod = GetInt(req, "optInSlowPeriod", 26);
-        int _raw_optInMAType = GetInt(req, "optInMAType", 1);
+        int _raw_optInMAType = GetInt(req, "optInMAType", (int)MAType.DEFAULT);
         MAType optInMAType = (MAType)_raw_optInMAType;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -39966,10 +39966,10 @@ public class TaCodegenServe {
         int svK = GetInt(req, "unstablePeriod", 0);
         int optInFastK_Period = GetInt(req, "optInFastK_Period", 5);
         int optInSlowK_Period = GetInt(req, "optInSlowK_Period", 3);
-        int _raw_optInSlowK_MAType = GetInt(req, "optInSlowK_MAType", 0);
+        int _raw_optInSlowK_MAType = GetInt(req, "optInSlowK_MAType", (int)MAType.DEFAULT);
         MAType optInSlowK_MAType = (MAType)_raw_optInSlowK_MAType;
         int optInSlowD_Period = GetInt(req, "optInSlowD_Period", 3);
-        int _raw_optInSlowD_MAType = GetInt(req, "optInSlowD_MAType", 0);
+        int _raw_optInSlowD_MAType = GetInt(req, "optInSlowD_MAType", (int)MAType.DEFAULT);
         MAType optInSlowD_MAType = (MAType)_raw_optInSlowD_MAType;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -40224,7 +40224,7 @@ public class TaCodegenServe {
         int svK = GetInt(req, "unstablePeriod", 0);
         int optInFastK_Period = GetInt(req, "optInFastK_Period", 5);
         int optInFastD_Period = GetInt(req, "optInFastD_Period", 3);
-        int _raw_optInFastD_MAType = GetInt(req, "optInFastD_MAType", 0);
+        int _raw_optInFastD_MAType = GetInt(req, "optInFastD_MAType", (int)MAType.DEFAULT);
         MAType optInFastD_MAType = (MAType)_raw_optInFastD_MAType;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -40480,7 +40480,7 @@ public class TaCodegenServe {
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 14);
         int optInFastK_Period = GetInt(req, "optInFastK_Period", 5);
         int optInFastD_Period = GetInt(req, "optInFastD_Period", 3);
-        int _raw_optInFastD_MAType = GetInt(req, "optInFastD_MAType", 0);
+        int _raw_optInFastD_MAType = GetInt(req, "optInFastD_MAType", (int)MAType.DEFAULT);
         MAType optInFastD_MAType = (MAType)_raw_optInFastD_MAType;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -69444,7 +69444,7 @@ public class TaCodegenServe {
         case "APO": {
             int optInFastPeriod = GetInt(p, "optInFastPeriod", 0);
             int optInSlowPeriod = GetInt(p, "optInSlowPeriod", 0);
-            MAType optInMAType = (MAType)GetInt(p, "optInMAType", 0);
+            MAType optInMAType = (MAType)GetInt(p, "optInMAType", (int)MAType.DEFAULT);
             return core.ApoLookback(optInFastPeriod, optInSlowPeriod, optInMAType);
         }
         case "AROON": {
@@ -69480,14 +69480,14 @@ public class TaCodegenServe {
             int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
             double optInNbDevUp = GetDouble(p, "optInNbDevUp", 0.0);
             double optInNbDevDn = GetDouble(p, "optInNbDevDn", 0.0);
-            MAType optInMAType = (MAType)GetInt(p, "optInMAType", 0);
+            MAType optInMAType = (MAType)GetInt(p, "optInMAType", (int)MAType.DEFAULT);
             return core.BbandsLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
         }
         case "BBW": {
             int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
             double optInNbDevUp = GetDouble(p, "optInNbDevUp", 0.0);
             double optInNbDevDn = GetDouble(p, "optInNbDevDn", 0.0);
-            MAType optInMAType = (MAType)GetInt(p, "optInMAType", 0);
+            MAType optInMAType = (MAType)GetInt(p, "optInMAType", (int)MAType.DEFAULT);
             return core.BbwLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
         }
         case "BETA": {
@@ -69836,9 +69836,9 @@ public class TaCodegenServe {
         case "KDJ": {
             int optInFastK_Period = GetInt(p, "optInFastK_Period", 0);
             int optInSlowK_Period = GetInt(p, "optInSlowK_Period", 0);
-            MAType optInSlowK_MAType = (MAType)GetInt(p, "optInSlowK_MAType", 0);
+            MAType optInSlowK_MAType = (MAType)GetInt(p, "optInSlowK_MAType", (int)MAType.DEFAULT);
             int optInSlowD_Period = GetInt(p, "optInSlowD_Period", 0);
-            MAType optInSlowD_MAType = (MAType)GetInt(p, "optInSlowD_MAType", 0);
+            MAType optInSlowD_MAType = (MAType)GetInt(p, "optInSlowD_MAType", (int)MAType.DEFAULT);
             return core.KdjLookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
         }
         case "KURTOSIS": {
@@ -69869,7 +69869,7 @@ public class TaCodegenServe {
         }
         case "MA": {
             int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
-            MAType optInMAType = (MAType)GetInt(p, "optInMAType", 0);
+            MAType optInMAType = (MAType)GetInt(p, "optInMAType", (int)MAType.DEFAULT);
             return core.MaLookback(optInTimePeriod, optInMAType);
         }
         case "MACD": {
@@ -69880,11 +69880,11 @@ public class TaCodegenServe {
         }
         case "MACDEXT": {
             int optInFastPeriod = GetInt(p, "optInFastPeriod", 0);
-            MAType optInFastMAType = (MAType)GetInt(p, "optInFastMAType", 0);
+            MAType optInFastMAType = (MAType)GetInt(p, "optInFastMAType", (int)MAType.DEFAULT);
             int optInSlowPeriod = GetInt(p, "optInSlowPeriod", 0);
-            MAType optInSlowMAType = (MAType)GetInt(p, "optInSlowMAType", 0);
+            MAType optInSlowMAType = (MAType)GetInt(p, "optInSlowMAType", (int)MAType.DEFAULT);
             int optInSignalPeriod = GetInt(p, "optInSignalPeriod", 0);
-            MAType optInSignalMAType = (MAType)GetInt(p, "optInSignalMAType", 0);
+            MAType optInSignalMAType = (MAType)GetInt(p, "optInSignalMAType", (int)MAType.DEFAULT);
             return core.MacdextLookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType);
         }
         case "MACDFIX": {
@@ -69907,7 +69907,7 @@ public class TaCodegenServe {
         case "MAVP": {
             int optInMinPeriod = GetInt(p, "optInMinPeriod", 0);
             int optInMaxPeriod = GetInt(p, "optInMaxPeriod", 0);
-            MAType optInMAType = (MAType)GetInt(p, "optInMAType", 0);
+            MAType optInMAType = (MAType)GetInt(p, "optInMAType", (int)MAType.DEFAULT);
             return core.MavpLookback(optInMinPeriod, optInMaxPeriod, optInMAType);
         }
         case "MAX": {
@@ -69982,7 +69982,7 @@ public class TaCodegenServe {
             int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
             double optInNbDevUp = GetDouble(p, "optInNbDevUp", 0.0);
             double optInNbDevDn = GetDouble(p, "optInNbDevDn", 0.0);
-            MAType optInMAType = (MAType)GetInt(p, "optInMAType", 0);
+            MAType optInMAType = (MAType)GetInt(p, "optInMAType", (int)MAType.DEFAULT);
             return core.PercentbLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
         }
         case "PERCENTILE": {
@@ -70005,7 +70005,7 @@ public class TaCodegenServe {
         case "PPO": {
             int optInFastPeriod = GetInt(p, "optInFastPeriod", 0);
             int optInSlowPeriod = GetInt(p, "optInSlowPeriod", 0);
-            MAType optInMAType = (MAType)GetInt(p, "optInMAType", 0);
+            MAType optInMAType = (MAType)GetInt(p, "optInMAType", (int)MAType.DEFAULT);
             return core.PpoLookback(optInFastPeriod, optInSlowPeriod, optInMAType);
         }
         case "PVI": {
@@ -70014,7 +70014,7 @@ public class TaCodegenServe {
         case "PVO": {
             int optInFastPeriod = GetInt(p, "optInFastPeriod", 0);
             int optInSlowPeriod = GetInt(p, "optInSlowPeriod", 0);
-            MAType optInMAType = (MAType)GetInt(p, "optInMAType", 0);
+            MAType optInMAType = (MAType)GetInt(p, "optInMAType", (int)MAType.DEFAULT);
             return core.PvoLookback(optInFastPeriod, optInSlowPeriod, optInMAType);
         }
         case "PVT": {
@@ -70110,22 +70110,22 @@ public class TaCodegenServe {
         case "STOCH": {
             int optInFastK_Period = GetInt(p, "optInFastK_Period", 0);
             int optInSlowK_Period = GetInt(p, "optInSlowK_Period", 0);
-            MAType optInSlowK_MAType = (MAType)GetInt(p, "optInSlowK_MAType", 0);
+            MAType optInSlowK_MAType = (MAType)GetInt(p, "optInSlowK_MAType", (int)MAType.DEFAULT);
             int optInSlowD_Period = GetInt(p, "optInSlowD_Period", 0);
-            MAType optInSlowD_MAType = (MAType)GetInt(p, "optInSlowD_MAType", 0);
+            MAType optInSlowD_MAType = (MAType)GetInt(p, "optInSlowD_MAType", (int)MAType.DEFAULT);
             return core.StochLookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
         }
         case "STOCHF": {
             int optInFastK_Period = GetInt(p, "optInFastK_Period", 0);
             int optInFastD_Period = GetInt(p, "optInFastD_Period", 0);
-            MAType optInFastD_MAType = (MAType)GetInt(p, "optInFastD_MAType", 0);
+            MAType optInFastD_MAType = (MAType)GetInt(p, "optInFastD_MAType", (int)MAType.DEFAULT);
             return core.StochfLookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
         }
         case "STOCHRSI": {
             int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
             int optInFastK_Period = GetInt(p, "optInFastK_Period", 0);
             int optInFastD_Period = GetInt(p, "optInFastD_Period", 0);
-            MAType optInFastD_MAType = (MAType)GetInt(p, "optInFastD_MAType", 0);
+            MAType optInFastD_MAType = (MAType)GetInt(p, "optInFastD_MAType", (int)MAType.DEFAULT);
             return core.StochrsiLookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
         }
         case "SUB": {
@@ -71624,7 +71624,7 @@ public class TaCodegenServe {
         ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         int optInFastPeriod = GetInt(p, "optInFastPeriod", 0);
         int optInSlowPeriod = GetInt(p, "optInSlowPeriod", 0);
-        MAType optInMAType = (MAType)GetInt(p, "optInMAType", 0);
+        MAType optInMAType = (MAType)GetInt(p, "optInMAType", (int)MAType.DEFAULT);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -72840,7 +72840,7 @@ public class TaCodegenServe {
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         double optInNbDevUp = GetDouble(p, "optInNbDevUp", 0.0);
         double optInNbDevDn = GetDouble(p, "optInNbDevDn", 0.0);
-        MAType optInMAType = (MAType)GetInt(p, "optInMAType", 0);
+        MAType optInMAType = (MAType)GetInt(p, "optInMAType", (int)MAType.DEFAULT);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -72977,7 +72977,7 @@ public class TaCodegenServe {
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         double optInNbDevUp = GetDouble(p, "optInNbDevUp", 0.0);
         double optInNbDevDn = GetDouble(p, "optInNbDevDn", 0.0);
-        MAType optInMAType = (MAType)GetInt(p, "optInMAType", 0);
+        MAType optInMAType = (MAType)GetInt(p, "optInMAType", (int)MAType.DEFAULT);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -87274,9 +87274,9 @@ public class TaCodegenServe {
         ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         int optInFastK_Period = GetInt(p, "optInFastK_Period", 0);
         int optInSlowK_Period = GetInt(p, "optInSlowK_Period", 0);
-        MAType optInSlowK_MAType = (MAType)GetInt(p, "optInSlowK_MAType", 0);
+        MAType optInSlowK_MAType = (MAType)GetInt(p, "optInSlowK_MAType", (int)MAType.DEFAULT);
         int optInSlowD_Period = GetInt(p, "optInSlowD_Period", 0);
-        MAType optInSlowD_MAType = (MAType)GetInt(p, "optInSlowD_MAType", 0);
+        MAType optInSlowD_MAType = (MAType)GetInt(p, "optInSlowD_MAType", (int)MAType.DEFAULT);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -88309,7 +88309,7 @@ public class TaCodegenServe {
         }
         ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
-        MAType optInMAType = (MAType)GetInt(p, "optInMAType", 0);
+        MAType optInMAType = (MAType)GetInt(p, "optInMAType", (int)MAType.DEFAULT);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -88574,11 +88574,11 @@ public class TaCodegenServe {
         }
         ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         int optInFastPeriod = GetInt(p, "optInFastPeriod", 0);
-        MAType optInFastMAType = (MAType)GetInt(p, "optInFastMAType", 0);
+        MAType optInFastMAType = (MAType)GetInt(p, "optInFastMAType", (int)MAType.DEFAULT);
         int optInSlowPeriod = GetInt(p, "optInSlowPeriod", 0);
-        MAType optInSlowMAType = (MAType)GetInt(p, "optInSlowMAType", 0);
+        MAType optInSlowMAType = (MAType)GetInt(p, "optInSlowMAType", (int)MAType.DEFAULT);
         int optInSignalPeriod = GetInt(p, "optInSignalPeriod", 0);
-        MAType optInSignalMAType = (MAType)GetInt(p, "optInSignalMAType", 0);
+        MAType optInSignalMAType = (MAType)GetInt(p, "optInSignalMAType", (int)MAType.DEFAULT);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -89259,7 +89259,7 @@ public class TaCodegenServe {
         ReadOnlySpan<double> _warm_inReal1 = bench_mode == 0 ? default : inReal1.AsSpan(0, endIdx + 1);
         int optInMinPeriod = GetInt(p, "optInMinPeriod", 0);
         int optInMaxPeriod = GetInt(p, "optInMaxPeriod", 0);
-        MAType optInMAType = (MAType)GetInt(p, "optInMAType", 0);
+        MAType optInMAType = (MAType)GetInt(p, "optInMAType", (int)MAType.DEFAULT);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -91779,7 +91779,7 @@ public class TaCodegenServe {
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         double optInNbDevUp = GetDouble(p, "optInNbDevUp", 0.0);
         double optInNbDevDn = GetDouble(p, "optInNbDevDn", 0.0);
-        MAType optInMAType = (MAType)GetInt(p, "optInMAType", 0);
+        MAType optInMAType = (MAType)GetInt(p, "optInMAType", (int)MAType.DEFAULT);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -92442,7 +92442,7 @@ public class TaCodegenServe {
         ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         int optInFastPeriod = GetInt(p, "optInFastPeriod", 0);
         int optInSlowPeriod = GetInt(p, "optInSlowPeriod", 0);
-        MAType optInMAType = (MAType)GetInt(p, "optInMAType", 0);
+        MAType optInMAType = (MAType)GetInt(p, "optInMAType", (int)MAType.DEFAULT);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -92705,7 +92705,7 @@ public class TaCodegenServe {
         ReadOnlySpan<double> _warm_inVolume = bench_mode == 0 ? default : inVolume.AsSpan(0, endIdx + 1);
         int optInFastPeriod = GetInt(p, "optInFastPeriod", 0);
         int optInSlowPeriod = GetInt(p, "optInSlowPeriod", 0);
-        MAType optInMAType = (MAType)GetInt(p, "optInMAType", 0);
+        MAType optInMAType = (MAType)GetInt(p, "optInMAType", (int)MAType.DEFAULT);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -95479,9 +95479,9 @@ public class TaCodegenServe {
         ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         int optInFastK_Period = GetInt(p, "optInFastK_Period", 0);
         int optInSlowK_Period = GetInt(p, "optInSlowK_Period", 0);
-        MAType optInSlowK_MAType = (MAType)GetInt(p, "optInSlowK_MAType", 0);
+        MAType optInSlowK_MAType = (MAType)GetInt(p, "optInSlowK_MAType", (int)MAType.DEFAULT);
         int optInSlowD_Period = GetInt(p, "optInSlowD_Period", 0);
-        MAType optInSlowD_MAType = (MAType)GetInt(p, "optInSlowD_MAType", 0);
+        MAType optInSlowD_MAType = (MAType)GetInt(p, "optInSlowD_MAType", (int)MAType.DEFAULT);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -95626,7 +95626,7 @@ public class TaCodegenServe {
         ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         int optInFastK_Period = GetInt(p, "optInFastK_Period", 0);
         int optInFastD_Period = GetInt(p, "optInFastD_Period", 0);
-        MAType optInFastD_MAType = (MAType)GetInt(p, "optInFastD_MAType", 0);
+        MAType optInFastD_MAType = (MAType)GetInt(p, "optInFastD_MAType", (int)MAType.DEFAULT);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -95764,7 +95764,7 @@ public class TaCodegenServe {
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         int optInFastK_Period = GetInt(p, "optInFastK_Period", 0);
         int optInFastD_Period = GetInt(p, "optInFastD_Period", 0);
-        MAType optInFastD_MAType = (MAType)GetInt(p, "optInFastD_MAType", 0);
+        MAType optInFastD_MAType = (MAType)GetInt(p, "optInFastD_MAType", (int)MAType.DEFAULT);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the

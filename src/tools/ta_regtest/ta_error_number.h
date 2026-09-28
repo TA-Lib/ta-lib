@@ -395,6 +395,11 @@ typedef enum
   TA_INDEX_RANGE_XLANG_CALL_FAILED = 1540,
   TA_INDEX_RANGE_XLANG_MISMATCH    = 1541,
 
+  /* Cross-language absent MA-type field: the function's own default */
+  TA_ABSENT_MATYPE_CALL_FAILED     = 1545,
+  TA_ABSENT_MATYPE_MISMATCH        = 1546,
+  TA_ABSENT_MATYPE_VACUOUS         = 1547,
+
   /* Rolling extremum block scan vs a naive window scan (issue #147). */
   TA_REGTEST_ROLLING_EXTREMUM_CALL    = 1550,
   TA_REGTEST_ROLLING_EXTREMUM_BEGIDX  = 1551,

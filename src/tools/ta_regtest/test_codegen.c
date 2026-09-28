@@ -4019,6 +4019,71 @@ static ErrorNumber test_index_range_xlang(CodegenPipe *cp, const CodegenLanguage
     return TA_TEST_PASS;
 }
 
+/* A request with no optInMAType asks for the function's own default. APO is
+ * the probe because its default (EMA) is not the enum's zero (SMA), so a server
+ * that reads an absent enum field as 0 answers with different values. */
+static ErrorNumber test_absent_matype_xlang(CodegenPipe *cp, const CodegenLanguage *lang,
+                                            char *reqBuf, char *respBuf)
+{
+    #define AM_NB   40
+    #define AM_FAST 3
+    #define AM_SLOW 8
+    TA_Real in[AM_NB], want[AM_NB], sma[AM_NB], got[AM_NB];
+    TA_Integer beg, nb, begSma, nbSma;
+    int i, pos, rc, gotBeg, gotNb, parsed;
+
+    for( i = 0; i < AM_NB; i++ )
+        in[i] = 100.0 + 0.37 * (double)(i % 7) + 0.11 * (double)i;
+
+    if( TA_APO( 0, AM_NB-1, in, AM_FAST, AM_SLOW, TA_MAType_DEFAULT, &beg, &nb, want ) != TA_SUCCESS
+        || TA_APO( 0, AM_NB-1, in, AM_FAST, AM_SLOW, TA_MAType_SMA, &begSma, &nbSma, sma ) != TA_SUCCESS )
+    {
+        printf("  ABSENT MATYPE [%s]: in-process TA_APO failed\n", lang->display);
+        return TA_ABSENT_MATYPE_CALL_FAILED;
+    }
+    if( nb < 1 || (beg == begSma && nb == nbSma && memcmp(want, sma, (size_t)nb * sizeof(TA_Real)) == 0) )
+    {
+        printf("  ABSENT MATYPE [%s]: APO's default is indistinguishable from SMA\n", lang->display);
+        return TA_ABSENT_MATYPE_VACUOUS;
+    }
+
+    pos = codegen_appendf(reqBuf, JSON_BUF_SIZE, 0,
+            "{\"method\":\"TA_APO\",\"params\":{\"startIdx\":0,\"endIdx\":%d,\"inReal\":", AM_NB-1);
+    pos = json_write_double_array(reqBuf, JSON_BUF_SIZE, pos, in, AM_NB, 0);
+    codegen_appendf(reqBuf, JSON_BUF_SIZE, pos,
+            ",\"optInFastPeriod\":%d,\"optInSlowPeriod\":%d}}", AM_FAST, AM_SLOW);
+
+    if( codegen_pipe_call(cp, reqBuf, respBuf, JSON_BUF_SIZE) != TA_TEST_PASS || json_is_error(respBuf) )
+    {
+        printf("  ABSENT MATYPE [%s]: call failed: %s\n", lang->display, respBuf);
+        return TA_ABSENT_MATYPE_CALL_FAILED;
+    }
+    rc = json_get_int(respBuf, "retCode");
+    gotBeg = json_get_int(respBuf, "outBegIdx");
+    gotNb = json_get_int(respBuf, "outNBElement");
+    parsed = json_get_double_array(respBuf, "outReal", got, AM_NB);
+    if( rc != TA_SUCCESS || gotBeg != beg || gotNb != nb || parsed != nb )
+    {
+        printf("  ABSENT MATYPE [%s]: TA_APO without optInMAType returned rc=%d (%d,%d), "
+               "not TA_MAType_DEFAULT's (%d,%d)\n",
+               lang->display, rc, gotBeg, gotNb, (int)beg, (int)nb);
+        return TA_ABSENT_MATYPE_MISMATCH;
+    }
+    for( i = 0; i < nb; i++ )
+    {
+        if( memcmp(&got[i], &want[i], sizeof(TA_Real)) != 0 )
+        {
+            printf("  ABSENT MATYPE [%s]: TA_APO without optInMAType, output %d is %.17g, "
+                   "TA_MAType_DEFAULT gives %.17g\n", lang->display, i, got[i], want[i]);
+            return TA_ABSENT_MATYPE_MISMATCH;
+        }
+    }
+    return TA_TEST_PASS;
+    #undef AM_NB
+    #undef AM_FAST
+    #undef AM_SLOW
+}
+
 /* set_unstable_period's set-all wildcard (id == TA_FUNC_UNST_ALL) must really
  * reach every function on every server (issue #144).
  *
@@ -4467,6 +4532,16 @@ static ErrorNumber test_codegen_for_language(
         if( idxErr != TA_TEST_PASS )
         {
             ctx.error = idxErr;
+            ctx.failed++;
+        }
+    }
+
+    if( ctx.error == TA_TEST_PASS )
+    {
+        ErrorNumber amErr = test_absent_matype_xlang(&cp, lang, requestBuf, responseBuf);
+        if( amErr != TA_TEST_PASS )
+        {
+            ctx.error = amErr;
             ctx.failed++;
         }
     }

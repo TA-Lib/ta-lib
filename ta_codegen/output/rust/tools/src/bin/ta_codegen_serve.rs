@@ -2125,7 +2125,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             }
             let optInFastPeriod = params["optInFastPeriod"].as_i64().unwrap_or(12) as i32;
             let optInSlowPeriod = params["optInSlowPeriod"].as_i64().unwrap_or(26) as i32;
-            let optInMAType_raw = params["optInMAType"].as_i64().unwrap_or(1) as i32;
+            let optInMAType_raw = params["optInMAType"].as_i64().unwrap_or(MAType::DEFAULT as i64) as i32;
             let optInMAType_res = MAType::try_from(optInMAType_raw);
             let optInMAType = optInMAType_res.unwrap_or(MAType::SMA);
             // The output buffers are sized to the count the call actually PRODUCES --
@@ -3133,7 +3133,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(20) as i32;
             let optInNbDevUp = params["optInNbDevUp"].as_f64().unwrap_or(2.0) as f64;
             let optInNbDevDn = params["optInNbDevDn"].as_f64().unwrap_or(2.0) as f64;
-            let optInMAType_raw = params["optInMAType"].as_i64().unwrap_or(0) as i32;
+            let optInMAType_raw = params["optInMAType"].as_i64().unwrap_or(MAType::DEFAULT as i64) as i32;
             let optInMAType_res = MAType::try_from(optInMAType_raw);
             let optInMAType = optInMAType_res.unwrap_or(MAType::SMA);
             // The output buffers are sized to the count the call actually PRODUCES --
@@ -3252,7 +3252,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(20) as i32;
             let optInNbDevUp = params["optInNbDevUp"].as_f64().unwrap_or(2.0) as f64;
             let optInNbDevDn = params["optInNbDevDn"].as_f64().unwrap_or(2.0) as f64;
-            let optInMAType_raw = params["optInMAType"].as_i64().unwrap_or(0) as i32;
+            let optInMAType_raw = params["optInMAType"].as_i64().unwrap_or(MAType::DEFAULT as i64) as i32;
             let optInMAType_res = MAType::try_from(optInMAType_raw);
             let optInMAType = optInMAType_res.unwrap_or(MAType::SMA);
             // The output buffers are sized to the count the call actually PRODUCES --
@@ -15288,11 +15288,11 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             }
             let optInFastK_Period = params["optInFastK_Period"].as_i64().unwrap_or(9) as i32;
             let optInSlowK_Period = params["optInSlowK_Period"].as_i64().unwrap_or(3) as i32;
-            let optInSlowK_MAType_raw = params["optInSlowK_MAType"].as_i64().unwrap_or(13) as i32;
+            let optInSlowK_MAType_raw = params["optInSlowK_MAType"].as_i64().unwrap_or(MAType::DEFAULT as i64) as i32;
             let optInSlowK_MAType_res = MAType::try_from(optInSlowK_MAType_raw);
             let optInSlowK_MAType = optInSlowK_MAType_res.unwrap_or(MAType::SMA);
             let optInSlowD_Period = params["optInSlowD_Period"].as_i64().unwrap_or(3) as i32;
-            let optInSlowD_MAType_raw = params["optInSlowD_MAType"].as_i64().unwrap_or(13) as i32;
+            let optInSlowD_MAType_raw = params["optInSlowD_MAType"].as_i64().unwrap_or(MAType::DEFAULT as i64) as i32;
             let optInSlowD_MAType_res = MAType::try_from(optInSlowD_MAType_raw);
             let optInSlowD_MAType = optInSlowD_MAType_res.unwrap_or(MAType::SMA);
             // The output buffers are sized to the count the call actually PRODUCES --
@@ -16122,7 +16122,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 inReal = &_json_inReal;
             }
             let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
-            let optInMAType_raw = params["optInMAType"].as_i64().unwrap_or(0) as i32;
+            let optInMAType_raw = params["optInMAType"].as_i64().unwrap_or(MAType::DEFAULT as i64) as i32;
             let optInMAType_res = MAType::try_from(optInMAType_raw);
             let optInMAType = optInMAType_res.unwrap_or(MAType::SMA);
             // The output buffers are sized to the count the call actually PRODUCES --
@@ -16343,15 +16343,15 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 inReal = &_json_inReal;
             }
             let optInFastPeriod = params["optInFastPeriod"].as_i64().unwrap_or(12) as i32;
-            let optInFastMAType_raw = params["optInFastMAType"].as_i64().unwrap_or(0) as i32;
+            let optInFastMAType_raw = params["optInFastMAType"].as_i64().unwrap_or(MAType::DEFAULT as i64) as i32;
             let optInFastMAType_res = MAType::try_from(optInFastMAType_raw);
             let optInFastMAType = optInFastMAType_res.unwrap_or(MAType::SMA);
             let optInSlowPeriod = params["optInSlowPeriod"].as_i64().unwrap_or(26) as i32;
-            let optInSlowMAType_raw = params["optInSlowMAType"].as_i64().unwrap_or(0) as i32;
+            let optInSlowMAType_raw = params["optInSlowMAType"].as_i64().unwrap_or(MAType::DEFAULT as i64) as i32;
             let optInSlowMAType_res = MAType::try_from(optInSlowMAType_raw);
             let optInSlowMAType = optInSlowMAType_res.unwrap_or(MAType::SMA);
             let optInSignalPeriod = params["optInSignalPeriod"].as_i64().unwrap_or(9) as i32;
-            let optInSignalMAType_raw = params["optInSignalMAType"].as_i64().unwrap_or(0) as i32;
+            let optInSignalMAType_raw = params["optInSignalMAType"].as_i64().unwrap_or(MAType::DEFAULT as i64) as i32;
             let optInSignalMAType_res = MAType::try_from(optInSignalMAType_raw);
             let optInSignalMAType = optInSignalMAType_res.unwrap_or(MAType::SMA);
             // The output buffers are sized to the count the call actually PRODUCES --
@@ -16924,7 +16924,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             }
             let optInMinPeriod = params["optInMinPeriod"].as_i64().unwrap_or(2) as i32;
             let optInMaxPeriod = params["optInMaxPeriod"].as_i64().unwrap_or(30) as i32;
-            let optInMAType_raw = params["optInMAType"].as_i64().unwrap_or(0) as i32;
+            let optInMAType_raw = params["optInMAType"].as_i64().unwrap_or(MAType::DEFAULT as i64) as i32;
             let optInMAType_res = MAType::try_from(optInMAType_raw);
             let optInMAType = optInMAType_res.unwrap_or(MAType::SMA);
             // The output buffers are sized to the count the call actually PRODUCES --
@@ -18984,7 +18984,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(20) as i32;
             let optInNbDevUp = params["optInNbDevUp"].as_f64().unwrap_or(2.0) as f64;
             let optInNbDevDn = params["optInNbDevDn"].as_f64().unwrap_or(2.0) as f64;
-            let optInMAType_raw = params["optInMAType"].as_i64().unwrap_or(0) as i32;
+            let optInMAType_raw = params["optInMAType"].as_i64().unwrap_or(MAType::DEFAULT as i64) as i32;
             let optInMAType_res = MAType::try_from(optInMAType_raw);
             let optInMAType = optInMAType_res.unwrap_or(MAType::SMA);
             // The output buffers are sized to the count the call actually PRODUCES --
@@ -19536,7 +19536,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             }
             let optInFastPeriod = params["optInFastPeriod"].as_i64().unwrap_or(12) as i32;
             let optInSlowPeriod = params["optInSlowPeriod"].as_i64().unwrap_or(26) as i32;
-            let optInMAType_raw = params["optInMAType"].as_i64().unwrap_or(1) as i32;
+            let optInMAType_raw = params["optInMAType"].as_i64().unwrap_or(MAType::DEFAULT as i64) as i32;
             let optInMAType_res = MAType::try_from(optInMAType_raw);
             let optInMAType = optInMAType_res.unwrap_or(MAType::SMA);
             // The output buffers are sized to the count the call actually PRODUCES --
@@ -19755,7 +19755,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             }
             let optInFastPeriod = params["optInFastPeriod"].as_i64().unwrap_or(12) as i32;
             let optInSlowPeriod = params["optInSlowPeriod"].as_i64().unwrap_or(26) as i32;
-            let optInMAType_raw = params["optInMAType"].as_i64().unwrap_or(1) as i32;
+            let optInMAType_raw = params["optInMAType"].as_i64().unwrap_or(MAType::DEFAULT as i64) as i32;
             let optInMAType_res = MAType::try_from(optInMAType_raw);
             let optInMAType = optInMAType_res.unwrap_or(MAType::SMA);
             // The output buffers are sized to the count the call actually PRODUCES --
@@ -22032,11 +22032,11 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             }
             let optInFastK_Period = params["optInFastK_Period"].as_i64().unwrap_or(5) as i32;
             let optInSlowK_Period = params["optInSlowK_Period"].as_i64().unwrap_or(3) as i32;
-            let optInSlowK_MAType_raw = params["optInSlowK_MAType"].as_i64().unwrap_or(0) as i32;
+            let optInSlowK_MAType_raw = params["optInSlowK_MAType"].as_i64().unwrap_or(MAType::DEFAULT as i64) as i32;
             let optInSlowK_MAType_res = MAType::try_from(optInSlowK_MAType_raw);
             let optInSlowK_MAType = optInSlowK_MAType_res.unwrap_or(MAType::SMA);
             let optInSlowD_Period = params["optInSlowD_Period"].as_i64().unwrap_or(3) as i32;
-            let optInSlowD_MAType_raw = params["optInSlowD_MAType"].as_i64().unwrap_or(0) as i32;
+            let optInSlowD_MAType_raw = params["optInSlowD_MAType"].as_i64().unwrap_or(MAType::DEFAULT as i64) as i32;
             let optInSlowD_MAType_res = MAType::try_from(optInSlowD_MAType_raw);
             let optInSlowD_MAType = optInSlowD_MAType_res.unwrap_or(MAType::SMA);
             // The output buffers are sized to the count the call actually PRODUCES --
@@ -22168,7 +22168,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             }
             let optInFastK_Period = params["optInFastK_Period"].as_i64().unwrap_or(5) as i32;
             let optInFastD_Period = params["optInFastD_Period"].as_i64().unwrap_or(3) as i32;
-            let optInFastD_MAType_raw = params["optInFastD_MAType"].as_i64().unwrap_or(0) as i32;
+            let optInFastD_MAType_raw = params["optInFastD_MAType"].as_i64().unwrap_or(MAType::DEFAULT as i64) as i32;
             let optInFastD_MAType_res = MAType::try_from(optInFastD_MAType_raw);
             let optInFastD_MAType = optInFastD_MAType_res.unwrap_or(MAType::SMA);
             // The output buffers are sized to the count the call actually PRODUCES --
@@ -22285,7 +22285,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
             let optInFastK_Period = params["optInFastK_Period"].as_i64().unwrap_or(5) as i32;
             let optInFastD_Period = params["optInFastD_Period"].as_i64().unwrap_or(3) as i32;
-            let optInFastD_MAType_raw = params["optInFastD_MAType"].as_i64().unwrap_or(0) as i32;
+            let optInFastD_MAType_raw = params["optInFastD_MAType"].as_i64().unwrap_or(MAType::DEFAULT as i64) as i32;
             let optInFastD_MAType_res = MAType::try_from(optInFastD_MAType_raw);
             let optInFastD_MAType = optInFastD_MAType_res.unwrap_or(MAType::SMA);
             // The output buffers are sized to the count the call actually PRODUCES --
@@ -27285,7 +27285,7 @@ fn sv_apo(core: &Core, params: &Value) -> String {
     };
     let optInFastPeriod = params["optInFastPeriod"].as_i64().unwrap_or(12) as i32;
     let optInSlowPeriod = params["optInSlowPeriod"].as_i64().unwrap_or(26) as i32;
-    let optInMAType_raw = params["optInMAType"].as_i64().unwrap_or(1) as i32;
+    let optInMAType_raw = params["optInMAType"].as_i64().unwrap_or(MAType::DEFAULT as i64) as i32;
     let optInMAType = match MAType::try_from(optInMAType_raw) {
         Ok(v) => v,
         Err(_) => return "{\"retCode\":2,\"legs\":0,\"nb\":0,\"openRejects\":1,\"ok\":1,\"peek_ok\":1}".to_string(),
@@ -28741,7 +28741,7 @@ fn sv_bbands(core: &Core, params: &Value) -> String {
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(20) as i32;
     let optInNbDevUp = params["optInNbDevUp"].as_f64().unwrap_or(2.0);
     let optInNbDevDn = params["optInNbDevDn"].as_f64().unwrap_or(2.0);
-    let optInMAType_raw = params["optInMAType"].as_i64().unwrap_or(0) as i32;
+    let optInMAType_raw = params["optInMAType"].as_i64().unwrap_or(MAType::DEFAULT as i64) as i32;
     let optInMAType = match MAType::try_from(optInMAType_raw) {
         Ok(v) => v,
         Err(_) => return "{\"retCode\":2,\"legs\":0,\"nb\":0,\"openRejects\":1,\"ok\":1,\"peek_ok\":1}".to_string(),
@@ -28942,7 +28942,7 @@ fn sv_bbw(core: &Core, params: &Value) -> String {
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(20) as i32;
     let optInNbDevUp = params["optInNbDevUp"].as_f64().unwrap_or(2.0);
     let optInNbDevDn = params["optInNbDevDn"].as_f64().unwrap_or(2.0);
-    let optInMAType_raw = params["optInMAType"].as_i64().unwrap_or(0) as i32;
+    let optInMAType_raw = params["optInMAType"].as_i64().unwrap_or(MAType::DEFAULT as i64) as i32;
     let optInMAType = match MAType::try_from(optInMAType_raw) {
         Ok(v) => v,
         Err(_) => return "{\"retCode\":2,\"legs\":0,\"nb\":0,\"openRejects\":1,\"ok\":1,\"peek_ok\":1}".to_string(),
@@ -45536,13 +45536,13 @@ fn sv_kdj(core: &Core, params: &Value) -> String {
     };
     let optInFastK_Period = params["optInFastK_Period"].as_i64().unwrap_or(9) as i32;
     let optInSlowK_Period = params["optInSlowK_Period"].as_i64().unwrap_or(3) as i32;
-    let optInSlowK_MAType_raw = params["optInSlowK_MAType"].as_i64().unwrap_or(13) as i32;
+    let optInSlowK_MAType_raw = params["optInSlowK_MAType"].as_i64().unwrap_or(MAType::DEFAULT as i64) as i32;
     let optInSlowK_MAType = match MAType::try_from(optInSlowK_MAType_raw) {
         Ok(v) => v,
         Err(_) => return "{\"retCode\":2,\"legs\":0,\"nb\":0,\"openRejects\":1,\"ok\":1,\"peek_ok\":1}".to_string(),
     };
     let optInSlowD_Period = params["optInSlowD_Period"].as_i64().unwrap_or(3) as i32;
-    let optInSlowD_MAType_raw = params["optInSlowD_MAType"].as_i64().unwrap_or(13) as i32;
+    let optInSlowD_MAType_raw = params["optInSlowD_MAType"].as_i64().unwrap_or(MAType::DEFAULT as i64) as i32;
     let optInSlowD_MAType = match MAType::try_from(optInSlowD_MAType_raw) {
         Ok(v) => v,
         Err(_) => return "{\"retCode\":2,\"legs\":0,\"nb\":0,\"openRejects\":1,\"ok\":1,\"peek_ok\":1}".to_string(),
@@ -46852,7 +46852,7 @@ fn sv_ma(core: &Core, params: &Value) -> String {
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
-    let optInMAType_raw = params["optInMAType"].as_i64().unwrap_or(0) as i32;
+    let optInMAType_raw = params["optInMAType"].as_i64().unwrap_or(MAType::DEFAULT as i64) as i32;
     let optInMAType = match MAType::try_from(optInMAType_raw) {
         Ok(v) => v,
         Err(_) => return "{\"retCode\":2,\"legs\":0,\"nb\":0,\"openRejects\":1,\"ok\":1,\"peek_ok\":1}".to_string(),
@@ -47213,19 +47213,19 @@ fn sv_macdext(core: &Core, params: &Value) -> String {
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
     let optInFastPeriod = params["optInFastPeriod"].as_i64().unwrap_or(12) as i32;
-    let optInFastMAType_raw = params["optInFastMAType"].as_i64().unwrap_or(0) as i32;
+    let optInFastMAType_raw = params["optInFastMAType"].as_i64().unwrap_or(MAType::DEFAULT as i64) as i32;
     let optInFastMAType = match MAType::try_from(optInFastMAType_raw) {
         Ok(v) => v,
         Err(_) => return "{\"retCode\":2,\"legs\":0,\"nb\":0,\"openRejects\":1,\"ok\":1,\"peek_ok\":1}".to_string(),
     };
     let optInSlowPeriod = params["optInSlowPeriod"].as_i64().unwrap_or(26) as i32;
-    let optInSlowMAType_raw = params["optInSlowMAType"].as_i64().unwrap_or(0) as i32;
+    let optInSlowMAType_raw = params["optInSlowMAType"].as_i64().unwrap_or(MAType::DEFAULT as i64) as i32;
     let optInSlowMAType = match MAType::try_from(optInSlowMAType_raw) {
         Ok(v) => v,
         Err(_) => return "{\"retCode\":2,\"legs\":0,\"nb\":0,\"openRejects\":1,\"ok\":1,\"peek_ok\":1}".to_string(),
     };
     let optInSignalPeriod = params["optInSignalPeriod"].as_i64().unwrap_or(9) as i32;
-    let optInSignalMAType_raw = params["optInSignalMAType"].as_i64().unwrap_or(0) as i32;
+    let optInSignalMAType_raw = params["optInSignalMAType"].as_i64().unwrap_or(MAType::DEFAULT as i64) as i32;
     let optInSignalMAType = match MAType::try_from(optInSignalMAType_raw) {
         Ok(v) => v,
         Err(_) => return "{\"retCode\":2,\"legs\":0,\"nb\":0,\"openRejects\":1,\"ok\":1,\"peek_ok\":1}".to_string(),
@@ -48110,7 +48110,7 @@ fn sv_mavp(core: &Core, params: &Value) -> String {
     };
     let optInMinPeriod = params["optInMinPeriod"].as_i64().unwrap_or(2) as i32;
     let optInMaxPeriod = params["optInMaxPeriod"].as_i64().unwrap_or(30) as i32;
-    let optInMAType_raw = params["optInMAType"].as_i64().unwrap_or(0) as i32;
+    let optInMAType_raw = params["optInMAType"].as_i64().unwrap_or(MAType::DEFAULT as i64) as i32;
     let optInMAType = match MAType::try_from(optInMAType_raw) {
         Ok(v) => v,
         Err(_) => return "{\"retCode\":2,\"legs\":0,\"nb\":0,\"openRejects\":1,\"ok\":1,\"peek_ok\":1}".to_string(),
@@ -51173,7 +51173,7 @@ fn sv_percentb(core: &Core, params: &Value) -> String {
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(20) as i32;
     let optInNbDevUp = params["optInNbDevUp"].as_f64().unwrap_or(2.0);
     let optInNbDevDn = params["optInNbDevDn"].as_f64().unwrap_or(2.0);
-    let optInMAType_raw = params["optInMAType"].as_i64().unwrap_or(0) as i32;
+    let optInMAType_raw = params["optInMAType"].as_i64().unwrap_or(MAType::DEFAULT as i64) as i32;
     let optInMAType = match MAType::try_from(optInMAType_raw) {
         Ok(v) => v,
         Err(_) => return "{\"retCode\":2,\"legs\":0,\"nb\":0,\"openRejects\":1,\"ok\":1,\"peek_ok\":1}".to_string(),
@@ -51982,7 +51982,7 @@ fn sv_ppo(core: &Core, params: &Value) -> String {
     };
     let optInFastPeriod = params["optInFastPeriod"].as_i64().unwrap_or(12) as i32;
     let optInSlowPeriod = params["optInSlowPeriod"].as_i64().unwrap_or(26) as i32;
-    let optInMAType_raw = params["optInMAType"].as_i64().unwrap_or(1) as i32;
+    let optInMAType_raw = params["optInMAType"].as_i64().unwrap_or(MAType::DEFAULT as i64) as i32;
     let optInMAType = match MAType::try_from(optInMAType_raw) {
         Ok(v) => v,
         Err(_) => return "{\"retCode\":2,\"legs\":0,\"nb\":0,\"openRejects\":1,\"ok\":1,\"peek_ok\":1}".to_string(),
@@ -52310,7 +52310,7 @@ fn sv_pvo(core: &Core, params: &Value) -> String {
     };
     let optInFastPeriod = params["optInFastPeriod"].as_i64().unwrap_or(12) as i32;
     let optInSlowPeriod = params["optInSlowPeriod"].as_i64().unwrap_or(26) as i32;
-    let optInMAType_raw = params["optInMAType"].as_i64().unwrap_or(1) as i32;
+    let optInMAType_raw = params["optInMAType"].as_i64().unwrap_or(MAType::DEFAULT as i64) as i32;
     let optInMAType = match MAType::try_from(optInMAType_raw) {
         Ok(v) => v,
         Err(_) => return "{\"retCode\":2,\"legs\":0,\"nb\":0,\"openRejects\":1,\"ok\":1,\"peek_ok\":1}".to_string(),
@@ -55690,13 +55690,13 @@ fn sv_stoch(core: &Core, params: &Value) -> String {
     };
     let optInFastK_Period = params["optInFastK_Period"].as_i64().unwrap_or(5) as i32;
     let optInSlowK_Period = params["optInSlowK_Period"].as_i64().unwrap_or(3) as i32;
-    let optInSlowK_MAType_raw = params["optInSlowK_MAType"].as_i64().unwrap_or(0) as i32;
+    let optInSlowK_MAType_raw = params["optInSlowK_MAType"].as_i64().unwrap_or(MAType::DEFAULT as i64) as i32;
     let optInSlowK_MAType = match MAType::try_from(optInSlowK_MAType_raw) {
         Ok(v) => v,
         Err(_) => return "{\"retCode\":2,\"legs\":0,\"nb\":0,\"openRejects\":1,\"ok\":1,\"peek_ok\":1}".to_string(),
     };
     let optInSlowD_Period = params["optInSlowD_Period"].as_i64().unwrap_or(3) as i32;
-    let optInSlowD_MAType_raw = params["optInSlowD_MAType"].as_i64().unwrap_or(0) as i32;
+    let optInSlowD_MAType_raw = params["optInSlowD_MAType"].as_i64().unwrap_or(MAType::DEFAULT as i64) as i32;
     let optInSlowD_MAType = match MAType::try_from(optInSlowD_MAType_raw) {
         Ok(v) => v,
         Err(_) => return "{\"retCode\":2,\"legs\":0,\"nb\":0,\"openRejects\":1,\"ok\":1,\"peek_ok\":1}".to_string(),
@@ -55881,7 +55881,7 @@ fn sv_stochf(core: &Core, params: &Value) -> String {
     };
     let optInFastK_Period = params["optInFastK_Period"].as_i64().unwrap_or(5) as i32;
     let optInFastD_Period = params["optInFastD_Period"].as_i64().unwrap_or(3) as i32;
-    let optInFastD_MAType_raw = params["optInFastD_MAType"].as_i64().unwrap_or(0) as i32;
+    let optInFastD_MAType_raw = params["optInFastD_MAType"].as_i64().unwrap_or(MAType::DEFAULT as i64) as i32;
     let optInFastD_MAType = match MAType::try_from(optInFastD_MAType_raw) {
         Ok(v) => v,
         Err(_) => return "{\"retCode\":2,\"legs\":0,\"nb\":0,\"openRejects\":1,\"ok\":1,\"peek_ok\":1}".to_string(),
@@ -56067,7 +56067,7 @@ fn sv_stochrsi(core: &Core, params: &Value) -> String {
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
     let optInFastK_Period = params["optInFastK_Period"].as_i64().unwrap_or(5) as i32;
     let optInFastD_Period = params["optInFastD_Period"].as_i64().unwrap_or(3) as i32;
-    let optInFastD_MAType_raw = params["optInFastD_MAType"].as_i64().unwrap_or(0) as i32;
+    let optInFastD_MAType_raw = params["optInFastD_MAType"].as_i64().unwrap_or(MAType::DEFAULT as i64) as i32;
     let optInFastD_MAType = match MAType::try_from(optInFastD_MAType_raw) {
         Ok(v) => v,
         Err(_) => return "{\"retCode\":2,\"legs\":0,\"nb\":0,\"openRejects\":1,\"ok\":1,\"peek_ok\":1}".to_string(),

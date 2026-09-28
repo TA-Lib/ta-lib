@@ -109,7 +109,7 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
                 // it — the same shape, and the same reason, as the Java server.
                 let _ = writeln!(
                     s,
-                    "    let {name}_raw = params[\"{name}\"].as_i64().unwrap_or({d}) as i32;"
+                    "    let {name}_raw = params[\"{name}\"].as_i64().unwrap_or({enum_name}::DEFAULT as i64) as i32;"
                 );
                 let _ = writeln!(s, "    let {name} = match {enum_name}::try_from({name}_raw) {{");
                 s.push_str("        Ok(v) => v,

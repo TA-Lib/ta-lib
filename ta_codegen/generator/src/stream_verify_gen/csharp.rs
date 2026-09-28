@@ -148,8 +148,7 @@ fn emit_csharp_sv_func(
                 );
             }
             crate::ir::ParamType::Enum(en) => {
-                let d = p.default.unwrap_or(0.0) as i64;
-                let _ = writeln!(s, "        int _raw_{name} = GetInt(req, \"{name}\", {d});");
+                let _ = writeln!(s, "        int _raw_{name} = GetInt(req, \"{name}\", (int){en}.DEFAULT);");
                 let _ = writeln!(s, "        {en} {name} = ({en})_raw_{name};");
                 enum_param_names.push(name.clone());
             }

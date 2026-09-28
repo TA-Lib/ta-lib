@@ -198102,7 +198102,7 @@ public class TaCodegenServe {
         boolean _optRejected = false;
         int optInFastPeriod = jsonInt(json, "optInFastPeriod");
         int optInSlowPeriod = jsonInt(json, "optInSlowPeriod");
-        int _raw_optInMAType = jsonInt(json, "optInMAType");
+        int _raw_optInMAType = json.contains("\"optInMAType\"") ? jsonInt(json, "optInMAType") : MAType.DEFAULT.ordinal();
         if (_raw_optInMAType < 0 || _raw_optInMAType >= MAType.values().length) _optRejected = true;
         MAType optInMAType = MAType.values()[_optRejected ? 0 : _raw_optInMAType];
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -199501,7 +199501,7 @@ public class TaCodegenServe {
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
         double optInNbDevUp = jsonDouble(json, "optInNbDevUp");
         double optInNbDevDn = jsonDouble(json, "optInNbDevDn");
-        int _raw_optInMAType = jsonInt(json, "optInMAType");
+        int _raw_optInMAType = json.contains("\"optInMAType\"") ? jsonInt(json, "optInMAType") : MAType.DEFAULT.ordinal();
         if (_raw_optInMAType < 0 || _raw_optInMAType >= MAType.values().length) _optRejected = true;
         MAType optInMAType = MAType.values()[_optRejected ? 0 : _raw_optInMAType];
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -199659,7 +199659,7 @@ public class TaCodegenServe {
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
         double optInNbDevUp = jsonDouble(json, "optInNbDevUp");
         double optInNbDevDn = jsonDouble(json, "optInNbDevDn");
-        int _raw_optInMAType = jsonInt(json, "optInMAType");
+        int _raw_optInMAType = json.contains("\"optInMAType\"") ? jsonInt(json, "optInMAType") : MAType.DEFAULT.ordinal();
         if (_raw_optInMAType < 0 || _raw_optInMAType >= MAType.values().length) _optRejected = true;
         MAType optInMAType = MAType.values()[_optRejected ? 0 : _raw_optInMAType];
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -216104,11 +216104,11 @@ public class TaCodegenServe {
         boolean _optRejected = false;
         int optInFastK_Period = jsonInt(json, "optInFastK_Period");
         int optInSlowK_Period = jsonInt(json, "optInSlowK_Period");
-        int _raw_optInSlowK_MAType = jsonInt(json, "optInSlowK_MAType");
+        int _raw_optInSlowK_MAType = json.contains("\"optInSlowK_MAType\"") ? jsonInt(json, "optInSlowK_MAType") : MAType.DEFAULT.ordinal();
         if (_raw_optInSlowK_MAType < 0 || _raw_optInSlowK_MAType >= MAType.values().length) _optRejected = true;
         MAType optInSlowK_MAType = MAType.values()[_optRejected ? 0 : _raw_optInSlowK_MAType];
         int optInSlowD_Period = jsonInt(json, "optInSlowD_Period");
-        int _raw_optInSlowD_MAType = jsonInt(json, "optInSlowD_MAType");
+        int _raw_optInSlowD_MAType = json.contains("\"optInSlowD_MAType\"") ? jsonInt(json, "optInSlowD_MAType") : MAType.DEFAULT.ordinal();
         if (_raw_optInSlowD_MAType < 0 || _raw_optInSlowD_MAType >= MAType.values().length) _optRejected = true;
         MAType optInSlowD_MAType = MAType.values()[_optRejected ? 0 : _raw_optInSlowD_MAType];
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -217297,7 +217297,7 @@ public class TaCodegenServe {
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
-        int _raw_optInMAType = jsonInt(json, "optInMAType");
+        int _raw_optInMAType = json.contains("\"optInMAType\"") ? jsonInt(json, "optInMAType") : MAType.DEFAULT.ordinal();
         if (_raw_optInMAType < 0 || _raw_optInMAType >= MAType.values().length) _optRejected = true;
         MAType optInMAType = MAType.values()[_optRejected ? 0 : _raw_optInMAType];
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -217602,15 +217602,15 @@ public class TaCodegenServe {
         }
         boolean _optRejected = false;
         int optInFastPeriod = jsonInt(json, "optInFastPeriod");
-        int _raw_optInFastMAType = jsonInt(json, "optInFastMAType");
+        int _raw_optInFastMAType = json.contains("\"optInFastMAType\"") ? jsonInt(json, "optInFastMAType") : MAType.DEFAULT.ordinal();
         if (_raw_optInFastMAType < 0 || _raw_optInFastMAType >= MAType.values().length) _optRejected = true;
         MAType optInFastMAType = MAType.values()[_optRejected ? 0 : _raw_optInFastMAType];
         int optInSlowPeriod = jsonInt(json, "optInSlowPeriod");
-        int _raw_optInSlowMAType = jsonInt(json, "optInSlowMAType");
+        int _raw_optInSlowMAType = json.contains("\"optInSlowMAType\"") ? jsonInt(json, "optInSlowMAType") : MAType.DEFAULT.ordinal();
         if (_raw_optInSlowMAType < 0 || _raw_optInSlowMAType >= MAType.values().length) _optRejected = true;
         MAType optInSlowMAType = MAType.values()[_optRejected ? 0 : _raw_optInSlowMAType];
         int optInSignalPeriod = jsonInt(json, "optInSignalPeriod");
-        int _raw_optInSignalMAType = jsonInt(json, "optInSignalMAType");
+        int _raw_optInSignalMAType = json.contains("\"optInSignalMAType\"") ? jsonInt(json, "optInSignalMAType") : MAType.DEFAULT.ordinal();
         if (_raw_optInSignalMAType < 0 || _raw_optInSignalMAType >= MAType.values().length) _optRejected = true;
         MAType optInSignalMAType = MAType.values()[_optRejected ? 0 : _raw_optInSignalMAType];
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -218391,7 +218391,7 @@ public class TaCodegenServe {
         boolean _optRejected = false;
         int optInMinPeriod = jsonInt(json, "optInMinPeriod");
         int optInMaxPeriod = jsonInt(json, "optInMaxPeriod");
-        int _raw_optInMAType = jsonInt(json, "optInMAType");
+        int _raw_optInMAType = json.contains("\"optInMAType\"") ? jsonInt(json, "optInMAType") : MAType.DEFAULT.ordinal();
         if (_raw_optInMAType < 0 || _raw_optInMAType >= MAType.values().length) _optRejected = true;
         MAType optInMAType = MAType.values()[_optRejected ? 0 : _raw_optInMAType];
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -221288,7 +221288,7 @@ public class TaCodegenServe {
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
         double optInNbDevUp = jsonDouble(json, "optInNbDevUp");
         double optInNbDevDn = jsonDouble(json, "optInNbDevDn");
-        int _raw_optInMAType = jsonInt(json, "optInMAType");
+        int _raw_optInMAType = json.contains("\"optInMAType\"") ? jsonInt(json, "optInMAType") : MAType.DEFAULT.ordinal();
         if (_raw_optInMAType < 0 || _raw_optInMAType >= MAType.values().length) _optRejected = true;
         MAType optInMAType = MAType.values()[_optRejected ? 0 : _raw_optInMAType];
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -222051,7 +222051,7 @@ public class TaCodegenServe {
         boolean _optRejected = false;
         int optInFastPeriod = jsonInt(json, "optInFastPeriod");
         int optInSlowPeriod = jsonInt(json, "optInSlowPeriod");
-        int _raw_optInMAType = jsonInt(json, "optInMAType");
+        int _raw_optInMAType = json.contains("\"optInMAType\"") ? jsonInt(json, "optInMAType") : MAType.DEFAULT.ordinal();
         if (_raw_optInMAType < 0 || _raw_optInMAType >= MAType.values().length) _optRejected = true;
         MAType optInMAType = MAType.values()[_optRejected ? 0 : _raw_optInMAType];
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -222355,7 +222355,7 @@ public class TaCodegenServe {
         boolean _optRejected = false;
         int optInFastPeriod = jsonInt(json, "optInFastPeriod");
         int optInSlowPeriod = jsonInt(json, "optInSlowPeriod");
-        int _raw_optInMAType = jsonInt(json, "optInMAType");
+        int _raw_optInMAType = json.contains("\"optInMAType\"") ? jsonInt(json, "optInMAType") : MAType.DEFAULT.ordinal();
         if (_raw_optInMAType < 0 || _raw_optInMAType >= MAType.values().length) _optRejected = true;
         MAType optInMAType = MAType.values()[_optRejected ? 0 : _raw_optInMAType];
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -225540,11 +225540,11 @@ public class TaCodegenServe {
         boolean _optRejected = false;
         int optInFastK_Period = jsonInt(json, "optInFastK_Period");
         int optInSlowK_Period = jsonInt(json, "optInSlowK_Period");
-        int _raw_optInSlowK_MAType = jsonInt(json, "optInSlowK_MAType");
+        int _raw_optInSlowK_MAType = json.contains("\"optInSlowK_MAType\"") ? jsonInt(json, "optInSlowK_MAType") : MAType.DEFAULT.ordinal();
         if (_raw_optInSlowK_MAType < 0 || _raw_optInSlowK_MAType >= MAType.values().length) _optRejected = true;
         MAType optInSlowK_MAType = MAType.values()[_optRejected ? 0 : _raw_optInSlowK_MAType];
         int optInSlowD_Period = jsonInt(json, "optInSlowD_Period");
-        int _raw_optInSlowD_MAType = jsonInt(json, "optInSlowD_MAType");
+        int _raw_optInSlowD_MAType = json.contains("\"optInSlowD_MAType\"") ? jsonInt(json, "optInSlowD_MAType") : MAType.DEFAULT.ordinal();
         if (_raw_optInSlowD_MAType < 0 || _raw_optInSlowD_MAType >= MAType.values().length) _optRejected = true;
         MAType optInSlowD_MAType = MAType.values()[_optRejected ? 0 : _raw_optInSlowD_MAType];
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -225712,7 +225712,7 @@ public class TaCodegenServe {
         boolean _optRejected = false;
         int optInFastK_Period = jsonInt(json, "optInFastK_Period");
         int optInFastD_Period = jsonInt(json, "optInFastD_Period");
-        int _raw_optInFastD_MAType = jsonInt(json, "optInFastD_MAType");
+        int _raw_optInFastD_MAType = json.contains("\"optInFastD_MAType\"") ? jsonInt(json, "optInFastD_MAType") : MAType.DEFAULT.ordinal();
         if (_raw_optInFastD_MAType < 0 || _raw_optInFastD_MAType >= MAType.values().length) _optRejected = true;
         MAType optInFastD_MAType = MAType.values()[_optRejected ? 0 : _raw_optInFastD_MAType];
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -225873,7 +225873,7 @@ public class TaCodegenServe {
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
         int optInFastK_Period = jsonInt(json, "optInFastK_Period");
         int optInFastD_Period = jsonInt(json, "optInFastD_Period");
-        int _raw_optInFastD_MAType = jsonInt(json, "optInFastD_MAType");
+        int _raw_optInFastD_MAType = json.contains("\"optInFastD_MAType\"") ? jsonInt(json, "optInFastD_MAType") : MAType.DEFAULT.ordinal();
         if (_raw_optInFastD_MAType < 0 || _raw_optInFastD_MAType >= MAType.values().length) _optRejected = true;
         MAType optInFastD_MAType = MAType.values()[_optRejected ? 0 : _raw_optInFastD_MAType];
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -229733,6 +229733,9 @@ public class TaCodegenServe {
             io.github.talib.metadata.OptInputInfo o = f.optInputs().get(i);
             switch (o.type()) {
                 case REAL_RANGE, REAL_LIST -> h.setOptInput(i, jsonDouble(json, o.paramName()));
+                case INTEGER_LIST -> {
+                    if (json.contains("\"" + o.paramName() + "\"")) h.setOptInput(i, jsonInt(json, o.paramName()));
+                }
                 default -> h.setOptInput(i, jsonInt(json, o.paramName()));
             }
         }
@@ -231517,7 +231520,7 @@ public class TaCodegenServe {
         int svK = jsonInt(json, "unstablePeriod");
         int optInFastPeriod = json.contains("\"optInFastPeriod\"") ? jsonInt(json, "optInFastPeriod") : 12;
         int optInSlowPeriod = json.contains("\"optInSlowPeriod\"") ? jsonInt(json, "optInSlowPeriod") : 26;
-        int _raw_optInMAType = json.contains("\"optInMAType\"") ? jsonInt(json, "optInMAType") : 1;
+        int _raw_optInMAType = json.contains("\"optInMAType\"") ? jsonInt(json, "optInMAType") : MAType.DEFAULT.ordinal();
         if (_raw_optInMAType < 0 || _raw_optInMAType >= MAType.values().length) {
             /* Out-of-list enum: unrepresentable in the type-safe Java surface —
              * batch and stream both reject at the type level (reject parity). */
@@ -233002,7 +233005,7 @@ public class TaCodegenServe {
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 20;
         double optInNbDevUp = json.contains("\"optInNbDevUp\"") ? jsonDouble(json, "optInNbDevUp") : 2e0;
         double optInNbDevDn = json.contains("\"optInNbDevDn\"") ? jsonDouble(json, "optInNbDevDn") : 2e0;
-        int _raw_optInMAType = json.contains("\"optInMAType\"") ? jsonInt(json, "optInMAType") : 0;
+        int _raw_optInMAType = json.contains("\"optInMAType\"") ? jsonInt(json, "optInMAType") : MAType.DEFAULT.ordinal();
         if (_raw_optInMAType < 0 || _raw_optInMAType >= MAType.values().length) {
             /* Out-of-list enum: unrepresentable in the type-safe Java surface —
              * batch and stream both reject at the type level (reject parity). */
@@ -233222,7 +233225,7 @@ public class TaCodegenServe {
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 20;
         double optInNbDevUp = json.contains("\"optInNbDevUp\"") ? jsonDouble(json, "optInNbDevUp") : 2e0;
         double optInNbDevDn = json.contains("\"optInNbDevDn\"") ? jsonDouble(json, "optInNbDevDn") : 2e0;
-        int _raw_optInMAType = json.contains("\"optInMAType\"") ? jsonInt(json, "optInMAType") : 0;
+        int _raw_optInMAType = json.contains("\"optInMAType\"") ? jsonInt(json, "optInMAType") : MAType.DEFAULT.ordinal();
         if (_raw_optInMAType < 0 || _raw_optInMAType >= MAType.values().length) {
             /* Out-of-list enum: unrepresentable in the type-safe Java surface —
              * batch and stream both reject at the type level (reject parity). */
@@ -249856,7 +249859,7 @@ public class TaCodegenServe {
         int svK = jsonInt(json, "unstablePeriod");
         int optInFastK_Period = json.contains("\"optInFastK_Period\"") ? jsonInt(json, "optInFastK_Period") : 9;
         int optInSlowK_Period = json.contains("\"optInSlowK_Period\"") ? jsonInt(json, "optInSlowK_Period") : 3;
-        int _raw_optInSlowK_MAType = json.contains("\"optInSlowK_MAType\"") ? jsonInt(json, "optInSlowK_MAType") : 13;
+        int _raw_optInSlowK_MAType = json.contains("\"optInSlowK_MAType\"") ? jsonInt(json, "optInSlowK_MAType") : MAType.DEFAULT.ordinal();
         if (_raw_optInSlowK_MAType < 0 || _raw_optInSlowK_MAType >= MAType.values().length) {
             /* Out-of-list enum: unrepresentable in the type-safe Java surface —
              * batch and stream both reject at the type level (reject parity). */
@@ -249864,7 +249867,7 @@ public class TaCodegenServe {
         }
         MAType optInSlowK_MAType = MAType.values()[_raw_optInSlowK_MAType];
         int optInSlowD_Period = json.contains("\"optInSlowD_Period\"") ? jsonInt(json, "optInSlowD_Period") : 3;
-        int _raw_optInSlowD_MAType = json.contains("\"optInSlowD_MAType\"") ? jsonInt(json, "optInSlowD_MAType") : 13;
+        int _raw_optInSlowD_MAType = json.contains("\"optInSlowD_MAType\"") ? jsonInt(json, "optInSlowD_MAType") : MAType.DEFAULT.ordinal();
         if (_raw_optInSlowD_MAType < 0 || _raw_optInSlowD_MAType >= MAType.values().length) {
             /* Out-of-list enum: unrepresentable in the type-safe Java surface —
              * batch and stream both reject at the type level (reject parity). */
@@ -251211,7 +251214,7 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 30;
-        int _raw_optInMAType = json.contains("\"optInMAType\"") ? jsonInt(json, "optInMAType") : 0;
+        int _raw_optInMAType = json.contains("\"optInMAType\"") ? jsonInt(json, "optInMAType") : MAType.DEFAULT.ordinal();
         if (_raw_optInMAType < 0 || _raw_optInMAType >= MAType.values().length) {
             /* Out-of-list enum: unrepresentable in the type-safe Java surface —
              * batch and stream both reject at the type level (reject parity). */
@@ -251595,7 +251598,7 @@ public class TaCodegenServe {
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
         int optInFastPeriod = json.contains("\"optInFastPeriod\"") ? jsonInt(json, "optInFastPeriod") : 12;
-        int _raw_optInFastMAType = json.contains("\"optInFastMAType\"") ? jsonInt(json, "optInFastMAType") : 0;
+        int _raw_optInFastMAType = json.contains("\"optInFastMAType\"") ? jsonInt(json, "optInFastMAType") : MAType.DEFAULT.ordinal();
         if (_raw_optInFastMAType < 0 || _raw_optInFastMAType >= MAType.values().length) {
             /* Out-of-list enum: unrepresentable in the type-safe Java surface —
              * batch and stream both reject at the type level (reject parity). */
@@ -251603,7 +251606,7 @@ public class TaCodegenServe {
         }
         MAType optInFastMAType = MAType.values()[_raw_optInFastMAType];
         int optInSlowPeriod = json.contains("\"optInSlowPeriod\"") ? jsonInt(json, "optInSlowPeriod") : 26;
-        int _raw_optInSlowMAType = json.contains("\"optInSlowMAType\"") ? jsonInt(json, "optInSlowMAType") : 0;
+        int _raw_optInSlowMAType = json.contains("\"optInSlowMAType\"") ? jsonInt(json, "optInSlowMAType") : MAType.DEFAULT.ordinal();
         if (_raw_optInSlowMAType < 0 || _raw_optInSlowMAType >= MAType.values().length) {
             /* Out-of-list enum: unrepresentable in the type-safe Java surface —
              * batch and stream both reject at the type level (reject parity). */
@@ -251611,7 +251614,7 @@ public class TaCodegenServe {
         }
         MAType optInSlowMAType = MAType.values()[_raw_optInSlowMAType];
         int optInSignalPeriod = json.contains("\"optInSignalPeriod\"") ? jsonInt(json, "optInSignalPeriod") : 9;
-        int _raw_optInSignalMAType = json.contains("\"optInSignalMAType\"") ? jsonInt(json, "optInSignalMAType") : 0;
+        int _raw_optInSignalMAType = json.contains("\"optInSignalMAType\"") ? jsonInt(json, "optInSignalMAType") : MAType.DEFAULT.ordinal();
         if (_raw_optInSignalMAType < 0 || _raw_optInSignalMAType >= MAType.values().length) {
             /* Out-of-list enum: unrepresentable in the type-safe Java surface —
              * batch and stream both reject at the type level (reject parity). */
@@ -252542,7 +252545,7 @@ public class TaCodegenServe {
         int svK = jsonInt(json, "unstablePeriod");
         int optInMinPeriod = json.contains("\"optInMinPeriod\"") ? jsonInt(json, "optInMinPeriod") : 2;
         int optInMaxPeriod = json.contains("\"optInMaxPeriod\"") ? jsonInt(json, "optInMaxPeriod") : 30;
-        int _raw_optInMAType = json.contains("\"optInMAType\"") ? jsonInt(json, "optInMAType") : 0;
+        int _raw_optInMAType = json.contains("\"optInMAType\"") ? jsonInt(json, "optInMAType") : MAType.DEFAULT.ordinal();
         if (_raw_optInMAType < 0 || _raw_optInMAType >= MAType.values().length) {
             /* Out-of-list enum: unrepresentable in the type-safe Java surface —
              * batch and stream both reject at the type level (reject parity). */
@@ -255681,7 +255684,7 @@ public class TaCodegenServe {
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 20;
         double optInNbDevUp = json.contains("\"optInNbDevUp\"") ? jsonDouble(json, "optInNbDevUp") : 2e0;
         double optInNbDevDn = json.contains("\"optInNbDevDn\"") ? jsonDouble(json, "optInNbDevDn") : 2e0;
-        int _raw_optInMAType = json.contains("\"optInMAType\"") ? jsonInt(json, "optInMAType") : 0;
+        int _raw_optInMAType = json.contains("\"optInMAType\"") ? jsonInt(json, "optInMAType") : MAType.DEFAULT.ordinal();
         if (_raw_optInMAType < 0 || _raw_optInMAType >= MAType.values().length) {
             /* Out-of-list enum: unrepresentable in the type-safe Java surface —
              * batch and stream both reject at the type level (reject parity). */
@@ -256512,7 +256515,7 @@ public class TaCodegenServe {
         int svK = jsonInt(json, "unstablePeriod");
         int optInFastPeriod = json.contains("\"optInFastPeriod\"") ? jsonInt(json, "optInFastPeriod") : 12;
         int optInSlowPeriod = json.contains("\"optInSlowPeriod\"") ? jsonInt(json, "optInSlowPeriod") : 26;
-        int _raw_optInMAType = json.contains("\"optInMAType\"") ? jsonInt(json, "optInMAType") : 1;
+        int _raw_optInMAType = json.contains("\"optInMAType\"") ? jsonInt(json, "optInMAType") : MAType.DEFAULT.ordinal();
         if (_raw_optInMAType < 0 || _raw_optInMAType >= MAType.values().length) {
             /* Out-of-list enum: unrepresentable in the type-safe Java surface —
              * batch and stream both reject at the type level (reject parity). */
@@ -256845,7 +256848,7 @@ public class TaCodegenServe {
         int svK = jsonInt(json, "unstablePeriod");
         int optInFastPeriod = json.contains("\"optInFastPeriod\"") ? jsonInt(json, "optInFastPeriod") : 12;
         int optInSlowPeriod = json.contains("\"optInSlowPeriod\"") ? jsonInt(json, "optInSlowPeriod") : 26;
-        int _raw_optInMAType = json.contains("\"optInMAType\"") ? jsonInt(json, "optInMAType") : 1;
+        int _raw_optInMAType = json.contains("\"optInMAType\"") ? jsonInt(json, "optInMAType") : MAType.DEFAULT.ordinal();
         if (_raw_optInMAType < 0 || _raw_optInMAType >= MAType.values().length) {
             /* Out-of-list enum: unrepresentable in the type-safe Java surface —
              * batch and stream both reject at the type level (reject parity). */
@@ -260287,7 +260290,7 @@ public class TaCodegenServe {
         int svK = jsonInt(json, "unstablePeriod");
         int optInFastK_Period = json.contains("\"optInFastK_Period\"") ? jsonInt(json, "optInFastK_Period") : 5;
         int optInSlowK_Period = json.contains("\"optInSlowK_Period\"") ? jsonInt(json, "optInSlowK_Period") : 3;
-        int _raw_optInSlowK_MAType = json.contains("\"optInSlowK_MAType\"") ? jsonInt(json, "optInSlowK_MAType") : 0;
+        int _raw_optInSlowK_MAType = json.contains("\"optInSlowK_MAType\"") ? jsonInt(json, "optInSlowK_MAType") : MAType.DEFAULT.ordinal();
         if (_raw_optInSlowK_MAType < 0 || _raw_optInSlowK_MAType >= MAType.values().length) {
             /* Out-of-list enum: unrepresentable in the type-safe Java surface —
              * batch and stream both reject at the type level (reject parity). */
@@ -260295,7 +260298,7 @@ public class TaCodegenServe {
         }
         MAType optInSlowK_MAType = MAType.values()[_raw_optInSlowK_MAType];
         int optInSlowD_Period = json.contains("\"optInSlowD_Period\"") ? jsonInt(json, "optInSlowD_Period") : 3;
-        int _raw_optInSlowD_MAType = json.contains("\"optInSlowD_MAType\"") ? jsonInt(json, "optInSlowD_MAType") : 0;
+        int _raw_optInSlowD_MAType = json.contains("\"optInSlowD_MAType\"") ? jsonInt(json, "optInSlowD_MAType") : MAType.DEFAULT.ordinal();
         if (_raw_optInSlowD_MAType < 0 || _raw_optInSlowD_MAType >= MAType.values().length) {
             /* Out-of-list enum: unrepresentable in the type-safe Java surface —
              * batch and stream both reject at the type level (reject parity). */
@@ -260497,7 +260500,7 @@ public class TaCodegenServe {
         int svK = jsonInt(json, "unstablePeriod");
         int optInFastK_Period = json.contains("\"optInFastK_Period\"") ? jsonInt(json, "optInFastK_Period") : 5;
         int optInFastD_Period = json.contains("\"optInFastD_Period\"") ? jsonInt(json, "optInFastD_Period") : 3;
-        int _raw_optInFastD_MAType = json.contains("\"optInFastD_MAType\"") ? jsonInt(json, "optInFastD_MAType") : 0;
+        int _raw_optInFastD_MAType = json.contains("\"optInFastD_MAType\"") ? jsonInt(json, "optInFastD_MAType") : MAType.DEFAULT.ordinal();
         if (_raw_optInFastD_MAType < 0 || _raw_optInFastD_MAType >= MAType.values().length) {
             /* Out-of-list enum: unrepresentable in the type-safe Java surface —
              * batch and stream both reject at the type level (reject parity). */
@@ -260700,7 +260703,7 @@ public class TaCodegenServe {
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 14;
         int optInFastK_Period = json.contains("\"optInFastK_Period\"") ? jsonInt(json, "optInFastK_Period") : 5;
         int optInFastD_Period = json.contains("\"optInFastD_Period\"") ? jsonInt(json, "optInFastD_Period") : 3;
-        int _raw_optInFastD_MAType = json.contains("\"optInFastD_MAType\"") ? jsonInt(json, "optInFastD_MAType") : 0;
+        int _raw_optInFastD_MAType = json.contains("\"optInFastD_MAType\"") ? jsonInt(json, "optInFastD_MAType") : MAType.DEFAULT.ordinal();
         if (_raw_optInFastD_MAType < 0 || _raw_optInFastD_MAType >= MAType.values().length) {
             /* Out-of-list enum: unrepresentable in the type-safe Java surface —
              * batch and stream both reject at the type level (reject parity). */

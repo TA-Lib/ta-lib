@@ -1280,7 +1280,7 @@ pub(crate) fn generate_c_stream_verify(
                 ));
             } else if matches!(&opt.param_type, ParamType::Enum(_)) {
                 s.push_str(&format!(
-                    "        TA_MAType {0} = (TA_MAType)json_find_int(json, \"{0}\");\n",
+                    "        TA_MAType {0} = json_find_matype(json, \"{0}\");\n",
                     opt.name
                 ));
             } else {

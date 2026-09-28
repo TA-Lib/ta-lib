@@ -95,10 +95,9 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
                 );
             }
             crate::ir::ParamType::Enum(en) => {
-                let d = p.default.unwrap_or(0.0) as i64;
                 let _ = writeln!(
                     s,
-                    "        int _raw_{name} = json.contains(\"\\\"{name}\\\"\") ? jsonInt(json, \"{name}\") : {d};"
+                    "        int _raw_{name} = json.contains(\"\\\"{name}\\\"\") ? jsonInt(json, \"{name}\") : {en}.DEFAULT.ordinal();"
                 );
                 let _ = writeln!(
                     s,

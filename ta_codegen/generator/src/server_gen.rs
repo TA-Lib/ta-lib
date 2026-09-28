@@ -477,6 +477,23 @@ static int json_find_int(const char *json, const char *field) {
     return (int)v;
 }
 
+static int json_has_field(const char *json, const char *field) {
+    char pattern[256];
+    snprintf(pattern, sizeof(pattern), "\"%s\":", field);
+    return strstr(json, pattern) != NULL;
+}
+
+/* An absent MA-type field asks for the function's default. A frozen release
+ * older than TA_MAType_DEFAULT rejects it, but resolves TA_INTEGER_DEFAULT. */
+static TA_MAType json_find_matype(const char *json, const char *field) {
+    if( json_has_field(json, field) ) return (TA_MAType)json_find_int(json, field);
+#ifdef TA_REF_SERVE
+    return (TA_MAType)TA_INTEGER_DEFAULT;
+#else
+    return TA_MAType_DEFAULT;
+#endif
+}
+
 static double json_find_double(const char *json, const char *field) {
     char pattern[256];
     snprintf(pattern, sizeof(pattern), "\"%s\":", field);
@@ -907,7 +924,7 @@ fn generate_c_dispatch(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> S
                 ));
             } else if matches!(&opt.param_type, ParamType::Enum(_)) {
                 s.push_str(&format!(
-                    "        TA_MAType {} = (TA_MAType)json_find_int(json, \"{}\");\n",
+                    "        TA_MAType {} = json_find_matype(json, \"{}\");\n",
                     opt.name, opt.name
                 ));
             } else {
@@ -1180,7 +1197,7 @@ fn generate_c_dispatch(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> S
                 ));
             } else if matches!(&opt.param_type, ParamType::Enum(_)) {
                 s.push_str(&format!(
-                    "        TA_MAType {} = (TA_MAType)json_find_int(json, \"{}\");\n",
+                    "        TA_MAType {} = json_find_matype(json, \"{}\");\n",
                     opt.name, opt.name
                 ));
             } else {
@@ -2002,7 +2019,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
                 // `_optRejected` is what actually forces the BadParam response
                 // below, and the placeholder is never observed in one.
                 s.push_str(&format!(
-                    "        int _raw_{0} = jsonInt(json, \"{0}\");\n\
+                    "        int _raw_{0} = json.contains(\"\\\"{0}\\\"\") ? jsonInt(json, \"{0}\") : {1}.DEFAULT.ordinal();\n\
                      \x20       if (_raw_{0} < 0 || _raw_{0} >= {1}.values().length) _optRejected = true;\n\
                      \x20       {1} {0} = {1}.values()[_optRejected ? 0 : _raw_{0}];\n",
                     opt.name, enum_name
@@ -2386,6 +2403,9 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
             io.github.talib.metadata.OptInputInfo o = f.optInputs().get(i);
             switch (o.type()) {
                 case REAL_RANGE, REAL_LIST -> h.setOptInput(i, jsonDouble(json, o.paramName()));
+                case INTEGER_LIST -> {
+                    if (json.contains("\"" + o.paramName() + "\"")) h.setOptInput(i, jsonInt(json, o.paramName()));
+                }
                 default -> h.setOptInput(i, jsonInt(json, o.paramName()));
             }
         }
@@ -2851,7 +2871,7 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
     s.push_str(&crate::stream_verify_gen::csharp::generate_csharp_stream_verify(funcs, enums));
     s.push_str(&crate::ride_gen::csharp::generate_csharp_ridealong(funcs));
 
-    // ComputeLookback: parse a function's opt params (same JSON keys and 0/0.0
+    // ComputeLookback: parse a function's opt params (same JSON keys and
     // absent-field fallbacks as the per-function handlers) and call its guarded
     // <Name>Lookback. Mirrors the Java server's computeLookback.
     //
@@ -2873,7 +2893,7 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
                     name = opt.name
                 )),
                 ParamType::Enum(enum_name) => s.push_str(&format!(
-                    "            {ty} {name} = ({ty})GetInt(p, \"{name}\", 0);\n",
+                    "            {ty} {name} = ({ty})GetInt(p, \"{name}\", (int){ty}.DEFAULT);\n",
                     ty = enum_name,
                     name = opt.name
                 )),
@@ -2960,9 +2980,8 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
         }
 
         // Optional params (enum params read as int, cast to the enum type).
-        // An absent field defaults to 0/0.0, matching the C and Java servers
-        // exactly — the driver always sends every param, and a divergent
-        // fallback here could mask a driver bug behind a YAML default.
+        // An absent numeric field reads 0/0.0, as in the C and Java servers; an
+        // absent enum field reads DEFAULT, as in every server.
         for opt in &func.optional_inputs {
             match &opt.param_type {
                 ParamType::Real => {
@@ -2973,7 +2992,7 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
                 }
                 ParamType::Enum(enum_name) => {
                     s.push_str(&format!(
-                        "        {ty} {name} = ({ty})GetInt(p, \"{name}\", 0);\n",
+                        "        {ty} {name} = ({ty})GetInt(p, \"{name}\", (int){ty}.DEFAULT);\n",
                         ty = enum_name,
                         name = opt.name
                     ));
@@ -3772,7 +3791,7 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
                         .and_then(|e| e.variants.first())
                         .map_or_else(|| "0".to_string(), |v| format!("{enum_name}::{}", v.name));
                     s.push_str(&format!(
-                        "            let {n}_raw = params[\"{n}\"].as_i64().unwrap_or({default_i}) as i32;\n",
+                        "            let {n}_raw = params[\"{n}\"].as_i64().unwrap_or({enum_name}::DEFAULT as i64) as i32;\n",
                         n = opt.name
                     ));
                     s.push_str(&format!(
