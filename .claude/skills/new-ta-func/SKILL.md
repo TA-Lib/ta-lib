@@ -157,7 +157,8 @@ bite while authoring the `.c`):
 ### 4. Write / adjust the documentation — `ta_codegen/input/<name>/<name>.md`
 
 The canonical prose source: summary, the formula in its **original algebraic form**
-(never implementation artifacts — no zero-guards, epsilons or `period == 1` cases),
+(never implementation artifacts — no zero-guards, epsilons or `period == 1` cases;
+state a value returned where the algebra is undefined only when a reader would wonder),
 inputs/outputs, references. Rendered into four targets — the website function page,
 the Rust rustdoc (including a runnable doctest), the Java Javadoc and the C# XML doc
 comments — so the four cannot describe the same function differently. The C# ones are
