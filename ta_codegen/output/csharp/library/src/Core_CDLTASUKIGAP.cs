@@ -143,23 +143,23 @@ public partial class Core
       outIdx = 0;
       do {
          if( (MinLt(inOpen[i - 1], inClose[i - 1]) > MaxGt(inOpen[i - 2], inClose[i - 2])) && /* upside gap */
-              ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 1 &&     /* 1st: white */
-              ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 0 - 1 &&         /* 2nd: black */
+              ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == 1 &&  /* 1st: white */
+              ((inClose[i] >= inOpen[i]) ? 1 : -1) == -1 &&         /* 2nd: black */
               inOpen[i] < inClose[i - 1] &&
-              inOpen[i] > inOpen[i - 1] &&                                /* that opens within the white rb */
-              inClose[i] < inOpen[i - 1] &&                               /* and closes under the white rb */
-              inClose[i] > MaxGt(inClose[i - 2], inOpen[i - 2]) &&        /* inside the gap */
+              inOpen[i] > inOpen[i - 1] &&                          /* that opens within the white rb */
+              inClose[i] < inOpen[i - 1] &&                         /* and closes under the white rb */
+              inClose[i] > MaxGt(inClose[i - 2], inOpen[i - 2]) &&  /* inside the gap */
               Math.Abs(Math.Abs(inClose[i - 1] - inOpen[i - 1]) - Math.Abs(inClose[i] - inOpen[i])) < ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.Abs(inClose[i - 1] - inOpen[i - 1])) : ((Near_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((Near_rangeType == 2) ? ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) || /* size of 2 rb near the same */
              (MaxGt(inOpen[i - 1], inClose[i - 1]) < MinLt(inOpen[i - 2], inClose[i - 2])) && /* downside gap */
-              ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && /* 1st: black */
-              ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 &&             /* 2nd: white */
+              ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 && /* 1st: black */
+              ((inClose[i] >= inOpen[i]) ? 1 : -1) == 1 &&          /* 2nd: white */
               inOpen[i] < inOpen[i - 1] &&
-              inOpen[i] > inClose[i - 1] &&                               /* that opens within the black rb */
-              inClose[i] > inOpen[i - 1] &&                               /* and closes above the black rb */
-              inClose[i] < MinLt(inClose[i - 2], inOpen[i - 2]) &&        /* inside the gap */
+              inOpen[i] > inClose[i - 1] &&                         /* that opens within the black rb */
+              inClose[i] > inOpen[i - 1] &&                         /* and closes above the black rb */
+              inClose[i] < MinLt(inClose[i - 2], inOpen[i - 2]) &&  /* inside the gap */
               Math.Abs(Math.Abs(inClose[i - 1] - inOpen[i - 1]) - Math.Abs(inClose[i] - inOpen[i])) < ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.Abs(inClose[i - 1] - inOpen[i - 1])) : ((Near_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((Near_rangeType == 2) ? ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) ) /* size of 2 rb near the same */
          {
-            outInteger[outIdx++] = ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) * 100;
+            outInteger[outIdx++] = ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100;
          } else {
             outInteger[outIdx++] = 0;
          }
@@ -223,8 +223,8 @@ public partial class Core
       i = startIdx;
       outIdx = 0;
       do {
-         if( (MinLt((double)inOpen[i - 1], (double)inClose[i - 1]) > MaxGt((double)inOpen[i - 2], (double)inClose[i - 2])) && (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) == 1 && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 0 - 1 && (double)inOpen[i] < (double)inClose[i - 1] && (double)inOpen[i] > (double)inOpen[i - 1] && (double)inClose[i] < (double)inOpen[i - 1] && (double)inClose[i] > MaxGt((double)inClose[i - 2], (double)inOpen[i - 2]) && Math.Abs(Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1]) - Math.Abs((double)inClose[i] - (double)inOpen[i])) < ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : ((Near_rangeType == 1) ? ((double)inHigh[i - 1] - (double)inLow[i - 1]) : ((Near_rangeType == 2) ? (((double)inHigh[i - 1] - ((((double)inClose[i - 1]) >= ((double)inOpen[i - 1])) ? ((double)inClose[i - 1]) : ((double)inOpen[i - 1]))) + (((((double)inClose[i - 1]) >= ((double)inOpen[i - 1])) ? ((double)inOpen[i - 1]) : ((double)inClose[i - 1])) - (double)inLow[i - 1])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) || (MaxGt((double)inOpen[i - 1], (double)inClose[i - 1]) < MinLt((double)inOpen[i - 2], (double)inClose[i - 2])) && (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 1 && (double)inOpen[i] < (double)inOpen[i - 1] && (double)inOpen[i] > (double)inClose[i - 1] && (double)inClose[i] > (double)inOpen[i - 1] && (double)inClose[i] < MinLt((double)inClose[i - 2], (double)inOpen[i - 2]) && Math.Abs(Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1]) - Math.Abs((double)inClose[i] - (double)inOpen[i])) < ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : ((Near_rangeType == 1) ? ((double)inHigh[i - 1] - (double)inLow[i - 1]) : ((Near_rangeType == 2) ? (((double)inHigh[i - 1] - ((((double)inClose[i - 1]) >= ((double)inOpen[i - 1])) ? ((double)inClose[i - 1]) : ((double)inOpen[i - 1]))) + (((((double)inClose[i - 1]) >= ((double)inOpen[i - 1])) ? ((double)inOpen[i - 1]) : ((double)inClose[i - 1])) - (double)inLow[i - 1])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) ) {
-            outInteger[outIdx++] = (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) * 100;
+         if( (MinLt((double)inOpen[i - 1], (double)inClose[i - 1]) > MaxGt((double)inOpen[i - 2], (double)inClose[i - 2])) && (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : -1) == 1 && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : -1) == -1 && (double)inOpen[i] < (double)inClose[i - 1] && (double)inOpen[i] > (double)inOpen[i - 1] && (double)inClose[i] < (double)inOpen[i - 1] && (double)inClose[i] > MaxGt((double)inClose[i - 2], (double)inOpen[i - 2]) && Math.Abs(Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1]) - Math.Abs((double)inClose[i] - (double)inOpen[i])) < ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : ((Near_rangeType == 1) ? ((double)inHigh[i - 1] - (double)inLow[i - 1]) : ((Near_rangeType == 2) ? (((double)inHigh[i - 1] - ((((double)inClose[i - 1]) >= ((double)inOpen[i - 1])) ? ((double)inClose[i - 1]) : ((double)inOpen[i - 1]))) + (((((double)inClose[i - 1]) >= ((double)inOpen[i - 1])) ? ((double)inOpen[i - 1]) : ((double)inClose[i - 1])) - (double)inLow[i - 1])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) || (MaxGt((double)inOpen[i - 1], (double)inClose[i - 1]) < MinLt((double)inOpen[i - 2], (double)inClose[i - 2])) && (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : -1) == -1 && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : -1) == 1 && (double)inOpen[i] < (double)inOpen[i - 1] && (double)inOpen[i] > (double)inClose[i - 1] && (double)inClose[i] > (double)inOpen[i - 1] && (double)inClose[i] < MinLt((double)inClose[i - 2], (double)inOpen[i - 2]) && Math.Abs(Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1]) - Math.Abs((double)inClose[i] - (double)inOpen[i])) < ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : ((Near_rangeType == 1) ? ((double)inHigh[i - 1] - (double)inLow[i - 1]) : ((Near_rangeType == 2) ? (((double)inHigh[i - 1] - ((((double)inClose[i - 1]) >= ((double)inOpen[i - 1])) ? ((double)inClose[i - 1]) : ((double)inOpen[i - 1]))) + (((((double)inClose[i - 1]) >= ((double)inOpen[i - 1])) ? ((double)inOpen[i - 1]) : ((double)inClose[i - 1])) - (double)inLow[i - 1])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) ) {
+            outInteger[outIdx++] = (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : -1) * 100;
          } else {
             outInteger[outIdx++] = 0;
          }
@@ -567,23 +567,23 @@ public partial class Core
          int Near_avgPeriod = sp.cs_Near_avgPeriod;
          double Near_factor = sp.cs_Near_factor;
          if( (MinLt(sp.lag1_inOpen, sp.lag1_inClose) > MaxGt(sp.lag2_inOpen, sp.lag2_inClose)) && /* upside gap */
-              ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 1 &&     /* 1st: white */
-              ((inClose >= inOpen) ? 1 : 0 - 1) == 0 - 1 &&                 /* 2nd: black */
+              ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : -1) == 1 &&  /* 1st: white */
+              ((inClose >= inOpen) ? 1 : -1) == -1 &&                 /* 2nd: black */
               inOpen < sp.lag1_inClose &&
-              inOpen > sp.lag1_inOpen &&                                    /* that opens within the white rb */
-              inClose < sp.lag1_inOpen &&                                   /* and closes under the white rb */
-              inClose > MaxGt(sp.lag2_inClose, sp.lag2_inOpen) &&           /* inside the gap */
+              inOpen > sp.lag1_inOpen &&                              /* that opens within the white rb */
+              inClose < sp.lag1_inOpen &&                             /* and closes under the white rb */
+              inClose > MaxGt(sp.lag2_inClose, sp.lag2_inOpen) &&     /* inside the gap */
               Math.Abs(Math.Abs(sp.lag1_inClose - sp.lag1_inOpen) - Math.Abs(inClose - inOpen)) < ((Near_factor * (((Near_avgPeriod != 0) ? (sp.NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.Abs(sp.lag1_inClose - sp.lag1_inOpen)) : ((Near_rangeType == 1) ? (sp.lag1_inHigh - sp.lag1_inLow) : ((Near_rangeType == 2) ? ((sp.lag1_inHigh - (((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inClose) : (sp.lag1_inOpen))) + ((((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inOpen) : (sp.lag1_inClose)) - sp.lag1_inLow)) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) || /* size of 2 rb near the same */
              (MaxGt(sp.lag1_inOpen, sp.lag1_inClose) < MinLt(sp.lag2_inOpen, sp.lag2_inClose)) && /* downside gap */
-              ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* 1st: black */
-              ((inClose >= inOpen) ? 1 : 0 - 1) == 1 &&                     /* 2nd: white */
+              ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : -1) == -1 && /* 1st: black */
+              ((inClose >= inOpen) ? 1 : -1) == 1 &&                  /* 2nd: white */
               inOpen < sp.lag1_inOpen &&
-              inOpen > sp.lag1_inClose &&                                   /* that opens within the black rb */
-              inClose > sp.lag1_inOpen &&                                   /* and closes above the black rb */
-              inClose < MinLt(sp.lag2_inClose, sp.lag2_inOpen) &&           /* inside the gap */
+              inOpen > sp.lag1_inClose &&                             /* that opens within the black rb */
+              inClose > sp.lag1_inOpen &&                             /* and closes above the black rb */
+              inClose < MinLt(sp.lag2_inClose, sp.lag2_inOpen) &&     /* inside the gap */
               Math.Abs(Math.Abs(sp.lag1_inClose - sp.lag1_inOpen) - Math.Abs(inClose - inOpen)) < ((Near_factor * (((Near_avgPeriod != 0) ? (sp.NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.Abs(sp.lag1_inClose - sp.lag1_inOpen)) : ((Near_rangeType == 1) ? (sp.lag1_inHigh - sp.lag1_inLow) : ((Near_rangeType == 2) ? ((sp.lag1_inHigh - (((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inClose) : (sp.lag1_inOpen))) + ((((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inOpen) : (sp.lag1_inClose)) - sp.lag1_inLow)) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) ) /* size of 2 rb near the same */
          {
-            cur_outInteger = ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) * 100;
+            cur_outInteger = ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : -1) * 100;
          } else {
             cur_outInteger = 0;
          }
@@ -614,23 +614,23 @@ public partial class Core
       double Near_factor = sp.cs_Near_factor;
       sp.ring_NearTrailingIdx_derived[sp.ringPos_NearTrailingIdx] = ((Near_rangeType == 0) ? (Math.Abs(inClose - inOpen)) : ((Near_rangeType == 1) ? (inHigh - inLow) : ((Near_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
       if( (MinLt(sp.lag1_inOpen, sp.lag1_inClose) > MaxGt(sp.lag2_inOpen, sp.lag2_inClose)) && /* upside gap */
-           ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 1 &&     /* 1st: white */
-           ((inClose >= inOpen) ? 1 : 0 - 1) == 0 - 1 &&                 /* 2nd: black */
+           ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : -1) == 1 &&  /* 1st: white */
+           ((inClose >= inOpen) ? 1 : -1) == -1 &&                 /* 2nd: black */
            inOpen < sp.lag1_inClose &&
-           inOpen > sp.lag1_inOpen &&                                    /* that opens within the white rb */
-           inClose < sp.lag1_inOpen &&                                   /* and closes under the white rb */
-           inClose > MaxGt(sp.lag2_inClose, sp.lag2_inOpen) &&           /* inside the gap */
+           inOpen > sp.lag1_inOpen &&                              /* that opens within the white rb */
+           inClose < sp.lag1_inOpen &&                             /* and closes under the white rb */
+           inClose > MaxGt(sp.lag2_inClose, sp.lag2_inOpen) &&     /* inside the gap */
            Math.Abs(Math.Abs(sp.lag1_inClose - sp.lag1_inOpen) - Math.Abs(inClose - inOpen)) < ((Near_factor * (((Near_avgPeriod != 0) ? (sp.NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.Abs(sp.lag1_inClose - sp.lag1_inOpen)) : ((Near_rangeType == 1) ? (sp.lag1_inHigh - sp.lag1_inLow) : ((Near_rangeType == 2) ? ((sp.lag1_inHigh - (((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inClose) : (sp.lag1_inOpen))) + ((((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inOpen) : (sp.lag1_inClose)) - sp.lag1_inLow)) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) || /* size of 2 rb near the same */
           (MaxGt(sp.lag1_inOpen, sp.lag1_inClose) < MinLt(sp.lag2_inOpen, sp.lag2_inClose)) && /* downside gap */
-           ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* 1st: black */
-           ((inClose >= inOpen) ? 1 : 0 - 1) == 1 &&                     /* 2nd: white */
+           ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : -1) == -1 && /* 1st: black */
+           ((inClose >= inOpen) ? 1 : -1) == 1 &&                  /* 2nd: white */
            inOpen < sp.lag1_inOpen &&
-           inOpen > sp.lag1_inClose &&                                   /* that opens within the black rb */
-           inClose > sp.lag1_inOpen &&                                   /* and closes above the black rb */
-           inClose < MinLt(sp.lag2_inClose, sp.lag2_inOpen) &&           /* inside the gap */
+           inOpen > sp.lag1_inClose &&                             /* that opens within the black rb */
+           inClose > sp.lag1_inOpen &&                             /* and closes above the black rb */
+           inClose < MinLt(sp.lag2_inClose, sp.lag2_inOpen) &&     /* inside the gap */
            Math.Abs(Math.Abs(sp.lag1_inClose - sp.lag1_inOpen) - Math.Abs(inClose - inOpen)) < ((Near_factor * (((Near_avgPeriod != 0) ? (sp.NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.Abs(sp.lag1_inClose - sp.lag1_inOpen)) : ((Near_rangeType == 1) ? (sp.lag1_inHigh - sp.lag1_inLow) : ((Near_rangeType == 2) ? ((sp.lag1_inHigh - (((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inClose) : (sp.lag1_inOpen))) + ((((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inOpen) : (sp.lag1_inClose)) - sp.lag1_inLow)) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) ) /* size of 2 rb near the same */
       {
-         sp.cur_outInteger = ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) * 100;
+         sp.cur_outInteger = ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : -1) * 100;
       } else {
          sp.cur_outInteger = 0;
       }
@@ -719,23 +719,23 @@ public partial class Core
       outIdx = 0;
       do {
          if( (MinLt(inOpen[i - 1], inClose[i - 1]) > MaxGt(inOpen[i - 2], inClose[i - 2])) && /* upside gap */
-              ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 1 &&     /* 1st: white */
-              ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 0 - 1 &&         /* 2nd: black */
+              ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == 1 &&  /* 1st: white */
+              ((inClose[i] >= inOpen[i]) ? 1 : -1) == -1 &&         /* 2nd: black */
               inOpen[i] < inClose[i - 1] &&
-              inOpen[i] > inOpen[i - 1] &&                                /* that opens within the white rb */
-              inClose[i] < inOpen[i - 1] &&                               /* and closes under the white rb */
-              inClose[i] > MaxGt(inClose[i - 2], inOpen[i - 2]) &&        /* inside the gap */
+              inOpen[i] > inOpen[i - 1] &&                          /* that opens within the white rb */
+              inClose[i] < inOpen[i - 1] &&                         /* and closes under the white rb */
+              inClose[i] > MaxGt(inClose[i - 2], inOpen[i - 2]) &&  /* inside the gap */
               Math.Abs(Math.Abs(inClose[i - 1] - inOpen[i - 1]) - Math.Abs(inClose[i] - inOpen[i])) < ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.Abs(inClose[i - 1] - inOpen[i - 1])) : ((Near_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((Near_rangeType == 2) ? ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) || /* size of 2 rb near the same */
              (MaxGt(inOpen[i - 1], inClose[i - 1]) < MinLt(inOpen[i - 2], inClose[i - 2])) && /* downside gap */
-              ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && /* 1st: black */
-              ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 &&             /* 2nd: white */
+              ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 && /* 1st: black */
+              ((inClose[i] >= inOpen[i]) ? 1 : -1) == 1 &&          /* 2nd: white */
               inOpen[i] < inOpen[i - 1] &&
-              inOpen[i] > inClose[i - 1] &&                               /* that opens within the black rb */
-              inClose[i] > inOpen[i - 1] &&                               /* and closes above the black rb */
-              inClose[i] < MinLt(inClose[i - 2], inOpen[i - 2]) &&        /* inside the gap */
+              inOpen[i] > inClose[i - 1] &&                         /* that opens within the black rb */
+              inClose[i] > inOpen[i - 1] &&                         /* and closes above the black rb */
+              inClose[i] < MinLt(inClose[i - 2], inOpen[i - 2]) &&  /* inside the gap */
               Math.Abs(Math.Abs(inClose[i - 1] - inOpen[i - 1]) - Math.Abs(inClose[i] - inOpen[i])) < ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.Abs(inClose[i - 1] - inOpen[i - 1])) : ((Near_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((Near_rangeType == 2) ? ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) ) /* size of 2 rb near the same */
          {
-            outInteger[outIdx++ * outStride] = ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) * 100;
+            outInteger[outIdx++ * outStride] = ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100;
          } else {
             outInteger[outIdx++ * outStride] = 0;
          }

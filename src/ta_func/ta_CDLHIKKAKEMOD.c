@@ -158,7 +158,7 @@ TA_LIB_API TA_RetCode TA_CDLHIKKAKEMOD( int    startIdx,
             inLow[i] > inLow[i - 1] &&     /* (bear) 4th: higher high and higher low */
             inClose[i - 2] >= inHigh[i - 2] - TA_CANDLEAVERAGE(Near,NearPeriodTotal,i - 2))) ) /* (bull) 2nd: close near the top */
       {
-         patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : 0 - 1);
+         patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : -1);
          patternHigh = inHigh[i - 1];
          patternLow = inLow[i - 1];
          patternCount = 4;
@@ -209,7 +209,7 @@ TA_LIB_API TA_RetCode TA_CDLHIKKAKEMOD( int    startIdx,
             inLow[i] > inLow[i - 1] &&     /* (bear) 4th: higher high and higher low */
             inClose[i - 2] >= inHigh[i - 2] - TA_CANDLEAVERAGE(Near,NearPeriodTotal,i - 2))) ) /* (bull) 2nd: close near the top */
       {
-         patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : 0 - 1);
+         patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : -1);
          patternHigh = inHigh[i - 1];
          patternLow = inLow[i - 1];
          patternCount = 4;
@@ -220,7 +220,7 @@ TA_LIB_API TA_RetCode TA_CDLHIKKAKEMOD( int    startIdx,
            (patternResult < 0 &&
             inClose[i] < patternLow)) )  /* close lower than the low of 3rd */
       {
-         outInteger[outIdx++] = patternResult + 100 * ((patternResult > 0) ? 1 : 0 - 1);
+         outInteger[outIdx++] = patternResult + 100 * ((patternResult > 0) ? 1 : -1);
          patternCount = 0;
       } else 
       {
@@ -307,7 +307,7 @@ TA_RetCode TA_S_CDLHIKKAKEMOD( int    startIdx,
    {
       if( (double)inHigh[i - 2] < (double)inHigh[i - 3] && (double)inLow[i - 2] > (double)inLow[i - 3] && (double)inHigh[i - 1] < (double)inHigh[i - 2] && (double)inLow[i - 1] > (double)inLow[i - 2] && (((double)inHigh[i] < (double)inHigh[i - 1] && (double)inLow[i] < (double)inLow[i - 1] && (double)inClose[i - 2] <= (double)inLow[i - 2] + TA_CANDLEAVERAGE(Near,NearPeriodTotal,i - 2)) || ((double)inHigh[i] > (double)inHigh[i - 1] && (double)inLow[i] > (double)inLow[i - 1] && (double)inClose[i - 2] >= (double)inHigh[i - 2] - TA_CANDLEAVERAGE(Near,NearPeriodTotal,i - 2))) )
       {
-         patternResult = 100 * (((double)inHigh[i] < (double)inHigh[i - 1]) ? 1 : 0 - 1);
+         patternResult = 100 * (((double)inHigh[i] < (double)inHigh[i - 1]) ? 1 : -1);
          patternHigh = (double)inHigh[i - 1];
          patternLow = (double)inLow[i - 1];
          patternCount = 4;
@@ -329,14 +329,14 @@ TA_RetCode TA_S_CDLHIKKAKEMOD( int    startIdx,
    {
       if( (double)inHigh[i - 2] < (double)inHigh[i - 3] && (double)inLow[i - 2] > (double)inLow[i - 3] && (double)inHigh[i - 1] < (double)inHigh[i - 2] && (double)inLow[i - 1] > (double)inLow[i - 2] && (((double)inHigh[i] < (double)inHigh[i - 1] && (double)inLow[i] < (double)inLow[i - 1] && (double)inClose[i - 2] <= (double)inLow[i - 2] + TA_CANDLEAVERAGE(Near,NearPeriodTotal,i - 2)) || ((double)inHigh[i] > (double)inHigh[i - 1] && (double)inLow[i] > (double)inLow[i - 1] && (double)inClose[i - 2] >= (double)inHigh[i - 2] - TA_CANDLEAVERAGE(Near,NearPeriodTotal,i - 2))) )
       {
-         patternResult = 100 * (((double)inHigh[i] < (double)inHigh[i - 1]) ? 1 : 0 - 1);
+         patternResult = 100 * (((double)inHigh[i] < (double)inHigh[i - 1]) ? 1 : -1);
          patternHigh = (double)inHigh[i - 1];
          patternLow = (double)inLow[i - 1];
          patternCount = 4;
          outInteger[outIdx++] = patternResult;
       } else if( patternCount > 0 && ((patternResult > 0 && (double)inClose[i] > patternHigh) || (patternResult < 0 && (double)inClose[i] < patternLow)) )
       {
-         outInteger[outIdx++] = patternResult + 100 * ((patternResult > 0) ? 1 : 0 - 1);
+         outInteger[outIdx++] = patternResult + 100 * ((patternResult > 0) ? 1 : -1);
          patternCount = 0;
       } else 
       {
@@ -407,7 +407,7 @@ static void TA_CDLHIKKAKEMOD_StepImpl( struct TA_CDLHIKKAKEMOD_Stream *sp, doubl
          inLow > sp->lag1_inLow &&          /* (bear) 4th: higher high and higher low */
          sp->lag2_inClose >= sp->lag2_inHigh - TA_STREAM_CANDLEAVERAGE(Near,sp->NearPeriodTotal,sp->lag2_inOpen,sp->lag2_inHigh,sp->lag2_inLow,sp->lag2_inClose))) ) /* (bull) 2nd: close near the top */
    {
-      sp->patternResult = 100 * ((inHigh < sp->lag1_inHigh) ? 1 : 0 - 1);
+      sp->patternResult = 100 * ((inHigh < sp->lag1_inHigh) ? 1 : -1);
       sp->patternHigh = sp->lag1_inHigh;
       sp->patternLow = sp->lag1_inLow;
       sp->patternCount = 4;
@@ -418,7 +418,7 @@ static void TA_CDLHIKKAKEMOD_StepImpl( struct TA_CDLHIKKAKEMOD_Stream *sp, doubl
         (sp->patternResult < 0 &&
          inClose < sp->patternLow)) )  /* close lower than the low of 3rd */
    {
-      *outInteger= sp->patternResult + 100 * ((sp->patternResult > 0) ? 1 : 0 - 1);
+      *outInteger= sp->patternResult + 100 * ((sp->patternResult > 0) ? 1 : -1);
       sp->patternCount = 0;
    } else 
    {
@@ -528,7 +528,7 @@ static TA_RetCode TA_CDLHIKKAKEMOD_OpenImpl( struct TA_CDLHIKKAKEMOD_Stream **st
                inLow[i] > inLow[i - 1] &&     /* (bear) 4th: higher high and higher low */
                inClose[i - 2] >= inHigh[i - 2] - TA_CANDLEAVERAGE(Near,NearPeriodTotal,i - 2))) ) /* (bull) 2nd: close near the top */
          {
-            patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : 0 - 1);
+            patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : -1);
             patternHigh = inHigh[i - 1];
             patternLow = inLow[i - 1];
             patternCount = 4;
@@ -579,7 +579,7 @@ static TA_RetCode TA_CDLHIKKAKEMOD_OpenImpl( struct TA_CDLHIKKAKEMOD_Stream **st
                inLow[i] > inLow[i - 1] &&     /* (bear) 4th: higher high and higher low */
                inClose[i - 2] >= inHigh[i - 2] - TA_CANDLEAVERAGE(Near,NearPeriodTotal,i - 2))) ) /* (bull) 2nd: close near the top */
          {
-            patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : 0 - 1);
+            patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : -1);
             patternHigh = inHigh[i - 1];
             patternLow = inLow[i - 1];
             patternCount = 4;
@@ -590,7 +590,7 @@ static TA_RetCode TA_CDLHIKKAKEMOD_OpenImpl( struct TA_CDLHIKKAKEMOD_Stream **st
               (patternResult < 0 &&
                inClose[i] < patternLow)) )  /* close lower than the low of 3rd */
          {
-            outInteger[outIdx++ * outStride] = patternResult + 100 * ((patternResult > 0) ? 1 : 0 - 1);
+            outInteger[outIdx++ * outStride] = patternResult + 100 * ((patternResult > 0) ? 1 : -1);
             patternCount = 0;
          } else 
          {
@@ -726,7 +726,7 @@ TA_LIB_API TA_RetCode TA_CDLHIKKAKEMOD_Peek( const TA_CDLHIKKAKEMOD_Stream *stre
          inLow > sp->lag1_inLow &&          /* (bear) 4th: higher high and higher low */
          sp->lag2_inClose >= sp->lag2_inHigh - TA_STREAM_CANDLEAVERAGE(Near,sp->NearPeriodTotal,sp->lag2_inOpen,sp->lag2_inHigh,sp->lag2_inLow,sp->lag2_inClose))) ) /* (bull) 2nd: close near the top */
    {
-      patternResult = 100 * ((inHigh < sp->lag1_inHigh) ? 1 : 0 - 1);
+      patternResult = 100 * ((inHigh < sp->lag1_inHigh) ? 1 : -1);
       patternHigh = sp->lag1_inHigh;
       patternLow = sp->lag1_inLow;
       patternCount = 4;
@@ -737,7 +737,7 @@ TA_LIB_API TA_RetCode TA_CDLHIKKAKEMOD_Peek( const TA_CDLHIKKAKEMOD_Stream *stre
         (patternResult < 0 &&
          inClose < patternLow)) )  /* close lower than the low of 3rd */
    {
-      *outInteger= patternResult + 100 * ((patternResult > 0) ? 1 : 0 - 1);
+      *outInteger= patternResult + 100 * ((patternResult > 0) ? 1 : -1);
       patternCount = 0;
    } else 
    {

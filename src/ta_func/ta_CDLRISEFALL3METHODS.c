@@ -158,27 +158,27 @@ TA_LIB_API TA_RetCode TA_CDLRISEFALL3METHODS( int    startIdx,
    outIdx = 0;
    do
    {
-      if( ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : 0 - 1) == 0 - ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : 0 - 1) && /* white, 3 black, white  ||  black, 3 white, black */
-          ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : 0 - 1) == ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) &&
-          ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) &&
-          ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) &&
+      if( ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : -1) == -((inClose[i - 3] >= inOpen[i - 3]) ? 1 : -1) && /* white, 3 black, white  ||  black, 3 white, black */
+          ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : -1) == ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) &&
+          ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) &&
+          ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -((inClose[i] >= inOpen[i]) ? 1 : -1) &&
           min(inOpen[i - 3],inClose[i - 3]) < inHigh[i - 4] && /* 2nd to 4th hold within 1st: a part of the real body must be within 1st range */
           max(inOpen[i - 3],inClose[i - 3]) > inLow[i - 4] &&
           min(inOpen[i - 2],inClose[i - 2]) < inHigh[i - 4] &&
           max(inOpen[i - 2],inClose[i - 2]) > inLow[i - 4] &&
           min(inOpen[i - 1],inClose[i - 1]) < inHigh[i - 4] &&
           max(inOpen[i - 1],inClose[i - 1]) > inLow[i - 4] &&
-          inClose[i - 2] * ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : 0 - 1) < inClose[i - 3] * ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : 0 - 1) && /* 2nd to 4th are falling (rising) */
-          inClose[i - 1] * ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : 0 - 1) < inClose[i - 2] * ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : 0 - 1) &&
-          inOpen[i] * ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : 0 - 1) > inClose[i - 1] * ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : 0 - 1) && /* 5th opens above (below) the prior close */
-          inClose[i] * ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : 0 - 1) > inClose[i - 4] * ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : 0 - 1) && /* 5th closes above (below) the 1st close */
+          inClose[i - 2] * ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : -1) < inClose[i - 3] * ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : -1) && /* 2nd to 4th are falling (rising) */
+          inClose[i - 1] * ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : -1) < inClose[i - 2] * ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : -1) &&
+          inOpen[i] * ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : -1) > inClose[i - 1] * ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : -1) && /* 5th opens above (below) the prior close */
+          inClose[i] * ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : -1) > inClose[i - 4] * ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : -1) && /* 5th closes above (below) the 1st close */
           fabs(inClose[i - 4] - inOpen[i - 4]) > TA_CANDLEAVERAGE(BodyLong,BodyPeriodTotal[4],i - 4) && /* 1st long, then 3 small, 5th long */
           fabs(inClose[i - 3] - inOpen[i - 3]) < TA_CANDLEAVERAGE(BodyShort,BodyPeriodTotal[3],i - 3) &&
           fabs(inClose[i - 2] - inOpen[i - 2]) < TA_CANDLEAVERAGE(BodyShort,BodyPeriodTotal[2],i - 2) &&
           fabs(inClose[i - 1] - inOpen[i - 1]) < TA_CANDLEAVERAGE(BodyShort,BodyPeriodTotal[1],i - 1) &&
           fabs(inClose[i] - inOpen[i]) > TA_CANDLEAVERAGE(BodyLong,BodyPeriodTotal[0],i) )
       {
-         outInteger[outIdx++] = 100 * ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : 0 - 1);
+         outInteger[outIdx++] = 100 * ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : -1);
       } else 
       {
          outInteger[outIdx++] = 0;
@@ -277,9 +277,9 @@ TA_RetCode TA_S_CDLRISEFALL3METHODS( int    startIdx,
    outIdx = 0;
    do
    {
-      if( (((double)inClose[i - 4] >= (double)inOpen[i - 4]) ? 1 : 0 - 1) == 0 - (((double)inClose[i - 3] >= (double)inOpen[i - 3]) ? 1 : 0 - 1) && (((double)inClose[i - 3] >= (double)inOpen[i - 3]) ? 1 : 0 - 1) == (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) && (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) == (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) && (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) == 0 - (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) && min((double)inOpen[i - 3],(double)inClose[i - 3]) < (double)inHigh[i - 4] && max((double)inOpen[i - 3],(double)inClose[i - 3]) > (double)inLow[i - 4] && min((double)inOpen[i - 2],(double)inClose[i - 2]) < (double)inHigh[i - 4] && max((double)inOpen[i - 2],(double)inClose[i - 2]) > (double)inLow[i - 4] && min((double)inOpen[i - 1],(double)inClose[i - 1]) < (double)inHigh[i - 4] && max((double)inOpen[i - 1],(double)inClose[i - 1]) > (double)inLow[i - 4] && (double)inClose[i - 2] * (((double)inClose[i - 4] >= (double)inOpen[i - 4]) ? 1 : 0 - 1) < (double)inClose[i - 3] * (((double)inClose[i - 4] >= (double)inOpen[i - 4]) ? 1 : 0 - 1) && (double)inClose[i - 1] * (((double)inClose[i - 4] >= (double)inOpen[i - 4]) ? 1 : 0 - 1) < (double)inClose[i - 2] * (((double)inClose[i - 4] >= (double)inOpen[i - 4]) ? 1 : 0 - 1) && (double)inOpen[i] * (((double)inClose[i - 4] >= (double)inOpen[i - 4]) ? 1 : 0 - 1) > (double)inClose[i - 1] * (((double)inClose[i - 4] >= (double)inOpen[i - 4]) ? 1 : 0 - 1) && (double)inClose[i] * (((double)inClose[i - 4] >= (double)inOpen[i - 4]) ? 1 : 0 - 1) > (double)inClose[i - 4] * (((double)inClose[i - 4] >= (double)inOpen[i - 4]) ? 1 : 0 - 1) && fabs((double)inClose[i - 4] - (double)inOpen[i - 4]) > TA_CANDLEAVERAGE(BodyLong,BodyPeriodTotal[4],i - 4) && fabs((double)inClose[i - 3] - (double)inOpen[i - 3]) < TA_CANDLEAVERAGE(BodyShort,BodyPeriodTotal[3],i - 3) && fabs((double)inClose[i - 2] - (double)inOpen[i - 2]) < TA_CANDLEAVERAGE(BodyShort,BodyPeriodTotal[2],i - 2) && fabs((double)inClose[i - 1] - (double)inOpen[i - 1]) < TA_CANDLEAVERAGE(BodyShort,BodyPeriodTotal[1],i - 1) && fabs((double)inClose[i] - (double)inOpen[i]) > TA_CANDLEAVERAGE(BodyLong,BodyPeriodTotal[0],i) )
+      if( (((double)inClose[i - 4] >= (double)inOpen[i - 4]) ? 1 : -1) == -(((double)inClose[i - 3] >= (double)inOpen[i - 3]) ? 1 : -1) && (((double)inClose[i - 3] >= (double)inOpen[i - 3]) ? 1 : -1) == (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : -1) && (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : -1) == (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : -1) && (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : -1) == -(((double)inClose[i] >= (double)inOpen[i]) ? 1 : -1) && min((double)inOpen[i - 3],(double)inClose[i - 3]) < (double)inHigh[i - 4] && max((double)inOpen[i - 3],(double)inClose[i - 3]) > (double)inLow[i - 4] && min((double)inOpen[i - 2],(double)inClose[i - 2]) < (double)inHigh[i - 4] && max((double)inOpen[i - 2],(double)inClose[i - 2]) > (double)inLow[i - 4] && min((double)inOpen[i - 1],(double)inClose[i - 1]) < (double)inHigh[i - 4] && max((double)inOpen[i - 1],(double)inClose[i - 1]) > (double)inLow[i - 4] && (double)inClose[i - 2] * (((double)inClose[i - 4] >= (double)inOpen[i - 4]) ? 1 : -1) < (double)inClose[i - 3] * (((double)inClose[i - 4] >= (double)inOpen[i - 4]) ? 1 : -1) && (double)inClose[i - 1] * (((double)inClose[i - 4] >= (double)inOpen[i - 4]) ? 1 : -1) < (double)inClose[i - 2] * (((double)inClose[i - 4] >= (double)inOpen[i - 4]) ? 1 : -1) && (double)inOpen[i] * (((double)inClose[i - 4] >= (double)inOpen[i - 4]) ? 1 : -1) > (double)inClose[i - 1] * (((double)inClose[i - 4] >= (double)inOpen[i - 4]) ? 1 : -1) && (double)inClose[i] * (((double)inClose[i - 4] >= (double)inOpen[i - 4]) ? 1 : -1) > (double)inClose[i - 4] * (((double)inClose[i - 4] >= (double)inOpen[i - 4]) ? 1 : -1) && fabs((double)inClose[i - 4] - (double)inOpen[i - 4]) > TA_CANDLEAVERAGE(BodyLong,BodyPeriodTotal[4],i - 4) && fabs((double)inClose[i - 3] - (double)inOpen[i - 3]) < TA_CANDLEAVERAGE(BodyShort,BodyPeriodTotal[3],i - 3) && fabs((double)inClose[i - 2] - (double)inOpen[i - 2]) < TA_CANDLEAVERAGE(BodyShort,BodyPeriodTotal[2],i - 2) && fabs((double)inClose[i - 1] - (double)inOpen[i - 1]) < TA_CANDLEAVERAGE(BodyShort,BodyPeriodTotal[1],i - 1) && fabs((double)inClose[i] - (double)inOpen[i]) > TA_CANDLEAVERAGE(BodyLong,BodyPeriodTotal[0],i) )
       {
-         outInteger[outIdx++] = 100 * (((double)inClose[i - 4] >= (double)inOpen[i - 4]) ? 1 : 0 - 1);
+         outInteger[outIdx++] = 100 * (((double)inClose[i - 4] >= (double)inOpen[i - 4]) ? 1 : -1);
       } else 
       {
          outInteger[outIdx++] = 0;
@@ -350,27 +350,27 @@ static void TA_CDLRISEFALL3METHODS_StepImpl( struct TA_CDLRISEFALL3METHODS_Strea
 
    sp->ring_BodyLongTrailingIdx_derived[sp->ringPos_BodyLongTrailingIdx] = TA_STREAM_CANDLERANGE(BodyLong,inOpen,inHigh,inLow,inClose);
    sp->ring_BodyShortTrailingIdx_derived[sp->ringPos_BodyShortTrailingIdx] = TA_STREAM_CANDLERANGE(BodyShort,inOpen,inHigh,inLow,inClose);
-   if( ((sp->lag4_inClose >= sp->lag4_inOpen) ? 1 : 0 - 1) == 0 - ((sp->lag3_inClose >= sp->lag3_inOpen) ? 1 : 0 - 1) && /* white, 3 black, white  ||  black, 3 white, black */
-       ((sp->lag3_inClose >= sp->lag3_inOpen) ? 1 : 0 - 1) == ((sp->lag2_inClose >= sp->lag2_inOpen) ? 1 : 0 - 1) &&
-       ((sp->lag2_inClose >= sp->lag2_inOpen) ? 1 : 0 - 1) == ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) &&
-       ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) == 0 - ((inClose >= inOpen) ? 1 : 0 - 1) &&
+   if( ((sp->lag4_inClose >= sp->lag4_inOpen) ? 1 : -1) == -((sp->lag3_inClose >= sp->lag3_inOpen) ? 1 : -1) && /* white, 3 black, white  ||  black, 3 white, black */
+       ((sp->lag3_inClose >= sp->lag3_inOpen) ? 1 : -1) == ((sp->lag2_inClose >= sp->lag2_inOpen) ? 1 : -1) &&
+       ((sp->lag2_inClose >= sp->lag2_inOpen) ? 1 : -1) == ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : -1) &&
+       ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : -1) == -((inClose >= inOpen) ? 1 : -1) &&
        min(sp->lag3_inOpen,sp->lag3_inClose) < sp->lag4_inHigh && /* 2nd to 4th hold within 1st: a part of the real body must be within 1st range */
        max(sp->lag3_inOpen,sp->lag3_inClose) > sp->lag4_inLow &&
        min(sp->lag2_inOpen,sp->lag2_inClose) < sp->lag4_inHigh &&
        max(sp->lag2_inOpen,sp->lag2_inClose) > sp->lag4_inLow &&
        min(sp->lag1_inOpen,sp->lag1_inClose) < sp->lag4_inHigh &&
        max(sp->lag1_inOpen,sp->lag1_inClose) > sp->lag4_inLow &&
-       sp->lag2_inClose * ((sp->lag4_inClose >= sp->lag4_inOpen) ? 1 : 0 - 1) < sp->lag3_inClose * ((sp->lag4_inClose >= sp->lag4_inOpen) ? 1 : 0 - 1) && /* 2nd to 4th are falling (rising) */
-       sp->lag1_inClose * ((sp->lag4_inClose >= sp->lag4_inOpen) ? 1 : 0 - 1) < sp->lag2_inClose * ((sp->lag4_inClose >= sp->lag4_inOpen) ? 1 : 0 - 1) &&
-       inOpen * ((sp->lag4_inClose >= sp->lag4_inOpen) ? 1 : 0 - 1) > sp->lag1_inClose * ((sp->lag4_inClose >= sp->lag4_inOpen) ? 1 : 0 - 1) && /* 5th opens above (below) the prior close */
-       inClose * ((sp->lag4_inClose >= sp->lag4_inOpen) ? 1 : 0 - 1) > sp->lag4_inClose * ((sp->lag4_inClose >= sp->lag4_inOpen) ? 1 : 0 - 1) && /* 5th closes above (below) the 1st close */
+       sp->lag2_inClose * ((sp->lag4_inClose >= sp->lag4_inOpen) ? 1 : -1) < sp->lag3_inClose * ((sp->lag4_inClose >= sp->lag4_inOpen) ? 1 : -1) && /* 2nd to 4th are falling (rising) */
+       sp->lag1_inClose * ((sp->lag4_inClose >= sp->lag4_inOpen) ? 1 : -1) < sp->lag2_inClose * ((sp->lag4_inClose >= sp->lag4_inOpen) ? 1 : -1) &&
+       inOpen * ((sp->lag4_inClose >= sp->lag4_inOpen) ? 1 : -1) > sp->lag1_inClose * ((sp->lag4_inClose >= sp->lag4_inOpen) ? 1 : -1) && /* 5th opens above (below) the prior close */
+       inClose * ((sp->lag4_inClose >= sp->lag4_inOpen) ? 1 : -1) > sp->lag4_inClose * ((sp->lag4_inClose >= sp->lag4_inOpen) ? 1 : -1) && /* 5th closes above (below) the 1st close */
        fabs(sp->lag4_inClose - sp->lag4_inOpen) > TA_STREAM_CANDLEAVERAGE(BodyLong,sp->BodyPeriodTotal[4],sp->lag4_inOpen,sp->lag4_inHigh,sp->lag4_inLow,sp->lag4_inClose) && /* 1st long, then 3 small, 5th long */
        fabs(sp->lag3_inClose - sp->lag3_inOpen) < TA_STREAM_CANDLEAVERAGE(BodyShort,sp->BodyPeriodTotal[3],sp->lag3_inOpen,sp->lag3_inHigh,sp->lag3_inLow,sp->lag3_inClose) &&
        fabs(sp->lag2_inClose - sp->lag2_inOpen) < TA_STREAM_CANDLEAVERAGE(BodyShort,sp->BodyPeriodTotal[2],sp->lag2_inOpen,sp->lag2_inHigh,sp->lag2_inLow,sp->lag2_inClose) &&
        fabs(sp->lag1_inClose - sp->lag1_inOpen) < TA_STREAM_CANDLEAVERAGE(BodyShort,sp->BodyPeriodTotal[1],sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose) &&
        fabs(inClose - inOpen) > TA_STREAM_CANDLEAVERAGE(BodyLong,sp->BodyPeriodTotal[0],inOpen,inHigh,inLow,inClose) )
    {
-      *outInteger= 100 * ((sp->lag4_inClose >= sp->lag4_inOpen) ? 1 : 0 - 1);
+      *outInteger= 100 * ((sp->lag4_inClose >= sp->lag4_inOpen) ? 1 : -1);
    } else 
    {
       *outInteger= 0;
@@ -499,27 +499,27 @@ static TA_RetCode TA_CDLRISEFALL3METHODS_OpenImpl( struct TA_CDLRISEFALL3METHODS
       outIdx = 0;
       do
       {
-         if( ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : 0 - 1) == 0 - ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : 0 - 1) && /* white, 3 black, white  ||  black, 3 white, black */
-             ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : 0 - 1) == ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) &&
-             ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) &&
-             ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) &&
+         if( ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : -1) == -((inClose[i - 3] >= inOpen[i - 3]) ? 1 : -1) && /* white, 3 black, white  ||  black, 3 white, black */
+             ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : -1) == ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) &&
+             ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) &&
+             ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -((inClose[i] >= inOpen[i]) ? 1 : -1) &&
              min(inOpen[i - 3],inClose[i - 3]) < inHigh[i - 4] && /* 2nd to 4th hold within 1st: a part of the real body must be within 1st range */
              max(inOpen[i - 3],inClose[i - 3]) > inLow[i - 4] &&
              min(inOpen[i - 2],inClose[i - 2]) < inHigh[i - 4] &&
              max(inOpen[i - 2],inClose[i - 2]) > inLow[i - 4] &&
              min(inOpen[i - 1],inClose[i - 1]) < inHigh[i - 4] &&
              max(inOpen[i - 1],inClose[i - 1]) > inLow[i - 4] &&
-             inClose[i - 2] * ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : 0 - 1) < inClose[i - 3] * ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : 0 - 1) && /* 2nd to 4th are falling (rising) */
-             inClose[i - 1] * ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : 0 - 1) < inClose[i - 2] * ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : 0 - 1) &&
-             inOpen[i] * ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : 0 - 1) > inClose[i - 1] * ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : 0 - 1) && /* 5th opens above (below) the prior close */
-             inClose[i] * ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : 0 - 1) > inClose[i - 4] * ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : 0 - 1) && /* 5th closes above (below) the 1st close */
+             inClose[i - 2] * ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : -1) < inClose[i - 3] * ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : -1) && /* 2nd to 4th are falling (rising) */
+             inClose[i - 1] * ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : -1) < inClose[i - 2] * ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : -1) &&
+             inOpen[i] * ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : -1) > inClose[i - 1] * ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : -1) && /* 5th opens above (below) the prior close */
+             inClose[i] * ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : -1) > inClose[i - 4] * ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : -1) && /* 5th closes above (below) the 1st close */
              fabs(inClose[i - 4] - inOpen[i - 4]) > TA_CANDLEAVERAGE(BodyLong,BodyPeriodTotal[4],i - 4) && /* 1st long, then 3 small, 5th long */
              fabs(inClose[i - 3] - inOpen[i - 3]) < TA_CANDLEAVERAGE(BodyShort,BodyPeriodTotal[3],i - 3) &&
              fabs(inClose[i - 2] - inOpen[i - 2]) < TA_CANDLEAVERAGE(BodyShort,BodyPeriodTotal[2],i - 2) &&
              fabs(inClose[i - 1] - inOpen[i - 1]) < TA_CANDLEAVERAGE(BodyShort,BodyPeriodTotal[1],i - 1) &&
              fabs(inClose[i] - inOpen[i]) > TA_CANDLEAVERAGE(BodyLong,BodyPeriodTotal[0],i) )
          {
-            outInteger[outIdx++ * outStride] = 100 * ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : 0 - 1);
+            outInteger[outIdx++ * outStride] = 100 * ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : -1);
          } else 
          {
             outInteger[outIdx++ * outStride] = 0;
@@ -654,27 +654,27 @@ TA_LIB_API TA_RetCode TA_CDLRISEFALL3METHODS_Peek( const TA_CDLRISEFALL3METHODS_
 
    if( !stream || !outInteger ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
-   if( ((sp->lag4_inClose >= sp->lag4_inOpen) ? 1 : 0 - 1) == 0 - ((sp->lag3_inClose >= sp->lag3_inOpen) ? 1 : 0 - 1) && /* white, 3 black, white  ||  black, 3 white, black */
-       ((sp->lag3_inClose >= sp->lag3_inOpen) ? 1 : 0 - 1) == ((sp->lag2_inClose >= sp->lag2_inOpen) ? 1 : 0 - 1) &&
-       ((sp->lag2_inClose >= sp->lag2_inOpen) ? 1 : 0 - 1) == ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) &&
-       ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) == 0 - ((inClose >= inOpen) ? 1 : 0 - 1) &&
+   if( ((sp->lag4_inClose >= sp->lag4_inOpen) ? 1 : -1) == -((sp->lag3_inClose >= sp->lag3_inOpen) ? 1 : -1) && /* white, 3 black, white  ||  black, 3 white, black */
+       ((sp->lag3_inClose >= sp->lag3_inOpen) ? 1 : -1) == ((sp->lag2_inClose >= sp->lag2_inOpen) ? 1 : -1) &&
+       ((sp->lag2_inClose >= sp->lag2_inOpen) ? 1 : -1) == ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : -1) &&
+       ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : -1) == -((inClose >= inOpen) ? 1 : -1) &&
        min(sp->lag3_inOpen,sp->lag3_inClose) < sp->lag4_inHigh && /* 2nd to 4th hold within 1st: a part of the real body must be within 1st range */
        max(sp->lag3_inOpen,sp->lag3_inClose) > sp->lag4_inLow &&
        min(sp->lag2_inOpen,sp->lag2_inClose) < sp->lag4_inHigh &&
        max(sp->lag2_inOpen,sp->lag2_inClose) > sp->lag4_inLow &&
        min(sp->lag1_inOpen,sp->lag1_inClose) < sp->lag4_inHigh &&
        max(sp->lag1_inOpen,sp->lag1_inClose) > sp->lag4_inLow &&
-       sp->lag2_inClose * ((sp->lag4_inClose >= sp->lag4_inOpen) ? 1 : 0 - 1) < sp->lag3_inClose * ((sp->lag4_inClose >= sp->lag4_inOpen) ? 1 : 0 - 1) && /* 2nd to 4th are falling (rising) */
-       sp->lag1_inClose * ((sp->lag4_inClose >= sp->lag4_inOpen) ? 1 : 0 - 1) < sp->lag2_inClose * ((sp->lag4_inClose >= sp->lag4_inOpen) ? 1 : 0 - 1) &&
-       inOpen * ((sp->lag4_inClose >= sp->lag4_inOpen) ? 1 : 0 - 1) > sp->lag1_inClose * ((sp->lag4_inClose >= sp->lag4_inOpen) ? 1 : 0 - 1) && /* 5th opens above (below) the prior close */
-       inClose * ((sp->lag4_inClose >= sp->lag4_inOpen) ? 1 : 0 - 1) > sp->lag4_inClose * ((sp->lag4_inClose >= sp->lag4_inOpen) ? 1 : 0 - 1) && /* 5th closes above (below) the 1st close */
+       sp->lag2_inClose * ((sp->lag4_inClose >= sp->lag4_inOpen) ? 1 : -1) < sp->lag3_inClose * ((sp->lag4_inClose >= sp->lag4_inOpen) ? 1 : -1) && /* 2nd to 4th are falling (rising) */
+       sp->lag1_inClose * ((sp->lag4_inClose >= sp->lag4_inOpen) ? 1 : -1) < sp->lag2_inClose * ((sp->lag4_inClose >= sp->lag4_inOpen) ? 1 : -1) &&
+       inOpen * ((sp->lag4_inClose >= sp->lag4_inOpen) ? 1 : -1) > sp->lag1_inClose * ((sp->lag4_inClose >= sp->lag4_inOpen) ? 1 : -1) && /* 5th opens above (below) the prior close */
+       inClose * ((sp->lag4_inClose >= sp->lag4_inOpen) ? 1 : -1) > sp->lag4_inClose * ((sp->lag4_inClose >= sp->lag4_inOpen) ? 1 : -1) && /* 5th closes above (below) the 1st close */
        fabs(sp->lag4_inClose - sp->lag4_inOpen) > TA_STREAM_CANDLEAVERAGE(BodyLong,sp->BodyPeriodTotal[4],sp->lag4_inOpen,sp->lag4_inHigh,sp->lag4_inLow,sp->lag4_inClose) && /* 1st long, then 3 small, 5th long */
        fabs(sp->lag3_inClose - sp->lag3_inOpen) < TA_STREAM_CANDLEAVERAGE(BodyShort,sp->BodyPeriodTotal[3],sp->lag3_inOpen,sp->lag3_inHigh,sp->lag3_inLow,sp->lag3_inClose) &&
        fabs(sp->lag2_inClose - sp->lag2_inOpen) < TA_STREAM_CANDLEAVERAGE(BodyShort,sp->BodyPeriodTotal[2],sp->lag2_inOpen,sp->lag2_inHigh,sp->lag2_inLow,sp->lag2_inClose) &&
        fabs(sp->lag1_inClose - sp->lag1_inOpen) < TA_STREAM_CANDLEAVERAGE(BodyShort,sp->BodyPeriodTotal[1],sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose) &&
        fabs(inClose - inOpen) > TA_STREAM_CANDLEAVERAGE(BodyLong,sp->BodyPeriodTotal[0],inOpen,inHigh,inLow,inClose) )
    {
-      *outInteger= 100 * ((sp->lag4_inClose >= sp->lag4_inOpen) ? 1 : 0 - 1);
+      *outInteger= 100 * ((sp->lag4_inClose >= sp->lag4_inOpen) ? 1 : -1);
    } else 
    {
       *outInteger= 0;

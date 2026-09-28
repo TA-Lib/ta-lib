@@ -125,18 +125,18 @@ public partial class Core
        */
       outIdx = 0;
       do {
-         if( ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) && /* 1st and 2nd of same color */
-             ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) && /* 3rd opposite color */
-             inOpen[i] < MaxGt(inClose[i - 1], inOpen[i - 1]) &&          /* 3rd opens within 2nd rb */
+         if( ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) && /* 1st and 2nd of same color */
+             ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -((inClose[i] >= inOpen[i]) ? 1 : -1) && /* 3rd opposite color */
+             inOpen[i] < MaxGt(inClose[i - 1], inOpen[i - 1]) &&    /* 3rd opens within 2nd rb */
              inOpen[i] > MinLt(inClose[i - 1], inOpen[i - 1]) &&
-             inClose[i] < MaxGt(inClose[i - 2], inOpen[i - 2]) &&         /* 3rd closes within 1st rb */
+             inClose[i] < MaxGt(inClose[i - 2], inOpen[i - 2]) &&   /* 3rd closes within 1st rb */
              inClose[i] > MinLt(inClose[i - 2], inOpen[i - 2]) &&
-             (((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 1 &&     /* when 1st is white */
+             (((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == 1 &&  /* when 1st is white */
                (MinLt(inOpen[i - 1], inClose[i - 1]) > MaxGt(inOpen[i - 2], inClose[i - 2])) || /* upside gap */
-              ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && /* when 1st is black */
+              ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == -1 && /* when 1st is black */
                (MaxGt(inOpen[i - 1], inClose[i - 1]) < MinLt(inOpen[i - 2], inClose[i - 2]))) ) /* downside gap */
          {
-            outInteger[outIdx++] = ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) * 100;
+            outInteger[outIdx++] = ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) * 100;
          } else {
             outInteger[outIdx++] = 0;
          }
@@ -186,8 +186,8 @@ public partial class Core
       i = startIdx;
       outIdx = 0;
       do {
-         if( (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) == (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) && (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) == 0 - (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) && (double)inOpen[i] < MaxGt((double)inClose[i - 1], (double)inOpen[i - 1]) && (double)inOpen[i] > MinLt((double)inClose[i - 1], (double)inOpen[i - 1]) && (double)inClose[i] < MaxGt((double)inClose[i - 2], (double)inOpen[i - 2]) && (double)inClose[i] > MinLt((double)inClose[i - 2], (double)inOpen[i - 2]) && ((((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) == 1 && (MinLt((double)inOpen[i - 1], (double)inClose[i - 1]) > MaxGt((double)inOpen[i - 2], (double)inClose[i - 2])) || (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && (MaxGt((double)inOpen[i - 1], (double)inClose[i - 1]) < MinLt((double)inOpen[i - 2], (double)inClose[i - 2]))) ) {
-            outInteger[outIdx++] = (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) * 100;
+         if( (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : -1) == (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : -1) && (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : -1) == -(((double)inClose[i] >= (double)inOpen[i]) ? 1 : -1) && (double)inOpen[i] < MaxGt((double)inClose[i - 1], (double)inOpen[i - 1]) && (double)inOpen[i] > MinLt((double)inClose[i - 1], (double)inOpen[i - 1]) && (double)inClose[i] < MaxGt((double)inClose[i - 2], (double)inOpen[i - 2]) && (double)inClose[i] > MinLt((double)inClose[i - 2], (double)inOpen[i - 2]) && ((((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : -1) == 1 && (MinLt((double)inOpen[i - 1], (double)inClose[i - 1]) > MaxGt((double)inOpen[i - 2], (double)inClose[i - 2])) || (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : -1) == -1 && (MaxGt((double)inOpen[i - 1], (double)inClose[i - 1]) < MinLt((double)inOpen[i - 2], (double)inClose[i - 2]))) ) {
+            outInteger[outIdx++] = (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : -1) * 100;
          } else {
             outInteger[outIdx++] = 0;
          }
@@ -505,18 +505,18 @@ public partial class Core
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.NonFiniteBar("CDLXSIDEGAP3METHODS", "peek", !double.IsFinite(inOpen) ? nameof(inOpen) : !double.IsFinite(inHigh) ? nameof(inHigh) : !double.IsFinite(inLow) ? nameof(inLow) : nameof(inClose));
          Cdlxsidegap3methodsStream sp = this;
          int cur_outInteger = 0;
-         if( ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) == ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) && /* 1st and 2nd of same color */
-             ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 0 - ((inClose >= inOpen) ? 1 : 0 - 1) && /* 3rd opposite color */
-             inOpen < MaxGt(sp.lag1_inClose, sp.lag1_inOpen) &&             /* 3rd opens within 2nd rb */
+         if( ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : -1) == ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : -1) && /* 1st and 2nd of same color */
+             ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : -1) == -((inClose >= inOpen) ? 1 : -1) && /* 3rd opposite color */
+             inOpen < MaxGt(sp.lag1_inClose, sp.lag1_inOpen) &&       /* 3rd opens within 2nd rb */
              inOpen > MinLt(sp.lag1_inClose, sp.lag1_inOpen) &&
-             inClose < MaxGt(sp.lag2_inClose, sp.lag2_inOpen) &&            /* 3rd closes within 1st rb */
+             inClose < MaxGt(sp.lag2_inClose, sp.lag2_inOpen) &&      /* 3rd closes within 1st rb */
              inClose > MinLt(sp.lag2_inClose, sp.lag2_inOpen) &&
-             (((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) == 1 &&     /* when 1st is white */
+             (((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : -1) == 1 &&  /* when 1st is white */
                (MinLt(sp.lag1_inOpen, sp.lag1_inClose) > MaxGt(sp.lag2_inOpen, sp.lag2_inClose)) || /* upside gap */
-              ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* when 1st is black */
+              ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : -1) == -1 && /* when 1st is black */
                (MaxGt(sp.lag1_inOpen, sp.lag1_inClose) < MinLt(sp.lag2_inOpen, sp.lag2_inClose))) ) /* downside gap */
          {
-            cur_outInteger = ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) * 100;
+            cur_outInteger = ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : -1) * 100;
          } else {
             cur_outInteger = 0;
          }
@@ -542,18 +542,18 @@ public partial class Core
 
    private void Cdlxsidegap3methodsStepImpl( Cdlxsidegap3methodsStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
-      if( ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) == ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) && /* 1st and 2nd of same color */
-          ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 0 - ((inClose >= inOpen) ? 1 : 0 - 1) && /* 3rd opposite color */
-          inOpen < MaxGt(sp.lag1_inClose, sp.lag1_inOpen) &&             /* 3rd opens within 2nd rb */
+      if( ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : -1) == ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : -1) && /* 1st and 2nd of same color */
+          ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : -1) == -((inClose >= inOpen) ? 1 : -1) && /* 3rd opposite color */
+          inOpen < MaxGt(sp.lag1_inClose, sp.lag1_inOpen) &&       /* 3rd opens within 2nd rb */
           inOpen > MinLt(sp.lag1_inClose, sp.lag1_inOpen) &&
-          inClose < MaxGt(sp.lag2_inClose, sp.lag2_inOpen) &&            /* 3rd closes within 1st rb */
+          inClose < MaxGt(sp.lag2_inClose, sp.lag2_inOpen) &&      /* 3rd closes within 1st rb */
           inClose > MinLt(sp.lag2_inClose, sp.lag2_inOpen) &&
-          (((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) == 1 &&     /* when 1st is white */
+          (((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : -1) == 1 &&  /* when 1st is white */
             (MinLt(sp.lag1_inOpen, sp.lag1_inClose) > MaxGt(sp.lag2_inOpen, sp.lag2_inClose)) || /* upside gap */
-           ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* when 1st is black */
+           ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : -1) == -1 && /* when 1st is black */
             (MaxGt(sp.lag1_inOpen, sp.lag1_inClose) < MinLt(sp.lag2_inOpen, sp.lag2_inClose))) ) /* downside gap */
       {
-         sp.cur_outInteger = ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) * 100;
+         sp.cur_outInteger = ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : -1) * 100;
       } else {
          sp.cur_outInteger = 0;
       }
@@ -620,18 +620,18 @@ public partial class Core
        */
       outIdx = 0;
       do {
-         if( ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) && /* 1st and 2nd of same color */
-             ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) && /* 3rd opposite color */
-             inOpen[i] < MaxGt(inClose[i - 1], inOpen[i - 1]) &&          /* 3rd opens within 2nd rb */
+         if( ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) && /* 1st and 2nd of same color */
+             ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -((inClose[i] >= inOpen[i]) ? 1 : -1) && /* 3rd opposite color */
+             inOpen[i] < MaxGt(inClose[i - 1], inOpen[i - 1]) &&    /* 3rd opens within 2nd rb */
              inOpen[i] > MinLt(inClose[i - 1], inOpen[i - 1]) &&
-             inClose[i] < MaxGt(inClose[i - 2], inOpen[i - 2]) &&         /* 3rd closes within 1st rb */
+             inClose[i] < MaxGt(inClose[i - 2], inOpen[i - 2]) &&   /* 3rd closes within 1st rb */
              inClose[i] > MinLt(inClose[i - 2], inOpen[i - 2]) &&
-             (((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 1 &&     /* when 1st is white */
+             (((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == 1 &&  /* when 1st is white */
                (MinLt(inOpen[i - 1], inClose[i - 1]) > MaxGt(inOpen[i - 2], inClose[i - 2])) || /* upside gap */
-              ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && /* when 1st is black */
+              ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == -1 && /* when 1st is black */
                (MaxGt(inOpen[i - 1], inClose[i - 1]) < MinLt(inOpen[i - 2], inClose[i - 2]))) ) /* downside gap */
          {
-            outInteger[outIdx++ * outStride] = ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) * 100;
+            outInteger[outIdx++ * outStride] = ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) * 100;
          } else {
             outInteger[outIdx++ * outStride] = 0;
          }

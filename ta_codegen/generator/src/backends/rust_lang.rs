@@ -404,6 +404,7 @@ fn expr_is_int_array_typed(expr: &Expr, ctx: &RustRenderCtx) -> bool {
             expr_is_int_array_typed(left, ctx) && stays_i32(right)
                 || expr_is_int_array_typed(right, ctx) && stays_i32(left)
         }
+        Expr::Neg(inner) => expr_is_int_array_typed(inner, ctx),
         _ => false,
     }
 }
@@ -648,11 +649,11 @@ fn gen_impl_block(func: &FuncDef, enums: &HashMap<String, EnumDef>, registry: &R
     let mut sentinel_vars = std::collections::HashSet::new();
     collect_sentinel_vars(&body_func.body, &mut sentinel_vars);
     // Also detect integer variables that participate in signed arithmetic
-    // (< 0, 0 - N, negative-capable casts — issue #160). Deliberately NOT
+    // (< 0, -x, negative-capable casts — issue #160). Deliberately NOT
     // transitive through var-to-var copies: propagating the extremum family's
     // -1 sentinels into their loop indices churned 14 hot files for no
     // behavior change. A local needing signedness must be assigned a signed
-    // EXPRESSION (cast, negative literal, 0-N) directly.
+    // EXPRESSION (cast, negative literal, -x) directly.
     collect_signed_int_vars(&body_func.body, &index_vars, &real_vars, &mut sentinel_vars);
     reject_unsupported_negative_casts(&body_func.body, &real_vars, &func.name);
     // Remove sentinel/signed vars from index_vars — they're i32, not usize
@@ -2148,14 +2149,10 @@ pub(crate) fn collect_var_types(
     }
 }
 
-/// Check if an expression is `0 - 1` (unary minus parsed as `BinOp(IntLiteral(0), Sub, IntLiteral(1))`).
+/// Check if an expression is the literal `-1`.
 fn is_negative_one(expr: &Expr) -> bool {
-    matches!(
-        expr,
-        Expr::BinOp(left, BinOp::Sub, right)
-            if matches!(left.as_ref(), Expr::IntLiteral(0))
-            && matches!(right.as_ref(), Expr::IntLiteral(1))
-    )
+    matches!(expr, Expr::Neg(inner) if matches!(inner.as_ref(), Expr::IntLiteral(1)))
+        || matches!(expr, Expr::IntLiteral(-1))
 }
 
 /// Issue #160: fail generation LOUDLY when a negative-capable `(int)(float)`
@@ -2265,15 +2262,16 @@ fn render_signed_dest_value(
 /// name-heuristic float classifier alone misses e.g. `double basis; (int)basis`).
 /// sqrt/fabs/abs inners are provably non-negative (HMA's sqrtPeriod stays usize).
 fn cast_inner_negative_capable(inner: &Expr, real_vars: &std::collections::HashSet<String>) -> bool {
-    let is_float = fma::expr_is_float_typed(inner, None)
-        || matches!(inner, Expr::Var(v) if real_vars.contains(v));
+    let base = if let Expr::Neg(i) = inner { i.as_ref() } else { inner };
+    let is_float = fma::expr_is_float_typed(base, None)
+        || matches!(base, Expr::Var(v) if real_vars.contains(v));
     is_float
         && !matches!(inner,
                      Expr::FuncCall(name, _) if name == "sqrt" || name == "fabs" || name == "abs")
 }
 
 /// Check if an expression can produce a negative integer value.
-/// Catches: `0 - N`, `-N` literal, negative-capable `(int)` casts (#160),
+/// Catches: `-x`, `0 - N`, `-N` literal, negative-capable `(int)` casts (#160),
 /// arithmetic/ternary combinations of the above.
 fn expr_can_be_negative(expr: &Expr, real_vars: &std::collections::HashSet<String>) -> bool {
     match expr {
@@ -2284,8 +2282,8 @@ fn expr_can_be_negative(expr: &Expr, real_vars: &std::collections::HashSet<Strin
                 || expr_can_be_negative(left, real_vars)
                 || expr_can_be_negative(right, real_vars)
         }
-        // ~x is negative for every x >= 0 (two's complement)
-        Expr::BitwiseNot(_) => true,
+        // ~x is negative for every x >= 0 (two's complement), -x for every x > 0
+        Expr::BitwiseNot(_) | Expr::Neg(_) => true,
         // (int)(<float expr>) truncates: negative doubles yield negative ints (#160)
         Expr::Cast(VarType::Integer | VarType::Index, inner) => {
             cast_inner_negative_capable(inner, real_vars)
@@ -2473,7 +2471,7 @@ fn count_increments_in_expr(name: &str, expr: &Expr) -> usize {
         }
         Expr::ArrayAccess(_, idx) => count_increments_in_expr(name, idx),
         Expr::FuncCall(_, args) => args.iter().map(|a| count_increments_in_expr(name, a)).sum(),
-        Expr::Not(inner) | Expr::BitwiseNot(inner) | Expr::Cast(_, inner) => {
+        Expr::Not(inner) | Expr::BitwiseNot(inner) | Expr::Neg(inner) | Expr::Cast(_, inner) => {
             count_increments_in_expr(name, inner)
         }
         Expr::Ternary(cond, then_expr, else_expr) => {
@@ -2859,6 +2857,7 @@ fn pure_shift<'x>(condition: &Expr, body: &'x [Statement]) -> Option<(&'x str, b
             Expr::BinOp(lhs, BinOp::Add | BinOp::Sub, rhs) => {
                 pure_bound(lhs, index, arr) && pure_bound(rhs, index, arr)
             }
+            Expr::Neg(inner) => pure_bound(inner, index, arr),
             _ => false,
         }
     }
@@ -2898,6 +2897,7 @@ fn wrapping_index(e: &Expr, idx: &dyn Fn(&Expr) -> String) -> String {
                 terms(l, plus, out);
                 terms(r, !plus, out);
             }
+            Expr::Neg(inner) => terms(inner, !plus, out),
             other => out.push((other, plus)),
         }
     }
@@ -4146,7 +4146,7 @@ fn expr_has_uncast_array_access(expr: &Expr) -> bool {
         Expr::BinOp(left, _, right) => {
             expr_has_uncast_array_access(left) || expr_has_uncast_array_access(right)
         }
-        Expr::Not(inner) | Expr::BitwiseNot(inner) => expr_has_uncast_array_access(inner),
+        Expr::Not(inner) | Expr::BitwiseNot(inner) | Expr::Neg(inner) => expr_has_uncast_array_access(inner),
         Expr::FuncCall(_, args) => args.iter().any(expr_has_uncast_array_access),
         Expr::Ternary(cond, then_expr, else_expr) => {
             expr_has_uncast_array_access(cond)
@@ -4180,6 +4180,7 @@ fn render_assign_target(
         | Expr::BinOp(_, _, _)
         | Expr::Cast(_, _)
         | Expr::Not(_)
+        | Expr::Neg(_)
         | Expr::BitwiseNot(_)
         | Expr::FuncCall(_, _)
         | Expr::PointerDeref(_)
@@ -4278,6 +4279,7 @@ fn render_binop_operand(
         | Expr::Var(_)
         | Expr::ArrayAccess(_, _)
         | Expr::Not(_)
+        | Expr::Neg(_)
         | Expr::BitwiseNot(_)
         | Expr::FuncCall(_, _)
         | Expr::PointerDeref(_)
@@ -4868,6 +4870,7 @@ fn expr_is_integer(expr: &Expr) -> bool {
         }
         Expr::IntLiteral(_) | Expr::Cast(VarType::Integer | VarType::Index, _) => true,
         Expr::BinOp(left, _, right) => expr_is_integer(left) && expr_is_integer(right),
+        Expr::Neg(inner) => expr_is_integer(inner),
         _ => false,
     }
 }
@@ -4934,7 +4937,7 @@ fn expr_is_i32_typed(expr: &Expr) -> bool {
             expr_is_i32_typed(left) && (expr_is_i32_typed(right) || matches!(right.as_ref(), Expr::IntLiteral(_)))
                 || expr_is_i32_typed(right) && matches!(left.as_ref(), Expr::IntLiteral(_))
         }
-        Expr::BitwiseNot(inner) => expr_is_i32_typed(inner),
+        Expr::BitwiseNot(inner) | Expr::Neg(inner) => expr_is_i32_typed(inner),
         Expr::Cast(VarType::Integer, _inner) => {
             true
         }
@@ -4986,6 +4989,7 @@ fn expr_is_i32_typed_ctx(expr: &Expr, ctx: &RustRenderCtx) -> bool {
                 || (l_i32 && r_usize && contains_sentinel_expr(left, ctx))
                 || (r_i32 && l_usize && contains_sentinel_expr(right, ctx))
         }
+        Expr::Neg(inner) => expr_is_i32_typed_ctx(inner, ctx),
         _ => false,
     }
 }
@@ -4996,6 +5000,7 @@ fn contains_sentinel_expr(expr: &Expr, ctx: &RustRenderCtx) -> bool {
         Expr::BinOp(left, _, right) => {
             contains_sentinel_expr(left, ctx) || contains_sentinel_expr(right, ctx)
         }
+        Expr::Neg(inner) => contains_sentinel_expr(inner, ctx),
         _ => false,
     }
 }
@@ -5016,6 +5021,10 @@ pub(crate) fn expr_is_untyped_integer(expr: &Expr) -> bool {
             let left_is_int = expr_is_untyped_integer(left) || matches!(left.as_ref(), Expr::IntLiteral(_));
             let right_is_int = expr_is_untyped_integer(right) || matches!(right.as_ref(), Expr::IntLiteral(_));
             left_is_int && right_is_int && !expr_is_i32_typed(left) && !expr_is_i32_typed(right)
+        }
+        Expr::Neg(inner) => {
+            (expr_is_untyped_integer(inner) || matches!(inner.as_ref(), Expr::IntLiteral(_)))
+                && !expr_is_i32_typed(inner)
         }
         _ => false,
     }
@@ -5091,6 +5100,7 @@ fn expr_renders_as_usize_despite_i32(expr: &Expr, ctx: &RustRenderCtx) -> bool {
             expr_renders_as_usize_despite_i32(left, ctx)
                 || expr_renders_as_usize_despite_i32(right, ctx)
         }
+        Expr::Neg(inner) => expr_renders_as_usize_despite_i32(inner, ctx),
         _ => false,
     }
 }
@@ -6675,6 +6685,7 @@ fn walk_rename(expr: &Expr, elections: &ElectionMap, hit: &mut bool) -> Expr {
         }
         Expr::Not(inner) => Expr::Not(Box::new(walk_rename(inner, elections, hit))),
         Expr::BitwiseNot(inner) => Expr::BitwiseNot(Box::new(walk_rename(inner, elections, hit))),
+        Expr::Neg(inner) => Expr::Neg(Box::new(walk_rename(inner, elections, hit))),
         Expr::FuncCall(name, args) => Expr::FuncCall(
             name.clone(),
             args.iter().map(|a| walk_rename(a, elections, hit)).collect(),
@@ -6759,6 +6770,7 @@ fn expr_mentions_index_domain(expr: &Expr) -> bool {
             expr_mentions_index_domain(a) || expr_mentions_index_domain(b)
         }
         Expr::Cast(_, inner)
+        | Expr::Neg(inner)
         | Expr::PostIncrement(inner)
         | Expr::PostDecrement(inner)
         | Expr::PreIncrement(inner)

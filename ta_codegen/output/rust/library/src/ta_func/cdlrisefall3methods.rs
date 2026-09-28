@@ -379,27 +379,27 @@ impl Core {
                 let _w10 = &_w10[.._wn + 2];
                 let _w11 = &_w11[.._wn + 4];
                 for _wk in 0.._wn {
-                    if (if _w2[_wk] >= _w11[_wk] { 1 } else { 0 - 1 }) == 0 - (if _w2[_wk + 1] >= _w11[_wk + 1] { 1 } else { 0 - 1 }) && // white, 3 black, white  ||  black, 3 white, black
-                       (if _w2[_wk + 1] >= _w11[_wk + 1] { 1 } else { 0 - 1 }) == (if _w2[_wk + 2] >= _w11[_wk + 2] { 1 } else { 0 - 1 }) &&
-                       (if _w2[_wk + 2] >= _w11[_wk + 2] { 1 } else { 0 - 1 }) == (if _w2[_wk + 3] >= _w11[_wk + 3] { 1 } else { 0 - 1 }) &&
-                       (if _w2[_wk + 3] >= _w11[_wk + 3] { 1 } else { 0 - 1 }) == 0 - (if _w2[_wk + 4] >= _w11[_wk + 4] { 1 } else { 0 - 1 }) &&
+                    if (if _w2[_wk] >= _w11[_wk] { 1 } else { -1 }) == -(if _w2[_wk + 1] >= _w11[_wk + 1] { 1 } else { -1 }) && // white, 3 black, white  ||  black, 3 white, black
+                       (if _w2[_wk + 1] >= _w11[_wk + 1] { 1 } else { -1 }) == (if _w2[_wk + 2] >= _w11[_wk + 2] { 1 } else { -1 }) &&
+                       (if _w2[_wk + 2] >= _w11[_wk + 2] { 1 } else { -1 }) == (if _w2[_wk + 3] >= _w11[_wk + 3] { 1 } else { -1 }) &&
+                       (if _w2[_wk + 3] >= _w11[_wk + 3] { 1 } else { -1 }) == -(if _w2[_wk + 4] >= _w11[_wk + 4] { 1 } else { -1 }) &&
                        c_min(_w11[_wk + 1], _w2[_wk + 1]) < _w5[_wk] && // 2nd to 4th hold within 1st: a part of the real body must be within 1st range
                        c_max(_w11[_wk + 1], _w2[_wk + 1]) > _w8[_wk] &&
                        c_min(_w11[_wk + 2], _w2[_wk + 2]) < _w5[_wk] &&
                        c_max(_w11[_wk + 2], _w2[_wk + 2]) > _w8[_wk] &&
                        c_min(_w11[_wk + 3], _w2[_wk + 3]) < _w5[_wk] &&
                        c_max(_w11[_wk + 3], _w2[_wk + 3]) > _w8[_wk] &&
-                       _w2[_wk + 2] * (((if _w2[_wk] >= _w11[_wk] { 1 } else { 0 - 1 })) as f64) < _w2[_wk + 1] * (((if _w2[_wk] >= _w11[_wk] { 1 } else { 0 - 1 })) as f64) && // 2nd to 4th are falling (rising)
-                       _w2[_wk + 3] * (((if _w2[_wk] >= _w11[_wk] { 1 } else { 0 - 1 })) as f64) < _w2[_wk + 2] * (((if _w2[_wk] >= _w11[_wk] { 1 } else { 0 - 1 })) as f64) &&
-                       _w11[_wk + 4] * (((if _w2[_wk] >= _w11[_wk] { 1 } else { 0 - 1 })) as f64) > _w2[_wk + 3] * (((if _w2[_wk] >= _w11[_wk] { 1 } else { 0 - 1 })) as f64) && // 5th opens above (below) the prior close
-                       _w2[_wk + 4] * (((if _w2[_wk] >= _w11[_wk] { 1 } else { 0 - 1 })) as f64) > _w2[_wk] * (((if _w2[_wk] >= _w11[_wk] { 1 } else { 0 - 1 })) as f64) && // 5th closes above (below) the 1st close
+                       _w2[_wk + 2] * (((if _w2[_wk] >= _w11[_wk] { 1 } else { -1 })) as f64) < _w2[_wk + 1] * (((if _w2[_wk] >= _w11[_wk] { 1 } else { -1 })) as f64) && // 2nd to 4th are falling (rising)
+                       _w2[_wk + 3] * (((if _w2[_wk] >= _w11[_wk] { 1 } else { -1 })) as f64) < _w2[_wk + 2] * (((if _w2[_wk] >= _w11[_wk] { 1 } else { -1 })) as f64) &&
+                       _w11[_wk + 4] * (((if _w2[_wk] >= _w11[_wk] { 1 } else { -1 })) as f64) > _w2[_wk + 3] * (((if _w2[_wk] >= _w11[_wk] { 1 } else { -1 })) as f64) && // 5th opens above (below) the prior close
+                       _w2[_wk + 4] * (((if _w2[_wk] >= _w11[_wk] { 1 } else { -1 })) as f64) > _w2[_wk] * (((if _w2[_wk] >= _w11[_wk] { 1 } else { -1 })) as f64) && // 5th closes above (below) the 1st close
                        (_w2[_wk] - _w11[_wk]).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (BodyPeriodTotal[4]) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => ((_w2[_wk]) - (_w11[_wk])).abs(), 1 => (_w5[_wk]) - (_w8[_wk]), 2 => ((_w5[_wk]) - (if (_w2[_wk]) >= (_w11[_wk]) { (_w2[_wk]) } else { (_w11[_wk]) })) + ((if (_w2[_wk]) >= (_w11[_wk]) { (_w11[_wk]) } else { (_w2[_wk]) }) - (_w8[_wk])), _ => 0.0 } }) * (if (BodyLong_rangeType) == 2 { 0.5 } else { 1.0 })) && // 1st long, then 3 small, 5th long
                        (_w2[_wk + 1] - _w11[_wk + 1]).abs() < ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (BodyPeriodTotal[3]) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((_w2[_wk + 1]) - (_w11[_wk + 1])).abs(), 1 => (_w5[_wk + 1]) - (_w8[_wk + 1]), 2 => ((_w5[_wk + 1]) - (if (_w2[_wk + 1]) >= (_w11[_wk + 1]) { (_w2[_wk + 1]) } else { (_w11[_wk + 1]) })) + ((if (_w2[_wk + 1]) >= (_w11[_wk + 1]) { (_w11[_wk + 1]) } else { (_w2[_wk + 1]) }) - (_w8[_wk + 1])), _ => 0.0 } }) * (if (BodyShort_rangeType) == 2 { 0.5 } else { 1.0 })) &&
                        (_w2[_wk + 2] - _w11[_wk + 2]).abs() < ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (BodyPeriodTotal[2]) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((_w2[_wk + 2]) - (_w11[_wk + 2])).abs(), 1 => (_w5[_wk + 2]) - (_w8[_wk + 2]), 2 => ((_w5[_wk + 2]) - (if (_w2[_wk + 2]) >= (_w11[_wk + 2]) { (_w2[_wk + 2]) } else { (_w11[_wk + 2]) })) + ((if (_w2[_wk + 2]) >= (_w11[_wk + 2]) { (_w11[_wk + 2]) } else { (_w2[_wk + 2]) }) - (_w8[_wk + 2])), _ => 0.0 } }) * (if (BodyShort_rangeType) == 2 { 0.5 } else { 1.0 })) &&
                        (_w2[_wk + 3] - _w11[_wk + 3]).abs() < ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (BodyPeriodTotal[1]) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((_w2[_wk + 3]) - (_w11[_wk + 3])).abs(), 1 => (_w5[_wk + 3]) - (_w8[_wk + 3]), 2 => ((_w5[_wk + 3]) - (if (_w2[_wk + 3]) >= (_w11[_wk + 3]) { (_w2[_wk + 3]) } else { (_w11[_wk + 3]) })) + ((if (_w2[_wk + 3]) >= (_w11[_wk + 3]) { (_w11[_wk + 3]) } else { (_w2[_wk + 3]) }) - (_w8[_wk + 3])), _ => 0.0 } }) * (if (BodyShort_rangeType) == 2 { 0.5 } else { 1.0 })) &&
                        (_w2[_wk + 4] - _w11[_wk + 4]).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (BodyPeriodTotal[0]) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => ((_w2[_wk + 4]) - (_w11[_wk + 4])).abs(), 1 => (_w5[_wk + 4]) - (_w8[_wk + 4]), 2 => ((_w5[_wk + 4]) - (if (_w2[_wk + 4]) >= (_w11[_wk + 4]) { (_w2[_wk + 4]) } else { (_w11[_wk + 4]) })) + ((if (_w2[_wk + 4]) >= (_w11[_wk + 4]) { (_w11[_wk + 4]) } else { (_w2[_wk + 4]) }) - (_w8[_wk + 4])), _ => 0.0 } }) * (if (BodyLong_rangeType) == 2 { 0.5 } else { 1.0 }))
                     {
-                        outInteger[outIdx] = (100 * (if inClose[i - 4] >= inOpen[i - 4] { 1 } else { 0 - 1 })) as i32;
+                        outInteger[outIdx] = (100 * (if inClose[i - 4] >= inOpen[i - 4] { 1 } else { -1 })) as i32;
                         outIdx += 1;
                     } else {
                         outInteger[outIdx] = 0;
@@ -419,27 +419,27 @@ impl Core {
                 }
             } else {
                 loop {
-                    if (if inClose[i - 4] >= inOpen[i - 4] { 1 } else { 0 - 1 }) == 0 - (if inClose[i - 3] >= inOpen[i - 3] { 1 } else { 0 - 1 }) && // white, 3 black, white  ||  black, 3 white, black
-                       (if inClose[i - 3] >= inOpen[i - 3] { 1 } else { 0 - 1 }) == (if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 }) &&
-                       (if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 }) == (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) &&
-                       (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) == 0 - (if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 }) &&
+                    if (if inClose[i - 4] >= inOpen[i - 4] { 1 } else { -1 }) == -(if inClose[i - 3] >= inOpen[i - 3] { 1 } else { -1 }) && // white, 3 black, white  ||  black, 3 white, black
+                       (if inClose[i - 3] >= inOpen[i - 3] { 1 } else { -1 }) == (if inClose[i - 2] >= inOpen[i - 2] { 1 } else { -1 }) &&
+                       (if inClose[i - 2] >= inOpen[i - 2] { 1 } else { -1 }) == (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) &&
+                       (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) == -(if inClose[i] >= inOpen[i] { 1 } else { -1 }) &&
                        c_min(inOpen[i - 3], inClose[i - 3]) < inHigh[i - 4] && // 2nd to 4th hold within 1st: a part of the real body must be within 1st range
                        c_max(inOpen[i - 3], inClose[i - 3]) > inLow[i - 4] &&
                        c_min(inOpen[i - 2], inClose[i - 2]) < inHigh[i - 4] &&
                        c_max(inOpen[i - 2], inClose[i - 2]) > inLow[i - 4] &&
                        c_min(inOpen[i - 1], inClose[i - 1]) < inHigh[i - 4] &&
                        c_max(inOpen[i - 1], inClose[i - 1]) > inLow[i - 4] &&
-                       inClose[i - 2] * (((if inClose[i - 4] >= inOpen[i - 4] { 1 } else { 0 - 1 })) as f64) < inClose[i - 3] * (((if inClose[i - 4] >= inOpen[i - 4] { 1 } else { 0 - 1 })) as f64) && // 2nd to 4th are falling (rising)
-                       inClose[i - 1] * (((if inClose[i - 4] >= inOpen[i - 4] { 1 } else { 0 - 1 })) as f64) < inClose[i - 2] * (((if inClose[i - 4] >= inOpen[i - 4] { 1 } else { 0 - 1 })) as f64) &&
-                       inOpen[i] * (((if inClose[i - 4] >= inOpen[i - 4] { 1 } else { 0 - 1 })) as f64) > inClose[i - 1] * (((if inClose[i - 4] >= inOpen[i - 4] { 1 } else { 0 - 1 })) as f64) && // 5th opens above (below) the prior close
-                       inClose[i] * (((if inClose[i - 4] >= inOpen[i - 4] { 1 } else { 0 - 1 })) as f64) > inClose[i - 4] * (((if inClose[i - 4] >= inOpen[i - 4] { 1 } else { 0 - 1 })) as f64) && // 5th closes above (below) the 1st close
+                       inClose[i - 2] * (((if inClose[i - 4] >= inOpen[i - 4] { 1 } else { -1 })) as f64) < inClose[i - 3] * (((if inClose[i - 4] >= inOpen[i - 4] { 1 } else { -1 })) as f64) && // 2nd to 4th are falling (rising)
+                       inClose[i - 1] * (((if inClose[i - 4] >= inOpen[i - 4] { 1 } else { -1 })) as f64) < inClose[i - 2] * (((if inClose[i - 4] >= inOpen[i - 4] { 1 } else { -1 })) as f64) &&
+                       inOpen[i] * (((if inClose[i - 4] >= inOpen[i - 4] { 1 } else { -1 })) as f64) > inClose[i - 1] * (((if inClose[i - 4] >= inOpen[i - 4] { 1 } else { -1 })) as f64) && // 5th opens above (below) the prior close
+                       inClose[i] * (((if inClose[i - 4] >= inOpen[i - 4] { 1 } else { -1 })) as f64) > inClose[i - 4] * (((if inClose[i - 4] >= inOpen[i - 4] { 1 } else { -1 })) as f64) && // 5th closes above (below) the 1st close
                        (inClose[i - 4] - inOpen[i - 4]).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (BodyPeriodTotal[4]) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => ((inClose[i - 4]) - (inOpen[i - 4])).abs(), 1 => (inHigh[i - 4]) - (inLow[i - 4]), 2 => ((inHigh[i - 4]) - (if (inClose[i - 4]) >= (inOpen[i - 4]) { (inClose[i - 4]) } else { (inOpen[i - 4]) })) + ((if (inClose[i - 4]) >= (inOpen[i - 4]) { (inOpen[i - 4]) } else { (inClose[i - 4]) }) - (inLow[i - 4])), _ => 0.0 } }) * (if (BodyLong_rangeType) == 2 { 0.5 } else { 1.0 })) && // 1st long, then 3 small, 5th long
                        (inClose[i - 3] - inOpen[i - 3]).abs() < ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (BodyPeriodTotal[3]) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((inClose[i - 3]) - (inOpen[i - 3])).abs(), 1 => (inHigh[i - 3]) - (inLow[i - 3]), 2 => ((inHigh[i - 3]) - (if (inClose[i - 3]) >= (inOpen[i - 3]) { (inClose[i - 3]) } else { (inOpen[i - 3]) })) + ((if (inClose[i - 3]) >= (inOpen[i - 3]) { (inOpen[i - 3]) } else { (inClose[i - 3]) }) - (inLow[i - 3])), _ => 0.0 } }) * (if (BodyShort_rangeType) == 2 { 0.5 } else { 1.0 })) &&
                        (inClose[i - 2] - inOpen[i - 2]).abs() < ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (BodyPeriodTotal[2]) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((inClose[i - 2]) - (inOpen[i - 2])).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), 2 => ((inHigh[i - 2]) - (if (inClose[i - 2]) >= (inOpen[i - 2]) { (inClose[i - 2]) } else { (inOpen[i - 2]) })) + ((if (inClose[i - 2]) >= (inOpen[i - 2]) { (inOpen[i - 2]) } else { (inClose[i - 2]) }) - (inLow[i - 2])), _ => 0.0 } }) * (if (BodyShort_rangeType) == 2 { 0.5 } else { 1.0 })) &&
                        (inClose[i - 1] - inOpen[i - 1]).abs() < ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (BodyPeriodTotal[1]) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (BodyShort_rangeType) == 2 { 0.5 } else { 1.0 })) &&
                        (inClose[i] - inOpen[i]).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (BodyPeriodTotal[0]) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => ((inClose[i]) - (inOpen[i])).abs(), 1 => (inHigh[i]) - (inLow[i]), 2 => ((inHigh[i]) - (if (inClose[i]) >= (inOpen[i]) { (inClose[i]) } else { (inOpen[i]) })) + ((if (inClose[i]) >= (inOpen[i]) { (inOpen[i]) } else { (inClose[i]) }) - (inLow[i])), _ => 0.0 } }) * (if (BodyLong_rangeType) == 2 { 0.5 } else { 1.0 }))
                     {
-                        outInteger[outIdx] = (100 * (if inClose[i - 4] >= inOpen[i - 4] { 1 } else { 0 - 1 })) as i32;
+                        outInteger[outIdx] = (100 * (if inClose[i - 4] >= inOpen[i - 4] { 1 } else { -1 })) as i32;
                         outIdx += 1;
                     } else {
                         outInteger[outIdx] = 0;
@@ -464,27 +464,27 @@ impl Core {
             }
         } else {
             loop {
-                if (if inClose[i - 4] >= inOpen[i - 4] { 1 } else { 0 - 1 }) == 0 - (if inClose[i - 3] >= inOpen[i - 3] { 1 } else { 0 - 1 }) && // white, 3 black, white  ||  black, 3 white, black
-                   (if inClose[i - 3] >= inOpen[i - 3] { 1 } else { 0 - 1 }) == (if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 }) &&
-                   (if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 }) == (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) &&
-                   (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) == 0 - (if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 }) &&
+                if (if inClose[i - 4] >= inOpen[i - 4] { 1 } else { -1 }) == -(if inClose[i - 3] >= inOpen[i - 3] { 1 } else { -1 }) && // white, 3 black, white  ||  black, 3 white, black
+                   (if inClose[i - 3] >= inOpen[i - 3] { 1 } else { -1 }) == (if inClose[i - 2] >= inOpen[i - 2] { 1 } else { -1 }) &&
+                   (if inClose[i - 2] >= inOpen[i - 2] { 1 } else { -1 }) == (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) &&
+                   (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) == -(if inClose[i] >= inOpen[i] { 1 } else { -1 }) &&
                    c_min(inOpen[i - 3], inClose[i - 3]) < inHigh[i - 4] && // 2nd to 4th hold within 1st: a part of the real body must be within 1st range
                    c_max(inOpen[i - 3], inClose[i - 3]) > inLow[i - 4] &&
                    c_min(inOpen[i - 2], inClose[i - 2]) < inHigh[i - 4] &&
                    c_max(inOpen[i - 2], inClose[i - 2]) > inLow[i - 4] &&
                    c_min(inOpen[i - 1], inClose[i - 1]) < inHigh[i - 4] &&
                    c_max(inOpen[i - 1], inClose[i - 1]) > inLow[i - 4] &&
-                   inClose[i - 2] * (((if inClose[i - 4] >= inOpen[i - 4] { 1 } else { 0 - 1 })) as f64) < inClose[i - 3] * (((if inClose[i - 4] >= inOpen[i - 4] { 1 } else { 0 - 1 })) as f64) && // 2nd to 4th are falling (rising)
-                   inClose[i - 1] * (((if inClose[i - 4] >= inOpen[i - 4] { 1 } else { 0 - 1 })) as f64) < inClose[i - 2] * (((if inClose[i - 4] >= inOpen[i - 4] { 1 } else { 0 - 1 })) as f64) &&
-                   inOpen[i] * (((if inClose[i - 4] >= inOpen[i - 4] { 1 } else { 0 - 1 })) as f64) > inClose[i - 1] * (((if inClose[i - 4] >= inOpen[i - 4] { 1 } else { 0 - 1 })) as f64) && // 5th opens above (below) the prior close
-                   inClose[i] * (((if inClose[i - 4] >= inOpen[i - 4] { 1 } else { 0 - 1 })) as f64) > inClose[i - 4] * (((if inClose[i - 4] >= inOpen[i - 4] { 1 } else { 0 - 1 })) as f64) && // 5th closes above (below) the 1st close
+                   inClose[i - 2] * (((if inClose[i - 4] >= inOpen[i - 4] { 1 } else { -1 })) as f64) < inClose[i - 3] * (((if inClose[i - 4] >= inOpen[i - 4] { 1 } else { -1 })) as f64) && // 2nd to 4th are falling (rising)
+                   inClose[i - 1] * (((if inClose[i - 4] >= inOpen[i - 4] { 1 } else { -1 })) as f64) < inClose[i - 2] * (((if inClose[i - 4] >= inOpen[i - 4] { 1 } else { -1 })) as f64) &&
+                   inOpen[i] * (((if inClose[i - 4] >= inOpen[i - 4] { 1 } else { -1 })) as f64) > inClose[i - 1] * (((if inClose[i - 4] >= inOpen[i - 4] { 1 } else { -1 })) as f64) && // 5th opens above (below) the prior close
+                   inClose[i] * (((if inClose[i - 4] >= inOpen[i - 4] { 1 } else { -1 })) as f64) > inClose[i - 4] * (((if inClose[i - 4] >= inOpen[i - 4] { 1 } else { -1 })) as f64) && // 5th closes above (below) the 1st close
                    (inClose[i - 4] - inOpen[i - 4]).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (BodyPeriodTotal[4]) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => ((inClose[i - 4]) - (inOpen[i - 4])).abs(), 1 => (inHigh[i - 4]) - (inLow[i - 4]), 2 => ((inHigh[i - 4]) - (if (inClose[i - 4]) >= (inOpen[i - 4]) { (inClose[i - 4]) } else { (inOpen[i - 4]) })) + ((if (inClose[i - 4]) >= (inOpen[i - 4]) { (inOpen[i - 4]) } else { (inClose[i - 4]) }) - (inLow[i - 4])), _ => 0.0 } }) * (if (BodyLong_rangeType) == 2 { 0.5 } else { 1.0 })) && // 1st long, then 3 small, 5th long
                    (inClose[i - 3] - inOpen[i - 3]).abs() < ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (BodyPeriodTotal[3]) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((inClose[i - 3]) - (inOpen[i - 3])).abs(), 1 => (inHigh[i - 3]) - (inLow[i - 3]), 2 => ((inHigh[i - 3]) - (if (inClose[i - 3]) >= (inOpen[i - 3]) { (inClose[i - 3]) } else { (inOpen[i - 3]) })) + ((if (inClose[i - 3]) >= (inOpen[i - 3]) { (inOpen[i - 3]) } else { (inClose[i - 3]) }) - (inLow[i - 3])), _ => 0.0 } }) * (if (BodyShort_rangeType) == 2 { 0.5 } else { 1.0 })) &&
                    (inClose[i - 2] - inOpen[i - 2]).abs() < ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (BodyPeriodTotal[2]) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((inClose[i - 2]) - (inOpen[i - 2])).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), 2 => ((inHigh[i - 2]) - (if (inClose[i - 2]) >= (inOpen[i - 2]) { (inClose[i - 2]) } else { (inOpen[i - 2]) })) + ((if (inClose[i - 2]) >= (inOpen[i - 2]) { (inOpen[i - 2]) } else { (inClose[i - 2]) }) - (inLow[i - 2])), _ => 0.0 } }) * (if (BodyShort_rangeType) == 2 { 0.5 } else { 1.0 })) &&
                    (inClose[i - 1] - inOpen[i - 1]).abs() < ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (BodyPeriodTotal[1]) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (BodyShort_rangeType) == 2 { 0.5 } else { 1.0 })) &&
                    (inClose[i] - inOpen[i]).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (BodyPeriodTotal[0]) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => ((inClose[i]) - (inOpen[i])).abs(), 1 => (inHigh[i]) - (inLow[i]), 2 => ((inHigh[i]) - (if (inClose[i]) >= (inOpen[i]) { (inClose[i]) } else { (inOpen[i]) })) + ((if (inClose[i]) >= (inOpen[i]) { (inOpen[i]) } else { (inClose[i]) }) - (inLow[i])), _ => 0.0 } }) * (if (BodyLong_rangeType) == 2 { 0.5 } else { 1.0 }))
                 {
-                    outInteger[outIdx] = (100 * (if inClose[i - 4] >= inOpen[i - 4] { 1 } else { 0 - 1 })) as i32;
+                    outInteger[outIdx] = (100 * (if inClose[i - 4] >= inOpen[i - 4] { 1 } else { -1 })) as i32;
                     outIdx += 1;
                 } else {
                     outInteger[outIdx] = 0;
@@ -742,27 +742,27 @@ impl Core {
             }
         }
         sp.ring_BodyShortTrailingIdx_derived[sp.ringPos_BodyShortTrailingIdx] = _candlerange_1;
-        if (if sp.lag4_inClose >= sp.lag4_inOpen { 1 } else { 0 - 1 }) == 0 - (if sp.lag3_inClose >= sp.lag3_inOpen { 1 } else { 0 - 1 }) && // white, 3 black, white  ||  black, 3 white, black
-           (if sp.lag3_inClose >= sp.lag3_inOpen { 1 } else { 0 - 1 }) == (if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { 0 - 1 }) &&
-           (if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { 0 - 1 }) == (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 }) &&
-           (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 }) == 0 - (if inClose >= inOpen { 1 } else { 0 - 1 }) &&
+        if (if sp.lag4_inClose >= sp.lag4_inOpen { 1 } else { -1 }) == -(if sp.lag3_inClose >= sp.lag3_inOpen { 1 } else { -1 }) && // white, 3 black, white  ||  black, 3 white, black
+           (if sp.lag3_inClose >= sp.lag3_inOpen { 1 } else { -1 }) == (if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { -1 }) &&
+           (if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { -1 }) == (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { -1 }) &&
+           (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { -1 }) == -(if inClose >= inOpen { 1 } else { -1 }) &&
            c_min(sp.lag3_inOpen, sp.lag3_inClose) < sp.lag4_inHigh && // 2nd to 4th hold within 1st: a part of the real body must be within 1st range
            c_max(sp.lag3_inOpen, sp.lag3_inClose) > sp.lag4_inLow &&
            c_min(sp.lag2_inOpen, sp.lag2_inClose) < sp.lag4_inHigh &&
            c_max(sp.lag2_inOpen, sp.lag2_inClose) > sp.lag4_inLow &&
            c_min(sp.lag1_inOpen, sp.lag1_inClose) < sp.lag4_inHigh &&
            c_max(sp.lag1_inOpen, sp.lag1_inClose) > sp.lag4_inLow &&
-           sp.lag2_inClose * (((if sp.lag4_inClose >= sp.lag4_inOpen { 1 } else { 0 - 1 })) as f64) < sp.lag3_inClose * (((if sp.lag4_inClose >= sp.lag4_inOpen { 1 } else { 0 - 1 })) as f64) && // 2nd to 4th are falling (rising)
-           sp.lag1_inClose * (((if sp.lag4_inClose >= sp.lag4_inOpen { 1 } else { 0 - 1 })) as f64) < sp.lag2_inClose * (((if sp.lag4_inClose >= sp.lag4_inOpen { 1 } else { 0 - 1 })) as f64) &&
-           inOpen * (((if sp.lag4_inClose >= sp.lag4_inOpen { 1 } else { 0 - 1 })) as f64) > sp.lag1_inClose * (((if sp.lag4_inClose >= sp.lag4_inOpen { 1 } else { 0 - 1 })) as f64) && // 5th opens above (below) the prior close
-           inClose * (((if sp.lag4_inClose >= sp.lag4_inOpen { 1 } else { 0 - 1 })) as f64) > sp.lag4_inClose * (((if sp.lag4_inClose >= sp.lag4_inOpen { 1 } else { 0 - 1 })) as f64) && // 5th closes above (below) the 1st close
+           sp.lag2_inClose * (((if sp.lag4_inClose >= sp.lag4_inOpen { 1 } else { -1 })) as f64) < sp.lag3_inClose * (((if sp.lag4_inClose >= sp.lag4_inOpen { 1 } else { -1 })) as f64) && // 2nd to 4th are falling (rising)
+           sp.lag1_inClose * (((if sp.lag4_inClose >= sp.lag4_inOpen { 1 } else { -1 })) as f64) < sp.lag2_inClose * (((if sp.lag4_inClose >= sp.lag4_inOpen { 1 } else { -1 })) as f64) &&
+           inOpen * (((if sp.lag4_inClose >= sp.lag4_inOpen { 1 } else { -1 })) as f64) > sp.lag1_inClose * (((if sp.lag4_inClose >= sp.lag4_inOpen { 1 } else { -1 })) as f64) && // 5th opens above (below) the prior close
+           inClose * (((if sp.lag4_inClose >= sp.lag4_inOpen { 1 } else { -1 })) as f64) > sp.lag4_inClose * (((if sp.lag4_inClose >= sp.lag4_inOpen { 1 } else { -1 })) as f64) && // 5th closes above (below) the 1st close
            (sp.lag4_inClose - sp.lag4_inOpen).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (sp.BodyPeriodTotal[4]) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => ((sp.lag4_inClose) - (sp.lag4_inOpen)).abs(), 1 => (sp.lag4_inHigh) - (sp.lag4_inLow), 2 => ((sp.lag4_inHigh) - (if (sp.lag4_inClose) >= (sp.lag4_inOpen) { (sp.lag4_inClose) } else { (sp.lag4_inOpen) })) + ((if (sp.lag4_inClose) >= (sp.lag4_inOpen) { (sp.lag4_inOpen) } else { (sp.lag4_inClose) }) - (sp.lag4_inLow)), _ => 0.0 } }) * (if (BodyLong_rangeType) == 2 { 0.5 } else { 1.0 })) && // 1st long, then 3 small, 5th long
            (sp.lag3_inClose - sp.lag3_inOpen).abs() < ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (sp.BodyPeriodTotal[3]) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((sp.lag3_inClose) - (sp.lag3_inOpen)).abs(), 1 => (sp.lag3_inHigh) - (sp.lag3_inLow), 2 => ((sp.lag3_inHigh) - (if (sp.lag3_inClose) >= (sp.lag3_inOpen) { (sp.lag3_inClose) } else { (sp.lag3_inOpen) })) + ((if (sp.lag3_inClose) >= (sp.lag3_inOpen) { (sp.lag3_inOpen) } else { (sp.lag3_inClose) }) - (sp.lag3_inLow)), _ => 0.0 } }) * (if (BodyShort_rangeType) == 2 { 0.5 } else { 1.0 })) &&
            (sp.lag2_inClose - sp.lag2_inOpen).abs() < ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (sp.BodyPeriodTotal[2]) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((sp.lag2_inClose) - (sp.lag2_inOpen)).abs(), 1 => (sp.lag2_inHigh) - (sp.lag2_inLow), 2 => ((sp.lag2_inHigh) - (if (sp.lag2_inClose) >= (sp.lag2_inOpen) { (sp.lag2_inClose) } else { (sp.lag2_inOpen) })) + ((if (sp.lag2_inClose) >= (sp.lag2_inOpen) { (sp.lag2_inOpen) } else { (sp.lag2_inClose) }) - (sp.lag2_inLow)), _ => 0.0 } }) * (if (BodyShort_rangeType) == 2 { 0.5 } else { 1.0 })) &&
            (sp.lag1_inClose - sp.lag1_inOpen).abs() < ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (sp.BodyPeriodTotal[1]) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((sp.lag1_inClose) - (sp.lag1_inOpen)).abs(), 1 => (sp.lag1_inHigh) - (sp.lag1_inLow), 2 => ((sp.lag1_inHigh) - (if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inClose) } else { (sp.lag1_inOpen) })) + ((if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inOpen) } else { (sp.lag1_inClose) }) - (sp.lag1_inLow)), _ => 0.0 } }) * (if (BodyShort_rangeType) == 2 { 0.5 } else { 1.0 })) &&
            (inClose - inOpen).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (sp.BodyPeriodTotal[0]) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => ((inClose) - (inOpen)).abs(), 1 => (inHigh) - (inLow), 2 => ((inHigh) - (if (inClose) >= (inOpen) { (inClose) } else { (inOpen) })) + ((if (inClose) >= (inOpen) { (inOpen) } else { (inClose) }) - (inLow)), _ => 0.0 } }) * (if (BodyLong_rangeType) == 2 { 0.5 } else { 1.0 }))
         {
-            (*outInteger) = (100 * (if sp.lag4_inClose >= sp.lag4_inOpen { 1 } else { 0 - 1 })) as i32;
+            (*outInteger) = (100 * (if sp.lag4_inClose >= sp.lag4_inOpen { 1 } else { -1 })) as i32;
         } else {
             (*outInteger) = 0;
         }
@@ -1001,27 +1001,27 @@ impl Core {
         // outInteger is positive (1 to 100) or negative (-1 to -100)
         outIdx = 0;
         loop {
-            if (if inClose[i - 4] >= inOpen[i - 4] { 1 } else { 0 - 1 }) == 0 - (if inClose[i - 3] >= inOpen[i - 3] { 1 } else { 0 - 1 }) && // white, 3 black, white  ||  black, 3 white, black
-               (if inClose[i - 3] >= inOpen[i - 3] { 1 } else { 0 - 1 }) == (if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 }) &&
-               (if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 }) == (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) &&
-               (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) == 0 - (if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 }) &&
+            if (if inClose[i - 4] >= inOpen[i - 4] { 1 } else { -1 }) == -(if inClose[i - 3] >= inOpen[i - 3] { 1 } else { -1 }) && // white, 3 black, white  ||  black, 3 white, black
+               (if inClose[i - 3] >= inOpen[i - 3] { 1 } else { -1 }) == (if inClose[i - 2] >= inOpen[i - 2] { 1 } else { -1 }) &&
+               (if inClose[i - 2] >= inOpen[i - 2] { 1 } else { -1 }) == (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) &&
+               (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) == -(if inClose[i] >= inOpen[i] { 1 } else { -1 }) &&
                c_min(inOpen[i - 3], inClose[i - 3]) < inHigh[i - 4] && // 2nd to 4th hold within 1st: a part of the real body must be within 1st range
                c_max(inOpen[i - 3], inClose[i - 3]) > inLow[i - 4] &&
                c_min(inOpen[i - 2], inClose[i - 2]) < inHigh[i - 4] &&
                c_max(inOpen[i - 2], inClose[i - 2]) > inLow[i - 4] &&
                c_min(inOpen[i - 1], inClose[i - 1]) < inHigh[i - 4] &&
                c_max(inOpen[i - 1], inClose[i - 1]) > inLow[i - 4] &&
-               inClose[i - 2] * (((if inClose[i - 4] >= inOpen[i - 4] { 1 } else { 0 - 1 })) as f64) < inClose[i - 3] * (((if inClose[i - 4] >= inOpen[i - 4] { 1 } else { 0 - 1 })) as f64) && // 2nd to 4th are falling (rising)
-               inClose[i - 1] * (((if inClose[i - 4] >= inOpen[i - 4] { 1 } else { 0 - 1 })) as f64) < inClose[i - 2] * (((if inClose[i - 4] >= inOpen[i - 4] { 1 } else { 0 - 1 })) as f64) &&
-               inOpen[i] * (((if inClose[i - 4] >= inOpen[i - 4] { 1 } else { 0 - 1 })) as f64) > inClose[i - 1] * (((if inClose[i - 4] >= inOpen[i - 4] { 1 } else { 0 - 1 })) as f64) && // 5th opens above (below) the prior close
-               inClose[i] * (((if inClose[i - 4] >= inOpen[i - 4] { 1 } else { 0 - 1 })) as f64) > inClose[i - 4] * (((if inClose[i - 4] >= inOpen[i - 4] { 1 } else { 0 - 1 })) as f64) && // 5th closes above (below) the 1st close
+               inClose[i - 2] * (((if inClose[i - 4] >= inOpen[i - 4] { 1 } else { -1 })) as f64) < inClose[i - 3] * (((if inClose[i - 4] >= inOpen[i - 4] { 1 } else { -1 })) as f64) && // 2nd to 4th are falling (rising)
+               inClose[i - 1] * (((if inClose[i - 4] >= inOpen[i - 4] { 1 } else { -1 })) as f64) < inClose[i - 2] * (((if inClose[i - 4] >= inOpen[i - 4] { 1 } else { -1 })) as f64) &&
+               inOpen[i] * (((if inClose[i - 4] >= inOpen[i - 4] { 1 } else { -1 })) as f64) > inClose[i - 1] * (((if inClose[i - 4] >= inOpen[i - 4] { 1 } else { -1 })) as f64) && // 5th opens above (below) the prior close
+               inClose[i] * (((if inClose[i - 4] >= inOpen[i - 4] { 1 } else { -1 })) as f64) > inClose[i - 4] * (((if inClose[i - 4] >= inOpen[i - 4] { 1 } else { -1 })) as f64) && // 5th closes above (below) the 1st close
                (inClose[i - 4] - inOpen[i - 4]).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (BodyPeriodTotal[4]) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => ((inClose[i - 4]) - (inOpen[i - 4])).abs(), 1 => (inHigh[i - 4]) - (inLow[i - 4]), 2 => ((inHigh[i - 4]) - (if (inClose[i - 4]) >= (inOpen[i - 4]) { (inClose[i - 4]) } else { (inOpen[i - 4]) })) + ((if (inClose[i - 4]) >= (inOpen[i - 4]) { (inOpen[i - 4]) } else { (inClose[i - 4]) }) - (inLow[i - 4])), _ => 0.0 } }) * (if (BodyLong_rangeType) == 2 { 0.5 } else { 1.0 })) && // 1st long, then 3 small, 5th long
                (inClose[i - 3] - inOpen[i - 3]).abs() < ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (BodyPeriodTotal[3]) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((inClose[i - 3]) - (inOpen[i - 3])).abs(), 1 => (inHigh[i - 3]) - (inLow[i - 3]), 2 => ((inHigh[i - 3]) - (if (inClose[i - 3]) >= (inOpen[i - 3]) { (inClose[i - 3]) } else { (inOpen[i - 3]) })) + ((if (inClose[i - 3]) >= (inOpen[i - 3]) { (inOpen[i - 3]) } else { (inClose[i - 3]) }) - (inLow[i - 3])), _ => 0.0 } }) * (if (BodyShort_rangeType) == 2 { 0.5 } else { 1.0 })) &&
                (inClose[i - 2] - inOpen[i - 2]).abs() < ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (BodyPeriodTotal[2]) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((inClose[i - 2]) - (inOpen[i - 2])).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), 2 => ((inHigh[i - 2]) - (if (inClose[i - 2]) >= (inOpen[i - 2]) { (inClose[i - 2]) } else { (inOpen[i - 2]) })) + ((if (inClose[i - 2]) >= (inOpen[i - 2]) { (inOpen[i - 2]) } else { (inClose[i - 2]) }) - (inLow[i - 2])), _ => 0.0 } }) * (if (BodyShort_rangeType) == 2 { 0.5 } else { 1.0 })) &&
                (inClose[i - 1] - inOpen[i - 1]).abs() < ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (BodyPeriodTotal[1]) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (BodyShort_rangeType) == 2 { 0.5 } else { 1.0 })) &&
                (inClose[i] - inOpen[i]).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (BodyPeriodTotal[0]) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => ((inClose[i]) - (inOpen[i])).abs(), 1 => (inHigh[i]) - (inLow[i]), 2 => ((inHigh[i]) - (if (inClose[i]) >= (inOpen[i]) { (inClose[i]) } else { (inOpen[i]) })) + ((if (inClose[i]) >= (inOpen[i]) { (inOpen[i]) } else { (inClose[i]) }) - (inLow[i])), _ => 0.0 } }) * (if (BodyLong_rangeType) == 2 { 0.5 } else { 1.0 }))
             {
-                outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = (100 * (if inClose[i - 4] >= inOpen[i - 4] { 1 } else { 0 - 1 })) as i32;
+                outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = (100 * (if inClose[i - 4] >= inOpen[i - 4] { 1 } else { -1 })) as i32;
             } else {
                 outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0;
             }
@@ -1295,27 +1295,27 @@ impl Cdlrisefall3methodsStream {
             let BodyShort_avgPeriod: i32 = self.cs_body_short.avg_period;
             #[allow(non_snake_case)]
             let BodyShort_factor: f64 = self.cs_body_short.factor;
-            if (if sp.lag4_inClose >= sp.lag4_inOpen { 1 } else { 0 - 1 }) == 0 - (if sp.lag3_inClose >= sp.lag3_inOpen { 1 } else { 0 - 1 }) && // white, 3 black, white  ||  black, 3 white, black
-               (if sp.lag3_inClose >= sp.lag3_inOpen { 1 } else { 0 - 1 }) == (if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { 0 - 1 }) &&
-               (if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { 0 - 1 }) == (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 }) &&
-               (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 }) == 0 - (if inClose >= inOpen { 1 } else { 0 - 1 }) &&
+            if (if sp.lag4_inClose >= sp.lag4_inOpen { 1 } else { -1 }) == -(if sp.lag3_inClose >= sp.lag3_inOpen { 1 } else { -1 }) && // white, 3 black, white  ||  black, 3 white, black
+               (if sp.lag3_inClose >= sp.lag3_inOpen { 1 } else { -1 }) == (if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { -1 }) &&
+               (if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { -1 }) == (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { -1 }) &&
+               (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { -1 }) == -(if inClose >= inOpen { 1 } else { -1 }) &&
                c_min(sp.lag3_inOpen, sp.lag3_inClose) < sp.lag4_inHigh && // 2nd to 4th hold within 1st: a part of the real body must be within 1st range
                c_max(sp.lag3_inOpen, sp.lag3_inClose) > sp.lag4_inLow &&
                c_min(sp.lag2_inOpen, sp.lag2_inClose) < sp.lag4_inHigh &&
                c_max(sp.lag2_inOpen, sp.lag2_inClose) > sp.lag4_inLow &&
                c_min(sp.lag1_inOpen, sp.lag1_inClose) < sp.lag4_inHigh &&
                c_max(sp.lag1_inOpen, sp.lag1_inClose) > sp.lag4_inLow &&
-               sp.lag2_inClose * (((if sp.lag4_inClose >= sp.lag4_inOpen { 1 } else { 0 - 1 })) as f64) < sp.lag3_inClose * (((if sp.lag4_inClose >= sp.lag4_inOpen { 1 } else { 0 - 1 })) as f64) && // 2nd to 4th are falling (rising)
-               sp.lag1_inClose * (((if sp.lag4_inClose >= sp.lag4_inOpen { 1 } else { 0 - 1 })) as f64) < sp.lag2_inClose * (((if sp.lag4_inClose >= sp.lag4_inOpen { 1 } else { 0 - 1 })) as f64) &&
-               inOpen * (((if sp.lag4_inClose >= sp.lag4_inOpen { 1 } else { 0 - 1 })) as f64) > sp.lag1_inClose * (((if sp.lag4_inClose >= sp.lag4_inOpen { 1 } else { 0 - 1 })) as f64) && // 5th opens above (below) the prior close
-               inClose * (((if sp.lag4_inClose >= sp.lag4_inOpen { 1 } else { 0 - 1 })) as f64) > sp.lag4_inClose * (((if sp.lag4_inClose >= sp.lag4_inOpen { 1 } else { 0 - 1 })) as f64) && // 5th closes above (below) the 1st close
+               sp.lag2_inClose * (((if sp.lag4_inClose >= sp.lag4_inOpen { 1 } else { -1 })) as f64) < sp.lag3_inClose * (((if sp.lag4_inClose >= sp.lag4_inOpen { 1 } else { -1 })) as f64) && // 2nd to 4th are falling (rising)
+               sp.lag1_inClose * (((if sp.lag4_inClose >= sp.lag4_inOpen { 1 } else { -1 })) as f64) < sp.lag2_inClose * (((if sp.lag4_inClose >= sp.lag4_inOpen { 1 } else { -1 })) as f64) &&
+               inOpen * (((if sp.lag4_inClose >= sp.lag4_inOpen { 1 } else { -1 })) as f64) > sp.lag1_inClose * (((if sp.lag4_inClose >= sp.lag4_inOpen { 1 } else { -1 })) as f64) && // 5th opens above (below) the prior close
+               inClose * (((if sp.lag4_inClose >= sp.lag4_inOpen { 1 } else { -1 })) as f64) > sp.lag4_inClose * (((if sp.lag4_inClose >= sp.lag4_inOpen { 1 } else { -1 })) as f64) && // 5th closes above (below) the 1st close
                (sp.lag4_inClose - sp.lag4_inOpen).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (sp.BodyPeriodTotal[4]) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => ((sp.lag4_inClose) - (sp.lag4_inOpen)).abs(), 1 => (sp.lag4_inHigh) - (sp.lag4_inLow), 2 => ((sp.lag4_inHigh) - (if (sp.lag4_inClose) >= (sp.lag4_inOpen) { (sp.lag4_inClose) } else { (sp.lag4_inOpen) })) + ((if (sp.lag4_inClose) >= (sp.lag4_inOpen) { (sp.lag4_inOpen) } else { (sp.lag4_inClose) }) - (sp.lag4_inLow)), _ => 0.0 } }) * (if (BodyLong_rangeType) == 2 { 0.5 } else { 1.0 })) && // 1st long, then 3 small, 5th long
                (sp.lag3_inClose - sp.lag3_inOpen).abs() < ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (sp.BodyPeriodTotal[3]) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((sp.lag3_inClose) - (sp.lag3_inOpen)).abs(), 1 => (sp.lag3_inHigh) - (sp.lag3_inLow), 2 => ((sp.lag3_inHigh) - (if (sp.lag3_inClose) >= (sp.lag3_inOpen) { (sp.lag3_inClose) } else { (sp.lag3_inOpen) })) + ((if (sp.lag3_inClose) >= (sp.lag3_inOpen) { (sp.lag3_inOpen) } else { (sp.lag3_inClose) }) - (sp.lag3_inLow)), _ => 0.0 } }) * (if (BodyShort_rangeType) == 2 { 0.5 } else { 1.0 })) &&
                (sp.lag2_inClose - sp.lag2_inOpen).abs() < ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (sp.BodyPeriodTotal[2]) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((sp.lag2_inClose) - (sp.lag2_inOpen)).abs(), 1 => (sp.lag2_inHigh) - (sp.lag2_inLow), 2 => ((sp.lag2_inHigh) - (if (sp.lag2_inClose) >= (sp.lag2_inOpen) { (sp.lag2_inClose) } else { (sp.lag2_inOpen) })) + ((if (sp.lag2_inClose) >= (sp.lag2_inOpen) { (sp.lag2_inOpen) } else { (sp.lag2_inClose) }) - (sp.lag2_inLow)), _ => 0.0 } }) * (if (BodyShort_rangeType) == 2 { 0.5 } else { 1.0 })) &&
                (sp.lag1_inClose - sp.lag1_inOpen).abs() < ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (sp.BodyPeriodTotal[1]) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((sp.lag1_inClose) - (sp.lag1_inOpen)).abs(), 1 => (sp.lag1_inHigh) - (sp.lag1_inLow), 2 => ((sp.lag1_inHigh) - (if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inClose) } else { (sp.lag1_inOpen) })) + ((if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inOpen) } else { (sp.lag1_inClose) }) - (sp.lag1_inLow)), _ => 0.0 } }) * (if (BodyShort_rangeType) == 2 { 0.5 } else { 1.0 })) &&
                (inClose - inOpen).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (sp.BodyPeriodTotal[0]) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => ((inClose) - (inOpen)).abs(), 1 => (inHigh) - (inLow), 2 => ((inHigh) - (if (inClose) >= (inOpen) { (inClose) } else { (inOpen) })) + ((if (inClose) >= (inOpen) { (inOpen) } else { (inClose) }) - (inLow)), _ => 0.0 } }) * (if (BodyLong_rangeType) == 2 { 0.5 } else { 1.0 }))
             {
-                (*outInteger) = (100 * (if sp.lag4_inClose >= sp.lag4_inOpen { 1 } else { 0 - 1 })) as i32;
+                (*outInteger) = (100 * (if sp.lag4_inClose >= sp.lag4_inOpen { 1 } else { -1 })) as i32;
             } else {
                 (*outInteger) = 0;
             }

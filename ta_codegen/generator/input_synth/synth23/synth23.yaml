@@ -1,0 +1,11 @@
+name: SYNTH23
+group: Math Operators
+hint: Synthetic gate function 23 - the negation of a zero (never shipped)
+flags: [stream]
+inputs:
+  - name: inReal
+    type: real
+outputs:
+  - name: outReal
+    type: real
+    flags: [line]

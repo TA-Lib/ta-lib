@@ -223,12 +223,12 @@ impl Core {
                 for _wk in 0.._wn {
                     if (_w2[_wk] - _w11[_wk]).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (BodyLongPeriodTotal) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => ((_w2[_wk]) - (_w11[_wk])).abs(), 1 => (_w5[_wk]) - (_w8[_wk]), 2 => ((_w5[_wk]) - (if (_w2[_wk]) >= (_w11[_wk]) { (_w2[_wk]) } else { (_w11[_wk]) })) + ((if (_w2[_wk]) >= (_w11[_wk]) { (_w11[_wk]) } else { (_w2[_wk]) }) - (_w8[_wk])), _ => 0.0 } }) * (if (BodyLong_rangeType) == 2 { 0.5 } else { 1.0 })) && // 1st: long real body
                        (_w2[_wk + 1] - _w11[_wk + 1]).abs() <= ((BodyDoji_factor) * (if (BodyDoji_avgPeriod) != 0 { (BodyDojiPeriodTotal) / (BodyDoji_avgPeriod as f64) } else { match BodyDoji_rangeType { 0 => ((_w2[_wk + 1]) - (_w11[_wk + 1])).abs(), 1 => (_w5[_wk + 1]) - (_w8[_wk + 1]), 2 => ((_w5[_wk + 1]) - (if (_w2[_wk + 1]) >= (_w11[_wk + 1]) { (_w2[_wk + 1]) } else { (_w11[_wk + 1]) })) + ((if (_w2[_wk + 1]) >= (_w11[_wk + 1]) { (_w11[_wk + 1]) } else { (_w2[_wk + 1]) }) - (_w8[_wk + 1])), _ => 0.0 } }) * (if (BodyDoji_rangeType) == 2 { 0.5 } else { 1.0 })) && // 2nd: doji
-                       ((if _w2[_wk] >= _w11[_wk] { 1 } else { 0 - 1 }) == 1 &&
+                       ((if _w2[_wk] >= _w11[_wk] { 1 } else { -1 }) == 1 &&
                          ((if c_min(_w11[_wk + 1], _w2[_wk + 1]) > c_max(_w11[_wk], _w2[_wk]) { 1 } else { 0 }) != 0) || // that gaps up if 1st is white
-                        (((if _w2[_wk] >= _w11[_wk] { 1 } else { 0 - 1 })) as i32) == 0 - 1 &&
+                        (if _w2[_wk] >= _w11[_wk] { 1 } else { -1 }) == -1 &&
                          ((if c_max(_w11[_wk + 1], _w2[_wk + 1]) < c_min(_w11[_wk], _w2[_wk]) { 1 } else { 0 }) != 0)) // or down if 1st is black
                     {
-                        outInteger[outIdx] = ((0 - (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 })) * 100) as i32;
+                        outInteger[outIdx] = (-(if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32;
                         outIdx += 1;
                     } else {
                         outInteger[outIdx] = 0;
@@ -246,12 +246,12 @@ impl Core {
                 loop {
                     if (inClose[i - 1] - inOpen[i - 1]).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (BodyLongPeriodTotal) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (BodyLong_rangeType) == 2 { 0.5 } else { 1.0 })) && // 1st: long real body
                        (inClose[i] - inOpen[i]).abs() <= ((BodyDoji_factor) * (if (BodyDoji_avgPeriod) != 0 { (BodyDojiPeriodTotal) / (BodyDoji_avgPeriod as f64) } else { match BodyDoji_rangeType { 0 => ((inClose[i]) - (inOpen[i])).abs(), 1 => (inHigh[i]) - (inLow[i]), 2 => ((inHigh[i]) - (if (inClose[i]) >= (inOpen[i]) { (inClose[i]) } else { (inOpen[i]) })) + ((if (inClose[i]) >= (inOpen[i]) { (inOpen[i]) } else { (inClose[i]) }) - (inLow[i])), _ => 0.0 } }) * (if (BodyDoji_rangeType) == 2 { 0.5 } else { 1.0 })) && // 2nd: doji
-                       ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) == 1 &&
+                       ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) == 1 &&
                          ((if c_min(inOpen[i], inClose[i]) > c_max(inOpen[i - 1], inClose[i - 1]) { 1 } else { 0 }) != 0) || // that gaps up if 1st is white
-                        (((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 })) as i32) == 0 - 1 &&
+                        (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) == -1 &&
                          ((if c_max(inOpen[i], inClose[i]) < c_min(inOpen[i - 1], inClose[i - 1]) { 1 } else { 0 }) != 0)) // or down if 1st is black
                     {
-                        outInteger[outIdx] = ((0 - (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 })) * 100) as i32;
+                        outInteger[outIdx] = (-(if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32;
                         outIdx += 1;
                     } else {
                         outInteger[outIdx] = 0;
@@ -271,12 +271,12 @@ impl Core {
             loop {
                 if (inClose[i - 1] - inOpen[i - 1]).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (BodyLongPeriodTotal) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (BodyLong_rangeType) == 2 { 0.5 } else { 1.0 })) && // 1st: long real body
                    (inClose[i] - inOpen[i]).abs() <= ((BodyDoji_factor) * (if (BodyDoji_avgPeriod) != 0 { (BodyDojiPeriodTotal) / (BodyDoji_avgPeriod as f64) } else { match BodyDoji_rangeType { 0 => ((inClose[i]) - (inOpen[i])).abs(), 1 => (inHigh[i]) - (inLow[i]), 2 => ((inHigh[i]) - (if (inClose[i]) >= (inOpen[i]) { (inClose[i]) } else { (inOpen[i]) })) + ((if (inClose[i]) >= (inOpen[i]) { (inOpen[i]) } else { (inClose[i]) }) - (inLow[i])), _ => 0.0 } }) * (if (BodyDoji_rangeType) == 2 { 0.5 } else { 1.0 })) && // 2nd: doji
-                   ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) == 1 &&
+                   ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) == 1 &&
                      ((if c_min(inOpen[i], inClose[i]) > c_max(inOpen[i - 1], inClose[i - 1]) { 1 } else { 0 }) != 0) || // that gaps up if 1st is white
-                    (((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 })) as i32) == 0 - 1 &&
+                    (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) == -1 &&
                      ((if c_max(inOpen[i], inClose[i]) < c_min(inOpen[i - 1], inClose[i - 1]) { 1 } else { 0 }) != 0)) // or down if 1st is black
                 {
-                    outInteger[outIdx] = ((0 - (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 })) * 100) as i32;
+                    outInteger[outIdx] = (-(if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32;
                     outIdx += 1;
                 } else {
                     outInteger[outIdx] = 0;
@@ -517,12 +517,12 @@ impl Core {
         }
         if (sp.lag1_inClose - sp.lag1_inOpen).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (sp.BodyLongPeriodTotal) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => ((sp.lag1_inClose) - (sp.lag1_inOpen)).abs(), 1 => (sp.lag1_inHigh) - (sp.lag1_inLow), 2 => ((sp.lag1_inHigh) - (if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inClose) } else { (sp.lag1_inOpen) })) + ((if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inOpen) } else { (sp.lag1_inClose) }) - (sp.lag1_inLow)), _ => 0.0 } }) * (if (BodyLong_rangeType) == 2 { 0.5 } else { 1.0 })) && // 1st: long real body
            (inClose - inOpen).abs() <= ((BodyDoji_factor) * (if (BodyDoji_avgPeriod) != 0 { (sp.BodyDojiPeriodTotal) / (BodyDoji_avgPeriod as f64) } else { match BodyDoji_rangeType { 0 => ((inClose) - (inOpen)).abs(), 1 => (inHigh) - (inLow), 2 => ((inHigh) - (if (inClose) >= (inOpen) { (inClose) } else { (inOpen) })) + ((if (inClose) >= (inOpen) { (inOpen) } else { (inClose) }) - (inLow)), _ => 0.0 } }) * (if (BodyDoji_rangeType) == 2 { 0.5 } else { 1.0 })) && // 2nd: doji
-           ((if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 }) == 1 &&
+           ((if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { -1 }) == 1 &&
              ((if c_min(inOpen, inClose) > c_max(sp.lag1_inOpen, sp.lag1_inClose) { 1 } else { 0 }) != 0) || // that gaps up if 1st is white
-            (((if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 &&
+            (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { -1 }) == -1 &&
              ((if c_max(inOpen, inClose) < c_min(sp.lag1_inOpen, sp.lag1_inClose) { 1 } else { 0 }) != 0)) // or down if 1st is black
         {
-            (*outInteger) = ((0 - (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 })) * 100) as i32;
+            (*outInteger) = (-(if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { -1 }) * 100) as i32;
         } else {
             (*outInteger) = 0;
         }
@@ -724,12 +724,12 @@ impl Core {
         loop {
             if (inClose[i - 1] - inOpen[i - 1]).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (BodyLongPeriodTotal) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (BodyLong_rangeType) == 2 { 0.5 } else { 1.0 })) && // 1st: long real body
                (inClose[i] - inOpen[i]).abs() <= ((BodyDoji_factor) * (if (BodyDoji_avgPeriod) != 0 { (BodyDojiPeriodTotal) / (BodyDoji_avgPeriod as f64) } else { match BodyDoji_rangeType { 0 => ((inClose[i]) - (inOpen[i])).abs(), 1 => (inHigh[i]) - (inLow[i]), 2 => ((inHigh[i]) - (if (inClose[i]) >= (inOpen[i]) { (inClose[i]) } else { (inOpen[i]) })) + ((if (inClose[i]) >= (inOpen[i]) { (inOpen[i]) } else { (inClose[i]) }) - (inLow[i])), _ => 0.0 } }) * (if (BodyDoji_rangeType) == 2 { 0.5 } else { 1.0 })) && // 2nd: doji
-               ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) == 1 &&
+               ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) == 1 &&
                  ((if c_min(inOpen[i], inClose[i]) > c_max(inOpen[i - 1], inClose[i - 1]) { 1 } else { 0 }) != 0) || // that gaps up if 1st is white
-                (((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 })) as i32) == 0 - 1 &&
+                (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) == -1 &&
                  ((if c_max(inOpen[i], inClose[i]) < c_min(inOpen[i - 1], inClose[i - 1]) { 1 } else { 0 }) != 0)) // or down if 1st is black
             {
-                outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = ((0 - (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 })) * 100) as i32;
+                outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = (-(if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32;
             } else {
                 outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0;
             }
@@ -983,12 +983,12 @@ impl CdldojistarStream {
             let BodyLong_factor: f64 = self.cs_body_long.factor;
             if (sp.lag1_inClose - sp.lag1_inOpen).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (sp.BodyLongPeriodTotal) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => ((sp.lag1_inClose) - (sp.lag1_inOpen)).abs(), 1 => (sp.lag1_inHigh) - (sp.lag1_inLow), 2 => ((sp.lag1_inHigh) - (if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inClose) } else { (sp.lag1_inOpen) })) + ((if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inOpen) } else { (sp.lag1_inClose) }) - (sp.lag1_inLow)), _ => 0.0 } }) * (if (BodyLong_rangeType) == 2 { 0.5 } else { 1.0 })) && // 1st: long real body
                (inClose - inOpen).abs() <= ((BodyDoji_factor) * (if (BodyDoji_avgPeriod) != 0 { (sp.BodyDojiPeriodTotal) / (BodyDoji_avgPeriod as f64) } else { match BodyDoji_rangeType { 0 => ((inClose) - (inOpen)).abs(), 1 => (inHigh) - (inLow), 2 => ((inHigh) - (if (inClose) >= (inOpen) { (inClose) } else { (inOpen) })) + ((if (inClose) >= (inOpen) { (inOpen) } else { (inClose) }) - (inLow)), _ => 0.0 } }) * (if (BodyDoji_rangeType) == 2 { 0.5 } else { 1.0 })) && // 2nd: doji
-               ((if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 }) == 1 &&
+               ((if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { -1 }) == 1 &&
                  ((if c_min(inOpen, inClose) > c_max(sp.lag1_inOpen, sp.lag1_inClose) { 1 } else { 0 }) != 0) || // that gaps up if 1st is white
-                (((if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 &&
+                (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { -1 }) == -1 &&
                  ((if c_max(inOpen, inClose) < c_min(sp.lag1_inOpen, sp.lag1_inClose) { 1 } else { 0 }) != 0)) // or down if 1st is black
             {
-                (*outInteger) = ((0 - (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 })) * 100) as i32;
+                (*outInteger) = (-(if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { -1 }) * 100) as i32;
             } else {
                 (*outInteger) = 0;
             }

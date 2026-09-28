@@ -302,8 +302,8 @@
              */
             if( tempReal > 1.0 ) {
                tempReal = 1.0;
-            } else if( tempReal < 0 - 1.0 ) {
-               tempReal = 0 - 1.0;
+            } else if( tempReal < -1.0 ) {
+               tempReal = -1.0;
             }
             outReal[outIdx++] = tempReal;
          } else {
@@ -481,8 +481,8 @@
             tempReal = spXY / Math.sqrt(ssX * ssY);
             if( tempReal > 1.0 ) {
                tempReal = 1.0;
-            } else if( tempReal < 0 - 1.0 ) {
-               tempReal = 0 - 1.0;
+            } else if( tempReal < -1.0 ) {
+               tempReal = -1.0;
             }
             outReal[outIdx++] = tempReal;
          } else {
@@ -956,8 +956,8 @@
              */
             if( tempReal > 1.0 ) {
                tempReal = 1.0;
-            } else if( tempReal < 0 - 1.0 ) {
-               tempReal = 0 - 1.0;
+            } else if( tempReal < -1.0 ) {
+               tempReal = -1.0;
             }
             cur_outReal = tempReal;
          } else {
@@ -1162,8 +1162,8 @@
           */
          if( tempReal > 1.0 ) {
             tempReal = 1.0;
-         } else if( tempReal < 0 - 1.0 ) {
-            tempReal = 0 - 1.0;
+         } else if( tempReal < -1.0 ) {
+            tempReal = -1.0;
          }
          sp.cur_outReal = tempReal;
       } else {
@@ -1438,8 +1438,8 @@
              */
             if( tempReal > 1.0 ) {
                tempReal = 1.0;
-            } else if( tempReal < 0 - 1.0 ) {
-               tempReal = 0 - 1.0;
+            } else if( tempReal < -1.0 ) {
+               tempReal = -1.0;
             }
             outReal[outIdx++ * outStride] = tempReal;
          } else {

@@ -247,9 +247,9 @@ TA_LIB_API TA_RetCode TA_T3( int    startIdx,
    }
    /* Calculate the constants */
    tempReal = optInVFactor * optInVFactor;
-   c1 = 0 - tempReal * optInVFactor;
+   c1 = -(tempReal * optInVFactor);
    c2 = 3.0 * (tempReal - c1);
-   c3 = (0 - 6.0) * tempReal - 3.0 * (optInVFactor - c1);
+   c3 = -6.0 * tempReal - 3.0 * (optInVFactor - c1);
    c4 = fma(3.0, tempReal, fma(3.0, optInVFactor, 1.0) - c1);
    /* Write the first output */
    outIdx = 0;
@@ -408,9 +408,9 @@ TA_RetCode TA_S_T3( int    startIdx,
       e6 = fma(one_minus_k, e6, k * e5);
    }
    tempReal = optInVFactor * optInVFactor;
-   c1 = 0 - tempReal * optInVFactor;
+   c1 = -(tempReal * optInVFactor);
    c2 = 3.0 * (tempReal - c1);
-   c3 = (0 - 6.0) * tempReal - 3.0 * (optInVFactor - c1);
+   c3 = -6.0 * tempReal - 3.0 * (optInVFactor - c1);
    c4 = fma(3.0, tempReal, fma(3.0, optInVFactor, 1.0) - c1);
    outIdx = 0;
    outReal[outIdx++] = fma(c4, e3, fma(c3, e4, fma(c1, e6, c2 * e5)));
@@ -658,9 +658,9 @@ static TA_RetCode TA_T3_OpenImpl( struct TA_T3_Stream **stream, const double inR
       }
       /* Calculate the constants */
       tempReal = optInVFactor * optInVFactor;
-      c1 = 0 - tempReal * optInVFactor;
+      c1 = -(tempReal * optInVFactor);
       c2 = 3.0 * (tempReal - c1);
-      c3 = (0 - 6.0) * tempReal - 3.0 * (optInVFactor - c1);
+      c3 = -6.0 * tempReal - 3.0 * (optInVFactor - c1);
       c4 = fma(3.0, tempReal, fma(3.0, optInVFactor, 1.0) - c1);
       /* Write the first output */
       outIdx = 0;

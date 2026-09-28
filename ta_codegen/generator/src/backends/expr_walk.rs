@@ -66,6 +66,7 @@ pub fn expr_prec(e: &Expr) -> u8 {
         Expr::BinOp(_, op, _) => binop_prec(op),
         Expr::Not(_)
         | Expr::BitwiseNot(_)
+        | Expr::Neg(_)
         | Expr::Cast(..)
         | Expr::AddressOf(_)
         | Expr::PreIncrement(_)
@@ -227,6 +228,24 @@ pub trait ExprEmitter {
         format!("~({})", self.walk(inner))
     }
 
+    /// Render an `Expr::Neg`. Only a bare name, index, call or unsigned literal
+    /// goes unwrapped: anything else could print a second `-` straight after
+    /// the first, and `--x` is a decrement in C, Java and C#.
+    fn neg(&self, inner: &Expr) -> String {
+        let s = self.walk(inner);
+        let bare = match inner {
+            Expr::Var(_) | Expr::ArrayAccess(..) | Expr::FuncCall(..) => true,
+            Expr::Literal(f) => f.is_sign_positive(),
+            Expr::IntLiteral(i) => *i >= 0,
+            _ => false,
+        };
+        if bare && !s.starts_with('-') {
+            format!("-{s}")
+        } else {
+            format!("-({s})")
+        }
+    }
+
     /// The owned recursion: match `expr`'s variant and dispatch to the
     /// corresponding leaf hook. This is the single copy of the `Expr` tree-walk
     /// that every backend shares; the match is intentionally exhaustive (no
@@ -241,6 +260,7 @@ pub trait ExprEmitter {
             Expr::Cast(ty, inner) => self.cast(ty, inner),
             Expr::Not(inner) => self.not(inner),
             Expr::BitwiseNot(inner) => self.bitwise_not(inner),
+            Expr::Neg(inner) => self.neg(inner),
             Expr::FuncCall(name, args) => self.func_call(name, args),
             Expr::PointerDeref(name) => self.pointer_deref(name),
             Expr::AddressOf(inner) => self.address_of(inner),

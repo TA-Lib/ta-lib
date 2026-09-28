@@ -147,7 +147,7 @@ impl Core {
                 inHigh[i] > inHigh[i - 1] &&
                  inLow[i] > inLow[i - 1])       // (bear) 3rd: higher high and higher low
             {
-                patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { 0 - 1 });
+                patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { -1 });
                 savedHigh = inHigh[i - 1];
                 savedLow = inLow[i - 1];
                 cd = 4;
@@ -184,7 +184,7 @@ impl Core {
                 inHigh[i] > inHigh[i - 1] &&
                  inLow[i] > inLow[i - 1])       // (bear) 3rd: higher high and higher low
             {
-                patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { 0 - 1 });
+                patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { -1 });
                 savedHigh = inHigh[i - 1];
                 savedLow = inLow[i - 1];
                 cd = 4;
@@ -196,7 +196,7 @@ impl Core {
                 patternResult < 0 &&
                  inClose[i] < savedLow)    // close lower than the low of 2nd
             {
-                outInteger[outIdx] = (patternResult + ((100 * (if patternResult > 0 { 1 } else { 0 - 1 })) as i32)) as i32;
+                outInteger[outIdx] = (patternResult + ((100 * (if patternResult > 0 { 1 } else { -1 })) as i32)) as i32;
                 outIdx += 1;
                 cd = 0;
             } else {
@@ -380,7 +380,7 @@ impl Core {
             inHigh > sp.lag1_inHigh &&
              inLow > sp.lag1_inLow)           // (bear) 3rd: higher high and higher low
         {
-            sp.patternResult = 100 * (if inHigh < sp.lag1_inHigh { 1 } else { 0 - 1 });
+            sp.patternResult = 100 * (if inHigh < sp.lag1_inHigh { 1 } else { -1 });
             sp.savedHigh = sp.lag1_inHigh;
             sp.savedLow = sp.lag1_inLow;
             sp.cd = 4;
@@ -391,7 +391,7 @@ impl Core {
             sp.patternResult < 0 &&
              inClose < sp.savedLow)    // close lower than the low of 2nd
         {
-            (*outInteger) = (sp.patternResult + ((100 * (if sp.patternResult > 0 { 1 } else { 0 - 1 })) as i32)) as i32;
+            (*outInteger) = (sp.patternResult + ((100 * (if sp.patternResult > 0 { 1 } else { -1 })) as i32)) as i32;
             sp.cd = 0;
         } else {
             (*outInteger) = 0;
@@ -469,7 +469,7 @@ impl Core {
                 inHigh[i] > inHigh[i - 1] &&
                  inLow[i] > inLow[i - 1])       // (bear) 3rd: higher high and higher low
             {
-                patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { 0 - 1 });
+                patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { -1 });
                 savedHigh = inHigh[i - 1];
                 savedLow = inLow[i - 1];
                 cd = 4;
@@ -506,7 +506,7 @@ impl Core {
                 inHigh[i] > inHigh[i - 1] &&
                  inLow[i] > inLow[i - 1])       // (bear) 3rd: higher high and higher low
             {
-                patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { 0 - 1 });
+                patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { -1 });
                 savedHigh = inHigh[i - 1];
                 savedLow = inLow[i - 1];
                 cd = 4;
@@ -517,7 +517,7 @@ impl Core {
                 patternResult < 0 &&
                  inClose[i] < savedLow)    // close lower than the low of 2nd
             {
-                outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = (patternResult + ((100 * (if patternResult > 0 { 1 } else { 0 - 1 })) as i32)) as i32;
+                outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = (patternResult + ((100 * (if patternResult > 0 { 1 } else { -1 })) as i32)) as i32;
                 cd = 0;
             } else {
                 outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0;
@@ -736,7 +736,7 @@ impl CdlhikkakeStream {
                 inHigh > sp.lag1_inHigh &&
                  inLow > sp.lag1_inLow)           // (bear) 3rd: higher high and higher low
             {
-                patternResult = 100 * (if inHigh < sp.lag1_inHigh { 1 } else { 0 - 1 });
+                patternResult = 100 * (if inHigh < sp.lag1_inHigh { 1 } else { -1 });
                 savedHigh = sp.lag1_inHigh;
                 savedLow = sp.lag1_inLow;
                 cd = 4;
@@ -747,7 +747,7 @@ impl CdlhikkakeStream {
                 patternResult < 0 &&
                  inClose < savedLow)    // close lower than the low of 2nd
             {
-                (*outInteger) = (patternResult + ((100 * (if patternResult > 0 { 1 } else { 0 - 1 })) as i32)) as i32;
+                (*outInteger) = (patternResult + ((100 * (if patternResult > 0 { 1 } else { -1 })) as i32)) as i32;
                 cd = 0;
             } else {
                 (*outInteger) = 0;

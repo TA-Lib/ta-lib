@@ -211,18 +211,18 @@ impl Core {
                 let _w6 = &_w6[.._wn];
                 let _w7 = &_w7[.._wn + 4];
                 for _wk in 0.._wn {
-                    if (((if _w1[_wk] >= _w7[_wk] { 1 } else { 0 - 1 })) as i32) == 0 - 1 &&
-                       (((if _w1[_wk + 1] >= _w7[_wk + 1] { 1 } else { 0 - 1 })) as i32) == 0 - 1 &&
-                       (((if _w1[_wk + 2] >= _w7[_wk + 2] { 1 } else { 0 - 1 })) as i32) == 0 - 1 && // 3 black candlesticks
+                    if (if _w1[_wk] >= _w7[_wk] { 1 } else { -1 }) == -1 &&
+                       (if _w1[_wk + 1] >= _w7[_wk + 1] { 1 } else { -1 }) == -1 &&
+                       (if _w1[_wk + 2] >= _w7[_wk + 2] { 1 } else { -1 }) == -1 && // 3 black candlesticks
                        _w7[_wk] > _w7[_wk + 1] &&
-                       _w7[_wk + 1] > _w7[_wk + 2] &&                                        // with consecutively lower opens
+                       _w7[_wk + 1] > _w7[_wk + 2] &&                               // with consecutively lower opens
                        _w1[_wk] > _w1[_wk + 1] &&
-                       _w1[_wk + 1] > _w1[_wk + 2] &&                                        // and closes
-                       (((if _w1[_wk + 3] >= _w7[_wk + 3] { 1 } else { 0 - 1 })) as i32) == 0 - 1 && // 4th: black with an upper shadow
+                       _w1[_wk + 1] > _w1[_wk + 2] &&                               // and closes
+                       (if _w1[_wk + 3] >= _w7[_wk + 3] { 1 } else { -1 }) == -1 && // 4th: black with an upper shadow
                        (_w3[_wk] - (if _w1[_wk + 3] >= _w7[_wk + 3] { _w1[_wk + 3] } else { _w7[_wk + 3] })) > ((ShadowVeryShort_factor) * (if (ShadowVeryShort_avgPeriod) != 0 { (ShadowVeryShortPeriodTotal) / (ShadowVeryShort_avgPeriod as f64) } else { match ShadowVeryShort_rangeType { 0 => ((_w1[_wk + 3]) - (_w7[_wk + 3])).abs(), 1 => (_w3[_wk]) - (_w5[_wk]), 2 => ((_w3[_wk]) - (if (_w1[_wk + 3]) >= (_w7[_wk + 3]) { (_w1[_wk + 3]) } else { (_w7[_wk + 3]) })) + ((if (_w1[_wk + 3]) >= (_w7[_wk + 3]) { (_w7[_wk + 3]) } else { (_w1[_wk + 3]) }) - (_w5[_wk])), _ => 0.0 } }) * (if (ShadowVeryShort_rangeType) == 2 { 0.5 } else { 1.0 })) &&
-                       (if _w1[_wk + 4] >= _w7[_wk + 4] { 1 } else { 0 - 1 }) == 1 &&        // 5th: white
-                       _w7[_wk + 4] > _w7[_wk + 3] &&                                        // that opens above prior candle's body
-                       _w1[_wk + 4] > _w3[_wk]                                               // and closes above prior candle's high
+                       (if _w1[_wk + 4] >= _w7[_wk + 4] { 1 } else { -1 }) == 1 &&  // 5th: white
+                       _w7[_wk + 4] > _w7[_wk + 3] &&                               // that opens above prior candle's body
+                       _w1[_wk + 4] > _w3[_wk]                                      // and closes above prior candle's high
                     {
                         outInteger[outIdx] = 100;
                         outIdx += 1;
@@ -238,18 +238,18 @@ impl Core {
                 }
             } else {
                 loop {
-                    if (((if inClose[i - 4] >= inOpen[i - 4] { 1 } else { 0 - 1 })) as i32) == 0 - 1 &&
-                       (((if inClose[i - 3] >= inOpen[i - 3] { 1 } else { 0 - 1 })) as i32) == 0 - 1 &&
-                       (((if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 })) as i32) == 0 - 1 && // 3 black candlesticks
+                    if (if inClose[i - 4] >= inOpen[i - 4] { 1 } else { -1 }) == -1 &&
+                       (if inClose[i - 3] >= inOpen[i - 3] { 1 } else { -1 }) == -1 &&
+                       (if inClose[i - 2] >= inOpen[i - 2] { 1 } else { -1 }) == -1 && // 3 black candlesticks
                        inOpen[i - 4] > inOpen[i - 3] &&
-                       inOpen[i - 3] > inOpen[i - 2] &&                          // with consecutively lower opens
+                       inOpen[i - 3] > inOpen[i - 2] &&                                // with consecutively lower opens
                        inClose[i - 4] > inClose[i - 3] &&
-                       inClose[i - 3] > inClose[i - 2] &&                        // and closes
-                       (((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 })) as i32) == 0 - 1 && // 4th: black with an upper shadow
+                       inClose[i - 3] > inClose[i - 2] &&                              // and closes
+                       (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) == -1 && // 4th: black with an upper shadow
                        (inHigh[i - 1] - (if inClose[i - 1] >= inOpen[i - 1] { inClose[i - 1] } else { inOpen[i - 1] })) > ((ShadowVeryShort_factor) * (if (ShadowVeryShort_avgPeriod) != 0 { (ShadowVeryShortPeriodTotal) / (ShadowVeryShort_avgPeriod as f64) } else { match ShadowVeryShort_rangeType { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (ShadowVeryShort_rangeType) == 2 { 0.5 } else { 1.0 })) &&
-                       (if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 }) == 1 && // 5th: white
-                       inOpen[i] > inOpen[i - 1] &&                              // that opens above prior candle's body
-                       inClose[i] > inHigh[i - 1]                                // and closes above prior candle's high
+                       (if inClose[i] >= inOpen[i] { 1 } else { -1 }) == 1 &&          // 5th: white
+                       inOpen[i] > inOpen[i - 1] &&                                    // that opens above prior candle's body
+                       inClose[i] > inHigh[i - 1]                                      // and closes above prior candle's high
                     {
                         outInteger[outIdx] = 100;
                         outIdx += 1;
@@ -267,18 +267,18 @@ impl Core {
             }
         } else {
             loop {
-                if (((if inClose[i - 4] >= inOpen[i - 4] { 1 } else { 0 - 1 })) as i32) == 0 - 1 &&
-                   (((if inClose[i - 3] >= inOpen[i - 3] { 1 } else { 0 - 1 })) as i32) == 0 - 1 &&
-                   (((if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 })) as i32) == 0 - 1 && // 3 black candlesticks
+                if (if inClose[i - 4] >= inOpen[i - 4] { 1 } else { -1 }) == -1 &&
+                   (if inClose[i - 3] >= inOpen[i - 3] { 1 } else { -1 }) == -1 &&
+                   (if inClose[i - 2] >= inOpen[i - 2] { 1 } else { -1 }) == -1 && // 3 black candlesticks
                    inOpen[i - 4] > inOpen[i - 3] &&
-                   inOpen[i - 3] > inOpen[i - 2] &&                          // with consecutively lower opens
+                   inOpen[i - 3] > inOpen[i - 2] &&                                // with consecutively lower opens
                    inClose[i - 4] > inClose[i - 3] &&
-                   inClose[i - 3] > inClose[i - 2] &&                        // and closes
-                   (((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 })) as i32) == 0 - 1 && // 4th: black with an upper shadow
+                   inClose[i - 3] > inClose[i - 2] &&                              // and closes
+                   (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) == -1 && // 4th: black with an upper shadow
                    (inHigh[i - 1] - (if inClose[i - 1] >= inOpen[i - 1] { inClose[i - 1] } else { inOpen[i - 1] })) > ((ShadowVeryShort_factor) * (if (ShadowVeryShort_avgPeriod) != 0 { (ShadowVeryShortPeriodTotal) / (ShadowVeryShort_avgPeriod as f64) } else { match ShadowVeryShort_rangeType { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (ShadowVeryShort_rangeType) == 2 { 0.5 } else { 1.0 })) &&
-                   (if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 }) == 1 && // 5th: white
-                   inOpen[i] > inOpen[i - 1] &&                              // that opens above prior candle's body
-                   inClose[i] > inHigh[i - 1]                                // and closes above prior candle's high
+                   (if inClose[i] >= inOpen[i] { 1 } else { -1 }) == 1 &&          // 5th: white
+                   inOpen[i] > inOpen[i - 1] &&                                    // that opens above prior candle's body
+                   inClose[i] > inHigh[i - 1]                                      // and closes above prior candle's high
                 {
                     outInteger[outIdx] = 100;
                     outIdx += 1;
@@ -492,18 +492,18 @@ impl Core {
             }
         }
         sp.ring_ShadowVeryShortTrailingIdx_derived[sp.ringPos_ShadowVeryShortTrailingIdx] = _candlerange_0;
-        if (((if sp.lag4_inClose >= sp.lag4_inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 &&
-           (((if sp.lag3_inClose >= sp.lag3_inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 &&
-           (((if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 && // 3 black candlesticks
+        if (if sp.lag4_inClose >= sp.lag4_inOpen { 1 } else { -1 }) == -1 &&
+           (if sp.lag3_inClose >= sp.lag3_inOpen { 1 } else { -1 }) == -1 &&
+           (if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { -1 }) == -1 && // 3 black candlesticks
            sp.lag4_inOpen > sp.lag3_inOpen &&
-           sp.lag3_inOpen > sp.lag2_inOpen &&                  // with consecutively lower opens
+           sp.lag3_inOpen > sp.lag2_inOpen &&                                // with consecutively lower opens
            sp.lag4_inClose > sp.lag3_inClose &&
-           sp.lag3_inClose > sp.lag2_inClose &&                // and closes
-           (((if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 && // 4th: black with an upper shadow
+           sp.lag3_inClose > sp.lag2_inClose &&                              // and closes
+           (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { -1 }) == -1 && // 4th: black with an upper shadow
            (sp.lag1_inHigh - (if sp.lag1_inClose >= sp.lag1_inOpen { sp.lag1_inClose } else { sp.lag1_inOpen })) > ((ShadowVeryShort_factor) * (if (ShadowVeryShort_avgPeriod) != 0 { (sp.ShadowVeryShortPeriodTotal) / (ShadowVeryShort_avgPeriod as f64) } else { match ShadowVeryShort_rangeType { 0 => ((sp.lag1_inClose) - (sp.lag1_inOpen)).abs(), 1 => (sp.lag1_inHigh) - (sp.lag1_inLow), 2 => ((sp.lag1_inHigh) - (if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inClose) } else { (sp.lag1_inOpen) })) + ((if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inOpen) } else { (sp.lag1_inClose) }) - (sp.lag1_inLow)), _ => 0.0 } }) * (if (ShadowVeryShort_rangeType) == 2 { 0.5 } else { 1.0 })) &&
-           (if inClose >= inOpen { 1 } else { 0 - 1 }) == 1 && // 5th: white
-           inOpen > sp.lag1_inOpen &&                          // that opens above prior candle's body
-           inClose > sp.lag1_inHigh                            // and closes above prior candle's high
+           (if inClose >= inOpen { 1 } else { -1 }) == 1 &&                  // 5th: white
+           inOpen > sp.lag1_inOpen &&                                        // that opens above prior candle's body
+           inClose > sp.lag1_inHigh                                          // and closes above prior candle's high
         {
             (*outInteger) = 100;
         } else {
@@ -629,18 +629,18 @@ impl Core {
         // while this function does not consider it
         outIdx = 0;
         loop {
-            if (((if inClose[i - 4] >= inOpen[i - 4] { 1 } else { 0 - 1 })) as i32) == 0 - 1 &&
-               (((if inClose[i - 3] >= inOpen[i - 3] { 1 } else { 0 - 1 })) as i32) == 0 - 1 &&
-               (((if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 })) as i32) == 0 - 1 && // 3 black candlesticks
+            if (if inClose[i - 4] >= inOpen[i - 4] { 1 } else { -1 }) == -1 &&
+               (if inClose[i - 3] >= inOpen[i - 3] { 1 } else { -1 }) == -1 &&
+               (if inClose[i - 2] >= inOpen[i - 2] { 1 } else { -1 }) == -1 && // 3 black candlesticks
                inOpen[i - 4] > inOpen[i - 3] &&
-               inOpen[i - 3] > inOpen[i - 2] &&                          // with consecutively lower opens
+               inOpen[i - 3] > inOpen[i - 2] &&                                // with consecutively lower opens
                inClose[i - 4] > inClose[i - 3] &&
-               inClose[i - 3] > inClose[i - 2] &&                        // and closes
-               (((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 })) as i32) == 0 - 1 && // 4th: black with an upper shadow
+               inClose[i - 3] > inClose[i - 2] &&                              // and closes
+               (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) == -1 && // 4th: black with an upper shadow
                (inHigh[i - 1] - (if inClose[i - 1] >= inOpen[i - 1] { inClose[i - 1] } else { inOpen[i - 1] })) > ((ShadowVeryShort_factor) * (if (ShadowVeryShort_avgPeriod) != 0 { (ShadowVeryShortPeriodTotal) / (ShadowVeryShort_avgPeriod as f64) } else { match ShadowVeryShort_rangeType { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (ShadowVeryShort_rangeType) == 2 { 0.5 } else { 1.0 })) &&
-               (if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 }) == 1 && // 5th: white
-               inOpen[i] > inOpen[i - 1] &&                              // that opens above prior candle's body
-               inClose[i] > inHigh[i - 1]                                // and closes above prior candle's high
+               (if inClose[i] >= inOpen[i] { 1 } else { -1 }) == 1 &&          // 5th: white
+               inOpen[i] > inOpen[i - 1] &&                                    // that opens above prior candle's body
+               inClose[i] > inHigh[i - 1]                                      // and closes above prior candle's high
             {
                 outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 100;
             } else {
@@ -877,18 +877,18 @@ impl CdlladderbottomStream {
             let ShadowVeryShort_avgPeriod: i32 = self.cs_shadow_very_short.avg_period;
             #[allow(non_snake_case)]
             let ShadowVeryShort_factor: f64 = self.cs_shadow_very_short.factor;
-            if (((if sp.lag4_inClose >= sp.lag4_inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 &&
-               (((if sp.lag3_inClose >= sp.lag3_inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 &&
-               (((if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 && // 3 black candlesticks
+            if (if sp.lag4_inClose >= sp.lag4_inOpen { 1 } else { -1 }) == -1 &&
+               (if sp.lag3_inClose >= sp.lag3_inOpen { 1 } else { -1 }) == -1 &&
+               (if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { -1 }) == -1 && // 3 black candlesticks
                sp.lag4_inOpen > sp.lag3_inOpen &&
-               sp.lag3_inOpen > sp.lag2_inOpen &&                  // with consecutively lower opens
+               sp.lag3_inOpen > sp.lag2_inOpen &&                                // with consecutively lower opens
                sp.lag4_inClose > sp.lag3_inClose &&
-               sp.lag3_inClose > sp.lag2_inClose &&                // and closes
-               (((if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 && // 4th: black with an upper shadow
+               sp.lag3_inClose > sp.lag2_inClose &&                              // and closes
+               (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { -1 }) == -1 && // 4th: black with an upper shadow
                (sp.lag1_inHigh - (if sp.lag1_inClose >= sp.lag1_inOpen { sp.lag1_inClose } else { sp.lag1_inOpen })) > ((ShadowVeryShort_factor) * (if (ShadowVeryShort_avgPeriod) != 0 { (sp.ShadowVeryShortPeriodTotal) / (ShadowVeryShort_avgPeriod as f64) } else { match ShadowVeryShort_rangeType { 0 => ((sp.lag1_inClose) - (sp.lag1_inOpen)).abs(), 1 => (sp.lag1_inHigh) - (sp.lag1_inLow), 2 => ((sp.lag1_inHigh) - (if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inClose) } else { (sp.lag1_inOpen) })) + ((if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inOpen) } else { (sp.lag1_inClose) }) - (sp.lag1_inLow)), _ => 0.0 } }) * (if (ShadowVeryShort_rangeType) == 2 { 0.5 } else { 1.0 })) &&
-               (if inClose >= inOpen { 1 } else { 0 - 1 }) == 1 && // 5th: white
-               inOpen > sp.lag1_inOpen &&                          // that opens above prior candle's body
-               inClose > sp.lag1_inHigh                            // and closes above prior candle's high
+               (if inClose >= inOpen { 1 } else { -1 }) == 1 &&                  // 5th: white
+               inOpen > sp.lag1_inOpen &&                                        // that opens above prior candle's body
+               inClose > sp.lag1_inHigh                                          // and closes above prior candle's high
             {
                 (*outInteger) = 100;
             } else {

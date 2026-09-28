@@ -64,6 +64,7 @@ fn expr_any(e: &Expr, pred: &dyn Fn(&Expr) -> bool) -> bool {
             Expr::ArrayAccess(_, i)
             | Expr::Cast(_, i)
             | Expr::Not(i)
+            | Expr::Neg(i)
             | Expr::BitwiseNot(i)
             | Expr::AddressOf(i)
             | Expr::PostIncrement(i)

@@ -283,13 +283,13 @@ impl Core {
             // An all-flat window therefore emits exactly 0.0 rather than NaN, which
             // is correl.c's precedent and what #112 requires of a successful call.
             if ssX > 0.00000000000001 * sumX2 && ssX * ssY > 0.0 {
-                tempReal = (0_f64 - spXY) / (ssX * ssY).sqrt();
+                tempReal = -spXY / (ssX * ssY).sqrt();
                 // A correlation coefficient cannot leave [-1,1]; rounding in the
                 // three sums can still put it slightly outside.
                 if tempReal > 1.0 {
                     tempReal = 1.0;
-                } else if tempReal < 0_f64 - 1.0 {
-                    tempReal = 0_f64 - 1.0;
+                } else if tempReal < -1.0 {
+                    tempReal = -1.0;
                 }
                 outReal[outIdx] = tempReal;
                 outIdx += 1;
@@ -568,13 +568,13 @@ impl Core {
         // An all-flat window therefore emits exactly 0.0 rather than NaN, which
         // is correl.c's precedent and what #112 requires of a successful call.
         if ssX > 0.00000000000001 * sp.sumX2 && ssX * sp.ssY > 0.0 {
-            tempReal = (0_f64 - spXY) / (ssX * sp.ssY).sqrt();
+            tempReal = -spXY / (ssX * sp.ssY).sqrt();
             // A correlation coefficient cannot leave [-1,1]; rounding in the
             // three sums can still put it slightly outside.
             if tempReal > 1.0 {
                 tempReal = 1.0;
-            } else if tempReal < 0_f64 - 1.0 {
-                tempReal = 0_f64 - 1.0;
+            } else if tempReal < -1.0 {
+                tempReal = -1.0;
             }
             (*outReal) = tempReal;
         } else {
@@ -784,13 +784,13 @@ impl Core {
             // An all-flat window therefore emits exactly 0.0 rather than NaN, which
             // is correl.c's precedent and what #112 requires of a successful call.
             if ssX > 0.00000000000001 * sumX2 && ssX * ssY > 0.0 {
-                tempReal = (0_f64 - spXY) / (ssX * ssY).sqrt();
+                tempReal = -spXY / (ssX * ssY).sqrt();
                 // A correlation coefficient cannot leave [-1,1]; rounding in the
                 // three sums can still put it slightly outside.
                 if tempReal > 1.0 {
                     tempReal = 1.0;
-                } else if tempReal < 0_f64 - 1.0 {
-                    tempReal = 0_f64 - 1.0;
+                } else if tempReal < -1.0 {
+                    tempReal = -1.0;
                 }
                 outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = tempReal;
             } else {
@@ -1120,13 +1120,13 @@ impl CtiStream {
             // An all-flat window therefore emits exactly 0.0 rather than NaN, which
             // is correl.c's precedent and what #112 requires of a successful call.
             if ssX > 0.00000000000001 * sumX2 && ssX * sp.ssY > 0.0 {
-                tempReal = (0_f64 - spXY) / (ssX * sp.ssY).sqrt();
+                tempReal = -spXY / (ssX * sp.ssY).sqrt();
                 // A correlation coefficient cannot leave [-1,1]; rounding in the
                 // three sums can still put it slightly outside.
                 if tempReal > 1.0 {
                     tempReal = 1.0;
-                } else if tempReal < 0_f64 - 1.0 {
-                    tempReal = 0_f64 - 1.0;
+                } else if tempReal < -1.0 {
+                    tempReal = -1.0;
                 }
                 (*outReal) = tempReal;
             } else {

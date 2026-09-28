@@ -187,7 +187,7 @@ impl Core {
             if close > prevClose {
                 streak = (if streak > 0.0 { streak + 1.0 } else { 1.0 });
             } else if close < prevClose {
-                streak = (if streak < 0.0 { streak - 1.0 } else { 0_f64 - 1.0 });
+                streak = (if streak < 0.0 { streak - 1.0 } else { -1.0 });
             } else {
                 streak = 0.0;
             }
@@ -393,7 +393,7 @@ impl Core {
         if close > sp.prevClose {
             sp.streak = (if sp.streak > 0.0 { sp.streak + 1.0 } else { 1.0 });
         } else if close < sp.prevClose {
-            sp.streak = (if sp.streak < 0.0 { sp.streak - 1.0 } else { 0_f64 - 1.0 });
+            sp.streak = (if sp.streak < 0.0 { sp.streak - 1.0 } else { -1.0 });
         } else {
             sp.streak = 0.0;
         }
@@ -494,7 +494,7 @@ impl Core {
             if close > prevClose {
                 streak = (if streak > 0.0 { streak + 1.0 } else { 1.0 });
             } else if close < prevClose {
-                streak = (if streak < 0.0 { streak - 1.0 } else { 0_f64 - 1.0 });
+                streak = (if streak < 0.0 { streak - 1.0 } else { -1.0 });
             } else {
                 streak = 0.0;
             }
@@ -726,7 +726,7 @@ impl CrsiStream {
             if close > sp.prevClose {
                 streak = (if streak > 0.0 { streak + 1.0 } else { 1.0 });
             } else if close < sp.prevClose {
-                streak = (if streak < 0.0 { streak - 1.0 } else { 0_f64 - 1.0 });
+                streak = (if streak < 0.0 { streak - 1.0 } else { -1.0 });
             } else {
                 streak = 0.0;
             }

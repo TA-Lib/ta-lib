@@ -141,7 +141,7 @@ TA_LIB_API TA_RetCode TA_CDLHIKKAKE( int    startIdx,
            (inHigh[i] > inHigh[i - 1] &&
             inLow[i] > inLow[i - 1])) )    /* (bear) 3rd: higher high and higher low */
       {
-         patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : 0 - 1);
+         patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : -1);
          savedHigh = inHigh[i - 1];
          savedLow = inLow[i - 1];
          cd = 4;
@@ -181,7 +181,7 @@ TA_LIB_API TA_RetCode TA_CDLHIKKAKE( int    startIdx,
            (inHigh[i] > inHigh[i - 1] &&
             inLow[i] > inLow[i - 1])) )    /* (bear) 3rd: higher high and higher low */
       {
-         patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : 0 - 1);
+         patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : -1);
          savedHigh = inHigh[i - 1];
          savedLow = inLow[i - 1];
          cd = 4;
@@ -192,7 +192,7 @@ TA_LIB_API TA_RetCode TA_CDLHIKKAKE( int    startIdx,
            (patternResult < 0 &&
             inClose[i] < savedLow)) )  /* close lower than the low of 2nd */
       {
-         outInteger[outIdx++] = patternResult + 100 * ((patternResult > 0) ? 1 : 0 - 1);
+         outInteger[outIdx++] = patternResult + 100 * ((patternResult > 0) ? 1 : -1);
          cd = 0;
       } else 
       {
@@ -266,7 +266,7 @@ TA_RetCode TA_S_CDLHIKKAKE( int    startIdx,
    {
       if( (double)inHigh[i - 1] < (double)inHigh[i - 2] && (double)inLow[i - 1] > (double)inLow[i - 2] && (((double)inHigh[i] < (double)inHigh[i - 1] && (double)inLow[i] < (double)inLow[i - 1]) || ((double)inHigh[i] > (double)inHigh[i - 1] && (double)inLow[i] > (double)inLow[i - 1])) )
       {
-         patternResult = 100 * (((double)inHigh[i] < (double)inHigh[i - 1]) ? 1 : 0 - 1);
+         patternResult = 100 * (((double)inHigh[i] < (double)inHigh[i - 1]) ? 1 : -1);
          savedHigh = (double)inHigh[i - 1];
          savedLow = (double)inLow[i - 1];
          cd = 4;
@@ -286,14 +286,14 @@ TA_RetCode TA_S_CDLHIKKAKE( int    startIdx,
    {
       if( (double)inHigh[i - 1] < (double)inHigh[i - 2] && (double)inLow[i - 1] > (double)inLow[i - 2] && (((double)inHigh[i] < (double)inHigh[i - 1] && (double)inLow[i] < (double)inLow[i - 1]) || ((double)inHigh[i] > (double)inHigh[i - 1] && (double)inLow[i] > (double)inLow[i - 1])) )
       {
-         patternResult = 100 * (((double)inHigh[i] < (double)inHigh[i - 1]) ? 1 : 0 - 1);
+         patternResult = 100 * (((double)inHigh[i] < (double)inHigh[i - 1]) ? 1 : -1);
          savedHigh = (double)inHigh[i - 1];
          savedLow = (double)inLow[i - 1];
          cd = 4;
          outInteger[outIdx++] = patternResult;
       } else if( cd > 0 && ((patternResult > 0 && (double)inClose[i] > savedHigh) || (patternResult < 0 && (double)inClose[i] < savedLow)) )
       {
-         outInteger[outIdx++] = patternResult + 100 * ((patternResult > 0) ? 1 : 0 - 1);
+         outInteger[outIdx++] = patternResult + 100 * ((patternResult > 0) ? 1 : -1);
          cd = 0;
       } else 
       {
@@ -338,7 +338,7 @@ static void TA_CDLHIKKAKE_StepImpl( struct TA_CDLHIKKAKE_Stream *sp, double inOp
         (inHigh > sp->lag1_inHigh &&
          inLow > sp->lag1_inLow)) )         /* (bear) 3rd: higher high and higher low */
    {
-      sp->patternResult = 100 * ((inHigh < sp->lag1_inHigh) ? 1 : 0 - 1);
+      sp->patternResult = 100 * ((inHigh < sp->lag1_inHigh) ? 1 : -1);
       sp->savedHigh = sp->lag1_inHigh;
       sp->savedLow = sp->lag1_inLow;
       sp->cd = 4;
@@ -349,7 +349,7 @@ static void TA_CDLHIKKAKE_StepImpl( struct TA_CDLHIKKAKE_Stream *sp, double inOp
         (sp->patternResult < 0 &&
          inClose < sp->savedLow)) )  /* close lower than the low of 2nd */
    {
-      *outInteger= sp->patternResult + 100 * ((sp->patternResult > 0) ? 1 : 0 - 1);
+      *outInteger= sp->patternResult + 100 * ((sp->patternResult > 0) ? 1 : -1);
       sp->cd = 0;
    } else 
    {
@@ -429,7 +429,7 @@ static TA_RetCode TA_CDLHIKKAKE_OpenImpl( struct TA_CDLHIKKAKE_Stream **stream, 
               (inHigh[i] > inHigh[i - 1] &&
                inLow[i] > inLow[i - 1])) )    /* (bear) 3rd: higher high and higher low */
          {
-            patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : 0 - 1);
+            patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : -1);
             savedHigh = inHigh[i - 1];
             savedLow = inLow[i - 1];
             cd = 4;
@@ -469,7 +469,7 @@ static TA_RetCode TA_CDLHIKKAKE_OpenImpl( struct TA_CDLHIKKAKE_Stream **stream, 
               (inHigh[i] > inHigh[i - 1] &&
                inLow[i] > inLow[i - 1])) )    /* (bear) 3rd: higher high and higher low */
          {
-            patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : 0 - 1);
+            patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : -1);
             savedHigh = inHigh[i - 1];
             savedLow = inLow[i - 1];
             cd = 4;
@@ -480,7 +480,7 @@ static TA_RetCode TA_CDLHIKKAKE_OpenImpl( struct TA_CDLHIKKAKE_Stream **stream, 
               (patternResult < 0 &&
                inClose[i] < savedLow)) )  /* close lower than the low of 2nd */
          {
-            outInteger[outIdx++ * outStride] = patternResult + 100 * ((patternResult > 0) ? 1 : 0 - 1);
+            outInteger[outIdx++ * outStride] = patternResult + 100 * ((patternResult > 0) ? 1 : -1);
             cd = 0;
          } else 
          {
@@ -591,7 +591,7 @@ TA_LIB_API TA_RetCode TA_CDLHIKKAKE_Peek( const TA_CDLHIKKAKE_Stream *stream, do
         (inHigh > sp->lag1_inHigh &&
          inLow > sp->lag1_inLow)) )         /* (bear) 3rd: higher high and higher low */
    {
-      patternResult = 100 * ((inHigh < sp->lag1_inHigh) ? 1 : 0 - 1);
+      patternResult = 100 * ((inHigh < sp->lag1_inHigh) ? 1 : -1);
       savedHigh = sp->lag1_inHigh;
       savedLow = sp->lag1_inLow;
       cd = 4;
@@ -602,7 +602,7 @@ TA_LIB_API TA_RetCode TA_CDLHIKKAKE_Peek( const TA_CDLHIKKAKE_Stream *stream, do
         (patternResult < 0 &&
          inClose < savedLow)) )  /* close lower than the low of 2nd */
    {
-      *outInteger= patternResult + 100 * ((patternResult > 0) ? 1 : 0 - 1);
+      *outInteger= patternResult + 100 * ((patternResult > 0) ? 1 : -1);
       cd = 0;
    } else 
    {

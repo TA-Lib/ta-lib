@@ -428,6 +428,7 @@ impl TypeNames {
                 r,
             ) => self.is_real_expr(l) || self.is_real_expr(r),
             Expr::Ternary(_, a, b) => self.is_real_expr(a) || self.is_real_expr(b),
+            Expr::Neg(i) => self.is_real_expr(i),
             // Everything else is not PROVABLY floating-point, which is the bar
             // here. That includes an explicit `(int)` cast — writing one is the
             // whole point, so it must stop the walk — and any call, whose
@@ -3385,8 +3386,13 @@ impl Parser {
         if let Some(Token::Op(ref op)) = self.peek() {
             if op == "-" {
                 self.advance();
-                let operand = self.parse_unary();
-                return Expr::BinOp(Box::new(Expr::IntLiteral(0)), BinOp::Sub, Box::new(operand));
+                // A nonzero literal folds to its negative; `-0.0` must stay a
+                // negation, because a folded zero literal renders unsigned.
+                return match self.parse_unary() {
+                    Expr::IntLiteral(v) if v != 0 => Expr::IntLiteral(-v),
+                    Expr::Literal(v) if v != 0.0 => Expr::Literal(-v),
+                    operand => Expr::Neg(Box::new(operand)),
+                };
             }
             if op == "+" {
                 self.advance();
@@ -5855,13 +5861,16 @@ TA_RetCode test_func(int startIdx, int *outBegIdx)
         let tokens = tokenize("-x");
         let mut parser = Parser::new(tokens);
         let expr = parser.parse_expr();
-        match expr {
-            Expr::BinOp(left, BinOp::Sub, _) => match *left {
-                Expr::IntLiteral(0) => {}
-                other => panic!("Expected IntLiteral(0) for unary minus, got {other:?}"),
-            },
-            other => panic!("Expected Sub from 0 for unary minus, got {other:?}"),
-        }
+        assert_eq!(expr, Expr::Neg(Box::new(Expr::Var("x".into()))));
+    }
+
+    #[test]
+    fn test_unary_minus_folds_only_nonzero_literals() {
+        let parse = |src: &str| Parser::new(tokenize(src)).parse_expr();
+        assert_eq!(parse("-1"), Expr::IntLiteral(-1));
+        assert_eq!(parse("-0.5"), Expr::Literal(-0.5));
+        assert_eq!(parse("-0.0"), Expr::Neg(Box::new(Expr::Literal(0.0))));
+        assert_eq!(parse("-0"), Expr::Neg(Box::new(Expr::IntLiteral(0))));
     }
 
     #[test]

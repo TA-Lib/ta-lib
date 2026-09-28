@@ -260,16 +260,16 @@ TA_LIB_API TA_RetCode TA_CTI( int    startIdx,
        */
       if( ssX > 0.00000000000001 * sumX2 && ssX * ssY > 0.0 )
       {
-         tempReal = (0 - spXY) / sqrt(ssX * ssY);
+         tempReal = -spXY / sqrt(ssX * ssY);
          /* A correlation coefficient cannot leave [-1,1]; rounding in the
           * three sums can still put it slightly outside.
           */
          if( tempReal > 1.0 )
          {
             tempReal = 1.0;
-         } else if( tempReal < 0 - 1.0 )
+         } else if( tempReal < -1.0 )
          {
-            tempReal = 0 - 1.0;
+            tempReal = -1.0;
          }
          outReal[outIdx++] = tempReal;
       } else 
@@ -422,13 +422,13 @@ TA_RetCode TA_S_CTI( int    startIdx,
       trailingIdx += 1;
       if( ssX > 0.00000000000001 * sumX2 && ssX * ssY > 0.0 )
       {
-         tempReal = (0 - spXY) / sqrt(ssX * ssY);
+         tempReal = -spXY / sqrt(ssX * ssY);
          if( tempReal > 1.0 )
          {
             tempReal = 1.0;
-         } else if( tempReal < 0 - 1.0 )
+         } else if( tempReal < -1.0 )
          {
-            tempReal = 0 - 1.0;
+            tempReal = -1.0;
          }
          outReal[outIdx++] = tempReal;
       } else 
@@ -588,16 +588,16 @@ static void TA_CTI_StepImpl( struct TA_CTI_Stream *sp, double inReal, double *ou
     */
    if( ssX > 0.00000000000001 * sumX2 && ssX * sp->ssY > 0.0 )
    {
-      tempReal = (0 - spXY) / sqrt(ssX * sp->ssY);
+      tempReal = -spXY / sqrt(ssX * sp->ssY);
       /* A correlation coefficient cannot leave [-1,1]; rounding in the
        * three sums can still put it slightly outside.
        */
       if( tempReal > 1.0 )
       {
          tempReal = 1.0;
-      } else if( tempReal < 0 - 1.0 )
+      } else if( tempReal < -1.0 )
       {
-         tempReal = 0 - 1.0;
+         tempReal = -1.0;
       }
       *outReal= tempReal;
    } else 
@@ -813,16 +813,16 @@ static TA_RetCode TA_CTI_OpenImpl( struct TA_CTI_Stream **stream, const double i
           */
          if( ssX > 0.00000000000001 * sumX2 && ssX * ssY > 0.0 )
          {
-            tempReal = (0 - spXY) / sqrt(ssX * ssY);
+            tempReal = -spXY / sqrt(ssX * ssY);
             /* A correlation coefficient cannot leave [-1,1]; rounding in the
              * three sums can still put it slightly outside.
              */
             if( tempReal > 1.0 )
             {
                tempReal = 1.0;
-            } else if( tempReal < 0 - 1.0 )
+            } else if( tempReal < -1.0 )
             {
-               tempReal = 0 - 1.0;
+               tempReal = -1.0;
             }
             outReal[outIdx++ * outStride] = tempReal;
          } else 
@@ -1053,16 +1053,16 @@ TA_LIB_API TA_RetCode TA_CTI_Peek( const TA_CTI_Stream *stream, double inReal, d
     */
    if( ssX > 0.00000000000001 * sumX2 && ssX * sp->ssY > 0.0 )
    {
-      tempReal = (0 - spXY) / sqrt(ssX * sp->ssY);
+      tempReal = -spXY / sqrt(ssX * sp->ssY);
       /* A correlation coefficient cannot leave [-1,1]; rounding in the
        * three sums can still put it slightly outside.
        */
       if( tempReal > 1.0 )
       {
          tempReal = 1.0;
-      } else if( tempReal < 0 - 1.0 )
+      } else if( tempReal < -1.0 )
       {
-         tempReal = 0 - 1.0;
+         tempReal = -1.0;
       }
       *outReal= tempReal;
    } else 

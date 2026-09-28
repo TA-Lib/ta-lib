@@ -154,7 +154,7 @@ TA_LIB_API TA_RetCode TA_CG( int    startIdx,
       return TA_SUCCESS;
    }
    periodDouble = (double)optInTimePeriod;
-   flatValue = (0 - (periodDouble + 1.0)) * 0.5;
+   flatValue = -(periodDouble + 1.0) * 0.5;
    /* Each window value is held as y = x*scale, an integer, split into 2 or 3
     * integer-valued limbs of `width`. The bounds keep every limb of both the
     * weighted and the plain sum below 2^53 while the total weight is at most
@@ -348,7 +348,7 @@ TA_LIB_API TA_RetCode TA_CG( int    startIdx,
          fit2Mid = 1;
          fit2Lo = 1;
          fit3Mid = 1;
-         failAt = 0 - 1;
+         failAt = -1;
          num = 0.0;
          den = 0.0;
          k = 0;
@@ -509,7 +509,7 @@ TA_LIB_API TA_RetCode TA_CG( int    startIdx,
        */
       if( den != 0.0 )
       {
-         value = (0 - num) / den;
+         value = -num / den;
       } else 
       {
          value = flatValue;
@@ -642,7 +642,7 @@ TA_RetCode TA_S_CG( int    startIdx,
       return TA_SUCCESS;
    }
    periodDouble = (double)optInTimePeriod;
-   flatValue = (0 - (periodDouble + 1.0)) * 0.5;
+   flatValue = -(periodDouble + 1.0) * 0.5;
    weightTotal = 1.0;
    while( weightTotal < periodDouble * (periodDouble + 1.0) * 0.5 )
    {
@@ -791,7 +791,7 @@ TA_RetCode TA_S_CG( int    startIdx,
          fit2Mid = 1;
          fit2Lo = 1;
          fit3Mid = 1;
-         failAt = 0 - 1;
+         failAt = -1;
          num = 0.0;
          den = 0.0;
          k = 0;
@@ -944,7 +944,7 @@ TA_RetCode TA_S_CG( int    startIdx,
       }
       if( den != 0.0 )
       {
-         value = (0 - num) / den;
+         value = -num / den;
       } else 
       {
          value = flatValue;
@@ -1200,7 +1200,7 @@ static void TA_CG_StepImpl( struct TA_CG_Stream *sp, double inReal, double *outR
       fit2Mid = 1;
       fit2Lo = 1;
       fit3Mid = 1;
-      failAt = 0 - 1;
+      failAt = -1;
       sp->num = 0.0;
       sp->den = 0.0;
       k = 0;
@@ -1361,7 +1361,7 @@ static void TA_CG_StepImpl( struct TA_CG_Stream *sp, double inReal, double *outR
     */
    if( sp->den != 0.0 )
    {
-      value = (0 - sp->num) / sp->den;
+      value = -sp->num / sp->den;
    } else 
    {
       value = sp->flatValue;
@@ -1498,7 +1498,7 @@ static TA_RetCode TA_CG_OpenImpl( struct TA_CG_Stream **stream, const double inR
          return TA_INSUFFICIENT_HISTORY;
       }
       periodDouble = (double)optInTimePeriod;
-      flatValue = (0 - (periodDouble + 1.0)) * 0.5;
+      flatValue = -(periodDouble + 1.0) * 0.5;
       /* Each window value is held as y = x*scale, an integer, split into 2 or 3
        * integer-valued limbs of `width`. The bounds keep every limb of both the
        * weighted and the plain sum below 2^53 while the total weight is at most
@@ -1692,7 +1692,7 @@ static TA_RetCode TA_CG_OpenImpl( struct TA_CG_Stream **stream, const double inR
             fit2Mid = 1;
             fit2Lo = 1;
             fit3Mid = 1;
-            failAt = 0 - 1;
+            failAt = -1;
             num = 0.0;
             den = 0.0;
             k = 0;
@@ -1853,7 +1853,7 @@ static TA_RetCode TA_CG_OpenImpl( struct TA_CG_Stream **stream, const double inR
           */
          if( den != 0.0 )
          {
-            value = (0 - num) / den;
+            value = -num / den;
          } else 
          {
             value = flatValue;
@@ -2207,7 +2207,7 @@ TA_LIB_API TA_RetCode TA_CG_Peek( const TA_CG_Stream *stream, double inReal, dou
       fit2Mid = 1;
       fit2Lo = 1;
       fit3Mid = 1;
-      failAt = 0 - 1;
+      failAt = -1;
       num = 0.0;
       den = 0.0;
       k = 0;
@@ -2368,7 +2368,7 @@ TA_LIB_API TA_RetCode TA_CG_Peek( const TA_CG_Stream *stream, double inReal, dou
     */
    if( den != 0.0 )
    {
-      value = (0 - num) / den;
+      value = -num / den;
    } else 
    {
       value = sp->flatValue;

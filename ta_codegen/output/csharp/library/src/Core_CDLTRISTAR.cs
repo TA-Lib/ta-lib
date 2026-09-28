@@ -146,7 +146,7 @@ public partial class Core
             if( (MinLt(inOpen[i - 1], inClose[i - 1]) > MaxGt(inOpen[i - 2], inClose[i - 2])) && /* 2nd gaps up */
                 MaxGt(inOpen[i], inClose[i]) < MaxGt(inOpen[i - 1], inClose[i - 1]) ) /* 3rd is not higher than 2nd */
             {
-               outInteger[outIdx] = 0 - 100;
+               outInteger[outIdx] = -100;
             }
             if( (MaxGt(inOpen[i - 1], inClose[i - 1]) < MinLt(inOpen[i - 2], inClose[i - 2])) && /* 2nd gaps down */
                 MinLt(inOpen[i], inClose[i]) > MinLt(inOpen[i - 1], inClose[i - 1]) ) /* 3rd is not lower than 2nd */
@@ -220,7 +220,7 @@ public partial class Core
          if( Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2]) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((BodyDoji_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((BodyDoji_rangeType == 2) ? (((double)inHigh[i - 2] - ((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inClose[i - 2]) : ((double)inOpen[i - 2]))) + (((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inOpen[i - 2]) : ((double)inClose[i - 2])) - (double)inLow[i - 2])) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) && Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1]) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((BodyDoji_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((BodyDoji_rangeType == 2) ? (((double)inHigh[i - 2] - ((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inClose[i - 2]) : ((double)inOpen[i - 2]))) + (((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inOpen[i - 2]) : ((double)inClose[i - 2])) - (double)inLow[i - 2])) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) && Math.Abs((double)inClose[i] - (double)inOpen[i]) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((BodyDoji_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((BodyDoji_rangeType == 2) ? (((double)inHigh[i - 2] - ((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inClose[i - 2]) : ((double)inOpen[i - 2]))) + (((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inOpen[i - 2]) : ((double)inClose[i - 2])) - (double)inLow[i - 2])) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) ) {
             outInteger[outIdx] = 0;
             if( (MinLt((double)inOpen[i - 1], (double)inClose[i - 1]) > MaxGt((double)inOpen[i - 2], (double)inClose[i - 2])) && MaxGt((double)inOpen[i], (double)inClose[i]) < MaxGt((double)inOpen[i - 1], (double)inClose[i - 1]) ) {
-               outInteger[outIdx] = 0 - 100;
+               outInteger[outIdx] = -100;
             }
             if( (MaxGt((double)inOpen[i - 1], (double)inClose[i - 1]) < MinLt((double)inOpen[i - 2], (double)inClose[i - 2])) && MinLt((double)inOpen[i], (double)inClose[i]) > MinLt((double)inOpen[i - 1], (double)inClose[i - 1]) ) {
                outInteger[outIdx] = 100;
@@ -577,7 +577,7 @@ public partial class Core
             if( (MinLt(sp.lag1_inOpen, sp.lag1_inClose) > MaxGt(sp.lag2_inOpen, sp.lag2_inClose)) && /* 2nd gaps up */
                 MaxGt(inOpen, inClose) < MaxGt(sp.lag1_inOpen, sp.lag1_inClose) ) /* 3rd is not higher than 2nd */
             {
-               cur_outInteger = 0 - 100;
+               cur_outInteger = -100;
             }
             if( (MaxGt(sp.lag1_inOpen, sp.lag1_inClose) < MinLt(sp.lag2_inOpen, sp.lag2_inClose)) && /* 2nd gaps down */
                 MinLt(inOpen, inClose) > MinLt(sp.lag1_inOpen, sp.lag1_inClose) ) /* 3rd is not lower than 2nd */
@@ -623,7 +623,7 @@ public partial class Core
          if( (MinLt(sp.lag1_inOpen, sp.lag1_inClose) > MaxGt(sp.lag2_inOpen, sp.lag2_inClose)) && /* 2nd gaps up */
              MaxGt(inOpen, inClose) < MaxGt(sp.lag1_inOpen, sp.lag1_inClose) ) /* 3rd is not higher than 2nd */
          {
-            sp.cur_outInteger = 0 - 100;
+            sp.cur_outInteger = -100;
          }
          if( (MaxGt(sp.lag1_inOpen, sp.lag1_inClose) < MinLt(sp.lag2_inOpen, sp.lag2_inClose)) && /* 2nd gaps down */
              MinLt(inOpen, inClose) > MinLt(sp.lag1_inOpen, sp.lag1_inClose) ) /* 3rd is not lower than 2nd */
@@ -723,7 +723,7 @@ public partial class Core
             if( (MinLt(inOpen[i - 1], inClose[i - 1]) > MaxGt(inOpen[i - 2], inClose[i - 2])) && /* 2nd gaps up */
                 MaxGt(inOpen[i], inClose[i]) < MaxGt(inOpen[i - 1], inClose[i - 1]) ) /* 3rd is not higher than 2nd */
             {
-               outInteger[outIdx * outStride] = 0 - 100;
+               outInteger[outIdx * outStride] = -100;
             }
             if( (MaxGt(inOpen[i - 1], inClose[i - 1]) < MinLt(inOpen[i - 2], inClose[i - 2])) && /* 2nd gaps down */
                 MinLt(inOpen[i], inClose[i]) > MinLt(inOpen[i - 1], inClose[i - 1]) ) /* 3rd is not lower than 2nd */

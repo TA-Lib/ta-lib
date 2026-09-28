@@ -114,7 +114,7 @@
          return RetCode.SUCCESS ;
       }
       periodDouble = (double)optInTimePeriod;
-      flatValue = (0 - (periodDouble + 1.0)) * 0.5;
+      flatValue = -(periodDouble + 1.0) * 0.5;
       /* Each window value is held as y = x*scale, an integer, split into 2 or 3
        * integer-valued limbs of `width`. The bounds keep every limb of both the
        * weighted and the plain sum below 2^53 while the total weight is at most
@@ -285,7 +285,7 @@
             fit2Mid = 1;
             fit2Lo = 1;
             fit3Mid = 1;
-            failAt = 0 - 1;
+            failAt = -1;
             num = 0.0;
             den = 0.0;
             k = 0;
@@ -424,7 +424,7 @@
           * (#253).
           */
          if( den != 0.0 ) {
-            value = (0 - num) / den;
+            value = -num / den;
          } else {
             value = flatValue;
          }
@@ -545,7 +545,7 @@
          return RetCode.SUCCESS ;
       }
       periodDouble = (double)optInTimePeriod;
-      flatValue = (0 - (periodDouble + 1.0)) * 0.5;
+      flatValue = -(periodDouble + 1.0) * 0.5;
       weightTotal = 1.0;
       while( weightTotal < periodDouble * (periodDouble + 1.0) * 0.5 ) {
          weightTotal *= 2.0;
@@ -671,7 +671,7 @@
             fit2Mid = 1;
             fit2Lo = 1;
             fit3Mid = 1;
-            failAt = 0 - 1;
+            failAt = -1;
             num = 0.0;
             den = 0.0;
             k = 0;
@@ -802,7 +802,7 @@
             num = t + c;
          }
          if( den != 0.0 ) {
-            value = (0 - num) / den;
+            value = -num / den;
          } else {
             value = flatValue;
          }
@@ -1315,7 +1315,7 @@
             fit2Mid = 1;
             fit2Lo = 1;
             fit3Mid = 1;
-            failAt = 0 - 1;
+            failAt = -1;
             num = 0.0;
             den = 0.0;
             k = 0;
@@ -1454,7 +1454,7 @@
           * (#253).
           */
          if( den != 0.0 ) {
-            value = (0 - num) / den;
+            value = -num / den;
          } else {
             value = sp.flatValue;
          }
@@ -1653,7 +1653,7 @@
          fit2Mid = 1;
          fit2Lo = 1;
          fit3Mid = 1;
-         failAt = 0 - 1;
+         failAt = -1;
          sp.num = 0.0;
          sp.den = 0.0;
          k = 0;
@@ -1792,7 +1792,7 @@
        * (#253).
        */
       if( sp.den != 0.0 ) {
-         value = (0 - sp.num) / sp.den;
+         value = -sp.num / sp.den;
       } else {
          value = sp.flatValue;
       }
@@ -1916,7 +1916,7 @@
          return RetCode.INSUFFICIENT_HISTORY ;
       }
       periodDouble = (double)optInTimePeriod;
-      flatValue = (0 - (periodDouble + 1.0)) * 0.5;
+      flatValue = -(periodDouble + 1.0) * 0.5;
       /* Each window value is held as y = x*scale, an integer, split into 2 or 3
        * integer-valued limbs of `width`. The bounds keep every limb of both the
        * weighted and the plain sum below 2^53 while the total weight is at most
@@ -2087,7 +2087,7 @@
             fit2Mid = 1;
             fit2Lo = 1;
             fit3Mid = 1;
-            failAt = 0 - 1;
+            failAt = -1;
             num = 0.0;
             den = 0.0;
             k = 0;
@@ -2226,7 +2226,7 @@
           * (#253).
           */
          if( den != 0.0 ) {
-            value = (0 - num) / den;
+            value = -num / den;
          } else {
             value = flatValue;
          }

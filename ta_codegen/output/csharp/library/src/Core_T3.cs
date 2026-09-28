@@ -255,9 +255,9 @@ public partial class Core
       }
       /* Calculate the constants */
       tempReal = optInVFactor * optInVFactor;
-      c1 = 0 - tempReal * optInVFactor;
+      c1 = -(tempReal * optInVFactor);
       c2 = 3.0 * (tempReal - c1);
-      c3 = (0 - 6.0) * tempReal - 3.0 * (optInVFactor - c1);
+      c3 = -6.0 * tempReal - 3.0 * (optInVFactor - c1);
       c4 = Math.FusedMultiplyAdd(3.0, tempReal, Math.FusedMultiplyAdd(3.0, optInVFactor, 1.0) - c1);
       /* Write the first output */
       outIdx = 0;
@@ -402,9 +402,9 @@ public partial class Core
          e6 = Math.FusedMultiplyAdd(one_minus_k, e6, k * e5);
       }
       tempReal = optInVFactor * optInVFactor;
-      c1 = 0 - tempReal * optInVFactor;
+      c1 = -(tempReal * optInVFactor);
       c2 = 3.0 * (tempReal - c1);
-      c3 = (0 - 6.0) * tempReal - 3.0 * (optInVFactor - c1);
+      c3 = -6.0 * tempReal - 3.0 * (optInVFactor - c1);
       c4 = Math.FusedMultiplyAdd(3.0, tempReal, Math.FusedMultiplyAdd(3.0, optInVFactor, 1.0) - c1);
       outIdx = 0;
       outReal[outIdx++] = Math.FusedMultiplyAdd(c4, e3, Math.FusedMultiplyAdd(c3, e4, Math.FusedMultiplyAdd(c1, e6, c2 * e5)));
@@ -953,9 +953,9 @@ public partial class Core
       }
       /* Calculate the constants */
       tempReal = optInVFactor * optInVFactor;
-      c1 = 0 - tempReal * optInVFactor;
+      c1 = -(tempReal * optInVFactor);
       c2 = 3.0 * (tempReal - c1);
-      c3 = (0 - 6.0) * tempReal - 3.0 * (optInVFactor - c1);
+      c3 = -6.0 * tempReal - 3.0 * (optInVFactor - c1);
       c4 = Math.FusedMultiplyAdd(3.0, tempReal, Math.FusedMultiplyAdd(3.0, optInVFactor, 1.0) - c1);
       /* Write the first output */
       outIdx = 0;

@@ -205,9 +205,9 @@
       }
       /* Calculate the constants */
       tempReal = optInVFactor * optInVFactor;
-      c1 = 0 - tempReal * optInVFactor;
+      c1 = -(tempReal * optInVFactor);
       c2 = 3.0 * (tempReal - c1);
-      c3 = (0 - 6.0) * tempReal - 3.0 * (optInVFactor - c1);
+      c3 = -6.0 * tempReal - 3.0 * (optInVFactor - c1);
       c4 = Math.fma(3.0, tempReal, Math.fma(3.0, optInVFactor, 1.0) - c1);
       /* Write the first output */
       outIdx = 0;
@@ -347,9 +347,9 @@
          e6 = Math.fma(one_minus_k, e6, k * e5);
       }
       tempReal = optInVFactor * optInVFactor;
-      c1 = 0 - tempReal * optInVFactor;
+      c1 = -(tempReal * optInVFactor);
       c2 = 3.0 * (tempReal - c1);
-      c3 = (0 - 6.0) * tempReal - 3.0 * (optInVFactor - c1);
+      c3 = -6.0 * tempReal - 3.0 * (optInVFactor - c1);
       c4 = Math.fma(3.0, tempReal, Math.fma(3.0, optInVFactor, 1.0) - c1);
       outIdx = 0;
       outReal[outIdx++] = Math.fma(c4, e3, Math.fma(c3, e4, Math.fma(c1, e6, c2 * e5)));
@@ -863,9 +863,9 @@
       }
       /* Calculate the constants */
       tempReal = optInVFactor * optInVFactor;
-      c1 = 0 - tempReal * optInVFactor;
+      c1 = -(tempReal * optInVFactor);
       c2 = 3.0 * (tempReal - c1);
-      c3 = (0 - 6.0) * tempReal - 3.0 * (optInVFactor - c1);
+      c3 = -6.0 * tempReal - 3.0 * (optInVFactor - c1);
       c4 = Math.fma(3.0, tempReal, Math.fma(3.0, optInVFactor, 1.0) - c1);
       /* Write the first output */
       outIdx = 0;

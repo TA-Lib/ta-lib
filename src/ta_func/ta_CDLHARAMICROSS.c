@@ -159,11 +159,11 @@ TA_LIB_API TA_RetCode TA_CDLHARAMICROSS( int    startIdx,
             if( max(inClose[i],inOpen[i]) < max(inClose[i - 1],inOpen[i - 1]) && /* 2nd is engulfed by 1st */
                 min(inClose[i],inOpen[i]) > min(inClose[i - 1],inOpen[i - 1]) )
             {
-               outInteger[outIdx++] = (0 - ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1)) * 100;
+               outInteger[outIdx++] = -((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100;
             } else if( max(inClose[i],inOpen[i]) <= max(inClose[i - 1],inOpen[i - 1]) && /* 2nd is engulfed by 1st */
                 min(inClose[i],inOpen[i]) >= min(inClose[i - 1],inOpen[i - 1]) )  /* (one end of real body can match; engulfing guaranteed by "long" and "doji") */
             {
-               outInteger[outIdx++] = (0 - ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1)) * 80;
+               outInteger[outIdx++] = -((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 80;
             } else 
             {
                outInteger[outIdx++] = 0;
@@ -266,10 +266,10 @@ TA_RetCode TA_S_CDLHARAMICROSS( int    startIdx,
          {
             if( max((double)inClose[i],(double)inOpen[i]) < max((double)inClose[i - 1],(double)inOpen[i - 1]) && min((double)inClose[i],(double)inOpen[i]) > min((double)inClose[i - 1],(double)inOpen[i - 1]) )
             {
-               outInteger[outIdx++] = (0 - (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1)) * 100;
+               outInteger[outIdx++] = -(((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : -1) * 100;
             } else if( max((double)inClose[i],(double)inOpen[i]) <= max((double)inClose[i - 1],(double)inOpen[i - 1]) && min((double)inClose[i],(double)inOpen[i]) >= min((double)inClose[i - 1],(double)inOpen[i - 1]) )
             {
-               outInteger[outIdx++] = (0 - (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1)) * 80;
+               outInteger[outIdx++] = -(((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : -1) * 80;
             } else 
             {
                outInteger[outIdx++] = 0;
@@ -342,11 +342,11 @@ static void TA_CDLHARAMICROSS_StepImpl( struct TA_CDLHARAMICROSS_Stream *sp, dou
          if( max(inClose,inOpen) < max(sp->lag1_inClose,sp->lag1_inOpen) && /* 2nd is engulfed by 1st */
              min(inClose,inOpen) > min(sp->lag1_inClose,sp->lag1_inOpen) )
          {
-            *outInteger= (0 - ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1)) * 100;
+            *outInteger= -((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : -1) * 100;
          } else if( max(inClose,inOpen) <= max(sp->lag1_inClose,sp->lag1_inOpen) && /* 2nd is engulfed by 1st */
              min(inClose,inOpen) >= min(sp->lag1_inClose,sp->lag1_inOpen) )  /* (one end of real body can match; engulfing guaranteed by "long" and "doji") */
          {
-            *outInteger= (0 - ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1)) * 80;
+            *outInteger= -((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : -1) * 80;
          } else 
          {
             *outInteger= 0;
@@ -468,11 +468,11 @@ static TA_RetCode TA_CDLHARAMICROSS_OpenImpl( struct TA_CDLHARAMICROSS_Stream **
                if( max(inClose[i],inOpen[i]) < max(inClose[i - 1],inOpen[i - 1]) && /* 2nd is engulfed by 1st */
                    min(inClose[i],inOpen[i]) > min(inClose[i - 1],inOpen[i - 1]) )
                {
-                  outInteger[outIdx++ * outStride] = (0 - ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1)) * 100;
+                  outInteger[outIdx++ * outStride] = -((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100;
                } else if( max(inClose[i],inOpen[i]) <= max(inClose[i - 1],inOpen[i - 1]) && /* 2nd is engulfed by 1st */
                    min(inClose[i],inOpen[i]) >= min(inClose[i - 1],inOpen[i - 1]) )  /* (one end of real body can match; engulfing guaranteed by "long" and "doji") */
                {
-                  outInteger[outIdx++ * outStride] = (0 - ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1)) * 80;
+                  outInteger[outIdx++ * outStride] = -((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 80;
                } else 
                {
                   outInteger[outIdx++ * outStride] = 0;
@@ -605,11 +605,11 @@ TA_LIB_API TA_RetCode TA_CDLHARAMICROSS_Peek( const TA_CDLHARAMICROSS_Stream *st
          if( max(inClose,inOpen) < max(sp->lag1_inClose,sp->lag1_inOpen) && /* 2nd is engulfed by 1st */
              min(inClose,inOpen) > min(sp->lag1_inClose,sp->lag1_inOpen) )
          {
-            *outInteger= (0 - ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1)) * 100;
+            *outInteger= -((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : -1) * 100;
          } else if( max(inClose,inOpen) <= max(sp->lag1_inClose,sp->lag1_inOpen) && /* 2nd is engulfed by 1st */
              min(inClose,inOpen) >= min(sp->lag1_inClose,sp->lag1_inOpen) )  /* (one end of real body can match; engulfing guaranteed by "long" and "doji") */
          {
-            *outInteger= (0 - ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1)) * 80;
+            *outInteger= -((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : -1) * 80;
          } else 
          {
             *outInteger= 0;

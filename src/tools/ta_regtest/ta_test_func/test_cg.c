@@ -1497,7 +1497,7 @@ static ErrorNumber test_cg_edges( void )
 }
 
 /* (5) Negating every input negates every partial sum exactly, so a nonzero
- * output keeps its bits. A zero's sign follows Den, which flips. */
+ * output keeps its bits. A zero's sign is set by Den, which flips. */
 static ErrorNumber test_cg_negation( void )
 {
    static double neg[CG_INT_N], out[CG_CAP], outNeg[CG_CAP];
@@ -1952,7 +1952,7 @@ static void cg_build_exact_series( void )
    }
 
    /* [v, -2v] has Num == 0 at n = 2, so the output is a zero whose sign
-    * follows Den. */
+    * is the opposite of Den's. */
    ta_test_ref_lcg_seed( 0x4535u );
    for( i = 0; i < CGX_N; i += 2 )
    {
@@ -2083,7 +2083,7 @@ static double cg_exact_reference( const double *x, int t, int n, int *fit, int *
          den += x[i];
          num += den;
       }
-      return den != 0.0 ? ( 0 - num ) / den : -( (double)n + 1.0 ) * 0.5;
+      return den != 0.0 ? -num / den : -( (double)n + 1.0 ) * 0.5;
    }
 
    for( k = 0; k < 5; k++ )
@@ -2103,7 +2103,7 @@ static double cg_exact_reference( const double *x, int t, int n, int *fit, int *
    }
    if( num == 0.0 )
       g_cgExactNum0++;
-   return num == 0.0 ? 0.0 / den : -num / den;
+   return -num / den;
 }
 
 static ErrorNumber test_cg_exact( void )

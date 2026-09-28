@@ -377,7 +377,7 @@ TA_LIB_API TA_RetCode TA_SAREXT( int    startIdx,
             {
                sar += sar * optInOffsetOnReverse;
             }
-            outReal[outIdx++] = 0 - sar;
+            outReal[outIdx++] = -sar;
             /* Adjust afShort and ep */
             afShort = optInAccelerationInitShort;
             ep = newLow;
@@ -466,7 +466,7 @@ TA_LIB_API TA_RetCode TA_SAREXT( int    startIdx,
       {
          /* No switch */
          /* Output the SAR (was calculated in the previous iteration) */
-         outReal[outIdx++] = 0 - sar;
+         outReal[outIdx++] = -sar;
          /* Adjust afShort and ep. */
          if( newLow < ep )
          {
@@ -679,7 +679,7 @@ TA_RetCode TA_S_SAREXT( int    startIdx,
             {
                sar += sar * optInOffsetOnReverse;
             }
-            outReal[outIdx++] = 0 - sar;
+            outReal[outIdx++] = -sar;
             afShort = optInAccelerationInitShort;
             ep = newLow;
             sar = fma(afShort, ep - sar, sar);
@@ -743,7 +743,7 @@ TA_RetCode TA_S_SAREXT( int    startIdx,
          }
       } else 
       {
-         outReal[outIdx++] = 0 - sar;
+         outReal[outIdx++] = -sar;
          if( newLow < ep )
          {
             ep = newLow;
@@ -834,7 +834,7 @@ static TA_FMA_STEP_INLINE void TA_SAREXT_StepImpl( struct TA_SAREXT_Stream *sp, 
          {
             sar += sar * sp->optInOffsetOnReverse;
          }
-         *outReal= 0 - sar;
+         *outReal= -sar;
          /* Adjust afShort and ep */
          sp->afShort = sp->optInAccelerationInitShort;
          sp->ep = newLow;
@@ -923,7 +923,7 @@ static TA_FMA_STEP_INLINE void TA_SAREXT_StepImpl( struct TA_SAREXT_Stream *sp, 
    {
       /* No switch */
       /* Output the SAR (was calculated in the previous iteration) */
-      *outReal= 0 - sar;
+      *outReal= -sar;
       /* Adjust afShort and ep. */
       if( newLow < sp->ep )
       {
@@ -1216,7 +1216,7 @@ static TA_RetCode TA_SAREXT_OpenImpl( struct TA_SAREXT_Stream **stream, const do
                {
                   sar += sar * optInOffsetOnReverse;
                }
-               outReal[outIdx++ * outStride] = 0 - sar;
+               outReal[outIdx++ * outStride] = -sar;
                /* Adjust afShort and ep */
                afShort = optInAccelerationInitShort;
                ep = newLow;
@@ -1305,7 +1305,7 @@ static TA_RetCode TA_SAREXT_OpenImpl( struct TA_SAREXT_Stream **stream, const do
          {
             /* No switch */
             /* Output the SAR (was calculated in the previous iteration) */
-            outReal[outIdx++ * outStride] = 0 - sar;
+            outReal[outIdx++ * outStride] = -sar;
             /* Adjust afShort and ep. */
             if( newLow < ep )
             {
@@ -1466,7 +1466,7 @@ TA_LIB_API TA_RetCode TA_SAREXT_Peek( const TA_SAREXT_Stream *stream, double inH
          {
             sar += sar * sp->optInOffsetOnReverse;
          }
-         *outReal= 0 - sar;
+         *outReal= -sar;
          /* Adjust afShort and ep */
          afShort = sp->optInAccelerationInitShort;
          ep = newLow;
@@ -1555,7 +1555,7 @@ TA_LIB_API TA_RetCode TA_SAREXT_Peek( const TA_SAREXT_Stream *stream, double inH
    {
       /* No switch */
       /* Output the SAR (was calculated in the previous iteration) */
-      *outReal= 0 - sar;
+      *outReal= -sar;
       /* Adjust afShort and ep. */
       if( newLow < ep )
       {

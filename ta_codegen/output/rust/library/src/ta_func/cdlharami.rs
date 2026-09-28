@@ -231,13 +231,13 @@ impl Core {
                         {
                             // 2nd is engulfed by 1st
                             if c_max(inClose[i], inOpen[i]) < c_max(inClose[i - 1], inOpen[i - 1]) && c_min(inClose[i], inOpen[i]) > c_min(inClose[i - 1], inOpen[i - 1]) {
-                                outInteger[outIdx] = ((0 - (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 })) * 100) as i32;
+                                outInteger[outIdx] = (-(if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32;
                                 outIdx += 1;
                                 // 2nd is engulfed by 1st
                                 // (one end of real body can match;
                                 // engulfing guaranteed by "long" and "short")
                             } else if c_max(inClose[i], inOpen[i]) <= c_max(inClose[i - 1], inOpen[i - 1]) && c_min(inClose[i], inOpen[i]) >= c_min(inClose[i - 1], inOpen[i - 1]) {
-                                outInteger[outIdx] = ((0 - (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 })) * 80) as i32;
+                                outInteger[outIdx] = (-(if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 80) as i32;
                                 outIdx += 1;
                             } else {
                                 outInteger[outIdx] = 0;
@@ -267,13 +267,13 @@ impl Core {
                         {
                             // 2nd is engulfed by 1st
                             if c_max(inClose[i], inOpen[i]) < c_max(inClose[i - 1], inOpen[i - 1]) && c_min(inClose[i], inOpen[i]) > c_min(inClose[i - 1], inOpen[i - 1]) {
-                                outInteger[outIdx] = ((0 - (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 })) * 100) as i32;
+                                outInteger[outIdx] = (-(if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32;
                                 outIdx += 1;
                                 // 2nd is engulfed by 1st
                                 // (one end of real body can match;
                                 // engulfing guaranteed by "long" and "short")
                             } else if c_max(inClose[i], inOpen[i]) <= c_max(inClose[i - 1], inOpen[i - 1]) && c_min(inClose[i], inOpen[i]) >= c_min(inClose[i - 1], inOpen[i - 1]) {
-                                outInteger[outIdx] = ((0 - (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 })) * 80) as i32;
+                                outInteger[outIdx] = (-(if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 80) as i32;
                                 outIdx += 1;
                             } else {
                                 outInteger[outIdx] = 0;
@@ -305,13 +305,13 @@ impl Core {
                     {
                         // 2nd is engulfed by 1st
                         if c_max(inClose[i], inOpen[i]) < c_max(inClose[i - 1], inOpen[i - 1]) && c_min(inClose[i], inOpen[i]) > c_min(inClose[i - 1], inOpen[i - 1]) {
-                            outInteger[outIdx] = ((0 - (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 })) * 100) as i32;
+                            outInteger[outIdx] = (-(if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32;
                             outIdx += 1;
                             // 2nd is engulfed by 1st
                             // (one end of real body can match;
                             // engulfing guaranteed by "long" and "short")
                         } else if c_max(inClose[i], inOpen[i]) <= c_max(inClose[i - 1], inOpen[i - 1]) && c_min(inClose[i], inOpen[i]) >= c_min(inClose[i - 1], inOpen[i - 1]) {
-                            outInteger[outIdx] = ((0 - (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 })) * 80) as i32;
+                            outInteger[outIdx] = (-(if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 80) as i32;
                             outIdx += 1;
                         } else {
                             outInteger[outIdx] = 0;
@@ -561,12 +561,12 @@ impl Core {
             {
                 // 2nd is engulfed by 1st
                 if c_max(inClose, inOpen) < c_max(sp.lag1_inClose, sp.lag1_inOpen) && c_min(inClose, inOpen) > c_min(sp.lag1_inClose, sp.lag1_inOpen) {
-                    (*outInteger) = ((0 - (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 })) * 100) as i32;
+                    (*outInteger) = (-(if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { -1 }) * 100) as i32;
                     // 2nd is engulfed by 1st
                     // (one end of real body can match;
                     // engulfing guaranteed by "long" and "short")
                 } else if c_max(inClose, inOpen) <= c_max(sp.lag1_inClose, sp.lag1_inOpen) && c_min(inClose, inOpen) >= c_min(sp.lag1_inClose, sp.lag1_inOpen) {
-                    (*outInteger) = ((0 - (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 })) * 80) as i32;
+                    (*outInteger) = (-(if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { -1 }) * 80) as i32;
                 } else {
                     (*outInteger) = 0;
                 }
@@ -780,12 +780,12 @@ impl Core {
                 {
                     // 2nd is engulfed by 1st
                     if c_max(inClose[i], inOpen[i]) < c_max(inClose[i - 1], inOpen[i - 1]) && c_min(inClose[i], inOpen[i]) > c_min(inClose[i - 1], inOpen[i - 1]) {
-                        outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = ((0 - (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 })) * 100) as i32;
+                        outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = (-(if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32;
                         // 2nd is engulfed by 1st
                         // (one end of real body can match;
                         // engulfing guaranteed by "long" and "short")
                     } else if c_max(inClose[i], inOpen[i]) <= c_max(inClose[i - 1], inOpen[i - 1]) && c_min(inClose[i], inOpen[i]) >= c_min(inClose[i - 1], inOpen[i - 1]) {
-                        outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = ((0 - (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 })) * 80) as i32;
+                        outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = (-(if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 80) as i32;
                     } else {
                         outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0;
                     }
@@ -1049,12 +1049,12 @@ impl CdlharamiStream {
                 {
                     // 2nd is engulfed by 1st
                     if c_max(inClose, inOpen) < c_max(sp.lag1_inClose, sp.lag1_inOpen) && c_min(inClose, inOpen) > c_min(sp.lag1_inClose, sp.lag1_inOpen) {
-                        (*outInteger) = ((0 - (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 })) * 100) as i32;
+                        (*outInteger) = (-(if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { -1 }) * 100) as i32;
                         // 2nd is engulfed by 1st
                         // (one end of real body can match;
                         // engulfing guaranteed by "long" and "short")
                     } else if c_max(inClose, inOpen) <= c_max(sp.lag1_inClose, sp.lag1_inOpen) && c_min(inClose, inOpen) >= c_min(sp.lag1_inClose, sp.lag1_inOpen) {
-                        (*outInteger) = ((0 - (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 })) * 80) as i32;
+                        (*outInteger) = (-(if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { -1 }) * 80) as i32;
                     } else {
                         (*outInteger) = 0;
                     }

@@ -337,7 +337,7 @@ impl Core {
                 outTrend[outIdx] = 1;
             } else {
                 outSupertrend[outIdx] = finalUpper;
-                outTrend[outIdx] = (0 - 1) as i32;
+                outTrend[outIdx] = -1;
             }
             prevClose = closeToday;
             outIdx += 1;
@@ -587,7 +587,7 @@ impl Core {
             (*outTrend) = 1;
         } else {
             (*outSupertrend) = sp.finalUpper;
-            (*outTrend) = (0 - 1) as i32;
+            (*outTrend) = -1;
         }
         sp.prevClose = closeToday;
         sp.cur_outSupertrend = (*outSupertrend);
@@ -770,7 +770,7 @@ impl Core {
                 outTrend[(outIdx * outStride) as usize] = 1;
             } else {
                 outSupertrend[(outIdx * outStride) as usize] = finalUpper;
-                outTrend[(outIdx * outStride) as usize] = (0 - 1) as i32;
+                outTrend[(outIdx * outStride) as usize] = -1;
             }
             prevClose = closeToday;
             outIdx += 1;
@@ -1042,7 +1042,7 @@ impl SupertrendStream {
                 (*outTrend) = 1;
             } else {
                 (*outSupertrend) = finalUpper;
-                (*outTrend) = (0 - 1) as i32;
+                (*outTrend) = -1;
             }
         }
         Ok((outSupertrend, outTrend))

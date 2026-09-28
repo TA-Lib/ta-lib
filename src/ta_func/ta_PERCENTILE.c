@@ -443,7 +443,7 @@ TA_LIB_API TA_RetCode TA_PERCENTILE( int    startIdx,
     */
    tail = lookbackTotal - lookbackTotal % 2;
    lim = (lookbackTotal > 13) ? lookbackTotal - 2 : 11;
-   run = 0 - 1;
+   run = -1;
    dPrev = 0;
    trend = 0;
    last = inReal[startIdx - 1];
@@ -1280,7 +1280,7 @@ TA_RetCode TA_S_PERCENTILE( int    startIdx,
    }
    tail = lookbackTotal - lookbackTotal % 2;
    lim = (lookbackTotal > 13) ? lookbackTotal - 2 : 11;
-   run = 0 - 1;
+   run = -1;
    dPrev = 0;
    trend = 0;
    last = (double)inReal[startIdx - 1];
@@ -2649,7 +2649,7 @@ static TA_RetCode TA_PERCENTILE_OpenImpl( struct TA_PERCENTILE_Stream **stream, 
        */
       tail = lookbackTotal - lookbackTotal % 2;
       lim = (lookbackTotal > 13) ? lookbackTotal - 2 : 11;
-      run = 0 - 1;
+      run = -1;
       dPrev = 0;
       trend = 0;
       last = inReal[startIdx - 1];

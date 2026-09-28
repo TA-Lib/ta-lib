@@ -56,7 +56,7 @@
        * lookback answers a usable number for a call that cannot run.
        */
       if( optInMinPeriod > optInMaxPeriod ) {
-         return 0 - 1 ;
+         return -1 ;
       }
       return maLookback(optInMaxPeriod, optInMAType) ;
 

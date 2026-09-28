@@ -1057,6 +1057,7 @@ pub fn walk_expr(e: &Expr, f: &mut dyn FnMut(&Expr)) {
         Expr::ArrayAccess(_, i)
         | Expr::Cast(_, i)
         | Expr::Not(i)
+        | Expr::Neg(i)
         | Expr::BitwiseNot(i)
         | Expr::AddressOf(i)
         | Expr::PostIncrement(i)
@@ -3278,6 +3279,7 @@ pub(crate) fn exprs_equal(a: &Expr, b: &Expr) -> bool {
         (Expr::Cast(t1, e1), Expr::Cast(t2, e2)) => t1 == t2 && exprs_equal(e1, e2),
         (Expr::Not(e1), Expr::Not(e2))
         | (Expr::BitwiseNot(e1), Expr::BitwiseNot(e2))
+        | (Expr::Neg(e1), Expr::Neg(e2))
         | (Expr::AddressOf(e1), Expr::AddressOf(e2)) => {
             exprs_equal(e1, e2)
         }
@@ -5255,6 +5257,7 @@ fn classify_v(
         Expr::BinOp(lhs, _, rhs) => vec![lhs.as_ref(), rhs.as_ref()],
         Expr::Cast(_, inner)
         | Expr::Not(inner)
+        | Expr::Neg(inner)
         | Expr::BitwiseNot(inner)
         | Expr::AddressOf(inner) => vec![inner.as_ref()],
         Expr::PostIncrement(inner)
@@ -5423,6 +5426,7 @@ fn shape_key(e: &Expr) -> String {
             Expr::Cast(t, x) => Expr::Cast(t.clone(), Box::new(blank(x))),
             Expr::Not(x) => Expr::Not(Box::new(blank(x))),
             Expr::BitwiseNot(x) => Expr::BitwiseNot(Box::new(blank(x))),
+            Expr::Neg(x) => Expr::Neg(Box::new(blank(x))),
             Expr::Ternary(c, t, f) => Expr::Ternary(
                 Box::new(blank(c)),
                 Box::new(blank(t)),
@@ -7437,10 +7441,11 @@ fn expr_is_pure(e: &Expr) -> bool {
         | Expr::Cast(_, i)
         | Expr::Not(i)
         | Expr::BitwiseNot(i)
+        | Expr::Neg(i)
         | Expr::AddressOf(i) => expr_is_pure(i),
         Expr::BinOp(l, _, r) => expr_is_pure(l) && expr_is_pure(r),
         Expr::Ternary(c, a, b) => expr_is_pure(c) && expr_is_pure(a) && expr_is_pure(b),
-        _ => true,
+        Expr::Literal(_) | Expr::IntLiteral(_) | Expr::Var(_) | Expr::PointerDeref(_) => true,
     }
 }
 
@@ -8104,6 +8109,7 @@ pub fn rewrite_expr(e: &Expr, f: &dyn Fn(Expr) -> Expr) -> Expr {
         Expr::Cast(t, i) => Expr::Cast(t.clone(), Box::new(rewrite_expr(i, f))),
         Expr::Not(i) => Expr::Not(Box::new(rewrite_expr(i, f))),
         Expr::BitwiseNot(i) => Expr::BitwiseNot(Box::new(rewrite_expr(i, f))),
+        Expr::Neg(i) => Expr::Neg(Box::new(rewrite_expr(i, f))),
         Expr::AddressOf(i) => Expr::AddressOf(Box::new(rewrite_expr(i, f))),
         Expr::PostIncrement(i) => Expr::PostIncrement(Box::new(rewrite_expr(i, f))),
         Expr::PostDecrement(i) => Expr::PostDecrement(Box::new(rewrite_expr(i, f))),
@@ -8117,7 +8123,7 @@ pub fn rewrite_expr(e: &Expr, f: &dyn Fn(Expr) -> Expr) -> Expr {
             Box::new(rewrite_expr(t, f)),
             Box::new(rewrite_expr(e2, f)),
         ),
-        other => other.clone(),
+        Expr::Literal(_) | Expr::IntLiteral(_) | Expr::Var(_) | Expr::PointerDeref(_) => e.clone(),
     };
     f(rebuilt)
 }
@@ -9288,6 +9294,7 @@ impl PeekRewrite<'_> {
             Expr::Cast(t, i) => Expr::Cast(t.clone(), Box::new(self.expr(i))),
             Expr::Not(i) => Expr::Not(Box::new(self.expr(i))),
             Expr::BitwiseNot(i) => Expr::BitwiseNot(Box::new(self.expr(i))),
+            Expr::Neg(i) => Expr::Neg(Box::new(self.expr(i))),
             Expr::AddressOf(i) => Expr::AddressOf(Box::new(self.expr(i))),
             Expr::PostIncrement(i) => Expr::PostIncrement(Box::new(self.expr(i))),
             Expr::PostDecrement(i) => Expr::PostDecrement(Box::new(self.expr(i))),

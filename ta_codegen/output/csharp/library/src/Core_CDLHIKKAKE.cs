@@ -139,7 +139,7 @@ public partial class Core
               inHigh[i] > inHigh[i - 1] &&
                inLow[i] > inLow[i - 1]) )     /* (bear) 3rd: higher high and higher low */
          {
-            patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : 0 - 1);
+            patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : -1);
             savedHigh = inHigh[i - 1];
             savedLow = inLow[i - 1];
             cd = 4;
@@ -177,7 +177,7 @@ public partial class Core
               inHigh[i] > inHigh[i - 1] &&
                inLow[i] > inLow[i - 1]) )     /* (bear) 3rd: higher high and higher low */
          {
-            patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : 0 - 1);
+            patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : -1);
             savedHigh = inHigh[i - 1];
             savedLow = inLow[i - 1];
             cd = 4;
@@ -188,7 +188,7 @@ public partial class Core
               patternResult < 0 &&
                inClose[i] < savedLow) )  /* close lower than the low of 2nd */
          {
-            outInteger[outIdx++] = patternResult + 100 * ((patternResult > 0) ? 1 : 0 - 1);
+            outInteger[outIdx++] = patternResult + 100 * ((patternResult > 0) ? 1 : -1);
             cd = 0;
          } else {
             outInteger[outIdx++] = 0;
@@ -247,7 +247,7 @@ public partial class Core
       i = startIdx - 3;
       while( i < startIdx ) {
          if( (double)inHigh[i - 1] < (double)inHigh[i - 2] && (double)inLow[i - 1] > (double)inLow[i - 2] && ((double)inHigh[i] < (double)inHigh[i - 1] && (double)inLow[i] < (double)inLow[i - 1] || (double)inHigh[i] > (double)inHigh[i - 1] && (double)inLow[i] > (double)inLow[i - 1]) ) {
-            patternResult = 100 * (((double)inHigh[i] < (double)inHigh[i - 1]) ? 1 : 0 - 1);
+            patternResult = 100 * (((double)inHigh[i] < (double)inHigh[i - 1]) ? 1 : -1);
             savedHigh = (double)inHigh[i - 1];
             savedLow = (double)inLow[i - 1];
             cd = 4;
@@ -263,13 +263,13 @@ public partial class Core
       outIdx = 0;
       do {
          if( (double)inHigh[i - 1] < (double)inHigh[i - 2] && (double)inLow[i - 1] > (double)inLow[i - 2] && ((double)inHigh[i] < (double)inHigh[i - 1] && (double)inLow[i] < (double)inLow[i - 1] || (double)inHigh[i] > (double)inHigh[i - 1] && (double)inLow[i] > (double)inLow[i - 1]) ) {
-            patternResult = 100 * (((double)inHigh[i] < (double)inHigh[i - 1]) ? 1 : 0 - 1);
+            patternResult = 100 * (((double)inHigh[i] < (double)inHigh[i - 1]) ? 1 : -1);
             savedHigh = (double)inHigh[i - 1];
             savedLow = (double)inLow[i - 1];
             cd = 4;
             outInteger[outIdx++] = patternResult;
          } else if( cd > 0 && (patternResult > 0 && (double)inClose[i] > savedHigh || patternResult < 0 && (double)inClose[i] < savedLow) ) {
-            outInteger[outIdx++] = patternResult + 100 * ((patternResult > 0) ? 1 : 0 - 1);
+            outInteger[outIdx++] = patternResult + 100 * ((patternResult > 0) ? 1 : -1);
             cd = 0;
          } else {
             outInteger[outIdx++] = 0;
@@ -606,7 +606,7 @@ public partial class Core
               inHigh > sp.lag1_inHigh &&
                inLow > sp.lag1_inLow) )         /* (bear) 3rd: higher high and higher low */
          {
-            patternResult = 100 * ((inHigh < sp.lag1_inHigh) ? 1 : 0 - 1);
+            patternResult = 100 * ((inHigh < sp.lag1_inHigh) ? 1 : -1);
             savedHigh = sp.lag1_inHigh;
             savedLow = sp.lag1_inLow;
             cd = 4;
@@ -617,7 +617,7 @@ public partial class Core
               patternResult < 0 &&
                inClose < savedLow) )  /* close lower than the low of 2nd */
          {
-            cur_outInteger = patternResult + 100 * ((patternResult > 0) ? 1 : 0 - 1);
+            cur_outInteger = patternResult + 100 * ((patternResult > 0) ? 1 : -1);
             cd = 0;
          } else {
             cur_outInteger = 0;
@@ -651,7 +651,7 @@ public partial class Core
            inHigh > sp.lag1_inHigh &&
             inLow > sp.lag1_inLow) )         /* (bear) 3rd: higher high and higher low */
       {
-         sp.patternResult = 100 * ((inHigh < sp.lag1_inHigh) ? 1 : 0 - 1);
+         sp.patternResult = 100 * ((inHigh < sp.lag1_inHigh) ? 1 : -1);
          sp.savedHigh = sp.lag1_inHigh;
          sp.savedLow = sp.lag1_inLow;
          sp.cd = 4;
@@ -662,7 +662,7 @@ public partial class Core
            sp.patternResult < 0 &&
             inClose < sp.savedLow) )  /* close lower than the low of 2nd */
       {
-         sp.cur_outInteger = sp.patternResult + 100 * ((sp.patternResult > 0) ? 1 : 0 - 1);
+         sp.cur_outInteger = sp.patternResult + 100 * ((sp.patternResult > 0) ? 1 : -1);
          sp.cd = 0;
       } else {
          sp.cur_outInteger = 0;
@@ -738,7 +738,7 @@ public partial class Core
               inHigh[i] > inHigh[i - 1] &&
                inLow[i] > inLow[i - 1]) )     /* (bear) 3rd: higher high and higher low */
          {
-            patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : 0 - 1);
+            patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : -1);
             savedHigh = inHigh[i - 1];
             savedLow = inLow[i - 1];
             cd = 4;
@@ -776,7 +776,7 @@ public partial class Core
               inHigh[i] > inHigh[i - 1] &&
                inLow[i] > inLow[i - 1]) )     /* (bear) 3rd: higher high and higher low */
          {
-            patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : 0 - 1);
+            patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : -1);
             savedHigh = inHigh[i - 1];
             savedLow = inLow[i - 1];
             cd = 4;
@@ -787,7 +787,7 @@ public partial class Core
               patternResult < 0 &&
                inClose[i] < savedLow) )  /* close lower than the low of 2nd */
          {
-            outInteger[outIdx++ * outStride] = patternResult + 100 * ((patternResult > 0) ? 1 : 0 - 1);
+            outInteger[outIdx++ * outStride] = patternResult + 100 * ((patternResult > 0) ? 1 : -1);
             cd = 0;
          } else {
             outInteger[outIdx++ * outStride] = 0;

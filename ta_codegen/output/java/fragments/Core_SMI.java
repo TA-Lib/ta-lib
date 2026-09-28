@@ -182,8 +182,8 @@
       sumSignal = 0.0;
       highest = 0.0;
       lowest = 0.0;
-      highestIdx = 0 - 1;
-      lowestIdx = 0 - 1;
+      highestIdx = -1;
+      lowestIdx = -1;
       /* The first bar carrying a full high/low window. */
       trailingIdx = startIdx - lookbackTotal;
       today = trailingIdx + (optInTimePeriod - 1);
@@ -463,8 +463,8 @@
       sumSignal = 0.0;
       highest = 0.0;
       lowest = 0.0;
-      highestIdx = 0 - 1;
-      lowestIdx = 0 - 1;
+      highestIdx = -1;
+      lowestIdx = -1;
       trailingIdx = startIdx - lookbackTotal;
       today = trailingIdx + (optInTimePeriod - 1);
       nBar = 0;
@@ -1282,8 +1282,8 @@
       sumSignal = 0.0;
       highest = 0.0;
       lowest = 0.0;
-      highestIdx = 0 - 1;
-      lowestIdx = 0 - 1;
+      highestIdx = -1;
+      lowestIdx = -1;
       /* The first bar carrying a full high/low window. */
       trailingIdx = startIdx - lookbackTotal;
       today = trailingIdx + (optInTimePeriod - 1);

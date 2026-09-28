@@ -503,7 +503,7 @@ fn invariant(e: &Expr, facts: &Facts) -> bool {
         Expr::IntLiteral(_) => true,
         Expr::Var(n) | Expr::PointerDeref(n) => !facts.assigned.contains(n) && !n.contains('.'),
         Expr::BinOp(l, _, r) => invariant(l, facts) && invariant(r, facts),
-        Expr::Cast(_, i) => invariant(i, facts),
+        Expr::Cast(_, i) | Expr::Neg(i) => invariant(i, facts),
         _ => false,
     }
 }
@@ -785,6 +785,7 @@ fn each_access_in(s: &Statement, reach: Reach, f: &mut dyn FnMut(&str, &Expr, Re
             }
             Expr::Cast(_, inner)
             | Expr::Not(inner)
+            | Expr::Neg(inner)
             | Expr::BitwiseNot(inner)
             | Expr::AddressOf(inner)
             | Expr::PostIncrement(inner)
@@ -833,6 +834,7 @@ fn map_accesses(s: &Statement, f: &mut dyn FnMut(Expr) -> Expr) -> Statement {
             Expr::Cast(ty, inner) => Expr::Cast(ty.clone(), bx(go(inner, map))),
             Expr::Not(inner) => Expr::Not(bx(go(inner, map))),
             Expr::BitwiseNot(inner) => Expr::BitwiseNot(bx(go(inner, map))),
+            Expr::Neg(inner) => Expr::Neg(bx(go(inner, map))),
             Expr::AddressOf(inner) => Expr::AddressOf(bx(go(inner, map))),
             Expr::PostIncrement(inner) => Expr::PostIncrement(bx(go(inner, map))),
             Expr::PostDecrement(inner) => Expr::PostDecrement(bx(go(inner, map))),
@@ -898,6 +900,7 @@ fn flatten<'e>(e: &'e Expr, plus: bool, out: &mut Vec<(&'e Expr, bool)>) {
             flatten(l, plus, out);
             flatten(r, !plus, out);
         }
+        Expr::Neg(x) => flatten(x, !plus, out),
         other => out.push((other, plus)),
     }
 }

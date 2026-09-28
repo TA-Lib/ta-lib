@@ -348,7 +348,7 @@ public partial class Core
             if( tempReal > 1.0 ) {
                tempReal = 1.0;
             } else {
-               tempReal = MaxGt(0 - 1.0, tempReal);
+               tempReal = MaxGt(-1.0, tempReal);
             }
             outReal[outIdx++] = tempReal;
          } else {
@@ -528,7 +528,7 @@ public partial class Core
             if( tempReal > 1.0 ) {
                tempReal = 1.0;
             } else {
-               tempReal = MaxGt(0 - 1.0, tempReal);
+               tempReal = MaxGt(-1.0, tempReal);
             }
             outReal[outIdx++] = tempReal;
          } else {
@@ -1044,7 +1044,7 @@ public partial class Core
             if( tempReal > 1.0 ) {
                tempReal = 1.0;
             } else {
-               tempReal = MaxGt(0 - 1.0, tempReal);
+               tempReal = MaxGt(-1.0, tempReal);
             }
             cur_outReal = tempReal;
          } else {
@@ -1237,7 +1237,7 @@ public partial class Core
          if( tempReal > 1.0 ) {
             tempReal = 1.0;
          } else {
-            tempReal = MaxGt(0 - 1.0, tempReal);
+            tempReal = MaxGt(-1.0, tempReal);
          }
          sp.cur_outReal = tempReal;
       } else {
@@ -1512,7 +1512,7 @@ public partial class Core
             if( tempReal > 1.0 ) {
                tempReal = 1.0;
             } else {
-               tempReal = MaxGt(0 - 1.0, tempReal);
+               tempReal = MaxGt(-1.0, tempReal);
             }
             outReal[outIdx++ * outStride] = tempReal;
          } else {

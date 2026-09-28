@@ -225,7 +225,7 @@ TA_LIB_API TA_RetCode TA_STOCHF( int    startIdx,
     */
    trailingIdx = startIdx - lookbackTotal;
    today = trailingIdx + lookbackK;
-   highestIdx = 0 - 1;
+   highestIdx = -1;
    lowestIdx = highestIdx;
    lowest = 0.0;
    highest = lowest;
@@ -431,7 +431,7 @@ TA_RetCode TA_S_STOCHF( int    startIdx,
    outIdx = 0;
    trailingIdx = startIdx - lookbackTotal;
    today = trailingIdx + lookbackK;
-   highestIdx = 0 - 1;
+   highestIdx = -1;
    lowestIdx = highestIdx;
    lowest = 0.0;
    highest = lowest;
@@ -782,7 +782,7 @@ static TA_RetCode TA_STOCHF_OpenImpl( struct TA_STOCHF_Stream **stream, const do
        */
       trailingIdx = startIdx - lookbackTotal;
       today = trailingIdx + lookbackK;
-      highestIdx = 0 - 1;
+      highestIdx = -1;
       lowestIdx = highestIdx;
       lowest = 0.0;
       highest = lowest;

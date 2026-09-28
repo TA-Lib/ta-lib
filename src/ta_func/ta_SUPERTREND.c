@@ -292,7 +292,7 @@ TA_LIB_API TA_RetCode TA_SUPERTREND( int    startIdx,
       } else 
       {
          outSupertrend[outIdx] = finalUpper;
-         outTrend[outIdx] = 0 - 1;
+         outTrend[outIdx] = -1;
       }
       prevClose = closeToday;
       outIdx += 1;
@@ -482,7 +482,7 @@ TA_RetCode TA_S_SUPERTREND( int    startIdx,
       } else 
       {
          outSupertrend[outIdx] = finalUpper;
-         outTrend[outIdx] = 0 - 1;
+         outTrend[outIdx] = -1;
       }
       prevClose = closeToday;
       outIdx += 1;
@@ -592,7 +592,7 @@ static TA_FMA_STEP_INLINE void TA_SUPERTREND_StepImpl( struct TA_SUPERTREND_Stre
    } else 
    {
       *outSupertrend= sp->finalUpper;
-      *outTrend= 0 - 1;
+      *outTrend= -1;
    }
    sp->prevClose = closeToday;
    sp->cur_outSupertrend = *outSupertrend;
@@ -804,7 +804,7 @@ static TA_RetCode TA_SUPERTREND_OpenImpl( struct TA_SUPERTREND_Stream **stream, 
          } else 
          {
             outSupertrend[outIdx * outStride] = finalUpper;
-            outTrend[outIdx * outStride] = 0 - 1;
+            outTrend[outIdx * outStride] = -1;
          }
          prevClose = closeToday;
          outIdx += 1;
@@ -980,7 +980,7 @@ TA_LIB_API TA_RetCode TA_SUPERTREND_Peek( const TA_SUPERTREND_Stream *stream, do
    } else 
    {
       *outSupertrend= finalUpper;
-      *outTrend= 0 - 1;
+      *outTrend= -1;
    }
    return TA_SUCCESS;
 }

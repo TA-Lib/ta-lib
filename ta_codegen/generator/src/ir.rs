@@ -820,6 +820,8 @@ pub enum Expr {
     BinOp(Box<Expr>, BinOp, Box<Expr>),
     Cast(VarType, Box<Expr>),
     Not(Box<Expr>),
+    /// Arithmetic negation `-x`: a sign flip, so `-(+0.0)` is `-0.0`, which `0 - x` is not.
+    Neg(Box<Expr>),
     /// Bitwise complement: `~x` (integer-valued, unlike the boolean [`Expr::Not`])
     BitwiseNot(Box<Expr>),
     /// Function/builtin call: `UNSTABLE_PERIOD(RSI)`, `IS_ZERO(x)`, `ARRAY_COPY`(...),

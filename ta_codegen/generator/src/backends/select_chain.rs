@@ -103,6 +103,7 @@ impl DefUse {
                 self.add(t, under);
                 self.add(f, under);
             }
+            Expr::Neg(i) => self.add(i, true),
             Expr::Cast(_, i)
             | Expr::Not(i)
             | Expr::BitwiseNot(i)

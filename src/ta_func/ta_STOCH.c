@@ -245,7 +245,7 @@ TA_LIB_API TA_RetCode TA_STOCH( int    startIdx,
     */
    trailingIdx = startIdx - lookbackTotal;
    today = trailingIdx + lookbackK;
-   highestIdx = 0 - 1;
+   highestIdx = -1;
    lowestIdx = highestIdx;
    lowest = 0.0;
    highest = lowest;
@@ -480,7 +480,7 @@ TA_RetCode TA_S_STOCH( int    startIdx,
    outIdx = 0;
    trailingIdx = startIdx - lookbackTotal;
    today = trailingIdx + lookbackK;
-   highestIdx = 0 - 1;
+   highestIdx = -1;
    lowestIdx = highestIdx;
    lowest = 0.0;
    highest = lowest;
@@ -863,7 +863,7 @@ static TA_RetCode TA_STOCH_OpenImpl( struct TA_STOCH_Stream **stream, const doub
        */
       trailingIdx = startIdx - lookbackTotal;
       today = trailingIdx + lookbackK;
-      highestIdx = 0 - 1;
+      highestIdx = -1;
       lowestIdx = highestIdx;
       lowest = 0.0;
       highest = lowest;

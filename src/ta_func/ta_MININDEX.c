@@ -123,7 +123,7 @@ TA_LIB_API TA_RetCode TA_MININDEX( int    startIdx,
    outIdx = 0;
    today = startIdx;
    trailingIdx = startIdx - nbInitialElementNeeded;
-   lowestIdx = 0 - 1;
+   lowestIdx = -1;
    lowest = 0.0;
    while( today <= endIdx )
    {
@@ -207,7 +207,7 @@ TA_RetCode TA_S_MININDEX( int    startIdx,
    outIdx = 0;
    today = startIdx;
    trailingIdx = startIdx - nbInitialElementNeeded;
-   lowestIdx = 0 - 1;
+   lowestIdx = -1;
    lowest = 0.0;
    while( today <= endIdx )
    {
@@ -360,7 +360,7 @@ static TA_RetCode TA_MININDEX_OpenImpl( struct TA_MININDEX_Stream **stream, cons
       outIdx = 0;
       today = startIdx;
       trailingIdx = startIdx - nbInitialElementNeeded;
-      lowestIdx = 0 - 1;
+      lowestIdx = -1;
       lowest = 0.0;
       while( today <= endIdx )
       {

@@ -228,11 +228,11 @@ public partial class Core
           * outside its own bar, which nothing here validates.
           */
          if( !(Math.Abs(highest - lowest) <= 0.00000000000001 * (Math.Abs(highest) + Math.Abs(lowest))) ) {
-            tempReal = (highest - inClose[today]) / (highest - lowest) * (0 - 100.0);
+            tempReal = (highest - inClose[today]) / (highest - lowest) * -100.0;
             if( tempReal > 0.0 ) {
                tempReal = 0.0;
             } else {
-               tempReal = MaxGt(0 - 100.0, tempReal);
+               tempReal = MaxGt(-100.0, tempReal);
             }
             outReal[outIdx++] = tempReal;
          } else {
@@ -277,11 +277,11 @@ public partial class Core
                lowest = sufLowest[m];
                lowest = MinLt(preLowest[m - 1], lowest);
                if( !(Math.Abs(highest - lowest) <= 0.00000000000001 * (Math.Abs(highest) + Math.Abs(lowest))) ) {
-                  tempReal = (highest - inClose[today + m - 1]) / (highest - lowest) * (0 - 100.0);
+                  tempReal = (highest - inClose[today + m - 1]) / (highest - lowest) * -100.0;
                   if( tempReal > 0.0 ) {
                      tempReal = 0.0;
                   } else {
-                     tempReal = MaxGt(0 - 100.0, tempReal);
+                     tempReal = MaxGt(-100.0, tempReal);
                   }
                   outReal[outIdx++] = tempReal;
                } else {
@@ -399,11 +399,11 @@ public partial class Core
          highest = sufHighest[0];
          lowest = sufLowest[0];
          if( !(Math.Abs(highest - lowest) <= 0.00000000000001 * (Math.Abs(highest) + Math.Abs(lowest))) ) {
-            tempReal = (highest - (double)inClose[today]) / (highest - lowest) * (0 - 100.0);
+            tempReal = (highest - (double)inClose[today]) / (highest - lowest) * -100.0;
             if( tempReal > 0.0 ) {
                tempReal = 0.0;
             } else {
-               tempReal = MaxGt(0 - 100.0, tempReal);
+               tempReal = MaxGt(-100.0, tempReal);
             }
             outReal[outIdx++] = tempReal;
          } else {
@@ -440,11 +440,11 @@ public partial class Core
                lowest = sufLowest[m];
                lowest = MinLt(preLowest[m - 1], lowest);
                if( !(Math.Abs(highest - lowest) <= 0.00000000000001 * (Math.Abs(highest) + Math.Abs(lowest))) ) {
-                  tempReal = (highest - (double)inClose[today + m - 1]) / (highest - lowest) * (0 - 100.0);
+                  tempReal = (highest - (double)inClose[today + m - 1]) / (highest - lowest) * -100.0;
                   if( tempReal > 0.0 ) {
                      tempReal = 0.0;
                   } else {
-                     tempReal = MaxGt(0 - 100.0, tempReal);
+                     tempReal = MaxGt(-100.0, tempReal);
                   }
                   outReal[outIdx++] = tempReal;
                } else {
@@ -831,11 +831,11 @@ public partial class Core
          }
          /* Same rule, band and clamp as the block scan above. */
          if( !(Math.Abs(highest - lowest) <= 0.00000000000001 * (Math.Abs(highest) + Math.Abs(lowest))) ) {
-            tempReal = (highest - (((sp.today & sp.xMask) != pkSlot2) ? sp.x_inClose[sp.today & sp.xMask] : pkVal2)) / (highest - lowest) * (0 - 100.0);
+            tempReal = (highest - (((sp.today & sp.xMask) != pkSlot2) ? sp.x_inClose[sp.today & sp.xMask] : pkVal2)) / (highest - lowest) * -100.0;
             if( tempReal > 0.0 ) {
                tempReal = 0.0;
             } else {
-               tempReal = MaxGt(0 - 100.0, tempReal);
+               tempReal = MaxGt(-100.0, tempReal);
             }
             cur_outReal = tempReal;
          } else {
@@ -904,11 +904,11 @@ public partial class Core
       }
       /* Same rule, band and clamp as the block scan above. */
       if( !(Math.Abs(sp.highest - sp.lowest) <= 0.00000000000001 * (Math.Abs(sp.highest) + Math.Abs(sp.lowest))) ) {
-         tempReal = (sp.highest - sp.x_inClose[sp.today & sp.xMask]) / (sp.highest - sp.lowest) * (0 - 100.0);
+         tempReal = (sp.highest - sp.x_inClose[sp.today & sp.xMask]) / (sp.highest - sp.lowest) * -100.0;
          if( tempReal > 0.0 ) {
             tempReal = 0.0;
          } else {
-            tempReal = MaxGt(0 - 100.0, tempReal);
+            tempReal = MaxGt(-100.0, tempReal);
          }
          sp.cur_outReal = tempReal;
       } else {
@@ -995,7 +995,7 @@ public partial class Core
       outIdx = 0;
       today = startIdx;
       trailingIdx = startIdx - nbInitialElementNeeded;
-      highestIdx = 0 - 1;
+      highestIdx = -1;
       lowestIdx = highestIdx;
       lowest = 0.0;
       highest = lowest;
@@ -1036,11 +1036,11 @@ public partial class Core
          }
          /* Same rule, band and clamp as the block scan above. */
          if( !(Math.Abs(highest - lowest) <= 0.00000000000001 * (Math.Abs(highest) + Math.Abs(lowest))) ) {
-            tempReal = (highest - inClose[today]) / (highest - lowest) * (0 - 100.0);
+            tempReal = (highest - inClose[today]) / (highest - lowest) * -100.0;
             if( tempReal > 0.0 ) {
                tempReal = 0.0;
             } else {
-               tempReal = MaxGt(0 - 100.0, tempReal);
+               tempReal = MaxGt(-100.0, tempReal);
             }
             outReal[outIdx++ * outStride] = tempReal;
          } else {

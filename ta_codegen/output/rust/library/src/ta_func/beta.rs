@@ -261,14 +261,14 @@ impl Core {
             if last_price_x != 0.0 {
                 x = (tmp_real - last_price_x) / last_price_x - shift_x;
             } else {
-                x = 0_f64 - shift_x;
+                x = -shift_x;
             }
             last_price_x = tmp_real;
             tmp_real = inReal1[{ let _v = i; i += 1; _v }];
             if last_price_y != 0.0 {
                 y = (tmp_real - last_price_y) / last_price_y - shift_y;
             } else {
-                y = 0_f64 - shift_y;
+                y = -shift_y;
             }
             last_price_y = tmp_real;
             S_xx += x * x;
@@ -286,14 +286,14 @@ impl Core {
             if last_price_x != 0.0 {
                 x = (tmp_real - last_price_x) / last_price_x - shift_x;
             } else {
-                x = 0_f64 - shift_x;
+                x = -shift_x;
             }
             last_price_x = tmp_real;
             tmp_real = inReal1[{ let _v = i; i += 1; _v }];
             if last_price_y != 0.0 {
                 y = (tmp_real - last_price_y) / last_price_y - shift_y;
             } else {
-                y = 0_f64 - shift_y;
+                y = -shift_y;
             }
             last_price_y = tmp_real;
             S_xx += x * x;
@@ -393,13 +393,13 @@ impl Core {
                     if prev_x != 0.0 {
                         x = (inReal0[j] - prev_x) / prev_x - shift_x;
                     } else {
-                        x = 0_f64 - shift_x;
+                        x = -shift_x;
                     }
                     prev_x = inReal0[j];
                     if prev_y != 0.0 {
                         y = (inReal1[j] - prev_y) / prev_y - shift_y;
                     } else {
-                        y = 0_f64 - shift_y;
+                        y = -shift_y;
                     }
                     prev_y = inReal1[j];
                     S_xx += x * x;
@@ -428,7 +428,7 @@ impl Core {
             if trailing_last_price_x != 0.0 {
                 x = (tmp_real - trailing_last_price_x) / trailing_last_price_x - shift_x;
             } else {
-                x = 0_f64 - shift_x;
+                x = -shift_x;
             }
             trailing_last_price_x = tmp_real;
             tmp_real = inReal1[trailingIdx];
@@ -436,7 +436,7 @@ impl Core {
             if trailing_last_price_y != 0.0 {
                 y = (tmp_real - trailing_last_price_y) / trailing_last_price_y - shift_y;
             } else {
-                y = 0_f64 - shift_y;
+                y = -shift_y;
             }
             trailing_last_price_y = tmp_real;
             // Write the output.
@@ -641,14 +641,14 @@ impl Core {
         if sp.last_price_x != 0.0 {
             x = (tmp_real - sp.last_price_x) / sp.last_price_x - sp.shift_x;
         } else {
-            x = 0_f64 - sp.shift_x;
+            x = -sp.shift_x;
         }
         sp.last_price_x = tmp_real;
         tmp_real = sp.x_inReal1[((({ let _v = sp.i; sp.i += 1; _v }) as i32) & sp.xMask) as usize];
         if sp.last_price_y != 0.0 {
             y = (tmp_real - sp.last_price_y) / sp.last_price_y - sp.shift_y;
         } else {
-            y = 0_f64 - sp.shift_y;
+            y = -sp.shift_y;
         }
         sp.last_price_y = tmp_real;
         sp.S_xx += x * x;
@@ -748,13 +748,13 @@ impl Core {
                 if prev_x != 0.0 {
                     x = (sp.x_inReal0[(sp.j & sp.xMask) as usize] - prev_x) / prev_x - sp.shift_x;
                 } else {
-                    x = 0_f64 - sp.shift_x;
+                    x = -sp.shift_x;
                 }
                 prev_x = sp.x_inReal0[(sp.j & sp.xMask) as usize];
                 if prev_y != 0.0 {
                     y = (sp.x_inReal1[(sp.j & sp.xMask) as usize] - prev_y) / prev_y - sp.shift_y;
                 } else {
-                    y = 0_f64 - sp.shift_y;
+                    y = -sp.shift_y;
                 }
                 prev_y = sp.x_inReal1[(sp.j & sp.xMask) as usize];
                 sp.S_xx += x * x;
@@ -783,7 +783,7 @@ impl Core {
         if sp.trailing_last_price_x != 0.0 {
             x = (tmp_real - sp.trailing_last_price_x) / sp.trailing_last_price_x - sp.shift_x;
         } else {
-            x = 0_f64 - sp.shift_x;
+            x = -sp.shift_x;
         }
         sp.trailing_last_price_x = tmp_real;
         tmp_real = sp.x_inReal1[(sp.trailingIdx & sp.xMask) as usize];
@@ -791,7 +791,7 @@ impl Core {
         if sp.trailing_last_price_y != 0.0 {
             y = (tmp_real - sp.trailing_last_price_y) / sp.trailing_last_price_y - sp.shift_y;
         } else {
-            y = 0_f64 - sp.shift_y;
+            y = -sp.shift_y;
         }
         sp.trailing_last_price_y = tmp_real;
         // Write the output.
@@ -977,14 +977,14 @@ impl Core {
             if last_price_x != 0.0 {
                 x = (tmp_real - last_price_x) / last_price_x - shift_x;
             } else {
-                x = 0_f64 - shift_x;
+                x = -shift_x;
             }
             last_price_x = tmp_real;
             tmp_real = inReal1[{ let _v = i; i += 1; _v }];
             if last_price_y != 0.0 {
                 y = (tmp_real - last_price_y) / last_price_y - shift_y;
             } else {
-                y = 0_f64 - shift_y;
+                y = -shift_y;
             }
             last_price_y = tmp_real;
             S_xx += x * x;
@@ -1002,14 +1002,14 @@ impl Core {
             if last_price_x != 0.0 {
                 x = (tmp_real - last_price_x) / last_price_x - shift_x;
             } else {
-                x = 0_f64 - shift_x;
+                x = -shift_x;
             }
             last_price_x = tmp_real;
             tmp_real = inReal1[{ let _v = i; i += 1; _v }];
             if last_price_y != 0.0 {
                 y = (tmp_real - last_price_y) / last_price_y - shift_y;
             } else {
-                y = 0_f64 - shift_y;
+                y = -shift_y;
             }
             last_price_y = tmp_real;
             S_xx += x * x;
@@ -1109,13 +1109,13 @@ impl Core {
                     if prev_x != 0.0 {
                         x = (inReal0[j] - prev_x) / prev_x - shift_x;
                     } else {
-                        x = 0_f64 - shift_x;
+                        x = -shift_x;
                     }
                     prev_x = inReal0[j];
                     if prev_y != 0.0 {
                         y = (inReal1[j] - prev_y) / prev_y - shift_y;
                     } else {
-                        y = 0_f64 - shift_y;
+                        y = -shift_y;
                     }
                     prev_y = inReal1[j];
                     S_xx += x * x;
@@ -1144,7 +1144,7 @@ impl Core {
             if trailing_last_price_x != 0.0 {
                 x = (tmp_real - trailing_last_price_x) / trailing_last_price_x - shift_x;
             } else {
-                x = 0_f64 - shift_x;
+                x = -shift_x;
             }
             trailing_last_price_x = tmp_real;
             tmp_real = inReal1[trailingIdx];
@@ -1152,7 +1152,7 @@ impl Core {
             if trailing_last_price_y != 0.0 {
                 y = (tmp_real - trailing_last_price_y) / trailing_last_price_y - shift_y;
             } else {
-                y = 0_f64 - shift_y;
+                y = -shift_y;
             }
             trailing_last_price_y = tmp_real;
             // Write the output.
@@ -1435,7 +1435,7 @@ impl BetaStream {
             if last_price_x != 0.0 {
                 x = (tmp_real - last_price_x) / last_price_x - shift_x;
             } else {
-                x = 0_f64 - shift_x;
+                x = -shift_x;
             }
             last_price_x = tmp_real;
             pkIdx0 = ((({ let _v = i; i += 1; _v }) as i32) & sp.xMask) as usize;
@@ -1443,7 +1443,7 @@ impl BetaStream {
             if last_price_y != 0.0 {
                 y = (tmp_real - last_price_y) / last_price_y - shift_y;
             } else {
-                y = 0_f64 - shift_y;
+                y = -shift_y;
             }
             last_price_y = tmp_real;
             S_xx += x * x;
@@ -1543,13 +1543,13 @@ impl BetaStream {
                     if prev_x != 0.0 {
                         x = ((if ((j & sp.xMask) as usize) != pkSlot0 { sp.x_inReal0[(j & sp.xMask) as usize] } else { pkVal0 }) - prev_x) / prev_x - shift_x;
                     } else {
-                        x = 0_f64 - shift_x;
+                        x = -shift_x;
                     }
                     prev_x = (if ((j & sp.xMask) as usize) != pkSlot0 { sp.x_inReal0[(j & sp.xMask) as usize] } else { pkVal0 });
                     if prev_y != 0.0 {
                         y = ((if ((j & sp.xMask) as usize) != pkSlot1 { sp.x_inReal1[(j & sp.xMask) as usize] } else { pkVal1 }) - prev_y) / prev_y - shift_y;
                     } else {
-                        y = 0_f64 - shift_y;
+                        y = -shift_y;
                     }
                     prev_y = (if ((j & sp.xMask) as usize) != pkSlot1 { sp.x_inReal1[(j & sp.xMask) as usize] } else { pkVal1 });
                     S_xx += x * x;
@@ -1578,7 +1578,7 @@ impl BetaStream {
             if trailing_last_price_x != 0.0 {
                 x = (tmp_real - trailing_last_price_x) / trailing_last_price_x - shift_x;
             } else {
-                x = 0_f64 - shift_x;
+                x = -shift_x;
             }
             trailing_last_price_x = tmp_real;
             tmp_real = (if ((trailingIdx & sp.xMask) as usize) != pkSlot1 { sp.x_inReal1[(trailingIdx & sp.xMask) as usize] } else { pkVal1 });
@@ -1586,7 +1586,7 @@ impl BetaStream {
             if trailing_last_price_y != 0.0 {
                 y = (tmp_real - trailing_last_price_y) / trailing_last_price_y - shift_y;
             } else {
-                y = 0_f64 - shift_y;
+                y = -shift_y;
             }
             trailing_last_price_y = tmp_real;
             // Write the output.

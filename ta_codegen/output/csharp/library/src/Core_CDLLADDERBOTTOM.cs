@@ -141,18 +141,18 @@ public partial class Core
        */
       outIdx = 0;
       do {
-         if( ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : 0 - 1) == 0 - 1 &&
-             ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : 0 - 1) == 0 - 1 &&
-             ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && /* 3 black candlesticks */
+         if( ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : -1) == -1 &&
+             ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : -1) == -1 &&
+             ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == -1 && /* 3 black candlesticks */
              inOpen[i - 4] > inOpen[i - 3] &&
-             inOpen[i - 3] > inOpen[i - 2] &&                            /* with consecutively lower opens */
+             inOpen[i - 3] > inOpen[i - 2] &&                      /* with consecutively lower opens */
              inClose[i - 4] > inClose[i - 3] &&
-             inClose[i - 3] > inClose[i - 2] &&                          /* and closes */
-             ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && /* 4th: black with an upper shadow */
+             inClose[i - 3] > inClose[i - 2] &&                    /* and closes */
+             ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 && /* 4th: black with an upper shadow */
              (inHigh[i - 1] - ((inClose[i - 1] >= inOpen[i - 1]) ? inClose[i - 1] : inOpen[i - 1])) > ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal / ShadowVeryShort_avgPeriod) : ((ShadowVeryShort_rangeType == 0) ? (Math.Abs(inClose[i - 1] - inOpen[i - 1])) : ((ShadowVeryShort_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1])) : 0.0)))) / ((ShadowVeryShort_rangeType == 2) ? 2.0 : 1.0)))) &&
-             ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 &&             /* 5th: white */
-             inOpen[i] > inOpen[i - 1] &&                                /* that opens above prior candle's body */
-             inClose[i] > inHigh[i - 1] )                                /* and closes above prior candle's high */
+             ((inClose[i] >= inOpen[i]) ? 1 : -1) == 1 &&          /* 5th: white */
+             inOpen[i] > inOpen[i - 1] &&                          /* that opens above prior candle's body */
+             inClose[i] > inHigh[i - 1] )                          /* and closes above prior candle's high */
          {
             outInteger[outIdx++] = 100;
          } else {
@@ -218,7 +218,7 @@ public partial class Core
       i = startIdx;
       outIdx = 0;
       do {
-         if( (((double)inClose[i - 4] >= (double)inOpen[i - 4]) ? 1 : 0 - 1) == 0 - 1 && (((double)inClose[i - 3] >= (double)inOpen[i - 3]) ? 1 : 0 - 1) == 0 - 1 && (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && (double)inOpen[i - 4] > (double)inOpen[i - 3] && (double)inOpen[i - 3] > (double)inOpen[i - 2] && (double)inClose[i - 4] > (double)inClose[i - 3] && (double)inClose[i - 3] > (double)inClose[i - 2] && (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && ((double)inHigh[i - 1] - (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? (double)inClose[i - 1] : (double)inOpen[i - 1])) > ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal / ShadowVeryShort_avgPeriod) : ((ShadowVeryShort_rangeType == 0) ? (Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : ((ShadowVeryShort_rangeType == 1) ? ((double)inHigh[i - 1] - (double)inLow[i - 1]) : ((ShadowVeryShort_rangeType == 2) ? (((double)inHigh[i - 1] - ((((double)inClose[i - 1]) >= ((double)inOpen[i - 1])) ? ((double)inClose[i - 1]) : ((double)inOpen[i - 1]))) + (((((double)inClose[i - 1]) >= ((double)inOpen[i - 1])) ? ((double)inOpen[i - 1]) : ((double)inClose[i - 1])) - (double)inLow[i - 1])) : 0.0)))) / ((ShadowVeryShort_rangeType == 2) ? 2.0 : 1.0)))) && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 1 && (double)inOpen[i] > (double)inOpen[i - 1] && (double)inClose[i] > (double)inHigh[i - 1] ) {
+         if( (((double)inClose[i - 4] >= (double)inOpen[i - 4]) ? 1 : -1) == -1 && (((double)inClose[i - 3] >= (double)inOpen[i - 3]) ? 1 : -1) == -1 && (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : -1) == -1 && (double)inOpen[i - 4] > (double)inOpen[i - 3] && (double)inOpen[i - 3] > (double)inOpen[i - 2] && (double)inClose[i - 4] > (double)inClose[i - 3] && (double)inClose[i - 3] > (double)inClose[i - 2] && (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : -1) == -1 && ((double)inHigh[i - 1] - (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? (double)inClose[i - 1] : (double)inOpen[i - 1])) > ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal / ShadowVeryShort_avgPeriod) : ((ShadowVeryShort_rangeType == 0) ? (Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : ((ShadowVeryShort_rangeType == 1) ? ((double)inHigh[i - 1] - (double)inLow[i - 1]) : ((ShadowVeryShort_rangeType == 2) ? (((double)inHigh[i - 1] - ((((double)inClose[i - 1]) >= ((double)inOpen[i - 1])) ? ((double)inClose[i - 1]) : ((double)inOpen[i - 1]))) + (((((double)inClose[i - 1]) >= ((double)inOpen[i - 1])) ? ((double)inOpen[i - 1]) : ((double)inClose[i - 1])) - (double)inLow[i - 1])) : 0.0)))) / ((ShadowVeryShort_rangeType == 2) ? 2.0 : 1.0)))) && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : -1) == 1 && (double)inOpen[i] > (double)inOpen[i - 1] && (double)inClose[i] > (double)inHigh[i - 1] ) {
             outInteger[outIdx++] = 100;
          } else {
             outInteger[outIdx++] = 0;
@@ -571,18 +571,18 @@ public partial class Core
          int ShadowVeryShort_rangeType = sp.cs_ShadowVeryShort_rangeType;
          int ShadowVeryShort_avgPeriod = sp.cs_ShadowVeryShort_avgPeriod;
          double ShadowVeryShort_factor = sp.cs_ShadowVeryShort_factor;
-         if( ((sp.lag4_inClose >= sp.lag4_inOpen) ? 1 : 0 - 1) == 0 - 1 &&
-             ((sp.lag3_inClose >= sp.lag3_inOpen) ? 1 : 0 - 1) == 0 - 1 &&
-             ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* 3 black candlesticks */
+         if( ((sp.lag4_inClose >= sp.lag4_inOpen) ? 1 : -1) == -1 &&
+             ((sp.lag3_inClose >= sp.lag3_inOpen) ? 1 : -1) == -1 &&
+             ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : -1) == -1 && /* 3 black candlesticks */
              sp.lag4_inOpen > sp.lag3_inOpen &&
-             sp.lag3_inOpen > sp.lag2_inOpen &&                            /* with consecutively lower opens */
+             sp.lag3_inOpen > sp.lag2_inOpen &&                      /* with consecutively lower opens */
              sp.lag4_inClose > sp.lag3_inClose &&
-             sp.lag3_inClose > sp.lag2_inClose &&                          /* and closes */
-             ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* 4th: black with an upper shadow */
+             sp.lag3_inClose > sp.lag2_inClose &&                    /* and closes */
+             ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : -1) == -1 && /* 4th: black with an upper shadow */
              (sp.lag1_inHigh - ((sp.lag1_inClose >= sp.lag1_inOpen) ? sp.lag1_inClose : sp.lag1_inOpen)) > ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (sp.ShadowVeryShortPeriodTotal / ShadowVeryShort_avgPeriod) : ((ShadowVeryShort_rangeType == 0) ? (Math.Abs(sp.lag1_inClose - sp.lag1_inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (sp.lag1_inHigh - sp.lag1_inLow) : ((ShadowVeryShort_rangeType == 2) ? ((sp.lag1_inHigh - (((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inClose) : (sp.lag1_inOpen))) + ((((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inOpen) : (sp.lag1_inClose)) - sp.lag1_inLow)) : 0.0)))) / ((ShadowVeryShort_rangeType == 2) ? 2.0 : 1.0)))) &&
-             ((inClose >= inOpen) ? 1 : 0 - 1) == 1 &&                     /* 5th: white */
-             inOpen > sp.lag1_inOpen &&                                    /* that opens above prior candle's body */
-             inClose > sp.lag1_inHigh )                                    /* and closes above prior candle's high */
+             ((inClose >= inOpen) ? 1 : -1) == 1 &&                  /* 5th: white */
+             inOpen > sp.lag1_inOpen &&                              /* that opens above prior candle's body */
+             inClose > sp.lag1_inHigh )                              /* and closes above prior candle's high */
          {
             cur_outInteger = 100;
          } else {
@@ -614,18 +614,18 @@ public partial class Core
       int ShadowVeryShort_avgPeriod = sp.cs_ShadowVeryShort_avgPeriod;
       double ShadowVeryShort_factor = sp.cs_ShadowVeryShort_factor;
       sp.ring_ShadowVeryShortTrailingIdx_derived[sp.ringPos_ShadowVeryShortTrailingIdx] = ((ShadowVeryShort_rangeType == 0) ? (Math.Abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
-      if( ((sp.lag4_inClose >= sp.lag4_inOpen) ? 1 : 0 - 1) == 0 - 1 &&
-          ((sp.lag3_inClose >= sp.lag3_inOpen) ? 1 : 0 - 1) == 0 - 1 &&
-          ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* 3 black candlesticks */
+      if( ((sp.lag4_inClose >= sp.lag4_inOpen) ? 1 : -1) == -1 &&
+          ((sp.lag3_inClose >= sp.lag3_inOpen) ? 1 : -1) == -1 &&
+          ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : -1) == -1 && /* 3 black candlesticks */
           sp.lag4_inOpen > sp.lag3_inOpen &&
-          sp.lag3_inOpen > sp.lag2_inOpen &&                            /* with consecutively lower opens */
+          sp.lag3_inOpen > sp.lag2_inOpen &&                      /* with consecutively lower opens */
           sp.lag4_inClose > sp.lag3_inClose &&
-          sp.lag3_inClose > sp.lag2_inClose &&                          /* and closes */
-          ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* 4th: black with an upper shadow */
+          sp.lag3_inClose > sp.lag2_inClose &&                    /* and closes */
+          ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : -1) == -1 && /* 4th: black with an upper shadow */
           (sp.lag1_inHigh - ((sp.lag1_inClose >= sp.lag1_inOpen) ? sp.lag1_inClose : sp.lag1_inOpen)) > ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (sp.ShadowVeryShortPeriodTotal / ShadowVeryShort_avgPeriod) : ((ShadowVeryShort_rangeType == 0) ? (Math.Abs(sp.lag1_inClose - sp.lag1_inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (sp.lag1_inHigh - sp.lag1_inLow) : ((ShadowVeryShort_rangeType == 2) ? ((sp.lag1_inHigh - (((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inClose) : (sp.lag1_inOpen))) + ((((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inOpen) : (sp.lag1_inClose)) - sp.lag1_inLow)) : 0.0)))) / ((ShadowVeryShort_rangeType == 2) ? 2.0 : 1.0)))) &&
-          ((inClose >= inOpen) ? 1 : 0 - 1) == 1 &&                     /* 5th: white */
-          inOpen > sp.lag1_inOpen &&                                    /* that opens above prior candle's body */
-          inClose > sp.lag1_inHigh )                                    /* and closes above prior candle's high */
+          ((inClose >= inOpen) ? 1 : -1) == 1 &&                  /* 5th: white */
+          inOpen > sp.lag1_inOpen &&                              /* that opens above prior candle's body */
+          inClose > sp.lag1_inHigh )                              /* and closes above prior candle's high */
       {
          sp.cur_outInteger = 100;
       } else {
@@ -717,18 +717,18 @@ public partial class Core
        */
       outIdx = 0;
       do {
-         if( ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : 0 - 1) == 0 - 1 &&
-             ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : 0 - 1) == 0 - 1 &&
-             ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && /* 3 black candlesticks */
+         if( ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : -1) == -1 &&
+             ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : -1) == -1 &&
+             ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == -1 && /* 3 black candlesticks */
              inOpen[i - 4] > inOpen[i - 3] &&
-             inOpen[i - 3] > inOpen[i - 2] &&                            /* with consecutively lower opens */
+             inOpen[i - 3] > inOpen[i - 2] &&                      /* with consecutively lower opens */
              inClose[i - 4] > inClose[i - 3] &&
-             inClose[i - 3] > inClose[i - 2] &&                          /* and closes */
-             ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && /* 4th: black with an upper shadow */
+             inClose[i - 3] > inClose[i - 2] &&                    /* and closes */
+             ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 && /* 4th: black with an upper shadow */
              (inHigh[i - 1] - ((inClose[i - 1] >= inOpen[i - 1]) ? inClose[i - 1] : inOpen[i - 1])) > ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal / ShadowVeryShort_avgPeriod) : ((ShadowVeryShort_rangeType == 0) ? (Math.Abs(inClose[i - 1] - inOpen[i - 1])) : ((ShadowVeryShort_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1])) : 0.0)))) / ((ShadowVeryShort_rangeType == 2) ? 2.0 : 1.0)))) &&
-             ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 &&             /* 5th: white */
-             inOpen[i] > inOpen[i - 1] &&                                /* that opens above prior candle's body */
-             inClose[i] > inHigh[i - 1] )                                /* and closes above prior candle's high */
+             ((inClose[i] >= inOpen[i]) ? 1 : -1) == 1 &&          /* 5th: white */
+             inOpen[i] > inOpen[i - 1] &&                          /* that opens above prior candle's body */
+             inClose[i] > inHigh[i - 1] )                          /* and closes above prior candle's high */
          {
             outInteger[outIdx++ * outStride] = 100;
          } else {

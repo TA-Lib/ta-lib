@@ -198,14 +198,14 @@
          if( last_price_x != 0.0 ) {
             x = (tmp_real - last_price_x) / last_price_x - shift_x;
          } else {
-            x = 0 - shift_x;
+            x = -shift_x;
          }
          last_price_x = tmp_real;
          tmp_real = inReal1[i++];
          if( last_price_y != 0.0 ) {
             y = (tmp_real - last_price_y) / last_price_y - shift_y;
          } else {
-            y = 0 - shift_y;
+            y = -shift_y;
          }
          last_price_y = tmp_real;
          S_xx += x * x;
@@ -223,14 +223,14 @@
          if( last_price_x != 0.0 ) {
             x = (tmp_real - last_price_x) / last_price_x - shift_x;
          } else {
-            x = 0 - shift_x;
+            x = -shift_x;
          }
          last_price_x = tmp_real;
          tmp_real = inReal1[i++];
          if( last_price_y != 0.0 ) {
             y = (tmp_real - last_price_y) / last_price_y - shift_y;
          } else {
-            y = 0 - shift_y;
+            y = -shift_y;
          }
          last_price_y = tmp_real;
          S_xx += x * x;
@@ -323,13 +323,13 @@
                if( prev_x != 0.0 ) {
                   x = (inReal0[j] - prev_x) / prev_x - shift_x;
                } else {
-                  x = 0 - shift_x;
+                  x = -shift_x;
                }
                prev_x = inReal0[j];
                if( prev_y != 0.0 ) {
                   y = (inReal1[j] - prev_y) / prev_y - shift_y;
                } else {
-                  y = 0 - shift_y;
+                  y = -shift_y;
                }
                prev_y = inReal1[j];
                S_xx += x * x;
@@ -359,7 +359,7 @@
          if( trailing_last_price_x != 0.0 ) {
             x = (tmp_real - trailing_last_price_x) / trailing_last_price_x - shift_x;
          } else {
-            x = 0 - shift_x;
+            x = -shift_x;
          }
          trailing_last_price_x = tmp_real;
          tmp_real = inReal1[trailingIdx];
@@ -367,7 +367,7 @@
          if( trailing_last_price_y != 0.0 ) {
             y = (tmp_real - trailing_last_price_y) / trailing_last_price_y - shift_y;
          } else {
-            y = 0 - shift_y;
+            y = -shift_y;
          }
          trailing_last_price_y = tmp_real;
          /* Write the output.
@@ -490,14 +490,14 @@
          if( last_price_x != 0.0 ) {
             x = (tmp_real - last_price_x) / last_price_x - shift_x;
          } else {
-            x = 0 - shift_x;
+            x = -shift_x;
          }
          last_price_x = tmp_real;
          tmp_real = (double)inReal1[i++];
          if( last_price_y != 0.0 ) {
             y = (tmp_real - last_price_y) / last_price_y - shift_y;
          } else {
-            y = 0 - shift_y;
+            y = -shift_y;
          }
          last_price_y = tmp_real;
          S_xx += x * x;
@@ -514,14 +514,14 @@
          if( last_price_x != 0.0 ) {
             x = (tmp_real - last_price_x) / last_price_x - shift_x;
          } else {
-            x = 0 - shift_x;
+            x = -shift_x;
          }
          last_price_x = tmp_real;
          tmp_real = (double)inReal1[i++];
          if( last_price_y != 0.0 ) {
             y = (tmp_real - last_price_y) / last_price_y - shift_y;
          } else {
-            y = 0 - shift_y;
+            y = -shift_y;
          }
          last_price_y = tmp_real;
          S_xx += x * x;
@@ -562,13 +562,13 @@
                if( prev_x != 0.0 ) {
                   x = ((double)inReal0[j] - prev_x) / prev_x - shift_x;
                } else {
-                  x = 0 - shift_x;
+                  x = -shift_x;
                }
                prev_x = (double)inReal0[j];
                if( prev_y != 0.0 ) {
                   y = ((double)inReal1[j] - prev_y) / prev_y - shift_y;
                } else {
-                  y = 0 - shift_y;
+                  y = -shift_y;
                }
                prev_y = (double)inReal1[j];
                S_xx += x * x;
@@ -587,7 +587,7 @@
          if( trailing_last_price_x != 0.0 ) {
             x = (tmp_real - trailing_last_price_x) / trailing_last_price_x - shift_x;
          } else {
-            x = 0 - shift_x;
+            x = -shift_x;
          }
          trailing_last_price_x = tmp_real;
          tmp_real = (double)inReal1[trailingIdx];
@@ -595,7 +595,7 @@
          if( trailing_last_price_y != 0.0 ) {
             y = (tmp_real - trailing_last_price_y) / trailing_last_price_y - shift_y;
          } else {
-            y = 0 - shift_y;
+            y = -shift_y;
          }
          trailing_last_price_y = tmp_real;
          if( denom > 0.00000000000001 * denom_scale ) {
@@ -936,7 +936,7 @@
          if( last_price_x != 0.0 ) {
             x = (tmp_real - last_price_x) / last_price_x - shift_x;
          } else {
-            x = 0 - shift_x;
+            x = -shift_x;
          }
          last_price_x = tmp_real;
          pkIdx0 = i++ & sp.xMask;
@@ -944,7 +944,7 @@
          if( last_price_y != 0.0 ) {
             y = (tmp_real - last_price_y) / last_price_y - shift_y;
          } else {
-            y = 0 - shift_y;
+            y = -shift_y;
          }
          last_price_y = tmp_real;
          S_xx += x * x;
@@ -1037,13 +1037,13 @@
                if( prev_x != 0.0 ) {
                   x = ((((j & sp.xMask) != pkSlot0) ? sp.x_inReal0[j & sp.xMask] : pkVal0) - prev_x) / prev_x - shift_x;
                } else {
-                  x = 0 - shift_x;
+                  x = -shift_x;
                }
                prev_x = ((j & sp.xMask) != pkSlot0) ? sp.x_inReal0[j & sp.xMask] : pkVal0;
                if( prev_y != 0.0 ) {
                   y = ((((j & sp.xMask) != pkSlot1) ? sp.x_inReal1[j & sp.xMask] : pkVal1) - prev_y) / prev_y - shift_y;
                } else {
-                  y = 0 - shift_y;
+                  y = -shift_y;
                }
                prev_y = ((j & sp.xMask) != pkSlot1) ? sp.x_inReal1[j & sp.xMask] : pkVal1;
                S_xx += x * x;
@@ -1073,7 +1073,7 @@
          if( trailing_last_price_x != 0.0 ) {
             x = (tmp_real - trailing_last_price_x) / trailing_last_price_x - shift_x;
          } else {
-            x = 0 - shift_x;
+            x = -shift_x;
          }
          trailing_last_price_x = tmp_real;
          tmp_real = ((trailingIdx & sp.xMask) != pkSlot1) ? sp.x_inReal1[trailingIdx & sp.xMask] : pkVal1;
@@ -1081,7 +1081,7 @@
          if( trailing_last_price_y != 0.0 ) {
             y = (tmp_real - trailing_last_price_y) / trailing_last_price_y - shift_y;
          } else {
-            y = 0 - shift_y;
+            y = -shift_y;
          }
          trailing_last_price_y = tmp_real;
          /* Write the output.
@@ -1142,14 +1142,14 @@
       if( sp.last_price_x != 0.0 ) {
          x = (tmp_real - sp.last_price_x) / sp.last_price_x - sp.shift_x;
       } else {
-         x = 0 - sp.shift_x;
+         x = -sp.shift_x;
       }
       sp.last_price_x = tmp_real;
       tmp_real = sp.x_inReal1[sp.i++ & sp.xMask];
       if( sp.last_price_y != 0.0 ) {
          y = (tmp_real - sp.last_price_y) / sp.last_price_y - sp.shift_y;
       } else {
-         y = 0 - sp.shift_y;
+         y = -sp.shift_y;
       }
       sp.last_price_y = tmp_real;
       sp.S_xx += x * x;
@@ -1242,13 +1242,13 @@
             if( prev_x != 0.0 ) {
                x = (sp.x_inReal0[sp.j & sp.xMask] - prev_x) / prev_x - sp.shift_x;
             } else {
-               x = 0 - sp.shift_x;
+               x = -sp.shift_x;
             }
             prev_x = sp.x_inReal0[sp.j & sp.xMask];
             if( prev_y != 0.0 ) {
                y = (sp.x_inReal1[sp.j & sp.xMask] - prev_y) / prev_y - sp.shift_y;
             } else {
-               y = 0 - sp.shift_y;
+               y = -sp.shift_y;
             }
             prev_y = sp.x_inReal1[sp.j & sp.xMask];
             sp.S_xx += x * x;
@@ -1278,7 +1278,7 @@
       if( sp.trailing_last_price_x != 0.0 ) {
          x = (tmp_real - sp.trailing_last_price_x) / sp.trailing_last_price_x - sp.shift_x;
       } else {
-         x = 0 - sp.shift_x;
+         x = -sp.shift_x;
       }
       sp.trailing_last_price_x = tmp_real;
       tmp_real = sp.x_inReal1[sp.trailingIdx & sp.xMask];
@@ -1286,7 +1286,7 @@
       if( sp.trailing_last_price_y != 0.0 ) {
          y = (tmp_real - sp.trailing_last_price_y) / sp.trailing_last_price_y - sp.shift_y;
       } else {
-         y = 0 - sp.shift_y;
+         y = -sp.shift_y;
       }
       sp.trailing_last_price_y = tmp_real;
       /* Write the output.
@@ -1467,14 +1467,14 @@
          if( last_price_x != 0.0 ) {
             x = (tmp_real - last_price_x) / last_price_x - shift_x;
          } else {
-            x = 0 - shift_x;
+            x = -shift_x;
          }
          last_price_x = tmp_real;
          tmp_real = inReal1[i++];
          if( last_price_y != 0.0 ) {
             y = (tmp_real - last_price_y) / last_price_y - shift_y;
          } else {
-            y = 0 - shift_y;
+            y = -shift_y;
          }
          last_price_y = tmp_real;
          S_xx += x * x;
@@ -1492,14 +1492,14 @@
          if( last_price_x != 0.0 ) {
             x = (tmp_real - last_price_x) / last_price_x - shift_x;
          } else {
-            x = 0 - shift_x;
+            x = -shift_x;
          }
          last_price_x = tmp_real;
          tmp_real = inReal1[i++];
          if( last_price_y != 0.0 ) {
             y = (tmp_real - last_price_y) / last_price_y - shift_y;
          } else {
-            y = 0 - shift_y;
+            y = -shift_y;
          }
          last_price_y = tmp_real;
          S_xx += x * x;
@@ -1592,13 +1592,13 @@
                if( prev_x != 0.0 ) {
                   x = (inReal0[j] - prev_x) / prev_x - shift_x;
                } else {
-                  x = 0 - shift_x;
+                  x = -shift_x;
                }
                prev_x = inReal0[j];
                if( prev_y != 0.0 ) {
                   y = (inReal1[j] - prev_y) / prev_y - shift_y;
                } else {
-                  y = 0 - shift_y;
+                  y = -shift_y;
                }
                prev_y = inReal1[j];
                S_xx += x * x;
@@ -1628,7 +1628,7 @@
          if( trailing_last_price_x != 0.0 ) {
             x = (tmp_real - trailing_last_price_x) / trailing_last_price_x - shift_x;
          } else {
-            x = 0 - shift_x;
+            x = -shift_x;
          }
          trailing_last_price_x = tmp_real;
          tmp_real = inReal1[trailingIdx];
@@ -1636,7 +1636,7 @@
          if( trailing_last_price_y != 0.0 ) {
             y = (tmp_real - trailing_last_price_y) / trailing_last_price_y - shift_y;
          } else {
-            y = 0 - shift_y;
+            y = -shift_y;
          }
          trailing_last_price_y = tmp_real;
          /* Write the output.

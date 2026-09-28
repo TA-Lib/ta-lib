@@ -187,7 +187,7 @@
        */
       trailingIdx = startIdx - lookbackTotal;
       today = trailingIdx + lookbackK;
-      highestIdx = 0 - 1;
+      highestIdx = -1;
       lowestIdx = highestIdx;
       lowest = 0.0;
       highest = lowest;
@@ -354,7 +354,7 @@
       outIdx = 0;
       trailingIdx = startIdx - lookbackTotal;
       today = trailingIdx + lookbackK;
-      highestIdx = 0 - 1;
+      highestIdx = -1;
       lowestIdx = highestIdx;
       lowest = 0.0;
       highest = lowest;
@@ -1040,7 +1040,7 @@
        */
       trailingIdx = startIdx - lookbackTotal;
       today = trailingIdx + lookbackK;
-      highestIdx = 0 - 1;
+      highestIdx = -1;
       lowestIdx = highestIdx;
       lowest = 0.0;
       highest = lowest;

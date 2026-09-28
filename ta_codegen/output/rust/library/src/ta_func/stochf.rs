@@ -248,7 +248,7 @@ impl Core {
         // the lookback involve with the smoothing).
         trailingIdx = startIdx - lookbackTotal;
         today = trailingIdx + lookbackK;
-        highestIdx = 0 - 1;
+        highestIdx = -1;
         lowestIdx = highestIdx;
         lowest = 0.0;
         highest = lowest;
@@ -715,7 +715,7 @@ impl Core {
         // the lookback involve with the smoothing).
         trailingIdx = startIdx - lookbackTotal;
         today = trailingIdx + lookbackK;
-        highestIdx = 0 - 1;
+        highestIdx = -1;
         lowestIdx = highestIdx;
         lowest = 0.0;
         highest = lowest;

@@ -5123,6 +5123,13 @@ fn render_anchor(
         let rb = render_expr(b, ctx, opt_real_params, registry, helpers);
         return format!("(({ra}) as usize).saturating_sub(({rb}) as usize)");
     }
+    if let Expr::Neg(b) = e {
+        let rb = render_expr(b, ctx, opt_real_params, registry, helpers);
+        return format!("0usize.saturating_sub(({rb}) as usize)");
+    }
+    if matches!(e, Expr::IntLiteral(n) if *n < 0) {
+        return "0usize".to_string();
+    }
     let r = render_expr(e, ctx, opt_real_params, registry, helpers);
     format!("(({r}) as usize)")
 }

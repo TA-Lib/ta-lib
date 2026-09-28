@@ -260,11 +260,11 @@ impl Core {
             // quotient is <= 1 under any rounding mode. Its domain is the close
             // outside its own bar, which nothing here validates.
             if !(((highest - lowest).abs() <= 1e-14 * ((highest).abs() + (lowest).abs()))) {
-                tempReal = (highest - inClose[today]) / (highest - lowest) * (0_f64 - 100.0);
+                tempReal = (highest - inClose[today]) / (highest - lowest) * -100.0;
                 if tempReal > 0.0 {
                     tempReal = 0.0;
-                } else if tempReal < 0_f64 - 100.0 {
-                    tempReal = 0_f64 - 100.0;
+                } else if tempReal < -100.0 {
+                    tempReal = -100.0;
                 }
                 outReal[outIdx] = tempReal;
                 outIdx += 1;
@@ -316,11 +316,11 @@ impl Core {
                     lowest = sufLowest[m];
                     lowest = c_min(preLowest[m - 1], lowest);
                     if !(((highest - lowest).abs() <= 1e-14 * ((highest).abs() + (lowest).abs()))) {
-                        tempReal = (highest - inClose[today + m - 1]) / (highest - lowest) * (0_f64 - 100.0);
+                        tempReal = (highest - inClose[today + m - 1]) / (highest - lowest) * -100.0;
                         if tempReal > 0.0 {
                             tempReal = 0.0;
-                        } else if tempReal < 0_f64 - 100.0 {
-                            tempReal = 0_f64 - 100.0;
+                        } else if tempReal < -100.0 {
+                            tempReal = -100.0;
                         }
                         outReal[outIdx] = tempReal;
                         outIdx += 1;
@@ -539,11 +539,11 @@ impl Core {
         }
         // Same rule, band and clamp as the block scan above.
         if !(((sp.highest - sp.lowest).abs() <= 1e-14 * ((sp.highest).abs() + (sp.lowest).abs()))) {
-            tempReal = (sp.highest - sp.x_inClose[(sp.today & sp.xMask) as usize]) / (sp.highest - sp.lowest) * (0_f64 - 100.0);
+            tempReal = (sp.highest - sp.x_inClose[(sp.today & sp.xMask) as usize]) / (sp.highest - sp.lowest) * -100.0;
             if tempReal > 0.0 {
                 tempReal = 0.0;
-            } else if tempReal < 0_f64 - 100.0 {
-                tempReal = 0_f64 - 100.0;
+            } else if tempReal < -100.0 {
+                tempReal = -100.0;
             }
             (*outReal) = tempReal;
         } else {
@@ -632,7 +632,7 @@ impl Core {
         outIdx = 0;
         today = startIdx;
         trailingIdx = startIdx - nbInitialElementNeeded;
-        highestIdx = 0 - 1;
+        highestIdx = -1;
         lowestIdx = highestIdx;
         lowest = 0.0;
         highest = lowest;
@@ -673,11 +673,11 @@ impl Core {
             }
             // Same rule, band and clamp as the block scan above.
             if !(((highest - lowest).abs() <= 1e-14 * ((highest).abs() + (lowest).abs()))) {
-                tempReal = (highest - inClose[today]) / (highest - lowest) * (0_f64 - 100.0);
+                tempReal = (highest - inClose[today]) / (highest - lowest) * -100.0;
                 if tempReal > 0.0 {
                     tempReal = 0.0;
-                } else if tempReal < 0_f64 - 100.0 {
-                    tempReal = 0_f64 - 100.0;
+                } else if tempReal < -100.0 {
+                    tempReal = -100.0;
                 }
                 outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = tempReal;
             } else {
@@ -958,11 +958,11 @@ impl WillrStream {
             }
             // Same rule, band and clamp as the block scan above.
             if !(((highest - lowest).abs() <= 1e-14 * ((highest).abs() + (lowest).abs()))) {
-                tempReal = (highest - (if ((sp.today & sp.xMask) as usize) != pkSlot2 { sp.x_inClose[(sp.today & sp.xMask) as usize] } else { pkVal2 })) / (highest - lowest) * (0_f64 - 100.0);
+                tempReal = (highest - (if ((sp.today & sp.xMask) as usize) != pkSlot2 { sp.x_inClose[(sp.today & sp.xMask) as usize] } else { pkVal2 })) / (highest - lowest) * -100.0;
                 if tempReal > 0.0 {
                     tempReal = 0.0;
-                } else if tempReal < 0_f64 - 100.0 {
-                    tempReal = 0_f64 - 100.0;
+                } else if tempReal < -100.0 {
+                    tempReal = -100.0;
                 }
                 (*outReal) = tempReal;
             } else {

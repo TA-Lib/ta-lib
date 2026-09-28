@@ -132,7 +132,7 @@ public partial class Core
       outIdx = 0;
       today = startIdx;
       trailingIdx = startIdx - nbInitialElementNeeded;
-      lowestIdx = 0 - 1;
+      lowestIdx = -1;
       lowest = 0.0;
       while( today <= endIdx ) {
          tmp = inReal[today];
@@ -206,7 +206,7 @@ public partial class Core
       outIdx = 0;
       today = startIdx;
       trailingIdx = startIdx - nbInitialElementNeeded;
-      lowestIdx = 0 - 1;
+      lowestIdx = -1;
       lowest = 0.0;
       while( today <= endIdx ) {
          tmp = (double)inReal[today];
@@ -654,7 +654,7 @@ public partial class Core
       outIdx = 0;
       today = startIdx;
       trailingIdx = startIdx - nbInitialElementNeeded;
-      lowestIdx = 0 - 1;
+      lowestIdx = -1;
       lowest = 0.0;
       while( today <= endIdx ) {
          tmp = inReal[today];

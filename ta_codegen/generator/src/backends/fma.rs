@@ -174,7 +174,7 @@ pub(crate) fn is_definitely_integer(expr: &Expr, ctx: &FmaCtx) -> bool {
                 || ctx.int_output_names.contains(name)
         }
         Expr::BinOp(a, _, b) => is_definitely_integer(a, ctx) || is_definitely_integer(b, ctx),
-        Expr::BitwiseNot(i) => is_definitely_integer(i, ctx),
+        Expr::BitwiseNot(i) | Expr::Neg(i) => is_definitely_integer(i, ctx),
         // IntLiteral and everything else: not definitely integer (literals coerce to f64).
         _ => false,
     }
@@ -187,6 +187,7 @@ pub(crate) fn is_definitely_integer(expr: &Expr, ctx: &FmaCtx) -> bool {
 pub(crate) fn expr_is_float_typed(expr: &Expr, ctx: Option<&FmaCtx>) -> bool {
     match expr {
         Expr::Literal(_) | Expr::Cast(VarType::Real, _) => true,
+        Expr::Neg(inner) => expr_is_float_typed(inner, ctx),
         Expr::Var(name) => {
             // Classify by the underlying batch name so the streamed recurrence
             // (which qualifies operands as `sp->X` / `cur_X`) fuses the same
@@ -347,6 +348,7 @@ fn expr_references(e: &Expr, name: &str) -> bool {
         Expr::Cast(_, i)
         | Expr::Not(i)
         | Expr::BitwiseNot(i)
+        | Expr::Neg(i)
         | Expr::AddressOf(i)
         | Expr::PostIncrement(i)
         | Expr::PostDecrement(i)

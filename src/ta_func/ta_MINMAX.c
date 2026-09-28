@@ -706,9 +706,9 @@ static TA_RetCode TA_MINMAX_OpenImpl( struct TA_MINMAX_Stream **stream, const do
       outIdx = 0;
       today = startIdx;
       trailingIdx = startIdx - nbInitialElementNeeded;
-      highestIdx = 0 - 1;
+      highestIdx = -1;
       highest = 0.0;
-      lowestIdx = 0 - 1;
+      lowestIdx = -1;
       lowest = 0.0;
       while( today <= endIdx )
       {

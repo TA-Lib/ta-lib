@@ -130,14 +130,14 @@ TA_LIB_API TA_RetCode TA_CDLENGULFING( int    startIdx,
    outIdx = 0;
    do
    {
-      if( (((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 &&
-           ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && /* white engulfs black */
+      if( (((inClose[i] >= inOpen[i]) ? 1 : -1) == 1 &&
+           ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 && /* white engulfs black */
            ((inClose[i] >= inOpen[i - 1] &&
              inOpen[i] < inClose[i - 1]) ||
             (inClose[i] > inOpen[i - 1] &&
              inOpen[i] <= inClose[i - 1]))) ||
-          (((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 0 - 1 &&
-           ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 1 &&     /* black engulfs white */
+          (((inClose[i] >= inOpen[i]) ? 1 : -1) == -1 &&
+           ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == 1 &&  /* black engulfs white */
            ((inOpen[i] >= inClose[i - 1] &&
              inClose[i] < inOpen[i - 1]) ||
             (inOpen[i] > inClose[i - 1] &&
@@ -145,10 +145,10 @@ TA_LIB_API TA_RetCode TA_CDLENGULFING( int    startIdx,
       {
          if( inOpen[i] != inClose[i - 1] && inClose[i] != inOpen[i - 1] )
          {
-            outInteger[outIdx++] = ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) * 100;
+            outInteger[outIdx++] = ((inClose[i] >= inOpen[i]) ? 1 : -1) * 100;
          } else 
          {
-            outInteger[outIdx++] = ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) * 80;
+            outInteger[outIdx++] = ((inClose[i] >= inOpen[i]) ? 1 : -1) * 80;
          }
       } else 
       {
@@ -209,14 +209,14 @@ TA_RetCode TA_S_CDLENGULFING( int    startIdx,
    outIdx = 0;
    do
    {
-      if( ((((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 1 && (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && (((double)inClose[i] >= (double)inOpen[i - 1] && (double)inOpen[i] < (double)inClose[i - 1]) || ((double)inClose[i] > (double)inOpen[i - 1] && (double)inOpen[i] <= (double)inClose[i - 1]))) || ((((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 0 - 1 && (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) == 1 && (((double)inOpen[i] >= (double)inClose[i - 1] && (double)inClose[i] < (double)inOpen[i - 1]) || ((double)inOpen[i] > (double)inClose[i - 1] && (double)inClose[i] <= (double)inOpen[i - 1]))) )
+      if( ((((double)inClose[i] >= (double)inOpen[i]) ? 1 : -1) == 1 && (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : -1) == -1 && (((double)inClose[i] >= (double)inOpen[i - 1] && (double)inOpen[i] < (double)inClose[i - 1]) || ((double)inClose[i] > (double)inOpen[i - 1] && (double)inOpen[i] <= (double)inClose[i - 1]))) || ((((double)inClose[i] >= (double)inOpen[i]) ? 1 : -1) == -1 && (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : -1) == 1 && (((double)inOpen[i] >= (double)inClose[i - 1] && (double)inClose[i] < (double)inOpen[i - 1]) || ((double)inOpen[i] > (double)inClose[i - 1] && (double)inClose[i] <= (double)inOpen[i - 1]))) )
       {
          if( (double)inOpen[i] != (double)inClose[i - 1] && (double)inClose[i] != (double)inOpen[i - 1] )
          {
-            outInteger[outIdx++] = (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) * 100;
+            outInteger[outIdx++] = (((double)inClose[i] >= (double)inOpen[i]) ? 1 : -1) * 100;
          } else 
          {
-            outInteger[outIdx++] = (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) * 80;
+            outInteger[outIdx++] = (((double)inClose[i] >= (double)inOpen[i]) ? 1 : -1) * 80;
          }
       } else 
       {
@@ -244,14 +244,14 @@ struct TA_CDLENGULFING_Stream {
 /* Private function, not in public API. */
 static void TA_CDLENGULFING_StepImpl( struct TA_CDLENGULFING_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
-   if( (((inClose >= inOpen) ? 1 : 0 - 1) == 1 &&
-        ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* white engulfs black */
+   if( (((inClose >= inOpen) ? 1 : -1) == 1 &&
+        ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : -1) == -1 && /* white engulfs black */
         ((inClose >= sp->lag1_inOpen &&
           inOpen < sp->lag1_inClose) ||
          (inClose > sp->lag1_inOpen &&
           inOpen <= sp->lag1_inClose))) ||
-       (((inClose >= inOpen) ? 1 : 0 - 1) == 0 - 1 &&
-        ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) == 1 &&     /* black engulfs white */
+       (((inClose >= inOpen) ? 1 : -1) == -1 &&
+        ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : -1) == 1 &&  /* black engulfs white */
         ((inOpen >= sp->lag1_inClose &&
           inClose < sp->lag1_inOpen) ||
          (inOpen > sp->lag1_inClose &&
@@ -259,10 +259,10 @@ static void TA_CDLENGULFING_StepImpl( struct TA_CDLENGULFING_Stream *sp, double 
    {
       if( inOpen != sp->lag1_inClose && inClose != sp->lag1_inOpen )
       {
-         *outInteger= ((inClose >= inOpen) ? 1 : 0 - 1) * 100;
+         *outInteger= ((inClose >= inOpen) ? 1 : -1) * 100;
       } else 
       {
-         *outInteger= ((inClose >= inOpen) ? 1 : 0 - 1) * 80;
+         *outInteger= ((inClose >= inOpen) ? 1 : -1) * 80;
       }
    } else 
    {
@@ -331,14 +331,14 @@ static TA_RetCode TA_CDLENGULFING_OpenImpl( struct TA_CDLENGULFING_Stream **stre
       outIdx = 0;
       do
       {
-         if( (((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 &&
-              ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && /* white engulfs black */
+         if( (((inClose[i] >= inOpen[i]) ? 1 : -1) == 1 &&
+              ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 && /* white engulfs black */
               ((inClose[i] >= inOpen[i - 1] &&
                 inOpen[i] < inClose[i - 1]) ||
                (inClose[i] > inOpen[i - 1] &&
                 inOpen[i] <= inClose[i - 1]))) ||
-             (((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 0 - 1 &&
-              ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 1 &&     /* black engulfs white */
+             (((inClose[i] >= inOpen[i]) ? 1 : -1) == -1 &&
+              ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == 1 &&  /* black engulfs white */
               ((inOpen[i] >= inClose[i - 1] &&
                 inClose[i] < inOpen[i - 1]) ||
                (inOpen[i] > inClose[i - 1] &&
@@ -346,10 +346,10 @@ static TA_RetCode TA_CDLENGULFING_OpenImpl( struct TA_CDLENGULFING_Stream **stre
          {
             if( inOpen[i] != inClose[i - 1] && inClose[i] != inOpen[i - 1] )
             {
-               outInteger[outIdx++ * outStride] = ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) * 100;
+               outInteger[outIdx++ * outStride] = ((inClose[i] >= inOpen[i]) ? 1 : -1) * 100;
             } else 
             {
-               outInteger[outIdx++ * outStride] = ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) * 80;
+               outInteger[outIdx++ * outStride] = ((inClose[i] >= inOpen[i]) ? 1 : -1) * 80;
             }
          } else 
          {
@@ -435,14 +435,14 @@ TA_LIB_API TA_RetCode TA_CDLENGULFING_Peek( const TA_CDLENGULFING_Stream *stream
 
    if( !stream || !outInteger ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
-   if( (((inClose >= inOpen) ? 1 : 0 - 1) == 1 &&
-        ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* white engulfs black */
+   if( (((inClose >= inOpen) ? 1 : -1) == 1 &&
+        ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : -1) == -1 && /* white engulfs black */
         ((inClose >= sp->lag1_inOpen &&
           inOpen < sp->lag1_inClose) ||
          (inClose > sp->lag1_inOpen &&
           inOpen <= sp->lag1_inClose))) ||
-       (((inClose >= inOpen) ? 1 : 0 - 1) == 0 - 1 &&
-        ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) == 1 &&     /* black engulfs white */
+       (((inClose >= inOpen) ? 1 : -1) == -1 &&
+        ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : -1) == 1 &&  /* black engulfs white */
         ((inOpen >= sp->lag1_inClose &&
           inClose < sp->lag1_inOpen) ||
          (inOpen > sp->lag1_inClose &&
@@ -450,10 +450,10 @@ TA_LIB_API TA_RetCode TA_CDLENGULFING_Peek( const TA_CDLENGULFING_Stream *stream
    {
       if( inOpen != sp->lag1_inClose && inClose != sp->lag1_inOpen )
       {
-         *outInteger= ((inClose >= inOpen) ? 1 : 0 - 1) * 100;
+         *outInteger= ((inClose >= inOpen) ? 1 : -1) * 100;
       } else 
       {
-         *outInteger= ((inClose >= inOpen) ? 1 : 0 - 1) * 80;
+         *outInteger= ((inClose >= inOpen) ? 1 : -1) * 80;
       }
    } else 
    {

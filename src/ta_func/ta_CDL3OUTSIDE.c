@@ -126,18 +126,18 @@ TA_LIB_API TA_RetCode TA_CDL3OUTSIDE( int    startIdx,
    outIdx = 0;
    do
    {
-      if( (((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 1 &&
-           ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && /* white engulfs black */
+      if( (((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == 1 &&
+           ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == -1 && /* white engulfs black */
            inClose[i - 1] > inOpen[i - 2] &&
            inOpen[i - 1] < inClose[i - 2] &&
-           inClose[i] > inClose[i - 1]) ||                             /* third candle higher */
-          (((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 &&
-           ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 1 &&     /* black engulfs white */
+           inClose[i] > inClose[i - 1]) ||                       /* third candle higher */
+          (((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 &&
+           ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == 1 &&  /* black engulfs white */
            inOpen[i - 1] > inClose[i - 2] &&
            inClose[i - 1] < inOpen[i - 2] &&
-           inClose[i] < inClose[i - 1]) )                              /* third candle lower */
+           inClose[i] < inClose[i - 1]) )                        /* third candle lower */
       {
-         outInteger[outIdx++] = ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) * 100;
+         outInteger[outIdx++] = ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100;
       } else 
       {
          outInteger[outIdx++] = 0;
@@ -197,9 +197,9 @@ TA_RetCode TA_S_CDL3OUTSIDE( int    startIdx,
    outIdx = 0;
    do
    {
-      if( ((((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) == 1 && (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && (double)inClose[i - 1] > (double)inOpen[i - 2] && (double)inOpen[i - 1] < (double)inClose[i - 2] && (double)inClose[i] > (double)inClose[i - 1]) || ((((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) == 1 && (double)inOpen[i - 1] > (double)inClose[i - 2] && (double)inClose[i - 1] < (double)inOpen[i - 2] && (double)inClose[i] < (double)inClose[i - 1]) )
+      if( ((((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : -1) == 1 && (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : -1) == -1 && (double)inClose[i - 1] > (double)inOpen[i - 2] && (double)inOpen[i - 1] < (double)inClose[i - 2] && (double)inClose[i] > (double)inClose[i - 1]) || ((((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : -1) == -1 && (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : -1) == 1 && (double)inOpen[i - 1] > (double)inClose[i - 2] && (double)inClose[i - 1] < (double)inOpen[i - 2] && (double)inClose[i] < (double)inClose[i - 1]) )
       {
-         outInteger[outIdx++] = (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) * 100;
+         outInteger[outIdx++] = (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : -1) * 100;
       } else 
       {
          outInteger[outIdx++] = 0;
@@ -228,18 +228,18 @@ struct TA_CDL3OUTSIDE_Stream {
 /* Private function, not in public API. */
 static void TA_CDL3OUTSIDE_StepImpl( struct TA_CDL3OUTSIDE_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
-   if( (((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) == 1 &&
-        ((sp->lag2_inClose >= sp->lag2_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* white engulfs black */
+   if( (((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : -1) == 1 &&
+        ((sp->lag2_inClose >= sp->lag2_inOpen) ? 1 : -1) == -1 && /* white engulfs black */
         sp->lag1_inClose > sp->lag2_inOpen &&
         sp->lag1_inOpen < sp->lag2_inClose &&
-        inClose > sp->lag1_inClose) ||                                  /* third candle higher */
-       (((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 &&
-        ((sp->lag2_inClose >= sp->lag2_inOpen) ? 1 : 0 - 1) == 1 &&     /* black engulfs white */
+        inClose > sp->lag1_inClose) ||                            /* third candle higher */
+       (((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : -1) == -1 &&
+        ((sp->lag2_inClose >= sp->lag2_inOpen) ? 1 : -1) == 1 &&  /* black engulfs white */
         sp->lag1_inOpen > sp->lag2_inClose &&
         sp->lag1_inClose < sp->lag2_inOpen &&
-        inClose < sp->lag1_inClose) )                                   /* third candle lower */
+        inClose < sp->lag1_inClose) )                             /* third candle lower */
    {
-      *outInteger= ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) * 100;
+      *outInteger= ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : -1) * 100;
    } else 
    {
       *outInteger= 0;
@@ -307,18 +307,18 @@ static TA_RetCode TA_CDL3OUTSIDE_OpenImpl( struct TA_CDL3OUTSIDE_Stream **stream
       outIdx = 0;
       do
       {
-         if( (((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 1 &&
-              ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && /* white engulfs black */
+         if( (((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == 1 &&
+              ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == -1 && /* white engulfs black */
               inClose[i - 1] > inOpen[i - 2] &&
               inOpen[i - 1] < inClose[i - 2] &&
-              inClose[i] > inClose[i - 1]) ||                             /* third candle higher */
-             (((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 &&
-              ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 1 &&     /* black engulfs white */
+              inClose[i] > inClose[i - 1]) ||                       /* third candle higher */
+             (((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 &&
+              ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == 1 &&  /* black engulfs white */
               inOpen[i - 1] > inClose[i - 2] &&
               inClose[i - 1] < inOpen[i - 2] &&
-              inClose[i] < inClose[i - 1]) )                              /* third candle lower */
+              inClose[i] < inClose[i - 1]) )                        /* third candle lower */
          {
-            outInteger[outIdx++ * outStride] = ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) * 100;
+            outInteger[outIdx++ * outStride] = ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100;
          } else 
          {
             outInteger[outIdx++ * outStride] = 0;
@@ -405,18 +405,18 @@ TA_LIB_API TA_RetCode TA_CDL3OUTSIDE_Peek( const TA_CDL3OUTSIDE_Stream *stream, 
 
    if( !stream || !outInteger ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
-   if( (((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) == 1 &&
-        ((sp->lag2_inClose >= sp->lag2_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* white engulfs black */
+   if( (((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : -1) == 1 &&
+        ((sp->lag2_inClose >= sp->lag2_inOpen) ? 1 : -1) == -1 && /* white engulfs black */
         sp->lag1_inClose > sp->lag2_inOpen &&
         sp->lag1_inOpen < sp->lag2_inClose &&
-        inClose > sp->lag1_inClose) ||                                  /* third candle higher */
-       (((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 &&
-        ((sp->lag2_inClose >= sp->lag2_inOpen) ? 1 : 0 - 1) == 1 &&     /* black engulfs white */
+        inClose > sp->lag1_inClose) ||                            /* third candle higher */
+       (((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : -1) == -1 &&
+        ((sp->lag2_inClose >= sp->lag2_inOpen) ? 1 : -1) == 1 &&  /* black engulfs white */
         sp->lag1_inOpen > sp->lag2_inClose &&
         sp->lag1_inClose < sp->lag2_inOpen &&
-        inClose < sp->lag1_inClose) )                                   /* third candle lower */
+        inClose < sp->lag1_inClose) )                             /* third candle lower */
    {
-      *outInteger= ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) * 100;
+      *outInteger= ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : -1) * 100;
    } else 
    {
       *outInteger= 0;

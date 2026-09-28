@@ -187,7 +187,7 @@ impl Core {
                         if ((if c_min(inOpen[i - 1], inClose[i - 1]) > c_max(inOpen[i - 2], inClose[i - 2]) { 1 } else { 0 }) != 0) && // 2nd gaps up
                            c_max(inOpen[i], inClose[i]) < c_max(inOpen[i - 1], inClose[i - 1]) // 3rd is not higher than 2nd
                         {
-                            outInteger[outIdx] = (0 - 100) as i32;
+                            outInteger[outIdx] = -100;
                         }
                         if ((if c_max(inOpen[i - 1], inClose[i - 1]) < c_min(inOpen[i - 2], inClose[i - 2]) { 1 } else { 0 }) != 0) && // 2nd gaps down
                            c_min(inOpen[i], inClose[i]) > c_min(inOpen[i - 1], inClose[i - 1]) // 3rd is not lower than 2nd
@@ -215,7 +215,7 @@ impl Core {
                         if ((if c_min(inOpen[i - 1], inClose[i - 1]) > c_max(inOpen[i - 2], inClose[i - 2]) { 1 } else { 0 }) != 0) && // 2nd gaps up
                            c_max(inOpen[i], inClose[i]) < c_max(inOpen[i - 1], inClose[i - 1]) // 3rd is not higher than 2nd
                         {
-                            outInteger[outIdx] = (0 - 100) as i32;
+                            outInteger[outIdx] = -100;
                         }
                         if ((if c_max(inOpen[i - 1], inClose[i - 1]) < c_min(inOpen[i - 2], inClose[i - 2]) { 1 } else { 0 }) != 0) && // 2nd gaps down
                            c_min(inOpen[i], inClose[i]) > c_min(inOpen[i - 1], inClose[i - 1]) // 3rd is not lower than 2nd
@@ -245,7 +245,7 @@ impl Core {
                     if ((if c_min(inOpen[i - 1], inClose[i - 1]) > c_max(inOpen[i - 2], inClose[i - 2]) { 1 } else { 0 }) != 0) && // 2nd gaps up
                        c_max(inOpen[i], inClose[i]) < c_max(inOpen[i - 1], inClose[i - 1]) // 3rd is not higher than 2nd
                     {
-                        outInteger[outIdx] = (0 - 100) as i32;
+                        outInteger[outIdx] = -100;
                     }
                     if ((if c_max(inOpen[i - 1], inClose[i - 1]) < c_min(inOpen[i - 2], inClose[i - 2]) { 1 } else { 0 }) != 0) && // 2nd gaps down
                        c_min(inOpen[i], inClose[i]) > c_min(inOpen[i - 1], inClose[i - 1]) // 3rd is not lower than 2nd
@@ -467,7 +467,7 @@ impl Core {
             if ((if c_min(sp.lag1_inOpen, sp.lag1_inClose) > c_max(sp.lag2_inOpen, sp.lag2_inClose) { 1 } else { 0 }) != 0) && // 2nd gaps up
                c_max(inOpen, inClose) < c_max(sp.lag1_inOpen, sp.lag1_inClose) // 3rd is not higher than 2nd
             {
-                (*outInteger) = (0 - 100) as i32;
+                (*outInteger) = -100;
             }
             if ((if c_max(sp.lag1_inOpen, sp.lag1_inClose) < c_min(sp.lag2_inOpen, sp.lag2_inClose) { 1 } else { 0 }) != 0) && // 2nd gaps down
                c_min(inOpen, inClose) > c_min(sp.lag1_inOpen, sp.lag1_inClose) // 3rd is not lower than 2nd
@@ -616,7 +616,7 @@ impl Core {
                 if ((if c_min(inOpen[i - 1], inClose[i - 1]) > c_max(inOpen[i - 2], inClose[i - 2]) { 1 } else { 0 }) != 0) && // 2nd gaps up
                    c_max(inOpen[i], inClose[i]) < c_max(inOpen[i - 1], inClose[i - 1]) // 3rd is not higher than 2nd
                 {
-                    outInteger[(outIdx * outStride) as usize] = (0 - 100) as i32;
+                    outInteger[(outIdx * outStride) as usize] = -100;
                 }
                 if ((if c_max(inOpen[i - 1], inClose[i - 1]) < c_min(inOpen[i - 2], inClose[i - 2]) { 1 } else { 0 }) != 0) && // 2nd gaps down
                    c_min(inOpen[i], inClose[i]) > c_min(inOpen[i - 1], inClose[i - 1]) // 3rd is not lower than 2nd
@@ -862,7 +862,7 @@ impl CdltristarStream {
                 if ((if c_min(sp.lag1_inOpen, sp.lag1_inClose) > c_max(sp.lag2_inOpen, sp.lag2_inClose) { 1 } else { 0 }) != 0) && // 2nd gaps up
                    c_max(inOpen, inClose) < c_max(sp.lag1_inOpen, sp.lag1_inClose) // 3rd is not higher than 2nd
                 {
-                    (*outInteger) = (0 - 100) as i32;
+                    (*outInteger) = -100;
                 }
                 if ((if c_max(sp.lag1_inOpen, sp.lag1_inClose) < c_min(sp.lag2_inOpen, sp.lag2_inClose) { 1 } else { 0 }) != 0) && // 2nd gaps down
                    c_min(inOpen, inClose) > c_min(sp.lag1_inOpen, sp.lag1_inClose) // 3rd is not lower than 2nd

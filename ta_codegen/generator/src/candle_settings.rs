@@ -140,6 +140,7 @@ fn scan_expr(expr: &Expr, found: &mut BTreeSet<String>) {
         }
         Expr::Cast(_, inner)
         | Expr::Not(inner)
+        | Expr::Neg(inner)
         | Expr::BitwiseNot(inner)
         | Expr::AddressOf(inner)
         | Expr::PostIncrement(inner)

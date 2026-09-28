@@ -132,18 +132,18 @@ impl Core {
         // function does not consider it
         outIdx = 0;
         loop {
-            if (if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 }) == (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) && // 1st and 2nd of same color
-               (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) == 0 - (if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 }) && // 3rd opposite color
-               inOpen[i] < c_max(inClose[i - 1], inOpen[i - 1]) &&                // 3rd opens within 2nd rb
+            if (if inClose[i - 2] >= inOpen[i - 2] { 1 } else { -1 }) == (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) && // 1st and 2nd of same color
+               (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) == -(if inClose[i] >= inOpen[i] { 1 } else { -1 }) && // 3rd opposite color
+               inOpen[i] < c_max(inClose[i - 1], inOpen[i - 1]) &&              // 3rd opens within 2nd rb
                inOpen[i] > c_min(inClose[i - 1], inOpen[i - 1]) &&
-               inClose[i] < c_max(inClose[i - 2], inOpen[i - 2]) &&               // 3rd closes within 1st rb
+               inClose[i] < c_max(inClose[i - 2], inOpen[i - 2]) &&             // 3rd closes within 1st rb
                inClose[i] > c_min(inClose[i - 2], inOpen[i - 2]) &&
-               ((if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 }) == 1 && // when 1st is white
+               ((if inClose[i - 2] >= inOpen[i - 2] { 1 } else { -1 }) == 1 &&  // when 1st is white
                  ((if c_min(inOpen[i - 1], inClose[i - 1]) > c_max(inOpen[i - 2], inClose[i - 2]) { 1 } else { 0 }) != 0) || // upside gap
-                (((if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 })) as i32) == 0 - 1 && // when 1st is black
+                (if inClose[i - 2] >= inOpen[i - 2] { 1 } else { -1 }) == -1 && // when 1st is black
                  ((if c_max(inOpen[i - 1], inClose[i - 1]) < c_min(inOpen[i - 2], inClose[i - 2]) { 1 } else { 0 }) != 0)) // downside gap
             {
-                outInteger[outIdx] = ((if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 }) * 100) as i32;
+                outInteger[outIdx] = ((if inClose[i - 2] >= inOpen[i - 2] { 1 } else { -1 }) * 100) as i32;
                 outIdx += 1;
             } else {
                 outInteger[outIdx] = 0;
@@ -319,18 +319,18 @@ struct Cdlxsidegap3methodsStreamState {
 #[allow(unused_parens)]
 impl Core {
     fn cdlxsidegap3methods_step_impl(sp: &mut Cdlxsidegap3methodsStreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
-        if (if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { 0 - 1 }) == (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 }) && // 1st and 2nd of same color
-           (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 }) == 0 - (if inClose >= inOpen { 1 } else { 0 - 1 }) && // 3rd opposite color
-           inOpen < c_max(sp.lag1_inClose, sp.lag1_inOpen) &&                   // 3rd opens within 2nd rb
+        if (if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { -1 }) == (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { -1 }) && // 1st and 2nd of same color
+           (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { -1 }) == -(if inClose >= inOpen { 1 } else { -1 }) && // 3rd opposite color
+           inOpen < c_max(sp.lag1_inClose, sp.lag1_inOpen) &&                 // 3rd opens within 2nd rb
            inOpen > c_min(sp.lag1_inClose, sp.lag1_inOpen) &&
-           inClose < c_max(sp.lag2_inClose, sp.lag2_inOpen) &&                  // 3rd closes within 1st rb
+           inClose < c_max(sp.lag2_inClose, sp.lag2_inOpen) &&                // 3rd closes within 1st rb
            inClose > c_min(sp.lag2_inClose, sp.lag2_inOpen) &&
-           ((if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { 0 - 1 }) == 1 && // when 1st is white
+           ((if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { -1 }) == 1 &&  // when 1st is white
              ((if c_min(sp.lag1_inOpen, sp.lag1_inClose) > c_max(sp.lag2_inOpen, sp.lag2_inClose) { 1 } else { 0 }) != 0) || // upside gap
-            (((if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 && // when 1st is black
+            (if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { -1 }) == -1 && // when 1st is black
              ((if c_max(sp.lag1_inOpen, sp.lag1_inClose) < c_min(sp.lag2_inOpen, sp.lag2_inClose) { 1 } else { 0 }) != 0)) // downside gap
         {
-            (*outInteger) = ((if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { 0 - 1 }) * 100) as i32;
+            (*outInteger) = ((if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { -1 }) * 100) as i32;
         } else {
             (*outInteger) = 0;
         }
@@ -398,18 +398,18 @@ impl Core {
         // function does not consider it
         outIdx = 0;
         loop {
-            if (if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 }) == (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) && // 1st and 2nd of same color
-               (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) == 0 - (if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 }) && // 3rd opposite color
-               inOpen[i] < c_max(inClose[i - 1], inOpen[i - 1]) &&                // 3rd opens within 2nd rb
+            if (if inClose[i - 2] >= inOpen[i - 2] { 1 } else { -1 }) == (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) && // 1st and 2nd of same color
+               (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) == -(if inClose[i] >= inOpen[i] { 1 } else { -1 }) && // 3rd opposite color
+               inOpen[i] < c_max(inClose[i - 1], inOpen[i - 1]) &&              // 3rd opens within 2nd rb
                inOpen[i] > c_min(inClose[i - 1], inOpen[i - 1]) &&
-               inClose[i] < c_max(inClose[i - 2], inOpen[i - 2]) &&               // 3rd closes within 1st rb
+               inClose[i] < c_max(inClose[i - 2], inOpen[i - 2]) &&             // 3rd closes within 1st rb
                inClose[i] > c_min(inClose[i - 2], inOpen[i - 2]) &&
-               ((if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 }) == 1 && // when 1st is white
+               ((if inClose[i - 2] >= inOpen[i - 2] { 1 } else { -1 }) == 1 &&  // when 1st is white
                  ((if c_min(inOpen[i - 1], inClose[i - 1]) > c_max(inOpen[i - 2], inClose[i - 2]) { 1 } else { 0 }) != 0) || // upside gap
-                (((if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 })) as i32) == 0 - 1 && // when 1st is black
+                (if inClose[i - 2] >= inOpen[i - 2] { 1 } else { -1 }) == -1 && // when 1st is black
                  ((if c_max(inOpen[i - 1], inClose[i - 1]) < c_min(inOpen[i - 2], inClose[i - 2]) { 1 } else { 0 }) != 0)) // downside gap
             {
-                outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = ((if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 }) * 100) as i32;
+                outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = ((if inClose[i - 2] >= inOpen[i - 2] { 1 } else { -1 }) * 100) as i32;
             } else {
                 outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0;
             }
@@ -611,18 +611,18 @@ impl Cdlxsidegap3methodsStream {
         {
             let sp = &self.state;
             let outInteger = &mut outInteger;
-            if (if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { 0 - 1 }) == (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 }) && // 1st and 2nd of same color
-               (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 }) == 0 - (if inClose >= inOpen { 1 } else { 0 - 1 }) && // 3rd opposite color
-               inOpen < c_max(sp.lag1_inClose, sp.lag1_inOpen) &&                   // 3rd opens within 2nd rb
+            if (if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { -1 }) == (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { -1 }) && // 1st and 2nd of same color
+               (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { -1 }) == -(if inClose >= inOpen { 1 } else { -1 }) && // 3rd opposite color
+               inOpen < c_max(sp.lag1_inClose, sp.lag1_inOpen) &&                 // 3rd opens within 2nd rb
                inOpen > c_min(sp.lag1_inClose, sp.lag1_inOpen) &&
-               inClose < c_max(sp.lag2_inClose, sp.lag2_inOpen) &&                  // 3rd closes within 1st rb
+               inClose < c_max(sp.lag2_inClose, sp.lag2_inOpen) &&                // 3rd closes within 1st rb
                inClose > c_min(sp.lag2_inClose, sp.lag2_inOpen) &&
-               ((if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { 0 - 1 }) == 1 && // when 1st is white
+               ((if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { -1 }) == 1 &&  // when 1st is white
                  ((if c_min(sp.lag1_inOpen, sp.lag1_inClose) > c_max(sp.lag2_inOpen, sp.lag2_inClose) { 1 } else { 0 }) != 0) || // upside gap
-                (((if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 && // when 1st is black
+                (if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { -1 }) == -1 && // when 1st is black
                  ((if c_max(sp.lag1_inOpen, sp.lag1_inClose) < c_min(sp.lag2_inOpen, sp.lag2_inClose) { 1 } else { 0 }) != 0)) // downside gap
             {
-                (*outInteger) = ((if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { 0 - 1 }) * 100) as i32;
+                (*outInteger) = ((if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { -1 }) * 100) as i32;
             } else {
                 (*outInteger) = 0;
             }

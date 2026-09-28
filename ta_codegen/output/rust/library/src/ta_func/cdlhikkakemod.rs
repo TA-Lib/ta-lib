@@ -229,7 +229,7 @@ impl Core {
                          _w5[_wk + 3] > _w5[_wk + 2] && // (bear) 4th: higher high and higher low
                          _w1[_wk] >= _w3[_wk + 1] - ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((_w1[_wk]) - (_w7[_wk])).abs(), 1 => (_w3[_wk + 1]) - (_w5[_wk + 1]), 2 => ((_w3[_wk + 1]) - (if (_w1[_wk]) >= (_w7[_wk]) { (_w1[_wk]) } else { (_w7[_wk]) })) + ((if (_w1[_wk]) >= (_w7[_wk]) { (_w7[_wk]) } else { (_w1[_wk]) }) - (_w5[_wk + 1])), _ => 0.0 } }) * (if (Near_rangeType) == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
                     {
-                        patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { 0 - 1 });
+                        patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { -1 });
                         patternHigh = inHigh[i - 1];
                         patternLow = inLow[i - 1];
                         patternCount = 4;
@@ -262,7 +262,7 @@ impl Core {
                          inLow[i] > inLow[i - 1] &&     // (bear) 4th: higher high and higher low
                          inClose[i - 2] >= inHigh[i - 2] - ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((inClose[i - 2]) - (inOpen[i - 2])).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), 2 => ((inHigh[i - 2]) - (if (inClose[i - 2]) >= (inOpen[i - 2]) { (inClose[i - 2]) } else { (inOpen[i - 2]) })) + ((if (inClose[i - 2]) >= (inOpen[i - 2]) { (inOpen[i - 2]) } else { (inClose[i - 2]) }) - (inLow[i - 2])), _ => 0.0 } }) * (if (Near_rangeType) == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
                     {
-                        patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { 0 - 1 });
+                        patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { -1 });
                         patternHigh = inHigh[i - 1];
                         patternLow = inLow[i - 1];
                         patternCount = 4;
@@ -323,7 +323,7 @@ impl Core {
                          _w5[_wk + 3] > _w5[_wk + 2] && // (bear) 4th: higher high and higher low
                          _w1[_wk] >= _w3[_wk + 1] - ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((_w1[_wk]) - (_w7[_wk])).abs(), 1 => (_w3[_wk + 1]) - (_w5[_wk + 1]), 2 => ((_w3[_wk + 1]) - (if (_w1[_wk]) >= (_w7[_wk]) { (_w1[_wk]) } else { (_w7[_wk]) })) + ((if (_w1[_wk]) >= (_w7[_wk]) { (_w7[_wk]) } else { (_w1[_wk]) }) - (_w5[_wk + 1])), _ => 0.0 } }) * (if (Near_rangeType) == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
                     {
-                        patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { 0 - 1 });
+                        patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { -1 });
                         patternHigh = inHigh[i - 1];
                         patternLow = inLow[i - 1];
                         patternCount = 4;
@@ -335,7 +335,7 @@ impl Core {
                         patternResult < 0 &&
                          inClose[i] < patternLow)    // close lower than the low of 3rd
                     {
-                        outInteger[outIdx] = (patternResult + ((100 * (if patternResult > 0 { 1 } else { 0 - 1 })) as i32)) as i32;
+                        outInteger[outIdx] = (patternResult + ((100 * (if patternResult > 0 { 1 } else { -1 })) as i32)) as i32;
                         outIdx += 1;
                         patternCount = 0;
                     } else {
@@ -362,7 +362,7 @@ impl Core {
                          inLow[i] > inLow[i - 1] &&     // (bear) 4th: higher high and higher low
                          inClose[i - 2] >= inHigh[i - 2] - ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((inClose[i - 2]) - (inOpen[i - 2])).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), 2 => ((inHigh[i - 2]) - (if (inClose[i - 2]) >= (inOpen[i - 2]) { (inClose[i - 2]) } else { (inOpen[i - 2]) })) + ((if (inClose[i - 2]) >= (inOpen[i - 2]) { (inOpen[i - 2]) } else { (inClose[i - 2]) }) - (inLow[i - 2])), _ => 0.0 } }) * (if (Near_rangeType) == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
                     {
-                        patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { 0 - 1 });
+                        patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { -1 });
                         patternHigh = inHigh[i - 1];
                         patternLow = inLow[i - 1];
                         patternCount = 4;
@@ -374,7 +374,7 @@ impl Core {
                         patternResult < 0 &&
                          inClose[i] < patternLow)    // close lower than the low of 3rd
                     {
-                        outInteger[outIdx] = (patternResult + ((100 * (if patternResult > 0 { 1 } else { 0 - 1 })) as i32)) as i32;
+                        outInteger[outIdx] = (patternResult + ((100 * (if patternResult > 0 { 1 } else { -1 })) as i32)) as i32;
                         outIdx += 1;
                         patternCount = 0;
                     } else {
@@ -403,7 +403,7 @@ impl Core {
                      inLow[i] > inLow[i - 1] &&     // (bear) 4th: higher high and higher low
                      inClose[i - 2] >= inHigh[i - 2] - ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((inClose[i - 2]) - (inOpen[i - 2])).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), 2 => ((inHigh[i - 2]) - (if (inClose[i - 2]) >= (inOpen[i - 2]) { (inClose[i - 2]) } else { (inOpen[i - 2]) })) + ((if (inClose[i - 2]) >= (inOpen[i - 2]) { (inOpen[i - 2]) } else { (inClose[i - 2]) }) - (inLow[i - 2])), _ => 0.0 } }) * (if (Near_rangeType) == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
                 {
-                    patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { 0 - 1 });
+                    patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { -1 });
                     patternHigh = inHigh[i - 1];
                     patternLow = inLow[i - 1];
                     patternCount = 4;
@@ -415,7 +415,7 @@ impl Core {
                     patternResult < 0 &&
                      inClose[i] < patternLow)    // close lower than the low of 3rd
                 {
-                    outInteger[outIdx] = (patternResult + ((100 * (if patternResult > 0 { 1 } else { 0 - 1 })) as i32)) as i32;
+                    outInteger[outIdx] = (patternResult + ((100 * (if patternResult > 0 { 1 } else { -1 })) as i32)) as i32;
                     outIdx += 1;
                     patternCount = 0;
                 } else {
@@ -644,7 +644,7 @@ impl Core {
              inLow > sp.lag1_inLow &&         // (bear) 4th: higher high and higher low
              sp.lag2_inClose >= sp.lag2_inHigh - ((Near_factor) * (if (Near_avgPeriod) != 0 { (sp.NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((sp.lag2_inClose) - (sp.lag2_inOpen)).abs(), 1 => (sp.lag2_inHigh) - (sp.lag2_inLow), 2 => ((sp.lag2_inHigh) - (if (sp.lag2_inClose) >= (sp.lag2_inOpen) { (sp.lag2_inClose) } else { (sp.lag2_inOpen) })) + ((if (sp.lag2_inClose) >= (sp.lag2_inOpen) { (sp.lag2_inOpen) } else { (sp.lag2_inClose) }) - (sp.lag2_inLow)), _ => 0.0 } }) * (if (Near_rangeType) == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
         {
-            sp.patternResult = 100 * (if inHigh < sp.lag1_inHigh { 1 } else { 0 - 1 });
+            sp.patternResult = 100 * (if inHigh < sp.lag1_inHigh { 1 } else { -1 });
             sp.patternHigh = sp.lag1_inHigh;
             sp.patternLow = sp.lag1_inLow;
             sp.patternCount = 4;
@@ -655,7 +655,7 @@ impl Core {
             sp.patternResult < 0 &&
              inClose < sp.patternLow)    // close lower than the low of 3rd
         {
-            (*outInteger) = (sp.patternResult + ((100 * (if sp.patternResult > 0 { 1 } else { 0 - 1 })) as i32)) as i32;
+            (*outInteger) = (sp.patternResult + ((100 * (if sp.patternResult > 0 { 1 } else { -1 })) as i32)) as i32;
             sp.patternCount = 0;
         } else {
             (*outInteger) = 0;
@@ -794,7 +794,7 @@ impl Core {
                  inLow[i] > inLow[i - 1] &&     // (bear) 4th: higher high and higher low
                  inClose[i - 2] >= inHigh[i - 2] - ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((inClose[i - 2]) - (inOpen[i - 2])).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), 2 => ((inHigh[i - 2]) - (if (inClose[i - 2]) >= (inOpen[i - 2]) { (inClose[i - 2]) } else { (inOpen[i - 2]) })) + ((if (inClose[i - 2]) >= (inOpen[i - 2]) { (inOpen[i - 2]) } else { (inClose[i - 2]) }) - (inLow[i - 2])), _ => 0.0 } }) * (if (Near_rangeType) == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
             {
-                patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { 0 - 1 });
+                patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { -1 });
                 patternHigh = inHigh[i - 1];
                 patternLow = inLow[i - 1];
                 patternCount = 4;
@@ -842,7 +842,7 @@ impl Core {
                  inLow[i] > inLow[i - 1] &&     // (bear) 4th: higher high and higher low
                  inClose[i - 2] >= inHigh[i - 2] - ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((inClose[i - 2]) - (inOpen[i - 2])).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), 2 => ((inHigh[i - 2]) - (if (inClose[i - 2]) >= (inOpen[i - 2]) { (inClose[i - 2]) } else { (inOpen[i - 2]) })) + ((if (inClose[i - 2]) >= (inOpen[i - 2]) { (inOpen[i - 2]) } else { (inClose[i - 2]) }) - (inLow[i - 2])), _ => 0.0 } }) * (if (Near_rangeType) == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
             {
-                patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { 0 - 1 });
+                patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { -1 });
                 patternHigh = inHigh[i - 1];
                 patternLow = inLow[i - 1];
                 patternCount = 4;
@@ -853,7 +853,7 @@ impl Core {
                 patternResult < 0 &&
                  inClose[i] < patternLow)    // close lower than the low of 3rd
             {
-                outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = (patternResult + ((100 * (if patternResult > 0 { 1 } else { 0 - 1 })) as i32)) as i32;
+                outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = (patternResult + ((100 * (if patternResult > 0 { 1 } else { -1 })) as i32)) as i32;
                 patternCount = 0;
             } else {
                 outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0;
@@ -1109,7 +1109,7 @@ impl CdlhikkakemodStream {
                  inLow > sp.lag1_inLow &&         // (bear) 4th: higher high and higher low
                  sp.lag2_inClose >= sp.lag2_inHigh - ((Near_factor) * (if (Near_avgPeriod) != 0 { (sp.NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((sp.lag2_inClose) - (sp.lag2_inOpen)).abs(), 1 => (sp.lag2_inHigh) - (sp.lag2_inLow), 2 => ((sp.lag2_inHigh) - (if (sp.lag2_inClose) >= (sp.lag2_inOpen) { (sp.lag2_inClose) } else { (sp.lag2_inOpen) })) + ((if (sp.lag2_inClose) >= (sp.lag2_inOpen) { (sp.lag2_inOpen) } else { (sp.lag2_inClose) }) - (sp.lag2_inLow)), _ => 0.0 } }) * (if (Near_rangeType) == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
             {
-                patternResult = 100 * (if inHigh < sp.lag1_inHigh { 1 } else { 0 - 1 });
+                patternResult = 100 * (if inHigh < sp.lag1_inHigh { 1 } else { -1 });
                 patternHigh = sp.lag1_inHigh;
                 patternLow = sp.lag1_inLow;
                 patternCount = 4;
@@ -1120,7 +1120,7 @@ impl CdlhikkakemodStream {
                 patternResult < 0 &&
                  inClose < patternLow)    // close lower than the low of 3rd
             {
-                (*outInteger) = (patternResult + ((100 * (if patternResult > 0 { 1 } else { 0 - 1 })) as i32)) as i32;
+                (*outInteger) = (patternResult + ((100 * (if patternResult > 0 { 1 } else { -1 })) as i32)) as i32;
                 patternCount = 0;
             } else {
                 (*outInteger) = 0;

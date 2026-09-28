@@ -83,7 +83,7 @@ TA_LIB_API int TA_MAVP_Lookback( int optInMinPeriod, int optInMaxPeriod, TA_MATy
     */
    if( optInMinPeriod > optInMaxPeriod )
    {
-      return 0 - 1;
+      return -1;
    }
    return TA_MA_Lookback(optInMaxPeriod,optInMAType);
 }

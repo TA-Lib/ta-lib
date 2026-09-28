@@ -213,7 +213,7 @@ fn vars_of(e: &Expr, out: &mut HashSet<String>) {
             vars_of(l, out);
             vars_of(r, out);
         }
-        Expr::Cast(_, i) | Expr::Not(i) | Expr::BitwiseNot(i) | Expr::AddressOf(i) => {
+        Expr::Cast(_, i) | Expr::Not(i) | Expr::BitwiseNot(i) | Expr::Neg(i) | Expr::AddressOf(i) => {
             vars_of(i, out)
         }
         Expr::PostIncrement(i)
@@ -648,7 +648,7 @@ fn scan_expr(
             scan_expr(l, accum, guards, aliases, derived, func, out);
             scan_expr(r, accum, guards, aliases, derived, func, out);
         }
-        Expr::Cast(_, i) | Expr::Not(i) | Expr::BitwiseNot(i) | Expr::AddressOf(i) => {
+        Expr::Cast(_, i) | Expr::Not(i) | Expr::BitwiseNot(i) | Expr::Neg(i) | Expr::AddressOf(i) => {
             scan_expr(i, accum, guards, aliases, derived, func, out)
         }
         Expr::FuncCall(_, args) => {

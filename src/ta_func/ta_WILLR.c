@@ -271,13 +271,13 @@ TA_LIB_API TA_RetCode TA_WILLR( int    startIdx,
        */
       if( !TA_IS_ZERO_SCALED(highest - lowest, fabs(highest) + fabs(lowest)) )
       {
-         tempReal = (highest - inClose[today]) / (highest - lowest) * (0 - 100.0);
+         tempReal = (highest - inClose[today]) / (highest - lowest) * -100.0;
          if( tempReal > 0.0 )
          {
             tempReal = 0.0;
-         } else if( tempReal < 0 - 100.0 )
+         } else if( tempReal < -100.0 )
          {
-            tempReal = 0 - 100.0;
+            tempReal = -100.0;
          }
          outReal[outIdx++] = tempReal;
       } else 
@@ -342,13 +342,13 @@ TA_LIB_API TA_RetCode TA_WILLR( int    startIdx,
             }
             if( !TA_IS_ZERO_SCALED(highest - lowest, fabs(highest) + fabs(lowest)) )
             {
-               tempReal = (highest - inClose[today + m - 1]) / (highest - lowest) * (0 - 100.0);
+               tempReal = (highest - inClose[today + m - 1]) / (highest - lowest) * -100.0;
                if( tempReal > 0.0 )
                {
                   tempReal = 0.0;
-               } else if( tempReal < 0 - 100.0 )
+               } else if( tempReal < -100.0 )
                {
-                  tempReal = 0 - 100.0;
+                  tempReal = -100.0;
                }
                outReal[outIdx++] = tempReal;
             } else 
@@ -527,13 +527,13 @@ TA_RetCode TA_S_WILLR( int    startIdx,
       lowest = sufLowest[0];
       if( !TA_IS_ZERO_SCALED(highest - lowest, fabs(highest) + fabs(lowest)) )
       {
-         tempReal = (highest - (double)inClose[today]) / (highest - lowest) * (0 - 100.0);
+         tempReal = (highest - (double)inClose[today]) / (highest - lowest) * -100.0;
          if( tempReal > 0.0 )
          {
             tempReal = 0.0;
-         } else if( tempReal < 0 - 100.0 )
+         } else if( tempReal < -100.0 )
          {
-            tempReal = 0 - 100.0;
+            tempReal = -100.0;
          }
          outReal[outIdx++] = tempReal;
       } else 
@@ -590,13 +590,13 @@ TA_RetCode TA_S_WILLR( int    startIdx,
             }
             if( !TA_IS_ZERO_SCALED(highest - lowest, fabs(highest) + fabs(lowest)) )
             {
-               tempReal = (highest - (double)inClose[today + m - 1]) / (highest - lowest) * (0 - 100.0);
+               tempReal = (highest - (double)inClose[today + m - 1]) / (highest - lowest) * -100.0;
                if( tempReal > 0.0 )
                {
                   tempReal = 0.0;
-               } else if( tempReal < 0 - 100.0 )
+               } else if( tempReal < -100.0 )
                {
-                  tempReal = 0 - 100.0;
+                  tempReal = -100.0;
                }
                outReal[outIdx++] = tempReal;
             } else 
@@ -711,13 +711,13 @@ static void TA_WILLR_StepImpl( struct TA_WILLR_Stream *sp, double inHigh, double
    /* Same rule, band and clamp as the block scan above. */
    if( !TA_IS_ZERO_SCALED(sp->highest - sp->lowest, fabs(sp->highest) + fabs(sp->lowest)) )
    {
-      tempReal = (sp->highest - sp->x_inClose[sp->today & sp->xMask]) / (sp->highest - sp->lowest) * (0 - 100.0);
+      tempReal = (sp->highest - sp->x_inClose[sp->today & sp->xMask]) / (sp->highest - sp->lowest) * -100.0;
       if( tempReal > 0.0 )
       {
          tempReal = 0.0;
-      } else if( tempReal < 0 - 100.0 )
+      } else if( tempReal < -100.0 )
       {
-         tempReal = 0 - 100.0;
+         tempReal = -100.0;
       }
       *outReal= tempReal;
    } else 
@@ -807,7 +807,7 @@ static TA_RetCode TA_WILLR_OpenImpl( struct TA_WILLR_Stream **stream, const doub
       outIdx = 0;
       today = startIdx;
       trailingIdx = startIdx - nbInitialElementNeeded;
-      highestIdx = 0 - 1;
+      highestIdx = -1;
       lowestIdx = highestIdx;
       lowest = 0.0;
       highest = lowest;
@@ -860,13 +860,13 @@ static TA_RetCode TA_WILLR_OpenImpl( struct TA_WILLR_Stream **stream, const doub
          /* Same rule, band and clamp as the block scan above. */
          if( !TA_IS_ZERO_SCALED(highest - lowest, fabs(highest) + fabs(lowest)) )
          {
-            tempReal = (highest - inClose[today]) / (highest - lowest) * (0 - 100.0);
+            tempReal = (highest - inClose[today]) / (highest - lowest) * -100.0;
             if( tempReal > 0.0 )
             {
                tempReal = 0.0;
-            } else if( tempReal < 0 - 100.0 )
+            } else if( tempReal < -100.0 )
             {
-               tempReal = 0 - 100.0;
+               tempReal = -100.0;
             }
             outReal[outIdx++ * outStride] = tempReal;
          } else 
@@ -1058,13 +1058,13 @@ TA_LIB_API TA_RetCode TA_WILLR_Peek( const TA_WILLR_Stream *stream, double inHig
    /* Same rule, band and clamp as the block scan above. */
    if( !TA_IS_ZERO_SCALED(highest - lowest, fabs(highest) + fabs(lowest)) )
    {
-      tempReal = (highest - (((sp->today & sp->xMask) != pkSlot2) ? x_inClose[sp->today & sp->xMask] : pkVal2)) / (highest - lowest) * (0 - 100.0);
+      tempReal = (highest - (((sp->today & sp->xMask) != pkSlot2) ? x_inClose[sp->today & sp->xMask] : pkVal2)) / (highest - lowest) * -100.0;
       if( tempReal > 0.0 )
       {
          tempReal = 0.0;
-      } else if( tempReal < 0 - 100.0 )
+      } else if( tempReal < -100.0 )
       {
-         tempReal = 0 - 100.0;
+         tempReal = -100.0;
       }
       *outReal= tempReal;
    } else 

@@ -504,9 +504,11 @@ fn render_init_expr(expr: &Expr) -> String {
     match expr {
         Expr::Literal(f) => {
             let s = format!("{f}");
-            if f.fract() == 0.0 && !s.contains('.') { format!("{s}.0") } else { s }
+            let s = if f.fract() == 0.0 && !s.contains('.') { format!("{s}.0") } else { s };
+            if *f < 0.0 { format!("({s})") } else { s }
         }
-        Expr::IntLiteral(i) => format!("{i}"),
+        Expr::IntLiteral(i) => if *i < 0 { format!("({i})") } else { format!("{i}") },
+        Expr::Neg(inner) => format!("(-({}))", render_init_expr(inner)),
         Expr::Var(name) => name.clone(),
         Expr::BinOp(lhs, op, rhs) => {
             let op_str = match op {

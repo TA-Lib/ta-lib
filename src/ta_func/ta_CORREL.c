@@ -357,9 +357,9 @@ TA_LIB_API TA_RetCode TA_CORREL( int    startIdx,
          if( tempReal > 1.0 )
          {
             tempReal = 1.0;
-         } else if( tempReal < 0 - 1.0 )
+         } else if( tempReal < -1.0 )
          {
-            tempReal = 0 - 1.0;
+            tempReal = -1.0;
          }
          outReal[outIdx++] = tempReal;
       } else 
@@ -562,9 +562,9 @@ TA_RetCode TA_S_CORREL( int    startIdx,
          if( tempReal > 1.0 )
          {
             tempReal = 1.0;
-         } else if( tempReal < 0 - 1.0 )
+         } else if( tempReal < -1.0 )
          {
-            tempReal = 0 - 1.0;
+            tempReal = -1.0;
          }
          outReal[outIdx++] = tempReal;
       } else 
@@ -816,9 +816,9 @@ static void TA_CORREL_StepImpl( struct TA_CORREL_Stream *sp, double inReal0, dou
       if( tempReal > 1.0 )
       {
          tempReal = 1.0;
-      } else if( tempReal < 0 - 1.0 )
+      } else if( tempReal < -1.0 )
       {
-         tempReal = 0 - 1.0;
+         tempReal = -1.0;
       }
       *outReal= tempReal;
    } else 
@@ -1117,9 +1117,9 @@ static TA_RetCode TA_CORREL_OpenImpl( struct TA_CORREL_Stream **stream, const do
             if( tempReal > 1.0 )
             {
                tempReal = 1.0;
-            } else if( tempReal < 0 - 1.0 )
+            } else if( tempReal < -1.0 )
             {
-               tempReal = 0 - 1.0;
+               tempReal = -1.0;
             }
             outReal[outIdx++ * outStride] = tempReal;
          } else 
@@ -1443,9 +1443,9 @@ TA_LIB_API TA_RetCode TA_CORREL_Peek( const TA_CORREL_Stream *stream, double inR
       if( tempReal > 1.0 )
       {
          tempReal = 1.0;
-      } else if( tempReal < 0 - 1.0 )
+      } else if( tempReal < -1.0 )
       {
-         tempReal = 0 - 1.0;
+         tempReal = -1.0;
       }
       *outReal= tempReal;
    } else 

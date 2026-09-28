@@ -140,18 +140,18 @@ TA_LIB_API TA_RetCode TA_CDLLADDERBOTTOM( int    startIdx,
    outIdx = 0;
    do
    {
-      if( ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : 0 - 1) == 0 - 1 &&
-          ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : 0 - 1) == 0 - 1 &&
-          ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && /* 3 black candlesticks */
+      if( ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : -1) == -1 &&
+          ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : -1) == -1 &&
+          ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == -1 && /* 3 black candlesticks */
           inOpen[i - 4] > inOpen[i - 3] &&
-          inOpen[i - 3] > inOpen[i - 2] &&                            /* with consecutively lower opens */
+          inOpen[i - 3] > inOpen[i - 2] &&                      /* with consecutively lower opens */
           inClose[i - 4] > inClose[i - 3] &&
-          inClose[i - 3] > inClose[i - 2] &&                          /* and closes */
-          ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && /* 4th: black with an upper shadow */
+          inClose[i - 3] > inClose[i - 2] &&                    /* and closes */
+          ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 && /* 4th: black with an upper shadow */
           (inHigh[i - 1] - ((inClose[i - 1] >= inOpen[i - 1]) ? inClose[i - 1] : inOpen[i - 1])) > TA_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal,i - 1) &&
-          ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 &&             /* 5th: white */
-          inOpen[i] > inOpen[i - 1] &&                                /* that opens above prior candle's body */
-          inClose[i] > inHigh[i - 1] )                                /* and closes above prior candle's high */
+          ((inClose[i] >= inOpen[i]) ? 1 : -1) == 1 &&          /* 5th: white */
+          inOpen[i] > inOpen[i - 1] &&                          /* that opens above prior candle's body */
+          inClose[i] > inHigh[i - 1] )                          /* and closes above prior candle's high */
       {
          outInteger[outIdx++] = 100;
       } else 
@@ -229,7 +229,7 @@ TA_RetCode TA_S_CDLLADDERBOTTOM( int    startIdx,
    outIdx = 0;
    do
    {
-      if( (((double)inClose[i - 4] >= (double)inOpen[i - 4]) ? 1 : 0 - 1) == 0 - 1 && (((double)inClose[i - 3] >= (double)inOpen[i - 3]) ? 1 : 0 - 1) == 0 - 1 && (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && (double)inOpen[i - 4] > (double)inOpen[i - 3] && (double)inOpen[i - 3] > (double)inOpen[i - 2] && (double)inClose[i - 4] > (double)inClose[i - 3] && (double)inClose[i - 3] > (double)inClose[i - 2] && (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && ((double)inHigh[i - 1] - (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? (double)inClose[i - 1] : (double)inOpen[i - 1])) > TA_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal,i - 1) && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 1 && (double)inOpen[i] > (double)inOpen[i - 1] && (double)inClose[i] > (double)inHigh[i - 1] )
+      if( (((double)inClose[i - 4] >= (double)inOpen[i - 4]) ? 1 : -1) == -1 && (((double)inClose[i - 3] >= (double)inOpen[i - 3]) ? 1 : -1) == -1 && (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : -1) == -1 && (double)inOpen[i - 4] > (double)inOpen[i - 3] && (double)inOpen[i - 3] > (double)inOpen[i - 2] && (double)inClose[i - 4] > (double)inClose[i - 3] && (double)inClose[i - 3] > (double)inClose[i - 2] && (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : -1) == -1 && ((double)inHigh[i - 1] - (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? (double)inClose[i - 1] : (double)inOpen[i - 1])) > TA_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal,i - 1) && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : -1) == 1 && (double)inOpen[i] > (double)inOpen[i - 1] && (double)inClose[i] > (double)inHigh[i - 1] )
       {
          outInteger[outIdx++] = 100;
       } else 
@@ -282,18 +282,18 @@ static void TA_CDLLADDERBOTTOM_ReleaseImpl( struct TA_CDLLADDERBOTTOM_Stream *sp
 static void TA_CDLLADDERBOTTOM_StepImpl( struct TA_CDLLADDERBOTTOM_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
    sp->ring_ShadowVeryShortTrailingIdx_derived[sp->ringPos_ShadowVeryShortTrailingIdx] = TA_STREAM_CANDLERANGE(ShadowVeryShort,inOpen,inHigh,inLow,inClose);
-   if( ((sp->lag4_inClose >= sp->lag4_inOpen) ? 1 : 0 - 1) == 0 - 1 &&
-       ((sp->lag3_inClose >= sp->lag3_inOpen) ? 1 : 0 - 1) == 0 - 1 &&
-       ((sp->lag2_inClose >= sp->lag2_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* 3 black candlesticks */
+   if( ((sp->lag4_inClose >= sp->lag4_inOpen) ? 1 : -1) == -1 &&
+       ((sp->lag3_inClose >= sp->lag3_inOpen) ? 1 : -1) == -1 &&
+       ((sp->lag2_inClose >= sp->lag2_inOpen) ? 1 : -1) == -1 && /* 3 black candlesticks */
        sp->lag4_inOpen > sp->lag3_inOpen &&
-       sp->lag3_inOpen > sp->lag2_inOpen &&                            /* with consecutively lower opens */
+       sp->lag3_inOpen > sp->lag2_inOpen &&                      /* with consecutively lower opens */
        sp->lag4_inClose > sp->lag3_inClose &&
-       sp->lag3_inClose > sp->lag2_inClose &&                          /* and closes */
-       ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* 4th: black with an upper shadow */
+       sp->lag3_inClose > sp->lag2_inClose &&                    /* and closes */
+       ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : -1) == -1 && /* 4th: black with an upper shadow */
        (sp->lag1_inHigh - ((sp->lag1_inClose >= sp->lag1_inOpen) ? sp->lag1_inClose : sp->lag1_inOpen)) > TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,sp->ShadowVeryShortPeriodTotal,sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose) &&
-       ((inClose >= inOpen) ? 1 : 0 - 1) == 1 &&                       /* 5th: white */
-       inOpen > sp->lag1_inOpen &&                                     /* that opens above prior candle's body */
-       inClose > sp->lag1_inHigh )                                     /* and closes above prior candle's high */
+       ((inClose >= inOpen) ? 1 : -1) == 1 &&                    /* 5th: white */
+       inOpen > sp->lag1_inOpen &&                               /* that opens above prior candle's body */
+       inClose > sp->lag1_inHigh )                               /* and closes above prior candle's high */
    {
       *outInteger= 100;
    } else 
@@ -390,18 +390,18 @@ static TA_RetCode TA_CDLLADDERBOTTOM_OpenImpl( struct TA_CDLLADDERBOTTOM_Stream 
       outIdx = 0;
       do
       {
-         if( ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : 0 - 1) == 0 - 1 &&
-             ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : 0 - 1) == 0 - 1 &&
-             ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && /* 3 black candlesticks */
+         if( ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : -1) == -1 &&
+             ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : -1) == -1 &&
+             ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == -1 && /* 3 black candlesticks */
              inOpen[i - 4] > inOpen[i - 3] &&
-             inOpen[i - 3] > inOpen[i - 2] &&                            /* with consecutively lower opens */
+             inOpen[i - 3] > inOpen[i - 2] &&                      /* with consecutively lower opens */
              inClose[i - 4] > inClose[i - 3] &&
-             inClose[i - 3] > inClose[i - 2] &&                          /* and closes */
-             ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && /* 4th: black with an upper shadow */
+             inClose[i - 3] > inClose[i - 2] &&                    /* and closes */
+             ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 && /* 4th: black with an upper shadow */
              (inHigh[i - 1] - ((inClose[i - 1] >= inOpen[i - 1]) ? inClose[i - 1] : inOpen[i - 1])) > TA_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal,i - 1) &&
-             ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 &&             /* 5th: white */
-             inOpen[i] > inOpen[i - 1] &&                                /* that opens above prior candle's body */
-             inClose[i] > inHigh[i - 1] )                                /* and closes above prior candle's high */
+             ((inClose[i] >= inOpen[i]) ? 1 : -1) == 1 &&          /* 5th: white */
+             inOpen[i] > inOpen[i - 1] &&                          /* that opens above prior candle's body */
+             inClose[i] > inHigh[i - 1] )                          /* and closes above prior candle's high */
          {
             outInteger[outIdx++ * outStride] = 100;
          } else 
@@ -514,18 +514,18 @@ TA_LIB_API TA_RetCode TA_CDLLADDERBOTTOM_Peek( const TA_CDLLADDERBOTTOM_Stream *
 
    if( !stream || !outInteger ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
-   if( ((sp->lag4_inClose >= sp->lag4_inOpen) ? 1 : 0 - 1) == 0 - 1 &&
-       ((sp->lag3_inClose >= sp->lag3_inOpen) ? 1 : 0 - 1) == 0 - 1 &&
-       ((sp->lag2_inClose >= sp->lag2_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* 3 black candlesticks */
+   if( ((sp->lag4_inClose >= sp->lag4_inOpen) ? 1 : -1) == -1 &&
+       ((sp->lag3_inClose >= sp->lag3_inOpen) ? 1 : -1) == -1 &&
+       ((sp->lag2_inClose >= sp->lag2_inOpen) ? 1 : -1) == -1 && /* 3 black candlesticks */
        sp->lag4_inOpen > sp->lag3_inOpen &&
-       sp->lag3_inOpen > sp->lag2_inOpen &&                            /* with consecutively lower opens */
+       sp->lag3_inOpen > sp->lag2_inOpen &&                      /* with consecutively lower opens */
        sp->lag4_inClose > sp->lag3_inClose &&
-       sp->lag3_inClose > sp->lag2_inClose &&                          /* and closes */
-       ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* 4th: black with an upper shadow */
+       sp->lag3_inClose > sp->lag2_inClose &&                    /* and closes */
+       ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : -1) == -1 && /* 4th: black with an upper shadow */
        (sp->lag1_inHigh - ((sp->lag1_inClose >= sp->lag1_inOpen) ? sp->lag1_inClose : sp->lag1_inOpen)) > TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,sp->ShadowVeryShortPeriodTotal,sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose) &&
-       ((inClose >= inOpen) ? 1 : 0 - 1) == 1 &&                       /* 5th: white */
-       inOpen > sp->lag1_inOpen &&                                     /* that opens above prior candle's body */
-       inClose > sp->lag1_inHigh )                                     /* and closes above prior candle's high */
+       ((inClose >= inOpen) ? 1 : -1) == 1 &&                    /* 5th: white */
+       inOpen > sp->lag1_inOpen &&                               /* that opens above prior candle's body */
+       inClose > sp->lag1_inHigh )                               /* and closes above prior candle's high */
    {
       *outInteger= 100;
    } else 

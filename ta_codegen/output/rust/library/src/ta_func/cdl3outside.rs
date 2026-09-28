@@ -131,18 +131,18 @@ impl Core {
         // in an uptrend, while this function does not consider it
         outIdx = 0;
         loop {
-            if (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) == 1 &&
-                (((if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 })) as i32) == 0 - 1 && // white engulfs black
+            if (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) == 1 &&
+                (if inClose[i - 2] >= inOpen[i - 2] { 1 } else { -1 }) == -1 && // white engulfs black
                 inClose[i - 1] > inOpen[i - 2] &&
                 inOpen[i - 1] < inClose[i - 2] &&
-                inClose[i] > inClose[i - 1] ||                                    // third candle higher
-               (((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 })) as i32) == 0 - 1 &&
-                (if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 }) == 1 && // black engulfs white
+                inClose[i] > inClose[i - 1] ||                                  // third candle higher
+               (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) == -1 &&
+                (if inClose[i - 2] >= inOpen[i - 2] { 1 } else { -1 }) == 1 &&  // black engulfs white
                 inOpen[i - 1] > inClose[i - 2] &&
                 inClose[i - 1] < inOpen[i - 2] &&
-                inClose[i] < inClose[i - 1]                                       // third candle lower
+                inClose[i] < inClose[i - 1]                                     // third candle lower
             {
-                outInteger[outIdx] = ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) * 100) as i32;
+                outInteger[outIdx] = ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32;
                 outIdx += 1;
             } else {
                 outInteger[outIdx] = 0;
@@ -311,18 +311,18 @@ struct Cdl3outsideStreamState {
 #[allow(unused_parens)]
 impl Core {
     fn cdl3outside_step_impl(sp: &mut Cdl3outsideStreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
-        if (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 }) == 1 &&
-            (((if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 && // white engulfs black
+        if (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { -1 }) == 1 &&
+            (if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { -1 }) == -1 && // white engulfs black
             sp.lag1_inClose > sp.lag2_inOpen &&
             sp.lag1_inOpen < sp.lag2_inClose &&
-            inClose > sp.lag1_inClose ||                                        // third candle higher
-           (((if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 &&
-            (if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { 0 - 1 }) == 1 && // black engulfs white
+            inClose > sp.lag1_inClose ||                                      // third candle higher
+           (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { -1 }) == -1 &&
+            (if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { -1 }) == 1 &&  // black engulfs white
             sp.lag1_inOpen > sp.lag2_inClose &&
             sp.lag1_inClose < sp.lag2_inOpen &&
-            inClose < sp.lag1_inClose                                           // third candle lower
+            inClose < sp.lag1_inClose                                         // third candle lower
         {
-            (*outInteger) = ((if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 }) * 100) as i32;
+            (*outInteger) = ((if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { -1 }) * 100) as i32;
         } else {
             (*outInteger) = 0;
         }
@@ -387,18 +387,18 @@ impl Core {
         // in an uptrend, while this function does not consider it
         outIdx = 0;
         loop {
-            if (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) == 1 &&
-                (((if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 })) as i32) == 0 - 1 && // white engulfs black
+            if (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) == 1 &&
+                (if inClose[i - 2] >= inOpen[i - 2] { 1 } else { -1 }) == -1 && // white engulfs black
                 inClose[i - 1] > inOpen[i - 2] &&
                 inOpen[i - 1] < inClose[i - 2] &&
-                inClose[i] > inClose[i - 1] ||                                    // third candle higher
-               (((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 })) as i32) == 0 - 1 &&
-                (if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 }) == 1 && // black engulfs white
+                inClose[i] > inClose[i - 1] ||                                  // third candle higher
+               (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) == -1 &&
+                (if inClose[i - 2] >= inOpen[i - 2] { 1 } else { -1 }) == 1 &&  // black engulfs white
                 inOpen[i - 1] > inClose[i - 2] &&
                 inClose[i - 1] < inOpen[i - 2] &&
-                inClose[i] < inClose[i - 1]                                       // third candle lower
+                inClose[i] < inClose[i - 1]                                     // third candle lower
             {
-                outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) * 100) as i32;
+                outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32;
             } else {
                 outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0;
             }
@@ -598,18 +598,18 @@ impl Cdl3outsideStream {
         {
             let sp = &self.state;
             let outInteger = &mut outInteger;
-            if (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 }) == 1 &&
-                (((if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 && // white engulfs black
+            if (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { -1 }) == 1 &&
+                (if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { -1 }) == -1 && // white engulfs black
                 sp.lag1_inClose > sp.lag2_inOpen &&
                 sp.lag1_inOpen < sp.lag2_inClose &&
-                inClose > sp.lag1_inClose ||                                        // third candle higher
-               (((if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 &&
-                (if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { 0 - 1 }) == 1 && // black engulfs white
+                inClose > sp.lag1_inClose ||                                      // third candle higher
+               (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { -1 }) == -1 &&
+                (if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { -1 }) == 1 &&  // black engulfs white
                 sp.lag1_inOpen > sp.lag2_inClose &&
                 sp.lag1_inClose < sp.lag2_inOpen &&
-                inClose < sp.lag1_inClose                                           // third candle lower
+                inClose < sp.lag1_inClose                                         // third candle lower
             {
-                (*outInteger) = ((if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 }) * 100) as i32;
+                (*outInteger) = ((if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { -1 }) * 100) as i32;
             } else {
                 (*outInteger) = 0;
             }

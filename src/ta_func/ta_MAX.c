@@ -535,7 +535,7 @@ static TA_RetCode TA_MAX_OpenImpl( struct TA_MAX_Stream **stream, const double i
       outIdx = 0;
       today = startIdx;
       trailingIdx = startIdx - nbInitialElementNeeded;
-      highestIdx = 0 - 1;
+      highestIdx = -1;
       highest = 0.0;
       while( today <= endIdx )
       {

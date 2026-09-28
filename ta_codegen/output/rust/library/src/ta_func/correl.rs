@@ -363,8 +363,8 @@ impl Core {
                 // three sums can still put it a few ulp outside.
                 if tempReal > 1.0 {
                     tempReal = 1.0;
-                } else if tempReal < 0_f64 - 1.0 {
-                    tempReal = 0_f64 - 1.0;
+                } else if tempReal < -1.0 {
+                    tempReal = -1.0;
                 }
                 outReal[outIdx] = tempReal;
                 outIdx += 1;
@@ -713,8 +713,8 @@ impl Core {
             // three sums can still put it a few ulp outside.
             if tempReal > 1.0 {
                 tempReal = 1.0;
-            } else if tempReal < 0_f64 - 1.0 {
-                tempReal = 0_f64 - 1.0;
+            } else if tempReal < -1.0 {
+                tempReal = -1.0;
             }
             (*outReal) = tempReal;
         } else {
@@ -993,8 +993,8 @@ impl Core {
                 // three sums can still put it a few ulp outside.
                 if tempReal > 1.0 {
                     tempReal = 1.0;
-                } else if tempReal < 0_f64 - 1.0 {
-                    tempReal = 0_f64 - 1.0;
+                } else if tempReal < -1.0 {
+                    tempReal = -1.0;
                 }
                 outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = tempReal;
             } else {
@@ -1408,8 +1408,8 @@ impl CorrelStream {
                 // three sums can still put it a few ulp outside.
                 if tempReal > 1.0 {
                     tempReal = 1.0;
-                } else if tempReal < 0_f64 - 1.0 {
-                    tempReal = 0_f64 - 1.0;
+                } else if tempReal < -1.0 {
+                    tempReal = -1.0;
                 }
                 (*outReal) = tempReal;
             } else {

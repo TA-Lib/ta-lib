@@ -213,14 +213,14 @@
           * is correl.c's precedent and what #112 requires of a successful call.
           */
          if( ssX > 0.00000000000001 * sumX2 && ssX * ssY > 0.0 ) {
-            tempReal = (0 - spXY) / Math.sqrt(ssX * ssY);
+            tempReal = -spXY / Math.sqrt(ssX * ssY);
             /* A correlation coefficient cannot leave [-1,1]; rounding in the
              * three sums can still put it slightly outside.
              */
             if( tempReal > 1.0 ) {
                tempReal = 1.0;
-            } else if( tempReal < 0 - 1.0 ) {
-               tempReal = 0 - 1.0;
+            } else if( tempReal < -1.0 ) {
+               tempReal = -1.0;
             }
             outReal[outIdx++] = tempReal;
          } else {
@@ -355,11 +355,11 @@
          trailingX = (double)inReal[trailingIdx] - shift;
          trailingIdx += 1;
          if( ssX > 0.00000000000001 * sumX2 && ssX * ssY > 0.0 ) {
-            tempReal = (0 - spXY) / Math.sqrt(ssX * ssY);
+            tempReal = -spXY / Math.sqrt(ssX * ssY);
             if( tempReal > 1.0 ) {
                tempReal = 1.0;
-            } else if( tempReal < 0 - 1.0 ) {
-               tempReal = 0 - 1.0;
+            } else if( tempReal < -1.0 ) {
+               tempReal = -1.0;
             }
             outReal[outIdx++] = tempReal;
          } else {
@@ -756,14 +756,14 @@
           * is correl.c's precedent and what #112 requires of a successful call.
           */
          if( ssX > 0.00000000000001 * sumX2 && ssX * sp.ssY > 0.0 ) {
-            tempReal = (0 - spXY) / Math.sqrt(ssX * sp.ssY);
+            tempReal = -spXY / Math.sqrt(ssX * sp.ssY);
             /* A correlation coefficient cannot leave [-1,1]; rounding in the
              * three sums can still put it slightly outside.
              */
             if( tempReal > 1.0 ) {
                tempReal = 1.0;
-            } else if( tempReal < 0 - 1.0 ) {
-               tempReal = 0 - 1.0;
+            } else if( tempReal < -1.0 ) {
+               tempReal = -1.0;
             }
             cur_outReal = tempReal;
          } else {
@@ -890,14 +890,14 @@
        * is correl.c's precedent and what #112 requires of a successful call.
        */
       if( ssX > 0.00000000000001 * sp.sumX2 && ssX * sp.ssY > 0.0 ) {
-         tempReal = (0 - spXY) / Math.sqrt(ssX * sp.ssY);
+         tempReal = -spXY / Math.sqrt(ssX * sp.ssY);
          /* A correlation coefficient cannot leave [-1,1]; rounding in the
           * three sums can still put it slightly outside.
           */
          if( tempReal > 1.0 ) {
             tempReal = 1.0;
-         } else if( tempReal < 0 - 1.0 ) {
-            tempReal = 0 - 1.0;
+         } else if( tempReal < -1.0 ) {
+            tempReal = -1.0;
          }
          sp.cur_outReal = tempReal;
       } else {
@@ -1093,14 +1093,14 @@
           * is correl.c's precedent and what #112 requires of a successful call.
           */
          if( ssX > 0.00000000000001 * sumX2 && ssX * ssY > 0.0 ) {
-            tempReal = (0 - spXY) / Math.sqrt(ssX * ssY);
+            tempReal = -spXY / Math.sqrt(ssX * ssY);
             /* A correlation coefficient cannot leave [-1,1]; rounding in the
              * three sums can still put it slightly outside.
              */
             if( tempReal > 1.0 ) {
                tempReal = 1.0;
-            } else if( tempReal < 0 - 1.0 ) {
-               tempReal = 0 - 1.0;
+            } else if( tempReal < -1.0 ) {
+               tempReal = -1.0;
             }
             outReal[outIdx++ * outStride] = tempReal;
          } else {

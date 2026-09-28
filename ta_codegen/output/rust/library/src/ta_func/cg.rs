@@ -177,7 +177,7 @@ impl Core {
         }
         let inReal = &inReal[..=endIdx];
         periodDouble = optInTimePeriod as f64;
-        flatValue = (0_f64 - (periodDouble + 1.0)) * 0.5;
+        flatValue = -(periodDouble + 1.0) * 0.5;
         // Each window value is held as y = x*scale, an integer, split into 2 or 3
         // integer-valued limbs of `width`. The bounds keep every limb of both the
         // weighted and the plain sum below 2^53 while the total weight is at most
@@ -343,7 +343,7 @@ impl Core {
                 fit2Mid = 1;
                 fit2Lo = 1;
                 fit3Mid = 1;
-                failAt = 0 - 1;
+                failAt = -1;
                 num = 0.0;
                 den = 0.0;
                 k = 0;
@@ -483,7 +483,7 @@ impl Core {
             // function of its own window; an epsilon band would carry the quote unit
             // (#253).
             if den != 0.0 {
-                value = (0_f64 - num) / den;
+                value = -num / den;
             } else {
                 value = flatValue;
             }
@@ -831,7 +831,7 @@ impl Core {
             fit2Mid = 1;
             fit2Lo = 1;
             fit3Mid = 1;
-            failAt = 0 - 1;
+            failAt = -1;
             sp.num = 0.0;
             sp.den = 0.0;
             k = 0;
@@ -980,7 +980,7 @@ impl Core {
         // function of its own window; an epsilon band would carry the quote unit
         // (#253).
         if sp.den != 0.0 {
-            value = (0_f64 - sp.num) / sp.den;
+            value = -sp.num / sp.den;
         } else {
             value = sp.flatValue;
         }
@@ -1112,7 +1112,7 @@ impl Core {
             return Err(RetCode::InsufficientHistory);
         }
         periodDouble = optInTimePeriod as f64;
-        flatValue = (0_f64 - (periodDouble + 1.0)) * 0.5;
+        flatValue = -(periodDouble + 1.0) * 0.5;
         // Each window value is held as y = x*scale, an integer, split into 2 or 3
         // integer-valued limbs of `width`. The bounds keep every limb of both the
         // weighted and the plain sum below 2^53 while the total weight is at most
@@ -1278,7 +1278,7 @@ impl Core {
                 fit2Mid = 1;
                 fit2Lo = 1;
                 fit3Mid = 1;
-                failAt = 0 - 1;
+                failAt = -1;
                 num = 0.0;
                 den = 0.0;
                 k = 0;
@@ -1418,7 +1418,7 @@ impl Core {
             // function of its own window; an epsilon band would carry the quote unit
             // (#253).
             if den != 0.0 {
-                value = (0_f64 - num) / den;
+                value = -num / den;
             } else {
                 value = flatValue;
             }
@@ -1835,7 +1835,7 @@ impl CgStream {
                 fit2Mid = 1;
                 fit2Lo = 1;
                 fit3Mid = 1;
-                failAt = 0 - 1;
+                failAt = -1;
                 num = 0.0;
                 den = 0.0;
                 k = 0;
@@ -1984,7 +1984,7 @@ impl CgStream {
             // function of its own window; an epsilon band would carry the quote unit
             // (#253).
             if den != 0.0 {
-                value = (0_f64 - num) / den;
+                value = -num / den;
             } else {
                 value = sp.flatValue;
             }

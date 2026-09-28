@@ -753,7 +753,7 @@ public partial class Core
       outIdx = 0;
       today = startIdx;
       trailingIdx = startIdx - nbInitialElementNeeded;
-      highestIdx = 0 - 1;
+      highestIdx = -1;
       highest = 0.0;
       while( today <= endIdx ) {
          tmp = inReal[today];

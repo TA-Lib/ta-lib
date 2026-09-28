@@ -160,8 +160,8 @@ impl Core {
         outIdx = 0;
         today = startIdx;
         trailingIdx = startIdx - ((optInTimePeriod) as usize);
-        lowestIdx = 0 - 1;
-        highestIdx = 0 - 1;
+        lowestIdx = -1;
+        highestIdx = -1;
         lowest = 0.0;
         highest = 0.0;
         factor = (100.0 as f64) / (optInTimePeriod as f64);
@@ -492,8 +492,8 @@ impl Core {
         outIdx = 0;
         today = startIdx;
         trailingIdx = startIdx - ((optInTimePeriod) as usize);
-        lowestIdx = 0 - 1;
-        highestIdx = 0 - 1;
+        lowestIdx = -1;
+        highestIdx = -1;
         lowest = 0.0;
         highest = 0.0;
         factor = (100.0 as f64) / (optInTimePeriod as f64);

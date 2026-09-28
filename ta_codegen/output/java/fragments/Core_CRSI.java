@@ -127,7 +127,7 @@
          if( close > prevClose ) {
             streak = (streak > 0.0) ? streak + 1.0 : 1.0;
          } else if( close < prevClose ) {
-            streak = (streak < 0.0) ? streak - 1.0 : 0 - 1.0;
+            streak = (streak < 0.0) ? streak - 1.0 : -1.0;
          } else {
             streak = 0.0;
          }
@@ -231,7 +231,7 @@
          if( close > prevClose ) {
             streak = (streak > 0.0) ? streak + 1.0 : 1.0;
          } else if( close < prevClose ) {
-            streak = (streak < 0.0) ? streak - 1.0 : 0 - 1.0;
+            streak = (streak < 0.0) ? streak - 1.0 : -1.0;
          } else {
             streak = 0.0;
          }
@@ -553,7 +553,7 @@
          if( close > sp.prevClose ) {
             streak = (streak > 0.0) ? streak + 1.0 : 1.0;
          } else if( close < sp.prevClose ) {
-            streak = (streak < 0.0) ? streak - 1.0 : 0 - 1.0;
+            streak = (streak < 0.0) ? streak - 1.0 : -1.0;
          } else {
             streak = 0.0;
          }
@@ -605,7 +605,7 @@
       if( close > sp.prevClose ) {
          sp.streak = (sp.streak > 0.0) ? sp.streak + 1.0 : 1.0;
       } else if( close < sp.prevClose ) {
-         sp.streak = (sp.streak < 0.0) ? sp.streak - 1.0 : 0 - 1.0;
+         sp.streak = (sp.streak < 0.0) ? sp.streak - 1.0 : -1.0;
       } else {
          sp.streak = 0.0;
       }
@@ -698,7 +698,7 @@
          if( close > prevClose ) {
             streak = (streak > 0.0) ? streak + 1.0 : 1.0;
          } else if( close < prevClose ) {
-            streak = (streak < 0.0) ? streak - 1.0 : 0 - 1.0;
+            streak = (streak < 0.0) ? streak - 1.0 : -1.0;
          } else {
             streak = 0.0;
          }

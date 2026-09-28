@@ -341,7 +341,7 @@
                if( optInOffsetOnReverse != 0.0 ) {
                   sar += sar * optInOffsetOnReverse;
                }
-               outReal[outIdx++] = 0 - sar;
+               outReal[outIdx++] = -sar;
                /* Adjust afShort and ep */
                afShort = optInAccelerationInitShort;
                ep = newLow;
@@ -416,7 +416,7 @@
          } else {
             /* No switch */
             /* Output the SAR (was calculated in the previous iteration) */
-            outReal[outIdx++] = 0 - sar;
+            outReal[outIdx++] = -sar;
             /* Adjust afShort and ep. */
             if( newLow < ep ) {
                ep = newLow;
@@ -597,7 +597,7 @@
                if( optInOffsetOnReverse != 0.0 ) {
                   sar += sar * optInOffsetOnReverse;
                }
-               outReal[outIdx++] = 0 - sar;
+               outReal[outIdx++] = -sar;
                afShort = optInAccelerationInitShort;
                ep = newLow;
                sar = Math.fma(afShort, ep - sar, sar);
@@ -647,7 +647,7 @@
                sar = newLow;
             }
          } else {
-            outReal[outIdx++] = 0 - sar;
+            outReal[outIdx++] = -sar;
             if( newLow < ep ) {
                ep = newLow;
                afShort += optInAccelerationShort;
@@ -1008,7 +1008,7 @@
                if( sp.optInOffsetOnReverse != 0.0 ) {
                   sar += sar * sp.optInOffsetOnReverse;
                }
-               cur_outReal = 0 - sar;
+               cur_outReal = -sar;
                /* Adjust afShort and ep */
                afShort = sp.optInAccelerationInitShort;
                ep = newLow;
@@ -1083,7 +1083,7 @@
          } else {
             /* No switch */
             /* Output the SAR (was calculated in the previous iteration) */
-            cur_outReal = 0 - sar;
+            cur_outReal = -sar;
             /* Adjust afShort and ep. */
             if( newLow < ep ) {
                ep = newLow;
@@ -1160,7 +1160,7 @@
             if( sp.optInOffsetOnReverse != 0.0 ) {
                sp.sar += sp.sar * sp.optInOffsetOnReverse;
             }
-            sp.cur_outReal = 0 - sp.sar;
+            sp.cur_outReal = -sp.sar;
             /* Adjust afShort and ep */
             sp.afShort = sp.optInAccelerationInitShort;
             sp.ep = sp.newLow;
@@ -1235,7 +1235,7 @@
       } else {
          /* No switch */
          /* Output the SAR (was calculated in the previous iteration) */
-         sp.cur_outReal = 0 - sp.sar;
+         sp.cur_outReal = -sp.sar;
          /* Adjust afShort and ep. */
          if( sp.newLow < sp.ep ) {
             sp.ep = sp.newLow;
@@ -1500,7 +1500,7 @@
                if( optInOffsetOnReverse != 0.0 ) {
                   sar += sar * optInOffsetOnReverse;
                }
-               outReal[outIdx++ * outStride] = 0 - sar;
+               outReal[outIdx++ * outStride] = -sar;
                /* Adjust afShort and ep */
                afShort = optInAccelerationInitShort;
                ep = newLow;
@@ -1575,7 +1575,7 @@
          } else {
             /* No switch */
             /* Output the SAR (was calculated in the previous iteration) */
-            outReal[outIdx++ * outStride] = 0 - sar;
+            outReal[outIdx++ * outStride] = -sar;
             /* Adjust afShort and ep. */
             if( newLow < ep ) {
                ep = newLow;

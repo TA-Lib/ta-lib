@@ -314,9 +314,9 @@ impl Core {
         }
         // Calculate the constants
         tempReal = optInVFactor * optInVFactor;
-        c1 = 0_f64 - tempReal * optInVFactor;
+        c1 = -(tempReal * optInVFactor);
         c2 = 3.0 * (tempReal - c1);
-        c3 = (0_f64 - 6.0) * tempReal - 3.0 * (optInVFactor - c1);
+        c3 = -6.0 * tempReal - 3.0 * (optInVFactor - c1);
         c4 = (3.0 as f64).mul_add(tempReal, (3.0 as f64).mul_add(optInVFactor, 1.0) - c1);
         // Write the first output
         outIdx = 0;
@@ -698,9 +698,9 @@ impl Core {
         }
         // Calculate the constants
         tempReal = optInVFactor * optInVFactor;
-        c1 = 0_f64 - tempReal * optInVFactor;
+        c1 = -(tempReal * optInVFactor);
         c2 = 3.0 * (tempReal - c1);
-        c3 = (0_f64 - 6.0) * tempReal - 3.0 * (optInVFactor - c1);
+        c3 = -6.0 * tempReal - 3.0 * (optInVFactor - c1);
         c4 = (3.0 as f64).mul_add(tempReal, (3.0 as f64).mul_add(optInVFactor, 1.0) - c1);
         // Write the first output
         outIdx = 0;

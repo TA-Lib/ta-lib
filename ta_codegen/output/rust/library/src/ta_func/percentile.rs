@@ -448,7 +448,7 @@ impl Core {
         // reads the two ranks it needs straight off the ring.
         tail = lookbackTotal - lookbackTotal % 2;
         lim = (if lookbackTotal > 13 { lookbackTotal - 2 } else { 11 });
-        run = 0 - 1;
+        run = -1;
         dPrev = 0;
         trend = 0;
         last = inReal[startIdx - 1];
@@ -1814,7 +1814,7 @@ impl Core {
         // reads the two ranks it needs straight off the ring.
         tail = lookbackTotal - lookbackTotal % 2;
         lim = (if lookbackTotal > 13 { lookbackTotal - 2 } else { 11 });
-        run = 0 - 1;
+        run = -1;
         dPrev = 0;
         trend = 0;
         last = inReal[startIdx - 1];

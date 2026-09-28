@@ -291,7 +291,7 @@ public partial class Core
          if( today % 2 == 0 ) {
             /* Do the Hilbert Transforms for even price bar */
             hilbertTempReal = a * smoothedValue;
-            detrender = 0 - detrender_Even[hilbertIdx];
+            detrender = -detrender_Even[hilbertIdx];
             detrender_Even[hilbertIdx] = hilbertTempReal;
             detrender += hilbertTempReal;
             detrender -= prev_detrender_Even;
@@ -300,7 +300,7 @@ public partial class Core
             prev_detrender_input_Even = smoothedValue;
             detrender *= adjustedPrevPeriod;
             hilbertTempReal = a * detrender;
-            Q1 = 0 - Q1_Even[hilbertIdx];
+            Q1 = -Q1_Even[hilbertIdx];
             Q1_Even[hilbertIdx] = hilbertTempReal;
             Q1 += hilbertTempReal;
             Q1 -= prev_Q1_Even;
@@ -309,7 +309,7 @@ public partial class Core
             prev_Q1_input_Even = detrender;
             Q1 *= adjustedPrevPeriod;
             hilbertTempReal = a * I1ForEvenPrev3;
-            jI = 0 - jI_Even[hilbertIdx];
+            jI = -jI_Even[hilbertIdx];
             jI_Even[hilbertIdx] = hilbertTempReal;
             jI += hilbertTempReal;
             jI -= prev_jI_Even;
@@ -318,7 +318,7 @@ public partial class Core
             prev_jI_input_Even = I1ForEvenPrev3;
             jI *= adjustedPrevPeriod;
             hilbertTempReal = a * Q1;
-            jQ = 0 - jQ_Even[hilbertIdx];
+            jQ = -jQ_Even[hilbertIdx];
             jQ_Even[hilbertIdx] = hilbertTempReal;
             jQ += hilbertTempReal;
             jQ -= prev_jQ_Even;
@@ -342,7 +342,7 @@ public partial class Core
          } else {
             /* Do the Hilbert Transforms for odd price bar */
             hilbertTempReal = a * smoothedValue;
-            detrender = 0 - detrender_Odd[hilbertIdx];
+            detrender = -detrender_Odd[hilbertIdx];
             detrender_Odd[hilbertIdx] = hilbertTempReal;
             detrender += hilbertTempReal;
             detrender -= prev_detrender_Odd;
@@ -351,7 +351,7 @@ public partial class Core
             prev_detrender_input_Odd = smoothedValue;
             detrender *= adjustedPrevPeriod;
             hilbertTempReal = a * detrender;
-            Q1 = 0 - Q1_Odd[hilbertIdx];
+            Q1 = -Q1_Odd[hilbertIdx];
             Q1_Odd[hilbertIdx] = hilbertTempReal;
             Q1 += hilbertTempReal;
             Q1 -= prev_Q1_Odd;
@@ -360,7 +360,7 @@ public partial class Core
             prev_Q1_input_Odd = detrender;
             Q1 *= adjustedPrevPeriod;
             hilbertTempReal = a * I1ForOddPrev3;
-            jI = 0 - jI_Odd[hilbertIdx];
+            jI = -jI_Odd[hilbertIdx];
             jI_Odd[hilbertIdx] = hilbertTempReal;
             jI += hilbertTempReal;
             jI -= prev_jI_Odd;
@@ -369,7 +369,7 @@ public partial class Core
             prev_jI_input_Odd = I1ForOddPrev3;
             jI *= adjustedPrevPeriod;
             hilbertTempReal = a * Q1;
-            jQ = 0 - jQ_Odd[hilbertIdx];
+            jQ = -jQ_Odd[hilbertIdx];
             jQ_Odd[hilbertIdx] = hilbertTempReal;
             jQ += hilbertTempReal;
             jQ -= prev_jQ_Odd;
@@ -599,7 +599,7 @@ public partial class Core
          periodWMASum -= periodWMASub;
          if( today % 2 == 0 ) {
             hilbertTempReal = a * smoothedValue;
-            detrender = 0 - detrender_Even[hilbertIdx];
+            detrender = -detrender_Even[hilbertIdx];
             detrender_Even[hilbertIdx] = hilbertTempReal;
             detrender += hilbertTempReal;
             detrender -= prev_detrender_Even;
@@ -608,7 +608,7 @@ public partial class Core
             prev_detrender_input_Even = smoothedValue;
             detrender *= adjustedPrevPeriod;
             hilbertTempReal = a * detrender;
-            Q1 = 0 - Q1_Even[hilbertIdx];
+            Q1 = -Q1_Even[hilbertIdx];
             Q1_Even[hilbertIdx] = hilbertTempReal;
             Q1 += hilbertTempReal;
             Q1 -= prev_Q1_Even;
@@ -617,7 +617,7 @@ public partial class Core
             prev_Q1_input_Even = detrender;
             Q1 *= adjustedPrevPeriod;
             hilbertTempReal = a * I1ForEvenPrev3;
-            jI = 0 - jI_Even[hilbertIdx];
+            jI = -jI_Even[hilbertIdx];
             jI_Even[hilbertIdx] = hilbertTempReal;
             jI += hilbertTempReal;
             jI -= prev_jI_Even;
@@ -626,7 +626,7 @@ public partial class Core
             prev_jI_input_Even = I1ForEvenPrev3;
             jI *= adjustedPrevPeriod;
             hilbertTempReal = a * Q1;
-            jQ = 0 - jQ_Even[hilbertIdx];
+            jQ = -jQ_Even[hilbertIdx];
             jQ_Even[hilbertIdx] = hilbertTempReal;
             jQ += hilbertTempReal;
             jQ -= prev_jQ_Even;
@@ -643,7 +643,7 @@ public partial class Core
             I1ForOddPrev2 = detrender;
          } else {
             hilbertTempReal = a * smoothedValue;
-            detrender = 0 - detrender_Odd[hilbertIdx];
+            detrender = -detrender_Odd[hilbertIdx];
             detrender_Odd[hilbertIdx] = hilbertTempReal;
             detrender += hilbertTempReal;
             detrender -= prev_detrender_Odd;
@@ -652,7 +652,7 @@ public partial class Core
             prev_detrender_input_Odd = smoothedValue;
             detrender *= adjustedPrevPeriod;
             hilbertTempReal = a * detrender;
-            Q1 = 0 - Q1_Odd[hilbertIdx];
+            Q1 = -Q1_Odd[hilbertIdx];
             Q1_Odd[hilbertIdx] = hilbertTempReal;
             Q1 += hilbertTempReal;
             Q1 -= prev_Q1_Odd;
@@ -661,7 +661,7 @@ public partial class Core
             prev_Q1_input_Odd = detrender;
             Q1 *= adjustedPrevPeriod;
             hilbertTempReal = a * I1ForOddPrev3;
-            jI = 0 - jI_Odd[hilbertIdx];
+            jI = -jI_Odd[hilbertIdx];
             jI_Odd[hilbertIdx] = hilbertTempReal;
             jI += hilbertTempReal;
             jI -= prev_jI_Odd;
@@ -670,7 +670,7 @@ public partial class Core
             prev_jI_input_Odd = I1ForOddPrev3;
             jI *= adjustedPrevPeriod;
             hilbertTempReal = a * Q1;
-            jQ = 0 - jQ_Odd[hilbertIdx];
+            jQ = -jQ_Odd[hilbertIdx];
             jQ_Odd[hilbertIdx] = hilbertTempReal;
             jQ += hilbertTempReal;
             jQ -= prev_jQ_Odd;
@@ -1140,7 +1140,7 @@ public partial class Core
          if( sp.streamParity == 0 ) {
             /* Do the Hilbert Transforms for even price bar */
             hilbertTempReal = sp.a * smoothedValue;
-            detrender = 0 - sp.detrender_Even[hilbertIdx];
+            detrender = -sp.detrender_Even[hilbertIdx];
             detrender += hilbertTempReal;
             detrender -= prev_detrender_Even;
             prev_detrender_Even = sp.b * prev_detrender_input_Even;
@@ -1148,7 +1148,7 @@ public partial class Core
             prev_detrender_input_Even = smoothedValue;
             detrender *= adjustedPrevPeriod;
             hilbertTempReal = sp.a * detrender;
-            Q1 = 0 - sp.Q1_Even[hilbertIdx];
+            Q1 = -sp.Q1_Even[hilbertIdx];
             Q1 += hilbertTempReal;
             Q1 -= prev_Q1_Even;
             prev_Q1_Even = sp.b * prev_Q1_input_Even;
@@ -1156,7 +1156,7 @@ public partial class Core
             prev_Q1_input_Even = detrender;
             Q1 *= adjustedPrevPeriod;
             hilbertTempReal = sp.a * I1ForEvenPrev3;
-            jI = 0 - sp.jI_Even[hilbertIdx];
+            jI = -sp.jI_Even[hilbertIdx];
             jI += hilbertTempReal;
             jI -= prev_jI_Even;
             prev_jI_Even = sp.b * prev_jI_input_Even;
@@ -1164,7 +1164,7 @@ public partial class Core
             prev_jI_input_Even = I1ForEvenPrev3;
             jI *= adjustedPrevPeriod;
             hilbertTempReal = sp.a * Q1;
-            jQ = 0 - sp.jQ_Even[hilbertIdx];
+            jQ = -sp.jQ_Even[hilbertIdx];
             jQ += hilbertTempReal;
             jQ -= prev_jQ_Even;
             prev_jQ_Even = sp.b * prev_jQ_input_Even;
@@ -1187,7 +1187,7 @@ public partial class Core
          } else {
             /* Do the Hilbert Transforms for odd price bar */
             hilbertTempReal = sp.a * smoothedValue;
-            detrender = 0 - sp.detrender_Odd[hilbertIdx];
+            detrender = -sp.detrender_Odd[hilbertIdx];
             detrender += hilbertTempReal;
             detrender -= prev_detrender_Odd;
             prev_detrender_Odd = sp.b * prev_detrender_input_Odd;
@@ -1195,7 +1195,7 @@ public partial class Core
             prev_detrender_input_Odd = smoothedValue;
             detrender *= adjustedPrevPeriod;
             hilbertTempReal = sp.a * detrender;
-            Q1 = 0 - sp.Q1_Odd[hilbertIdx];
+            Q1 = -sp.Q1_Odd[hilbertIdx];
             Q1 += hilbertTempReal;
             Q1 -= prev_Q1_Odd;
             prev_Q1_Odd = sp.b * prev_Q1_input_Odd;
@@ -1203,7 +1203,7 @@ public partial class Core
             prev_Q1_input_Odd = detrender;
             Q1 *= adjustedPrevPeriod;
             hilbertTempReal = sp.a * I1ForOddPrev3;
-            jI = 0 - sp.jI_Odd[hilbertIdx];
+            jI = -sp.jI_Odd[hilbertIdx];
             jI += hilbertTempReal;
             jI -= prev_jI_Odd;
             prev_jI_Odd = sp.b * prev_jI_input_Odd;
@@ -1211,7 +1211,7 @@ public partial class Core
             prev_jI_input_Odd = I1ForOddPrev3;
             jI *= adjustedPrevPeriod;
             hilbertTempReal = sp.a * Q1;
-            jQ = 0 - sp.jQ_Odd[hilbertIdx];
+            jQ = -sp.jQ_Odd[hilbertIdx];
             jQ += hilbertTempReal;
             jQ -= prev_jQ_Odd;
             prev_jQ_Odd = sp.b * prev_jQ_input_Odd;
@@ -1302,7 +1302,7 @@ public partial class Core
       if( sp.streamParity == 0 ) {
          /* Do the Hilbert Transforms for even price bar */
          hilbertTempReal = sp.a * smoothedValue;
-         detrender = 0 - sp.detrender_Even[sp.hilbertIdx];
+         detrender = -sp.detrender_Even[sp.hilbertIdx];
          sp.detrender_Even[sp.hilbertIdx] = hilbertTempReal;
          detrender += hilbertTempReal;
          detrender -= sp.prev_detrender_Even;
@@ -1311,7 +1311,7 @@ public partial class Core
          sp.prev_detrender_input_Even = smoothedValue;
          detrender *= adjustedPrevPeriod;
          hilbertTempReal = sp.a * detrender;
-         Q1 = 0 - sp.Q1_Even[sp.hilbertIdx];
+         Q1 = -sp.Q1_Even[sp.hilbertIdx];
          sp.Q1_Even[sp.hilbertIdx] = hilbertTempReal;
          Q1 += hilbertTempReal;
          Q1 -= sp.prev_Q1_Even;
@@ -1320,7 +1320,7 @@ public partial class Core
          sp.prev_Q1_input_Even = detrender;
          Q1 *= adjustedPrevPeriod;
          hilbertTempReal = sp.a * sp.I1ForEvenPrev3;
-         jI = 0 - sp.jI_Even[sp.hilbertIdx];
+         jI = -sp.jI_Even[sp.hilbertIdx];
          sp.jI_Even[sp.hilbertIdx] = hilbertTempReal;
          jI += hilbertTempReal;
          jI -= sp.prev_jI_Even;
@@ -1329,7 +1329,7 @@ public partial class Core
          sp.prev_jI_input_Even = sp.I1ForEvenPrev3;
          jI *= adjustedPrevPeriod;
          hilbertTempReal = sp.a * Q1;
-         jQ = 0 - sp.jQ_Even[sp.hilbertIdx];
+         jQ = -sp.jQ_Even[sp.hilbertIdx];
          sp.jQ_Even[sp.hilbertIdx] = hilbertTempReal;
          jQ += hilbertTempReal;
          jQ -= sp.prev_jQ_Even;
@@ -1353,7 +1353,7 @@ public partial class Core
       } else {
          /* Do the Hilbert Transforms for odd price bar */
          hilbertTempReal = sp.a * smoothedValue;
-         detrender = 0 - sp.detrender_Odd[sp.hilbertIdx];
+         detrender = -sp.detrender_Odd[sp.hilbertIdx];
          sp.detrender_Odd[sp.hilbertIdx] = hilbertTempReal;
          detrender += hilbertTempReal;
          detrender -= sp.prev_detrender_Odd;
@@ -1362,7 +1362,7 @@ public partial class Core
          sp.prev_detrender_input_Odd = smoothedValue;
          detrender *= adjustedPrevPeriod;
          hilbertTempReal = sp.a * detrender;
-         Q1 = 0 - sp.Q1_Odd[sp.hilbertIdx];
+         Q1 = -sp.Q1_Odd[sp.hilbertIdx];
          sp.Q1_Odd[sp.hilbertIdx] = hilbertTempReal;
          Q1 += hilbertTempReal;
          Q1 -= sp.prev_Q1_Odd;
@@ -1371,7 +1371,7 @@ public partial class Core
          sp.prev_Q1_input_Odd = detrender;
          Q1 *= adjustedPrevPeriod;
          hilbertTempReal = sp.a * sp.I1ForOddPrev3;
-         jI = 0 - sp.jI_Odd[sp.hilbertIdx];
+         jI = -sp.jI_Odd[sp.hilbertIdx];
          sp.jI_Odd[sp.hilbertIdx] = hilbertTempReal;
          jI += hilbertTempReal;
          jI -= sp.prev_jI_Odd;
@@ -1380,7 +1380,7 @@ public partial class Core
          sp.prev_jI_input_Odd = sp.I1ForOddPrev3;
          jI *= adjustedPrevPeriod;
          hilbertTempReal = sp.a * Q1;
-         jQ = 0 - sp.jQ_Odd[sp.hilbertIdx];
+         jQ = -sp.jQ_Odd[sp.hilbertIdx];
          sp.jQ_Odd[sp.hilbertIdx] = hilbertTempReal;
          jQ += hilbertTempReal;
          jQ -= sp.prev_jQ_Odd;
@@ -1647,7 +1647,7 @@ public partial class Core
          if( today % 2 == 0 ) {
             /* Do the Hilbert Transforms for even price bar */
             hilbertTempReal = a * smoothedValue;
-            detrender = 0 - detrender_Even[hilbertIdx];
+            detrender = -detrender_Even[hilbertIdx];
             detrender_Even[hilbertIdx] = hilbertTempReal;
             detrender += hilbertTempReal;
             detrender -= prev_detrender_Even;
@@ -1656,7 +1656,7 @@ public partial class Core
             prev_detrender_input_Even = smoothedValue;
             detrender *= adjustedPrevPeriod;
             hilbertTempReal = a * detrender;
-            Q1 = 0 - Q1_Even[hilbertIdx];
+            Q1 = -Q1_Even[hilbertIdx];
             Q1_Even[hilbertIdx] = hilbertTempReal;
             Q1 += hilbertTempReal;
             Q1 -= prev_Q1_Even;
@@ -1665,7 +1665,7 @@ public partial class Core
             prev_Q1_input_Even = detrender;
             Q1 *= adjustedPrevPeriod;
             hilbertTempReal = a * I1ForEvenPrev3;
-            jI = 0 - jI_Even[hilbertIdx];
+            jI = -jI_Even[hilbertIdx];
             jI_Even[hilbertIdx] = hilbertTempReal;
             jI += hilbertTempReal;
             jI -= prev_jI_Even;
@@ -1674,7 +1674,7 @@ public partial class Core
             prev_jI_input_Even = I1ForEvenPrev3;
             jI *= adjustedPrevPeriod;
             hilbertTempReal = a * Q1;
-            jQ = 0 - jQ_Even[hilbertIdx];
+            jQ = -jQ_Even[hilbertIdx];
             jQ_Even[hilbertIdx] = hilbertTempReal;
             jQ += hilbertTempReal;
             jQ -= prev_jQ_Even;
@@ -1698,7 +1698,7 @@ public partial class Core
          } else {
             /* Do the Hilbert Transforms for odd price bar */
             hilbertTempReal = a * smoothedValue;
-            detrender = 0 - detrender_Odd[hilbertIdx];
+            detrender = -detrender_Odd[hilbertIdx];
             detrender_Odd[hilbertIdx] = hilbertTempReal;
             detrender += hilbertTempReal;
             detrender -= prev_detrender_Odd;
@@ -1707,7 +1707,7 @@ public partial class Core
             prev_detrender_input_Odd = smoothedValue;
             detrender *= adjustedPrevPeriod;
             hilbertTempReal = a * detrender;
-            Q1 = 0 - Q1_Odd[hilbertIdx];
+            Q1 = -Q1_Odd[hilbertIdx];
             Q1_Odd[hilbertIdx] = hilbertTempReal;
             Q1 += hilbertTempReal;
             Q1 -= prev_Q1_Odd;
@@ -1716,7 +1716,7 @@ public partial class Core
             prev_Q1_input_Odd = detrender;
             Q1 *= adjustedPrevPeriod;
             hilbertTempReal = a * I1ForOddPrev3;
-            jI = 0 - jI_Odd[hilbertIdx];
+            jI = -jI_Odd[hilbertIdx];
             jI_Odd[hilbertIdx] = hilbertTempReal;
             jI += hilbertTempReal;
             jI -= prev_jI_Odd;
@@ -1725,7 +1725,7 @@ public partial class Core
             prev_jI_input_Odd = I1ForOddPrev3;
             jI *= adjustedPrevPeriod;
             hilbertTempReal = a * Q1;
-            jQ = 0 - jQ_Odd[hilbertIdx];
+            jQ = -jQ_Odd[hilbertIdx];
             jQ_Odd[hilbertIdx] = hilbertTempReal;
             jQ += hilbertTempReal;
             jQ -= prev_jQ_Odd;

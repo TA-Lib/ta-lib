@@ -145,7 +145,7 @@ TA_LIB_API TA_RetCode TA_CDLTRISTAR( int    startIdx,
          if( ((min(inOpen[i - 1],inClose[i - 1]) > max(inOpen[i - 2],inClose[i - 2])) ? 1 : 0) && /* 2nd gaps up */
              max(inOpen[i],inClose[i]) < max(inOpen[i - 1],inClose[i - 1]) ) /* 3rd is not higher than 2nd */
          {
-            outInteger[outIdx] = 0 - 100;
+            outInteger[outIdx] = -100;
          }
          if( ((max(inOpen[i - 1],inClose[i - 1]) < min(inOpen[i - 2],inClose[i - 2])) ? 1 : 0) && /* 2nd gaps down */
              min(inOpen[i],inClose[i]) > min(inOpen[i - 1],inClose[i - 1]) ) /* 3rd is not lower than 2nd */
@@ -233,7 +233,7 @@ TA_RetCode TA_S_CDLTRISTAR( int    startIdx,
          outInteger[outIdx] = 0;
          if( ((min((double)inOpen[i - 1],(double)inClose[i - 1]) > max((double)inOpen[i - 2],(double)inClose[i - 2])) ? 1 : 0) && max((double)inOpen[i],(double)inClose[i]) < max((double)inOpen[i - 1],(double)inClose[i - 1]) )
          {
-            outInteger[outIdx] = 0 - 100;
+            outInteger[outIdx] = -100;
          }
          if( ((max((double)inOpen[i - 1],(double)inClose[i - 1]) < min((double)inOpen[i - 2],(double)inClose[i - 2])) ? 1 : 0) && min((double)inOpen[i],(double)inClose[i]) > min((double)inOpen[i - 1],(double)inClose[i - 1]) )
          {
@@ -298,7 +298,7 @@ static void TA_CDLTRISTAR_StepImpl( struct TA_CDLTRISTAR_Stream *sp, double inOp
       if( ((min(sp->lag1_inOpen,sp->lag1_inClose) > max(sp->lag2_inOpen,sp->lag2_inClose)) ? 1 : 0) && /* 2nd gaps up */
           max(inOpen,inClose) < max(sp->lag1_inOpen,sp->lag1_inClose) ) /* 3rd is not higher than 2nd */
       {
-         *outInteger= 0 - 100;
+         *outInteger= -100;
       }
       if( ((max(sp->lag1_inOpen,sp->lag1_inClose) < min(sp->lag2_inOpen,sp->lag2_inClose)) ? 1 : 0) && /* 2nd gaps down */
           min(inOpen,inClose) > min(sp->lag1_inOpen,sp->lag1_inClose) ) /* 3rd is not lower than 2nd */
@@ -403,7 +403,7 @@ static TA_RetCode TA_CDLTRISTAR_OpenImpl( struct TA_CDLTRISTAR_Stream **stream, 
             if( ((min(inOpen[i - 1],inClose[i - 1]) > max(inOpen[i - 2],inClose[i - 2])) ? 1 : 0) && /* 2nd gaps up */
                 max(inOpen[i],inClose[i]) < max(inOpen[i - 1],inClose[i - 1]) ) /* 3rd is not higher than 2nd */
             {
-               outInteger[outIdx * outStride] = 0 - 100;
+               outInteger[outIdx * outStride] = -100;
             }
             if( ((max(inOpen[i - 1],inClose[i - 1]) < min(inOpen[i - 2],inClose[i - 2])) ? 1 : 0) && /* 2nd gaps down */
                 min(inOpen[i],inClose[i]) > min(inOpen[i - 1],inClose[i - 1]) ) /* 3rd is not lower than 2nd */
@@ -526,7 +526,7 @@ TA_LIB_API TA_RetCode TA_CDLTRISTAR_Peek( const TA_CDLTRISTAR_Stream *stream, do
       if( ((min(sp->lag1_inOpen,sp->lag1_inClose) > max(sp->lag2_inOpen,sp->lag2_inClose)) ? 1 : 0) && /* 2nd gaps up */
           max(inOpen,inClose) < max(sp->lag1_inOpen,sp->lag1_inClose) ) /* 3rd is not higher than 2nd */
       {
-         *outInteger= 0 - 100;
+         *outInteger= -100;
       }
       if( ((max(sp->lag1_inOpen,sp->lag1_inClose) < min(sp->lag2_inOpen,sp->lag2_inClose)) ? 1 : 0) && /* 2nd gaps down */
           min(inOpen,inClose) > min(sp->lag1_inOpen,sp->lag1_inClose) ) /* 3rd is not lower than 2nd */

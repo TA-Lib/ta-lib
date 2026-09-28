@@ -176,7 +176,7 @@ TA_LIB_API TA_RetCode TA_CRSI( int    startIdx,
          streak = (streak > 0.0) ? streak + 1.0 : 1.0;
       } else if( close < prevClose )
       {
-         streak = (streak < 0.0) ? streak - 1.0 : 0 - 1.0;
+         streak = (streak < 0.0) ? streak - 1.0 : -1.0;
       } else 
       {
          streak = 0.0;
@@ -328,7 +328,7 @@ TA_RetCode TA_S_CRSI( int    startIdx,
          streak = (streak > 0.0) ? streak + 1.0 : 1.0;
       } else if( close < prevClose )
       {
-         streak = (streak < 0.0) ? streak - 1.0 : 0 - 1.0;
+         streak = (streak < 0.0) ? streak - 1.0 : -1.0;
       } else 
       {
          streak = 0.0;
@@ -418,7 +418,7 @@ static TA_RetCode TA_CRSI_StepImpl( struct TA_CRSI_Stream *sp, double inReal, do
       sp->streak = (sp->streak > 0.0) ? sp->streak + 1.0 : 1.0;
    } else if( close < sp->prevClose )
    {
-      sp->streak = (sp->streak < 0.0) ? sp->streak - 1.0 : 0 - 1.0;
+      sp->streak = (sp->streak < 0.0) ? sp->streak - 1.0 : -1.0;
    } else 
    {
       sp->streak = 0.0;
@@ -568,7 +568,7 @@ static TA_RetCode TA_CRSI_OpenImpl( struct TA_CRSI_Stream **stream, const double
             streak = (streak > 0.0) ? streak + 1.0 : 1.0;
          } else if( close < prevClose )
          {
-            streak = (streak < 0.0) ? streak - 1.0 : 0 - 1.0;
+            streak = (streak < 0.0) ? streak - 1.0 : -1.0;
          } else 
          {
             streak = 0.0;
@@ -782,7 +782,7 @@ TA_LIB_API TA_RetCode TA_CRSI_Peek( const TA_CRSI_Stream *stream, double inReal,
       streak = (streak > 0.0) ? streak + 1.0 : 1.0;
    } else if( close < sp->prevClose )
    {
-      streak = (streak < 0.0) ? streak - 1.0 : 0 - 1.0;
+      streak = (streak < 0.0) ? streak - 1.0 : -1.0;
    } else 
    {
       streak = 0.0;

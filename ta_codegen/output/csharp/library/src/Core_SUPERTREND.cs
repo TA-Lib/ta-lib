@@ -272,7 +272,7 @@ public partial class Core
             outTrend[outIdx] = 1;
          } else {
             outSupertrend[outIdx] = finalUpper;
-            outTrend[outIdx] = 0 - 1;
+            outTrend[outIdx] = -1;
          }
          prevClose = closeToday;
          outIdx += 1;
@@ -425,7 +425,7 @@ public partial class Core
             outTrend[outIdx] = 1;
          } else {
             outSupertrend[outIdx] = finalUpper;
-            outTrend[outIdx] = 0 - 1;
+            outTrend[outIdx] = -1;
          }
          prevClose = closeToday;
          outIdx += 1;
@@ -863,7 +863,7 @@ public partial class Core
             cur_outTrend = 1;
          } else {
             cur_outSupertrend = finalUpper;
-            cur_outTrend = 0 - 1;
+            cur_outTrend = -1;
          }
          return new SupertrendValue(cur_outSupertrend, cur_outTrend);
       }
@@ -946,7 +946,7 @@ public partial class Core
          sp.cur_outTrend = 1;
       } else {
          sp.cur_outSupertrend = sp.finalUpper;
-         sp.cur_outTrend = 0 - 1;
+         sp.cur_outTrend = -1;
       }
       sp.prevClose = closeToday;
       sp.lag1_inClose = inClose;
@@ -1128,7 +1128,7 @@ public partial class Core
             outTrend[outIdx * outStride] = 1;
          } else {
             outSupertrend[outIdx * outStride] = finalUpper;
-            outTrend[outIdx * outStride] = 0 - 1;
+            outTrend[outIdx * outStride] = -1;
          }
          prevClose = closeToday;
          outIdx += 1;

@@ -99,8 +99,8 @@
       outIdx = 0;
       today = startIdx;
       trailingIdx = startIdx - optInTimePeriod;
-      lowestIdx = 0 - 1;
-      highestIdx = 0 - 1;
+      lowestIdx = -1;
+      highestIdx = -1;
       lowest = 0.0;
       highest = 0.0;
       factor = (double)100.0 / (double)optInTimePeriod;
@@ -205,8 +205,8 @@
       outIdx = 0;
       today = startIdx;
       trailingIdx = startIdx - optInTimePeriod;
-      lowestIdx = 0 - 1;
-      highestIdx = 0 - 1;
+      lowestIdx = -1;
+      highestIdx = -1;
       lowest = 0.0;
       highest = 0.0;
       factor = (double)100.0 / (double)optInTimePeriod;
@@ -722,8 +722,8 @@
       outIdx = 0;
       today = startIdx;
       trailingIdx = startIdx - optInTimePeriod;
-      lowestIdx = 0 - 1;
-      highestIdx = 0 - 1;
+      lowestIdx = -1;
+      highestIdx = -1;
       lowest = 0.0;
       highest = 0.0;
       factor = (double)100.0 / (double)optInTimePeriod;

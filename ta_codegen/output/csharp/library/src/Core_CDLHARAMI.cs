@@ -165,13 +165,13 @@ public partial class Core
             {
                /* 2nd is engulfed by 1st */
                if( MaxGt(inClose[i], inOpen[i]) < MaxGt(inClose[i - 1], inOpen[i - 1]) && MinLt(inClose[i], inOpen[i]) > MinLt(inClose[i - 1], inOpen[i - 1]) ) {
-                  outInteger[outIdx++] = (0 - ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1)) * 100;
+                  outInteger[outIdx++] = -((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100;
                   /* 2nd is engulfed by 1st
                    * (one end of real body can match;
                    * engulfing guaranteed by "long" and "short")
                    */
                } else if( MaxGt(inClose[i], inOpen[i]) <= MaxGt(inClose[i - 1], inOpen[i - 1]) && MinLt(inClose[i], inOpen[i]) >= MinLt(inClose[i - 1], inOpen[i - 1]) ) {
-                  outInteger[outIdx++] = (0 - ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1)) * 80;
+                  outInteger[outIdx++] = -((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 80;
                } else {
                   outInteger[outIdx++] = 0;
                }
@@ -258,9 +258,9 @@ public partial class Core
          if( Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : ((BodyLong_rangeType == 1) ? ((double)inHigh[i - 1] - (double)inLow[i - 1]) : ((BodyLong_rangeType == 2) ? (((double)inHigh[i - 1] - ((((double)inClose[i - 1]) >= ((double)inOpen[i - 1])) ? ((double)inClose[i - 1]) : ((double)inOpen[i - 1]))) + (((((double)inClose[i - 1]) >= ((double)inOpen[i - 1])) ? ((double)inOpen[i - 1]) : ((double)inClose[i - 1])) - (double)inLow[i - 1])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) ) {
             if( Math.Abs((double)inClose[i] - (double)inOpen[i]) <= ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.Abs((double)inClose[i] - (double)inOpen[i])) : ((BodyShort_rangeType == 1) ? ((double)inHigh[i] - (double)inLow[i]) : ((BodyShort_rangeType == 2) ? (((double)inHigh[i] - ((((double)inClose[i]) >= ((double)inOpen[i])) ? ((double)inClose[i]) : ((double)inOpen[i]))) + (((((double)inClose[i]) >= ((double)inOpen[i])) ? ((double)inOpen[i]) : ((double)inClose[i])) - (double)inLow[i])) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) ) {
                if( MaxGt((double)inClose[i], (double)inOpen[i]) < MaxGt((double)inClose[i - 1], (double)inOpen[i - 1]) && MinLt((double)inClose[i], (double)inOpen[i]) > MinLt((double)inClose[i - 1], (double)inOpen[i - 1]) ) {
-                  outInteger[outIdx++] = (0 - (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1)) * 100;
+                  outInteger[outIdx++] = -(((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : -1) * 100;
                } else if( MaxGt((double)inClose[i], (double)inOpen[i]) <= MaxGt((double)inClose[i - 1], (double)inOpen[i - 1]) && MinLt((double)inClose[i], (double)inOpen[i]) >= MinLt((double)inClose[i - 1], (double)inOpen[i - 1]) ) {
-                  outInteger[outIdx++] = (0 - (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1)) * 80;
+                  outInteger[outIdx++] = -(((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : -1) * 80;
                } else {
                   outInteger[outIdx++] = 0;
                }
@@ -626,13 +626,13 @@ public partial class Core
             {
                /* 2nd is engulfed by 1st */
                if( MaxGt(inClose, inOpen) < MaxGt(sp.lag1_inClose, sp.lag1_inOpen) && MinLt(inClose, inOpen) > MinLt(sp.lag1_inClose, sp.lag1_inOpen) ) {
-                  cur_outInteger = (0 - ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1)) * 100;
+                  cur_outInteger = -((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : -1) * 100;
                   /* 2nd is engulfed by 1st
                    * (one end of real body can match;
                    * engulfing guaranteed by "long" and "short")
                    */
                } else if( MaxGt(inClose, inOpen) <= MaxGt(sp.lag1_inClose, sp.lag1_inOpen) && MinLt(inClose, inOpen) >= MinLt(sp.lag1_inClose, sp.lag1_inOpen) ) {
-                  cur_outInteger = (0 - ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1)) * 80;
+                  cur_outInteger = -((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : -1) * 80;
                } else {
                   cur_outInteger = 0;
                }
@@ -682,13 +682,13 @@ public partial class Core
          {
             /* 2nd is engulfed by 1st */
             if( MaxGt(inClose, inOpen) < MaxGt(sp.lag1_inClose, sp.lag1_inOpen) && MinLt(inClose, inOpen) > MinLt(sp.lag1_inClose, sp.lag1_inOpen) ) {
-               sp.cur_outInteger = (0 - ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1)) * 100;
+               sp.cur_outInteger = -((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : -1) * 100;
                /* 2nd is engulfed by 1st
                 * (one end of real body can match;
                 * engulfing guaranteed by "long" and "short")
                 */
             } else if( MaxGt(inClose, inOpen) <= MaxGt(sp.lag1_inClose, sp.lag1_inOpen) && MinLt(inClose, inOpen) >= MinLt(sp.lag1_inClose, sp.lag1_inOpen) ) {
-               sp.cur_outInteger = (0 - ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1)) * 80;
+               sp.cur_outInteger = -((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : -1) * 80;
             } else {
                sp.cur_outInteger = 0;
             }
@@ -805,13 +805,13 @@ public partial class Core
             {
                /* 2nd is engulfed by 1st */
                if( MaxGt(inClose[i], inOpen[i]) < MaxGt(inClose[i - 1], inOpen[i - 1]) && MinLt(inClose[i], inOpen[i]) > MinLt(inClose[i - 1], inOpen[i - 1]) ) {
-                  outInteger[outIdx++ * outStride] = (0 - ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1)) * 100;
+                  outInteger[outIdx++ * outStride] = -((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100;
                   /* 2nd is engulfed by 1st
                    * (one end of real body can match;
                    * engulfing guaranteed by "long" and "short")
                    */
                } else if( MaxGt(inClose[i], inOpen[i]) <= MaxGt(inClose[i - 1], inOpen[i - 1]) && MinLt(inClose[i], inOpen[i]) >= MinLt(inClose[i - 1], inOpen[i - 1]) ) {
-                  outInteger[outIdx++ * outStride] = (0 - ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1)) * 80;
+                  outInteger[outIdx++ * outStride] = -((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 80;
                } else {
                   outInteger[outIdx++ * outStride] = 0;
                }

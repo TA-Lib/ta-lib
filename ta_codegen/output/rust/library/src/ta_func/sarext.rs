@@ -437,7 +437,7 @@ impl Core {
                     if optInOffsetOnReverse != 0.0 {
                         sar += sar * optInOffsetOnReverse;
                     }
-                    outReal[outIdx] = 0_f64 - sar;
+                    outReal[outIdx] = -sar;
                     outIdx += 1;
                     // Adjust afShort and ep
                     afShort = optInAccelerationInitShort;
@@ -511,7 +511,7 @@ impl Core {
             } else {
                 // No switch
                 // Output the SAR (was calculated in the previous iteration)
-                outReal[outIdx] = 0_f64 - sar;
+                outReal[outIdx] = -sar;
                 outIdx += 1;
                 // Adjust afShort and ep.
                 if newLow < ep {
@@ -740,7 +740,7 @@ impl Core {
                 if sp.optInOffsetOnReverse != 0.0 {
                     sp.sar += sp.sar * sp.optInOffsetOnReverse;
                 }
-                (*outReal) = 0_f64 - sp.sar;
+                (*outReal) = -sp.sar;
                 // Adjust afShort and ep
                 sp.afShort = sp.optInAccelerationInitShort;
                 sp.ep = sp.newLow;
@@ -811,7 +811,7 @@ impl Core {
         } else {
             // No switch
             // Output the SAR (was calculated in the previous iteration)
-            (*outReal) = 0_f64 - sp.sar;
+            (*outReal) = -sp.sar;
             // Adjust afShort and ep.
             if sp.newLow < sp.ep {
                 sp.ep = sp.newLow;
@@ -1072,7 +1072,7 @@ impl Core {
                     if optInOffsetOnReverse != 0.0 {
                         sar += sar * optInOffsetOnReverse;
                     }
-                    outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0_f64 - sar;
+                    outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = -sar;
                     // Adjust afShort and ep
                     afShort = optInAccelerationInitShort;
                     ep = newLow;
@@ -1143,7 +1143,7 @@ impl Core {
             } else {
                 // No switch
                 // Output the SAR (was calculated in the previous iteration)
-                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0_f64 - sar;
+                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = -sar;
                 // Adjust afShort and ep.
                 if newLow < ep {
                     ep = newLow;
@@ -1400,7 +1400,7 @@ impl SarextStream {
                     if sp.optInOffsetOnReverse != 0.0 {
                         sar += sar * sp.optInOffsetOnReverse;
                     }
-                    (*outReal) = 0_f64 - sar;
+                    (*outReal) = -sar;
                     // Adjust afShort and ep
                     afShort = sp.optInAccelerationInitShort;
                     ep = newLow;
@@ -1471,7 +1471,7 @@ impl SarextStream {
             } else {
                 // No switch
                 // Output the SAR (was calculated in the previous iteration)
-                (*outReal) = 0_f64 - sar;
+                (*outReal) = -sar;
                 // Adjust afShort and ep.
                 if newLow < ep {
                     ep = newLow;

@@ -183,11 +183,11 @@
           * outside its own bar, which nothing here validates.
           */
          if( !(Math.abs(highest - lowest) <= 0.00000000000001 * (Math.abs(highest) + Math.abs(lowest))) ) {
-            tempReal = (highest - inClose[today]) / (highest - lowest) * (0 - 100.0);
+            tempReal = (highest - inClose[today]) / (highest - lowest) * -100.0;
             if( tempReal > 0.0 ) {
                tempReal = 0.0;
-            } else if( tempReal < 0 - 100.0 ) {
-               tempReal = 0 - 100.0;
+            } else if( tempReal < -100.0 ) {
+               tempReal = -100.0;
             }
             outReal[outIdx++] = tempReal;
          } else {
@@ -240,11 +240,11 @@
                   lowest = preLowest[m - 1];
                }
                if( !(Math.abs(highest - lowest) <= 0.00000000000001 * (Math.abs(highest) + Math.abs(lowest))) ) {
-                  tempReal = (highest - inClose[today + m - 1]) / (highest - lowest) * (0 - 100.0);
+                  tempReal = (highest - inClose[today + m - 1]) / (highest - lowest) * -100.0;
                   if( tempReal > 0.0 ) {
                      tempReal = 0.0;
-                  } else if( tempReal < 0 - 100.0 ) {
-                     tempReal = 0 - 100.0;
+                  } else if( tempReal < -100.0 ) {
+                     tempReal = -100.0;
                   }
                   outReal[outIdx++] = tempReal;
                } else {
@@ -361,11 +361,11 @@
          highest = sufHighest[0];
          lowest = sufLowest[0];
          if( !(Math.abs(highest - lowest) <= 0.00000000000001 * (Math.abs(highest) + Math.abs(lowest))) ) {
-            tempReal = (highest - (double)inClose[today]) / (highest - lowest) * (0 - 100.0);
+            tempReal = (highest - (double)inClose[today]) / (highest - lowest) * -100.0;
             if( tempReal > 0.0 ) {
                tempReal = 0.0;
-            } else if( tempReal < 0 - 100.0 ) {
-               tempReal = 0 - 100.0;
+            } else if( tempReal < -100.0 ) {
+               tempReal = -100.0;
             }
             outReal[outIdx++] = tempReal;
          } else {
@@ -410,11 +410,11 @@
                   lowest = preLowest[m - 1];
                }
                if( !(Math.abs(highest - lowest) <= 0.00000000000001 * (Math.abs(highest) + Math.abs(lowest))) ) {
-                  tempReal = (highest - (double)inClose[today + m - 1]) / (highest - lowest) * (0 - 100.0);
+                  tempReal = (highest - (double)inClose[today + m - 1]) / (highest - lowest) * -100.0;
                   if( tempReal > 0.0 ) {
                      tempReal = 0.0;
-                  } else if( tempReal < 0 - 100.0 ) {
-                     tempReal = 0 - 100.0;
+                  } else if( tempReal < -100.0 ) {
+                     tempReal = -100.0;
                   }
                   outReal[outIdx++] = tempReal;
                } else {
@@ -751,11 +751,11 @@
          }
          /* Same rule, band and clamp as the block scan above. */
          if( !(Math.abs(highest - lowest) <= 0.00000000000001 * (Math.abs(highest) + Math.abs(lowest))) ) {
-            tempReal = (highest - (((sp.today & sp.xMask) != pkSlot2) ? sp.x_inClose[sp.today & sp.xMask] : pkVal2)) / (highest - lowest) * (0 - 100.0);
+            tempReal = (highest - (((sp.today & sp.xMask) != pkSlot2) ? sp.x_inClose[sp.today & sp.xMask] : pkVal2)) / (highest - lowest) * -100.0;
             if( tempReal > 0.0 ) {
                tempReal = 0.0;
-            } else if( tempReal < 0 - 100.0 ) {
-               tempReal = 0 - 100.0;
+            } else if( tempReal < -100.0 ) {
+               tempReal = -100.0;
             }
             cur_outReal = tempReal;
          } else {
@@ -833,11 +833,11 @@
       }
       /* Same rule, band and clamp as the block scan above. */
       if( !(Math.abs(sp.highest - sp.lowest) <= 0.00000000000001 * (Math.abs(sp.highest) + Math.abs(sp.lowest))) ) {
-         tempReal = (sp.highest - sp.x_inClose[sp.today & sp.xMask]) / (sp.highest - sp.lowest) * (0 - 100.0);
+         tempReal = (sp.highest - sp.x_inClose[sp.today & sp.xMask]) / (sp.highest - sp.lowest) * -100.0;
          if( tempReal > 0.0 ) {
             tempReal = 0.0;
-         } else if( tempReal < 0 - 100.0 ) {
-            tempReal = 0 - 100.0;
+         } else if( tempReal < -100.0 ) {
+            tempReal = -100.0;
          }
          sp.cur_outReal = tempReal;
       } else {
@@ -921,7 +921,7 @@
       outIdx = 0;
       today = startIdx;
       trailingIdx = startIdx - nbInitialElementNeeded;
-      highestIdx = 0 - 1;
+      highestIdx = -1;
       lowestIdx = highestIdx;
       lowest = 0.0;
       highest = lowest;
@@ -962,11 +962,11 @@
          }
          /* Same rule, band and clamp as the block scan above. */
          if( !(Math.abs(highest - lowest) <= 0.00000000000001 * (Math.abs(highest) + Math.abs(lowest))) ) {
-            tempReal = (highest - inClose[today]) / (highest - lowest) * (0 - 100.0);
+            tempReal = (highest - inClose[today]) / (highest - lowest) * -100.0;
             if( tempReal > 0.0 ) {
                tempReal = 0.0;
-            } else if( tempReal < 0 - 100.0 ) {
-               tempReal = 0 - 100.0;
+            } else if( tempReal < -100.0 ) {
+               tempReal = -100.0;
             }
             outReal[outIdx++ * outStride] = tempReal;
          } else {

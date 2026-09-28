@@ -261,14 +261,14 @@ public partial class Core
           * is correl.c's precedent and what #112 requires of a successful call.
           */
          if( ssX > 0.00000000000001 * sumX2 && ssX * ssY > 0.0 ) {
-            tempReal = (0 - spXY) / Math.Sqrt(ssX * ssY);
+            tempReal = -spXY / Math.Sqrt(ssX * ssY);
             /* A correlation coefficient cannot leave [-1,1]; rounding in the
              * three sums can still put it slightly outside.
              */
             if( tempReal > 1.0 ) {
                tempReal = 1.0;
             } else {
-               tempReal = MaxGt(0 - 1.0, tempReal);
+               tempReal = MaxGt(-1.0, tempReal);
             }
             outReal[outIdx++] = tempReal;
          } else {
@@ -408,11 +408,11 @@ public partial class Core
          trailingX = (double)inReal[trailingIdx] - shift;
          trailingIdx += 1;
          if( ssX > 0.00000000000001 * sumX2 && ssX * ssY > 0.0 ) {
-            tempReal = (0 - spXY) / Math.Sqrt(ssX * ssY);
+            tempReal = -spXY / Math.Sqrt(ssX * ssY);
             if( tempReal > 1.0 ) {
                tempReal = 1.0;
             } else {
-               tempReal = MaxGt(0 - 1.0, tempReal);
+               tempReal = MaxGt(-1.0, tempReal);
             }
             outReal[outIdx++] = tempReal;
          } else {
@@ -847,14 +847,14 @@ public partial class Core
           * is correl.c's precedent and what #112 requires of a successful call.
           */
          if( ssX > 0.00000000000001 * sumX2 && ssX * sp.ssY > 0.0 ) {
-            tempReal = (0 - spXY) / Math.Sqrt(ssX * sp.ssY);
+            tempReal = -spXY / Math.Sqrt(ssX * sp.ssY);
             /* A correlation coefficient cannot leave [-1,1]; rounding in the
              * three sums can still put it slightly outside.
              */
             if( tempReal > 1.0 ) {
                tempReal = 1.0;
             } else {
-               tempReal = MaxGt(0 - 1.0, tempReal);
+               tempReal = MaxGt(-1.0, tempReal);
             }
             cur_outReal = tempReal;
          } else {
@@ -972,14 +972,14 @@ public partial class Core
        * is correl.c's precedent and what #112 requires of a successful call.
        */
       if( ssX > 0.00000000000001 * sp.sumX2 && ssX * sp.ssY > 0.0 ) {
-         tempReal = (0 - spXY) / Math.Sqrt(ssX * sp.ssY);
+         tempReal = -spXY / Math.Sqrt(ssX * sp.ssY);
          /* A correlation coefficient cannot leave [-1,1]; rounding in the
           * three sums can still put it slightly outside.
           */
          if( tempReal > 1.0 ) {
             tempReal = 1.0;
          } else {
-            tempReal = MaxGt(0 - 1.0, tempReal);
+            tempReal = MaxGt(-1.0, tempReal);
          }
          sp.cur_outReal = tempReal;
       } else {
@@ -1178,14 +1178,14 @@ public partial class Core
           * is correl.c's precedent and what #112 requires of a successful call.
           */
          if( ssX > 0.00000000000001 * sumX2 && ssX * ssY > 0.0 ) {
-            tempReal = (0 - spXY) / Math.Sqrt(ssX * ssY);
+            tempReal = -spXY / Math.Sqrt(ssX * ssY);
             /* A correlation coefficient cannot leave [-1,1]; rounding in the
              * three sums can still put it slightly outside.
              */
             if( tempReal > 1.0 ) {
                tempReal = 1.0;
             } else {
-               tempReal = MaxGt(0 - 1.0, tempReal);
+               tempReal = MaxGt(-1.0, tempReal);
             }
             outReal[outIdx++ * outStride] = tempReal;
          } else {

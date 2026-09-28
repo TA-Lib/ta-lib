@@ -135,24 +135,24 @@ impl Core {
         // while this function does not consider it
         outIdx = 0;
         loop {
-            if (if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 }) == 1 &&
-                (((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 })) as i32) == 0 - 1 && // white engulfs black
+            if (if inClose[i] >= inOpen[i] { 1 } else { -1 }) == 1 &&
+                (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) == -1 && // white engulfs black
                 (inClose[i] >= inOpen[i - 1] &&
                   inOpen[i] < inClose[i - 1] ||
                  inClose[i] > inOpen[i - 1] &&
                   inOpen[i] <= inClose[i - 1]) ||
-               (((if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 })) as i32) == 0 - 1 &&
-                (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) == 1 &&       // black engulfs white
+               (if inClose[i] >= inOpen[i] { 1 } else { -1 }) == -1 &&
+                (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) == 1 &&  // black engulfs white
                 (inOpen[i] >= inClose[i - 1] &&
                   inClose[i] < inOpen[i - 1] ||
                  inOpen[i] > inClose[i - 1] &&
                   inClose[i] <= inOpen[i - 1])
             {
                 if inOpen[i] != inClose[i - 1] && inClose[i] != inOpen[i - 1] {
-                    outInteger[outIdx] = ((if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 }) * 100) as i32;
+                    outInteger[outIdx] = ((if inClose[i] >= inOpen[i] { 1 } else { -1 }) * 100) as i32;
                     outIdx += 1;
                 } else {
-                    outInteger[outIdx] = ((if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 }) * 80) as i32;
+                    outInteger[outIdx] = ((if inClose[i] >= inOpen[i] { 1 } else { -1 }) * 80) as i32;
                     outIdx += 1;
                 }
             } else {
@@ -323,23 +323,23 @@ struct CdlengulfingStreamState {
 #[allow(unused_parens)]
 impl Core {
     fn cdlengulfing_step_impl(sp: &mut CdlengulfingStreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
-        if (if inClose >= inOpen { 1 } else { 0 - 1 }) == 1 &&
-            (((if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 && // white engulfs black
+        if (if inClose >= inOpen { 1 } else { -1 }) == 1 &&
+            (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { -1 }) == -1 && // white engulfs black
             (inClose >= sp.lag1_inOpen &&
               inOpen < sp.lag1_inClose ||
              inClose > sp.lag1_inOpen &&
               inOpen <= sp.lag1_inClose) ||
-           (((if inClose >= inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 &&
-            (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 }) == 1 && // black engulfs white
+           (if inClose >= inOpen { 1 } else { -1 }) == -1 &&
+            (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { -1 }) == 1 &&  // black engulfs white
             (inOpen >= sp.lag1_inClose &&
               inClose < sp.lag1_inOpen ||
              inOpen > sp.lag1_inClose &&
               inClose <= sp.lag1_inOpen)
         {
             if inOpen != sp.lag1_inClose && inClose != sp.lag1_inOpen {
-                (*outInteger) = ((if inClose >= inOpen { 1 } else { 0 - 1 }) * 100) as i32;
+                (*outInteger) = ((if inClose >= inOpen { 1 } else { -1 }) * 100) as i32;
             } else {
-                (*outInteger) = ((if inClose >= inOpen { 1 } else { 0 - 1 }) * 80) as i32;
+                (*outInteger) = ((if inClose >= inOpen { 1 } else { -1 }) * 80) as i32;
             }
         } else {
             (*outInteger) = 0;
@@ -405,23 +405,23 @@ impl Core {
         // while this function does not consider it
         outIdx = 0;
         loop {
-            if (if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 }) == 1 &&
-                (((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 })) as i32) == 0 - 1 && // white engulfs black
+            if (if inClose[i] >= inOpen[i] { 1 } else { -1 }) == 1 &&
+                (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) == -1 && // white engulfs black
                 (inClose[i] >= inOpen[i - 1] &&
                   inOpen[i] < inClose[i - 1] ||
                  inClose[i] > inOpen[i - 1] &&
                   inOpen[i] <= inClose[i - 1]) ||
-               (((if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 })) as i32) == 0 - 1 &&
-                (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) == 1 &&       // black engulfs white
+               (if inClose[i] >= inOpen[i] { 1 } else { -1 }) == -1 &&
+                (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) == 1 &&  // black engulfs white
                 (inOpen[i] >= inClose[i - 1] &&
                   inClose[i] < inOpen[i - 1] ||
                  inOpen[i] > inClose[i - 1] &&
                   inClose[i] <= inOpen[i - 1])
             {
                 if inOpen[i] != inClose[i - 1] && inClose[i] != inOpen[i - 1] {
-                    outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = ((if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 }) * 100) as i32;
+                    outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = ((if inClose[i] >= inOpen[i] { 1 } else { -1 }) * 100) as i32;
                 } else {
-                    outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = ((if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 }) * 80) as i32;
+                    outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = ((if inClose[i] >= inOpen[i] { 1 } else { -1 }) * 80) as i32;
                 }
             } else {
                 outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0;
@@ -620,23 +620,23 @@ impl CdlengulfingStream {
         {
             let sp = &self.state;
             let outInteger = &mut outInteger;
-            if (if inClose >= inOpen { 1 } else { 0 - 1 }) == 1 &&
-                (((if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 && // white engulfs black
+            if (if inClose >= inOpen { 1 } else { -1 }) == 1 &&
+                (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { -1 }) == -1 && // white engulfs black
                 (inClose >= sp.lag1_inOpen &&
                   inOpen < sp.lag1_inClose ||
                  inClose > sp.lag1_inOpen &&
                   inOpen <= sp.lag1_inClose) ||
-               (((if inClose >= inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 &&
-                (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 }) == 1 && // black engulfs white
+               (if inClose >= inOpen { 1 } else { -1 }) == -1 &&
+                (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { -1 }) == 1 &&  // black engulfs white
                 (inOpen >= sp.lag1_inClose &&
                   inClose < sp.lag1_inOpen ||
                  inOpen > sp.lag1_inClose &&
                   inClose <= sp.lag1_inOpen)
             {
                 if inOpen != sp.lag1_inClose && inClose != sp.lag1_inOpen {
-                    (*outInteger) = ((if inClose >= inOpen { 1 } else { 0 - 1 }) * 100) as i32;
+                    (*outInteger) = ((if inClose >= inOpen { 1 } else { -1 }) * 100) as i32;
                 } else {
-                    (*outInteger) = ((if inClose >= inOpen { 1 } else { 0 - 1 }) * 80) as i32;
+                    (*outInteger) = ((if inClose >= inOpen { 1 } else { -1 }) * 80) as i32;
                 }
             } else {
                 (*outInteger) = 0;

@@ -532,7 +532,7 @@ static TA_RetCode TA_MIN_OpenImpl( struct TA_MIN_Stream **stream, const double i
       outIdx = 0;
       today = startIdx;
       trailingIdx = startIdx - nbInitialElementNeeded;
-      lowestIdx = 0 - 1;
+      lowestIdx = -1;
       lowest = 0.0;
       while( today <= endIdx )
       {
