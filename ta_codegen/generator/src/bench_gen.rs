@@ -333,6 +333,27 @@ fn is_period_opt(opt: &OptInput) -> bool {
     opt.param_type == ParamType::Integer && opt.name == "optInTimePeriod"
 }
 
+/// `--context[=N]`: N read-modify-write stores, cycling over 256 L1-resident
+/// cache lines, after every timed call; stand-in for the work a caller does
+/// between two calls. Out of line so the compiler cannot interleave it with
+/// the call it follows.
+const STREAM_CONTEXT_HELPER: &str = r"#define BENCH_CTX_LINES 256
+static int g_context = 0;
+static double g_ctx_buf[BENCH_CTX_LINES * 8];
+static unsigned g_ctx_pos = 0;
+#if defined(_MSC_VER)
+__declspec(noinline)
+#else
+__attribute__((noinline))
+#endif
+static void bench_context(void) {
+    for( int k = 0; k < g_context; k++ )
+        g_ctx_buf[((g_ctx_pos + (unsigned)k) % BENCH_CTX_LINES) * 8] += 1.0;
+    g_ctx_pos += (unsigned)g_context + 1u;
+}
+
+";
+
 /// Row printer + the tally behind the summary and `--min-ratio`.
 ///
 /// `speedup = batch_last_ns / update_ns` is the number this binary exists to
@@ -412,14 +433,23 @@ static int bench_stream_summary(void)
 
 "##;
 
+/// Emitted twice, `ctx` off and on, so the timed loops of the plain body test
+/// nothing: both bodies call the same out-of-line callees, and a run with and
+/// without `--context` differs only by the step.
 #[allow(clippy::too_many_lines)]
-fn generate_stream_bench_func(s: &mut String, funcs: &[FuncDef]) {
-    s.push_str("static volatile double g_sink = 0.0;\n\n");
-    s.push_str("#define BENCH_MASK 4095\n\n");
-    s.push_str(STREAM_ROW_HELPER);
-    s.push_str("static void bench_stream_all(const char *filter, int iters) {\n");
+fn generate_stream_bench_func(s: &mut String, funcs: &[FuncDef], ctx: bool) {
+    let ctx_call = |s: &mut String, ind: &str| {
+        if ctx {
+            let _ = writeln!(s, "{ind}bench_context();");
+        }
+    };
+    let fn_name = if ctx { "bench_stream_all_ctx" } else { "bench_stream_all" };
+    let _ = writeln!(s, "static void {fn_name}(const char *filter, int iters) {{");
     s.push_str("    if( g_period > 0 )\n");
     s.push_str("        printf(\"# --period=%d: every optInTimePeriod; all other params at their defaults\\n\", g_period);\n");
+    if ctx {
+        s.push_str("    printf(\"# --context=%d: every ns column and speedup include the caller-work step after each timed call\\n\", g_context);\n");
+    }
     s.push_str("    printf(\"# func batch_last_ns update_ns peek_ns lookback handle_bytes speedup\\n\");\n");
     s.push_str("    fflush(stdout);\n");
 
@@ -519,6 +549,7 @@ fn generate_stream_bench_func(s: &mut String, funcs: &[FuncDef]) {
                 }
             }
         }
+        ctx_call(s, "                ");
         s.push_str("                t++;\n");
         s.push_str("            }\n");
         s.push_str("            long long el = get_nanotime() - t0;\n");
@@ -558,6 +589,7 @@ fn generate_stream_bench_func(s: &mut String, funcs: &[FuncDef]) {
             s.push_str(&format!("                    {ta}_Update({});\n", a.join(", ")));
         }
         s.push_str(&out_acc);
+        ctx_call(s, "                    ");
         s.push_str("                }\n");
         s.push_str("                long long tu = get_nanotime() - t0;\n");
         s.push_str("                if( best_u < 0 || tu < best_u ) best_u = tu;\n");
@@ -581,6 +613,7 @@ fn generate_stream_bench_func(s: &mut String, funcs: &[FuncDef]) {
             s.push_str(&format!("                        {ta}_Peek({});\n", a.join(", ")));
         }
         s.push_str(&out_acc.replace("                    acc", "                        acc"));
+        ctx_call(s, "                        ");
         s.push_str("                    }\n");
         s.push_str("                    tp += get_nanotime() - t0;\n");
         s.push_str("                    for( int j = 0; j < blk; j++ ) {\n");
@@ -626,7 +659,7 @@ pub fn generate_c_stream_bench(funcs: &[FuncDef]) -> String {
     s.push_str(" * Output: `NAME batch_last update peek lookback handle_bytes` per line.\n");
     s.push_str(" */\n");
     s.push_str("#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n");
-    s.push_str("#include <math.h>\n#include <time.h>\n#include <ctype.h>\n#include <limits.h>\n");
+    s.push_str("#include <math.h>\n#include <time.h>\n#include <ctype.h>\n#include <limits.h>\n#include <errno.h>\n");
     s.push_str("#ifdef _WIN32\n#include <windows.h>\n#endif\n#ifdef __APPLE__\n#include <mach/mach_time.h>\n#endif\n\n");
     // The shared benchmark input corpus (src/tools/ta_bench is on the include
     // path — see the ta_bench_cg / ta_bench_stream gcc invocations in main.rs).
@@ -678,7 +711,12 @@ pub fn generate_c_stream_bench(funcs: &[FuncDef]) -> String {
     s.push_str("static int g_rtCap;\n\n");
 
     s.push_str(FUNC_MATCHES);
-    generate_stream_bench_func(&mut s, funcs);
+    s.push_str("static volatile double g_sink = 0.0;\n\n");
+    s.push_str("#define BENCH_MASK 4095\n\n");
+    s.push_str(STREAM_ROW_HELPER);
+    s.push_str(STREAM_CONTEXT_HELPER);
+    generate_stream_bench_func(&mut s, funcs, false);
+    generate_stream_bench_func(&mut s, funcs, true);
     s.push_str(&STREAM_MAIN_FUNC.replace("__CORPUS_ARGS__", CORPUS_ARGS));
     s
 }
@@ -745,10 +783,28 @@ int main(int argc, char *argv[]) {
            of its batch@last cost. Stream-bench only, hence not in CORPUS_ARGS. */
         else if( strncmp(argv[i], "--min-ratio=", 12) == 0 ) g_min_ratio = atof(argv[i]+12);
         else if( strncmp(argv[i], "--period=", 9) == 0 ) g_period = atoi(argv[i]+9);
+        else if( strcmp(argv[i], "--context") == 0 ) g_context = 128;
+        else if( strncmp(argv[i], "--context=", 10) == 0 ) {
+            char *end = NULL;
+            long n;
+            errno = 0;
+            n = strtol(argv[i]+10, &end, 10);
+            if( !isdigit((unsigned char)argv[i][10]) || *end != '\0' || errno == ERANGE || n > INT_MAX ) {
+                fprintf(stderr, "%s: --context=N needs an integer N >= 0, got '%s'\n", argv[0], argv[i]+10);
+                return 2;
+            }
+            g_context = (int)n;
+        }
 __CORPUS_ARGS__    }
     if( n_points > MAX_POINTS ) n_points = MAX_POINTS;
     if( n_points < BENCH_MASK + 1 ) n_points = BENCH_MASK + 1; /* the bar feed indexes it & BENCH_MASK */
     if( n_iters < 1 ) n_iters = 1;
+    if( g_context > 0 && g_min_ratio > 0.0 ) {
+        /* The step is added to both batch@last and update, which pulls every
+           speedup toward 1 and hides the cliffs the gate is for. */
+        fprintf(stderr, "%s: --min-ratio cannot be combined with --context\n", argv[0]);
+        return 2;
+    }
     /* The trend/chop regime length is relative to the window under test. */
     if( g_corpus.refPeriod <= 0 )
         g_corpus.refPeriod = (g_period > 0) ? g_period : BENCH_CORPUS_PERIOD;
@@ -758,7 +814,8 @@ __CORPUS_ARGS__    }
     generate_price_data(n_points);
     /* Growing history for batch@last, sized so it never recycles within a pass. */
     bench_rt_reserve((long long)n_iters + 8192);
-    bench_stream_all(func_filter, n_iters);
+    if( g_context > 0 ) bench_stream_all_ctx(func_filter, n_iters);
+    else bench_stream_all(func_filter, n_iters);
     int rc = bench_stream_summary();
     free(g_rt_open); free(g_rt_high); free(g_rt_low); free(g_rt_close); free(g_rt_volume); free(g_rt_oi); free(g_rt_periods);
     free(g_open); free(g_high); free(g_low); free(g_close); free(g_volume); free(g_oi); free(g_periods);

@@ -188,6 +188,20 @@ Every param reaches the batch call as a runtime value, as it does from a caller
 of the shipped library, so no row's `batch_last_ns` times a body specialised on
 a constant.
 
+`--context` (N=128) or `--context=N` runs N read-modify-write stores of
+stand-in caller work after every timed call. Every ns column includes it, and
+so does `speedup`, which it pulls toward 1, so the binary refuses it together
+with `--min-ratio`. Without it the calls run back to back on one handle, the
+only pattern where a cost carried from one call to the next shows in full; on
+amd-1 and intel-1 such a cost was gone once 16 to 32 stores separated two
+updates, while costs within one call survived. So when a change's claimed
+mechanism is memory traffic or latency across calls (state layout, store
+forwarding, dependency chains), time it without and with `--context` on amd-1
+and intel-1: it must not regress in either run, and the gain to claim is the
+with-context difference in ns, not a ratio of the totals. Confirm such a claim
+on the shipped build, as in the A/B section, with the same step after each
+call. A change that only removes work needs no context run.
+
 `ta_bench_stream` is **C only**. For the Rust, Java and C# streaming tiers,
 `scripts/stream_ab.py` A/Bs `update` (or `peek`) per bar — or `open`, which times
 the whole warm-up instead of one bar — between the working tree
