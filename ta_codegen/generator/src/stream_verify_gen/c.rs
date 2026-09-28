@@ -1230,27 +1230,25 @@ pub(crate) fn generate_c_stream_verify(
     // State-equivalence comparators, emitted before the handler that calls them.
     let (steq_code, steq_have) = generate_c_state_eq(funcs, enums);
     s.push_str(&steq_code);
-    s.push_str("static void handle_stream_verify(const char *json, char *resp, int resp_size) {\n");
-    s.push_str("    int fnLen = 0;\n");
-    s.push_str("    const char *fn = json_find_string(json, \"funcName\", &fnLen);\n");
-    s.push_str("    int svShape  = json_find_int(json, \"gen_shape\");\n");
-    s.push_str("    int svSeed   = json_find_int(json, \"gen_seed\");\n");
-    s.push_str("    int svN      = json_find_int(json, \"gen_n\");\n");
-    s.push_str("    int svK      = json_find_int(json, \"unstablePeriod\");\n");
-    s.push_str("    int svCandle = json_find_int(json, \"candleLegs\");\n");
-    s.push_str("    (void)svCandle;\n");
-    s.push_str("    (void)svK;\n");
-    s.push_str("    if( !fn ) { snprintf(resp, resp_size, \"{\\\"error\\\":\\\"missing funcName\\\"}\"); return; }\n");
-    s.push_str("    if( svN < 2 ) svN = 2;\n");
-    s.push_str("    if( svN > SV_MAXN ) svN = SV_MAXN;\n");
-    s.push_str("    fuzz_gen(svShape, svSeed, svN, sv_o, sv_h, sv_l, sv_c, sv_v, sv_oi);\n\n");
-
-    let mut first = true;
+    // One out-of-line function per indicator: inlined back into the handler,
+    // they become a single function that -flto compiles in one serial partition.
+    s.push_str("#if defined(_MSC_VER)\n#define SV_NOINLINE __declspec(noinline)\n#else\n#define SV_NOINLINE __attribute__((noinline))\n#endif\n");
+    let mut disp = String::new();
+    disp.push_str("static void handle_stream_verify(const char *json, char *resp, int resp_size) {\n");
+    disp.push_str("    int fnLen = 0;\n");
+    disp.push_str("    const char *fn = json_find_string(json, \"funcName\", &fnLen);\n");
+    disp.push_str("    int svShape  = json_find_int(json, \"gen_shape\");\n");
+    disp.push_str("    int svSeed   = json_find_int(json, \"gen_seed\");\n");
+    disp.push_str("    int svN      = json_find_int(json, \"gen_n\");\n");
+    disp.push_str("    int svK      = json_find_int(json, \"unstablePeriod\");\n");
+    disp.push_str("    int svCandle = json_find_int(json, \"candleLegs\");\n");
+    disp.push_str("    if( !fn ) { snprintf(resp, resp_size, \"{\\\"error\\\":\\\"missing funcName\\\"}\"); return; }\n");
+    disp.push_str("    if( svN < 2 ) svN = 2;\n");
+    disp.push_str("    if( svN > SV_MAXN ) svN = SV_MAXN;\n");
+    disp.push_str("    fuzz_gen(svShape, svSeed, svN, sv_o, sv_h, sv_l, sv_c, sv_v, sv_oi);\n");
     for func in funcs.iter().filter(|f| f.streaming) {
         let name = &func.name;
         let method = format!("TA_{name}");
-        let cond = if first { "if" } else { "else if" };
-        first = false;
 
         // Input arrays in fuzz convention, in signature order.
         let input_names = expand_input_names(&func.inputs);
@@ -1268,11 +1266,19 @@ pub(crate) fn generate_c_stream_verify(
         let pin_ids: Vec<i32> = collect_pin_ids(func, funcs, enums);
 
 
-        s.push_str(&format!(
-            "    {cond}( fnLen == {} && strncmp(fn, \"{method}\", {}) == 0 ) {{\n",
+        let _ = writeln!(
+            disp,
+            "    if( fnLen == {} && strncmp(fn, \"{method}\", {}) == 0 ) {{ sv_verify_{name}(json, resp, resp_size, svN, svK, svCandle); return; }}",
             method.len(),
             method.len()
-        ));
+        );
+        let _ = writeln!(
+            s,
+            "static SV_NOINLINE void sv_verify_{name}(const char *json, char *resp, int resp_size, int svN, int svK, int svCandle) {{"
+        );
+        s.push_str("    (void)svK;\n");
+        s.push_str("    (void)svCandle;\n");
+        let body_start = s.len();
 
         // Optional params from the request.
         for opt in &func.optional_inputs {
@@ -1792,11 +1798,17 @@ pub(crate) fn generate_c_stream_verify(
         } else {
             s.push_str("        pos = json_appendf(resp, resp_size, pos, \",\\\"fill_checked\\\":%d,\\\"fill_ok\\\":%d,\\\"fill_bars\\\":%d,\\\"ok\\\":%d,\\\"peek_checked\\\":%d,\\\"peek_ok\\\":%d,\\\"peek_reps\\\":%d,\\\"peek_rep_ok\\\":%d,\\\"peek_rejects\\\":%d,\\\"short_history_checked\\\":%d,\\\"short_history_ok\\\":%d,\\\"short_history_bad\\\":\\\"%s\\\",\\\"clone_checked\\\":%d,\\\"clone_legs\\\":%d,\\\"clone_ok\\\":%d,\\\"clone_bad\\\":\\\"%s\\\",\\\"value_checked\\\":%d,\\\"value_legs\\\":%d,\\\"value_ok\\\":%d,\\\"value_bad\\\":\\\"%s\\\",\\\"benign\\\":%d}\", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);\n");
         }
-        s.push_str("        return;\n");
-        s.push_str("    }\n");
+        let mut body = String::with_capacity(s.len() - body_start);
+        for l in s[body_start..].lines() {
+            body.push_str(l.strip_prefix("    ").unwrap_or(l));
+            body.push('\n');
+        }
+        s.truncate(body_start);
+        s.push_str(&body);
+        s.push_str("}\n\n");
     }
 
-    // Unknown / non-streamable function.
+    s.push_str(&disp);
     s.push_str("    snprintf(resp, resp_size, \"{\\\"error\\\":\\\"not_streamable\\\"}\");\n");
     s.push_str("}\n");
     s.push_str("#else /* TA_REF_SERVE: a frozen release's stream structs are private to it */\n");
