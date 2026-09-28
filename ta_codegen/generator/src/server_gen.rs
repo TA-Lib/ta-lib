@@ -1771,7 +1771,27 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     // ta_abstract metadata table + introspection RPC handlers (issue #114).
     s.push_str(&crate::backends::java_abstract::generate(funcs, enums));
 
-    // Dispatch method
+    s.push_str("    static final String[] FUNC_NAMES = {\n");
+    for func in funcs {
+        let _ = writeln!(s, "        \"TA_{}\",", func.name);
+    }
+    s.push_str("    };\n");
+    s.push_str("    static final java.util.HashMap<String, Integer> FUNC_INDEX = new java.util.HashMap<>();\n");
+    s.push_str("    static { for (int i = 0; i < FUNC_NAMES.length; i++) FUNC_INDEX.put(FUNC_NAMES[i], i); }\n\n");
+
+    // HotSpot silently never compiles a method over 8000 bytecode bytes
+    // (HugeMethodLimit), and every request goes through handleRequest and this
+    // switch: keep per-function code to one case line here and none in
+    // handleRequest.
+    s.push_str("    static String dispatchFunction(int i, String json) {\n");
+    s.push_str("        switch (i) {\n");
+    for (i, func) in funcs.iter().enumerate() {
+        let _ = writeln!(s, "            case {i}: return handle_{}(json);", func.name);
+    }
+    s.push_str("            default: return null;\n");
+    s.push_str("        }\n");
+    s.push_str("    }\n\n");
+
     s.push_str("    static String handleRequest(String json) {\n");
 
     // Handle load_data for perftest pre-loading
@@ -1792,28 +1812,17 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("            return \"{\\\"status\\\":\\\"ok\\\",\\\"n\\\":\" + refN + \"}\";\n");
     s.push_str("        }\n");
 
-    // stream_verify MUST dispatch before the per-function chain: its funcName
-    // is TA_-prefixed, so the contains("\"TA_<NAME>\"") probes below would
-    // misroute it to handle_<NAME> (the C server orders the same way).
     s.push_str("        else if (json.contains(\"\\\"stream_verify\\\"\")) return handle_stream_verify(json);\n");
     s.push_str("        else if (json.contains(\"\\\"fuzz_in_hash\\\"\")) return handle_fuzz_in_hash(json);\n");
-
-    // Thin dispatch: each indicator delegates to its own static handle_XXX method.
-    // This keeps handleRequest small enough for HotSpot C2 to JIT-compile it.
-    for func in funcs {
-        let method_name = format!("TA_{}", func.name);
-        s.push_str(&format!(
-            "        else if (json.contains(\"\\\"{method_name}\\\"\")) return handle_{}(json);\n",
-            func.name
-        ));
-    }
+    s.push_str("        Integer _fi = FUNC_INDEX.get(jsonString(json, \"method\"));\n");
+    s.push_str("        if (_fi != null) return dispatchFunction(_fi, json);\n");
 
     // gencode_digest — the two stamps ta_regtest compares. Java only: every other
     // backend's server compiles or links the shipped artifact, so it has no second
     // text that could drift (#322). Reads the SHIPPED constant off the loaded
     // class, never a source file, which is what makes a stale class directory
     // visible here.
-    s.push_str("        else if (json.contains(\"\\\"gencode_digest\\\"\")) {\n");
+    s.push_str("        if (json.contains(\"\\\"gencode_digest\\\"\")) {\n");
     s.push_str("            return \"{\\\"spliced\\\":\\\"\" + SPLICED_GENCODE_DIGEST\n");
     s.push_str("                 + \"\\\",\\\"shipped\\\":\\\"\" + io.github.talib.BuildStamp.GENCODE_DIGEST\n");
     s.push_str("                 + \"\\\"}\";\n");
@@ -1822,12 +1831,10 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     // list_functions method — returns {"functions":["TA_SMA","TA_RSI",...]}
     s.push_str("        else if (json.contains(\"\\\"list_functions\\\"\")) {\n");
     s.push_str("            StringBuilder sb = new StringBuilder(\"{\\\"functions\\\":[\");\n");
-    for (i, func) in funcs.iter().enumerate() {
-        if i > 0 {
-            s.push_str("            sb.append(\",\");\n");
-        }
-        s.push_str(&format!("            sb.append(\"\\\"TA_{}\\\"\");\n", func.name));
-    }
+    s.push_str("            for (int i = 0; i < FUNC_NAMES.length; i++) {\n");
+    s.push_str("                if (i > 0) sb.append(',');\n");
+    s.push_str("                sb.append('\"').append(FUNC_NAMES[i]).append('\"');\n");
+    s.push_str("            }\n");
     s.push_str("            sb.append(\"]}\");\n");
     s.push_str("            return sb.toString();\n");
     s.push_str("        }\n");
@@ -1968,9 +1975,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
 
         // Parse input arrays or use pre-loaded data
         for name in &input_names {
-            s.push_str(&format!(
-                "        double[] {name} = new double[MAX_ARRAY_SIZE];\n"
-            ));
+            s.push_str(&format!("        double[] {name};\n"));
         }
         s.push_str("        if (use_preloaded != 0 && refN > 0) {\n");
         for (j, name) in input_names.iter().enumerate() {
@@ -1982,16 +1987,14 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
                 "refHigh".to_string()
             };
             s.push_str(&format!(
-                "            System.arraycopy({ref_src}, 0, {name}, 0, refN);\n"
+                "            {name} = new double[MAX_ARRAY_SIZE];\n\
+                 \x20           System.arraycopy({ref_src}, 0, {name}, 0, refN);\n"
             ));
         }
         s.push_str("        } else {\n");
         for name in &input_names {
             s.push_str(&format!(
-                "            double[] _tmp_{name} = jsonDoubleArray(json, \"{name}\");\n"
-            ));
-            s.push_str(&format!(
-                "            {name} = _tmp_{name};\n"
+                "            {name} = jsonDoubleArray(json, \"{name}\");\n"
             ));
         }
         s.push_str("        }\n");

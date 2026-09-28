@@ -197028,6 +197028,441 @@ public class TaCodegenServe {
         return "{\"length\":" + xml.length() + ",\"checksum\":" + checksum + "}";
     }
 
+    static final String[] FUNC_NAMES = {
+        "TA_AC",
+        "TA_ACCBANDS",
+        "TA_ACOS",
+        "TA_AD",
+        "TA_ADD",
+        "TA_ADOSC",
+        "TA_ADR",
+        "TA_ADX",
+        "TA_ADXR",
+        "TA_AO",
+        "TA_APO",
+        "TA_AROON",
+        "TA_AROONOSC",
+        "TA_ASI",
+        "TA_ASIN",
+        "TA_ATAN",
+        "TA_ATR",
+        "TA_AVGDEV",
+        "TA_AVGPRICE",
+        "TA_BBANDS",
+        "TA_BBW",
+        "TA_BETA",
+        "TA_BOP",
+        "TA_CCI",
+        "TA_CDL2CROWS",
+        "TA_CDL3BLACKCROWS",
+        "TA_CDL3INSIDE",
+        "TA_CDL3LINESTRIKE",
+        "TA_CDL3OUTSIDE",
+        "TA_CDL3STARSINSOUTH",
+        "TA_CDL3WHITESOLDIERS",
+        "TA_CDLABANDONEDBABY",
+        "TA_CDLADVANCEBLOCK",
+        "TA_CDLBELTHOLD",
+        "TA_CDLBREAKAWAY",
+        "TA_CDLCLOSINGMARUBOZU",
+        "TA_CDLCONCEALBABYSWALL",
+        "TA_CDLCOUNTERATTACK",
+        "TA_CDLDARKCLOUDCOVER",
+        "TA_CDLDOJI",
+        "TA_CDLDOJISTAR",
+        "TA_CDLDRAGONFLYDOJI",
+        "TA_CDLENGULFING",
+        "TA_CDLEVENINGDOJISTAR",
+        "TA_CDLEVENINGSTAR",
+        "TA_CDLGAPSIDESIDEWHITE",
+        "TA_CDLGRAVESTONEDOJI",
+        "TA_CDLHAMMER",
+        "TA_CDLHANGINGMAN",
+        "TA_CDLHARAMI",
+        "TA_CDLHARAMICROSS",
+        "TA_CDLHIGHWAVE",
+        "TA_CDLHIKKAKE",
+        "TA_CDLHIKKAKEMOD",
+        "TA_CDLHOMINGPIGEON",
+        "TA_CDLIDENTICAL3CROWS",
+        "TA_CDLINNECK",
+        "TA_CDLINVERTEDHAMMER",
+        "TA_CDLKICKING",
+        "TA_CDLKICKINGBYLENGTH",
+        "TA_CDLLADDERBOTTOM",
+        "TA_CDLLONGLEGGEDDOJI",
+        "TA_CDLLONGLINE",
+        "TA_CDLMARUBOZU",
+        "TA_CDLMATCHINGLOW",
+        "TA_CDLMATHOLD",
+        "TA_CDLMORNINGDOJISTAR",
+        "TA_CDLMORNINGSTAR",
+        "TA_CDLONNECK",
+        "TA_CDLPIERCING",
+        "TA_CDLRICKSHAWMAN",
+        "TA_CDLRISEFALL3METHODS",
+        "TA_CDLSEPARATINGLINES",
+        "TA_CDLSHOOTINGSTAR",
+        "TA_CDLSHORTLINE",
+        "TA_CDLSPINNINGTOP",
+        "TA_CDLSTALLEDPATTERN",
+        "TA_CDLSTICKSANDWICH",
+        "TA_CDLTAKURI",
+        "TA_CDLTASUKIGAP",
+        "TA_CDLTHRUSTING",
+        "TA_CDLTRISTAR",
+        "TA_CDLUNIQUE3RIVER",
+        "TA_CDLUPSIDEGAP2CROWS",
+        "TA_CDLXSIDEGAP3METHODS",
+        "TA_CEIL",
+        "TA_CG",
+        "TA_CMF",
+        "TA_CMO",
+        "TA_CMOU",
+        "TA_COPPOCK",
+        "TA_CORREL",
+        "TA_COS",
+        "TA_COSH",
+        "TA_CRSI",
+        "TA_CTI",
+        "TA_CUMSUM",
+        "TA_CVI",
+        "TA_DEMA",
+        "TA_DIV",
+        "TA_DONCHIAN",
+        "TA_DPO",
+        "TA_DX",
+        "TA_EFI",
+        "TA_EMA",
+        "TA_ER",
+        "TA_ERI",
+        "TA_EXP",
+        "TA_FLOOR",
+        "TA_FOSC",
+        "TA_FRACTAL",
+        "TA_FRAMA",
+        "TA_HA",
+        "TA_HMA",
+        "TA_HT_DCPERIOD",
+        "TA_HT_DCPHASE",
+        "TA_HT_PHASOR",
+        "TA_HT_SINE",
+        "TA_HT_TRENDLINE",
+        "TA_HT_TRENDMODE",
+        "TA_IMI",
+        "TA_KAMA",
+        "TA_KC",
+        "TA_KDJ",
+        "TA_KURTOSIS",
+        "TA_LINEARREG",
+        "TA_LINEARREG_ANGLE",
+        "TA_LINEARREG_INTERCEPT",
+        "TA_LINEARREG_SLOPE",
+        "TA_LN",
+        "TA_LOG10",
+        "TA_MA",
+        "TA_MACD",
+        "TA_MACDEXT",
+        "TA_MACDFIX",
+        "TA_MAMA",
+        "TA_MARKETFI",
+        "TA_MASSI",
+        "TA_MAVP",
+        "TA_MAX",
+        "TA_MAXINDEX",
+        "TA_MEDIAN",
+        "TA_MEDPRICE",
+        "TA_MFI",
+        "TA_MIDPOINT",
+        "TA_MIDPRICE",
+        "TA_MIN",
+        "TA_MININDEX",
+        "TA_MINMAX",
+        "TA_MINMAXINDEX",
+        "TA_MINUS_DI",
+        "TA_MINUS_DM",
+        "TA_MOM",
+        "TA_MULT",
+        "TA_NATR",
+        "TA_NVI",
+        "TA_OBV",
+        "TA_PERCENTB",
+        "TA_PERCENTILE",
+        "TA_PERCENTRANK",
+        "TA_PLUS_DI",
+        "TA_PLUS_DM",
+        "TA_PPO",
+        "TA_PVI",
+        "TA_PVO",
+        "TA_PVT",
+        "TA_QSTICK",
+        "TA_RMA",
+        "TA_ROC",
+        "TA_ROCP",
+        "TA_ROCR",
+        "TA_ROCR100",
+        "TA_RSI",
+        "TA_RVI",
+        "TA_RVIR",
+        "TA_RVOL",
+        "TA_SAR",
+        "TA_SAREXT",
+        "TA_SI",
+        "TA_SIN",
+        "TA_SINH",
+        "TA_SMA",
+        "TA_SMI",
+        "TA_SQRT",
+        "TA_STDDEV",
+        "TA_STOCH",
+        "TA_STOCHF",
+        "TA_STOCHRSI",
+        "TA_SUB",
+        "TA_SUM",
+        "TA_SUPERTREND",
+        "TA_T3",
+        "TA_TAN",
+        "TA_TANH",
+        "TA_TEMA",
+        "TA_TRANGE",
+        "TA_TRIMA",
+        "TA_TRIX",
+        "TA_TSF",
+        "TA_TSI",
+        "TA_TYPPRICE",
+        "TA_ULTOSC",
+        "TA_VAR",
+        "TA_VHF",
+        "TA_VORTEX",
+        "TA_VWAP",
+        "TA_VWMA",
+        "TA_WAD",
+        "TA_WCLPRICE",
+        "TA_WILLR",
+        "TA_WMA",
+        "TA_ZLEMA",
+    };
+    static final java.util.HashMap<String, Integer> FUNC_INDEX = new java.util.HashMap<>();
+    static { for (int i = 0; i < FUNC_NAMES.length; i++) FUNC_INDEX.put(FUNC_NAMES[i], i); }
+
+    static String dispatchFunction(int i, String json) {
+        switch (i) {
+            case 0: return handle_AC(json);
+            case 1: return handle_ACCBANDS(json);
+            case 2: return handle_ACOS(json);
+            case 3: return handle_AD(json);
+            case 4: return handle_ADD(json);
+            case 5: return handle_ADOSC(json);
+            case 6: return handle_ADR(json);
+            case 7: return handle_ADX(json);
+            case 8: return handle_ADXR(json);
+            case 9: return handle_AO(json);
+            case 10: return handle_APO(json);
+            case 11: return handle_AROON(json);
+            case 12: return handle_AROONOSC(json);
+            case 13: return handle_ASI(json);
+            case 14: return handle_ASIN(json);
+            case 15: return handle_ATAN(json);
+            case 16: return handle_ATR(json);
+            case 17: return handle_AVGDEV(json);
+            case 18: return handle_AVGPRICE(json);
+            case 19: return handle_BBANDS(json);
+            case 20: return handle_BBW(json);
+            case 21: return handle_BETA(json);
+            case 22: return handle_BOP(json);
+            case 23: return handle_CCI(json);
+            case 24: return handle_CDL2CROWS(json);
+            case 25: return handle_CDL3BLACKCROWS(json);
+            case 26: return handle_CDL3INSIDE(json);
+            case 27: return handle_CDL3LINESTRIKE(json);
+            case 28: return handle_CDL3OUTSIDE(json);
+            case 29: return handle_CDL3STARSINSOUTH(json);
+            case 30: return handle_CDL3WHITESOLDIERS(json);
+            case 31: return handle_CDLABANDONEDBABY(json);
+            case 32: return handle_CDLADVANCEBLOCK(json);
+            case 33: return handle_CDLBELTHOLD(json);
+            case 34: return handle_CDLBREAKAWAY(json);
+            case 35: return handle_CDLCLOSINGMARUBOZU(json);
+            case 36: return handle_CDLCONCEALBABYSWALL(json);
+            case 37: return handle_CDLCOUNTERATTACK(json);
+            case 38: return handle_CDLDARKCLOUDCOVER(json);
+            case 39: return handle_CDLDOJI(json);
+            case 40: return handle_CDLDOJISTAR(json);
+            case 41: return handle_CDLDRAGONFLYDOJI(json);
+            case 42: return handle_CDLENGULFING(json);
+            case 43: return handle_CDLEVENINGDOJISTAR(json);
+            case 44: return handle_CDLEVENINGSTAR(json);
+            case 45: return handle_CDLGAPSIDESIDEWHITE(json);
+            case 46: return handle_CDLGRAVESTONEDOJI(json);
+            case 47: return handle_CDLHAMMER(json);
+            case 48: return handle_CDLHANGINGMAN(json);
+            case 49: return handle_CDLHARAMI(json);
+            case 50: return handle_CDLHARAMICROSS(json);
+            case 51: return handle_CDLHIGHWAVE(json);
+            case 52: return handle_CDLHIKKAKE(json);
+            case 53: return handle_CDLHIKKAKEMOD(json);
+            case 54: return handle_CDLHOMINGPIGEON(json);
+            case 55: return handle_CDLIDENTICAL3CROWS(json);
+            case 56: return handle_CDLINNECK(json);
+            case 57: return handle_CDLINVERTEDHAMMER(json);
+            case 58: return handle_CDLKICKING(json);
+            case 59: return handle_CDLKICKINGBYLENGTH(json);
+            case 60: return handle_CDLLADDERBOTTOM(json);
+            case 61: return handle_CDLLONGLEGGEDDOJI(json);
+            case 62: return handle_CDLLONGLINE(json);
+            case 63: return handle_CDLMARUBOZU(json);
+            case 64: return handle_CDLMATCHINGLOW(json);
+            case 65: return handle_CDLMATHOLD(json);
+            case 66: return handle_CDLMORNINGDOJISTAR(json);
+            case 67: return handle_CDLMORNINGSTAR(json);
+            case 68: return handle_CDLONNECK(json);
+            case 69: return handle_CDLPIERCING(json);
+            case 70: return handle_CDLRICKSHAWMAN(json);
+            case 71: return handle_CDLRISEFALL3METHODS(json);
+            case 72: return handle_CDLSEPARATINGLINES(json);
+            case 73: return handle_CDLSHOOTINGSTAR(json);
+            case 74: return handle_CDLSHORTLINE(json);
+            case 75: return handle_CDLSPINNINGTOP(json);
+            case 76: return handle_CDLSTALLEDPATTERN(json);
+            case 77: return handle_CDLSTICKSANDWICH(json);
+            case 78: return handle_CDLTAKURI(json);
+            case 79: return handle_CDLTASUKIGAP(json);
+            case 80: return handle_CDLTHRUSTING(json);
+            case 81: return handle_CDLTRISTAR(json);
+            case 82: return handle_CDLUNIQUE3RIVER(json);
+            case 83: return handle_CDLUPSIDEGAP2CROWS(json);
+            case 84: return handle_CDLXSIDEGAP3METHODS(json);
+            case 85: return handle_CEIL(json);
+            case 86: return handle_CG(json);
+            case 87: return handle_CMF(json);
+            case 88: return handle_CMO(json);
+            case 89: return handle_CMOU(json);
+            case 90: return handle_COPPOCK(json);
+            case 91: return handle_CORREL(json);
+            case 92: return handle_COS(json);
+            case 93: return handle_COSH(json);
+            case 94: return handle_CRSI(json);
+            case 95: return handle_CTI(json);
+            case 96: return handle_CUMSUM(json);
+            case 97: return handle_CVI(json);
+            case 98: return handle_DEMA(json);
+            case 99: return handle_DIV(json);
+            case 100: return handle_DONCHIAN(json);
+            case 101: return handle_DPO(json);
+            case 102: return handle_DX(json);
+            case 103: return handle_EFI(json);
+            case 104: return handle_EMA(json);
+            case 105: return handle_ER(json);
+            case 106: return handle_ERI(json);
+            case 107: return handle_EXP(json);
+            case 108: return handle_FLOOR(json);
+            case 109: return handle_FOSC(json);
+            case 110: return handle_FRACTAL(json);
+            case 111: return handle_FRAMA(json);
+            case 112: return handle_HA(json);
+            case 113: return handle_HMA(json);
+            case 114: return handle_HT_DCPERIOD(json);
+            case 115: return handle_HT_DCPHASE(json);
+            case 116: return handle_HT_PHASOR(json);
+            case 117: return handle_HT_SINE(json);
+            case 118: return handle_HT_TRENDLINE(json);
+            case 119: return handle_HT_TRENDMODE(json);
+            case 120: return handle_IMI(json);
+            case 121: return handle_KAMA(json);
+            case 122: return handle_KC(json);
+            case 123: return handle_KDJ(json);
+            case 124: return handle_KURTOSIS(json);
+            case 125: return handle_LINEARREG(json);
+            case 126: return handle_LINEARREG_ANGLE(json);
+            case 127: return handle_LINEARREG_INTERCEPT(json);
+            case 128: return handle_LINEARREG_SLOPE(json);
+            case 129: return handle_LN(json);
+            case 130: return handle_LOG10(json);
+            case 131: return handle_MA(json);
+            case 132: return handle_MACD(json);
+            case 133: return handle_MACDEXT(json);
+            case 134: return handle_MACDFIX(json);
+            case 135: return handle_MAMA(json);
+            case 136: return handle_MARKETFI(json);
+            case 137: return handle_MASSI(json);
+            case 138: return handle_MAVP(json);
+            case 139: return handle_MAX(json);
+            case 140: return handle_MAXINDEX(json);
+            case 141: return handle_MEDIAN(json);
+            case 142: return handle_MEDPRICE(json);
+            case 143: return handle_MFI(json);
+            case 144: return handle_MIDPOINT(json);
+            case 145: return handle_MIDPRICE(json);
+            case 146: return handle_MIN(json);
+            case 147: return handle_MININDEX(json);
+            case 148: return handle_MINMAX(json);
+            case 149: return handle_MINMAXINDEX(json);
+            case 150: return handle_MINUS_DI(json);
+            case 151: return handle_MINUS_DM(json);
+            case 152: return handle_MOM(json);
+            case 153: return handle_MULT(json);
+            case 154: return handle_NATR(json);
+            case 155: return handle_NVI(json);
+            case 156: return handle_OBV(json);
+            case 157: return handle_PERCENTB(json);
+            case 158: return handle_PERCENTILE(json);
+            case 159: return handle_PERCENTRANK(json);
+            case 160: return handle_PLUS_DI(json);
+            case 161: return handle_PLUS_DM(json);
+            case 162: return handle_PPO(json);
+            case 163: return handle_PVI(json);
+            case 164: return handle_PVO(json);
+            case 165: return handle_PVT(json);
+            case 166: return handle_QSTICK(json);
+            case 167: return handle_RMA(json);
+            case 168: return handle_ROC(json);
+            case 169: return handle_ROCP(json);
+            case 170: return handle_ROCR(json);
+            case 171: return handle_ROCR100(json);
+            case 172: return handle_RSI(json);
+            case 173: return handle_RVI(json);
+            case 174: return handle_RVIR(json);
+            case 175: return handle_RVOL(json);
+            case 176: return handle_SAR(json);
+            case 177: return handle_SAREXT(json);
+            case 178: return handle_SI(json);
+            case 179: return handle_SIN(json);
+            case 180: return handle_SINH(json);
+            case 181: return handle_SMA(json);
+            case 182: return handle_SMI(json);
+            case 183: return handle_SQRT(json);
+            case 184: return handle_STDDEV(json);
+            case 185: return handle_STOCH(json);
+            case 186: return handle_STOCHF(json);
+            case 187: return handle_STOCHRSI(json);
+            case 188: return handle_SUB(json);
+            case 189: return handle_SUM(json);
+            case 190: return handle_SUPERTREND(json);
+            case 191: return handle_T3(json);
+            case 192: return handle_TAN(json);
+            case 193: return handle_TANH(json);
+            case 194: return handle_TEMA(json);
+            case 195: return handle_TRANGE(json);
+            case 196: return handle_TRIMA(json);
+            case 197: return handle_TRIX(json);
+            case 198: return handle_TSF(json);
+            case 199: return handle_TSI(json);
+            case 200: return handle_TYPPRICE(json);
+            case 201: return handle_ULTOSC(json);
+            case 202: return handle_VAR(json);
+            case 203: return handle_VHF(json);
+            case 204: return handle_VORTEX(json);
+            case 205: return handle_VWAP(json);
+            case 206: return handle_VWMA(json);
+            case 207: return handle_WAD(json);
+            case 208: return handle_WCLPRICE(json);
+            case 209: return handle_WILLR(json);
+            case 210: return handle_WMA(json);
+            case 211: return handle_ZLEMA(json);
+            default: return null;
+        }
+    }
+
     static String handleRequest(String json) {
         if (json.contains("\"load_data\"")) {
             double[] tmp = jsonDoubleArray(json, "open");
@@ -197047,648 +197482,19 @@ public class TaCodegenServe {
         }
         else if (json.contains("\"stream_verify\"")) return handle_stream_verify(json);
         else if (json.contains("\"fuzz_in_hash\"")) return handle_fuzz_in_hash(json);
-        else if (json.contains("\"TA_AC\"")) return handle_AC(json);
-        else if (json.contains("\"TA_ACCBANDS\"")) return handle_ACCBANDS(json);
-        else if (json.contains("\"TA_ACOS\"")) return handle_ACOS(json);
-        else if (json.contains("\"TA_AD\"")) return handle_AD(json);
-        else if (json.contains("\"TA_ADD\"")) return handle_ADD(json);
-        else if (json.contains("\"TA_ADOSC\"")) return handle_ADOSC(json);
-        else if (json.contains("\"TA_ADR\"")) return handle_ADR(json);
-        else if (json.contains("\"TA_ADX\"")) return handle_ADX(json);
-        else if (json.contains("\"TA_ADXR\"")) return handle_ADXR(json);
-        else if (json.contains("\"TA_AO\"")) return handle_AO(json);
-        else if (json.contains("\"TA_APO\"")) return handle_APO(json);
-        else if (json.contains("\"TA_AROON\"")) return handle_AROON(json);
-        else if (json.contains("\"TA_AROONOSC\"")) return handle_AROONOSC(json);
-        else if (json.contains("\"TA_ASI\"")) return handle_ASI(json);
-        else if (json.contains("\"TA_ASIN\"")) return handle_ASIN(json);
-        else if (json.contains("\"TA_ATAN\"")) return handle_ATAN(json);
-        else if (json.contains("\"TA_ATR\"")) return handle_ATR(json);
-        else if (json.contains("\"TA_AVGDEV\"")) return handle_AVGDEV(json);
-        else if (json.contains("\"TA_AVGPRICE\"")) return handle_AVGPRICE(json);
-        else if (json.contains("\"TA_BBANDS\"")) return handle_BBANDS(json);
-        else if (json.contains("\"TA_BBW\"")) return handle_BBW(json);
-        else if (json.contains("\"TA_BETA\"")) return handle_BETA(json);
-        else if (json.contains("\"TA_BOP\"")) return handle_BOP(json);
-        else if (json.contains("\"TA_CCI\"")) return handle_CCI(json);
-        else if (json.contains("\"TA_CDL2CROWS\"")) return handle_CDL2CROWS(json);
-        else if (json.contains("\"TA_CDL3BLACKCROWS\"")) return handle_CDL3BLACKCROWS(json);
-        else if (json.contains("\"TA_CDL3INSIDE\"")) return handle_CDL3INSIDE(json);
-        else if (json.contains("\"TA_CDL3LINESTRIKE\"")) return handle_CDL3LINESTRIKE(json);
-        else if (json.contains("\"TA_CDL3OUTSIDE\"")) return handle_CDL3OUTSIDE(json);
-        else if (json.contains("\"TA_CDL3STARSINSOUTH\"")) return handle_CDL3STARSINSOUTH(json);
-        else if (json.contains("\"TA_CDL3WHITESOLDIERS\"")) return handle_CDL3WHITESOLDIERS(json);
-        else if (json.contains("\"TA_CDLABANDONEDBABY\"")) return handle_CDLABANDONEDBABY(json);
-        else if (json.contains("\"TA_CDLADVANCEBLOCK\"")) return handle_CDLADVANCEBLOCK(json);
-        else if (json.contains("\"TA_CDLBELTHOLD\"")) return handle_CDLBELTHOLD(json);
-        else if (json.contains("\"TA_CDLBREAKAWAY\"")) return handle_CDLBREAKAWAY(json);
-        else if (json.contains("\"TA_CDLCLOSINGMARUBOZU\"")) return handle_CDLCLOSINGMARUBOZU(json);
-        else if (json.contains("\"TA_CDLCONCEALBABYSWALL\"")) return handle_CDLCONCEALBABYSWALL(json);
-        else if (json.contains("\"TA_CDLCOUNTERATTACK\"")) return handle_CDLCOUNTERATTACK(json);
-        else if (json.contains("\"TA_CDLDARKCLOUDCOVER\"")) return handle_CDLDARKCLOUDCOVER(json);
-        else if (json.contains("\"TA_CDLDOJI\"")) return handle_CDLDOJI(json);
-        else if (json.contains("\"TA_CDLDOJISTAR\"")) return handle_CDLDOJISTAR(json);
-        else if (json.contains("\"TA_CDLDRAGONFLYDOJI\"")) return handle_CDLDRAGONFLYDOJI(json);
-        else if (json.contains("\"TA_CDLENGULFING\"")) return handle_CDLENGULFING(json);
-        else if (json.contains("\"TA_CDLEVENINGDOJISTAR\"")) return handle_CDLEVENINGDOJISTAR(json);
-        else if (json.contains("\"TA_CDLEVENINGSTAR\"")) return handle_CDLEVENINGSTAR(json);
-        else if (json.contains("\"TA_CDLGAPSIDESIDEWHITE\"")) return handle_CDLGAPSIDESIDEWHITE(json);
-        else if (json.contains("\"TA_CDLGRAVESTONEDOJI\"")) return handle_CDLGRAVESTONEDOJI(json);
-        else if (json.contains("\"TA_CDLHAMMER\"")) return handle_CDLHAMMER(json);
-        else if (json.contains("\"TA_CDLHANGINGMAN\"")) return handle_CDLHANGINGMAN(json);
-        else if (json.contains("\"TA_CDLHARAMI\"")) return handle_CDLHARAMI(json);
-        else if (json.contains("\"TA_CDLHARAMICROSS\"")) return handle_CDLHARAMICROSS(json);
-        else if (json.contains("\"TA_CDLHIGHWAVE\"")) return handle_CDLHIGHWAVE(json);
-        else if (json.contains("\"TA_CDLHIKKAKE\"")) return handle_CDLHIKKAKE(json);
-        else if (json.contains("\"TA_CDLHIKKAKEMOD\"")) return handle_CDLHIKKAKEMOD(json);
-        else if (json.contains("\"TA_CDLHOMINGPIGEON\"")) return handle_CDLHOMINGPIGEON(json);
-        else if (json.contains("\"TA_CDLIDENTICAL3CROWS\"")) return handle_CDLIDENTICAL3CROWS(json);
-        else if (json.contains("\"TA_CDLINNECK\"")) return handle_CDLINNECK(json);
-        else if (json.contains("\"TA_CDLINVERTEDHAMMER\"")) return handle_CDLINVERTEDHAMMER(json);
-        else if (json.contains("\"TA_CDLKICKING\"")) return handle_CDLKICKING(json);
-        else if (json.contains("\"TA_CDLKICKINGBYLENGTH\"")) return handle_CDLKICKINGBYLENGTH(json);
-        else if (json.contains("\"TA_CDLLADDERBOTTOM\"")) return handle_CDLLADDERBOTTOM(json);
-        else if (json.contains("\"TA_CDLLONGLEGGEDDOJI\"")) return handle_CDLLONGLEGGEDDOJI(json);
-        else if (json.contains("\"TA_CDLLONGLINE\"")) return handle_CDLLONGLINE(json);
-        else if (json.contains("\"TA_CDLMARUBOZU\"")) return handle_CDLMARUBOZU(json);
-        else if (json.contains("\"TA_CDLMATCHINGLOW\"")) return handle_CDLMATCHINGLOW(json);
-        else if (json.contains("\"TA_CDLMATHOLD\"")) return handle_CDLMATHOLD(json);
-        else if (json.contains("\"TA_CDLMORNINGDOJISTAR\"")) return handle_CDLMORNINGDOJISTAR(json);
-        else if (json.contains("\"TA_CDLMORNINGSTAR\"")) return handle_CDLMORNINGSTAR(json);
-        else if (json.contains("\"TA_CDLONNECK\"")) return handle_CDLONNECK(json);
-        else if (json.contains("\"TA_CDLPIERCING\"")) return handle_CDLPIERCING(json);
-        else if (json.contains("\"TA_CDLRICKSHAWMAN\"")) return handle_CDLRICKSHAWMAN(json);
-        else if (json.contains("\"TA_CDLRISEFALL3METHODS\"")) return handle_CDLRISEFALL3METHODS(json);
-        else if (json.contains("\"TA_CDLSEPARATINGLINES\"")) return handle_CDLSEPARATINGLINES(json);
-        else if (json.contains("\"TA_CDLSHOOTINGSTAR\"")) return handle_CDLSHOOTINGSTAR(json);
-        else if (json.contains("\"TA_CDLSHORTLINE\"")) return handle_CDLSHORTLINE(json);
-        else if (json.contains("\"TA_CDLSPINNINGTOP\"")) return handle_CDLSPINNINGTOP(json);
-        else if (json.contains("\"TA_CDLSTALLEDPATTERN\"")) return handle_CDLSTALLEDPATTERN(json);
-        else if (json.contains("\"TA_CDLSTICKSANDWICH\"")) return handle_CDLSTICKSANDWICH(json);
-        else if (json.contains("\"TA_CDLTAKURI\"")) return handle_CDLTAKURI(json);
-        else if (json.contains("\"TA_CDLTASUKIGAP\"")) return handle_CDLTASUKIGAP(json);
-        else if (json.contains("\"TA_CDLTHRUSTING\"")) return handle_CDLTHRUSTING(json);
-        else if (json.contains("\"TA_CDLTRISTAR\"")) return handle_CDLTRISTAR(json);
-        else if (json.contains("\"TA_CDLUNIQUE3RIVER\"")) return handle_CDLUNIQUE3RIVER(json);
-        else if (json.contains("\"TA_CDLUPSIDEGAP2CROWS\"")) return handle_CDLUPSIDEGAP2CROWS(json);
-        else if (json.contains("\"TA_CDLXSIDEGAP3METHODS\"")) return handle_CDLXSIDEGAP3METHODS(json);
-        else if (json.contains("\"TA_CEIL\"")) return handle_CEIL(json);
-        else if (json.contains("\"TA_CG\"")) return handle_CG(json);
-        else if (json.contains("\"TA_CMF\"")) return handle_CMF(json);
-        else if (json.contains("\"TA_CMO\"")) return handle_CMO(json);
-        else if (json.contains("\"TA_CMOU\"")) return handle_CMOU(json);
-        else if (json.contains("\"TA_COPPOCK\"")) return handle_COPPOCK(json);
-        else if (json.contains("\"TA_CORREL\"")) return handle_CORREL(json);
-        else if (json.contains("\"TA_COS\"")) return handle_COS(json);
-        else if (json.contains("\"TA_COSH\"")) return handle_COSH(json);
-        else if (json.contains("\"TA_CRSI\"")) return handle_CRSI(json);
-        else if (json.contains("\"TA_CTI\"")) return handle_CTI(json);
-        else if (json.contains("\"TA_CUMSUM\"")) return handle_CUMSUM(json);
-        else if (json.contains("\"TA_CVI\"")) return handle_CVI(json);
-        else if (json.contains("\"TA_DEMA\"")) return handle_DEMA(json);
-        else if (json.contains("\"TA_DIV\"")) return handle_DIV(json);
-        else if (json.contains("\"TA_DONCHIAN\"")) return handle_DONCHIAN(json);
-        else if (json.contains("\"TA_DPO\"")) return handle_DPO(json);
-        else if (json.contains("\"TA_DX\"")) return handle_DX(json);
-        else if (json.contains("\"TA_EFI\"")) return handle_EFI(json);
-        else if (json.contains("\"TA_EMA\"")) return handle_EMA(json);
-        else if (json.contains("\"TA_ER\"")) return handle_ER(json);
-        else if (json.contains("\"TA_ERI\"")) return handle_ERI(json);
-        else if (json.contains("\"TA_EXP\"")) return handle_EXP(json);
-        else if (json.contains("\"TA_FLOOR\"")) return handle_FLOOR(json);
-        else if (json.contains("\"TA_FOSC\"")) return handle_FOSC(json);
-        else if (json.contains("\"TA_FRACTAL\"")) return handle_FRACTAL(json);
-        else if (json.contains("\"TA_FRAMA\"")) return handle_FRAMA(json);
-        else if (json.contains("\"TA_HA\"")) return handle_HA(json);
-        else if (json.contains("\"TA_HMA\"")) return handle_HMA(json);
-        else if (json.contains("\"TA_HT_DCPERIOD\"")) return handle_HT_DCPERIOD(json);
-        else if (json.contains("\"TA_HT_DCPHASE\"")) return handle_HT_DCPHASE(json);
-        else if (json.contains("\"TA_HT_PHASOR\"")) return handle_HT_PHASOR(json);
-        else if (json.contains("\"TA_HT_SINE\"")) return handle_HT_SINE(json);
-        else if (json.contains("\"TA_HT_TRENDLINE\"")) return handle_HT_TRENDLINE(json);
-        else if (json.contains("\"TA_HT_TRENDMODE\"")) return handle_HT_TRENDMODE(json);
-        else if (json.contains("\"TA_IMI\"")) return handle_IMI(json);
-        else if (json.contains("\"TA_KAMA\"")) return handle_KAMA(json);
-        else if (json.contains("\"TA_KC\"")) return handle_KC(json);
-        else if (json.contains("\"TA_KDJ\"")) return handle_KDJ(json);
-        else if (json.contains("\"TA_KURTOSIS\"")) return handle_KURTOSIS(json);
-        else if (json.contains("\"TA_LINEARREG\"")) return handle_LINEARREG(json);
-        else if (json.contains("\"TA_LINEARREG_ANGLE\"")) return handle_LINEARREG_ANGLE(json);
-        else if (json.contains("\"TA_LINEARREG_INTERCEPT\"")) return handle_LINEARREG_INTERCEPT(json);
-        else if (json.contains("\"TA_LINEARREG_SLOPE\"")) return handle_LINEARREG_SLOPE(json);
-        else if (json.contains("\"TA_LN\"")) return handle_LN(json);
-        else if (json.contains("\"TA_LOG10\"")) return handle_LOG10(json);
-        else if (json.contains("\"TA_MA\"")) return handle_MA(json);
-        else if (json.contains("\"TA_MACD\"")) return handle_MACD(json);
-        else if (json.contains("\"TA_MACDEXT\"")) return handle_MACDEXT(json);
-        else if (json.contains("\"TA_MACDFIX\"")) return handle_MACDFIX(json);
-        else if (json.contains("\"TA_MAMA\"")) return handle_MAMA(json);
-        else if (json.contains("\"TA_MARKETFI\"")) return handle_MARKETFI(json);
-        else if (json.contains("\"TA_MASSI\"")) return handle_MASSI(json);
-        else if (json.contains("\"TA_MAVP\"")) return handle_MAVP(json);
-        else if (json.contains("\"TA_MAX\"")) return handle_MAX(json);
-        else if (json.contains("\"TA_MAXINDEX\"")) return handle_MAXINDEX(json);
-        else if (json.contains("\"TA_MEDIAN\"")) return handle_MEDIAN(json);
-        else if (json.contains("\"TA_MEDPRICE\"")) return handle_MEDPRICE(json);
-        else if (json.contains("\"TA_MFI\"")) return handle_MFI(json);
-        else if (json.contains("\"TA_MIDPOINT\"")) return handle_MIDPOINT(json);
-        else if (json.contains("\"TA_MIDPRICE\"")) return handle_MIDPRICE(json);
-        else if (json.contains("\"TA_MIN\"")) return handle_MIN(json);
-        else if (json.contains("\"TA_MININDEX\"")) return handle_MININDEX(json);
-        else if (json.contains("\"TA_MINMAX\"")) return handle_MINMAX(json);
-        else if (json.contains("\"TA_MINMAXINDEX\"")) return handle_MINMAXINDEX(json);
-        else if (json.contains("\"TA_MINUS_DI\"")) return handle_MINUS_DI(json);
-        else if (json.contains("\"TA_MINUS_DM\"")) return handle_MINUS_DM(json);
-        else if (json.contains("\"TA_MOM\"")) return handle_MOM(json);
-        else if (json.contains("\"TA_MULT\"")) return handle_MULT(json);
-        else if (json.contains("\"TA_NATR\"")) return handle_NATR(json);
-        else if (json.contains("\"TA_NVI\"")) return handle_NVI(json);
-        else if (json.contains("\"TA_OBV\"")) return handle_OBV(json);
-        else if (json.contains("\"TA_PERCENTB\"")) return handle_PERCENTB(json);
-        else if (json.contains("\"TA_PERCENTILE\"")) return handle_PERCENTILE(json);
-        else if (json.contains("\"TA_PERCENTRANK\"")) return handle_PERCENTRANK(json);
-        else if (json.contains("\"TA_PLUS_DI\"")) return handle_PLUS_DI(json);
-        else if (json.contains("\"TA_PLUS_DM\"")) return handle_PLUS_DM(json);
-        else if (json.contains("\"TA_PPO\"")) return handle_PPO(json);
-        else if (json.contains("\"TA_PVI\"")) return handle_PVI(json);
-        else if (json.contains("\"TA_PVO\"")) return handle_PVO(json);
-        else if (json.contains("\"TA_PVT\"")) return handle_PVT(json);
-        else if (json.contains("\"TA_QSTICK\"")) return handle_QSTICK(json);
-        else if (json.contains("\"TA_RMA\"")) return handle_RMA(json);
-        else if (json.contains("\"TA_ROC\"")) return handle_ROC(json);
-        else if (json.contains("\"TA_ROCP\"")) return handle_ROCP(json);
-        else if (json.contains("\"TA_ROCR\"")) return handle_ROCR(json);
-        else if (json.contains("\"TA_ROCR100\"")) return handle_ROCR100(json);
-        else if (json.contains("\"TA_RSI\"")) return handle_RSI(json);
-        else if (json.contains("\"TA_RVI\"")) return handle_RVI(json);
-        else if (json.contains("\"TA_RVIR\"")) return handle_RVIR(json);
-        else if (json.contains("\"TA_RVOL\"")) return handle_RVOL(json);
-        else if (json.contains("\"TA_SAR\"")) return handle_SAR(json);
-        else if (json.contains("\"TA_SAREXT\"")) return handle_SAREXT(json);
-        else if (json.contains("\"TA_SI\"")) return handle_SI(json);
-        else if (json.contains("\"TA_SIN\"")) return handle_SIN(json);
-        else if (json.contains("\"TA_SINH\"")) return handle_SINH(json);
-        else if (json.contains("\"TA_SMA\"")) return handle_SMA(json);
-        else if (json.contains("\"TA_SMI\"")) return handle_SMI(json);
-        else if (json.contains("\"TA_SQRT\"")) return handle_SQRT(json);
-        else if (json.contains("\"TA_STDDEV\"")) return handle_STDDEV(json);
-        else if (json.contains("\"TA_STOCH\"")) return handle_STOCH(json);
-        else if (json.contains("\"TA_STOCHF\"")) return handle_STOCHF(json);
-        else if (json.contains("\"TA_STOCHRSI\"")) return handle_STOCHRSI(json);
-        else if (json.contains("\"TA_SUB\"")) return handle_SUB(json);
-        else if (json.contains("\"TA_SUM\"")) return handle_SUM(json);
-        else if (json.contains("\"TA_SUPERTREND\"")) return handle_SUPERTREND(json);
-        else if (json.contains("\"TA_T3\"")) return handle_T3(json);
-        else if (json.contains("\"TA_TAN\"")) return handle_TAN(json);
-        else if (json.contains("\"TA_TANH\"")) return handle_TANH(json);
-        else if (json.contains("\"TA_TEMA\"")) return handle_TEMA(json);
-        else if (json.contains("\"TA_TRANGE\"")) return handle_TRANGE(json);
-        else if (json.contains("\"TA_TRIMA\"")) return handle_TRIMA(json);
-        else if (json.contains("\"TA_TRIX\"")) return handle_TRIX(json);
-        else if (json.contains("\"TA_TSF\"")) return handle_TSF(json);
-        else if (json.contains("\"TA_TSI\"")) return handle_TSI(json);
-        else if (json.contains("\"TA_TYPPRICE\"")) return handle_TYPPRICE(json);
-        else if (json.contains("\"TA_ULTOSC\"")) return handle_ULTOSC(json);
-        else if (json.contains("\"TA_VAR\"")) return handle_VAR(json);
-        else if (json.contains("\"TA_VHF\"")) return handle_VHF(json);
-        else if (json.contains("\"TA_VORTEX\"")) return handle_VORTEX(json);
-        else if (json.contains("\"TA_VWAP\"")) return handle_VWAP(json);
-        else if (json.contains("\"TA_VWMA\"")) return handle_VWMA(json);
-        else if (json.contains("\"TA_WAD\"")) return handle_WAD(json);
-        else if (json.contains("\"TA_WCLPRICE\"")) return handle_WCLPRICE(json);
-        else if (json.contains("\"TA_WILLR\"")) return handle_WILLR(json);
-        else if (json.contains("\"TA_WMA\"")) return handle_WMA(json);
-        else if (json.contains("\"TA_ZLEMA\"")) return handle_ZLEMA(json);
-        else if (json.contains("\"gencode_digest\"")) {
+        Integer _fi = FUNC_INDEX.get(jsonString(json, "method"));
+        if (_fi != null) return dispatchFunction(_fi, json);
+        if (json.contains("\"gencode_digest\"")) {
             return "{\"spliced\":\"" + SPLICED_GENCODE_DIGEST
                  + "\",\"shipped\":\"" + io.github.talib.BuildStamp.GENCODE_DIGEST
                  + "\"}";
         }
         else if (json.contains("\"list_functions\"")) {
             StringBuilder sb = new StringBuilder("{\"functions\":[");
-            sb.append("\"TA_AC\"");
-            sb.append(",");
-            sb.append("\"TA_ACCBANDS\"");
-            sb.append(",");
-            sb.append("\"TA_ACOS\"");
-            sb.append(",");
-            sb.append("\"TA_AD\"");
-            sb.append(",");
-            sb.append("\"TA_ADD\"");
-            sb.append(",");
-            sb.append("\"TA_ADOSC\"");
-            sb.append(",");
-            sb.append("\"TA_ADR\"");
-            sb.append(",");
-            sb.append("\"TA_ADX\"");
-            sb.append(",");
-            sb.append("\"TA_ADXR\"");
-            sb.append(",");
-            sb.append("\"TA_AO\"");
-            sb.append(",");
-            sb.append("\"TA_APO\"");
-            sb.append(",");
-            sb.append("\"TA_AROON\"");
-            sb.append(",");
-            sb.append("\"TA_AROONOSC\"");
-            sb.append(",");
-            sb.append("\"TA_ASI\"");
-            sb.append(",");
-            sb.append("\"TA_ASIN\"");
-            sb.append(",");
-            sb.append("\"TA_ATAN\"");
-            sb.append(",");
-            sb.append("\"TA_ATR\"");
-            sb.append(",");
-            sb.append("\"TA_AVGDEV\"");
-            sb.append(",");
-            sb.append("\"TA_AVGPRICE\"");
-            sb.append(",");
-            sb.append("\"TA_BBANDS\"");
-            sb.append(",");
-            sb.append("\"TA_BBW\"");
-            sb.append(",");
-            sb.append("\"TA_BETA\"");
-            sb.append(",");
-            sb.append("\"TA_BOP\"");
-            sb.append(",");
-            sb.append("\"TA_CCI\"");
-            sb.append(",");
-            sb.append("\"TA_CDL2CROWS\"");
-            sb.append(",");
-            sb.append("\"TA_CDL3BLACKCROWS\"");
-            sb.append(",");
-            sb.append("\"TA_CDL3INSIDE\"");
-            sb.append(",");
-            sb.append("\"TA_CDL3LINESTRIKE\"");
-            sb.append(",");
-            sb.append("\"TA_CDL3OUTSIDE\"");
-            sb.append(",");
-            sb.append("\"TA_CDL3STARSINSOUTH\"");
-            sb.append(",");
-            sb.append("\"TA_CDL3WHITESOLDIERS\"");
-            sb.append(",");
-            sb.append("\"TA_CDLABANDONEDBABY\"");
-            sb.append(",");
-            sb.append("\"TA_CDLADVANCEBLOCK\"");
-            sb.append(",");
-            sb.append("\"TA_CDLBELTHOLD\"");
-            sb.append(",");
-            sb.append("\"TA_CDLBREAKAWAY\"");
-            sb.append(",");
-            sb.append("\"TA_CDLCLOSINGMARUBOZU\"");
-            sb.append(",");
-            sb.append("\"TA_CDLCONCEALBABYSWALL\"");
-            sb.append(",");
-            sb.append("\"TA_CDLCOUNTERATTACK\"");
-            sb.append(",");
-            sb.append("\"TA_CDLDARKCLOUDCOVER\"");
-            sb.append(",");
-            sb.append("\"TA_CDLDOJI\"");
-            sb.append(",");
-            sb.append("\"TA_CDLDOJISTAR\"");
-            sb.append(",");
-            sb.append("\"TA_CDLDRAGONFLYDOJI\"");
-            sb.append(",");
-            sb.append("\"TA_CDLENGULFING\"");
-            sb.append(",");
-            sb.append("\"TA_CDLEVENINGDOJISTAR\"");
-            sb.append(",");
-            sb.append("\"TA_CDLEVENINGSTAR\"");
-            sb.append(",");
-            sb.append("\"TA_CDLGAPSIDESIDEWHITE\"");
-            sb.append(",");
-            sb.append("\"TA_CDLGRAVESTONEDOJI\"");
-            sb.append(",");
-            sb.append("\"TA_CDLHAMMER\"");
-            sb.append(",");
-            sb.append("\"TA_CDLHANGINGMAN\"");
-            sb.append(",");
-            sb.append("\"TA_CDLHARAMI\"");
-            sb.append(",");
-            sb.append("\"TA_CDLHARAMICROSS\"");
-            sb.append(",");
-            sb.append("\"TA_CDLHIGHWAVE\"");
-            sb.append(",");
-            sb.append("\"TA_CDLHIKKAKE\"");
-            sb.append(",");
-            sb.append("\"TA_CDLHIKKAKEMOD\"");
-            sb.append(",");
-            sb.append("\"TA_CDLHOMINGPIGEON\"");
-            sb.append(",");
-            sb.append("\"TA_CDLIDENTICAL3CROWS\"");
-            sb.append(",");
-            sb.append("\"TA_CDLINNECK\"");
-            sb.append(",");
-            sb.append("\"TA_CDLINVERTEDHAMMER\"");
-            sb.append(",");
-            sb.append("\"TA_CDLKICKING\"");
-            sb.append(",");
-            sb.append("\"TA_CDLKICKINGBYLENGTH\"");
-            sb.append(",");
-            sb.append("\"TA_CDLLADDERBOTTOM\"");
-            sb.append(",");
-            sb.append("\"TA_CDLLONGLEGGEDDOJI\"");
-            sb.append(",");
-            sb.append("\"TA_CDLLONGLINE\"");
-            sb.append(",");
-            sb.append("\"TA_CDLMARUBOZU\"");
-            sb.append(",");
-            sb.append("\"TA_CDLMATCHINGLOW\"");
-            sb.append(",");
-            sb.append("\"TA_CDLMATHOLD\"");
-            sb.append(",");
-            sb.append("\"TA_CDLMORNINGDOJISTAR\"");
-            sb.append(",");
-            sb.append("\"TA_CDLMORNINGSTAR\"");
-            sb.append(",");
-            sb.append("\"TA_CDLONNECK\"");
-            sb.append(",");
-            sb.append("\"TA_CDLPIERCING\"");
-            sb.append(",");
-            sb.append("\"TA_CDLRICKSHAWMAN\"");
-            sb.append(",");
-            sb.append("\"TA_CDLRISEFALL3METHODS\"");
-            sb.append(",");
-            sb.append("\"TA_CDLSEPARATINGLINES\"");
-            sb.append(",");
-            sb.append("\"TA_CDLSHOOTINGSTAR\"");
-            sb.append(",");
-            sb.append("\"TA_CDLSHORTLINE\"");
-            sb.append(",");
-            sb.append("\"TA_CDLSPINNINGTOP\"");
-            sb.append(",");
-            sb.append("\"TA_CDLSTALLEDPATTERN\"");
-            sb.append(",");
-            sb.append("\"TA_CDLSTICKSANDWICH\"");
-            sb.append(",");
-            sb.append("\"TA_CDLTAKURI\"");
-            sb.append(",");
-            sb.append("\"TA_CDLTASUKIGAP\"");
-            sb.append(",");
-            sb.append("\"TA_CDLTHRUSTING\"");
-            sb.append(",");
-            sb.append("\"TA_CDLTRISTAR\"");
-            sb.append(",");
-            sb.append("\"TA_CDLUNIQUE3RIVER\"");
-            sb.append(",");
-            sb.append("\"TA_CDLUPSIDEGAP2CROWS\"");
-            sb.append(",");
-            sb.append("\"TA_CDLXSIDEGAP3METHODS\"");
-            sb.append(",");
-            sb.append("\"TA_CEIL\"");
-            sb.append(",");
-            sb.append("\"TA_CG\"");
-            sb.append(",");
-            sb.append("\"TA_CMF\"");
-            sb.append(",");
-            sb.append("\"TA_CMO\"");
-            sb.append(",");
-            sb.append("\"TA_CMOU\"");
-            sb.append(",");
-            sb.append("\"TA_COPPOCK\"");
-            sb.append(",");
-            sb.append("\"TA_CORREL\"");
-            sb.append(",");
-            sb.append("\"TA_COS\"");
-            sb.append(",");
-            sb.append("\"TA_COSH\"");
-            sb.append(",");
-            sb.append("\"TA_CRSI\"");
-            sb.append(",");
-            sb.append("\"TA_CTI\"");
-            sb.append(",");
-            sb.append("\"TA_CUMSUM\"");
-            sb.append(",");
-            sb.append("\"TA_CVI\"");
-            sb.append(",");
-            sb.append("\"TA_DEMA\"");
-            sb.append(",");
-            sb.append("\"TA_DIV\"");
-            sb.append(",");
-            sb.append("\"TA_DONCHIAN\"");
-            sb.append(",");
-            sb.append("\"TA_DPO\"");
-            sb.append(",");
-            sb.append("\"TA_DX\"");
-            sb.append(",");
-            sb.append("\"TA_EFI\"");
-            sb.append(",");
-            sb.append("\"TA_EMA\"");
-            sb.append(",");
-            sb.append("\"TA_ER\"");
-            sb.append(",");
-            sb.append("\"TA_ERI\"");
-            sb.append(",");
-            sb.append("\"TA_EXP\"");
-            sb.append(",");
-            sb.append("\"TA_FLOOR\"");
-            sb.append(",");
-            sb.append("\"TA_FOSC\"");
-            sb.append(",");
-            sb.append("\"TA_FRACTAL\"");
-            sb.append(",");
-            sb.append("\"TA_FRAMA\"");
-            sb.append(",");
-            sb.append("\"TA_HA\"");
-            sb.append(",");
-            sb.append("\"TA_HMA\"");
-            sb.append(",");
-            sb.append("\"TA_HT_DCPERIOD\"");
-            sb.append(",");
-            sb.append("\"TA_HT_DCPHASE\"");
-            sb.append(",");
-            sb.append("\"TA_HT_PHASOR\"");
-            sb.append(",");
-            sb.append("\"TA_HT_SINE\"");
-            sb.append(",");
-            sb.append("\"TA_HT_TRENDLINE\"");
-            sb.append(",");
-            sb.append("\"TA_HT_TRENDMODE\"");
-            sb.append(",");
-            sb.append("\"TA_IMI\"");
-            sb.append(",");
-            sb.append("\"TA_KAMA\"");
-            sb.append(",");
-            sb.append("\"TA_KC\"");
-            sb.append(",");
-            sb.append("\"TA_KDJ\"");
-            sb.append(",");
-            sb.append("\"TA_KURTOSIS\"");
-            sb.append(",");
-            sb.append("\"TA_LINEARREG\"");
-            sb.append(",");
-            sb.append("\"TA_LINEARREG_ANGLE\"");
-            sb.append(",");
-            sb.append("\"TA_LINEARREG_INTERCEPT\"");
-            sb.append(",");
-            sb.append("\"TA_LINEARREG_SLOPE\"");
-            sb.append(",");
-            sb.append("\"TA_LN\"");
-            sb.append(",");
-            sb.append("\"TA_LOG10\"");
-            sb.append(",");
-            sb.append("\"TA_MA\"");
-            sb.append(",");
-            sb.append("\"TA_MACD\"");
-            sb.append(",");
-            sb.append("\"TA_MACDEXT\"");
-            sb.append(",");
-            sb.append("\"TA_MACDFIX\"");
-            sb.append(",");
-            sb.append("\"TA_MAMA\"");
-            sb.append(",");
-            sb.append("\"TA_MARKETFI\"");
-            sb.append(",");
-            sb.append("\"TA_MASSI\"");
-            sb.append(",");
-            sb.append("\"TA_MAVP\"");
-            sb.append(",");
-            sb.append("\"TA_MAX\"");
-            sb.append(",");
-            sb.append("\"TA_MAXINDEX\"");
-            sb.append(",");
-            sb.append("\"TA_MEDIAN\"");
-            sb.append(",");
-            sb.append("\"TA_MEDPRICE\"");
-            sb.append(",");
-            sb.append("\"TA_MFI\"");
-            sb.append(",");
-            sb.append("\"TA_MIDPOINT\"");
-            sb.append(",");
-            sb.append("\"TA_MIDPRICE\"");
-            sb.append(",");
-            sb.append("\"TA_MIN\"");
-            sb.append(",");
-            sb.append("\"TA_MININDEX\"");
-            sb.append(",");
-            sb.append("\"TA_MINMAX\"");
-            sb.append(",");
-            sb.append("\"TA_MINMAXINDEX\"");
-            sb.append(",");
-            sb.append("\"TA_MINUS_DI\"");
-            sb.append(",");
-            sb.append("\"TA_MINUS_DM\"");
-            sb.append(",");
-            sb.append("\"TA_MOM\"");
-            sb.append(",");
-            sb.append("\"TA_MULT\"");
-            sb.append(",");
-            sb.append("\"TA_NATR\"");
-            sb.append(",");
-            sb.append("\"TA_NVI\"");
-            sb.append(",");
-            sb.append("\"TA_OBV\"");
-            sb.append(",");
-            sb.append("\"TA_PERCENTB\"");
-            sb.append(",");
-            sb.append("\"TA_PERCENTILE\"");
-            sb.append(",");
-            sb.append("\"TA_PERCENTRANK\"");
-            sb.append(",");
-            sb.append("\"TA_PLUS_DI\"");
-            sb.append(",");
-            sb.append("\"TA_PLUS_DM\"");
-            sb.append(",");
-            sb.append("\"TA_PPO\"");
-            sb.append(",");
-            sb.append("\"TA_PVI\"");
-            sb.append(",");
-            sb.append("\"TA_PVO\"");
-            sb.append(",");
-            sb.append("\"TA_PVT\"");
-            sb.append(",");
-            sb.append("\"TA_QSTICK\"");
-            sb.append(",");
-            sb.append("\"TA_RMA\"");
-            sb.append(",");
-            sb.append("\"TA_ROC\"");
-            sb.append(",");
-            sb.append("\"TA_ROCP\"");
-            sb.append(",");
-            sb.append("\"TA_ROCR\"");
-            sb.append(",");
-            sb.append("\"TA_ROCR100\"");
-            sb.append(",");
-            sb.append("\"TA_RSI\"");
-            sb.append(",");
-            sb.append("\"TA_RVI\"");
-            sb.append(",");
-            sb.append("\"TA_RVIR\"");
-            sb.append(",");
-            sb.append("\"TA_RVOL\"");
-            sb.append(",");
-            sb.append("\"TA_SAR\"");
-            sb.append(",");
-            sb.append("\"TA_SAREXT\"");
-            sb.append(",");
-            sb.append("\"TA_SI\"");
-            sb.append(",");
-            sb.append("\"TA_SIN\"");
-            sb.append(",");
-            sb.append("\"TA_SINH\"");
-            sb.append(",");
-            sb.append("\"TA_SMA\"");
-            sb.append(",");
-            sb.append("\"TA_SMI\"");
-            sb.append(",");
-            sb.append("\"TA_SQRT\"");
-            sb.append(",");
-            sb.append("\"TA_STDDEV\"");
-            sb.append(",");
-            sb.append("\"TA_STOCH\"");
-            sb.append(",");
-            sb.append("\"TA_STOCHF\"");
-            sb.append(",");
-            sb.append("\"TA_STOCHRSI\"");
-            sb.append(",");
-            sb.append("\"TA_SUB\"");
-            sb.append(",");
-            sb.append("\"TA_SUM\"");
-            sb.append(",");
-            sb.append("\"TA_SUPERTREND\"");
-            sb.append(",");
-            sb.append("\"TA_T3\"");
-            sb.append(",");
-            sb.append("\"TA_TAN\"");
-            sb.append(",");
-            sb.append("\"TA_TANH\"");
-            sb.append(",");
-            sb.append("\"TA_TEMA\"");
-            sb.append(",");
-            sb.append("\"TA_TRANGE\"");
-            sb.append(",");
-            sb.append("\"TA_TRIMA\"");
-            sb.append(",");
-            sb.append("\"TA_TRIX\"");
-            sb.append(",");
-            sb.append("\"TA_TSF\"");
-            sb.append(",");
-            sb.append("\"TA_TSI\"");
-            sb.append(",");
-            sb.append("\"TA_TYPPRICE\"");
-            sb.append(",");
-            sb.append("\"TA_ULTOSC\"");
-            sb.append(",");
-            sb.append("\"TA_VAR\"");
-            sb.append(",");
-            sb.append("\"TA_VHF\"");
-            sb.append(",");
-            sb.append("\"TA_VORTEX\"");
-            sb.append(",");
-            sb.append("\"TA_VWAP\"");
-            sb.append(",");
-            sb.append("\"TA_VWMA\"");
-            sb.append(",");
-            sb.append("\"TA_WAD\"");
-            sb.append(",");
-            sb.append("\"TA_WCLPRICE\"");
-            sb.append(",");
-            sb.append("\"TA_WILLR\"");
-            sb.append(",");
-            sb.append("\"TA_WMA\"");
-            sb.append(",");
-            sb.append("\"TA_ZLEMA\"");
+            for (int i = 0; i < FUNC_NAMES.length; i++) {
+                if (i > 0) sb.append(',');
+                sb.append('"').append(FUNC_NAMES[i]).append('"');
+            }
             sb.append("]}");
             return sb.toString();
         }
@@ -197781,16 +197587,16 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
+        double[] inHigh;
+        double[] inLow;
         if (use_preloaded != 0 && refN > 0) {
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
         } else {
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
         }
         boolean _optRejected = false;
         int optInFastPeriod = jsonInt(json, "optInFastPeriod");
@@ -197937,20 +197743,20 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -198104,12 +197910,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -198250,24 +198056,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
-        double[] inVolume = new double[MAX_ARRAY_SIZE];
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
+        double[] inVolume;
         if (use_preloaded != 0 && refN > 0) {
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
+            inVolume = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refVolume, 0, inVolume, 0, refN);
         } else {
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
-            double[] _tmp_inVolume = jsonDoubleArray(json, "inVolume");
-            inVolume = _tmp_inVolume;
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
+            inVolume = jsonDoubleArray(json, "inVolume");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -198417,16 +198223,16 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal0 = new double[MAX_ARRAY_SIZE];
-        double[] inReal1 = new double[MAX_ARRAY_SIZE];
+        double[] inReal0;
+        double[] inReal1;
         if (use_preloaded != 0 && refN > 0) {
+            inReal0 = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal0, 0, refN);
+            inReal1 = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inReal1, 0, refN);
         } else {
-            double[] _tmp_inReal0 = jsonDoubleArray(json, "inReal0");
-            inReal0 = _tmp_inReal0;
-            double[] _tmp_inReal1 = jsonDoubleArray(json, "inReal1");
-            inReal1 = _tmp_inReal1;
+            inReal0 = jsonDoubleArray(json, "inReal0");
+            inReal1 = jsonDoubleArray(json, "inReal1");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -198570,24 +198376,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
-        double[] inVolume = new double[MAX_ARRAY_SIZE];
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
+        double[] inVolume;
         if (use_preloaded != 0 && refN > 0) {
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
+            inVolume = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refVolume, 0, inVolume, 0, refN);
         } else {
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
-            double[] _tmp_inVolume = jsonDoubleArray(json, "inVolume");
-            inVolume = _tmp_inVolume;
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
+            inVolume = jsonDoubleArray(json, "inVolume");
         }
         boolean _optRejected = false;
         int optInFastPeriod = jsonInt(json, "optInFastPeriod");
@@ -198739,16 +198545,16 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
+        double[] inHigh;
+        double[] inLow;
         if (use_preloaded != 0 && refN > 0) {
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
         } else {
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -198893,20 +198699,20 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -199055,20 +198861,20 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -199216,16 +199022,16 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
+        double[] inHigh;
+        double[] inLow;
         if (use_preloaded != 0 && refN > 0) {
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
         } else {
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
         }
         boolean _optRejected = false;
         int optInFastPeriod = jsonInt(json, "optInFastPeriod");
@@ -199371,12 +199177,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         int optInFastPeriod = jsonInt(json, "optInFastPeriod");
@@ -199522,16 +199328,16 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
+        double[] inHigh;
+        double[] inLow;
         if (use_preloaded != 0 && refN > 0) {
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
         } else {
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -199679,16 +199485,16 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
+        double[] inHigh;
+        double[] inLow;
         if (use_preloaded != 0 && refN > 0) {
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
         } else {
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -199833,24 +199639,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         double optInLimitMove = jsonDouble(json, "optInLimitMove");
@@ -200001,12 +199807,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -200147,12 +199953,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -200293,20 +200099,20 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -200455,12 +200261,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -200602,24 +200408,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -200769,12 +200575,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -200927,12 +200733,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -201079,16 +200885,16 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal0 = new double[MAX_ARRAY_SIZE];
-        double[] inReal1 = new double[MAX_ARRAY_SIZE];
+        double[] inReal0;
+        double[] inReal1;
         if (use_preloaded != 0 && refN > 0) {
+            inReal0 = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal0, 0, refN);
+            inReal1 = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inReal1, 0, refN);
         } else {
-            double[] _tmp_inReal0 = jsonDoubleArray(json, "inReal0");
-            inReal0 = _tmp_inReal0;
-            double[] _tmp_inReal1 = jsonDoubleArray(json, "inReal1");
-            inReal1 = _tmp_inReal1;
+            inReal0 = jsonDoubleArray(json, "inReal0");
+            inReal1 = jsonDoubleArray(json, "inReal1");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -201233,24 +201039,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -201400,20 +201206,20 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -201561,24 +201367,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -201728,24 +201534,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -201895,24 +201701,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -202062,24 +201868,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -202229,24 +202035,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -202396,24 +202202,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -202563,24 +202369,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -202730,24 +202536,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         double optInPenetration = jsonDouble(json, "optInPenetration");
@@ -202898,24 +202704,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -203065,24 +202871,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -203232,24 +203038,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -203399,24 +203205,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -203566,24 +203372,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -203733,24 +203539,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -203900,24 +203706,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         double optInPenetration = jsonDouble(json, "optInPenetration");
@@ -204068,24 +203874,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -204235,24 +204041,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -204402,24 +204208,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -204569,24 +204375,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -204736,24 +204542,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         double optInPenetration = jsonDouble(json, "optInPenetration");
@@ -204904,24 +204710,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         double optInPenetration = jsonDouble(json, "optInPenetration");
@@ -205072,24 +204878,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -205239,24 +205045,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -205406,24 +205212,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -205573,24 +205379,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -205740,24 +205546,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -205907,24 +205713,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -206074,24 +205880,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -206241,24 +206047,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -206408,24 +206214,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -206575,24 +206381,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -206742,24 +206548,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -206909,24 +206715,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -207076,24 +206882,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -207243,24 +207049,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -207410,24 +207216,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -207577,24 +207383,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -207744,24 +207550,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -207911,24 +207717,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -208078,24 +207884,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -208245,24 +208051,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -208412,24 +208218,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         double optInPenetration = jsonDouble(json, "optInPenetration");
@@ -208580,24 +208386,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         double optInPenetration = jsonDouble(json, "optInPenetration");
@@ -208748,24 +208554,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         double optInPenetration = jsonDouble(json, "optInPenetration");
@@ -208916,24 +208722,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -209083,24 +208889,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -209250,24 +209056,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -209417,24 +209223,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -209584,24 +209390,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -209751,24 +209557,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -209918,24 +209724,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -210085,24 +209891,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -210252,24 +210058,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -210419,24 +210225,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -210586,24 +210392,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -210753,24 +210559,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -210920,24 +210726,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -211087,24 +210893,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -211254,24 +211060,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -211421,24 +211227,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -211588,24 +211394,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -211755,12 +211561,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -211901,12 +211707,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -212048,24 +211854,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
-        double[] inVolume = new double[MAX_ARRAY_SIZE];
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
+        double[] inVolume;
         if (use_preloaded != 0 && refN > 0) {
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
+            inVolume = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refVolume, 0, inVolume, 0, refN);
         } else {
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
-            double[] _tmp_inVolume = jsonDoubleArray(json, "inVolume");
-            inVolume = _tmp_inVolume;
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
+            inVolume = jsonDoubleArray(json, "inVolume");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -212216,12 +212022,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -212364,12 +212170,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -212511,12 +212317,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         int optInWMAPeriod = jsonInt(json, "optInWMAPeriod");
@@ -212660,16 +212466,16 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal0 = new double[MAX_ARRAY_SIZE];
-        double[] inReal1 = new double[MAX_ARRAY_SIZE];
+        double[] inReal0;
+        double[] inReal1;
         if (use_preloaded != 0 && refN > 0) {
+            inReal0 = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal0, 0, refN);
+            inReal1 = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inReal1, 0, refN);
         } else {
-            double[] _tmp_inReal0 = jsonDoubleArray(json, "inReal0");
-            inReal0 = _tmp_inReal0;
-            double[] _tmp_inReal1 = jsonDoubleArray(json, "inReal1");
-            inReal1 = _tmp_inReal1;
+            inReal0 = jsonDoubleArray(json, "inReal0");
+            inReal1 = jsonDoubleArray(json, "inReal1");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -212814,12 +212620,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -212960,12 +212766,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -213106,12 +212912,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -213255,12 +213061,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -213402,12 +213208,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -213548,16 +213354,16 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
+        double[] inHigh;
+        double[] inLow;
         if (use_preloaded != 0 && refN > 0) {
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
         } else {
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -213703,12 +213509,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -213850,16 +213656,16 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal0 = new double[MAX_ARRAY_SIZE];
-        double[] inReal1 = new double[MAX_ARRAY_SIZE];
+        double[] inReal0;
+        double[] inReal1;
         if (use_preloaded != 0 && refN > 0) {
+            inReal0 = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal0, 0, refN);
+            inReal1 = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inReal1, 0, refN);
         } else {
-            double[] _tmp_inReal0 = jsonDoubleArray(json, "inReal0");
-            inReal0 = _tmp_inReal0;
-            double[] _tmp_inReal1 = jsonDoubleArray(json, "inReal1");
-            inReal1 = _tmp_inReal1;
+            inReal0 = jsonDoubleArray(json, "inReal0");
+            inReal1 = jsonDoubleArray(json, "inReal1");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -214003,16 +213809,16 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
+        double[] inHigh;
+        double[] inLow;
         if (use_preloaded != 0 && refN > 0) {
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
         } else {
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -214163,12 +213969,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -214310,20 +214116,20 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -214472,16 +214278,16 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inClose = new double[MAX_ARRAY_SIZE];
-        double[] inVolume = new double[MAX_ARRAY_SIZE];
+        double[] inClose;
+        double[] inVolume;
         if (use_preloaded != 0 && refN > 0) {
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
+            inVolume = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refVolume, 0, inVolume, 0, refN);
         } else {
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
-            double[] _tmp_inVolume = jsonDoubleArray(json, "inVolume");
-            inVolume = _tmp_inVolume;
+            inClose = jsonDoubleArray(json, "inClose");
+            inVolume = jsonDoubleArray(json, "inVolume");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -214626,12 +214432,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -214774,12 +214580,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -214921,20 +214727,20 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -215085,12 +214891,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -215231,12 +215037,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -215377,12 +215183,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -215524,16 +215330,16 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
+        double[] inHigh;
+        double[] inLow;
         if (use_preloaded != 0 && refN > 0) {
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
         } else {
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
         }
         boolean _optRejected = false;
         int optInLeftBars = jsonInt(json, "optInLeftBars");
@@ -215682,16 +215488,16 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
+        double[] inHigh;
+        double[] inLow;
         if (use_preloaded != 0 && refN > 0) {
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
         } else {
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -215837,24 +215643,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         core.unstablePeriod[25] = jsonInt(json, "unstablePeriod");
@@ -216014,12 +215820,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -216161,12 +215967,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         core.unstablePeriod[6] = jsonInt(json, "unstablePeriod");
@@ -216308,12 +216114,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         core.unstablePeriod[7] = jsonInt(json, "unstablePeriod");
@@ -216455,12 +216261,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         core.unstablePeriod[8] = jsonInt(json, "unstablePeriod");
@@ -216605,12 +216411,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         core.unstablePeriod[9] = jsonInt(json, "unstablePeriod");
@@ -216755,12 +216561,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         core.unstablePeriod[10] = jsonInt(json, "unstablePeriod");
@@ -216902,12 +216708,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         core.unstablePeriod[11] = jsonInt(json, "unstablePeriod");
@@ -217049,16 +216855,16 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -217203,12 +217009,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -217351,20 +217157,20 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -217520,20 +217326,20 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         int optInFastK_Period = jsonInt(json, "optInFastK_Period");
@@ -217695,12 +217501,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -217842,12 +217648,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -217989,12 +217795,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -218136,12 +217942,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -218283,12 +218089,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -218430,12 +218236,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -218576,12 +218382,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -218722,12 +218528,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -218872,12 +218678,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         int optInFastPeriod = jsonInt(json, "optInFastPeriod");
@@ -219027,12 +218833,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         int optInFastPeriod = jsonInt(json, "optInFastPeriod");
@@ -219191,12 +218997,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         int optInSignalPeriod = jsonInt(json, "optInSignalPeriod");
@@ -219344,12 +219150,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         double optInFastLimit = jsonDouble(json, "optInFastLimit");
@@ -219496,20 +219302,20 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inVolume = new double[MAX_ARRAY_SIZE];
+        double[] inHigh;
+        double[] inLow;
+        double[] inVolume;
         if (use_preloaded != 0 && refN > 0) {
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inVolume = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refVolume, 0, inVolume, 0, refN);
         } else {
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inVolume = jsonDoubleArray(json, "inVolume");
-            inVolume = _tmp_inVolume;
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inVolume = jsonDoubleArray(json, "inVolume");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -219656,16 +219462,16 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
+        double[] inHigh;
+        double[] inLow;
         if (use_preloaded != 0 && refN > 0) {
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
         } else {
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
         }
         boolean _optRejected = false;
         int optInFastPeriod = jsonInt(json, "optInFastPeriod");
@@ -219811,16 +219617,16 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal0 = new double[MAX_ARRAY_SIZE];
-        double[] inReal1 = new double[MAX_ARRAY_SIZE];
+        double[] inReal0;
+        double[] inReal1;
         if (use_preloaded != 0 && refN > 0) {
+            inReal0 = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal0, 0, refN);
+            inReal1 = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inReal1, 0, refN);
         } else {
-            double[] _tmp_inReal0 = jsonDoubleArray(json, "inReal0");
-            inReal0 = _tmp_inReal0;
-            double[] _tmp_inReal1 = jsonDoubleArray(json, "inReal1");
-            inReal1 = _tmp_inReal1;
+            inReal0 = jsonDoubleArray(json, "inReal0");
+            inReal1 = jsonDoubleArray(json, "inReal1");
         }
         boolean _optRejected = false;
         int optInMinPeriod = jsonInt(json, "optInMinPeriod");
@@ -219969,12 +219775,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -220116,12 +219922,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -220263,12 +220069,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -220410,16 +220216,16 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
+        double[] inHigh;
+        double[] inLow;
         if (use_preloaded != 0 && refN > 0) {
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
         } else {
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -220563,24 +220369,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
-        double[] inVolume = new double[MAX_ARRAY_SIZE];
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
+        double[] inVolume;
         if (use_preloaded != 0 && refN > 0) {
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
+            inVolume = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refVolume, 0, inVolume, 0, refN);
         } else {
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
-            double[] _tmp_inVolume = jsonDoubleArray(json, "inVolume");
-            inVolume = _tmp_inVolume;
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
+            inVolume = jsonDoubleArray(json, "inVolume");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -220731,12 +220537,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -220878,16 +220684,16 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
+        double[] inHigh;
+        double[] inLow;
         if (use_preloaded != 0 && refN > 0) {
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
         } else {
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -221032,12 +220838,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -221179,12 +220985,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -221326,12 +221132,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -221476,12 +221282,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -221626,20 +221432,20 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -221788,16 +221594,16 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
+        double[] inHigh;
+        double[] inLow;
         if (use_preloaded != 0 && refN > 0) {
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
         } else {
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -221943,12 +221749,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -222090,16 +221896,16 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal0 = new double[MAX_ARRAY_SIZE];
-        double[] inReal1 = new double[MAX_ARRAY_SIZE];
+        double[] inReal0;
+        double[] inReal1;
         if (use_preloaded != 0 && refN > 0) {
+            inReal0 = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal0, 0, refN);
+            inReal1 = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inReal1, 0, refN);
         } else {
-            double[] _tmp_inReal0 = jsonDoubleArray(json, "inReal0");
-            inReal0 = _tmp_inReal0;
-            double[] _tmp_inReal1 = jsonDoubleArray(json, "inReal1");
-            inReal1 = _tmp_inReal1;
+            inReal0 = jsonDoubleArray(json, "inReal0");
+            inReal1 = jsonDoubleArray(json, "inReal1");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -222243,20 +222049,20 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -222405,16 +222211,16 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inClose = new double[MAX_ARRAY_SIZE];
-        double[] inVolume = new double[MAX_ARRAY_SIZE];
+        double[] inClose;
+        double[] inVolume;
         if (use_preloaded != 0 && refN > 0) {
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
+            inVolume = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refVolume, 0, inVolume, 0, refN);
         } else {
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
-            double[] _tmp_inVolume = jsonDoubleArray(json, "inVolume");
-            inVolume = _tmp_inVolume;
+            inClose = jsonDoubleArray(json, "inClose");
+            inVolume = jsonDoubleArray(json, "inVolume");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -222558,16 +222364,16 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
-        double[] inVolume = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
+        double[] inVolume;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
+            inVolume = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refVolume, 0, inVolume, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
-            double[] _tmp_inVolume = jsonDoubleArray(json, "inVolume");
-            inVolume = _tmp_inVolume;
+            inReal = jsonDoubleArray(json, "inReal");
+            inVolume = jsonDoubleArray(json, "inVolume");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -222711,12 +222517,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -222863,12 +222669,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -223011,12 +222817,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -223158,20 +222964,20 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -223320,16 +223126,16 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
+        double[] inHigh;
+        double[] inLow;
         if (use_preloaded != 0 && refN > 0) {
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
         } else {
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -223475,12 +223281,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         int optInFastPeriod = jsonInt(json, "optInFastPeriod");
@@ -223626,16 +223432,16 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inClose = new double[MAX_ARRAY_SIZE];
-        double[] inVolume = new double[MAX_ARRAY_SIZE];
+        double[] inClose;
+        double[] inVolume;
         if (use_preloaded != 0 && refN > 0) {
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
+            inVolume = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refVolume, 0, inVolume, 0, refN);
         } else {
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
-            double[] _tmp_inVolume = jsonDoubleArray(json, "inVolume");
-            inVolume = _tmp_inVolume;
+            inClose = jsonDoubleArray(json, "inClose");
+            inVolume = jsonDoubleArray(json, "inVolume");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -223779,12 +223585,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inVolume = new double[MAX_ARRAY_SIZE];
+        double[] inVolume;
         if (use_preloaded != 0 && refN > 0) {
+            inVolume = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refVolume, 0, inVolume, 0, refN);
         } else {
-            double[] _tmp_inVolume = jsonDoubleArray(json, "inVolume");
-            inVolume = _tmp_inVolume;
+            inVolume = jsonDoubleArray(json, "inVolume");
         }
         boolean _optRejected = false;
         int optInFastPeriod = jsonInt(json, "optInFastPeriod");
@@ -223930,16 +223736,16 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inClose = new double[MAX_ARRAY_SIZE];
-        double[] inVolume = new double[MAX_ARRAY_SIZE];
+        double[] inClose;
+        double[] inVolume;
         if (use_preloaded != 0 && refN > 0) {
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
+            inVolume = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refVolume, 0, inVolume, 0, refN);
         } else {
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
-            double[] _tmp_inVolume = jsonDoubleArray(json, "inVolume");
-            inVolume = _tmp_inVolume;
+            inClose = jsonDoubleArray(json, "inClose");
+            inVolume = jsonDoubleArray(json, "inVolume");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -224083,16 +223889,16 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -224237,12 +224043,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -224385,12 +224191,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -224532,12 +224338,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -224679,12 +224485,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -224826,12 +224632,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -224973,12 +224779,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -225121,12 +224927,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -225270,16 +225076,16 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
+        double[] inHigh;
+        double[] inLow;
         if (use_preloaded != 0 && refN > 0) {
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
         } else {
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -225425,12 +225231,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inVolume = new double[MAX_ARRAY_SIZE];
+        double[] inVolume;
         if (use_preloaded != 0 && refN > 0) {
+            inVolume = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refVolume, 0, inVolume, 0, refN);
         } else {
-            double[] _tmp_inVolume = jsonDoubleArray(json, "inVolume");
-            inVolume = _tmp_inVolume;
+            inVolume = jsonDoubleArray(json, "inVolume");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -225572,16 +225378,16 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
+        double[] inHigh;
+        double[] inLow;
         if (use_preloaded != 0 && refN > 0) {
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
         } else {
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
         }
         boolean _optRejected = false;
         double optInAcceleration = jsonDouble(json, "optInAcceleration");
@@ -225727,16 +225533,16 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
+        double[] inHigh;
+        double[] inLow;
         if (use_preloaded != 0 && refN > 0) {
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
         } else {
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
         }
         boolean _optRejected = false;
         double optInStartValue = jsonDouble(json, "optInStartValue");
@@ -225888,24 +225694,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inOpen = new double[MAX_ARRAY_SIZE];
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
-            inOpen = _tmp_inOpen;
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         double optInLimitMove = jsonDouble(json, "optInLimitMove");
@@ -226056,12 +225862,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -226202,12 +226008,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -226348,12 +226154,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -226495,20 +226301,20 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -226662,12 +226468,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -226808,12 +226614,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -226956,20 +226762,20 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         int optInFastK_Period = jsonInt(json, "optInFastK_Period");
@@ -227128,20 +226934,20 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         int optInFastK_Period = jsonInt(json, "optInFastK_Period");
@@ -227296,12 +227102,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -227451,16 +227257,16 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal0 = new double[MAX_ARRAY_SIZE];
-        double[] inReal1 = new double[MAX_ARRAY_SIZE];
+        double[] inReal0;
+        double[] inReal1;
         if (use_preloaded != 0 && refN > 0) {
+            inReal0 = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal0, 0, refN);
+            inReal1 = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inReal1, 0, refN);
         } else {
-            double[] _tmp_inReal0 = jsonDoubleArray(json, "inReal0");
-            inReal0 = _tmp_inReal0;
-            double[] _tmp_inReal1 = jsonDoubleArray(json, "inReal1");
-            inReal1 = _tmp_inReal1;
+            inReal0 = jsonDoubleArray(json, "inReal0");
+            inReal1 = jsonDoubleArray(json, "inReal1");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -227604,12 +227410,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -227751,20 +227557,20 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -227916,12 +227722,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -228065,12 +227871,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -228211,12 +228017,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -228357,12 +228163,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -228504,20 +228310,20 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -228664,12 +228470,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -228811,12 +228617,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -228958,12 +228764,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -229105,12 +228911,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         int optInFirstPeriod = jsonInt(json, "optInFirstPeriod");
@@ -229253,20 +229059,20 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -229413,20 +229219,20 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         int optInTimePeriod1 = jsonInt(json, "optInTimePeriod1");
@@ -229576,12 +229382,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -229724,12 +229530,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -229871,20 +229677,20 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -230035,24 +229841,24 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
-        double[] inVolume = new double[MAX_ARRAY_SIZE];
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
+        double[] inVolume;
         if (use_preloaded != 0 && refN > 0) {
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
+            inVolume = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refVolume, 0, inVolume, 0, refN);
         } else {
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
-            double[] _tmp_inVolume = jsonDoubleArray(json, "inVolume");
-            inVolume = _tmp_inVolume;
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
+            inVolume = jsonDoubleArray(json, "inVolume");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -230202,16 +230008,16 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
-        double[] inVolume = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
+        double[] inVolume;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
+            inVolume = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refVolume, 0, inVolume, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
-            double[] _tmp_inVolume = jsonDoubleArray(json, "inVolume");
-            inVolume = _tmp_inVolume;
+            inReal = jsonDoubleArray(json, "inReal");
+            inVolume = jsonDoubleArray(json, "inVolume");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -230356,20 +230162,20 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -230516,20 +230322,20 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -230676,20 +230482,20 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inHigh = new double[MAX_ARRAY_SIZE];
-        double[] inLow = new double[MAX_ARRAY_SIZE];
-        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
         if (use_preloaded != 0 && refN > 0) {
+            inHigh = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inClose, 0, refN);
         } else {
-            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
-            inHigh = _tmp_inHigh;
-            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
-            inLow = _tmp_inLow;
-            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
-            inClose = _tmp_inClose;
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -230837,12 +230643,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
@@ -230984,12 +230790,12 @@ public class TaCodegenServe {
         int use_preloaded = jsonInt(json, "use_preloaded");
         int bench_iters = jsonInt(json, "iters");
         if (bench_iters < 1) bench_iters = 1;
-        double[] inReal = new double[MAX_ARRAY_SIZE];
+        double[] inReal;
         if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal, 0, refN);
         } else {
-            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
-            inReal = _tmp_inReal;
+            inReal = jsonDoubleArray(json, "inReal");
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
