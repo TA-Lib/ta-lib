@@ -1096,257 +1096,273 @@ fn verify_hand_maintained_funcunstid(
     }
 }
 
+/// One compile's result, printed only after every backend has finished so
+/// concurrent builds never interleave their output.
+struct BuildStep {
+    label: String,
+    log: String,
+    status: String,
+    ok: bool,
+}
+
+/// Runs `cmd` with its stdout and stderr captured into one temp file, not a
+/// pipe: a build server the tool leaves behind (MSBuild node reuse, the Roslyn
+/// compiler server) inherits the handle, and reading a pipe to EOF would wait
+/// on that daemon instead of on the build. Stdin is closed so a concurrent
+/// child can never block on a prompt.
+fn run_build_step(label: &str, tool: &str, cmd: &mut std::process::Command) -> BuildStep {
+    use std::sync::atomic::{AtomicU32, Ordering};
+    static SEQ: AtomicU32 = AtomicU32::new(0);
+    let log_path = std::env::temp_dir().join(format!(
+        "ta_codegen_build_{}_{}.log",
+        std::process::id(),
+        SEQ.fetch_add(1, Ordering::Relaxed)
+    ));
+    let spawned = std::fs::File::create(&log_path).and_then(|out| {
+        let err = out.try_clone()?;
+        cmd.stdin(std::process::Stdio::null())
+            .stdout(out)
+            .stderr(err)
+            .status()
+    });
+    let log = std::fs::read(&log_path)
+        .map(|b| String::from_utf8_lossy(&b).into_owned())
+        .unwrap_or_default();
+    let _ = std::fs::remove_file(&log_path);
+    let (ok, status) = match spawned {
+        Ok(s) if s.success() => (true, "OK".to_string()),
+        Ok(s) => (false, format!("FAILED (exit {})", s.code().unwrap_or(-1))),
+        Err(e) => (false, format!("FAILED (could not run {tool}: {e})")),
+    };
+    BuildStep {
+        label: label.to_string(),
+        log,
+        status,
+        ok,
+    }
+}
+
+fn build_c(root: &Path, out_base: &Path, bin_dir: &Path, servers_only: bool) -> Vec<BuildStep> {
+    let c_dir = out_base.join("c/tools");
+    let include_dir = root.join("include");
+    let src_dir = root.join("src");
+    let ta_func_dir = src_dir.join("ta_func");
+    let ta_common_dir = src_dir.join("ta_common");
+    let ta_abstract_dir = src_dir.join("ta_abstract");
+    let ta_frames_dir = ta_abstract_dir.join("frames");
+    let ta_abstract_serve_dir = root.join("ta_codegen/generator/templates/c");
+    // fuzz_data.h (shared seed-generator/hasher) for stream_verify.
+    let ta_regtest_dir = src_dir.join("tools/ta_regtest");
+    // bench_corpus.h (shared benchmark input corpus) for the benchmark binaries.
+    let ta_bench_dir = src_dir.join("tools/ta_bench");
+    let inc = |d: &Path| format!("-I{}", d.to_str().unwrap());
+
+    let server = || {
+        let src = c_dir.join("ta_codegen_serve.c");
+        let dst = bin_dir.join("ta_codegen_serve_c");
+        run_build_step(
+            "C server",
+            "gcc",
+            std::process::Command::new("gcc")
+                .args(["-o", dst.to_str().unwrap(), src.to_str().unwrap()])
+                .args([
+                    inc(&c_dir),
+                    inc(&ta_abstract_dir),
+                    inc(&ta_frames_dir),
+                    inc(&include_dir),
+                    inc(&src_dir),
+                    inc(&ta_func_dir),
+                    inc(&ta_common_dir),
+                    inc(&ta_abstract_serve_dir),
+                    inc(&ta_regtest_dir),
+                ])
+                .args(COMMON_GCC_FLAGS)
+                .args(X86_GCC_FLAGS),
+        )
+    };
+    let bench = |label: &str, src_name: &str, dst_name: &str| {
+        let src = c_dir.join(src_name);
+        if servers_only || !src.exists() {
+            return None;
+        }
+        let dst = bin_dir.join(dst_name);
+        Some(run_build_step(
+            label,
+            "gcc",
+            std::process::Command::new("gcc")
+                .args(["-o", dst.to_str().unwrap(), src.to_str().unwrap()])
+                .args([
+                    inc(&c_dir),
+                    inc(&ta_bench_dir),
+                    inc(&include_dir),
+                    inc(&src_dir),
+                    inc(&ta_func_dir),
+                    inc(&ta_common_dir),
+                ])
+                .args(COMMON_GCC_FLAGS)
+                .args(X86_GCC_FLAGS),
+        ))
+    };
+
+    std::thread::scope(|s| {
+        let cg = s.spawn(|| bench("C bench", "ta_bench_cg.c", "ta_bench_cg"));
+        let stream = s.spawn(|| bench("C stream bench", "ta_bench_stream.c", "ta_bench_stream"));
+        let mut steps = vec![server()];
+        for (label, h) in [("C bench", cg), ("C stream bench", stream)] {
+            match h.join() {
+                Ok(step) => steps.extend(step),
+                Err(_) => steps.push(panicked_step(label)),
+            }
+        }
+        steps
+    })
+}
+
+fn build_java(out_base: &Path, bin_dir: &Path) -> Vec<BuildStep> {
+    let java_dir = out_base.join("java/tools");
+    let class_dir = bin_dir.join("ta_codegen_java");
+    // Wipe first. javac's implicit compilation off --source-path does NOT
+    // reliably refresh a class that is already here, so an edited library
+    // source could leave the server running the previous build's bytes, and
+    // every Java gate would agree with it because they all drive this classpath.
+    let _ = std::fs::remove_dir_all(&class_dir);
+    std::fs::create_dir_all(&class_dir).ok();
+    // The server's ta_abstract RPCs answer from the SHIPPED registry, so the
+    // library's main source root is on the source path; never a server-private
+    // table, or the abstract gate would never touch what ships.
+    let lib_src = out_base.join("java/library/src/main/java");
+    vec![run_build_step(
+        "Java server",
+        "javac",
+        std::process::Command::new("javac").args([
+            // The spliced public wrappers return `record OutRange`: a too-old
+            // JDK fails here with a clear unsupported-release error.
+            "--release",
+            JAVA_RELEASE,
+            "-nowarn",
+            "--source-path",
+            lib_src.to_str().unwrap(),
+            "-d",
+            class_dir.to_str().unwrap(),
+            java_dir.join("TaCodegenServe.java").to_str().unwrap(),
+        ]),
+    )]
+}
+
+fn build_csharp(out_base: &Path, bin_dir: &Path) -> Vec<BuildStep> {
+    let csharp_dir = out_base.join("csharp/tools");
+    let csharp_out = bin_dir.join("ta_codegen_csharp");
+    std::fs::create_dir_all(&csharp_out).ok();
+    // The server csproj compiles the shipped library sources directly, so one
+    // publish builds the managed indicators and the server.
+    vec![run_build_step(
+        "C# server",
+        "dotnet",
+        std::process::Command::new("dotnet").args([
+            "publish",
+            "-c",
+            "Release",
+            "-o",
+            csharp_out.to_str().unwrap(),
+            csharp_dir.to_str().unwrap(),
+        ]),
+    )]
+}
+
+fn build_rust(out_base: &Path, bin_dir: &Path) -> Vec<BuildStep> {
+    let rust_dir = out_base.join("rust");
+    let mut step = run_build_step(
+        "Rust server",
+        "cargo",
+        std::process::Command::new("cargo")
+            .args(["build", "--release", "--bin", "ta_codegen_serve"])
+            .current_dir(&rust_dir),
+    );
+    if step.ok {
+        let src = rust_dir.join("target/release/ta_codegen_serve");
+        if let Err(e) = std::fs::copy(&src, bin_dir.join("ta_codegen_serve_rust")) {
+            step.ok = false;
+            step.status = format!("OK (build), FAILED (copy: {e})");
+        }
+    }
+    vec![step]
+}
+
+fn panicked_step(label: &str) -> BuildStep {
+    BuildStep {
+        label: label.to_string(),
+        log: String::new(),
+        status: "FAILED (build thread panicked)".to_string(),
+        ok: false,
+    }
+}
+
 /// `servers_only` skips the two C benchmark binaries. They are the only extra
 /// artifacts any backend arm builds, they are two more whole-library `-flto`
 /// compiles (~3x the C server alone), and they share this function's `failures`
 /// counter -- so a caller that wants a server to talk to would otherwise pay for
 /// them and fail on a break that has nothing to do with it.
+///
+/// Backends build concurrently: each writes only its own directories (its
+/// `bin/` entries and, for C# and Rust, its own `output/<lang>` build tree).
 fn build_servers(backend_filter: Option<&str>, servers_only: bool) {
     let root = repo_root();
     let backends_to_build: Vec<&str> = match backend_filter {
-        Some(b) => b.split(',').map(|s| s.trim()).collect(),
+        Some(b) => b.split(',').map(str::trim).collect(),
         None => backends::all_names(),
     };
 
     let out_base = root.join("ta_codegen/output");
     let bin_dir = root.join("bin");
+    println!("  Building servers concurrently: {}", backends_to_build.join(", "));
 
-    // Track server-build failures so we can exit non-zero. Without this a
-    // failed compile would still exit 0, and ta_regtest would silently reuse
-    // the previously-built (stale) server binary — a real break reads as green.
+    // None marks a backend name no arm recognises.
+    let results: Vec<(&str, Option<Vec<BuildStep>>)> = std::thread::scope(|s| {
+        let handles: Vec<_> = backends_to_build
+            .iter()
+            .map(|&backend| {
+                let (root, out_base, bin_dir) = (&root, &out_base, &bin_dir);
+                let handle = s.spawn(move || match backend {
+                    "c" => Some(build_c(root, out_base, bin_dir, servers_only)),
+                    "java" => Some(build_java(out_base, bin_dir)),
+                    "csharp" => Some(build_csharp(out_base, bin_dir)),
+                    "rust" => Some(build_rust(out_base, bin_dir)),
+                    _ => None,
+                });
+                (backend, handle)
+            })
+            .collect();
+        handles
+            .into_iter()
+            .map(|(backend, h)| {
+                let steps = h
+                    .join()
+                    .unwrap_or_else(|_| Some(vec![panicked_step(&format!("{backend} server"))]));
+                (backend, steps)
+            })
+            .collect()
+    });
+
+    // Track failures so we can exit non-zero. Without this a failed compile
+    // would still exit 0, and ta_regtest would silently reuse the previously
+    // built (stale) server binary: a real break reads as green.
     let mut failures: u32 = 0;
-
-    for backend in &backends_to_build {
-        match *backend {
-            "c" => {
-                print!("  Building C server... ");
-                let c_dir = out_base.join("c/tools");
-                let include_dir = root.join("include");
-                let src_dir = root.join("src");
-                // Option B: the whole C library (indicators + ta_common + the generated
-                // ta_abstract layer) lives in src/; output/c holds only the
-                // server/unity wrappers.
-                let ta_func_dir = src_dir.join("ta_func");
-                let ta_common_dir = src_dir.join("ta_common");
-                let ta_abstract_dir = src_dir.join("ta_abstract");
-                let ta_frames_dir = ta_abstract_dir.join("frames");
-                let ta_abstract_serve_dir = root.join("ta_codegen/generator/templates/c");
-                // fuzz_data.h (shared seed-generator/hasher) for stream_verify.
-                let ta_regtest_dir = src_dir.join("tools/ta_regtest");
-                // bench_corpus.h (shared benchmark input corpus) for the two
-                // generated benchmark binaries below.
-                let ta_bench_dir = src_dir.join("tools/ta_bench");
-                let src = c_dir.join("ta_codegen_serve.c");
-                let dst = bin_dir.join("ta_codegen_serve_c");
-                match std::process::Command::new("gcc")
-                    .args([
-                        "-o",
-                        dst.to_str().unwrap(),
-                        src.to_str().unwrap(),
-                        &format!("-I{}", c_dir.to_str().unwrap()),
-                        &format!("-I{}", ta_abstract_dir.to_str().unwrap()),
-                        &format!("-I{}", ta_frames_dir.to_str().unwrap()),
-                        &format!("-I{}", include_dir.to_str().unwrap()),
-                        &format!("-I{}", src_dir.to_str().unwrap()),
-                        &format!("-I{}", ta_func_dir.to_str().unwrap()),
-                        &format!("-I{}", ta_common_dir.to_str().unwrap()),
-                        &format!("-I{}", ta_abstract_serve_dir.to_str().unwrap()),
-                        &format!("-I{}", ta_regtest_dir.to_str().unwrap()),
-                    ])
-                    .args(COMMON_GCC_FLAGS)
-                    .args(X86_GCC_FLAGS)
-                    .status()
-                {
-                    Ok(s) if s.success() => println!("OK"),
-                    Ok(s) => {
-                        failures += 1;
-                        println!("FAILED (exit {})", s.code().unwrap_or(-1));
-                    }
-                    Err(e) => {
-                        failures += 1;
-                        println!("FAILED (gcc not found: {})", e);
-                    }
-                }
-                // Also build direct-call benchmark binary if source exists
-                let bench_src = out_base.join("c/tools/ta_bench_cg.c");
-                if bench_src.exists() && !servers_only {
-                    print!("  Building C bench... ");
-                    let bench_dst = bin_dir.join("ta_bench_cg");
-                    let bench_inc_c = out_base.join("c/tools");
-                    match std::process::Command::new("gcc")
-                        .args([
-                            "-o",
-                            bench_dst.to_str().unwrap(),
-                            bench_src.to_str().unwrap(),
-                            &format!("-I{}", bench_inc_c.to_str().unwrap()),
-                            &format!("-I{}", ta_bench_dir.to_str().unwrap()),
-                            &format!("-I{}", include_dir.to_str().unwrap()),
-                            &format!("-I{}", src_dir.to_str().unwrap()),
-                            &format!("-I{}", ta_func_dir.to_str().unwrap()),
-                            &format!("-I{}", ta_common_dir.to_str().unwrap()),
-                        ])
-                        .args(COMMON_GCC_FLAGS)
-                        .args(X86_GCC_FLAGS)
-                        .status()
-                    {
-                        Ok(s) if s.success() => println!("OK"),
-                        Ok(s) => {
-                            failures += 1;
-                            println!("FAILED (exit {})", s.code().unwrap_or(-1));
-                        }
-                        Err(e) => {
-                            failures += 1;
-                            println!("FAILED (gcc not found: {})", e);
-                        }
-                    }
-                }
-                // Also build the streaming benchmark binary if source exists
-                let sbench_src = out_base.join("c/tools/ta_bench_stream.c");
-                if sbench_src.exists() && !servers_only {
-                    print!("  Building C stream bench... ");
-                    let sbench_dst = bin_dir.join("ta_bench_stream");
-                    let bench_inc_c = out_base.join("c/tools");
-                    match std::process::Command::new("gcc")
-                        .args([
-                            "-o",
-                            sbench_dst.to_str().unwrap(),
-                            sbench_src.to_str().unwrap(),
-                            &format!("-I{}", bench_inc_c.to_str().unwrap()),
-                            &format!("-I{}", ta_bench_dir.to_str().unwrap()),
-                            &format!("-I{}", include_dir.to_str().unwrap()),
-                            &format!("-I{}", src_dir.to_str().unwrap()),
-                            &format!("-I{}", ta_func_dir.to_str().unwrap()),
-                            &format!("-I{}", ta_common_dir.to_str().unwrap()),
-                        ])
-                        .args(COMMON_GCC_FLAGS)
-                        .args(X86_GCC_FLAGS)
-                        .status()
-                    {
-                        Ok(s) if s.success() => println!("OK"),
-                        Ok(s) => {
-                            failures += 1;
-                            println!("FAILED (exit {})", s.code().unwrap_or(-1));
-                        }
-                        Err(e) => {
-                            failures += 1;
-                            println!("FAILED (gcc not found: {})", e);
-                        }
-                    }
-                }
+    for (backend, steps) in &results {
+        // Counted as a failure: an unrecognised backend built nothing, and
+        // exiting 0 here lets ta_regtest reuse a stale binary and read green.
+        let Some(steps) = steps else {
+            failures += 1;
+            eprintln!("  Unknown backend: {backend}");
+            continue;
+        };
+        for step in steps {
+            print!("{}", step.log);
+            if !step.log.is_empty() && !step.log.ends_with('\n') {
+                println!();
             }
-            "java" => {
-                print!("  Building Java server... ");
-                let java_dir = out_base.join("java/tools");
-                let class_dir = bin_dir.join("ta_codegen_java");
-                // Wipe first. javac's implicit compilation off --source-path does
-                // NOT reliably refresh a class that is already here, so an edited
-                // library source could leave the server running the previous
-                // build's bytes -- and every Java gate would agree with it,
-                // because they all drive this same classpath. Demonstrated by
-                // corrupting FunctionDescription.java: the abstract gate passed
-                // until this directory was removed by hand.
-                let _ = std::fs::remove_dir_all(&class_dir);
-                std::fs::create_dir_all(&class_dir).ok();
-                // The server's ta_abstract RPCs answer from the SHIPPED registry
-                // (io.github.talib.metadata), so the library's sources are on the
-                // source path. Never a server-private table: the abstract gate
-                // would then never touch what ships (issue #164).
-                // The main source root only: under the Maven layout the test
-                // package lives in a sibling root, so it is not on the server's
-                // source path at all.
-                let lib_src = out_base.join("java/library/src/main/java");
-                match std::process::Command::new("javac")
-                    .args([
-                        // JDK 17 (LTS) floor: the spliced public wrappers return
-                        // `record OutRange`. Pinning it here means a too-old JDK
-                        // fails with a clear unsupported-release error.
-                        "--release",
-                        JAVA_RELEASE,
-                        "-nowarn",
-                        "--source-path",
-                        lib_src.to_str().unwrap(),
-                        "-d",
-                        class_dir.to_str().unwrap(),
-                        java_dir.join("TaCodegenServe.java").to_str().unwrap(),
-                    ])
-                    .status()
-                {
-                    Ok(s) if s.success() => println!("OK"),
-                    Ok(s) => {
-                        failures += 1;
-                        println!("FAILED (exit {})", s.code().unwrap_or(-1));
-                    }
-                    Err(e) => {
-                        failures += 1;
-                        println!("FAILED (javac not found: {})", e);
-                    }
-                }
-            }
-            "csharp" => {
-                print!("  Building C# server... ");
-                let csharp_dir = out_base.join("csharp/tools");
-                let csharp_out = bin_dir.join("ta_codegen_csharp");
-                std::fs::create_dir_all(&csharp_out).ok();
-
-                // The server csproj (generated by generate-servers) compiles the
-                // shipped library sources directly, so one publish builds the
-                // managed indicators + the server. No native shared library:
-                // the P/Invoke harness was retired with the managed backend.
-                match std::process::Command::new("dotnet")
-                    .args([
-                        "publish",
-                        "-c",
-                        "Release",
-                        "-o",
-                        csharp_out.to_str().unwrap(),
-                        csharp_dir.to_str().unwrap(),
-                    ])
-                    .status()
-                {
-                    Ok(s) if s.success() => println!("OK"),
-                    Ok(s) => {
-                        failures += 1;
-                        println!("FAILED (exit {})", s.code().unwrap_or(-1));
-                    }
-                    Err(e) => {
-                        failures += 1;
-                        println!("FAILED (dotnet not found: {})", e);
-                    }
-                }
-            }
-            "rust" => {
-                print!("  Building Rust server... ");
-                let rust_dir = out_base.join("rust");
-                match std::process::Command::new("cargo")
-                    .args(["build", "--release", "--bin", "ta_codegen_serve"])
-                    .current_dir(&rust_dir)
-                    .status()
-                {
-                    Ok(s) if s.success() => {
-                        let src = rust_dir.join("target/release/ta_codegen_serve");
-                        let dst = bin_dir.join("ta_codegen_serve_rust");
-                        if let Err(e) = std::fs::copy(&src, &dst) {
-                            failures += 1;
-                            println!("OK (build), FAILED (copy: {})", e);
-                        } else {
-                            println!("OK");
-                        }
-                    }
-                    Ok(s) => {
-                        failures += 1;
-                        println!("FAILED (exit {})", s.code().unwrap_or(-1));
-                    }
-                    Err(e) => {
-                        failures += 1;
-                        println!("FAILED (cargo not found: {})", e);
-                    }
-                }
-            }
-            // Counted as a failure: an unrecognised backend built nothing, and
-            // exiting 0 here lets ta_regtest reuse a stale binary and read green.
-            _ => {
+            println!("  Building {}... {}", step.label, step.status);
+            if !step.ok {
                 failures += 1;
-                eprintln!("  Unknown backend: {}", backend);
             }
         }
     }
