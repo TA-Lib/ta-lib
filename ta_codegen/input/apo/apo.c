@@ -17,6 +17,9 @@
  *  071126 MF,CC  Rewrite the combine into flat error-guards and a single-cursor
  *                offset index (offset = fastNb - *outNBElement). Bit-identical,
  *                streamable, and index-safe.
+ *  092826 MF,CC  #459 fuse the fast and slow SMA into one pass over the input:
+ *                two running sums, no intermediate buffer, no allocation.
+ *                Bit-identical.
  */
 
 int apo_lookback(int optInFastPeriod, int optInSlowPeriod, TA_MAType optInMAType)
@@ -56,6 +59,94 @@ TA_RetCode apo(int startIdx, int endIdx,
    {
       *outBegIdx = 0;
       *outNBElement = 0;
+      return TA_SUCCESS;
+   }
+
+   if( optInMAType == TA_MAType_SMA )
+   {
+      /* SMA fast path: the fast window is the newest optInFastPeriod bars of the
+       * slow one, so ONE pass over the input serves both moving averages - two
+       * running sums, no intermediate buffer and no allocation, where the general
+       * path below makes two passes and allocates the fast MA in full.
+       *
+       * Bit-identical to that path. Each sum sees exactly the add/subtract
+       * sequence TA_SMA gives it at its own period, starting from its own first
+       * output bar - which is why the fast sum is walked alone over the bars the
+       * slow MA does not reach (its running total is path-dependent, so arriving
+       * at the first output bar by a shorter route would change the low bits) -
+       * and each quotient is formed as sma.c forms it: the total AFTER adding the
+       * new bar and BEFORE dropping the trailing one, divided by the period.
+       *
+       * inReal may alias outReal, as it may in the general path. outReal[_outIdx]
+       * is written at bar _i with _outIdx <= _i-optInSlowPeriod+1 <= both trailing
+       * indices, and both trailing bars are read before that write, so no bar is
+       * overwritten before its last read.
+       *
+       * Every read is inside [0, endIdx]: the guard above leaves the slow
+       * lookback no greater than endIdx, and the public tier rejects
+       * endIdx < startIdx, so _slowStart <= endIdx and the seeding loops stop
+       * one bar below it. There is nothing left for an empty-output arm to
+       * catch, which is why this path has none.
+       */
+      double _fastTotal, _slowTotal, _fastValue, _slowValue;
+      int _i, _j, _outIdx, _fastStart, _slowStart, _fastTrailing, _slowTrailing;
+
+      /* Make sure slow is really slower than the fast period! if not, swap... */
+      if( optInSlowPeriod < optInFastPeriod )
+      {
+         tempInteger     = optInSlowPeriod;
+         optInSlowPeriod = optInFastPeriod;
+         optInFastPeriod = tempInteger;
+      }
+
+      _fastStart = optInFastPeriod - 1;
+      if( _fastStart < startIdx )
+         _fastStart = startIdx;
+      _slowStart = optInSlowPeriod - 1;
+      if( _slowStart < startIdx )
+         _slowStart = startIdx;
+
+      _fastTrailing = _fastStart - (optInFastPeriod - 1);
+      _fastTotal = 0.0;
+      for( _j=_fastTrailing; _j < _fastStart; _j++ )
+         _fastTotal += inReal[_j];
+
+      _slowTrailing = _slowStart - (optInSlowPeriod - 1);
+      _slowTotal = 0.0;
+      for( _j=_slowTrailing; _j < _slowStart; _j++ )
+         _slowTotal += inReal[_j];
+
+      /* The bars the fast MA has and the slow one does not: advance the fast sum
+       * alone. No output, but the sum must arrive at _slowStart along the same
+       * path TA_SMA would have taken.
+       */
+      for( _i=_fastStart; _i < _slowStart; _i++ )
+      {
+         _fastTotal += inReal[_i];
+         _fastTotal -= inReal[_fastTrailing];
+         _fastTrailing++;
+      }
+
+      _outIdx = 0;
+      for( _i=_slowStart; _i <= endIdx; _i++ )
+      {
+         _fastTotal += inReal[_i];
+         _fastValue = _fastTotal;
+         _fastTotal -= inReal[_fastTrailing];
+         _fastTrailing++;
+
+         _slowTotal += inReal[_i];
+         _slowValue = _slowTotal;
+         _slowTotal -= inReal[_slowTrailing];
+         _slowTrailing++;
+
+         outReal[_outIdx] = _fastValue / (double)optInFastPeriod
+         - _slowValue / (double)optInSlowPeriod;
+         _outIdx++;
+      }
+
+      *outBegIdx = _slowStart;
+      *outNBElement = _outIdx;
       return TA_SUCCESS;
    }
 
