@@ -154,7 +154,7 @@ struct TA_WCLPRICE_Stream {
 };
 
 /* Private function, not in public API. */
-static void TA_WCLPRICE_StepImpl( struct TA_WCLPRICE_Stream *sp, double inHigh, double inLow, double inClose, double *outReal )
+static TA_FMA_STEP_INLINE void TA_WCLPRICE_StepImpl( struct TA_WCLPRICE_Stream *sp, double inHigh, double inLow, double inClose, double *outReal )
 {
    *outReal= (fma(inClose, 2.0, inHigh + inLow)) / 4.0;
    sp->cur_outReal = *outReal;
@@ -245,6 +245,7 @@ TA_RetCode TA_WCLPRICE_OpenAndFillInternal( struct TA_WCLPRICE_Stream **stream, 
    return TA_WCLPRICE_OpenImpl( stream, inHigh, inLow, inClose, startIdx, historyLen, outBegIdx, outNBElement, outReal, 1 );
 }
 
+TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_WCLPRICE_Update( TA_WCLPRICE_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )
 {
    if( !stream ) return TA_BAD_PARAM;

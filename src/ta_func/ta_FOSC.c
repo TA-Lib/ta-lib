@@ -379,7 +379,7 @@ static void TA_FOSC_ReleaseImpl( struct TA_FOSC_Stream *sp )
 }
 
 /* Private function, not in public API. */
-static void TA_FOSC_StepImpl( struct TA_FOSC_Stream *sp, double inReal, double *outReal )
+static TA_FMA_STEP_INLINE void TA_FOSC_StepImpl( struct TA_FOSC_Stream *sp, double inReal, double *outReal )
 {
    double m;
    double b;
@@ -652,6 +652,7 @@ TA_RetCode TA_FOSC_OpenAndFillInternal( struct TA_FOSC_Stream **stream, const do
    return TA_FOSC_OpenImpl( stream, inReal, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
 }
 
+TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_FOSC_Update( TA_FOSC_Stream *stream, double inReal, double *outReal )
 {
    if( !stream ) return TA_BAD_PARAM;

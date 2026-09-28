@@ -429,7 +429,7 @@ static void TA_LINEARREG_ReleaseImpl( struct TA_LINEARREG_Stream *sp )
 }
 
 /* Private function, not in public API. */
-static void TA_LINEARREG_StepImpl( struct TA_LINEARREG_Stream *sp, double inReal, double *outReal )
+static TA_FMA_STEP_INLINE void TA_LINEARREG_StepImpl( struct TA_LINEARREG_Stream *sp, double inReal, double *outReal )
 {
    double m;
    double b;
@@ -810,6 +810,7 @@ TA_RetCode TA_LINEARREG_OpenAndFillInternal( struct TA_LINEARREG_Stream **stream
    return TA_LINEARREG_OpenImpl( stream, inReal, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
 }
 
+TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_LINEARREG_Update( TA_LINEARREG_Stream *stream, double inReal, double *outReal )
 {
    if( !stream ) return TA_BAD_PARAM;

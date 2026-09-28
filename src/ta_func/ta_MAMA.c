@@ -945,7 +945,7 @@ static void TA_MAMA_ReleaseImpl( struct TA_MAMA_Stream *sp )
 }
 
 /* Private function, not in public API. */
-static void TA_MAMA_StepImpl( struct TA_MAMA_Stream *sp, double inReal, double *outMAMA, double *outFAMA )
+static TA_FMA_STEP_INLINE void TA_MAMA_StepImpl( struct TA_MAMA_Stream *sp, double inReal, double *outMAMA, double *outFAMA )
 {
    double tempReal;
    double tempReal2;
@@ -1692,6 +1692,7 @@ TA_RetCode TA_MAMA_OpenAndFillInternal( struct TA_MAMA_Stream **stream, const do
    return TA_MAMA_OpenImpl( stream, inReal, startIdx, historyLen, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA, 1 );
 }
 
+TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_MAMA_Update( TA_MAMA_Stream *stream, double inReal, double *outMAMA, double *outFAMA )
 {
    if( !stream ) return TA_BAD_PARAM;

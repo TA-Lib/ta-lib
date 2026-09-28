@@ -438,7 +438,7 @@ struct TA_TSI_Stream {
 };
 
 /* Private function, not in public API. */
-static void TA_TSI_StepImpl( struct TA_TSI_Stream *sp, double inReal, double *outReal )
+static TA_FMA_STEP_INLINE void TA_TSI_StepImpl( struct TA_TSI_Stream *sp, double inReal, double *outReal )
 {
    double mom;
    double absMom;
@@ -714,6 +714,7 @@ TA_RetCode TA_TSI_OpenAndFillInternal( struct TA_TSI_Stream **stream, const doub
    return TA_TSI_OpenImpl( stream, inReal, startIdx, historyLen, optInFirstPeriod, optInSecondPeriod, outBegIdx, outNBElement, outReal, 1 );
 }
 
+TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_TSI_Update( TA_TSI_Stream *stream, double inReal, double *outReal )
 {
    if( !stream ) return TA_BAD_PARAM;

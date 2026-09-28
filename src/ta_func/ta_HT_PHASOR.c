@@ -816,7 +816,7 @@ static void TA_HT_PHASOR_ReleaseImpl( struct TA_HT_PHASOR_Stream *sp )
 }
 
 /* Private function, not in public API. */
-static void TA_HT_PHASOR_StepImpl( struct TA_HT_PHASOR_Stream *sp, double inReal, double *outInPhase, double *outQuadrature )
+static TA_FMA_STEP_INLINE void TA_HT_PHASOR_StepImpl( struct TA_HT_PHASOR_Stream *sp, double inReal, double *outInPhase, double *outQuadrature )
 {
    double tempReal;
    double tempReal2;
@@ -1457,6 +1457,7 @@ TA_RetCode TA_HT_PHASOR_OpenAndFillInternal( struct TA_HT_PHASOR_Stream **stream
    return TA_HT_PHASOR_OpenImpl( stream, inReal, startIdx, historyLen, outBegIdx, outNBElement, outInPhase, outQuadrature, 1 );
 }
 
+TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_HT_PHASOR_Update( TA_HT_PHASOR_Stream *stream, double inReal, double *outInPhase, double *outQuadrature )
 {
    if( !stream ) return TA_BAD_PARAM;

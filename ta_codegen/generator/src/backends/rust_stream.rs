@@ -33,6 +33,7 @@ use crate::registry::Registry;
 use crate::streaming::{self, StreamModel, StreamPlan};
 
 use super::common;
+use super::fma;
 use super::rust_doc::{series_def, unit_domain, CLOSE_SERIES, UNIT_SERIES, VOLUME_SERIES};
 use super::rust_lang::{
     build_matype_map, collect_for_loop_vars, collect_sentinel_vars, collect_signed_int_vars,
@@ -554,8 +555,96 @@ pub fn generate(
             emit_composed(&mut o, func, cp, enums, registry, helpers, &counter);
         }
     }
+    fma_dispatch_stream(&mut o, func);
 
     o
+}
+
+/// Fused sites a step needs before `update` is FMA-dispatched.
+///
+/// Undispatched, each fused site is a call into `compiler_builtins`' own
+/// runtime-dispatched `fma`; dispatched, the whole `update` is one call that
+/// cannot inline into a caller built without FMA. That pays from about three
+/// sites in straight-line code; a step that loops never pays.
+pub const STREAM_FMA_MIN_SITES: usize = 3;
+
+/// FMA runtime dispatch for `update`, the batch `_impl` trio: a dispatcher
+/// over a `#[target_feature(enable = "fma")]` clone and its `_scalar` body. A
+/// clone runs its callees at the features they were compiled with, so the
+/// step is `#[inline(always)]` and every caller carries its own copy.
+///
+/// `peek` stays single-path: a peek frame can fuse arithmetic whose result it
+/// never returns (SAR's next stop), so its fused-site count says nothing about
+/// what dispatch would save.
+fn fma_dispatch_stream(o: &mut String, func: &FuncDef) {
+    if !fma::EMIT_FMA {
+        return;
+    }
+    let Some((line, end)) = method_at(o, &format!("    fn {}_step_impl(", snake(func))) else {
+        return;
+    };
+    if !step_pays_for_dispatch(&o[line..end]) {
+        return;
+    }
+    o.insert_str(line, "    #[inline(always)]\n");
+    let Some((line, end)) = method_at(o, "    pub fn update(") else {
+        panic!("{}: stream section has no `update`", func.name);
+    };
+    let trio = dispatch_trio(&o[line..end], "update");
+    o.replace_range(line..end, &trio);
+}
+
+/// [`STREAM_FMA_MIN_SITES`] fused sites, and no loop.
+pub fn step_pays_for_dispatch(step: &str) -> bool {
+    let loops = step.lines().map(str::trim_start).any(|l| {
+        l.starts_with("while ") || l.starts_with("for ") || l.starts_with("loop {")
+    });
+    !loops && step.matches(".mul_add(").count() >= STREAM_FMA_MIN_SITES
+}
+
+/// The byte range of the method whose signature line starts with `sig`, from
+/// that line through its closing brace.
+fn method_at(o: &str, sig: &str) -> Option<(usize, usize)> {
+    let line = o.find(&format!("\n{sig}"))? + 1;
+    // Every method body indents past four spaces, so this closes the method.
+    let end = o[line..].find("\n    }\n").map(|e| line + e + "\n    }\n".len())?;
+    Some((line, end))
+}
+
+/// `    pub fn <verb>(<receiver>, <params>) -> <ret> {` plus its body, rewritten as
+/// the dispatcher, the fma clone and the `_scalar` body.
+fn dispatch_trio(method: &str, verb: &str) -> String {
+    let (sig, body) = method.split_once('\n').expect("a method has a body");
+    let open = format!("    pub fn {verb}(");
+    let (params, ret) = sig
+        .strip_prefix(&open)
+        .and_then(|rest| rest.split_once(") -> "))
+        .unwrap_or_else(|| panic!("`{verb}` signature no longer matches `{open}...) -> ...`: {sig}"));
+    let args: Vec<&str> = params
+        .split(", ")
+        .skip(1)
+        .map(|p| p.split_once(": ").map_or(p, |(name, _)| name))
+        .collect();
+    let args = args.join(", ");
+    let mut t = String::new();
+    let _ = writeln!(t, "{sig}");
+    let _ = writeln!(t, "        #[cfg(target_arch = \"x86_64\")]");
+    let _ = writeln!(
+        t,
+        "        return ta_lib_dispatch::dispatch_fma!(self, {verb}_fma, {verb}_scalar, ({args}));"
+    );
+    let _ = writeln!(t, "        #[cfg(not(target_arch = \"x86_64\"))]");
+    let _ = writeln!(t, "        self.{verb}_scalar({args})");
+    let _ = writeln!(t, "    }}\n");
+    let _ = writeln!(t, "    #[cfg(target_arch = \"x86_64\")]");
+    let _ = writeln!(t, "    #[target_feature(enable = \"fma\")]");
+    let _ = writeln!(t, "    fn {verb}_fma({params}) -> {ret}");
+    let _ = writeln!(t, "        self.{verb}_scalar({args})");
+    let _ = writeln!(t, "    }}\n");
+    let _ = writeln!(t, "    #[inline(always)]");
+    let _ = writeln!(t, "    fn {verb}_scalar({params}) -> {ret}");
+    t.push_str(body);
+    t
 }
 
 /// The lint preamble shared by every tier's generated `impl Core` block.

@@ -515,7 +515,7 @@ struct TA_SUPERTREND_Stream {
 };
 
 /* Private function, not in public API. */
-static void TA_SUPERTREND_StepImpl( struct TA_SUPERTREND_Stream *sp, double inHigh, double inLow, double inClose, double *outSupertrend, int *outTrend )
+static TA_FMA_STEP_INLINE void TA_SUPERTREND_StepImpl( struct TA_SUPERTREND_Stream *sp, double inHigh, double inLow, double inClose, double *outSupertrend, int *outTrend )
 {
    double val2;
    double val3;
@@ -878,6 +878,7 @@ TA_RetCode TA_SUPERTREND_OpenAndFillInternal( struct TA_SUPERTREND_Stream **stre
    return TA_SUPERTREND_OpenImpl( stream, inHigh, inLow, inClose, startIdx, historyLen, optInTimePeriod, optInMultiplier, outBegIdx, outNBElement, outSupertrend, outTrend, 1 );
 }
 
+TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_SUPERTREND_Update( TA_SUPERTREND_Stream *stream, double inHigh, double inLow, double inClose, double *outSupertrend, int *outTrend )
 {
    if( !stream ) return TA_BAD_PARAM;

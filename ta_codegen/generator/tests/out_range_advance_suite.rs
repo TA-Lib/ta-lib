@@ -222,6 +222,15 @@ fn finite_test(lang: &str, bars: &[String]) -> String {
     terms.join(" || ")
 }
 
+/// An FMA-dispatched Rust entry only forwards; its `_scalar` body carries the rules.
+fn entry_body(src: &str, lang: &str, upper: &str, verb: &str) -> String {
+    let scalar = format!("fn {verb}_scalar(");
+    if lang == "rust" && src.contains(&scalar) {
+        return body_of(src, move |l: &str| l.starts_with(&scalar));
+    }
+    body_of(src, entry_sig(lang, upper, verb))
+}
+
 fn entry_sig(lang: &str, upper: &str, verb: &str) -> Box<dyn Fn(&str) -> bool> {
     let (c, rust, java, csharp) = match verb {
         "update" => (
@@ -329,7 +338,7 @@ fn only_an_accepted_bar_advances_the_range() {
             let s = section(&name, lang);
             let (advance, reject) = spellings(lang);
 
-            let upd = body_of(&s, entry_sig(lang, &upper, "update"));
+            let upd = entry_body(&s, lang, &upper, "update");
             let scalar = finite_test(lang, &bars);
             updates += no_advance_on_any_reject(
                 &format!("{name}/{lang} Update"),
@@ -365,7 +374,7 @@ fn only_an_accepted_bar_advances_the_range() {
             );
             advancers += 1;
 
-            let peek = body_of(&s, entry_sig(lang, &upper, "peek"));
+            let peek = entry_body(&s, lang, &upper, "peek");
             assert!(
                 !peek.contains(advance),
                 "{name}: {lang} Peek moves the range. A peek that counts a bar is a peek \

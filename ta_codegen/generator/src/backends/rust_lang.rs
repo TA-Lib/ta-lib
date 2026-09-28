@@ -499,7 +499,7 @@ fn gen_imports() -> String {
 /// `vfmadd`, and the public name becomes a dispatcher through
 /// `ta_lib_dispatch::dispatch_fma!` (one cached CPU check per call; both
 /// paths are correctly rounded, so which clone runs never changes bits).
-/// Lookback and the stream tier stay undispatched, mirroring the C decision.
+/// Lookback stays undispatched; the stream tier has its own pass.
 fn fma_dispatch_wrap(text: String, fn_name: &str, vis: &str) -> String {
     if !fma::EMIT_FMA || !text.contains(".mul_add(") {
         return text;

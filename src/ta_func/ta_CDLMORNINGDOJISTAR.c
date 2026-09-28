@@ -354,7 +354,7 @@ static void TA_CDLMORNINGDOJISTAR_ReleaseImpl( struct TA_CDLMORNINGDOJISTAR_Stre
 }
 
 /* Private function, not in public API. */
-static void TA_CDLMORNINGDOJISTAR_StepImpl( struct TA_CDLMORNINGDOJISTAR_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
+static TA_FMA_STEP_INLINE void TA_CDLMORNINGDOJISTAR_StepImpl( struct TA_CDLMORNINGDOJISTAR_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
    if( sp->ringCap_BodyDojiTrailingIdx == 0 )
    {
@@ -640,6 +640,7 @@ TA_RetCode TA_CDLMORNINGDOJISTAR_OpenAndFillInternal( struct TA_CDLMORNINGDOJIST
    return TA_CDLMORNINGDOJISTAR_OpenImpl( stream, inOpen, inHigh, inLow, inClose, startIdx, historyLen, optInPenetration, outBegIdx, outNBElement, outInteger, 1 );
 }
 
+TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_CDLMORNINGDOJISTAR_Update( TA_CDLMORNINGDOJISTAR_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
    if( !stream ) return TA_BAD_PARAM;

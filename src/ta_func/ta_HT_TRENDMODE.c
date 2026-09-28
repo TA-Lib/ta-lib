@@ -1134,7 +1134,7 @@ static void TA_HT_TRENDMODE_ReleaseImpl( struct TA_HT_TRENDMODE_Stream *sp )
 }
 
 /* Private function, not in public API. */
-static void TA_HT_TRENDMODE_StepImpl( struct TA_HT_TRENDMODE_Stream *sp, double inReal, int *outInteger )
+static TA_FMA_STEP_INLINE void TA_HT_TRENDMODE_StepImpl( struct TA_HT_TRENDMODE_Stream *sp, double inReal, int *outInteger )
 {
    int i;
    int j;
@@ -2091,6 +2091,7 @@ TA_RetCode TA_HT_TRENDMODE_OpenAndFillInternal( struct TA_HT_TRENDMODE_Stream **
    return TA_HT_TRENDMODE_OpenImpl( stream, inReal, startIdx, historyLen, outBegIdx, outNBElement, outInteger, 1 );
 }
 
+TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_HT_TRENDMODE_Update( TA_HT_TRENDMODE_Stream *stream, double inReal, int *outInteger )
 {
    if( !stream ) return TA_BAD_PARAM;

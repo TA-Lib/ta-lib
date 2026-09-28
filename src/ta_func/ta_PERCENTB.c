@@ -736,7 +736,7 @@ struct TA_PERCENTB_Stream {
 };
 
 /* Private function, not in public API. */
-static TA_RetCode TA_PERCENTB_StepImpl( struct TA_PERCENTB_Stream *sp, double inReal, double *outReal )
+static TA_FMA_STEP_INLINE TA_RetCode TA_PERCENTB_StepImpl( struct TA_PERCENTB_Stream *sp, double inReal, double *outReal )
 {
    double den;
    double deviation;
@@ -1036,6 +1036,7 @@ TA_RetCode TA_PERCENTB_OpenAndFillInternal( struct TA_PERCENTB_Stream **stream, 
    return TA_PERCENTB_OpenImpl( stream, inReal, startIdx, historyLen, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outReal, 1 );
 }
 
+TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_PERCENTB_Update( TA_PERCENTB_Stream *stream, double inReal, double *outReal )
 {
    TA_RetCode retCode;

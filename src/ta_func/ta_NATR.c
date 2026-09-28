@@ -497,7 +497,7 @@ struct TA_NATR_Stream {
 };
 
 /* Private function, not in public API. */
-static void TA_NATR_StepImpl( struct TA_NATR_Stream *sp, double inHigh, double inLow, double inClose, double *outReal )
+static TA_FMA_STEP_INLINE void TA_NATR_StepImpl( struct TA_NATR_Stream *sp, double inHigh, double inLow, double inClose, double *outReal )
 {
    double tempValue;
    double val2;
@@ -831,6 +831,7 @@ TA_RetCode TA_NATR_OpenAndFillInternal( struct TA_NATR_Stream **stream, const do
    return TA_NATR_OpenImpl( stream, inHigh, inLow, inClose, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
 }
 
+TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_NATR_Update( TA_NATR_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )
 {
    if( !stream ) return TA_BAD_PARAM;

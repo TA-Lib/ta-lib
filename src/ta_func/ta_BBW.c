@@ -670,7 +670,7 @@ struct TA_BBW_Stream {
 };
 
 /* Private function, not in public API. */
-static TA_RetCode TA_BBW_StepImpl( struct TA_BBW_Stream *sp, double inReal, double *outReal )
+static TA_FMA_STEP_INLINE TA_RetCode TA_BBW_StepImpl( struct TA_BBW_Stream *sp, double inReal, double *outReal )
 {
    double deviation;
    double lower;
@@ -937,6 +937,7 @@ TA_RetCode TA_BBW_OpenAndFillInternal( struct TA_BBW_Stream **stream, const doub
    return TA_BBW_OpenImpl( stream, inReal, startIdx, historyLen, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outReal, 1 );
 }
 
+TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_BBW_Update( TA_BBW_Stream *stream, double inReal, double *outReal )
 {
    TA_RetCode retCode;

@@ -332,7 +332,7 @@ struct TA_EFI_Stream {
 };
 
 /* Private function, not in public API. */
-static void TA_EFI_StepImpl( struct TA_EFI_Stream *sp, double inClose, double inVolume, double *outReal )
+static TA_FMA_STEP_INLINE void TA_EFI_StepImpl( struct TA_EFI_Stream *sp, double inClose, double inVolume, double *outReal )
 {
    if( sp->optInTimePeriod == 1 )
    {
@@ -627,6 +627,7 @@ TA_RetCode TA_EFI_OpenAndFillInternal( struct TA_EFI_Stream **stream, const doub
    return TA_EFI_OpenImpl( stream, inClose, inVolume, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
 }
 
+TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_EFI_Update( TA_EFI_Stream *stream, double inClose, double inVolume, double *outReal )
 {
    if( !stream ) return TA_BAD_PARAM;

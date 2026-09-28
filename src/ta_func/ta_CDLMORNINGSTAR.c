@@ -332,7 +332,7 @@ static void TA_CDLMORNINGSTAR_ReleaseImpl( struct TA_CDLMORNINGSTAR_Stream *sp )
 }
 
 /* Private function, not in public API. */
-static void TA_CDLMORNINGSTAR_StepImpl( struct TA_CDLMORNINGSTAR_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
+static TA_FMA_STEP_INLINE void TA_CDLMORNINGSTAR_StepImpl( struct TA_CDLMORNINGSTAR_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
    if( sp->ringCap_BodyLongTrailingIdx == 0 )
    {
@@ -585,6 +585,7 @@ TA_RetCode TA_CDLMORNINGSTAR_OpenAndFillInternal( struct TA_CDLMORNINGSTAR_Strea
    return TA_CDLMORNINGSTAR_OpenImpl( stream, inOpen, inHigh, inLow, inClose, startIdx, historyLen, optInPenetration, outBegIdx, outNBElement, outInteger, 1 );
 }
 
+TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_CDLMORNINGSTAR_Update( TA_CDLMORNINGSTAR_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
    if( !stream ) return TA_BAD_PARAM;

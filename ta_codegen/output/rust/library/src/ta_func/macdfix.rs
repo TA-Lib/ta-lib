@@ -468,6 +468,7 @@ struct MacdfixStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
+    #[inline(always)]
     fn macdfix_step_impl(sp: &mut MacdfixStreamState, inReal: f64, outMACD: &mut f64, outMACDSignal: &mut f64, outMACDHist: &mut f64) {
         let mut macdValue: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
@@ -819,6 +820,20 @@ impl MacdfixStream {
     /// out of index domain and only a shorter history can start a new one.
     #[doc(alias = "TA_MACDFIX_Update")]
     pub fn update(&mut self, inReal: f64) -> Result<(f64, f64, f64), RetCode> {
+        #[cfg(target_arch = "x86_64")]
+        return ta_lib_dispatch::dispatch_fma!(self, update_fma, update_scalar, (inReal));
+        #[cfg(not(target_arch = "x86_64"))]
+        self.update_scalar(inReal)
+    }
+
+    #[cfg(target_arch = "x86_64")]
+    #[target_feature(enable = "fma")]
+    fn update_fma(&mut self, inReal: f64) -> Result<(f64, f64, f64), RetCode> {
+        self.update_scalar(inReal)
+    }
+
+    #[inline(always)]
+    fn update_scalar(&mut self, inReal: f64) -> Result<(f64, f64, f64), RetCode> {
         if self.out.beg_idx + self.out.count > Core::INDEX_MAX {
             return Err(RetCode::OutOfRangeEndIndex);
         }

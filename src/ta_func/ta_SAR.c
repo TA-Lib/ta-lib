@@ -588,7 +588,7 @@ struct TA_SAR_Stream {
 };
 
 /* Private function, not in public API. */
-static void TA_SAR_StepImpl( struct TA_SAR_Stream *sp, double inHigh, double inLow, double *outReal )
+static TA_FMA_STEP_INLINE void TA_SAR_StepImpl( struct TA_SAR_Stream *sp, double inHigh, double inLow, double *outReal )
 {
    double prevHigh;
    double prevLow;
@@ -1087,6 +1087,7 @@ TA_RetCode TA_SAR_OpenAndFillInternal( struct TA_SAR_Stream **stream, const doub
    return TA_SAR_OpenImpl( stream, inHigh, inLow, startIdx, historyLen, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal, 1 );
 }
 
+TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_SAR_Update( TA_SAR_Stream *stream, double inHigh, double inLow, double *outReal )
 {
    if( !stream ) return TA_BAD_PARAM;

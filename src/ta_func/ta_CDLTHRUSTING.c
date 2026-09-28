@@ -302,7 +302,7 @@ static void TA_CDLTHRUSTING_ReleaseImpl( struct TA_CDLTHRUSTING_Stream *sp )
 }
 
 /* Private function, not in public API. */
-static void TA_CDLTHRUSTING_StepImpl( struct TA_CDLTHRUSTING_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
+static TA_FMA_STEP_INLINE void TA_CDLTHRUSTING_StepImpl( struct TA_CDLTHRUSTING_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
    sp->ring_BodyLongTrailingIdx_derived[sp->ringPos_BodyLongTrailingIdx] = TA_STREAM_CANDLERANGE(BodyLong,inOpen,inHigh,inLow,inClose);
    sp->ring_EqualTrailingIdx_derived[sp->ringPos_EqualTrailingIdx] = TA_STREAM_CANDLERANGE(Equal,inOpen,inHigh,inLow,inClose);
@@ -529,6 +529,7 @@ TA_RetCode TA_CDLTHRUSTING_OpenAndFillInternal( struct TA_CDLTHRUSTING_Stream **
    return TA_CDLTHRUSTING_OpenImpl( stream, inOpen, inHigh, inLow, inClose, startIdx, historyLen, outBegIdx, outNBElement, outInteger, 1 );
 }
 
+TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_CDLTHRUSTING_Update( TA_CDLTHRUSTING_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
    if( !stream ) return TA_BAD_PARAM;

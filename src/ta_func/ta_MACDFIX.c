@@ -436,7 +436,7 @@ struct TA_MACDFIX_Stream {
 };
 
 /* Private function, not in public API. */
-static void TA_MACDFIX_StepImpl( struct TA_MACDFIX_Stream *sp, double inReal, double *outMACD, double *outMACDSignal, double *outMACDHist )
+static TA_FMA_STEP_INLINE void TA_MACDFIX_StepImpl( struct TA_MACDFIX_Stream *sp, double inReal, double *outMACD, double *outMACDSignal, double *outMACDHist )
 {
    double macdValue;
    double tempReal;
@@ -715,6 +715,7 @@ TA_RetCode TA_MACDFIX_OpenAndFillInternal( struct TA_MACDFIX_Stream **stream, co
    return TA_MACDFIX_OpenImpl( stream, inReal, startIdx, historyLen, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist, 1 );
 }
 
+TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_MACDFIX_Update( TA_MACDFIX_Stream *stream, double inReal, double *outMACD, double *outMACDSignal, double *outMACDHist )
 {
    if( !stream ) return TA_BAD_PARAM;

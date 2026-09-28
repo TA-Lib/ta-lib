@@ -794,7 +794,7 @@ struct TA_SAREXT_Stream {
 };
 
 /* Private function, not in public API. */
-static void TA_SAREXT_StepImpl( struct TA_SAREXT_Stream *sp, double inHigh, double inLow, double *outReal )
+static TA_FMA_STEP_INLINE void TA_SAREXT_StepImpl( struct TA_SAREXT_Stream *sp, double inHigh, double inLow, double *outReal )
 {
    double prevHigh;
    double prevLow;
@@ -1401,6 +1401,7 @@ TA_RetCode TA_SAREXT_OpenAndFillInternal( struct TA_SAREXT_Stream **stream, cons
    return TA_SAREXT_OpenImpl( stream, inHigh, inLow, startIdx, historyLen, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outBegIdx, outNBElement, outReal, 1 );
 }
 
+TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_SAREXT_Update( TA_SAREXT_Stream *stream, double inHigh, double inLow, double *outReal )
 {
    if( !stream ) return TA_BAD_PARAM;

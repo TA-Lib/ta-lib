@@ -714,6 +714,7 @@ struct SarextStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
+    #[inline(always)]
     fn sarext_step_impl(sp: &mut SarextStreamState, inHigh: f64, inLow: f64, outReal: &mut f64) {
         let mut prevHigh: f64 = 0.0_f64;
         let mut prevLow: f64 = 0.0_f64;
@@ -1321,6 +1322,20 @@ impl SarextStream {
     /// out of index domain and only a shorter history can start a new one.
     #[doc(alias = "TA_SAREXT_Update")]
     pub fn update(&mut self, inHigh: f64, inLow: f64) -> Result<f64, RetCode> {
+        #[cfg(target_arch = "x86_64")]
+        return ta_lib_dispatch::dispatch_fma!(self, update_fma, update_scalar, (inHigh, inLow));
+        #[cfg(not(target_arch = "x86_64"))]
+        self.update_scalar(inHigh, inLow)
+    }
+
+    #[cfg(target_arch = "x86_64")]
+    #[target_feature(enable = "fma")]
+    fn update_fma(&mut self, inHigh: f64, inLow: f64) -> Result<f64, RetCode> {
+        self.update_scalar(inHigh, inLow)
+    }
+
+    #[inline(always)]
+    fn update_scalar(&mut self, inHigh: f64, inLow: f64) -> Result<f64, RetCode> {
         if self.out.beg_idx + self.out.count > Core::INDEX_MAX {
             return Err(RetCode::OutOfRangeEndIndex);
         }

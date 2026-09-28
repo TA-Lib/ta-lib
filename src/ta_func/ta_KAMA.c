@@ -587,7 +587,7 @@ static void TA_KAMA_ReleaseImpl( struct TA_KAMA_Stream *sp )
 }
 
 /* Private function, not in public API. */
-static void TA_KAMA_StepImpl( struct TA_KAMA_Stream *sp, double inReal, double *outReal )
+static TA_FMA_STEP_INLINE void TA_KAMA_StepImpl( struct TA_KAMA_Stream *sp, double inReal, double *outReal )
 {
    double tempReal;
    double tempReal2;
@@ -1028,6 +1028,7 @@ TA_RetCode TA_KAMA_OpenAndFillInternal( struct TA_KAMA_Stream **stream, const do
    return TA_KAMA_OpenImpl( stream, inReal, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
 }
 
+TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_KAMA_Update( TA_KAMA_Stream *stream, double inReal, double *outReal )
 {
    if( !stream ) return TA_BAD_PARAM;

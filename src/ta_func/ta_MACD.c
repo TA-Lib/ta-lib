@@ -515,7 +515,7 @@ struct TA_MACD_Stream {
 };
 
 /* Private function, not in public API. */
-static void TA_MACD_StepImpl( struct TA_MACD_Stream *sp, double inReal, double *outMACD, double *outMACDSignal, double *outMACDHist )
+static TA_FMA_STEP_INLINE void TA_MACD_StepImpl( struct TA_MACD_Stream *sp, double inReal, double *outMACD, double *outMACDSignal, double *outMACDHist )
 {
    double macdValue;
    double tempReal;
@@ -824,6 +824,7 @@ TA_RetCode TA_MACD_OpenAndFillInternal( struct TA_MACD_Stream **stream, const do
    return TA_MACD_OpenImpl( stream, inReal, startIdx, historyLen, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist, 1 );
 }
 
+TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_MACD_Update( TA_MACD_Stream *stream, double inReal, double *outMACD, double *outMACDSignal, double *outMACDHist )
 {
    if( !stream ) return TA_BAD_PARAM;

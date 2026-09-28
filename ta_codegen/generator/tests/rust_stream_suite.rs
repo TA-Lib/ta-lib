@@ -757,3 +757,36 @@ fn apo_family_period_swap_is_a_write_bound_precondition() {
         );
     }
 }
+
+/// The stream tier's FMA dispatch is attached by a TEXT pass
+/// (`rust_stream::fma_dispatch_stream`), so a moved signature drops it with
+/// every value gate still green: both arms are bit-identical and only a
+/// benchmark would see the calls come back. Pinned both ways: `update` is
+/// dispatched, and its step force-inlined, exactly when the step pays for it;
+/// `peek` never is.
+#[test]
+fn a_fused_stream_update_is_fma_dispatched() {
+    let (mut dispatched, mut declined) = (0usize, 0usize);
+    let mut drifted: Vec<String> = Vec::new();
+    for name in streaming_indicators() {
+        let s = rust_stream_section(&name);
+        let step_sig = format!("    fn {name}_step_impl(");
+        if !s.contains(&step_sig) {
+            continue;
+        }
+        let step = body_of(&s, &step_sig);
+        let pays = backends::rust_stream::step_pays_for_dispatch(&step);
+        let upd = s.contains("dispatch_fma!(self, update_fma, update_scalar,")
+            && s.contains("    fn update_fma(")
+            && s.contains("    fn update_scalar(");
+        let inlined = s.contains(&format!("    #[inline(always)]\n{step_sig}"));
+        if upd != pays || inlined != pays || s.contains("fn peek_fma(") {
+            drifted.push(format!("{name}: pays={pays}, update dispatched={upd}, step inlined={inlined}"));
+        }
+        dispatched += usize::from(pays);
+        declined += usize::from(!pays && step.contains(".mul_add("));
+    }
+    assert!(drifted.is_empty(), "stream FMA dispatch drifted:\n{}", drifted.join("\n"));
+    assert!(dispatched > 0, "no update dispatched: the rule admits nothing");
+    assert!(declined > 0, "every fused step dispatched: the rule declines nothing");
+}

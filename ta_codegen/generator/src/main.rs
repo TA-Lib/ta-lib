@@ -3041,14 +3041,14 @@ $EX_CONFIGURATION_DOC
 //!
 //! The crate is `#![forbid(unsafe_code)]`: a bounds violation panics, it never
 //! triggers undefined behavior. On x86-64, the batch entry
-//! points of indicators built on fused multiply-adds are compiled twice and the
+//! points of indicators built on fused multiply-adds, and the stream `update`
+//! of those with enough fused arithmetic per bar, are compiled twice and the
 //! hardware-FMA clone is selected at runtime (the same dispatch the C library
 //! performs via `target_clones`); both paths are correctly rounded, so results
 //! are bit-identical either way. Calling that clone is the one `unsafe` in the
 //! crate's shipped dependency graph: it lives in `ta-lib-dispatch`, inside the
 //! `is_x86_feature_detected!("fma")` test that has just proved it sound, and
 //! `forbid` here does not see it because it expands from another crate's macro.
-//! The streaming tier stays single-path.
 //!
 //! # Live data
 //!

@@ -453,7 +453,7 @@ struct TA_T3_Stream {
 };
 
 /* Private function, not in public API. */
-static void TA_T3_StepImpl( struct TA_T3_Stream *sp, double inReal, double *outReal )
+static TA_FMA_STEP_INLINE void TA_T3_StepImpl( struct TA_T3_Stream *sp, double inReal, double *outReal )
 {
    if( sp->optInTimePeriod == 1 )
    {
@@ -747,6 +747,7 @@ TA_RetCode TA_T3_OpenAndFillInternal( struct TA_T3_Stream **stream, const double
    return TA_T3_OpenImpl( stream, inReal, startIdx, historyLen, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outReal, 1 );
 }
 
+TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_T3_Update( TA_T3_Stream *stream, double inReal, double *outReal )
 {
    if( !stream ) return TA_BAD_PARAM;

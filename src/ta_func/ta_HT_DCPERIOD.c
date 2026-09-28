@@ -799,7 +799,7 @@ static void TA_HT_DCPERIOD_ReleaseImpl( struct TA_HT_DCPERIOD_Stream *sp )
 }
 
 /* Private function, not in public API. */
-static void TA_HT_DCPERIOD_StepImpl( struct TA_HT_DCPERIOD_Stream *sp, double inReal, double *outReal )
+static TA_FMA_STEP_INLINE void TA_HT_DCPERIOD_StepImpl( struct TA_HT_DCPERIOD_Stream *sp, double inReal, double *outReal )
 {
    double tempReal;
    double tempReal2;
@@ -1431,6 +1431,7 @@ TA_RetCode TA_HT_DCPERIOD_OpenAndFillInternal( struct TA_HT_DCPERIOD_Stream **st
    return TA_HT_DCPERIOD_OpenImpl( stream, inReal, startIdx, historyLen, outBegIdx, outNBElement, outReal, 1 );
 }
 
+TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_HT_DCPERIOD_Update( TA_HT_DCPERIOD_Stream *stream, double inReal, double *outReal )
 {
    if( !stream ) return TA_BAD_PARAM;

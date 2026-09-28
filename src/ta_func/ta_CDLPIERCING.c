@@ -281,7 +281,7 @@ static void TA_CDLPIERCING_ReleaseImpl( struct TA_CDLPIERCING_Stream *sp )
 }
 
 /* Private function, not in public API. */
-static void TA_CDLPIERCING_StepImpl( struct TA_CDLPIERCING_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
+static TA_FMA_STEP_INLINE void TA_CDLPIERCING_StepImpl( struct TA_CDLPIERCING_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
    int totIdx;
 
@@ -487,6 +487,7 @@ TA_RetCode TA_CDLPIERCING_OpenAndFillInternal( struct TA_CDLPIERCING_Stream **st
    return TA_CDLPIERCING_OpenImpl( stream, inOpen, inHigh, inLow, inClose, startIdx, historyLen, outBegIdx, outNBElement, outInteger, 1 );
 }
 
+TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_CDLPIERCING_Update( TA_CDLPIERCING_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
    if( !stream ) return TA_BAD_PARAM;

@@ -25,8 +25,12 @@
  * Rust/Java backends. */
 #if defined( __x86_64__ ) && defined( __GLIBC__ ) && defined( __GNUC__ ) && !defined( __clang__ )
    #define TA_FMA_MULTIVERSION __attribute__((target_clones("default","fma")))
+   /* A fused stream step, inlined into each clone of its multiversioned caller:
+    * a clone runs its callees at the ISA they were compiled for. */
+   #define TA_FMA_STEP_INLINE __inline__ __attribute__((always_inline))
 #else
    #define TA_FMA_MULTIVERSION
+   #define TA_FMA_STEP_INLINE
 #endif
 
 /* Provides an equivalent to standard "math.h" functions. */

@@ -353,7 +353,7 @@ static void TA_CVI_ReleaseImpl( struct TA_CVI_Stream *sp )
 }
 
 /* Private function, not in public API. */
-static void TA_CVI_StepImpl( struct TA_CVI_Stream *sp, double inHigh, double inLow, double *outReal )
+static TA_FMA_STEP_INLINE void TA_CVI_StepImpl( struct TA_CVI_Stream *sp, double inHigh, double inLow, double *outReal )
 {
    double laggedEMA;
    double tempReal;
@@ -576,6 +576,7 @@ TA_RetCode TA_CVI_OpenAndFillInternal( struct TA_CVI_Stream **stream, const doub
    return TA_CVI_OpenImpl( stream, inHigh, inLow, startIdx, historyLen, optInTimePeriod, optInROCPeriod, outBegIdx, outNBElement, outReal, 1 );
 }
 
+TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_CVI_Update( TA_CVI_Stream *stream, double inHigh, double inLow, double *outReal )
 {
    if( !stream ) return TA_BAD_PARAM;

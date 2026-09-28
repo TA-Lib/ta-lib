@@ -479,7 +479,7 @@ static void TA_MASSI_ReleaseImpl( struct TA_MASSI_Stream *sp )
 }
 
 /* Private function, not in public API. */
-static void TA_MASSI_StepImpl( struct TA_MASSI_Stream *sp, double inHigh, double inLow, double *outReal )
+static TA_FMA_STEP_INLINE void TA_MASSI_StepImpl( struct TA_MASSI_Stream *sp, double inHigh, double inLow, double *outReal )
 {
    double hl;
    double ratio;
@@ -772,6 +772,7 @@ TA_RetCode TA_MASSI_OpenAndFillInternal( struct TA_MASSI_Stream **stream, const 
    return TA_MASSI_OpenImpl( stream, inHigh, inLow, startIdx, historyLen, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal, 1 );
 }
 
+TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_MASSI_Update( TA_MASSI_Stream *stream, double inHigh, double inLow, double *outReal )
 {
    if( !stream ) return TA_BAD_PARAM;

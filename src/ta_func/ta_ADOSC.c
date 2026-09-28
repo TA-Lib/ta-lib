@@ -391,7 +391,7 @@ struct TA_ADOSC_Stream {
 };
 
 /* Private function, not in public API. */
-static void TA_ADOSC_StepImpl( struct TA_ADOSC_Stream *sp, double inHigh, double inLow, double inClose, double inVolume, double *outReal )
+static TA_FMA_STEP_INLINE void TA_ADOSC_StepImpl( struct TA_ADOSC_Stream *sp, double inHigh, double inLow, double inClose, double inVolume, double *outReal )
 {
    double high;
    double low;
@@ -627,6 +627,7 @@ TA_RetCode TA_ADOSC_OpenAndFillInternal( struct TA_ADOSC_Stream **stream, const 
    return TA_ADOSC_OpenImpl( stream, inHigh, inLow, inClose, inVolume, startIdx, historyLen, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal, 1 );
 }
 
+TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_ADOSC_Update( TA_ADOSC_Stream *stream, double inHigh, double inLow, double inClose, double inVolume, double *outReal )
 {
    if( !stream ) return TA_BAD_PARAM;

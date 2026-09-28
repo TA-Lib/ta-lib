@@ -1242,35 +1242,50 @@ pub fn generate(
     o
 }
 
-/// FMA runtime CPU dispatch for `Peek` (#337) — the same rule the batch tiers
-/// carry, applied to the one streaming tier where it pays.
+/// FMA runtime CPU dispatch for the two per-bar tiers, `Peek` and `Update`.
 ///
-/// `Peek` inlines its own copy of the step, so the fused arithmetic is already
-/// inside the function being attributed and `target_clones` gives it a hardware
-/// clone. The other four streaming tiers delegate to `static`
-/// `_StepImpl`/`_OpenImpl` bodies that usually exceed
-/// `--param max-inline-insns-auto` (30 at `-O3`), so the clone is emitted empty
-/// and costs bytes for nothing; attributing the static instead would only make
-/// it un-inlinable. Peek is 25% of the byte cost of attributing all five, for
-/// every measured win and no measured regression.
+/// `target_clones` only pays when the fused arithmetic is inside the attributed
+/// function. `Peek` inlines its own copy of the step. `Update` delegates to the
+/// `static` `_StepImpl`, which the clones would not inline on size, so a fused
+/// step is marked `TA_FMA_STEP_INLINE` (force-inline wherever the attribute is
+/// real) and every caller, the tape step included, carries its own copy.
+/// Attributing the static itself would put an IFUNC hop on every bar.
+/// `_OpenImpl` stays single-path: it runs once per handle.
 fn mark_fma_multiversion(o: &mut String, func: &FuncDef) {
     if !fma::EMIT_FMA {
         return;
     }
+    let n = uname(func);
     // Public entries only: a `target_clones` symbol is exported from the shared
-    // library whatever its visibility, so a private one (a tape peek) would leak.
-    let sig = peek_signature(func);
-    let Some(start) = o.find(&sig) else {
-        return;
-    };
-    let line = o[..start].rfind('\n').map_or(0, |i| i + 1);
-    // Every generated body indents, so `"\n}\n"` closes this definition.
-    let Some(end) = o[start..].find("\n}\n").map(|e| start + e + 3) else {
-        return;
-    };
-    if o[line..end].contains("fma(") {
+    // library whatever its visibility, so a private one (a tape step) would leak.
+    let mut step_fuses = false;
+    for ret in ["void", "TA_RetCode"] {
+        if let Some(line) = fuses_at(o, &format!("static {ret} TA_{n}_StepImpl(")) {
+            o.replace_range(line..line + "static ".len(), "static TA_FMA_STEP_INLINE ");
+            step_fuses = true;
+        }
+    }
+    if step_fuses {
+        if let Some(line) = def_line(o, &update_signature(func)) {
+            o.insert_str(line, "TA_FMA_MULTIVERSION\n");
+        }
+    }
+    if let Some(line) = fuses_at(o, &peek_signature(func)) {
         o.insert_str(line, "TA_FMA_MULTIVERSION\n");
     }
+}
+
+/// Start of the line holding the definition that begins with `sig`.
+fn def_line(o: &str, sig: &str) -> Option<usize> {
+    o.find(&format!("\n{sig}")).map(|i| i + 1)
+}
+
+/// [`def_line`] of `sig`, when that definition's body calls `fma(`.
+fn fuses_at(o: &str, sig: &str) -> Option<usize> {
+    let line = def_line(o, sig)?;
+    // Every generated body indents, so `"\n}\n"` closes this definition.
+    let end = o[line..].find("\n}\n").map(|e| line + e + 3)?;
+    o[line..end].contains("fma(").then_some(line)
 }
 
 /// The `struct TA_<N>_Stream { ... };` text for one streaming function —

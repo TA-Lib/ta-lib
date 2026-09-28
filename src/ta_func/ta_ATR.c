@@ -413,7 +413,7 @@ struct TA_ATR_Stream {
 };
 
 /* Private function, not in public API. */
-static void TA_ATR_StepImpl( struct TA_ATR_Stream *sp, double inHigh, double inLow, double inClose, double *outReal )
+static TA_FMA_STEP_INLINE void TA_ATR_StepImpl( struct TA_ATR_Stream *sp, double inHigh, double inLow, double inClose, double *outReal )
 {
    double val2;
    double val3;
@@ -681,6 +681,7 @@ TA_RetCode TA_ATR_OpenAndFillInternal( struct TA_ATR_Stream **stream, const doub
    return TA_ATR_OpenImpl( stream, inHigh, inLow, inClose, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
 }
 
+TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_ATR_Update( TA_ATR_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )
 {
    if( !stream ) return TA_BAD_PARAM;

@@ -329,7 +329,7 @@ struct TA_ERI_Stream {
 };
 
 /* Private function, not in public API. */
-static void TA_ERI_StepImpl( struct TA_ERI_Stream *sp, double inHigh, double inLow, double inClose, double *outBullPower, double *outBearPower )
+static TA_FMA_STEP_INLINE void TA_ERI_StepImpl( struct TA_ERI_Stream *sp, double inHigh, double inLow, double inClose, double *outBullPower, double *outBearPower )
 {
    if( sp->optInTimePeriod == 1 )
    {
@@ -608,6 +608,7 @@ TA_RetCode TA_ERI_OpenAndFillInternal( struct TA_ERI_Stream **stream, const doub
    return TA_ERI_OpenImpl( stream, inHigh, inLow, inClose, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, outBullPower, outBearPower, 1 );
 }
 
+TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_ERI_Update( TA_ERI_Stream *stream, double inHigh, double inLow, double inClose, double *outBullPower, double *outBearPower )
 {
    if( !stream ) return TA_BAD_PARAM;

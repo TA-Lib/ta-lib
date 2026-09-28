@@ -979,7 +979,7 @@ static void TA_HT_SINE_ReleaseImpl( struct TA_HT_SINE_Stream *sp )
 }
 
 /* Private function, not in public API. */
-static void TA_HT_SINE_StepImpl( struct TA_HT_SINE_Stream *sp, double inReal, double *outSine, double *outLeadSine )
+static TA_FMA_STEP_INLINE void TA_HT_SINE_StepImpl( struct TA_HT_SINE_Stream *sp, double inReal, double *outSine, double *outLeadSine )
 {
    int i;
    double tempReal;
@@ -1777,6 +1777,7 @@ TA_RetCode TA_HT_SINE_OpenAndFillInternal( struct TA_HT_SINE_Stream **stream, co
    return TA_HT_SINE_OpenImpl( stream, inReal, startIdx, historyLen, outBegIdx, outNBElement, outSine, outLeadSine, 1 );
 }
 
+TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_HT_SINE_Update( TA_HT_SINE_Stream *stream, double inReal, double *outSine, double *outLeadSine )
 {
    if( !stream ) return TA_BAD_PARAM;

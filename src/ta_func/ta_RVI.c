@@ -792,7 +792,7 @@ static void TA_RVI_ReleaseImpl( struct TA_RVI_Stream *sp )
 }
 
 /* Private function, not in public API. */
-static void TA_RVI_StepImpl( struct TA_RVI_Stream *sp, double inReal, double *outReal )
+static TA_FMA_STEP_INLINE void TA_RVI_StepImpl( struct TA_RVI_Stream *sp, double inReal, double *outReal )
 {
    double tempReal;
    double meanValue1;
@@ -1314,6 +1314,7 @@ TA_RetCode TA_RVI_OpenAndFillInternal( struct TA_RVI_Stream **stream, const doub
    return TA_RVI_OpenImpl( stream, inReal, startIdx, historyLen, optInTimePeriod, optInStdDevPeriod, outBegIdx, outNBElement, outReal, 1 );
 }
 
+TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_RVI_Update( TA_RVI_Stream *stream, double inReal, double *outReal )
 {
    if( !stream ) return TA_BAD_PARAM;

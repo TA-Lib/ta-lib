@@ -786,7 +786,7 @@ struct TA_BBANDS_Stream {
 };
 
 /* Private function, not in public API. */
-static TA_RetCode TA_BBANDS_StepImpl( struct TA_BBANDS_Stream *sp, double inReal, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand )
+static TA_FMA_STEP_INLINE TA_RetCode TA_BBANDS_StepImpl( struct TA_BBANDS_Stream *sp, double inReal, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand )
 {
    double tempReal;
    double tempReal2;
@@ -1099,6 +1099,7 @@ TA_RetCode TA_BBANDS_OpenAndFillInternal( struct TA_BBANDS_Stream **stream, cons
    return TA_BBANDS_OpenImpl( stream, inReal, startIdx, historyLen, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand, 1 );
 }
 
+TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_BBANDS_Update( TA_BBANDS_Stream *stream, double inReal, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand )
 {
    TA_RetCode retCode;

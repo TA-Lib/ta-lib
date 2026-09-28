@@ -765,7 +765,7 @@ static void TA_SMI_ReleaseImpl( struct TA_SMI_Stream *sp )
 }
 
 /* Private function, not in public API. */
-static void TA_SMI_StepImpl( struct TA_SMI_Stream *sp, double inHigh, double inLow, double inClose, double *outSMI, double *outSMISignal )
+static TA_FMA_STEP_INLINE void TA_SMI_StepImpl( struct TA_SMI_Stream *sp, double inHigh, double inLow, double inClose, double *outSMI, double *outSMISignal )
 {
    double tmp;
    double num;
@@ -1272,6 +1272,7 @@ TA_RetCode TA_SMI_OpenAndFillInternal( struct TA_SMI_Stream **stream, const doub
    return TA_SMI_OpenImpl( stream, inHigh, inLow, inClose, startIdx, historyLen, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outSMI, outSMISignal, 1 );
 }
 
+TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_SMI_Update( TA_SMI_Stream *stream, double inHigh, double inLow, double inClose, double *outSMI, double *outSMISignal )
 {
    if( !stream ) return TA_BAD_PARAM;

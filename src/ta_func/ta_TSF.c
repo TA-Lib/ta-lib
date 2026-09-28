@@ -429,7 +429,7 @@ static void TA_TSF_ReleaseImpl( struct TA_TSF_Stream *sp )
 }
 
 /* Private function, not in public API. */
-static void TA_TSF_StepImpl( struct TA_TSF_Stream *sp, double inReal, double *outReal )
+static TA_FMA_STEP_INLINE void TA_TSF_StepImpl( struct TA_TSF_Stream *sp, double inReal, double *outReal )
 {
    double m;
    double b;
@@ -810,6 +810,7 @@ TA_RetCode TA_TSF_OpenAndFillInternal( struct TA_TSF_Stream **stream, const doub
    return TA_TSF_OpenImpl( stream, inReal, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
 }
 
+TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_TSF_Update( TA_TSF_Stream *stream, double inReal, double *outReal )
 {
    if( !stream ) return TA_BAD_PARAM;

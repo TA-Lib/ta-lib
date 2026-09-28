@@ -298,7 +298,7 @@ static void TA_ZLEMA_ReleaseImpl( struct TA_ZLEMA_Stream *sp )
 }
 
 /* Private function, not in public API. */
-static void TA_ZLEMA_StepImpl( struct TA_ZLEMA_Stream *sp, double inReal, double *outReal )
+static TA_FMA_STEP_INLINE void TA_ZLEMA_StepImpl( struct TA_ZLEMA_Stream *sp, double inReal, double *outReal )
 {
    if( sp->optInTimePeriod == 1 )
    {
@@ -520,6 +520,7 @@ TA_RetCode TA_ZLEMA_OpenAndFillInternal( struct TA_ZLEMA_Stream **stream, const 
    return TA_ZLEMA_OpenImpl( stream, inReal, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
 }
 
+TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_ZLEMA_Update( TA_ZLEMA_Stream *stream, double inReal, double *outReal )
 {
    if( !stream ) return TA_BAD_PARAM;

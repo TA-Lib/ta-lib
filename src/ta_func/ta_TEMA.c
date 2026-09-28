@@ -395,7 +395,7 @@ struct TA_TEMA_Stream {
 };
 
 /* Private function, not in public API. */
-static void TA_TEMA_StepImpl( struct TA_TEMA_Stream *sp, double inReal, double *outReal )
+static TA_FMA_STEP_INLINE void TA_TEMA_StepImpl( struct TA_TEMA_Stream *sp, double inReal, double *outReal )
 {
    if( sp->optInTimePeriod == 1 )
    {
@@ -673,6 +673,7 @@ TA_RetCode TA_TEMA_OpenAndFillInternal( struct TA_TEMA_Stream **stream, const do
    return TA_TEMA_OpenImpl( stream, inReal, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
 }
 
+TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_TEMA_Update( TA_TEMA_Stream *stream, double inReal, double *outReal )
 {
    if( !stream ) return TA_BAD_PARAM;

@@ -894,7 +894,7 @@ static void TA_HT_TRENDLINE_ReleaseImpl( struct TA_HT_TRENDLINE_Stream *sp )
 }
 
 /* Private function, not in public API. */
-static void TA_HT_TRENDLINE_StepImpl( struct TA_HT_TRENDLINE_Stream *sp, double inReal, double *outReal )
+static TA_FMA_STEP_INLINE void TA_HT_TRENDLINE_StepImpl( struct TA_HT_TRENDLINE_Stream *sp, double inReal, double *outReal )
 {
    int i;
    double tempReal;
@@ -1618,6 +1618,7 @@ TA_RetCode TA_HT_TRENDLINE_OpenAndFillInternal( struct TA_HT_TRENDLINE_Stream **
    return TA_HT_TRENDLINE_OpenImpl( stream, inReal, startIdx, historyLen, outBegIdx, outNBElement, outReal, 1 );
 }
 
+TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_HT_TRENDLINE_Update( TA_HT_TRENDLINE_Stream *stream, double inReal, double *outReal )
 {
    if( !stream ) return TA_BAD_PARAM;

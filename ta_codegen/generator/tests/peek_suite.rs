@@ -866,38 +866,60 @@ fn no_peek_frame_reads_a_field_it_has_bound() {
     assert!(offenders.is_empty(), "a peek frame reads what it has bound:\n{}", offenders.join("\n"));
 }
 
-/// The hardware-FMA clone on `Peek` (#337) is attached by a TEXT search
-/// (`c_stream::mark_fma_multiversion`) that returns silently when the signature
-/// or the closing brace moves, so a rename drops the clone with every value gate
-/// still green -- the Peek keeps calling libm and only a benchmark would notice.
-/// Pinned both ways: attributed exactly when the emitted Peek fuses.
+/// The hardware-FMA clones on `Peek` and `Update` are attached by a TEXT search
+/// (`c_stream::mark_fma_multiversion`) that returns silently when a signature
+/// or a closing brace moves, so a rename drops a clone with every value gate
+/// still green -- the tier keeps calling libm and only a benchmark would notice.
+/// Pinned both ways: Peek is attributed exactly when it fuses, Update exactly
+/// when its step does, and that step is force-inlined into it exactly then.
 #[test]
-fn a_fused_peek_carries_the_fma_multiversion_attribute() {
-    let (mut peeks, mut fused, mut attributed) = (0usize, 0usize, 0usize);
+fn a_fused_per_bar_tier_carries_the_fma_multiversion_attribute() {
+    let (mut peeks, mut steps) = (0usize, 0usize);
+    let (mut fused_peeks, mut fused_steps) = (0usize, 0usize);
     let mut drifted: Vec<String> = Vec::new();
+    let attributed = |src: &str, at: usize| {
+        let line = src[..at].rfind('\n').map_or(0, |i| i + 1);
+        src[..line].ends_with("TA_FMA_MULTIVERSION\n")
+    };
 
     for name in indicators() {
         let Some((func, enums)) = load(&name) else { continue };
         let src = stream_c(&func, &enums);
         let upper = func.name.to_uppercase();
-        let sig = format!("TA_RetCode TA_{upper}_Peek(");
-        let (Some(at), Some(body)) = (src.find(&sig), body_of(&src, &sig)) else { continue };
-        peeks += 1;
 
-        let line = src[..at].rfind('\n').map_or(0, |i| i + 1);
-        let has_attr = src[..line].ends_with("TA_FMA_MULTIVERSION\n");
-        let fuses = body.contains("fma(");
-        fused += usize::from(fuses);
-        attributed += usize::from(has_attr);
-        if fuses != has_attr {
-            drifted.push(format!("{upper} (fuses={fuses}, attributed={has_attr})"));
+        let sig = format!("TA_RetCode TA_{upper}_Peek(");
+        if let (Some(at), Some(body)) = (src.find(&sig), body_of(&src, &sig)) {
+            peeks += 1;
+            let (fuses, has_attr) = (body.contains("fma("), attributed(&src, at));
+            fused_peeks += usize::from(fuses);
+            if fuses != has_attr {
+                drifted.push(format!("{upper} Peek (fuses={fuses}, attributed={has_attr})"));
+            }
+        }
+
+        // The definition precedes every call, so the first mention is it.
+        let step = format!(" TA_{upper}_StepImpl(");
+        let upd = format!("TA_RetCode TA_{upper}_Update(");
+        if let (Some(st), Some(body), Some(at)) = (src.find(&step), body_of(&src, &step), src.find(&upd)) {
+            steps += 1;
+            let fuses = body.contains("fma(");
+            let line = &src[src[..st].rfind('\n').map_or(0, |i| i + 1)..st];
+            let inlined = line.starts_with("static TA_FMA_STEP_INLINE ");
+            let has_attr = attributed(&src, at);
+            fused_steps += usize::from(fuses);
+            if fuses != has_attr || fuses != inlined {
+                drifted.push(format!(
+                    "{upper} Update (step fuses={fuses}, step inlined={inlined}, attributed={has_attr})"
+                ));
+            }
         }
     }
 
-    assert!(drifted.is_empty(), "TA_FMA_MULTIVERSION drifted from the fused peeks: {drifted:?}");
+    assert!(drifted.is_empty(), "TA_FMA_MULTIVERSION drifted from the fused tiers: {drifted:?}");
     assert!(peeks >= 200, "only {peeks} peek frame(s) rendered -- the signature moved");
-    assert!(fused > 0, "no peek fuses, so this sweep proved nothing");
-    assert_eq!(fused, attributed, "{fused} fused peek(s) but {attributed} attributed");
+    assert!(steps >= 200, "only {steps} step(s) paired with an Update -- a signature moved");
+    assert!(fused_peeks > 0, "no peek fuses, so this sweep proved nothing about Peek");
+    assert!(fused_steps > 0, "no step fuses, so this sweep proved nothing about Update");
 }
 
 /// Peek renders every multiply-add it still EVALUATES exactly as update renders
