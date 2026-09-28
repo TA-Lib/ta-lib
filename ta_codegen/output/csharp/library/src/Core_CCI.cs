@@ -71,6 +71,9 @@ public partial class Core
     *                scales: `0.015*tempReal2` underflows to 0.0 on a denormal
     *                price the deviation's own band still calls "not flat", and
     *                the division returned +/-Inf under TA_SUCCESS.
+    *  092826 MF,CC  Sum the window around the slot just stored, taking it from
+    *                lastValue: a wide load over that slot waited for the store
+    *                (#455). Same order, same values.
     */
    /// <summary>
    /// Number of leading input bars <c>Cci</c> consumes before it can produce its
@@ -179,9 +182,17 @@ public partial class Core
       do {
          lastValue = (inHigh[i] + inLow[i] + inClose[i]) / 3;
          circBuffer[circBuffer_Idx] = lastValue;
-         /* Calculate the average for the whole period. */
+         /* Calculate the average for the whole period. Both sums take the
+          * slot just stored from lastValue, in the same order, so no load reads
+          * it back: a vector load spanning that slot stalls until the store
+          * commits.
+          */
          theAverage = 0;
-         for( j = 0; j < optInTimePeriod; j += 1 ) {
+         for( j = 0; j < circBuffer_Idx; j += 1 ) {
+            theAverage += circBuffer[j];
+         }
+         theAverage += lastValue;
+         for( j = circBuffer_Idx + 1; j < optInTimePeriod; j += 1 ) {
             theAverage += circBuffer[j];
          }
          theAverage /= optInTimePeriod;
@@ -189,7 +200,11 @@ public partial class Core
           * for the whole period, then its mean.
           */
          tempReal2 = 0;
-         for( j = 0; j < optInTimePeriod; j += 1 ) {
+         for( j = 0; j < circBuffer_Idx; j += 1 ) {
+            tempReal2 += Math.Abs(circBuffer[j] - theAverage);
+         }
+         tempReal2 += Math.Abs(lastValue - theAverage);
+         for( j = circBuffer_Idx + 1; j < optInTimePeriod; j += 1 ) {
             tempReal2 += Math.Abs(circBuffer[j] - theAverage);
          }
          tempReal2 /= optInTimePeriod;
@@ -293,12 +308,20 @@ public partial class Core
          lastValue = ((double)inHigh[i] + (double)inLow[i] + (double)inClose[i]) / 3;
          circBuffer[circBuffer_Idx] = lastValue;
          theAverage = 0;
-         for( j = 0; j < optInTimePeriod; j += 1 ) {
+         for( j = 0; j < circBuffer_Idx; j += 1 ) {
+            theAverage += circBuffer[j];
+         }
+         theAverage += lastValue;
+         for( j = circBuffer_Idx + 1; j < optInTimePeriod; j += 1 ) {
             theAverage += circBuffer[j];
          }
          theAverage /= optInTimePeriod;
          tempReal2 = 0;
-         for( j = 0; j < optInTimePeriod; j += 1 ) {
+         for( j = 0; j < circBuffer_Idx; j += 1 ) {
+            tempReal2 += Math.Abs(circBuffer[j] - theAverage);
+         }
+         tempReal2 += Math.Abs(lastValue - theAverage);
+         for( j = circBuffer_Idx + 1; j < optInTimePeriod; j += 1 ) {
             tempReal2 += Math.Abs(circBuffer[j] - theAverage);
          }
          tempReal2 /= optInTimePeriod;
@@ -623,9 +646,17 @@ public partial class Core
          lastValue = (inHigh + inLow + inClose) / 3;
          pkSlot0 = sp.circBuffer_Idx;
          pkVal0 = lastValue;
-         /* Calculate the average for the whole period. */
+         /* Calculate the average for the whole period. Both sums take the
+          * slot just stored from lastValue, in the same order, so no load reads
+          * it back: a vector load spanning that slot stalls until the store
+          * commits.
+          */
          theAverage = 0;
-         for( j = 0; j < sp.optInTimePeriod; j += 1 ) {
+         for( j = 0; j < sp.circBuffer_Idx; j += 1 ) {
+            theAverage += (j != pkSlot0) ? sp.cb_circBuffer[j] : pkVal0;
+         }
+         theAverage += lastValue;
+         for( j = sp.circBuffer_Idx + 1; j < sp.optInTimePeriod; j += 1 ) {
             theAverage += (j != pkSlot0) ? sp.cb_circBuffer[j] : pkVal0;
          }
          theAverage /= sp.optInTimePeriod;
@@ -633,7 +664,11 @@ public partial class Core
           * for the whole period, then its mean.
           */
          tempReal2 = 0;
-         for( j = 0; j < sp.optInTimePeriod; j += 1 ) {
+         for( j = 0; j < sp.circBuffer_Idx; j += 1 ) {
+            tempReal2 += Math.Abs(((j != pkSlot0) ? sp.cb_circBuffer[j] : pkVal0) - theAverage);
+         }
+         tempReal2 += Math.Abs(lastValue - theAverage);
+         for( j = sp.circBuffer_Idx + 1; j < sp.optInTimePeriod; j += 1 ) {
             tempReal2 += Math.Abs(((j != pkSlot0) ? sp.cb_circBuffer[j] : pkVal0) - theAverage);
          }
          tempReal2 /= sp.optInTimePeriod;
@@ -691,9 +726,17 @@ public partial class Core
       int j = 0;
       lastValue = (inHigh + inLow + inClose) / 3;
       sp.cb_circBuffer[sp.circBuffer_Idx] = lastValue;
-      /* Calculate the average for the whole period. */
+      /* Calculate the average for the whole period. Both sums take the
+       * slot just stored from lastValue, in the same order, so no load reads
+       * it back: a vector load spanning that slot stalls until the store
+       * commits.
+       */
       theAverage = 0;
-      for( j = 0; j < sp.optInTimePeriod; j += 1 ) {
+      for( j = 0; j < sp.circBuffer_Idx; j += 1 ) {
+         theAverage += sp.cb_circBuffer[j];
+      }
+      theAverage += lastValue;
+      for( j = sp.circBuffer_Idx + 1; j < sp.optInTimePeriod; j += 1 ) {
          theAverage += sp.cb_circBuffer[j];
       }
       theAverage /= sp.optInTimePeriod;
@@ -701,7 +744,11 @@ public partial class Core
        * for the whole period, then its mean.
        */
       tempReal2 = 0;
-      for( j = 0; j < sp.optInTimePeriod; j += 1 ) {
+      for( j = 0; j < sp.circBuffer_Idx; j += 1 ) {
+         tempReal2 += Math.Abs(sp.cb_circBuffer[j] - theAverage);
+      }
+      tempReal2 += Math.Abs(lastValue - theAverage);
+      for( j = sp.circBuffer_Idx + 1; j < sp.optInTimePeriod; j += 1 ) {
          tempReal2 += Math.Abs(sp.cb_circBuffer[j] - theAverage);
       }
       tempReal2 /= sp.optInTimePeriod;
@@ -820,9 +867,17 @@ public partial class Core
       do {
          lastValue = (inHigh[i] + inLow[i] + inClose[i]) / 3;
          circBuffer[circBuffer_Idx] = lastValue;
-         /* Calculate the average for the whole period. */
+         /* Calculate the average for the whole period. Both sums take the
+          * slot just stored from lastValue, in the same order, so no load reads
+          * it back: a vector load spanning that slot stalls until the store
+          * commits.
+          */
          theAverage = 0;
-         for( j = 0; j < optInTimePeriod; j += 1 ) {
+         for( j = 0; j < circBuffer_Idx; j += 1 ) {
+            theAverage += circBuffer[j];
+         }
+         theAverage += lastValue;
+         for( j = circBuffer_Idx + 1; j < optInTimePeriod; j += 1 ) {
             theAverage += circBuffer[j];
          }
          theAverage /= optInTimePeriod;
@@ -830,7 +885,11 @@ public partial class Core
           * for the whole period, then its mean.
           */
          tempReal2 = 0;
-         for( j = 0; j < optInTimePeriod; j += 1 ) {
+         for( j = 0; j < circBuffer_Idx; j += 1 ) {
+            tempReal2 += Math.Abs(circBuffer[j] - theAverage);
+         }
+         tempReal2 += Math.Abs(lastValue - theAverage);
+         for( j = circBuffer_Idx + 1; j < optInTimePeriod; j += 1 ) {
             tempReal2 += Math.Abs(circBuffer[j] - theAverage);
          }
          tempReal2 /= optInTimePeriod;

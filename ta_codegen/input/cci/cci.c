@@ -27,6 +27,9 @@
  *                scales: `0.015*tempReal2` underflows to 0.0 on a denormal
  *                price the deviation's own band still calls "not flat", and
  *                the division returned +/-Inf under TA_SUCCESS.
+ *  092826 MF,CC  Sum the window around the slot just stored, taking it from
+ *                lastValue: a wide load over that slot waited for the store
+ *                (#455). Same order, same values.
  */
 
 int cci_lookback(int optInTimePeriod)
@@ -100,9 +103,16 @@ TA_RetCode cci(int startIdx, int endIdx,
       lastValue = (inHigh[i]+inLow[i]+inClose[i])/3;
       circBuffer[circBuffer_Idx] = lastValue;
 
-      /* Calculate the average for the whole period. */
+      /* Calculate the average for the whole period. Both sums take the
+       * slot just stored from lastValue, in the same order, so no load reads
+       * it back: a vector load spanning that slot stalls until the store
+       * commits.
+       */
       theAverage = 0;
-      for( j=0; j < optInTimePeriod; j++ )
+      for( j=0; j < circBuffer_Idx; j++ )
+         theAverage += circBuffer[j];
+      theAverage += lastValue;
+      for( j=circBuffer_Idx+1; j < optInTimePeriod; j++ )
          theAverage += circBuffer[j];
       theAverage /= optInTimePeriod;
 
@@ -110,7 +120,10 @@ TA_RetCode cci(int startIdx, int endIdx,
        * for the whole period, then its mean.
        */
       tempReal2 = 0;
-      for( j=0; j < optInTimePeriod; j++ )
+      for( j=0; j < circBuffer_Idx; j++ )
+         tempReal2 += fabs(circBuffer[j]-theAverage);
+      tempReal2 += fabs(lastValue-theAverage);
+      for( j=circBuffer_Idx+1; j < optInTimePeriod; j++ )
          tempReal2 += fabs(circBuffer[j]-theAverage);
       tempReal2 /= optInTimePeriod;
 

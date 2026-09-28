@@ -69,6 +69,9 @@
  *                scales: `0.015*tempReal2` underflows to 0.0 on a denormal
  *                price the deviation's own band still calls "not flat", and
  *                the division returned +/-Inf under TA_SUCCESS.
+ *  092826 MF,CC  Sum the window around the slot just stored, taking it from
+ *                lastValue: a wide load over that slot waited for the store
+ *                (#455). Same order, same values.
  */
 
 // Import types from parent module
@@ -197,10 +200,23 @@ impl Core {
         loop {
             lastValue = (inHigh[i] + inLow[i] + inClose[i]) / 3_f64;
             circBuffer[circBuffer_Idx] = lastValue;
-            // Calculate the average for the whole period.
+            // Calculate the average for the whole period. Both sums take the
+            // slot just stored from lastValue, in the same order, so no load reads
+            // it back: a vector load spanning that slot stalls until the store
+            // commits.
             theAverage = 0.0;
-            // for( j = 0; j < ((optInTimePeriod) as usize); j += 1 )
             j = 0;
+            if j < circBuffer_Idx {
+                let _wn: usize = circBuffer_Idx - j;
+                let _w0 = &circBuffer[j..][.._wn];
+                for _wk in 0.._wn {
+                    theAverage += _w0[_wk];
+                    j += 1;
+                }
+            }
+            theAverage += lastValue;
+            // for( j = circBuffer_Idx + 1; j < ((optInTimePeriod) as usize); j += 1 )
+            j = circBuffer_Idx + 1;
             while j < ((optInTimePeriod) as usize) {
                 theAverage += circBuffer[j];
                 j += 1;
@@ -209,8 +225,18 @@ impl Core {
             // Do the summation of the ABS(TypePrice-average)
             // for the whole period, then its mean.
             tempReal2 = 0.0;
-            // for( j = 0; j < ((optInTimePeriod) as usize); j += 1 )
             j = 0;
+            if j < circBuffer_Idx {
+                let _wn: usize = circBuffer_Idx - j;
+                let _w0 = &circBuffer[j..][.._wn];
+                for _wk in 0.._wn {
+                    tempReal2 += (_w0[_wk] - theAverage).abs();
+                    j += 1;
+                }
+            }
+            tempReal2 += (lastValue - theAverage).abs();
+            // for( j = circBuffer_Idx + 1; j < ((optInTimePeriod) as usize); j += 1 )
+            j = circBuffer_Idx + 1;
             while j < ((optInTimePeriod) as usize) {
                 tempReal2 += (circBuffer[j] - theAverage).abs();
                 j += 1;
@@ -412,10 +438,20 @@ impl Core {
         let mut j: usize = 0_usize;
         lastValue = (inHigh + inLow + inClose) / 3_f64;
         sp.cb_circBuffer[sp.circBuffer_Idx] = lastValue;
-        // Calculate the average for the whole period.
+        // Calculate the average for the whole period. Both sums take the
+        // slot just stored from lastValue, in the same order, so no load reads
+        // it back: a vector load spanning that slot stalls until the store
+        // commits.
         theAverage = 0.0;
-        // for( j = 0; j < ((sp.optInTimePeriod) as usize); j += 1 )
+        // for( j = 0; j < sp.circBuffer_Idx; j += 1 )
         j = 0;
+        while j < sp.circBuffer_Idx {
+            theAverage += sp.cb_circBuffer[j];
+            j += 1;
+        }
+        theAverage += lastValue;
+        // for( j = sp.circBuffer_Idx + 1; j < ((sp.optInTimePeriod) as usize); j += 1 )
+        j = sp.circBuffer_Idx + 1;
         while j < ((sp.optInTimePeriod) as usize) {
             theAverage += sp.cb_circBuffer[j];
             j += 1;
@@ -424,8 +460,15 @@ impl Core {
         // Do the summation of the ABS(TypePrice-average)
         // for the whole period, then its mean.
         tempReal2 = 0.0;
-        // for( j = 0; j < ((sp.optInTimePeriod) as usize); j += 1 )
+        // for( j = 0; j < sp.circBuffer_Idx; j += 1 )
         j = 0;
+        while j < sp.circBuffer_Idx {
+            tempReal2 += (sp.cb_circBuffer[j] - theAverage).abs();
+            j += 1;
+        }
+        tempReal2 += (lastValue - theAverage).abs();
+        // for( j = sp.circBuffer_Idx + 1; j < ((sp.optInTimePeriod) as usize); j += 1 )
+        j = sp.circBuffer_Idx + 1;
         while j < ((sp.optInTimePeriod) as usize) {
             tempReal2 += (sp.cb_circBuffer[j] - theAverage).abs();
             j += 1;
@@ -544,10 +587,20 @@ impl Core {
         loop {
             lastValue = (inHigh[i] + inLow[i] + inClose[i]) / 3_f64;
             circBuffer[circBuffer_Idx] = lastValue;
-            // Calculate the average for the whole period.
+            // Calculate the average for the whole period. Both sums take the
+            // slot just stored from lastValue, in the same order, so no load reads
+            // it back: a vector load spanning that slot stalls until the store
+            // commits.
             theAverage = 0.0;
-            // for( j = 0; j < ((optInTimePeriod) as usize); j += 1 )
+            // for( j = 0; j < circBuffer_Idx; j += 1 )
             j = 0;
+            while j < circBuffer_Idx {
+                theAverage += circBuffer[j];
+                j += 1;
+            }
+            theAverage += lastValue;
+            // for( j = circBuffer_Idx + 1; j < ((optInTimePeriod) as usize); j += 1 )
+            j = circBuffer_Idx + 1;
             while j < ((optInTimePeriod) as usize) {
                 theAverage += circBuffer[j];
                 j += 1;
@@ -556,8 +609,15 @@ impl Core {
             // Do the summation of the ABS(TypePrice-average)
             // for the whole period, then its mean.
             tempReal2 = 0.0;
-            // for( j = 0; j < ((optInTimePeriod) as usize); j += 1 )
+            // for( j = 0; j < circBuffer_Idx; j += 1 )
             j = 0;
+            while j < circBuffer_Idx {
+                tempReal2 += (circBuffer[j] - theAverage).abs();
+                j += 1;
+            }
+            tempReal2 += (lastValue - theAverage).abs();
+            // for( j = circBuffer_Idx + 1; j < ((optInTimePeriod) as usize); j += 1 )
+            j = circBuffer_Idx + 1;
             while j < ((optInTimePeriod) as usize) {
                 tempReal2 += (circBuffer[j] - theAverage).abs();
                 j += 1;
@@ -797,10 +857,20 @@ impl CciStream {
             lastValue = (inHigh + inLow + inClose) / 3_f64;
             pkSlot0 = sp.circBuffer_Idx as usize;
             pkVal0 = lastValue;
-            // Calculate the average for the whole period.
+            // Calculate the average for the whole period. Both sums take the
+            // slot just stored from lastValue, in the same order, so no load reads
+            // it back: a vector load spanning that slot stalls until the store
+            // commits.
             theAverage = 0.0;
-            // for( j = 0; j < ((sp.optInTimePeriod) as usize); j += 1 )
+            // for( j = 0; j < sp.circBuffer_Idx; j += 1 )
             j = 0;
+            while j < sp.circBuffer_Idx {
+                theAverage += (if (j as usize) != pkSlot0 { sp.cb_circBuffer[j] } else { pkVal0 });
+                j += 1;
+            }
+            theAverage += lastValue;
+            // for( j = sp.circBuffer_Idx + 1; j < ((sp.optInTimePeriod) as usize); j += 1 )
+            j = sp.circBuffer_Idx + 1;
             while j < ((sp.optInTimePeriod) as usize) {
                 theAverage += (if (j as usize) != pkSlot0 { sp.cb_circBuffer[j] } else { pkVal0 });
                 j += 1;
@@ -809,8 +879,15 @@ impl CciStream {
             // Do the summation of the ABS(TypePrice-average)
             // for the whole period, then its mean.
             tempReal2 = 0.0;
-            // for( j = 0; j < ((sp.optInTimePeriod) as usize); j += 1 )
+            // for( j = 0; j < sp.circBuffer_Idx; j += 1 )
             j = 0;
+            while j < sp.circBuffer_Idx {
+                tempReal2 += ((if (j as usize) != pkSlot0 { sp.cb_circBuffer[j] } else { pkVal0 }) - theAverage).abs();
+                j += 1;
+            }
+            tempReal2 += (lastValue - theAverage).abs();
+            // for( j = sp.circBuffer_Idx + 1; j < ((sp.optInTimePeriod) as usize); j += 1 )
+            j = sp.circBuffer_Idx + 1;
             while j < ((sp.optInTimePeriod) as usize) {
                 tempReal2 += ((if (j as usize) != pkSlot0 { sp.cb_circBuffer[j] } else { pkVal0 }) - theAverage).abs();
                 j += 1;
