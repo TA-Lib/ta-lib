@@ -446,6 +446,17 @@ static const FramaEhlersRow framaEhlers[] =
 };
 #define NB_FRAMA_EHLERS ((int)(sizeof(framaEhlers)/sizeof(framaEhlers[0])))
 
+/* framaDegenerate at N=16, the rows after each run, from the same Formula as
+ * framaGolden. Holding the last dimension across a flat half instead moves
+ * them by up to 6e-2. */
+static const struct { int bar; double want; } framaDegenGolden[] = {
+   { 340, 140.68349017364477 }, { 348, 146.3430860999008 },
+   { 356, 157.42639621955547 }, { 508, 178.36793122443183 },
+   { 516, 165.72283218257962 }, { 530, 180.17789386572946 },
+   { 716, 216.625638264348   }, { 724, 212.23937773903373 },
+};
+#define NB_FRAMA_DEGEN_GOLDEN ((int)(sizeof(framaDegenGolden)/sizeof(framaDegenGolden[0])))
+
 static const int framaSweepPeriods[] = { 2, 4, 6, 16, 40, 64, 66, 100, 200 };
 static const int framaSweepUnst[]    = { 0, 3, 17 };
 static const int framaSweepAnchors[] = { 0, 37, 250, 777, 1498 };
@@ -908,6 +919,30 @@ static ErrorNumber test_frama_price_bars( void )
    {
       printf( "FRAMA degenerate Fail: %d flat-half bars, expected 46\n", nbDegen );
       return TA_FRAMA_VACUOUS;
+   }
+
+   retCode = TA_FRAMA( 0, FRAMA_NB-1, h, l, 16, &begIdx, &nbElement, out );
+   if( retCode != TA_SUCCESS || begIdx != 16 || nbElement != FRAMA_NB-16 )
+   {
+      printf( "FRAMA degenerate Fail: rc=%d (%d,%d)\n", (int)retCode, begIdx, nbElement );
+      return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+   }
+   err = framaVerify( h, l, FRAMA_NB, 16, retCode, begIdx, nbElement, out );
+   if( err != TA_TEST_PASS )
+      return err;
+   for( k = 0; k < NB_FRAMA_DEGEN_GOLDEN; k++ )
+   {
+      double diff;
+      const char *mode;
+
+      i = framaDegenGolden[k].bar - begIdx;
+      if( !checkOracleValue( out[i], framaDegenGolden[k].want, FRAMA_GOLD_REL, 0.0,
+                             &diff, &mode ) )
+      {
+         printf( "FRAMA degenerate Fail at bar %d: got %.17g expected %.17g (%s %.3e)\n",
+                 framaDegenGolden[k].bar, out[i], framaDegenGolden[k].want, mode, diff );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
    }
 
    for( i = 0; i < FRAMA_NB; i++ )

@@ -467,8 +467,8 @@
     * href="https://ta-lib.org/functions/frama">ta-lib.org/functions/frama</a>.
     * <p><b>Notes</b>
     * <ul>
-    * <li>The period must be even; an odd period is rejected rather than rounded.</li>
-    * <li>The output is a convex combination of past median prices.</li>
+    * <li>Where either half of the window is flat, alpha is 1 and the output is the price; Ehlers' listing keeps the previous bar's dimension there instead.</li>
+    * <li>The period must be even; an odd period is rejected.</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -536,8 +536,8 @@
     * href="https://ta-lib.org/functions/frama">ta-lib.org/functions/frama</a>.
     * <p><b>Notes</b>
     * <ul>
-    * <li>The period must be even; an odd period is rejected rather than rounded.</li>
-    * <li>The output is a convex combination of past median prices.</li>
+    * <li>Where either half of the window is flat, alpha is 1 and the output is the price; Ehlers' listing keeps the previous bar's dimension there instead.</li>
+    * <li>The period must be even; an odd period is rejected.</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a

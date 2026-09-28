@@ -492,8 +492,8 @@ public partial class Core
    /// <see href="https://ta-lib.org/functions/frama">ta-lib.org/functions/frama</see>.
    /// </para>
    /// <list type="bullet">
-   /// <item><description>The period must be even; an odd period is rejected rather than rounded.</description></item>
-   /// <item><description>The output is a convex combination of past median prices.</description></item>
+   /// <item><description>Where either half of the window is flat, alpha is 1 and the output is the price; Ehlers' listing keeps the previous bar's dimension there instead.</description></item>
+   /// <item><description>The period must be even; an odd period is rejected.</description></item>
    /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
@@ -574,8 +574,8 @@ public partial class Core
    /// <see href="https://ta-lib.org/functions/frama">ta-lib.org/functions/frama</see>.
    /// </para>
    /// <list type="bullet">
-   /// <item><description>The period must be even; an odd period is rejected rather than rounded.</description></item>
-   /// <item><description>The output is a convex combination of past median prices.</description></item>
+   /// <item><description>Where either half of the window is flat, alpha is 1 and the output is the price; Ehlers' listing keeps the previous bar's dimension there instead.</description></item>
+   /// <item><description>The period must be even; an odd period is rejected.</description></item>
    /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to

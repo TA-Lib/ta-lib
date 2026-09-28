@@ -17,8 +17,8 @@ FRAMA[t] = alpha * P[t] + (1 - alpha) * FRAMA[t-1], seeded with P on the bar bef
 
 ## Notes
 
-- The period must be even; an odd period is rejected rather than rounded.
-- The output is a convex combination of past median prices.
+- Where either half of the window is flat, alpha is 1 and the output is the price; Ehlers' listing keeps the previous bar's dimension there instead.
+- The period must be even; an odd period is rejected.
 
 ## Inputs
 

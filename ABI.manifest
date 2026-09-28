@@ -4,7 +4,7 @@ format 9
 soname libta-lib.so.1
 version-info 3:0:2
 headers ta_abstract.h ta_common.h ta_defs.h ta_func.h ta_libc.h
-function-count 2571
+function-count 2583
 platform pointer=8 long=8 int=4 enum=4
 type TA_FuncInfo sizeof=48 name:const_char_*=0 group:const_char_*=8 hint:const_char_*=16 flags:TA_FuncFlags=24 nbInput:unsigned_int=28 nbOptInput:unsigned_int=32 nbOutput:unsigned_int=36 handle:const_TA_FuncHandle_*=40
 type TA_InputParameterInfo sizeof=24 type:TA_InputParameterType=0 paramName:const_char_*=8 flags:TA_InputFlags=16
@@ -63,6 +63,7 @@ enum TA_FuncUnstId TA_FUNC_UNST_T3 = 23
 enum TA_FuncUnstId TA_FUNC_UNST_RMA = 24
 enum TA_FuncUnstId TA_FUNC_UNST_HA = 25
 enum TA_FuncUnstId TA_FUNC_UNST_RVI = 26
+enum TA_FuncUnstId TA_FUNC_UNST_FRAMA = 27
 enum TA_FuncUnstId TA_FUNC_UNST_ALL = 65535
 enum TA_InputParameterType sizeof=4
 enum TA_InputParameterType TA_Input_Price = 0
@@ -1284,6 +1285,16 @@ function TA_RetCode TA_FRACTAL_OutRange(const TA_FRACTAL_Stream *, int *, int *)
 function TA_RetCode TA_FRACTAL_Peek(const TA_FRACTAL_Stream *, double, double, int *, int *)
 function TA_RetCode TA_FRACTAL_Update(TA_FRACTAL_Stream *, double, double, int *, int *)
 function TA_RetCode TA_FRACTAL_Value(const TA_FRACTAL_Stream *, int *, int *)
+function TA_RetCode TA_FRAMA(int, int, const double *, const double *, int, int *, int *, double *)
+function TA_RetCode TA_FRAMA_Advance(TA_FRAMA_Stream *)
+function TA_RetCode TA_FRAMA_Clone(const TA_FRAMA_Stream *, TA_FRAMA_Stream **)
+function TA_RetCode TA_FRAMA_Close(TA_FRAMA_Stream *)
+function TA_RetCode TA_FRAMA_Open(TA_FRAMA_Stream **, const double *, const double *, int, int, double *)
+function TA_RetCode TA_FRAMA_OpenAndFill(TA_FRAMA_Stream **, const double *, const double *, int, int, int *, int *, double *)
+function TA_RetCode TA_FRAMA_OutRange(const TA_FRAMA_Stream *, int *, int *)
+function TA_RetCode TA_FRAMA_Peek(const TA_FRAMA_Stream *, double, double, double *)
+function TA_RetCode TA_FRAMA_Update(TA_FRAMA_Stream *, double, double, double *)
+function TA_RetCode TA_FRAMA_Value(const TA_FRAMA_Stream *, double *)
 function TA_RetCode TA_ForEachFunc(TA_CallForEachFunc, void *)
 function TA_RetCode TA_FuncTableAlloc(const char *, TA_StringTable **)
 function TA_RetCode TA_FuncTableFree(TA_StringTable *)
@@ -2200,6 +2211,7 @@ function TA_RetCode TA_S_EXP(int, int, const float *, int *, int *, double *)
 function TA_RetCode TA_S_FLOOR(int, int, const float *, int *, int *, double *)
 function TA_RetCode TA_S_FOSC(int, int, const float *, int, int *, int *, double *)
 function TA_RetCode TA_S_FRACTAL(int, int, const float *, const float *, int, int, int *, int *, int *, int *)
+function TA_RetCode TA_S_FRAMA(int, int, const float *, const float *, int, int *, int *, double *)
 function TA_RetCode TA_S_HA(int, int, const float *, const float *, const float *, const float *, int *, int *, double *, double *, double *, double *)
 function TA_RetCode TA_S_HMA(int, int, const float *, int, int *, int *, double *)
 function TA_RetCode TA_S_HT_DCPERIOD(int, int, const float *, int *, int *, double *)
@@ -2641,6 +2653,7 @@ function int TA_EXP_Lookback(void)
 function int TA_FLOOR_Lookback(void)
 function int TA_FOSC_Lookback(int)
 function int TA_FRACTAL_Lookback(int, int)
+function int TA_FRAMA_Lookback(int)
 function int TA_HA_Lookback(void)
 function int TA_HMA_Lookback(int)
 function int TA_HT_DCPERIOD_Lookback(void)
