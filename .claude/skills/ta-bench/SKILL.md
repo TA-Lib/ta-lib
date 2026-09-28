@@ -188,7 +188,7 @@ Every param reaches the batch call as a runtime value, as it does from a caller
 of the shipped library, so no row's `batch_last_ns` times a body specialised on
 a constant.
 
-`--context` (N=128) or `--context=N` runs N read-modify-write stores of
+`--context` (N=32) or `--context=N` runs N read-modify-write stores of
 stand-in caller work after every timed call. Every ns column includes it, and
 so does `speedup`, which it pulls toward 1, so the binary refuses it together
 with `--min-ratio`. Without it the calls run back to back on one handle, the

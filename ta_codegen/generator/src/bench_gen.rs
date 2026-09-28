@@ -783,7 +783,7 @@ int main(int argc, char *argv[]) {
            of its batch@last cost. Stream-bench only, hence not in CORPUS_ARGS. */
         else if( strncmp(argv[i], "--min-ratio=", 12) == 0 ) g_min_ratio = atof(argv[i]+12);
         else if( strncmp(argv[i], "--period=", 9) == 0 ) g_period = atoi(argv[i]+9);
-        else if( strcmp(argv[i], "--context") == 0 ) g_context = 128;
+        else if( strcmp(argv[i], "--context") == 0 ) g_context = 32;
         else if( strncmp(argv[i], "--context=", 10) == 0 ) {
             char *end = NULL;
             long n;
