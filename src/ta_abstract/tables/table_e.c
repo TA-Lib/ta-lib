@@ -102,6 +102,79 @@ DEF_FUNCTION( EMA,
              );
 /* EMA END */
 
+/* EMV BEGIN */
+static const TA_IntegerRange TA_DEF_EMV_TimePeriod =
+{
+   1,
+   100000,
+   4,
+   200,
+   1
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_EMV_TimePeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInTimePeriod",
+   0,
+
+   "Time Period",
+   (const void *)&TA_DEF_EMV_TimePeriod,
+   14,
+   "Number of periods for the smoothing average (1 = unsmoothed)",
+
+   NULL
+};
+
+static const TA_RealRange TA_DEF_EMV_VolumeDivisor =
+{
+   1.0,
+   TA_REAL_MAX,
+   0,
+   1.0,
+   100000000.0,
+   1000.0
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_EMV_VolumeDivisor =
+{
+   TA_OptInput_RealRange,
+   "optInVolumeDivisor",
+   0,
+
+   "Volume Divisor",
+   (const void *)&TA_DEF_EMV_VolumeDivisor,
+   10000.0,
+   "Volume scale divisor",
+
+   NULL
+};
+
+static const TA_InputParameterInfo    *TA_EMV_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_HLV,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_EMV_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_EMV_OptInputs[] =
+{ &TA_DEF_UI_D_EMV_TimePeriod,
+  &TA_DEF_UI_D_EMV_VolumeDivisor,
+  NULL
+};
+
+DEF_FUNCTION( EMV,
+              TA_GroupId_VolumeIndicators,
+              "Arms Ease of Movement",
+              TA_FUNC_FLG_STREAM
+             );
+/* EMV END */
+
 /* ER BEGIN */
 static const TA_IntegerRange TA_DEF_ER_TimePeriod =
 {
@@ -227,6 +300,7 @@ const TA_FuncDef *TA_DEF_TableE[] =
 {
    ADD_TO_TABLE(EFI),
    ADD_TO_TABLE(EMA),
+   ADD_TO_TABLE(EMV),
    ADD_TO_TABLE(ER),
    ADD_TO_TABLE(ERI),
    ADD_TO_TABLE(EXP),

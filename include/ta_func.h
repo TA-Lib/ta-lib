@@ -9145,6 +9145,102 @@ TA_LIB_API TA_RetCode TA_EMA_Advance( TA_EMA_Stream *stream );
 TA_LIB_API TA_RetCode TA_EMA_Clone( const TA_EMA_Stream *stream, TA_EMA_Stream **clone );
 
 /*
+ * TA_EMV - Arms Ease of Movement
+ * 
+ * Input  = High, Low, Volume
+ * Output = double
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod:(From 1 to 100000)
+ *    Number of periods for the smoothing average (1 = unsmoothed)
+ * 
+ * optInVolumeDivisor:(From 1 to 30000000000000000000000000000000000000)
+ *    Volume scale divisor
+ * 
+ * 
+ */
+TA_LIB_API TA_RetCode TA_EMV( int    startIdx,
+                              int    endIdx,
+                                         const double inHigh[],
+                                         const double inLow[],
+                                         const double inVolume[],
+                                         int           optInTimePeriod, /* From 1 to 100000 */
+                                         double        optInVolumeDivisor, /* From 1 to 30000000000000000000000000000000000000 */
+                                         int          *outBegIdx,
+                                         int          *outNBElement,
+                                         double        outReal[] );
+
+TA_LIB_API TA_RetCode TA_S_EMV( int    startIdx,
+                                int    endIdx,
+                                           const float  inHigh[],
+                                           const float  inLow[],
+                                           const float  inVolume[],
+                                           int           optInTimePeriod, /* From 1 to 100000 */
+                                           double        optInVolumeDivisor, /* From 1 to 30000000000000000000000000000000000000 */
+                                           int          *outBegIdx,
+                                           int          *outNBElement,
+                                           double        outReal[] );
+
+TA_LIB_API int TA_EMV_Lookback( int           optInTimePeriod, /* From 1 to 100000 */
+                                         double        optInVolumeDivisor );  /* From 1 to 30000000000000000000000000000000000000 */
+
+
+
+/*
+ * Streaming API for TA_EMV: incremental per-bar evaluation.
+ */
+typedef struct TA_EMV_Stream TA_EMV_Stream;
+
+TA_LIB_API TA_RetCode TA_EMV_Open( TA_EMV_Stream **stream, const double inHigh[], const double inLow[], const double inVolume[], int historyLen, int optInTimePeriod, double optInVolumeDivisor, double *outReal );
+
+TA_LIB_API TA_RetCode TA_EMV_Update( TA_EMV_Stream *stream, double inHigh, double inLow, double inVolume, double *outReal );
+
+TA_LIB_API TA_RetCode TA_EMV_Peek( const TA_EMV_Stream *stream, double inHigh, double inLow, double inVolume, double *outReal );
+
+TA_LIB_API TA_RetCode TA_EMV_Close( TA_EMV_Stream *stream );
+
+/*
+ * OpenAndFill: like Open, but a single pass ALSO fills the caller's arrays
+ * with the whole warm-up history. The fill is bit-identical to
+ * TA_EMV( 0, historyLen-1, ... ).
+ */
+TA_LIB_API TA_RetCode TA_EMV_OpenAndFill( TA_EMV_Stream **stream, const double inHigh[], const double inLow[], const double inVolume[], int historyLen, int optInTimePeriod, double optInVolumeDivisor, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
+ * Value: the value(s) at the last bar the stream counted (the bar
+ * TA_EMV_OutRange ends on), without recomputing. Seeded by Open, refreshed by
+ * every accepted Update, left alone by Peek.
+ */
+TA_LIB_API TA_RetCode TA_EMV_Value( const TA_EMV_Stream *stream, double *outReal );
+
+/*
+ * OutRange: the bars this stream has an output for, in the input series'
+ * coordinates. That is [*outBegIdx, *outBegIdx + *outNBElement), the range
+ * TA_EMV reports over the same bars. Open seeds it; every accepted Update and every
+ * TA_EMV_Advance adds one; a rejected Update and a Peek change nothing. The
+ * last bar it can reach is TA_INDEX_MAX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
+ */
+TA_LIB_API TA_RetCode TA_EMV_OutRange( const TA_EMV_Stream *stream, int *outBegIdx, int *outNBElement );
+
+/*
+ * Advance: count one bar this stream was not fed (one an Update rejected and
+ * that will not be re-fed, or a session with no print). The range moves by one
+ * and nothing else does, so TA_EMV_Value keeps answering the previous output,
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_INDEX_MAX.
+ */
+TA_LIB_API TA_RetCode TA_EMV_Advance( TA_EMV_Stream *stream );
+
+/*
+ * Clone: fork the stream. The fork is an independent stream at the same bar,
+ * owning its own copy of everything the original owns. Both must be closed.
+ * The fork carries the value and the range verbatim.
+ */
+TA_LIB_API TA_RetCode TA_EMV_Clone( const TA_EMV_Stream *stream, TA_EMV_Stream **clone );
+
+/*
  * TA_ER - Kaufman Efficiency Ratio
  * 
  * Input  = double

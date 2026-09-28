@@ -917,10 +917,11 @@ static ErrorNumber testTAFunction_ALL( void )
     * ...) rather than by indicator: one file per group is the convention here,
     * and a single file had grown past 4000 lines. Each carries its own tag, so
     * --function= reaches the members of whichever file they live in. */
-   DO_TEST( test_func_composite1, "PVO,VWMA,CMF,HMA,EFI,QSTICK,AO,AC,SUM" );
+   DO_TEST( test_func_composite1, "PVO,VWMA,CMF,HMA,EFI,QSTICK,AO,AC,SUM,EMV" );
    DO_TEST( test_func_composite2, "SMI,COPPOCK,ER" );
    DO_TEST( test_func_marketfi, "MARKETFI" );
    DO_TEST( test_func_cmf,       "CMF" );
+   DO_TEST( test_func_emv,       "EMV" );
    DO_TEST( test_func_kc,        "KC" );
    DO_TEST( test_func_donchian,  "DONCHIAN" );
    DO_TEST( test_func_rma,       "RMA" );

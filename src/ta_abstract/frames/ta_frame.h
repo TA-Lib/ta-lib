@@ -992,6 +992,15 @@ TA_RetCode TA_EMA_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_EMA_FramePPLB( const TA_ParamHolderPriv *params )
 ;
 
+TA_RetCode TA_EMV_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+;
+unsigned int TA_EMV_FramePPLB( const TA_ParamHolderPriv *params )
+;
+
 TA_RetCode TA_ER_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

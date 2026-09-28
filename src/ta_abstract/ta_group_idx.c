@@ -145,6 +145,7 @@ extern const TA_FuncDef TA_DEF_DPO;
 extern const TA_FuncDef TA_DEF_DX;
 extern const TA_FuncDef TA_DEF_EFI;
 extern const TA_FuncDef TA_DEF_EMA;
+extern const TA_FuncDef TA_DEF_EMV;
 extern const TA_FuncDef TA_DEF_ER;
 extern const TA_FuncDef TA_DEF_ERI;
 extern const TA_FuncDef TA_DEF_EXP;
@@ -402,6 +403,7 @@ const TA_FuncDef *TA_PerGroupFunc_6[] = {
 &TA_DEF_ADOSC,
 &TA_DEF_CMF,
 &TA_DEF_EFI,
+&TA_DEF_EMV,
 &TA_DEF_MARKETFI,
 &TA_DEF_NVI,
 &TA_DEF_OBV,

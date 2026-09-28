@@ -238,6 +238,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 - [ADOSC](/functions/adosc.md) — Chaikin A/D Oscillator
 - [CMF](/functions/cmf.md) — Chaikin Money Flow
 - [EFI](/functions/efi.md) — Elder's Force Index
+- [EMV](/functions/emv.md) — Arms Ease of Movement
 - [MARKETFI](/functions/marketfi.md) — Market Facilitation Index
 - [NVI](/functions/nvi.md) — Negative Volume Index
 - [OBV](/functions/obv.md) — On Balance Volume

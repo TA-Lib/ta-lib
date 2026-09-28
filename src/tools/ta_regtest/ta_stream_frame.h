@@ -4361,6 +4361,48 @@ static TA_RetCode TA_EMA_SFrameClose( void *stream )
    return TA_EMA_Close( (TA_EMA_Stream *)stream );
 }
 
+static TA_RetCode TA_EMV_SFrameOpen( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_EMV_Open(
+               (TA_EMV_Stream **)stream,
+               in[0] /* inHigh */,
+               in[1] /* inLow */,
+               in[2] /* inVolume */,
+               historyLen,
+               (int)optIn[0] /* optInTimePeriod */,
+               optIn[1] /* optInVolumeDivisor */,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_EMV_SFrameFill( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_EMV_OpenAndFill(
+               (TA_EMV_Stream **)stream,
+               in[0] /* inHigh */,
+               in[1] /* inLow */,
+               in[2] /* inVolume */,
+               historyLen,
+               (int)optIn[0] /* optInTimePeriod */,
+               optIn[1] /* optInVolumeDivisor */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_EMV_SFrameClose( void *stream )
+{
+   return TA_EMV_Close( (TA_EMV_Stream *)stream );
+}
+
 static TA_RetCode TA_ER_SFrameOpen( void **stream,
                   const double *const in[], int historyLen,
                   const double optIn[],
@@ -8722,6 +8764,8 @@ static const TA_StreamEntry TA_StreamTable[] = {
      2, TA_VIn_EFI, 1, TA_VOpt_EFI, 1, TA_VOutIsInt_EFI },
    { "EMA", TA_EMA_SFrameOpen, TA_EMA_SFrameFill, TA_EMA_SFrameClose,
      1, TA_VIn_EMA, 1, TA_VOpt_EMA, 1, TA_VOutIsInt_EMA },
+   { "EMV", TA_EMV_SFrameOpen, TA_EMV_SFrameFill, TA_EMV_SFrameClose,
+     3, TA_VIn_EMV, 2, TA_VOpt_EMV, 1, TA_VOutIsInt_EMV },
    { "ER", TA_ER_SFrameOpen, TA_ER_SFrameFill, TA_ER_SFrameClose,
      1, TA_VIn_ER, 1, TA_VOpt_ER, 1, TA_VOutIsInt_ER },
    { "ERI", TA_ERI_SFrameOpen, TA_ERI_SFrameFill, TA_ERI_SFrameClose,
@@ -8938,6 +8982,6 @@ static const TA_StreamEntry TA_StreamTable[] = {
      1, TA_VIn_ZLEMA, 1, TA_VOpt_ZLEMA, 1, TA_VOutIsInt_ZLEMA },
 };
 
-#define TA_STREAM_TABLE_SIZE 212
+#define TA_STREAM_TABLE_SIZE 213
 
 #endif /* TA_STREAM_FRAME_H */

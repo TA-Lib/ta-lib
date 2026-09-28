@@ -749,6 +749,12 @@ internal static class NoPhantomIoBinder
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
+        ["EMV"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.EmvImpl(
+                startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Volume), c.IntOpt(0), c.RealOpt(1), out int b, out int n, c.RealOut(0));
+            return new CallOutcome(rc, b, n);
+        },
         ["ER"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.ErImpl(
@@ -2026,6 +2032,12 @@ internal static class NoPhantomIoBinder
                 startIdx, endIdx, Narrow(c.Series(0)), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
+        ["EMV"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.EmvImpl(
+                startIdx, endIdx, Narrow(c.Price(0, PriceComponents.High)), Narrow(c.Price(0, PriceComponents.Low)), Narrow(c.Price(0, PriceComponents.Volume)), c.IntOpt(0), c.RealOpt(1), out int b, out int n, c.RealOut(0));
+            return new CallOutcome(rc, b, n);
+        },
         ["ER"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.ErImpl(
@@ -2778,6 +2790,7 @@ internal static class NoPhantomIoBinder
         ["DX"] = static (core, c) => core.DxOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0)),
         ["EFI"] = static (core, c) => core.EfiOpen(c.Price(0, PriceComponents.Close), c.Price(0, PriceComponents.Volume), c.IntOpt(0)),
         ["EMA"] = static (core, c) => core.EmaOpen(c.Series(0), c.IntOpt(0)),
+        ["EMV"] = static (core, c) => core.EmvOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Volume), c.IntOpt(0), c.RealOpt(1)),
         ["ER"] = static (core, c) => core.ErOpen(c.Series(0), c.IntOpt(0)),
         ["ERI"] = static (core, c) => core.EriOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0)),
         ["EXP"] = static (core, c) => core.ExpOpen(c.Series(0)),

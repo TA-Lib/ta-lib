@@ -10173,6 +10173,96 @@ fn legs_EMA(r: &mut Report) {
     r.legs_done("EMA", 1);
 }
 
+const V_EMV: &[(&str, i32, f64)] = &[
+    ("defaults", i32::MIN, Core::REAL_DEFAULT),
+    ("minimums", 1i32, 1.0f64),
+];
+
+fn sub_EMV(r: &mut Report) {
+    let core = Core::new();
+    for &(label, optInTimePeriod, optInVolumeDivisor) in V_EMV {
+        let Ok(lb) = core.emv_lookback(optInTimePeriod, optInVolumeDivisor) else { continue; };
+        r.control("EMV", label, run(|| {
+            let inHigh: Vec<f64> = Vec::with_capacity(1);
+            let inLow: Vec<f64> = Vec::with_capacity(1);
+            let inVolume: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.emv_impl(0, lb, &inHigh, &inLow, &inVolume, optInTimePeriod, optInVolumeDivisor, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+        if lb < 1 { r.no_quiet_range("EMV", label); continue; }
+        r.quiet("EMV", label, lb, run(|| {
+            let inHigh: Vec<f64> = Vec::with_capacity(1);
+            let inLow: Vec<f64> = Vec::with_capacity(1);
+            let inVolume: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.emv_impl(0, lb - 1, &inHigh, &inLow, &inVolume, optInTimePeriod, optInVolumeDivisor, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+}
+
+fn legs_EMV(r: &mut Report) {
+    let core = Core::new();
+    let optInTimePeriod = i32::MIN;
+    let optInVolumeDivisor = Core::REAL_DEFAULT;
+    let Ok(lb) = core.emv_lookback(optInTimePeriod, optInVolumeDivisor) else { r.no_legs("EMV"); return; };
+    let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inVolume: Vec<f64> = series("volume", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("EMV", run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.emv_impl(startIdx, endIdx, &inHigh, &inLow, &inVolume, optInTimePeriod, optInVolumeDivisor, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    {
+        let inHigh: Vec<f64> = Vec::with_capacity(1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inVolume: Vec<f64> = series("volume", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("EMV", "inHigh", 0, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.emv_impl(startIdx, endIdx, &inHigh, &inLow, &inVolume, optInTimePeriod, optInVolumeDivisor, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = Vec::with_capacity(1);
+        let inVolume: Vec<f64> = series("volume", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("EMV", "inLow", 1, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.emv_impl(startIdx, endIdx, &inHigh, &inLow, &inVolume, optInTimePeriod, optInVolumeDivisor, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inVolume: Vec<f64> = Vec::with_capacity(1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("EMV", "inVolume", 2, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.emv_impl(startIdx, endIdx, &inHigh, &inLow, &inVolume, optInTimePeriod, optInVolumeDivisor, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    r.legs_done("EMV", 3);
+}
+
 const V_ER: &[(&str, i32)] = &[
     ("defaults", i32::MIN),
     ("minimums", 2i32),
@@ -17985,6 +18075,7 @@ const PROBES: &[(&str, Probe, Probe)] = &[
     ("DX", sub_DX, legs_DX),
     ("EFI", sub_EFI, legs_EFI),
     ("EMA", sub_EMA, legs_EMA),
+    ("EMV", sub_EMV, legs_EMV),
     ("ER", sub_ER, legs_ER),
     ("ERI", sub_ERI, legs_ERI),
     ("EXP", sub_EXP, legs_EXP),
@@ -18130,7 +18221,7 @@ fn no_phantom_io() {
     // The corpus is the generator's, not a list kept by hand: a probe that
     // stopped being emitted is a shrinking sweep, which is the one way this
     // file can fail open.
-    assert_eq!(PROBES.len(), 212, "probe count");
+    assert_eq!(PROBES.len(), 213, "probe count");
     assert_eq!(
         PROBES.len(),
         crate::abstract_api::funcs().count(),

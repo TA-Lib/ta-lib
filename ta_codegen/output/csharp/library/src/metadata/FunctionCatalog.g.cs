@@ -218,6 +218,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
             MakeDx(),
             MakeEfi(),
             MakeEma(),
+            MakeEmv(),
             MakeEr(),
             MakeEri(),
             MakeExp(),
@@ -2611,6 +2612,30 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         invoke: static (core, c, startIdx, endIdx) =>
             core.Ema(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0)));
+
+    private static FuncInfo MakeEmv() => new(
+        name: "EMV",
+        group: FunctionGroup.VolumeIndicators,
+        hint: "Arms Ease of Movement",
+        flags: FuncFlags.Stream,
+        unstableId: null,
+        inputs:
+        [
+            new InputInfo(InputKind.Price, "inPriceHLV", PriceComponents.High | PriceComponents.Low | PriceComponents.Volume, [PriceComponents.High, PriceComponents.Low, PriceComponents.Volume]),
+        ],
+        optInputs:
+        [
+            new OptInputInfo("optInTimePeriod", "Time Period", "Number of periods for the smoothing average (1 = unsmoothed)", OptInputFlags.None, new OptInputDomain.IntegerRange(1, 100000, 14, 4, 200, 1)),
+            new OptInputInfo("optInVolumeDivisor", "Volume Divisor", "Volume scale divisor", OptInputFlags.None, new OptInputDomain.RealRange(1.0, 3e37, 0, 10000.0, 1.0, 100000000.0, 1000.0)),
+        ],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+        ],
+        lookback: static (core, c) => core.EmvLookback(c.IntOpt(0), c.RealOpt(1)),
+        invoke: static (core, c, startIdx, endIdx) =>
+            core.Emv(
+                startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Volume), c.IntOpt(0), c.RealOpt(1), c.RealOut(0)));
 
     private static FuncInfo MakeEr() => new(
         name: "ER",
