@@ -164,6 +164,15 @@ TA_RetCode TA_AROONOSC_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_AROONOSC_FramePPLB( const TA_ParamHolderPriv *params )
 ;
 
+TA_RetCode TA_ASI_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+;
+unsigned int TA_ASI_FramePPLB( const TA_ParamHolderPriv *params )
+;
+
 TA_RetCode TA_ASIN_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -1629,6 +1638,15 @@ TA_RetCode TA_SAREXT_FramePP( const TA_ParamHolderPriv *params,
                            int           *outNBElement )
 ;
 unsigned int TA_SAREXT_FramePPLB( const TA_ParamHolderPriv *params )
+;
+
+TA_RetCode TA_SI_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+;
+unsigned int TA_SI_FramePPLB( const TA_ParamHolderPriv *params )
 ;
 
 TA_RetCode TA_SIN_FramePP( const TA_ParamHolderPriv *params,

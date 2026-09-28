@@ -605,6 +605,48 @@ static TA_RetCode TA_AROONOSC_SFrameClose( void *stream )
    return TA_AROONOSC_Close( (TA_AROONOSC_Stream *)stream );
 }
 
+static TA_RetCode TA_ASI_SFrameOpen( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_ASI_Open(
+               (TA_ASI_Stream **)stream,
+               in[0] /* inOpen */,
+               in[1] /* inHigh */,
+               in[2] /* inLow */,
+               in[3] /* inClose */,
+               historyLen,
+               optIn[0] /* optInLimitMove */,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_ASI_SFrameFill( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_ASI_OpenAndFill(
+               (TA_ASI_Stream **)stream,
+               in[0] /* inOpen */,
+               in[1] /* inHigh */,
+               in[2] /* inLow */,
+               in[3] /* inClose */,
+               historyLen,
+               optIn[0] /* optInLimitMove */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_ASI_SFrameClose( void *stream )
+{
+   return TA_ASI_Close( (TA_ASI_Stream *)stream );
+}
+
 static TA_RetCode TA_ASIN_SFrameOpen( void **stream,
                   const double *const in[], int historyLen,
                   const double optIn[],
@@ -7099,6 +7141,48 @@ static TA_RetCode TA_SAREXT_SFrameClose( void *stream )
    return TA_SAREXT_Close( (TA_SAREXT_Stream *)stream );
 }
 
+static TA_RetCode TA_SI_SFrameOpen( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_SI_Open(
+               (TA_SI_Stream **)stream,
+               in[0] /* inOpen */,
+               in[1] /* inHigh */,
+               in[2] /* inLow */,
+               in[3] /* inClose */,
+               historyLen,
+               optIn[0] /* optInLimitMove */,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_SI_SFrameFill( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_SI_OpenAndFill(
+               (TA_SI_Stream **)stream,
+               in[0] /* inOpen */,
+               in[1] /* inHigh */,
+               in[2] /* inLow */,
+               in[3] /* inClose */,
+               historyLen,
+               optIn[0] /* optInLimitMove */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_SI_SFrameClose( void *stream )
+{
+   return TA_SI_Close( (TA_SI_Stream *)stream );
+}
+
 static TA_RetCode TA_SIN_SFrameOpen( void **stream,
                   const double *const in[], int historyLen,
                   const double optIn[],
@@ -8416,6 +8500,8 @@ static const TA_StreamEntry TA_StreamTable[] = {
      2, TA_VIn_AROON, 1, TA_VOpt_AROON, 2, TA_VOutIsInt_AROON },
    { "AROONOSC", TA_AROONOSC_SFrameOpen, TA_AROONOSC_SFrameFill, TA_AROONOSC_SFrameClose,
      2, TA_VIn_AROONOSC, 1, TA_VOpt_AROONOSC, 1, TA_VOutIsInt_AROONOSC },
+   { "ASI", TA_ASI_SFrameOpen, TA_ASI_SFrameFill, TA_ASI_SFrameClose,
+     4, TA_VIn_ASI, 1, TA_VOpt_ASI, 1, TA_VOutIsInt_ASI },
    { "ASIN", TA_ASIN_SFrameOpen, TA_ASIN_SFrameFill, TA_ASIN_SFrameClose,
      1, TA_VIn_ASIN, 0, NULL, 1, TA_VOutIsInt_ASIN },
    { "ATAN", TA_ATAN_SFrameOpen, TA_ATAN_SFrameFill, TA_ATAN_SFrameClose,
@@ -8742,6 +8828,8 @@ static const TA_StreamEntry TA_StreamTable[] = {
      2, TA_VIn_SAR, 2, TA_VOpt_SAR, 1, TA_VOutIsInt_SAR },
    { "SAREXT", TA_SAREXT_SFrameOpen, TA_SAREXT_SFrameFill, TA_SAREXT_SFrameClose,
      2, TA_VIn_SAREXT, 8, TA_VOpt_SAREXT, 1, TA_VOutIsInt_SAREXT },
+   { "SI", TA_SI_SFrameOpen, TA_SI_SFrameFill, TA_SI_SFrameClose,
+     4, TA_VIn_SI, 1, TA_VOpt_SI, 1, TA_VOutIsInt_SI },
    { "SIN", TA_SIN_SFrameOpen, TA_SIN_SFrameFill, TA_SIN_SFrameClose,
      1, TA_VIn_SIN, 0, NULL, 1, TA_VOutIsInt_SIN },
    { "SINH", TA_SINH_SFrameOpen, TA_SINH_SFrameFill, TA_SINH_SFrameClose,
@@ -8810,6 +8898,6 @@ static const TA_StreamEntry TA_StreamTable[] = {
      1, TA_VIn_ZLEMA, 1, TA_VOpt_ZLEMA, 1, TA_VOutIsInt_ZLEMA },
 };
 
-#define TA_STREAM_TABLE_SIZE 209
+#define TA_STREAM_TABLE_SIZE 211
 
 #endif /* TA_STREAM_FRAME_H */

@@ -11,6 +11,7 @@ AO                  Awesome Oscillator
 APO                 Absolute Price Oscillator
 AROON               Aroon
 AROONOSC            Aroon Oscillator
+ASI                 Wilder Accumulative Swing Index
 ASIN                Vector Trigonometric ASin
 ATAN                Vector Trigonometric ATan
 ATR                 Average True Range
@@ -174,6 +175,7 @@ RVIR                Relative Volatility Index, refined high/low form
 RVOL                Relative Volume
 SAR                 Parabolic SAR
 SAREXT              Parabolic SAR - Extended
+SI                  Wilder Swing Index
 SIN                 Vector Trigonometric Sin
 SINH                Vector Trigonometric Sinh
 SMA                 Simple Moving Average

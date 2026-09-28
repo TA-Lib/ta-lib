@@ -336,6 +336,55 @@ DEF_FUNCTION( SAREXT,
              );
 /* SAREXT END */
 
+/* SI BEGIN */
+static const TA_RealRange TA_DEF_SI_LimitMove =
+{
+   0.00000001,
+   TA_REAL_MAX,
+   4,
+   0.5,
+   30.0,
+   0.5
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_SI_LimitMove =
+{
+   TA_OptInput_RealRange,
+   "optInLimitMove",
+   0,
+
+   "Limit Move",
+   (const void *)&TA_DEF_SI_LimitMove,
+   3.0,
+   "Largest one-bar price move the index is scaled against, in price units",
+
+   NULL
+};
+
+static const TA_InputParameterInfo    *TA_SI_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_OHLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_SI_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_SI_OptInputs[] =
+{ &TA_DEF_UI_D_SI_LimitMove,
+  NULL
+};
+
+DEF_FUNCTION( SI,
+              TA_GroupId_MomentumIndicators,
+              "Wilder Swing Index",
+              TA_FUNC_FLG_STREAM
+             );
+/* SI END */
+
 /* SIN BEGIN */
 static const TA_InputParameterInfo    *TA_SIN_Inputs[]    =
 {
@@ -961,6 +1010,7 @@ const TA_FuncDef *TA_DEF_TableS[] =
 {
    ADD_TO_TABLE(SAR),
    ADD_TO_TABLE(SAREXT),
+   ADD_TO_TABLE(SI),
    ADD_TO_TABLE(SIN),
    ADD_TO_TABLE(SINH),
    ADD_TO_TABLE(SMA),

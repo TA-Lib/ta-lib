@@ -16,6 +16,7 @@ libta_func_la_SOURCES = ta_utility.c \
 	ta_APO.c \
 	ta_AROON.c \
 	ta_AROONOSC.c \
+	ta_ASI.c \
 	ta_ASIN.c \
 	ta_ATAN.c \
 	ta_ATR.c \
@@ -179,6 +180,7 @@ libta_func_la_SOURCES = ta_utility.c \
 	ta_RVOL.c \
 	ta_SAR.c \
 	ta_SAREXT.c \
+	ta_SI.c \
 	ta_SIN.c \
 	ta_SINH.c \
 	ta_SMA.c \

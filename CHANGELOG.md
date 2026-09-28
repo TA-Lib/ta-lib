@@ -13,6 +13,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 - `find_package(ta-lib CONFIG)` now works against a CMake install and provides the `ta-lib::ta-lib`
   target. An autotools install still provides `ta-lib.pc` only. (#422)
 - New TA Functions:
+  - ASI: Wilder Accumulative Swing Index, the running total of SI (#451)
   - BBW: Bollinger BandWidth, the band spread as a percentage of the middle band (#447)
   - CG: Center of Gravity Oscillator, Ehlers' balance point of the window (#450)
   - CRSI: Connors RSI (#431)
@@ -21,6 +22,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   - MEDIAN: Rolling Median (#432)
   - PERCENTB: Bollinger Bands %B, where the input sits relative to the bands (#449)
   - RVIR: Relative Volatility Index, 1995 refined form (#416)
+  - SI: Wilder Swing Index, each bar rated against the one before (#451)
 
 ### Faster
 - ~1.3x to 2.7x: CMO, PLUS_DM, MINUS_DM, PLUS_DI, MINUS_DI, DX, ADX and ADXR (#411)

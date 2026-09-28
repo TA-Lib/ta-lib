@@ -68,6 +68,8 @@ pub enum FuncId {
     AROON,
     /// Aroon Oscillator — [`Core::aroonosc`](crate::Core::aroonosc).
     AROONOSC,
+    /// Wilder Accumulative Swing Index — [`Core::asi`](crate::Core::asi).
+    ASI,
     /// Vector Trigonometric ASin — [`Core::asin`](crate::Core::asin).
     ASIN,
     /// Vector Trigonometric ATan — [`Core::atan`](crate::Core::atan).
@@ -394,6 +396,8 @@ pub enum FuncId {
     SAR,
     /// Parabolic SAR - Extended — [`Core::sarext`](crate::Core::sarext).
     SAREXT,
+    /// Wilder Swing Index — [`Core::si`](crate::Core::si).
+    SI,
     /// Vector Trigonometric Sin — [`Core::sin`](crate::Core::sin).
     SIN,
     /// Vector Trigonometric Sinh — [`Core::sinh`](crate::Core::sinh).
@@ -464,7 +468,7 @@ pub enum FuncId {
 
 impl FuncId {
     /// Number of functions in the registry.
-    pub const COUNT: usize = 209;
+    pub const COUNT: usize = 211;
     /// Metadata for this function (O(1) index into the const table).
     #[inline] pub fn info(self) -> &'static FuncInfo { &FUNC_TABLE[self as usize] }
     /// Upper-case TA name, e.g. "RSI".
@@ -791,7 +795,7 @@ impl FuncInfo {
 
 /// Backing storage for [`FUNCS`], indexed by [`FuncId`]. Link-time const, in
 /// `.rodata`. Private, so its length is nobody's business but this module's.
-static FUNC_TABLE: [FuncInfo; 209] = [
+static FUNC_TABLE: [FuncInfo; 211] = [
     FuncInfo {
         id: FuncId::AC,
         name: "AC",
@@ -932,6 +936,17 @@ static FUNC_TABLE: [FuncInfo; 209] = [
         flags: FuncFlags(0x02000000),
         inputs: &[InputInfo { param_name: "inPriceHL", kind: InputType::Price, flags: InputFlags(0x00000006) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 14, suggested: (4, 200, 1) } }, ],
+        outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        unst_id: None,
+    },
+    FuncInfo {
+        id: FuncId::ASI,
+        name: "ASI",
+        group: Group::MomentumIndicators,
+        hint: "Wilder Accumulative Swing Index",
+        flags: FuncFlags(0x22000000),
+        inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInLimitMove", display_name: "Limit Move", hint: "Largest one-bar price move the index is scaled against, in price units", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 1e-8, max: 3e37, precision: 4, default: 3.0, suggested: (0.5, 30.0, 0.5) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
         unst_id: None,
     },
@@ -2729,6 +2744,17 @@ static FUNC_TABLE: [FuncInfo; 209] = [
         unst_id: None,
     },
     FuncInfo {
+        id: FuncId::SI,
+        name: "SI",
+        group: Group::MomentumIndicators,
+        hint: "Wilder Swing Index",
+        flags: FuncFlags(0x02000000),
+        inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInLimitMove", display_name: "Limit Move", hint: "Largest one-bar price move the index is scaled against, in price units", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 1e-8, max: 3e37, precision: 4, default: 3.0, suggested: (0.5, 30.0, 0.5) } }, ],
+        outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        unst_id: None,
+    },
+    FuncInfo {
         id: FuncId::SIN,
         name: "SIN",
         group: Group::MathTransform,
@@ -3122,6 +3148,7 @@ fn get_func_handle_exact(name: &str) -> Option<FuncId> {
         "APO" => FuncId::APO,
         "AROON" => FuncId::AROON,
         "AROONOSC" => FuncId::AROONOSC,
+        "ASI" => FuncId::ASI,
         "ASIN" => FuncId::ASIN,
         "ATAN" => FuncId::ATAN,
         "ATR" => FuncId::ATR,
@@ -3285,6 +3312,7 @@ fn get_func_handle_exact(name: &str) -> Option<FuncId> {
         "RVOL" => FuncId::RVOL,
         "SAR" => FuncId::SAR,
         "SAREXT" => FuncId::SAREXT,
+        "SI" => FuncId::SI,
         "SIN" => FuncId::SIN,
         "SINH" => FuncId::SINH,
         "SMA" => FuncId::SMA,
@@ -3588,6 +3616,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::APO => self.core.apo_lookback(self.int_opt[0], self.int_opt[1], MAType::try_from(self.int_opt[2])?),
             FuncId::AROON => self.core.aroon_lookback(self.int_opt[0]),
             FuncId::AROONOSC => self.core.aroonosc_lookback(self.int_opt[0]),
+            FuncId::ASI => self.core.asi_lookback(self.real_opt[0]),
             FuncId::ASIN => self.core.asin_lookback(),
             FuncId::ATAN => self.core.atan_lookback(),
             FuncId::ATR => self.core.atr_lookback(self.int_opt[0]),
@@ -3751,6 +3780,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::RVOL => self.core.rvol_lookback(self.int_opt[0]),
             FuncId::SAR => self.core.sar_lookback(self.real_opt[0], self.real_opt[1]),
             FuncId::SAREXT => self.core.sarext_lookback(self.real_opt[0], self.real_opt[1], self.real_opt[2], self.real_opt[3], self.real_opt[4], self.real_opt[5], self.real_opt[6], self.real_opt[7]),
+            FuncId::SI => self.core.si_lookback(self.real_opt[0]),
             FuncId::SIN => self.core.sin_lookback(),
             FuncId::SINH => self.core.sinh_lookback(),
             FuncId::SMA => self.core.sma_lookback(self.int_opt[0]),
@@ -3970,6 +4000,19 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 let res = self.core.aroonosc(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], &mut *o0);
+                self.real_out[0] = Some(o0);
+                match res {
+                    Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
+                    Err(e) => e,
+                }
+            }
+            FuncId::ASI => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let res = self.core.asi(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5916,6 +5959,19 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 let res = self.core.sarext(start_idx, end_idx, i0_1, i0_2, self.real_opt[0], self.real_opt[1], self.real_opt[2], self.real_opt[3], self.real_opt[4], self.real_opt[5], self.real_opt[6], self.real_opt[7], &mut *o0);
+                self.real_out[0] = Some(o0);
+                match res {
+                    Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
+                    Err(e) => e,
+                }
+            }
+            FuncId::SI => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let res = self.core.si(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }

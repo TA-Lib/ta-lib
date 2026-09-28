@@ -197,6 +197,12 @@ internal static class NoPhantomIoBinder
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
+        ["ASI"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.AsiImpl(
+                startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.RealOpt(0), out int b, out int n, c.RealOut(0));
+            return new CallOutcome(rc, b, n);
+        },
         ["ASIN"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.AsinImpl(
@@ -1175,6 +1181,12 @@ internal static class NoPhantomIoBinder
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.RealOpt(0), c.RealOpt(1), c.RealOpt(2), c.RealOpt(3), c.RealOpt(4), c.RealOpt(5), c.RealOpt(6), c.RealOpt(7), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
+        ["SI"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.SiImpl(
+                startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.RealOpt(0), out int b, out int n, c.RealOut(0));
+            return new CallOutcome(rc, b, n);
+        },
         ["SIN"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.SinImpl(
@@ -1454,6 +1466,12 @@ internal static class NoPhantomIoBinder
         {
             RetCode rc = core.AroonoscImpl(
                 startIdx, endIdx, Narrow(c.Price(0, PriceComponents.High)), Narrow(c.Price(0, PriceComponents.Low)), c.IntOpt(0), out int b, out int n, c.RealOut(0));
+            return new CallOutcome(rc, b, n);
+        },
+        ["ASI"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.AsiImpl(
+                startIdx, endIdx, Narrow(c.Price(0, PriceComponents.Open)), Narrow(c.Price(0, PriceComponents.High)), Narrow(c.Price(0, PriceComponents.Low)), Narrow(c.Price(0, PriceComponents.Close)), c.RealOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["ASIN"] = static (core, c, startIdx, endIdx) =>
@@ -2434,6 +2452,12 @@ internal static class NoPhantomIoBinder
                 startIdx, endIdx, Narrow(c.Price(0, PriceComponents.High)), Narrow(c.Price(0, PriceComponents.Low)), c.RealOpt(0), c.RealOpt(1), c.RealOpt(2), c.RealOpt(3), c.RealOpt(4), c.RealOpt(5), c.RealOpt(6), c.RealOpt(7), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
+        ["SI"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.SiImpl(
+                startIdx, endIdx, Narrow(c.Price(0, PriceComponents.Open)), Narrow(c.Price(0, PriceComponents.High)), Narrow(c.Price(0, PriceComponents.Low)), Narrow(c.Price(0, PriceComponents.Close)), c.RealOpt(0), out int b, out int n, c.RealOut(0));
+            return new CallOutcome(rc, b, n);
+        },
         ["SIN"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.SinImpl(
@@ -2650,6 +2674,7 @@ internal static class NoPhantomIoBinder
         ["APO"] = static (core, c) => core.ApoOpen(c.Series(0), c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2)),
         ["AROON"] = static (core, c) => core.AroonOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0)),
         ["AROONOSC"] = static (core, c) => core.AroonoscOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0)),
+        ["ASI"] = static (core, c) => core.AsiOpen(c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.RealOpt(0)),
         ["ASIN"] = static (core, c) => core.AsinOpen(c.Series(0)),
         ["ATAN"] = static (core, c) => core.AtanOpen(c.Series(0)),
         ["ATR"] = static (core, c) => core.AtrOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0)),
@@ -2813,6 +2838,7 @@ internal static class NoPhantomIoBinder
         ["RVOL"] = static (core, c) => core.RvolOpen(c.Price(0, PriceComponents.Volume), c.IntOpt(0)),
         ["SAR"] = static (core, c) => core.SarOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.RealOpt(0), c.RealOpt(1)),
         ["SAREXT"] = static (core, c) => core.SarextOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.RealOpt(0), c.RealOpt(1), c.RealOpt(2), c.RealOpt(3), c.RealOpt(4), c.RealOpt(5), c.RealOpt(6), c.RealOpt(7)),
+        ["SI"] = static (core, c) => core.SiOpen(c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.RealOpt(0)),
         ["SIN"] = static (core, c) => core.SinOpen(c.Series(0)),
         ["SINH"] = static (core, c) => core.SinhOpen(c.Series(0)),
         ["SMA"] = static (core, c) => core.SmaOpen(c.Series(0), c.IntOpt(0)),

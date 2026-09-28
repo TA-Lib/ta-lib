@@ -126,6 +126,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
             MakeApo(),
             MakeAroon(),
             MakeAroonosc(),
+            MakeAsi(),
             MakeAsin(),
             MakeAtan(),
             MakeAtr(),
@@ -289,6 +290,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
             MakeRvol(),
             MakeSar(),
             MakeSarext(),
+            MakeSi(),
             MakeSin(),
             MakeSinh(),
             MakeSma(),
@@ -663,6 +665,29 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         invoke: static (core, c, startIdx, endIdx) =>
             core.Aroonosc(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), c.RealOut(0)));
+
+    private static FuncInfo MakeAsi() => new(
+        name: "ASI",
+        group: FunctionGroup.MomentumIndicators,
+        hint: "Wilder Accumulative Swing Index",
+        flags: FuncFlags.Stream | FuncFlags.PathDependent,
+        unstableId: null,
+        inputs:
+        [
+            new InputInfo(InputKind.Price, "inPriceOHLC", PriceComponents.Open | PriceComponents.High | PriceComponents.Low | PriceComponents.Close, [PriceComponents.Open, PriceComponents.High, PriceComponents.Low, PriceComponents.Close]),
+        ],
+        optInputs:
+        [
+            new OptInputInfo("optInLimitMove", "Limit Move", "Largest one-bar price move the index is scaled against, in price units", OptInputFlags.None, new OptInputDomain.RealRange(1e-8, 3e37, 4, 3.0, 0.5, 30.0, 0.5)),
+        ],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+        ],
+        lookback: static (core, c) => core.AsiLookback(c.RealOpt(0)),
+        invoke: static (core, c, startIdx, endIdx) =>
+            core.Asi(
+                startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.RealOpt(0), c.RealOut(0)));
 
     private static FuncInfo MakeAsin() => new(
         name: "ASIN",
@@ -4247,6 +4272,29 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         invoke: static (core, c, startIdx, endIdx) =>
             core.Sarext(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.RealOpt(0), c.RealOpt(1), c.RealOpt(2), c.RealOpt(3), c.RealOpt(4), c.RealOpt(5), c.RealOpt(6), c.RealOpt(7), c.RealOut(0)));
+
+    private static FuncInfo MakeSi() => new(
+        name: "SI",
+        group: FunctionGroup.MomentumIndicators,
+        hint: "Wilder Swing Index",
+        flags: FuncFlags.Stream,
+        unstableId: null,
+        inputs:
+        [
+            new InputInfo(InputKind.Price, "inPriceOHLC", PriceComponents.Open | PriceComponents.High | PriceComponents.Low | PriceComponents.Close, [PriceComponents.Open, PriceComponents.High, PriceComponents.Low, PriceComponents.Close]),
+        ],
+        optInputs:
+        [
+            new OptInputInfo("optInLimitMove", "Limit Move", "Largest one-bar price move the index is scaled against, in price units", OptInputFlags.None, new OptInputDomain.RealRange(1e-8, 3e37, 4, 3.0, 0.5, 30.0, 0.5)),
+        ],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+        ],
+        lookback: static (core, c) => core.SiLookback(c.RealOpt(0)),
+        invoke: static (core, c, startIdx, endIdx) =>
+            core.Si(
+                startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.RealOpt(0), c.RealOut(0)));
 
     private static FuncInfo MakeSin() => new(
         name: "SIN",

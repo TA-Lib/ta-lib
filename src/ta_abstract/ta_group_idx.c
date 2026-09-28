@@ -53,6 +53,7 @@ extern const TA_FuncDef TA_DEF_AO;
 extern const TA_FuncDef TA_DEF_APO;
 extern const TA_FuncDef TA_DEF_AROON;
 extern const TA_FuncDef TA_DEF_AROONOSC;
+extern const TA_FuncDef TA_DEF_ASI;
 extern const TA_FuncDef TA_DEF_ASIN;
 extern const TA_FuncDef TA_DEF_ATAN;
 extern const TA_FuncDef TA_DEF_ATR;
@@ -216,6 +217,7 @@ extern const TA_FuncDef TA_DEF_RVIR;
 extern const TA_FuncDef TA_DEF_RVOL;
 extern const TA_FuncDef TA_DEF_SAR;
 extern const TA_FuncDef TA_DEF_SAREXT;
+extern const TA_FuncDef TA_DEF_SI;
 extern const TA_FuncDef TA_DEF_SIN;
 extern const TA_FuncDef TA_DEF_SINH;
 extern const TA_FuncDef TA_DEF_SMA;
@@ -336,6 +338,7 @@ const TA_FuncDef *TA_PerGroupFunc_4[] = {
 &TA_DEF_APO,
 &TA_DEF_AROON,
 &TA_DEF_AROONOSC,
+&TA_DEF_ASI,
 &TA_DEF_BOP,
 &TA_DEF_CCI,
 &TA_DEF_CG,
@@ -368,6 +371,7 @@ const TA_FuncDef *TA_PerGroupFunc_4[] = {
 &TA_DEF_ROCR,
 &TA_DEF_ROCR100,
 &TA_DEF_RSI,
+&TA_DEF_SI,
 &TA_DEF_SMI,
 &TA_DEF_STOCH,
 &TA_DEF_STOCHF,

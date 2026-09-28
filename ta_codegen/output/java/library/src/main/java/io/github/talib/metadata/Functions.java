@@ -133,6 +133,7 @@ public final class Functions {
       put(m, f_APO());
       put(m, f_AROON());
       put(m, f_AROONOSC());
+      put(m, f_ASI());
       put(m, f_ASIN());
       put(m, f_ATAN());
       put(m, f_ATR());
@@ -296,6 +297,7 @@ public final class Functions {
       put(m, f_RVOL());
       put(m, f_SAR());
       put(m, f_SAREXT());
+      put(m, f_SI());
       put(m, f_SIN());
       put(m, f_SINH());
       put(m, f_SMA());
@@ -580,6 +582,24 @@ public final class Functions {
                "Time Period", "Time period", 14.0,
                0.0, 0.0, 0, 0.0, 0.0, 0.0,
                2, 100000, 4, 200, 1, null)
+         ),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
+         ));
+   }
+
+   private static FuncInfo f_ASI() {
+      return new FuncInfo(
+         "ASI", "Momentum Indicators", "Wilder Accumulative Swing Index", 0x22000000,
+         List.of(
+            new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.REAL_RANGE, "optInLimitMove", 0x00000000,
+               "Limit Move", "Largest one-bar price move the index is scaled against, in price units", 3.0,
+               1e-8, 3e37, 4, 0.5, 30.0, 0.5,
+               0, 0, 0, 0, 0, null)
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
@@ -3297,6 +3317,24 @@ public final class Functions {
                OptInputType.REAL_RANGE, "optInAccelerationMaxShort", 0x00000000,
                "AF Max Short", "Acceleration Factor maximum value for the Short direction", 0.2,
                0.0, 3e37, 4, 0.2, 0.4, 0.01,
+               0, 0, 0, 0, 0, null)
+         ),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
+         ));
+   }
+
+   private static FuncInfo f_SI() {
+      return new FuncInfo(
+         "SI", "Momentum Indicators", "Wilder Swing Index", 0x02000000,
+         List.of(
+            new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.REAL_RANGE, "optInLimitMove", 0x00000000,
+               "Limit Move", "Largest one-bar price move the index is scaled against, in price units", 3.0,
+               1e-8, 3e37, 4, 0.5, 30.0, 0.5,
                0, 0, 0, 0, 0, null)
          ),
          List.of(

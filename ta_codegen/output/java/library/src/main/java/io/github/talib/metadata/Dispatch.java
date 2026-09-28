@@ -95,6 +95,9 @@ final class Dispatch {
          case "AROONOSC":
             return core.aroonosc(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.intOpt(0), h.realOutput(0));
+         case "ASI":
+            return core.asi(
+               startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.realOpt(0), h.realOutput(0));
          case "ASIN":
             return core.asin(
                startIdx, endIdx, h.realInput(0), h.realOutput(0));
@@ -584,6 +587,9 @@ final class Dispatch {
          case "SAREXT":
             return core.sarext(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.realOpt(0), h.realOpt(1), h.realOpt(2), h.realOpt(3), h.realOpt(4), h.realOpt(5), h.realOpt(6), h.realOpt(7), h.realOutput(0));
+         case "SI":
+            return core.si(
+               startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.realOpt(0), h.realOutput(0));
          case "SIN":
             return core.sin(
                startIdx, endIdx, h.realInput(0), h.realOutput(0));
@@ -720,6 +726,8 @@ final class Dispatch {
             return core.aroonLookback(h.intOpt(0));
          case "AROONOSC":
             return core.aroonoscLookback(h.intOpt(0));
+         case "ASI":
+            return core.asiLookback(h.realOpt(0));
          case "ASIN":
             return core.asinLookback();
          case "ATAN":
@@ -1046,6 +1054,8 @@ final class Dispatch {
             return core.sarLookback(h.realOpt(0), h.realOpt(1));
          case "SAREXT":
             return core.sarextLookback(h.realOpt(0), h.realOpt(1), h.realOpt(2), h.realOpt(3), h.realOpt(4), h.realOpt(5), h.realOpt(6), h.realOpt(7));
+         case "SI":
+            return core.siLookback(h.realOpt(0));
          case "SIN":
             return core.sinLookback();
          case "SINH":

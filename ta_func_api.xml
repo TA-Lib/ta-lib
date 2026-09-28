@@ -657,6 +657,61 @@
 	</FinancialFunction>
 
 
+	<!-- ASI -->
+	<FinancialFunction>
+		<Abbreviation>ASI</Abbreviation>
+		<ShortDescription>Wilder Accumulative Swing Index</ShortDescription>
+		<GroupId>Momentum Indicators</GroupId>
+		<Flags>
+			<Flag>Streaming</Flag>
+			<Flag>Path Dependent</Flag>
+		</Flags>
+		<RequiredInputArguments>
+			<RequiredInputArgument>
+				<Type>Open</Type>
+				<Name>Open</Name>
+			</RequiredInputArgument>
+			<RequiredInputArgument>
+				<Type>High</Type>
+				<Name>High</Name>
+			</RequiredInputArgument>
+			<RequiredInputArgument>
+				<Type>Low</Type>
+				<Name>Low</Name>
+			</RequiredInputArgument>
+			<RequiredInputArgument>
+				<Type>Close</Type>
+				<Name>Close</Name>
+			</RequiredInputArgument>
+		</RequiredInputArguments>
+		<OptionalInputArguments>
+			<OptionalInputArgument>
+				<Name>Limit Move</Name>
+				<ShortDescription>Largest one-bar price move the index is scaled against, in price units</ShortDescription>
+				<Type>Double</Type>
+				<Range>
+					<Minimum>1.000000e-8</Minimum>
+					<Maximum>3.000000e+37</Maximum>
+					<Precision>4</Precision>
+					<SuggestedStart>5.000000e-1</SuggestedStart>
+					<SuggestedEnd>3.000000e+1</SuggestedEnd>
+					<SuggestedIncrement>5.000000e-1</SuggestedIncrement>
+				</Range>
+				<DefaultValue>3.000000e+0</DefaultValue>
+			</OptionalInputArgument>
+		</OptionalInputArguments>
+		<OutputArguments>
+			<OutputArgument>
+				<Type>Double Array</Type>
+				<Name>outReal</Name>
+				<Flags>
+					<Flag>Line</Flag>
+				</Flags>
+			</OutputArgument>
+		</OutputArguments>
+	</FinancialFunction>
+
+
 	<!-- ASIN -->
 	<FinancialFunction>
 		<Abbreviation>ASIN</Abbreviation>
@@ -7944,6 +7999,60 @@
 					<SuggestedIncrement>1.000000e-2</SuggestedIncrement>
 				</Range>
 				<DefaultValue>2.000000e-1</DefaultValue>
+			</OptionalInputArgument>
+		</OptionalInputArguments>
+		<OutputArguments>
+			<OutputArgument>
+				<Type>Double Array</Type>
+				<Name>outReal</Name>
+				<Flags>
+					<Flag>Line</Flag>
+				</Flags>
+			</OutputArgument>
+		</OutputArguments>
+	</FinancialFunction>
+
+
+	<!-- SI -->
+	<FinancialFunction>
+		<Abbreviation>SI</Abbreviation>
+		<ShortDescription>Wilder Swing Index</ShortDescription>
+		<GroupId>Momentum Indicators</GroupId>
+		<Flags>
+			<Flag>Streaming</Flag>
+		</Flags>
+		<RequiredInputArguments>
+			<RequiredInputArgument>
+				<Type>Open</Type>
+				<Name>Open</Name>
+			</RequiredInputArgument>
+			<RequiredInputArgument>
+				<Type>High</Type>
+				<Name>High</Name>
+			</RequiredInputArgument>
+			<RequiredInputArgument>
+				<Type>Low</Type>
+				<Name>Low</Name>
+			</RequiredInputArgument>
+			<RequiredInputArgument>
+				<Type>Close</Type>
+				<Name>Close</Name>
+			</RequiredInputArgument>
+		</RequiredInputArguments>
+		<OptionalInputArguments>
+			<OptionalInputArgument>
+				<Name>Limit Move</Name>
+				<ShortDescription>Largest one-bar price move the index is scaled against, in price units</ShortDescription>
+				<Type>Double</Type>
+				<Range>
+					<Minimum>1.000000e-8</Minimum>
+					<Maximum>3.000000e+37</Maximum>
+					<Precision>4</Precision>
+					<SuggestedStart>5.000000e-1</SuggestedStart>
+					<SuggestedEnd>3.000000e+1</SuggestedEnd>
+					<SuggestedIncrement>5.000000e-1</SuggestedIncrement>
+				</Range>
+				<DefaultValue>3.000000e+0</DefaultValue>
 			</OptionalInputArgument>
 		</OptionalInputArguments>
 		<OutputArguments>

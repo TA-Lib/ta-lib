@@ -500,6 +500,55 @@ DEF_FUNCTION( AROONOSC,
              );
 /* AROONOSC END */
 
+/* ASI BEGIN */
+static const TA_RealRange TA_DEF_ASI_LimitMove =
+{
+   0.00000001,
+   TA_REAL_MAX,
+   4,
+   0.5,
+   30.0,
+   0.5
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_ASI_LimitMove =
+{
+   TA_OptInput_RealRange,
+   "optInLimitMove",
+   0,
+
+   "Limit Move",
+   (const void *)&TA_DEF_ASI_LimitMove,
+   3.0,
+   "Largest one-bar price move the index is scaled against, in price units",
+
+   NULL
+};
+
+static const TA_InputParameterInfo    *TA_ASI_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_OHLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_ASI_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_ASI_OptInputs[] =
+{ &TA_DEF_UI_D_ASI_LimitMove,
+  NULL
+};
+
+DEF_FUNCTION( ASI,
+              TA_GroupId_MomentumIndicators,
+              "Wilder Accumulative Swing Index",
+              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_PATH_DEP
+             );
+/* ASI END */
+
 /* ASIN BEGIN */
 static const TA_InputParameterInfo    *TA_ASIN_Inputs[]    =
 {
@@ -638,6 +687,7 @@ const TA_FuncDef *TA_DEF_TableA[] =
    ADD_TO_TABLE(APO),
    ADD_TO_TABLE(AROON),
    ADD_TO_TABLE(AROONOSC),
+   ADD_TO_TABLE(ASI),
    ADD_TO_TABLE(ASIN),
    ADD_TO_TABLE(ATAN),
    ADD_TO_TABLE(ATR),

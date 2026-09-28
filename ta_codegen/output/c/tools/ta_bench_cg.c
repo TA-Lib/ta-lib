@@ -39,6 +39,7 @@
 #include "ta_APO.c"
 #include "ta_AROON.c"
 #include "ta_AROONOSC.c"
+#include "ta_ASI.c"
 #include "ta_ASIN.c"
 #include "ta_ATAN.c"
 #include "ta_ATR.c"
@@ -201,6 +202,7 @@
 #include "ta_RVOL.c"
 #include "ta_SAR.c"
 #include "ta_SAREXT.c"
+#include "ta_SI.c"
 #include "ta_SIN.c"
 #include "ta_SINH.c"
 #include "ta_SMA.c"
@@ -545,6 +547,22 @@ static void bench_all(const char *filter, int iters) {
             g_sink += g_outBuf0[0];
         }
         printf("AROONOSC %lld\n", best / iters);
+        fflush(stdout);
+    }
+    if( func_matches(filter, "ASI") ) {
+        long long best = 0;
+        for( int pass = 0; pass < 3; pass++ ) {
+            int outBegIdx, outNBElement;
+            long long t0 = get_nanotime();
+            for( int it = 0; it < iters; it++ ) {
+                TA_ASI(0, g_nPoints - 1, g_open, g_high, g_low, g_close, 3.000000000000000, &outBegIdx, &outNBElement, g_outBuf0);
+            }
+            long long elapsed = get_nanotime() - t0;
+            if( !best || elapsed < best ) best = elapsed;
+            g_sink += outNBElement;
+            g_sink += g_outBuf0[0];
+        }
+        printf("ASI %lld\n", best / iters);
         fflush(stdout);
     }
     if( func_matches(filter, "ASIN") ) {
@@ -3177,6 +3195,22 @@ static void bench_all(const char *filter, int iters) {
             g_sink += g_outBuf0[0];
         }
         printf("SAREXT %lld\n", best / iters);
+        fflush(stdout);
+    }
+    if( func_matches(filter, "SI") ) {
+        long long best = 0;
+        for( int pass = 0; pass < 3; pass++ ) {
+            int outBegIdx, outNBElement;
+            long long t0 = get_nanotime();
+            for( int it = 0; it < iters; it++ ) {
+                TA_SI(0, g_nPoints - 1, g_open, g_high, g_low, g_close, 3.000000000000000, &outBegIdx, &outNBElement, g_outBuf0);
+            }
+            long long elapsed = get_nanotime() - t0;
+            if( !best || elapsed < best ) best = elapsed;
+            g_sink += outNBElement;
+            g_sink += g_outBuf0[0];
+        }
+        printf("SI %lld\n", best / iters);
         fflush(stdout);
     }
     if( func_matches(filter, "SIN") ) {

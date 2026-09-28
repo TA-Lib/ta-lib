@@ -67,6 +67,7 @@ ErrorNumber test_func_crsi     ( TA_History *history );
 ErrorNumber test_func_bbw      ( TA_History *history );
 ErrorNumber test_func_cg       ( TA_History *history );
 ErrorNumber test_func_percentb ( TA_History *history );
+ErrorNumber test_func_si       ( TA_History *history );
 ErrorNumber test_func_percentile( TA_History *history );
 ErrorNumber test_func_cvi     ( TA_History *history );
 ErrorNumber test_func_massi   ( TA_History *history );

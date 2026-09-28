@@ -1469,6 +1469,114 @@ fn legs_AROONOSC(r: &mut Report) {
     r.legs_done("AROONOSC", 2);
 }
 
+const V_ASI: &[(&str, f64)] = &[
+    ("defaults", Core::REAL_DEFAULT),
+    ("minimums", 1e-8f64),
+];
+
+fn sub_ASI(r: &mut Report) {
+    let core = Core::new();
+    for &(label, optInLimitMove) in V_ASI {
+        let Ok(lb) = core.asi_lookback(optInLimitMove) else { continue; };
+        r.control("ASI", label, run(|| {
+            let inOpen: Vec<f64> = Vec::with_capacity(1);
+            let inHigh: Vec<f64> = Vec::with_capacity(1);
+            let inLow: Vec<f64> = Vec::with_capacity(1);
+            let inClose: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.asi_impl(0, lb, &inOpen, &inHigh, &inLow, &inClose, optInLimitMove, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+        if lb < 1 { r.no_quiet_range("ASI", label); continue; }
+        r.quiet("ASI", label, lb, run(|| {
+            let inOpen: Vec<f64> = Vec::with_capacity(1);
+            let inHigh: Vec<f64> = Vec::with_capacity(1);
+            let inLow: Vec<f64> = Vec::with_capacity(1);
+            let inClose: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.asi_impl(0, lb - 1, &inOpen, &inHigh, &inLow, &inClose, optInLimitMove, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+}
+
+fn legs_ASI(r: &mut Report) {
+    let core = Core::new();
+    let optInLimitMove = Core::REAL_DEFAULT;
+    let Ok(lb) = core.asi_lookback(optInLimitMove) else { r.no_legs("ASI"); return; };
+    let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("ASI", run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.asi_impl(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, optInLimitMove, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    {
+        let inOpen: Vec<f64> = Vec::with_capacity(1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("ASI", "inOpen", 0, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.asi_impl(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, optInLimitMove, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = Vec::with_capacity(1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("ASI", "inHigh", 1, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.asi_impl(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, optInLimitMove, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = Vec::with_capacity(1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("ASI", "inLow", 2, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.asi_impl(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, optInLimitMove, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = Vec::with_capacity(1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("ASI", "inClose", 3, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.asi_impl(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, optInLimitMove, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    r.legs_done("ASI", 4);
+}
+
 const V_ASIN: &[&str] = &[
     "defaults",
 ];
@@ -15131,6 +15239,114 @@ fn legs_SAREXT(r: &mut Report) {
     r.legs_done("SAREXT", 2);
 }
 
+const V_SI: &[(&str, f64)] = &[
+    ("defaults", Core::REAL_DEFAULT),
+    ("minimums", 1e-8f64),
+];
+
+fn sub_SI(r: &mut Report) {
+    let core = Core::new();
+    for &(label, optInLimitMove) in V_SI {
+        let Ok(lb) = core.si_lookback(optInLimitMove) else { continue; };
+        r.control("SI", label, run(|| {
+            let inOpen: Vec<f64> = Vec::with_capacity(1);
+            let inHigh: Vec<f64> = Vec::with_capacity(1);
+            let inLow: Vec<f64> = Vec::with_capacity(1);
+            let inClose: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.si_impl(0, lb, &inOpen, &inHigh, &inLow, &inClose, optInLimitMove, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+        if lb < 1 { r.no_quiet_range("SI", label); continue; }
+        r.quiet("SI", label, lb, run(|| {
+            let inOpen: Vec<f64> = Vec::with_capacity(1);
+            let inHigh: Vec<f64> = Vec::with_capacity(1);
+            let inLow: Vec<f64> = Vec::with_capacity(1);
+            let inClose: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.si_impl(0, lb - 1, &inOpen, &inHigh, &inLow, &inClose, optInLimitMove, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+}
+
+fn legs_SI(r: &mut Report) {
+    let core = Core::new();
+    let optInLimitMove = Core::REAL_DEFAULT;
+    let Ok(lb) = core.si_lookback(optInLimitMove) else { r.no_legs("SI"); return; };
+    let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("SI", run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.si_impl(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, optInLimitMove, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    {
+        let inOpen: Vec<f64> = Vec::with_capacity(1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("SI", "inOpen", 0, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.si_impl(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, optInLimitMove, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = Vec::with_capacity(1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("SI", "inHigh", 1, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.si_impl(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, optInLimitMove, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = Vec::with_capacity(1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("SI", "inLow", 2, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.si_impl(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, optInLimitMove, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = Vec::with_capacity(1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("SI", "inClose", 3, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.si_impl(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, optInLimitMove, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    r.legs_done("SI", 4);
+}
+
 const V_SIN: &[&str] = &[
     "defaults",
 ];
@@ -17605,6 +17821,7 @@ const PROBES: &[(&str, Probe, Probe)] = &[
     ("APO", sub_APO, legs_APO),
     ("AROON", sub_AROON, legs_AROON),
     ("AROONOSC", sub_AROONOSC, legs_AROONOSC),
+    ("ASI", sub_ASI, legs_ASI),
     ("ASIN", sub_ASIN, legs_ASIN),
     ("ATAN", sub_ATAN, legs_ATAN),
     ("ATR", sub_ATR, legs_ATR),
@@ -17768,6 +17985,7 @@ const PROBES: &[(&str, Probe, Probe)] = &[
     ("RVOL", sub_RVOL, legs_RVOL),
     ("SAR", sub_SAR, legs_SAR),
     ("SAREXT", sub_SAREXT, legs_SAREXT),
+    ("SI", sub_SI, legs_SI),
     ("SIN", sub_SIN, legs_SIN),
     ("SINH", sub_SINH, legs_SINH),
     ("SMA", sub_SMA, legs_SMA),
@@ -17839,7 +18057,7 @@ fn no_phantom_io() {
     // The corpus is the generator's, not a list kept by hand: a probe that
     // stopped being emitted is a shrinking sweep, which is the one way this
     // file can fail open.
-    assert_eq!(PROBES.len(), 209, "probe count");
+    assert_eq!(PROBES.len(), 211, "probe count");
     assert_eq!(
         PROBES.len(),
         crate::abstract_api::funcs().count(),

@@ -55,6 +55,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 - [APO](/functions/apo.md) — Absolute Price Oscillator
 - [AROON](/functions/aroon.md) — Aroon
 - [AROONOSC](/functions/aroonosc.md) — Aroon Oscillator
+- [ASI](/functions/asi.md) — Wilder Accumulative Swing Index
 - [BOP](/functions/bop.md) — Balance Of Power
 - [CCI](/functions/cci.md) — Commodity Channel Index
 - [CG](/functions/cg.md) — Center of Gravity Oscillator
@@ -87,6 +88,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 - [ROCR](/functions/rocr.md) — Rate of change ratio: (price/prevPrice)
 - [ROCR100](/functions/rocr100.md) — Rate of change ratio 100 scale: (price/prevPrice)*100
 - [RSI](/functions/rsi.md) — Relative Strength Index
+- [SI](/functions/si.md) — Wilder Swing Index
 - [SMI](/functions/smi.md) — Stochastic Momentum Index
 - [STOCH](/functions/stoch.md) — Stochastic
 - [STOCHF](/functions/stochf.md) — Stochastic Fast

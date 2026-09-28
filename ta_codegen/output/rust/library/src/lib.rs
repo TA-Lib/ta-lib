@@ -176,7 +176,7 @@
 //! * [`TAN`](Core::tan) — Vector Trigonometric Tan
 //! * [`TANH`](Core::tanh) — Vector Trigonometric Tanh
 //!
-//! ## Momentum Indicators (50)
+//! ## Momentum Indicators (52)
 //!
 //! * [`AC`](Core::ac) — Accelerator/Decelerator Oscillator
 //! * [`ADX`](Core::adx) — Average Directional Movement Index
@@ -185,6 +185,7 @@
 //! * [`APO`](Core::apo) — Absolute Price Oscillator
 //! * [`AROON`](Core::aroon) — Aroon
 //! * [`AROONOSC`](Core::aroonosc) — Aroon Oscillator
+//! * [`ASI`](Core::asi) — Wilder Accumulative Swing Index
 //! * [`BOP`](Core::bop) — Balance Of Power
 //! * [`CCI`](Core::cci) — Commodity Channel Index
 //! * [`CG`](Core::cg) — Center of Gravity Oscillator
@@ -217,6 +218,7 @@
 //! * [`ROCR`](Core::rocr) — Rate of change ratio: (price/prevPrice)
 //! * [`ROCR100`](Core::rocr100) — Rate of change ratio 100 scale: (price/prevPrice)*100
 //! * [`RSI`](Core::rsi) — Relative Strength Index
+//! * [`SI`](Core::si) — Wilder Swing Index
 //! * [`SMI`](Core::smi) — Stochastic Momentum Index
 //! * [`STOCH`](Core::stoch) — Stochastic
 //! * [`STOCHF`](Core::stochf) — Stochastic Fast

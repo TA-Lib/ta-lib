@@ -1,0 +1,21 @@
+name: SI
+group: Momentum Indicators
+hint: Wilder Swing Index
+flags: [stream]
+inputs:
+  - name: inPriceOHLC
+    type: price
+    price_components: [open, high, low, close]
+optional_inputs:
+  - name: optInLimitMove
+    type: real
+    display_name: Limit Move
+    hint: Largest one-bar price move the index is scaled against, in price units
+    range: [0.00000001, TA_REAL_MAX]
+    default: 3.0
+    precision: 4
+    suggested: [0.5, 30, 0.5]
+outputs:
+  - name: outReal
+    type: real
+    flags: [line]
