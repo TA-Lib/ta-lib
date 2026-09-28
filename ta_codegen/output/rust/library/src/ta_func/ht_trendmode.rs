@@ -577,6 +577,8 @@ impl Core {
             }
             if DCPeriodInt > 0 {
                 tempReal = tempReal / (DCPeriodInt as f64);
+            } else {
+                cold_arm();
             }
             trendline = ((2.0 as f64).mul_add(iTrend2, (4.0 as f64).mul_add(tempReal, 3.0 * iTrend1)) + iTrend3) / 10.0;
             iTrend3 = iTrend2;
@@ -1036,6 +1038,8 @@ impl Core {
         }
         if DCPeriodInt > 0 {
             tempReal = tempReal / (DCPeriodInt as f64);
+        } else {
+            cold_arm();
         }
         trendline = ((2.0 as f64).mul_add(sp.iTrend2, (4.0 as f64).mul_add(tempReal, 3.0 * sp.iTrend1)) + sp.iTrend3) / 10.0;
         sp.iTrend3 = sp.iTrend2;
@@ -1536,6 +1540,8 @@ impl Core {
             }
             if DCPeriodInt > 0 {
                 tempReal = tempReal / (DCPeriodInt as f64);
+            } else {
+                cold_arm();
             }
             trendline = ((2.0 as f64).mul_add(iTrend2, (4.0 as f64).mul_add(tempReal, 3.0 * iTrend1)) + iTrend3) / 10.0;
             iTrend3 = iTrend2;
@@ -2087,6 +2093,8 @@ impl HtTrendmodeStream {
             }
             if DCPeriodInt > 0 {
                 tempReal = tempReal / (DCPeriodInt as f64);
+            } else {
+                cold_arm();
             }
             trendline = ((2.0 as f64).mul_add(iTrend2, (4.0 as f64).mul_add(tempReal, 3.0 * iTrend1)) + iTrend3) / 10.0;
             iTrend3 = iTrend2;

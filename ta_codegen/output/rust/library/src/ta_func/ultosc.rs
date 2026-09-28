@@ -371,12 +371,18 @@ impl Core {
             output = 0.0;
             if b1Total > 0.0 {
                 output += 4.0 * (a1Total / b1Total);
+            } else {
+                cold_arm();
             }
             if b2Total > 0.0 {
                 output += 2.0 * (a2Total / b2Total);
+            } else {
+                cold_arm();
             }
             if b3Total > 0.0 {
                 output += a3Total / b3Total;
+            } else {
+                cold_arm();
             }
             // Remove the trailing terms to prepare for next day. Each was evaluated
             // once, when its bar entered the ring.
@@ -639,12 +645,18 @@ impl Core {
         output = 0.0;
         if sp.b1Total > 0.0 {
             output += 4.0 * (sp.a1Total / sp.b1Total);
+        } else {
+            cold_arm();
         }
         if sp.b2Total > 0.0 {
             output += 2.0 * (sp.a2Total / sp.b2Total);
+        } else {
+            cold_arm();
         }
         if sp.b3Total > 0.0 {
             output += sp.a3Total / sp.b3Total;
+        } else {
+            cold_arm();
         }
         // Remove the trailing terms to prepare for next day. Each was evaluated
         // once, when its bar entered the ring.
@@ -921,12 +933,18 @@ impl Core {
             output = 0.0;
             if b1Total > 0.0 {
                 output += 4.0 * (a1Total / b1Total);
+            } else {
+                cold_arm();
             }
             if b2Total > 0.0 {
                 output += 2.0 * (a2Total / b2Total);
+            } else {
+                cold_arm();
             }
             if b3Total > 0.0 {
                 output += a3Total / b3Total;
+            } else {
+                cold_arm();
             }
             // Remove the trailing terms to prepare for next day. Each was evaluated
             // once, when its bar entered the ring.
@@ -1234,12 +1252,18 @@ impl UltoscStream {
             output = 0.0;
             if b1Total > 0.0 {
                 output += 4.0 * (a1Total / b1Total);
+            } else {
+                cold_arm();
             }
             if b2Total > 0.0 {
                 output += 2.0 * (a2Total / b2Total);
+            } else {
+                cold_arm();
             }
             if b3Total > 0.0 {
                 output += a3Total / b3Total;
+            } else {
+                cold_arm();
             }
             // Remove the trailing terms to prepare for next day. Each was evaluated
             // once, when its bar entered the ring.

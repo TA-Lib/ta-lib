@@ -141,6 +141,8 @@ impl Core {
             close = inClose[currentBar];
             if tmp > 0.0 {
                 ad += (close - low - (high - close)) / tmp * (inVolume[currentBar] as f64);
+            } else {
+                cold_arm();
             }
             outReal[outIdx] = ad;
             outIdx += 1;
@@ -306,6 +308,8 @@ impl Core {
         close = inClose;
         if tmp > 0.0 {
             sp.ad += (close - low - (high - close)) / tmp * (inVolume as f64);
+        } else {
+            cold_arm();
         }
         (*outReal) = sp.ad;
         sp.cur_outReal = (*outReal);
@@ -370,6 +374,8 @@ impl Core {
             close = inClose[currentBar];
             if tmp > 0.0 {
                 ad += (close - low - (high - close)) / tmp * (inVolume[currentBar] as f64);
+            } else {
+                cold_arm();
             }
             outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = ad;
             currentBar += 1;
@@ -574,6 +580,8 @@ impl AdStream {
             close = inClose;
             if tmp > 0.0 {
                 ad += (close - low - (high - close)) / tmp * (inVolume as f64);
+            } else {
+                cold_arm();
             }
             (*outReal) = ad;
         }

@@ -209,6 +209,8 @@ impl Core {
             // produce -- out of a price-scale output, as ta_CMF.c does.
             if sumV > 0.0 {
                 vwap = sumPV / sumV;
+            } else {
+                cold_arm();
             }
             outReal[outIdx] = vwap;
             outIdx += 1;
@@ -472,6 +474,8 @@ impl Core {
         // produce -- out of a price-scale output, as ta_CMF.c does.
         if sp.sumV > 0.0 {
             sp.vwap = sp.sumPV / sp.sumV;
+        } else {
+            cold_arm();
         }
         (*outReal) = sp.vwap;
         sp.cur_outReal = (*outReal);
@@ -604,6 +608,8 @@ impl Core {
             // produce -- out of a price-scale output, as ta_CMF.c does.
             if sumV > 0.0 {
                 vwap = sumPV / sumV;
+            } else {
+                cold_arm();
             }
             outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = vwap;
         }
@@ -885,6 +891,8 @@ impl VwapStream {
             // produce -- out of a price-scale output, as ta_CMF.c does.
             if sumV > 0.0 {
                 vwap = sumPV / sumV;
+            } else {
+                cold_arm();
             }
             (*outReal) = vwap;
         }

@@ -14,6 +14,13 @@ pub(crate) fn c_max(a: f64, b: f64) -> f64 {
     core::hint::select_unpredictable(a > b, a, b)
 }
 
+/// The else arm of a divisor guard (`if( d > 0.0 ) x += a/d;`). Without a
+/// call on a cold path LLVM if-converts the guarded division into a blend,
+/// silently slower than the predicted branch gcc keeps.
+#[cold]
+#[inline(never)]
+pub(crate) fn cold_arm() {}
+
 /// C's `min(a, b)` macro, `a < b ? a : b`. One MINSD.
 #[inline(always)]
 pub(crate) fn c_min(a: f64, b: f64) -> f64 {

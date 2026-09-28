@@ -248,9 +248,13 @@ impl Core {
         // zero (issue #253).
         if last_price_x != 0.0 {
             shift_x = (inReal0[i] - last_price_x) / last_price_x;
+        } else {
+            cold_arm();
         }
         if last_price_y != 0.0 {
             shift_y = (inReal1[i] - last_price_y) / last_price_y;
+        } else {
+            cold_arm();
         }
         while i < startIdx {
             tmp_real = inReal0[i];
@@ -362,10 +366,14 @@ impl Core {
                 while j < i {
                     if prev_x != 0.0 {
                         tmp_real += (inReal0[j] - prev_x) / prev_x;
+                    } else {
+                        cold_arm();
                     }
                     prev_x = inReal0[j];
                     if prev_y != 0.0 {
                         shift_y += (inReal1[j] - prev_y) / prev_y;
+                    } else {
+                        cold_arm();
                     }
                     prev_y = inReal1[j];
                     j += 1;
@@ -713,10 +721,14 @@ impl Core {
             while sp.j < sp.i {
                 if prev_x != 0.0 {
                     tmp_real += (sp.x_inReal0[(sp.j & sp.xMask) as usize] - prev_x) / prev_x;
+                } else {
+                    cold_arm();
                 }
                 prev_x = sp.x_inReal0[(sp.j & sp.xMask) as usize];
                 if prev_y != 0.0 {
                     sp.shift_y += (sp.x_inReal1[(sp.j & sp.xMask) as usize] - prev_y) / prev_y;
+                } else {
+                    cold_arm();
                 }
                 prev_y = sp.x_inReal1[(sp.j & sp.xMask) as usize];
                 sp.j += 1;
@@ -952,9 +964,13 @@ impl Core {
         // zero (issue #253).
         if last_price_x != 0.0 {
             shift_x = (inReal0[i] - last_price_x) / last_price_x;
+        } else {
+            cold_arm();
         }
         if last_price_y != 0.0 {
             shift_y = (inReal1[i] - last_price_y) / last_price_y;
+        } else {
+            cold_arm();
         }
         while i < startIdx {
             tmp_real = inReal0[i];
@@ -1066,10 +1082,14 @@ impl Core {
                 while j < i {
                     if prev_x != 0.0 {
                         tmp_real += (inReal0[j] - prev_x) / prev_x;
+                    } else {
+                        cold_arm();
                     }
                     prev_x = inReal0[j];
                     if prev_y != 0.0 {
                         shift_y += (inReal1[j] - prev_y) / prev_y;
+                    } else {
+                        cold_arm();
                     }
                     prev_y = inReal1[j];
                     j += 1;
@@ -1496,10 +1516,14 @@ impl BetaStream {
                 while j < i {
                     if prev_x != 0.0 {
                         tmp_real += ((if ((j & sp.xMask) as usize) != pkSlot0 { sp.x_inReal0[(j & sp.xMask) as usize] } else { pkVal0 }) - prev_x) / prev_x;
+                    } else {
+                        cold_arm();
                     }
                     prev_x = (if ((j & sp.xMask) as usize) != pkSlot0 { sp.x_inReal0[(j & sp.xMask) as usize] } else { pkVal0 });
                     if prev_y != 0.0 {
                         shift_y += ((if ((j & sp.xMask) as usize) != pkSlot1 { sp.x_inReal1[(j & sp.xMask) as usize] } else { pkVal1 }) - prev_y) / prev_y;
+                    } else {
+                        cold_arm();
                     }
                     prev_y = (if ((j & sp.xMask) as usize) != pkSlot1 { sp.x_inReal1[(j & sp.xMask) as usize] } else { pkVal1 });
                     j += 1;

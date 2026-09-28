@@ -260,6 +260,8 @@ impl Core {
         close = inClose[today];
         if tmp > 0.0 {
             ad += (close - low - (high - close)) / tmp * (inVolume[today] as f64);
+        } else {
+            cold_arm();
         }
         today += 1;
         fastEMA = ad;
@@ -272,6 +274,8 @@ impl Core {
             close = inClose[today];
             if tmp > 0.0 {
                 ad += (close - low - (high - close)) / tmp * (inVolume[today] as f64);
+            } else {
+                cold_arm();
             }
             today += 1;
             fastEMA = (one_minus_fastk as f64).mul_add(fastEMA, fastk * ad);
@@ -286,6 +290,8 @@ impl Core {
             close = inClose[today];
             if tmp > 0.0 {
                 ad += (close - low - (high - close)) / tmp * (inVolume[today] as f64);
+            } else {
+                cold_arm();
             }
             today += 1;
             fastEMA = (one_minus_fastk as f64).mul_add(fastEMA, fastk * ad);
@@ -476,6 +482,8 @@ impl Core {
         close = inClose;
         if tmp > 0.0 {
             sp.ad += (close - low - (high - close)) / tmp * (inVolume as f64);
+        } else {
+            cold_arm();
         }
         sp.fastEMA = (sp.one_minus_fastk as f64).mul_add(sp.fastEMA, sp.fastk * sp.ad);
         sp.slowEMA = (sp.one_minus_slowk as f64).mul_add(sp.slowEMA, sp.slowk * sp.ad);
@@ -594,6 +602,8 @@ impl Core {
         close = inClose[today];
         if tmp > 0.0 {
             ad += (close - low - (high - close)) / tmp * (inVolume[today] as f64);
+        } else {
+            cold_arm();
         }
         today += 1;
         fastEMA = ad;
@@ -606,6 +616,8 @@ impl Core {
             close = inClose[today];
             if tmp > 0.0 {
                 ad += (close - low - (high - close)) / tmp * (inVolume[today] as f64);
+            } else {
+                cold_arm();
             }
             today += 1;
             fastEMA = (one_minus_fastk as f64).mul_add(fastEMA, fastk * ad);
@@ -620,6 +632,8 @@ impl Core {
             close = inClose[today];
             if tmp > 0.0 {
                 ad += (close - low - (high - close)) / tmp * (inVolume[today] as f64);
+            } else {
+                cold_arm();
             }
             today += 1;
             fastEMA = (one_minus_fastk as f64).mul_add(fastEMA, fastk * ad);
@@ -836,6 +850,8 @@ impl AdoscStream {
             close = inClose;
             if tmp > 0.0 {
                 ad += (close - low - (high - close)) / tmp * (inVolume as f64);
+            } else {
+                cold_arm();
             }
             fastEMA = (sp.one_minus_fastk as f64).mul_add(fastEMA, sp.fastk * ad);
             slowEMA = (sp.one_minus_slowk as f64).mul_add(slowEMA, sp.slowk * ad);

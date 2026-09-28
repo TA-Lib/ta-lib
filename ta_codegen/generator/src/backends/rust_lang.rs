@@ -3087,13 +3087,15 @@ impl RustStmt<'_, '_> {
 
     /// Shared `if` tail (then-body + else branch with `} else if` collapse) used
     /// by both the flat and multi-line-condition rendering paths.
-    fn render_if_tail(&self, then_body: &[Statement], else_body: &[Statement], indent: usize) -> String {
+    fn render_if_tail(&self, then_body: &[Statement], else_body: &[Statement], cold_else: bool, indent: usize) -> String {
         let pad = " ".repeat(indent);
         let mut out = String::new();
         for s in then_body {
             out.push_str(&self.walk_stmt(s, indent + 4));
         }
-        if else_body.is_empty() {
+        if cold_else {
+            out.push_str(&format!("{pad}}} else {{\n{pad}    cold_arm();\n{pad}}}\n"));
+        } else if else_body.is_empty() {
             out.push_str(&format!("{pad}}}\n"));
         } else {
             let code_start = else_body
@@ -3766,6 +3768,7 @@ impl StatementEmitter for RustStmt<'_, '_> {
         if contains_alloc_err_return(then_body) {
             return String::new();
         }
+        let cold_else = super::divisor_guard::is_divisor_guard(condition, then_body, else_body);
         // Split `if(A && B)` into nested `if(A) { if(B)` when both sides
         // contain a candle function call (ta_candlerange/ta_candleaverage).
         // This prevents the compiler from speculatively computing both sides
@@ -3818,7 +3821,7 @@ impl StatementEmitter for RustStmt<'_, '_> {
                 let mut out = format!("{pad}if ");
                 out.push_str(&cond_text);
                 out.push_str(&format!("{pad}{{\n"));
-                out.push_str(&self.render_if_tail(then_body, else_body, indent));
+                out.push_str(&self.render_if_tail(then_body, else_body, cold_else, indent));
                 return out;
             }
         }
@@ -3827,7 +3830,7 @@ impl StatementEmitter for RustStmt<'_, '_> {
             pad,
             render_condition(condition, self.ctx, self.opt_real_params, self.registry, self.helpers)
         );
-        out.push_str(&self.render_if_tail(then_body, else_body, indent));
+        out.push_str(&self.render_if_tail(then_body, else_body, cold_else, indent));
         out
     }
 

@@ -113,6 +113,8 @@ impl Core {
             // A zero previous close contributes nothing rather than Inf/NaN (#112).
             if prevClose != 0.0 {
                 prevPVT += (tempClose - prevClose) / prevClose * inVolume[i];
+            } else {
+                cold_arm();
             }
             outReal[outIdx] = prevPVT;
             outIdx += 1;
@@ -276,6 +278,8 @@ impl Core {
         // A zero previous close contributes nothing rather than Inf/NaN (#112).
         if sp.prevClose != 0.0 {
             sp.prevPVT += (tempClose - sp.prevClose) / sp.prevClose * inVolume;
+        } else {
+            cold_arm();
         }
         (*outReal) = sp.prevPVT;
         sp.prevClose = tempClose;
@@ -321,6 +325,8 @@ impl Core {
             // A zero previous close contributes nothing rather than Inf/NaN (#112).
             if prevClose != 0.0 {
                 prevPVT += (tempClose - prevClose) / prevClose * inVolume[i];
+            } else {
+                cold_arm();
             }
             outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = prevPVT;
             prevClose = tempClose;
@@ -521,6 +527,8 @@ impl PvtStream {
             // A zero previous close contributes nothing rather than Inf/NaN (#112).
             if sp.prevClose != 0.0 {
                 prevPVT += (tempClose - sp.prevClose) / sp.prevClose * inVolume;
+            } else {
+                cold_arm();
             }
             (*outReal) = prevPVT;
         }
