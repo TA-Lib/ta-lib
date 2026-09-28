@@ -117,7 +117,7 @@ function the filter excluded. A `--func` iteration loop must end with one bare
 ## Testing
 
 ```bash
-cargo test      # tests/*_suite.rs, topic-scoped, shared harness in tests/common/
+cargo test      # tests/all/: one crate, a topic-scoped module per *_suite.rs, shared harness in common/
 cargo clippy    # strict pedantic lints
 ```
 
@@ -159,7 +159,7 @@ fails.
 generator input, not a symbol, so every value-comparison gate passes whichever
 body was selected, and the `/* Using min_ALT1 ... */` marker is rendered *from*
 the resolution and would agree with a resolver that chose wrong.
-`tests/alt_suite.rs` checks the emitted statements against SYNTH5 and SYNTH6 —
+`tests/all/alt_suite.rs` checks the emitted statements against SYNTH5 and SYNTH6 —
 the same algorithm with the tiers swapped — so neither an always-base nor an
 always-alternate bug satisfies both.
 

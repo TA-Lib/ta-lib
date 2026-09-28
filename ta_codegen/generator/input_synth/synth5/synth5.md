@@ -11,7 +11,7 @@ outInteger[i] = ((int)(x(i - period + 1) + x(i))) mod 1024
 ## Notes
 
 - Covers `PRAGMA TA_ALT={STREAM,ALL_LANGUAGES}`. That orientation is not unreached — six shipped rolling-extremum functions ship it — so what this fixture adds is a base that CANNOT generate without its alternate: `inReal[i + nbInitialElementNeeded]` reads past the bar being emitted, which no per-bar automaton can express. Delete the alternate and generation fails, so the gate cannot pass by accident.
-- Named by `tests/alt_suite.rs`, which asserts on the emitted statements per tier — an alternate is generator input and never becomes a symbol, so nothing else can show which body won. SYNTH6 is the mirror; the pair is what defeats an always-base or always-alternate resolver.
+- Named by `tests/all/alt_suite.rs`, which asserts on the emitted statements per tier — an alternate is generator input and never becomes a symbol, so nothing else can show which body won. SYNTH6 is the mirror; the pair is what defeats an always-base or always-alternate resolver.
 - Coverage trap: both bodies add the same two bars in the SAME order, so base and alternate are bit-identical rather than merely equal. Reorder either sum and this fails on rounding instead of on resolution.
 - Issue #190.
 

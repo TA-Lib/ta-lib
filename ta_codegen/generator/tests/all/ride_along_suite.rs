@@ -7,7 +7,7 @@
 //! that way ever since. So the "every backend still compares" invariant is
 //! pinned here, on emitted text, where a missing emitter is loud.
 
-mod common;
+use crate::common;
 use common::{discover_indicators, load_indicator};
 use std::path::Path;
 use ta_codegen_lib::{ir, parser};

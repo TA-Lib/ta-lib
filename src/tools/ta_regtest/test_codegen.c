@@ -105,7 +105,7 @@ static int codegen_lang_has_stream_state_probe(const char *lang)
  * comparator skips the slack above the live window, which is exactly the slot
  * a peek touches there — and the next update overwrites it, so that one is
  * inert. The TOTAL gate for the property is structural, in the generator:
- * tests/peek_suite.rs asserts no peek frame stores into a handle buffer at all.
+ * tests/all/peek_suite.rs asserts no peek frame stores into a handle buffer at all.
  *
  * C only, for the same structural reason the state-equivalence leg above is:
  * the probe compares the handle field-by-field around a peek, and only the C
@@ -817,7 +817,7 @@ static int get_unst_ids(const char *funcName, TA_FuncUnstId *out, int maxOut)
 /* Self-check on UNSTABLE_MAP, run on every ta_regtest invocation.
  *
  * The table is hand-maintained against the generator's own answer (see
- * generator/tests/stability_suite.rs, which pins what each function inherits),
+ * generator/tests/all/stability_suite.rs, which pins what each function inherits),
  * so the two can drift. What is checked here is the property the sweep depends
  * on rather than the contents: no row names TA_TEST_UNST_NONE, no (name,id) pair
  * repeats, setting a function's set moves every member, and at least one

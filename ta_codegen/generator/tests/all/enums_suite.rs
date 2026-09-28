@@ -2,8 +2,7 @@
 //! and the negative-cast-to-signed-local rule (#160). Split out of the
 //! former `backend_suite.rs`.
 
-#[path = "common/mod.rs"]
-mod common;
+use crate::common;
 
 use common::{
     discover_indicators, generate_all, load_enums, load_indicator, load_indicator_with_source,
@@ -104,7 +103,7 @@ fn enum_param_gets_a_domain_gate_in_both_tiers() {
     let (c_min, c_max) =
         backends::common::enum_limit_names_of(ma, Lang::C).expect("C declares MAType limits");
 
-    let c = backends::c::generate(&func, &enums, &registry, &helpers);
+    let c = backends::c::generate(&func, &enums, registry, helpers);
     let gate = format!("(int)optInMAType < {c_min} || (int)optInMAType > {c_max}");
     // Both tiers: the lookback fails with -1, the guarded call with TA_BAD_PARAM.
     assert!(
@@ -118,7 +117,7 @@ fn enum_param_gets_a_domain_gate_in_both_tiers() {
 
     let (cs_min, cs_max) = backends::common::enum_limit_names_of(ma, Lang::CSharp)
         .expect("C# declares MAType limits");
-    let cs = backends::csharp::generate(&func, &enums, &registry, &helpers);
+    let cs = backends::csharp::generate(&func, &enums, registry, helpers);
     assert!(
         cs.contains(&format!("(int)optInMAType < {cs_min} || (int)optInMAType > {cs_max}")),
         "C# lost the enum domain gate:\n{cs}"
@@ -374,7 +373,7 @@ fn csharp_resolve_call_agrees_with_the_emitted_method_names() {
         // Since #236 step 5 the bare name is the PUBLIC overload -- the only tier
         // left that carries it -- which is what a cross-call has bound since
         // step 3 put the callee's argument checks on the composed path.
-        let src = backends::csharp::generate(&func, &enums, &registry, &helpers);
+        let src = backends::csharp::generate(&func, &enums, registry, helpers);
         assert!(
             src.contains(&format!("OutRange {bare}(")),
             "{name}: emitter never defines the `{bare}` the resolver hands out"
@@ -412,7 +411,7 @@ fn rust_fma_dispatch_fires_for_exactly_the_fusing_functions() {
             continue;
         }
         let (func, enums) = load_indicator(&name);
-        let out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
+        let out = backends::rust_lang::generate(&func, &enums, registry, helpers);
         checked += 1;
         if out.contains("ta_lib_dispatch::dispatch_fma!") {
             // Every dispatcher must come with exactly one clone: the
@@ -572,7 +571,7 @@ TA_RetCode max( int    startIdx,
 
     let registry = make_registry();
     let helpers = HelperRegistry::empty();
-    let cs = backends::csharp::generate(&func, &enums, &registry, &helpers);
+    let cs = backends::csharp::generate(&func, &enums, registry, &helpers);
     for needle in [
         "& ~1;",
         "(mask & 1) == 9999",

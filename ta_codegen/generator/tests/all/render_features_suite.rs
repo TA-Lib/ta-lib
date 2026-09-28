@@ -2,15 +2,13 @@
 //! ForC rendering, math-function idioms, expression/block inlining, and
 //! candle-settings unpacking. Split out of the former `backend_suite.rs`.
 
-#[path = "common/mod.rs"]
-mod common;
+use crate::common;
 
 use common::{
     discover_indicators, generate_all, load_indicator, load_indicator_with_source, make_helpers,
     make_registry, try_generate_all, try_load_indicator,
 };
 use std::collections::HashMap;
-use std::path::Path;
 use ta_codegen_lib::backends;
 use ta_codegen_lib::helper_registry::HelperRegistry;
 use ta_codegen_lib::ir;
@@ -307,7 +305,7 @@ fn c_for_loop_multi_init_comma_separated() {
     let registry = make_registry();
     let helpers = HelperRegistry::empty();
     let inline_counter = std::cell::Cell::new(0);
-    let rendered = backends::c::render_statement(&stmt, 0, false, &enums, &registry, &helpers, &inline_counter, &[], false);
+    let rendered = backends::c::render_statement(&stmt, 0, false, &enums, registry, &helpers, &inline_counter, &[], false);
 
     // Should produce: for( j = 0, i = startIdx; ... ; i = i + 1, j = j + 1 )
     // NOT: for( j = 0;\ni = startIdx; ... )
@@ -381,7 +379,7 @@ fn java_for_loop_multi_init_comma_separated() {
     let address_of_vars = std::collections::HashSet::new();
     let double_address_of_vars = std::collections::HashSet::new();
     let float_input_params = std::collections::HashSet::new();
-    let rendered = backends::java::render_statement(&stmt, 0, false, &enums, &registry, &helpers, &inline_counter, &address_of_vars, &double_address_of_vars, &float_input_params);
+    let rendered = backends::java::render_statement(&stmt, 0, false, &enums, registry, &helpers, &inline_counter, &address_of_vars, &double_address_of_vars, &float_input_params);
 
     // Should produce: for( j = 0, i = startIdx; ... ; i = i + 1, j = j + 1 )
     // NOT: for( j = 0;\ni = startIdx; ... )
@@ -451,7 +449,7 @@ fn rust_forc_emits_range_iteration_when_possible() {
         &output_names,
         &opt_real_params,
         &enums,
-        &registry,
+        registry,
         &helpers,
         &inline_counter,
     );
@@ -513,7 +511,7 @@ fn rust_inline_condition_parenthesizes_or_operand() {
         &[],
         &[],
         &enums,
-        &registry,
+        registry,
         &helpers,
         &inline_counter,
     );
@@ -576,13 +574,13 @@ fn java_condition_from_bool_ternary_helper_is_not_wrapped() {
 
     let enums = HashMap::new();
     let registry = make_registry();
-    let helpers = make_helper_registry();
+    let helpers = make_helpers();
     let inline_counter = std::cell::Cell::new(0);
     let address_of_vars = std::collections::HashSet::new();
     let double_address_of_vars = std::collections::HashSet::new();
     let float_input_params = std::collections::HashSet::new();
     let rendered = backends::java::render_statement(
-        &stmt, 0, false, &enums, &registry, &helpers, &inline_counter,
+        &stmt, 0, false, &enums, registry, helpers, &inline_counter,
         &address_of_vars, &double_address_of_vars, &float_input_params,
     );
 
@@ -626,7 +624,7 @@ fn java_condition_from_int_ternary_is_wrapped() {
     let double_address_of_vars = std::collections::HashSet::new();
     let float_input_params = std::collections::HashSet::new();
     let rendered = backends::java::render_statement(
-        &stmt, 0, false, &enums, &registry, &helpers, &inline_counter,
+        &stmt, 0, false, &enums, registry, &helpers, &inline_counter,
         &address_of_vars, &double_address_of_vars, &float_input_params,
     );
 
@@ -684,11 +682,11 @@ fn rust_condition_from_int_ternary_helper_is_wrapped() {
     let ctx = RustRenderCtx::empty();
     let enums = HashMap::new();
     let registry = make_registry();
-    let helpers = make_helper_registry();
+    let helpers = make_helpers();
     let inline_counter = std::cell::Cell::new(0);
     let rendered = render_statement(
         &stmt, 0, &ctx, &[], &std::collections::HashMap::new(), &[], &[],
-        &enums, &registry, &helpers, &inline_counter,
+        &enums, registry, helpers, &inline_counter,
     );
 
     assert!(
@@ -782,7 +780,7 @@ fn rust_forc_multi_init_falls_through_to_while() {
         &output_names,
         &opt_real_params,
         &enums,
-        &registry,
+        registry,
         &helpers,
         &inline_counter,
     );
@@ -898,9 +896,9 @@ fn backends_render_max_min_fmax_fmin_abs() {
     let registry = make_registry();
     let helpers = HelperRegistry::empty();
 
-    let c_out = backends::c::generate(&func, &enums, &registry, &helpers);
-    let java_out = backends::java::generate(&func, &enums, &registry, &helpers);
-    let rust_out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
+    let c_out = backends::c::generate(&func, &enums, registry, &helpers);
+    let java_out = backends::java::generate(&func, &enums, registry, &helpers);
+    let rust_out = backends::rust_lang::generate(&func, &enums, registry, &helpers);
 
     // C: max/min → the ta_utility.h branch macros max()/min() (NOT C99 fmin/fmax);
     // ABS(x) → fabs(x). See #102: fmin/fmax carry IEEE-754 NaN/signed-zero semantics
@@ -1056,7 +1054,7 @@ TA_RetCode max( int    startIdx,
 }
 "#;
     let (func, enums) = load_indicator_with_source("max", source);
-    let cs = backends::csharp::generate(&func, &enums, &make_registry(), &make_helpers());
+    let cs = backends::csharp::generate(&func, &enums, make_registry(), make_helpers());
     for needle in [
         "v1 = MaxGt(x, y);",
         "v2 = MaxGt(y, x);",
@@ -1101,9 +1099,9 @@ fn backends_render_math_functions_idiomatically() {
     let registry = make_registry();
     let helpers = HelperRegistry::empty();
 
-    let c_out = backends::c::generate(&func, &enums, &registry, &helpers);
-    let java_out = backends::java::generate(&func, &enums, &registry, &helpers);
-    let rust_out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
+    let c_out = backends::c::generate(&func, &enums, registry, &helpers);
+    let java_out = backends::java::generate(&func, &enums, registry, &helpers);
+    let rust_out = backends::rust_lang::generate(&func, &enums, registry, &helpers);
 
     // C: plain atan() from <math.h>
     assert!(
@@ -1280,12 +1278,6 @@ fn helper_registry_loads_from_disk() {
 // Expression inlining tests
 // ---------------------------------------------------------------------------
 
-/// Load a HelperRegistry from the real helper files on disk.
-fn make_helper_registry() -> HelperRegistry {
-    let base = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../ta_codegen/input");
-    HelperRegistry::from_dir(&base)
-}
-
 #[test]
 fn substitute_expr_replaces_vars() {
     use ta_codegen_lib::helper_registry::substitute_expr;
@@ -1388,13 +1380,13 @@ fn try_inline_returns_none_for_multi_statement() {
 
 #[test]
 fn c_backend_inlines_single_expr_helper() {
-    let helpers = make_helper_registry();
+    let helpers = make_helpers();
     let registry = make_registry();
 
     // Load a candlestick indicator that calls ta_realbody
     let (func, enums) = load_indicator("cdlkicking");
 
-    let output = backends::c::generate(&func, &enums, &registry, &helpers);
+    let output = backends::c::generate(&func, &enums, registry, helpers);
 
     // ta_realbody(close, open) => fabs(close - open)
     // After inlining, the output should contain fabs( (from inlined ta_realbody body)
@@ -1418,12 +1410,12 @@ fn c_backend_inlines_single_expr_helper() {
 
 #[test]
 fn java_backend_inlines_single_expr_helper() {
-    let helpers = make_helper_registry();
+    let helpers = make_helpers();
     let registry = make_registry();
 
     let (func, enums) = load_indicator("cdlkicking");
 
-    let output = backends::java::generate(&func, &enums, &registry, &helpers);
+    let output = backends::java::generate(&func, &enums, registry, helpers);
 
     // Java uses Math.abs instead of fabs, but inlined ta_realbody should produce Math.abs(
     assert!(
@@ -1442,12 +1434,12 @@ fn java_backend_inlines_single_expr_helper() {
 
 #[test]
 fn rust_backend_inlines_single_expr_helper() {
-    let helpers = make_helper_registry();
+    let helpers = make_helpers();
     let registry = make_registry();
 
     let (func, enums) = load_indicator("cdlkicking");
 
-    let output = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
+    let output = backends::rust_lang::generate(&func, &enums, registry, helpers);
 
     // Rust uses .abs() for fabs, so inlined ta_realbody should produce that
     // The Rust backend renders fabs as a function call
@@ -1468,7 +1460,7 @@ fn inlining_with_empty_registry_leaves_helpers_as_calls() {
 
     let (func, enums) = load_indicator("cdlkicking");
 
-    let output = backends::c::generate(&func, &enums, &registry, &helpers);
+    let output = backends::c::generate(&func, &enums, registry, &helpers);
 
     // With an empty helper registry, helper calls should remain as-is
     // (they'll be treated as regular function calls by the fallback path)
@@ -1542,7 +1534,7 @@ fn c_backend_inlines_multi_statement_helper_with_temp_var() {
     let registry = make_registry();
     let helpers = make_helpers();
 
-    let output = backends::c::generate(&func, &enums, &registry, &helpers);
+    let output = backends::c::generate(&func, &enums, registry, helpers);
 
     // Should NOT contain ta_true_range as a function call
     assert!(
@@ -1578,7 +1570,7 @@ fn c_backend_inlines_candlerange_switch() {
     let registry = make_registry();
     let helpers = make_helpers();
 
-    let output = backends::c::generate(&func, &enums, &registry, &helpers);
+    let output = backends::c::generate(&func, &enums, registry, helpers);
 
     assert!(
         output.contains("TA_CANDLERANGE(BodyLong,i)"),
@@ -1678,7 +1670,7 @@ fn inlining_counter_avoids_name_collisions() {
     let registry = make_registry();
     let helpers = make_helpers();
 
-    let output = backends::c::generate(&func, &enums, &registry, &helpers);
+    let output = backends::c::generate(&func, &enums, registry, helpers);
 
     // Both calls should emit C macros with different settings
     assert!(
@@ -1710,7 +1702,7 @@ fn java_backend_inlines_multi_statement_helper() {
     let registry = make_registry();
     let helpers = make_helpers();
 
-    let output = backends::java::generate(&func, &enums, &registry, &helpers);
+    let output = backends::java::generate(&func, &enums, registry, helpers);
 
     assert!(
         !output.contains("ta_true_range("),
@@ -1736,7 +1728,7 @@ fn rust_backend_inlines_multi_statement_helper() {
     let registry = make_registry();
     let helpers = make_helpers();
 
-    let output = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
+    let output = backends::rust_lang::generate(&func, &enums, registry, helpers);
 
     assert!(
         !output.contains("ta_true_range("),
@@ -1769,7 +1761,7 @@ fn nested_block_inlining_candleaverage_calls_candlerange() {
     let registry = make_registry();
     let helpers = make_helpers();
 
-    let output = backends::c::generate(&func, &enums, &registry, &helpers);
+    let output = backends::c::generate(&func, &enums, registry, helpers);
 
     // Should emit a single C macro — no expanded temporaries
     assert!(
@@ -1795,7 +1787,7 @@ fn c_backend_emits_candle_settings_unpacking() {
     let (func, enums) = load_indicator("cdl2crows");
     let registry = make_registry();
     let helpers = make_helpers();
-    let c_out = backends::c::generate(&func, &enums, &registry, &helpers);
+    let c_out = backends::c::generate(&func, &enums, registry, helpers);
 
     // Only the properties the rendered C actually reads. CDL2CROWS reaches
     // BodyLong through TA_CANDLERANGE / TA_CANDLEAVERAGE, which take the setting
@@ -1827,7 +1819,7 @@ fn rust_backend_emits_candle_settings_from_core() {
     let (func, enums) = load_indicator("cdl2crows");
     let registry = make_registry();
     let helpers = make_helpers();
-    let rust_out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
+    let rust_out = backends::rust_lang::generate(&func, &enums, registry, helpers);
 
     // Assert Rust output contains unpacking lines
     assert!(
@@ -1853,7 +1845,7 @@ fn java_backend_emits_candle_settings() {
     let (func, enums) = load_indicator("cdl2crows");
     let registry = make_registry();
     let helpers = make_helpers();
-    let java_out = backends::java::generate(&func, &enums, &registry, &helpers);
+    let java_out = backends::java::generate(&func, &enums, registry, helpers);
 
     // Assert Java output contains unpacking lines (canonical array/ordinal form)
     assert!(
@@ -1877,9 +1869,9 @@ fn candle_settings_unpacking_in_lookback() {
     let registry = make_registry();
     let helpers = make_helpers();
 
-    let c_out = backends::c::generate(&func, &enums, &registry, &helpers);
-    let rust_out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
-    let java_out = backends::java::generate(&func, &enums, &registry, &helpers);
+    let c_out = backends::c::generate(&func, &enums, registry, helpers);
+    let rust_out = backends::rust_lang::generate(&func, &enums, registry, helpers);
+    let java_out = backends::java::generate(&func, &enums, registry, helpers);
 
     // The lookback body references BodyLong_avgPeriod, so unpacking should appear
     // in the lookback function output
@@ -1912,7 +1904,7 @@ fn candle_settings_multiple_settings_in_kicking() {
     let registry = make_registry();
     let helpers = make_helpers();
 
-    let c_out = backends::c::generate(&func, &enums, &registry, &helpers);
+    let c_out = backends::c::generate(&func, &enums, registry, helpers);
     assert!(
         c_out.contains("TA_Globals->candleSettings[TA_BodyLong]"),
         "C output should unpack BodyLong"
@@ -1922,7 +1914,7 @@ fn candle_settings_multiple_settings_in_kicking() {
         "C output should unpack ShadowVeryShort"
     );
 
-    let rust_out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
+    let rust_out = backends::rust_lang::generate(&func, &enums, registry, helpers);
     assert!(
         rust_out.contains("self.candle_settings.body_long"),
         "Rust output should unpack body_long"
@@ -1932,7 +1924,7 @@ fn candle_settings_multiple_settings_in_kicking() {
         "Rust output should unpack shadow_very_short"
     );
 
-    let java_out = backends::java::generate(&func, &enums, &registry, &helpers);
+    let java_out = backends::java::generate(&func, &enums, registry, helpers);
     assert!(
         java_out.contains("this.candleSettings[CandleSettingType.BODY_LONG.ordinal()]"),
         "Java output should unpack BodyLong"
@@ -1949,19 +1941,19 @@ fn non_candlestick_indicator_has_no_candle_unpacking() {
     let registry = make_registry();
     let helpers = make_helpers();
 
-    let c_out = backends::c::generate(&func, &enums, &registry, &helpers);
+    let c_out = backends::c::generate(&func, &enums, registry, helpers);
     assert!(
         !c_out.contains("candleSettings"),
         "SMA should not have candle settings unpacking"
     );
 
-    let rust_out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
+    let rust_out = backends::rust_lang::generate(&func, &enums, registry, helpers);
     assert!(
         !rust_out.contains("candle_settings"),
         "SMA should not have candle settings unpacking in Rust"
     );
 
-    let java_out = backends::java::generate(&func, &enums, &registry, &helpers);
+    let java_out = backends::java::generate(&func, &enums, registry, helpers);
     assert!(
         !java_out.contains("candleSettings"),
         "SMA should not have candle settings unpacking in Java"
@@ -1986,7 +1978,7 @@ fn java_backend_hoisted_helper_declares_local_vars() {
     let registry = make_registry();
     let helpers = make_helpers();
 
-    let output = backends::java::generate(&func, &enums, &registry, &helpers);
+    let output = backends::java::generate(&func, &enums, registry, helpers);
     assert!(
         output.contains("double range_0"),
         "Should declare 'double range_0' for hoisted local: {output}"

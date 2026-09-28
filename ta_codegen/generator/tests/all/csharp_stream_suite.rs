@@ -2,10 +2,9 @@
 //! family's stride mechanics, the C# twin of the same pins in
 //! `java_stream_suite.rs`. Every runtime gate that could see these runs nightly.
 
+use crate::common;
 use std::collections::HashMap;
 use std::path::PathBuf;
-use ta_codegen_lib::helper_registry::HelperRegistry;
-use ta_codegen_lib::registry::Registry;
 use ta_codegen_lib::{backends, ir, parser};
 
 fn input_dir() -> PathBuf {
@@ -24,9 +23,9 @@ fn load(name: &str) -> (ir::FuncDef, HashMap<String, ir::EnumDef>) {
 fn section(name: &str) -> String {
     let (func, enums) = load(name);
     assert!(func.streaming, "{name}: yaml must carry the stream flag");
-    let registry = Registry::from_dir(&input_dir());
-    let helpers = HelperRegistry::from_dir(&input_dir());
-    let full = backends::csharp::generate(&func, &enums, &registry, &helpers);
+    let registry = common::make_registry();
+    let helpers = common::make_helpers();
+    let full = backends::csharp::generate(&func, &enums, registry, helpers);
     let at = full
         .find("/**** Streaming API *****/")
         .unwrap_or_else(|| panic!("{name}: stream section missing"));

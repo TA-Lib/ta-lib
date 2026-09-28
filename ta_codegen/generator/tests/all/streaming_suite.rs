@@ -24,8 +24,8 @@ fn load(name: &str) -> FuncDef {
 
 /// Cross-function lookup over the real input tree (YAML-only, same data the
 /// emitters read through the Registry).
-fn lookup() -> ta_codegen_lib::registry::Registry {
-    ta_codegen_lib::registry::Registry::from_dir(&input_dir())
+fn lookup() -> &'static ta_codegen_lib::registry::Registry {
+    crate::common::make_registry()
 }
 
 #[test]
@@ -103,7 +103,7 @@ fn minus_dm_derives_dual_mode_plan() {
     // period=1 — it streams as a param-selected dual mode: two independent T2
     // models sharing one handle, selected by the period<=1 guard fixed at Open.
     let f = load("minus_dm");
-    let plan = streaming::validate_streamable(&f, &lookup()).expect("MINUS_DM derives a plan");
+    let plan = streaming::validate_streamable(&f, lookup()).expect("MINUS_DM derives a plan");
     let streaming::StreamPlan::DualMode(dm) = plan else {
         panic!("expected DualMode, got {plan:?}");
     };
@@ -126,7 +126,7 @@ fn minus_di_derives_dual_mode_plan_with_tr() {
     // DI); the degenerate arm returns the raw DM1/TR ratio (no x100 — the
     // documented period-1 quirk), preserved verbatim by transcribing the arm.
     let f = load("minus_di");
-    let plan = streaming::validate_streamable(&f, &lookup()).expect("MINUS_DI derives a plan");
+    let plan = streaming::validate_streamable(&f, lookup()).expect("MINUS_DI derives a plan");
     let streaming::StreamPlan::DualMode(dm) = plan else {
         panic!("expected DualMode, got {plan:?}");
     };
@@ -143,7 +143,7 @@ fn trima_derives_dual_mode_if_else() {
     // carries one ring set, and both fall through to a shared epilogue (the
     // if/else form).
     let f = load("trima");
-    let plan = streaming::validate_streamable(&f, &lookup()).expect("TRIMA derives a plan");
+    let plan = streaming::validate_streamable(&f, lookup()).expect("TRIMA derives a plan");
     let streaming::StreamPlan::DualMode(dm) = plan else {
         panic!("expected DualMode, got {plan:?}");
     };
@@ -182,7 +182,7 @@ fn rolling_extremum_streams_from_its_stream_alternate() {
 
         for lang in ir::ALL_LANGS {
             let resolved = f.resolved_for(lang);
-            let plan = streaming::validate_streamable(&resolved, &lookup())
+            let plan = streaming::validate_streamable(&resolved, lookup())
                 .unwrap_or_else(|e| panic!("{name} [{}]: {e}", lang.as_str()));
             let streaming::StreamPlan::Loop(m) = plan else {
                 panic!("{name}: expected a plain Loop over the alternate, got {plan:?}");
@@ -195,7 +195,7 @@ fn rolling_extremum_streams_from_its_stream_alternate() {
         // it is genuinely not streamable — so the assertions above are testing
         // the resolution, not something that would hold anyway.
         assert!(
-            streaming::validate_streamable(&f, &lookup()).is_err(),
+            streaming::validate_streamable(&f, lookup()).is_err(),
             "{name}: the batch body must NOT be streamable, or the alternate proves nothing"
         );
     }
@@ -247,7 +247,7 @@ fn all_declared_functions_are_streamable() {
             // backend a different body, so streamability is a per-language
             // property. This mirrors the generate-time gate.
             for lang in ir::ALL_LANGS {
-                streaming::validate_streamable(&func.resolved_for(lang), &lk)
+                streaming::validate_streamable(&func.resolved_for(lang), lk)
                     .unwrap_or_else(|e| panic!("[{}] {e}", lang.as_str()));
             }
             checked += 1;
@@ -477,7 +477,7 @@ fn cdlhikkake_streams_via_countdown_refactor() {
     // no bare cursor and it now streams (bit-identical batch, verified vs v0.6.4).
     let f = load("cdlhikkake");
     assert!(
-        streaming::validate_streamable(&f, &lookup()).is_ok(),
+        streaming::validate_streamable(&f, lookup()).is_ok(),
         "CDLHIKKAKE streams after the countdown refactor"
     );
 }
@@ -532,7 +532,7 @@ fn ht_dcperiod_streams_via_carried_parity_and_gate_strip() {
     );
     // The whole plan validates as an ordinary Loop model.
     assert!(matches!(
-        streaming::validate_streamable(&f, &lookup()),
+        streaming::validate_streamable(&f, lookup()),
         Ok(streaming::StreamPlan::Loop(_))
     ));
 }
@@ -583,7 +583,7 @@ TA_RetCode ht_dcperiod( int startIdx, int endIdx,
     assert!(m.state.iter().any(|(n, _)| n == "acc"), "the recurrence carries `acc`");
     // build_transition must succeed (no `today` leak): validate through the C
     // emitter, which builds the transition and would panic on a leak.
-    assert!(streaming::validate_streamable(&f, &lookup()).is_ok());
+    assert!(streaming::validate_streamable(&f, lookup()).is_ok());
 }
 
 #[test]
@@ -624,7 +624,7 @@ TA_RetCode cdlhikkake( int startIdx, int endIdx,
     let f = load_with_source("cdlhikkake", src);
     assert!(streaming::analyze(&f).is_ok(), "analysis alone passes (a plain endIdx loop)");
     assert!(
-        streaming::validate_streamable(&f, &lookup()).is_err(),
+        streaming::validate_streamable(&f, lookup()).is_err(),
         "the saved absolute cursor must reject at transition build"
     );
 }
@@ -709,7 +709,7 @@ fn ma_derives_dispatch_plan() {
     // set-equality check passes when both sides lose the stream together).
     assert!(f.streaming, "ma.yaml must carry the stream flag");
     let lk = lookup();
-    let plan = streaming::validate_streamable(&f, &lk).expect("MA derives a plan");
+    let plan = streaming::validate_streamable(&f, lk).expect("MA derives a plan");
     let streaming::StreamPlan::Dispatch(dp) = plan else {
         panic!("MA must derive a dispatch plan, not a loop model");
     };
@@ -761,7 +761,7 @@ fn ma_derives_dispatch_plan() {
 #[test]
 fn dispatch_rejects_null_discard_of_non_nullable_output() {
     use ta_codegen_lib::streaming::{CalleeLookup, CalleeSig};
-    struct FamaNotNullable(ta_codegen_lib::registry::Registry);
+    struct FamaNotNullable(&'static ta_codegen_lib::registry::Registry);
     impl CalleeLookup for FamaNotNullable {
         fn callee(&self, name: &str) -> Option<CalleeSig> {
             let mut sig = self.0.callee(name)?;
@@ -779,7 +779,7 @@ fn dispatch_rejects_null_discard_of_non_nullable_output() {
     );
     // Sanity: with the real (nullable) FAMA the same dispatch DOES stream.
     assert!(
-        streaming::validate_streamable(&f, &lookup()).is_ok(),
+        streaming::validate_streamable(&f, lookup()).is_ok(),
         "MA streams with mama's real nullable FAMA"
     );
 }
@@ -834,7 +834,7 @@ fn dispatch_hard_errors_when_flagged_delegation_hides_behind_unflagged_call() {
     }
     let mut f = load("ma");
     let real = lookup();
-    let lk = TrimaUnflagged(&real);
+    let lk = TrimaUnflagged(real);
     fn visit(stmts: &mut [Statement]) {
         for s in stmts {
             if let Statement::Switch { cases, .. } = s {
@@ -892,7 +892,7 @@ fn ma_dispatch_admits_the_empty_range_guard() {
         "ma.c must carry a top-level `ma_lookback(..) > endIdx` guard"
     );
     assert!(
-        streaming::validate_streamable(&f, &lookup()).is_ok(),
+        streaming::validate_streamable(&f, lookup()).is_ok(),
         "the guard must not cost ma its dispatch plan"
     );
 }
@@ -991,7 +991,7 @@ fn dispatch_rejects_a_near_miss_empty_range_guard() {
         let mut f = load("ma");
         let idx = empty_range_guard_idx(&f).expect("ma carries the guard");
         mutate(&mut f.body[idx]);
-        let err = streaming::analyze_dispatch(&f, &lookup()).unwrap_err();
+        let err = streaming::analyze_dispatch(&f, lookup()).unwrap_err();
         assert!(
             matches!(err, StreamError::Unsupported(ref m)
                 if m.contains("unrecognized top-level statement")),
@@ -1002,7 +1002,7 @@ fn dispatch_rejects_a_near_miss_empty_range_guard() {
     // Control: unmutated, the same body analyzes.
     let f = load("ma");
     assert!(
-        streaming::analyze_dispatch(&f, &lookup()).is_ok(),
+        streaming::analyze_dispatch(&f, lookup()).is_ok(),
         "the unmutated dispatch body must still analyze"
     );
 
@@ -1012,7 +1012,7 @@ fn dispatch_rejects_a_near_miss_empty_range_guard() {
     let idx = empty_range_guard_idx(&f).expect("ma carries the guard");
     let dup = f.body[idx].clone();
     f.body.insert(idx, dup);
-    let err = streaming::analyze_dispatch(&f, &lookup()).unwrap_err();
+    let err = streaming::analyze_dispatch(&f, lookup()).unwrap_err();
     assert!(
         matches!(err, StreamError::Unsupported(ref m)
             if m.contains("unrecognized top-level statement")),
@@ -1031,7 +1031,7 @@ fn dispatch_rejects_a_near_miss_empty_range_guard() {
         .position(|s| matches!(s, Statement::Switch { .. }))
         .expect("ma's dispatch switch");
     f.body.insert(sw + 1, guard);
-    let err = streaming::analyze_dispatch(&f, &lookup()).unwrap_err();
+    let err = streaming::analyze_dispatch(&f, lookup()).unwrap_err();
     assert!(
         matches!(err, StreamError::Unsupported(ref m) if m.contains("after the switch")),
         "a guard behind the switch must be a hard error, got: {err}"
@@ -1100,7 +1100,7 @@ fn stoch_derives_composed_plan() {
     let f = load("stoch");
     assert!(f.streaming, "stoch.yaml must carry the stream flag");
     let lk = lookup();
-    let plan = streaming::validate_streamable(&f, &lk).expect("STOCH derives a plan");
+    let plan = streaming::validate_streamable(&f, lk).expect("STOCH derives a plan");
     let streaming::StreamPlan::Composed(cp) = plan else {
         panic!("STOCH must derive a composed plan");
     };
@@ -1140,7 +1140,7 @@ fn stoch_derives_composed_plan() {
 fn stochf_derives_composed_plan() {
     let f = load("stochf");
     assert!(f.streaming, "stochf.yaml must carry the stream flag");
-    let plan = streaming::validate_streamable(&f, &lookup()).expect("STOCHF derives a plan");
+    let plan = streaming::validate_streamable(&f, lookup()).expect("STOCHF derives a plan");
     let streaming::StreamPlan::Composed(cp) = plan else {
         panic!("STOCHF must derive a composed plan");
     };
@@ -1160,7 +1160,7 @@ fn bbands_derives_composed_plan_after_sma_fusion() {
     // composition.
     let f = load("bbands");
     assert!(f.streaming, "bbands.yaml must carry the stream flag");
-    let plan = streaming::validate_streamable(&f, &lookup()).expect("BBANDS derives a plan");
+    let plan = streaming::validate_streamable(&f, lookup()).expect("BBANDS derives a plan");
     let streaming::StreamPlan::Composed(cp) = plan else {
         panic!("BBANDS must derive a composed plan");
     };
@@ -1204,7 +1204,7 @@ fn stochrsi_derives_loopless_composed_plan() {
     // rsi(inReal) -> tempRSIBuffer, then stochf(tempRSIBuffer x3) -> outFastK/D.
     let f = load("stochrsi");
     assert!(f.streaming, "stochrsi.yaml must carry the stream flag");
-    let plan = streaming::validate_streamable(&f, &lookup()).expect("STOCHRSI derives a plan");
+    let plan = streaming::validate_streamable(&f, lookup()).expect("STOCHRSI derives a plan");
     let streaming::StreamPlan::Composed(cp) = plan else {
         panic!("STOCHRSI must derive a composed plan");
     };
@@ -1233,7 +1233,7 @@ fn stddev_derives_loopless_composed_plan() {
     // combine map (optInNbDev != 1.0 scales; otherwise plain sqrt).
     let f = load("stddev");
     assert!(f.streaming, "stddev.yaml must carry the stream flag");
-    let plan = streaming::validate_streamable(&f, &lookup()).expect("STDDEV derives a plan");
+    let plan = streaming::validate_streamable(&f, lookup()).expect("STDDEV derives a plan");
     let streaming::StreamPlan::Composed(cp) = plan else {
         panic!("STDDEV must derive a composed plan");
     };
@@ -1309,7 +1309,7 @@ TA_RetCode apo( int startIdx, int endIdx,
 }
 "#;
     let f = load_with_source("apo", src);
-    let err = streaming::analyze_composed(&f, &lookup()).unwrap_err();
+    let err = streaming::analyze_composed(&f, lookup()).unwrap_err();
     assert!(
         matches!(err, StreamError::Unsupported(ref m)
             if m.contains("success-guard") && m.contains("flatten")),
@@ -1360,7 +1360,7 @@ TA_RetCode apo( int startIdx, int endIdx,
 }
 "#;
     let f = load_with_source("apo", src);
-    let err = streaming::analyze_composed(&f, &lookup()).unwrap_err();
+    let err = streaming::analyze_composed(&f, lookup()).unwrap_err();
     assert!(
         matches!(err, StreamError::Unsupported(ref m) if m.contains("multi-cursor")),
         "G1 must guide to the single-cursor begIdx-offset form, got: {err}"
@@ -1374,7 +1374,7 @@ fn apo_derives_composed_plan_with_same_bar_offset_map() {
     // `offset = fastNb - *outNBElement` is proven a same-bar element-count
     // difference (both sub-calls share endIdx).
     let f = load("apo");
-    let plan = streaming::validate_streamable(&f, &lookup()).expect("APO derives a plan");
+    let plan = streaming::validate_streamable(&f, lookup()).expect("APO derives a plan");
     let streaming::StreamPlan::Composed(cp) = plan else {
         panic!("APO must derive a composed plan");
     };
@@ -1401,7 +1401,7 @@ fn ppo_derives_composed_plan_with_division_map() {
     // PPO is APO plus the TA_IS_ZERO-guarded division; the combine map still
     // reads tempBuffer[i + offset] at the same bar and carries tempReal.
     let f = load("ppo");
-    let plan = streaming::validate_streamable(&f, &lookup()).expect("PPO derives a plan");
+    let plan = streaming::validate_streamable(&f, lookup()).expect("PPO derives a plan");
     let streaming::StreamPlan::Composed(cp) = plan else {
         panic!("PPO must derive a composed plan");
     };
@@ -1425,7 +1425,7 @@ fn ppo_variant(from: &str, to: &str) -> FuncDef {
 }
 
 fn assert_refused(f: &FuncDef, needle: &str) {
-    match streaming::analyze_composed(f, &lookup()) {
+    match streaming::analyze_composed(f, lookup()) {
         Err(StreamError::Unsupported(m)) if m.contains(needle) => {}
         other => panic!("expected a refusal naming {needle:?}, got {other:?}"),
     }
@@ -1486,7 +1486,7 @@ fn adxr_derives_composed_plan_with_sub_lag_ring() {
     // ADX from (period-1) bars ago. That self-lag over the sub-output is a lag
     // ring (a param depth), NOT a same-bar combine.
     let f = load("adxr");
-    let plan = streaming::validate_streamable(&f, &lookup()).expect("ADXR derives a plan");
+    let plan = streaming::validate_streamable(&f, lookup()).expect("ADXR derives a plan");
     let streaming::StreamPlan::Composed(cp) = plan else {
         panic!("ADXR must derive a composed plan");
     };
@@ -1549,7 +1549,7 @@ TA_RetCode adxr( int startIdx, int endIdx,
 }
 "#;
     let f = load_with_source("adxr", src);
-    let err = streaming::analyze_composed(&f, &lookup()).unwrap_err();
+    let err = streaming::analyze_composed(&f, lookup()).unwrap_err();
     assert!(
         matches!(err, StreamError::Unsupported(ref m) if m.contains("same-bar shift")),
         "a data-dependent lag must be refused (not sized into a fixed ring), got: {err}"
@@ -1601,7 +1601,7 @@ TA_RetCode apo( int startIdx, int endIdx,
 }
 "#;
     let f = load_with_source("apo", src);
-    let err = streaming::analyze_composed(&f, &lookup()).unwrap_err();
+    let err = streaming::analyze_composed(&f, lookup()).unwrap_err();
     assert!(
         matches!(err, StreamError::Unsupported(ref m)
             if m.contains("element-count difference") && m.contains("same-bar")),
@@ -1656,7 +1656,7 @@ TA_RetCode apo( int startIdx, int endIdx,
 }
 "#;
     let f = load_with_source("apo", src);
-    let err = streaming::analyze_composed(&f, &lookup()).unwrap_err();
+    let err = streaming::analyze_composed(&f, lookup()).unwrap_err();
     assert!(
         matches!(err, StreamError::Unsupported(ref m) if m.contains("same-bar")),
         "combine over sub-calls with different endIdx must be refused as not same-bar, got: {err}"
@@ -1706,7 +1706,7 @@ fn count_receiver_rewritten_after_its_series_rejected() {
    for( i=0; i < (int)*outNBElement; i++ )
       outReal[i] = tempBuffer[i+offset] - outReal[i];",
     );
-    let err = streaming::analyze_composed(&f, &lookup()).unwrap_err();
+    let err = streaming::analyze_composed(&f, lookup()).unwrap_err();
     assert!(
         matches!(err, StreamError::Unsupported(ref m) if m.contains("same-bar")),
         "a count receiver rewritten by a later sub-call must not vouch for the first, got: {err}"
@@ -1729,7 +1729,7 @@ fn endidx_argument_its_own_call_rewrites_rejected() {
    for( i=0; i < (int)*outNBElement; i++ )
       outReal[i] = tempBuffer2[i+offset] - outReal[i];",
     );
-    let err = streaming::analyze_composed(&f, &lookup()).unwrap_err();
+    let err = streaming::analyze_composed(&f, lookup()).unwrap_err();
     assert!(
         matches!(err, StreamError::Unsupported(ref m) if m.contains("same-bar")),
         "an endIdx argument its own call rewrites must not match a later spelling, got: {err}"
@@ -1819,7 +1819,7 @@ fn end_aligned_with(edits: &[(&str, &str)]) -> FuncDef {
 }
 
 fn assert_not_same_bar(f: &FuncDef, why: &str) {
-    match streaming::analyze_composed(f, &lookup()) {
+    match streaming::analyze_composed(f, lookup()) {
         Err(StreamError::Unsupported(m)) if m.contains("same-bar") => {}
         Err(e) => panic!("{why}: refused for another reason: {e}"),
         Ok(_) => panic!("{why}: accepted"),
@@ -1829,7 +1829,7 @@ fn assert_not_same_bar(f: &FuncDef, why: &str) {
 #[test]
 fn end_aligned_sub_outputs_prove_offset_reads_same_bar() {
     let f = end_aligned_with(&[]);
-    let plan = streaming::validate_streamable(&f, &lookup()).expect("the fixture derives a plan");
+    let plan = streaming::validate_streamable(&f, lookup()).expect("the fixture derives a plan");
     let streaming::StreamPlan::Composed(cp) = plan else {
         panic!("the fixture must derive a composed plan");
     };
@@ -1958,7 +1958,7 @@ fn composed_sub_call_destination_funcs() {
         // base in the languages it claims.
         let writes_own_output = ir::ALL_LANGS.iter().any(|&lang| {
             let resolved = f.resolved_for(lang);
-            let Ok(streaming::StreamPlan::Composed(cp)) = streaming::validate_streamable(&resolved, &lk)
+            let Ok(streaming::StreamPlan::Composed(cp)) = streaming::validate_streamable(&resolved, lk)
             else {
                 return false;
             };
@@ -2065,12 +2065,12 @@ fn nan_inf_callee_is_refused() {
 
     // Control: as shipped, MA is finite-output and BBANDS composes it happily.
     assert!(
-        streaming::validate_streamable(&bbands, &reg).is_ok(),
+        streaming::validate_streamable(&bbands, reg).is_ok(),
         "BBANDS must derive a plan against the unmodified corpus, or the probe below \
          proves nothing"
     );
 
-    let flagged = FlagOneCallee { inner: &reg, flagged: "ma" };
+    let flagged = FlagOneCallee { inner: reg, flagged: "ma" };
     let err = streaming::validate_streamable(&bbands, &flagged)
         .expect_err("BBANDS composes MA, so a nan_inf_output MA must be refused");
     assert!(
@@ -2104,7 +2104,7 @@ fn nan_inf_callee_is_refused() {
     );
 
     let ma = load("ma");
-    let flagged_sma = FlagOneCallee { inner: &reg, flagged: "sma" };
+    let flagged_sma = FlagOneCallee { inner: reg, flagged: "sma" };
     let err = streaming::validate_streamable(&ma, &flagged_sma)
         .expect_err("MA dispatches to SMA, so a nan_inf_output SMA must be refused");
     assert!(
@@ -2112,6 +2112,6 @@ fn nan_inf_callee_is_refused() {
         "the dispatch arm must name the flag, the callee and the function: {err}"
     );
     // Control for both: unflagged, they derive plans as usual.
-    assert!(streaming::validate_streamable(&mavp, &reg).is_ok(), "MAVP plans normally");
-    assert!(streaming::validate_streamable(&ma, &reg).is_ok(), "MA plans normally");
+    assert!(streaming::validate_streamable(&mavp, reg).is_ok(), "MAVP plans normally");
+    assert!(streaming::validate_streamable(&ma, reg).is_ok(), "MA plans normally");
 }

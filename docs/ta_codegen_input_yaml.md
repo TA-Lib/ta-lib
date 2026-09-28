@@ -204,7 +204,7 @@ and requires lookback 0 plus a bit-exact copy, on the reference series and on tw
 series built to break the naive forms, through the batch, `TA_S_`, streaming and
 cross-language surfaces.
 
-Membership is gated from both ends in `ta_codegen/generator/tests/period1_suite.rs`:
+Membership is gated from both ends in `ta_codegen/generator/tests/all/period1_suite.rs`:
 
 - Every `MAType` member that resolves to a function with a period must carry it.
   A moving average that does not copy its input at a period of 1 is not a moving

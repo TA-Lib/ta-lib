@@ -6,9 +6,9 @@
 //! check: the transition build panics on a cursor/startIdx leak, so a clean
 //! render proves the analyzer normalizations fired.
 
+use crate::common;
 use std::collections::{BTreeSet, HashMap};
 use std::path::PathBuf;
-use ta_codegen_lib::helper_registry::HelperRegistry;
 use ta_codegen_lib::registry::Registry;
 use ta_codegen_lib::{backends, ir, parser};
 
@@ -49,9 +49,9 @@ fn streaming_indicators() -> Vec<String> {
 fn rust_stream_section(name: &str) -> String {
     let (func, enums) = load_indicator(name);
     assert!(func.streaming, "{name}: yaml must carry the stream flag");
-    let registry = Registry::from_dir(&input_dir());
-    let helpers = HelperRegistry::from_dir(&input_dir());
-    let full = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
+    let registry = common::make_registry();
+    let helpers = common::make_helpers();
+    let full = backends::rust_lang::generate(&func, &enums, registry, helpers);
     let start = full
         .find("/**** Streaming API *****/")
         .unwrap_or_else(|| panic!("{name}: stream section missing"));

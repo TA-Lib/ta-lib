@@ -26,10 +26,9 @@
 //! has: a range READER whose two out-parameters can be paired the wrong way
 //! round.
 
+use crate::common;
 use std::collections::HashMap;
 use std::path::PathBuf;
-use ta_codegen_lib::helper_registry::HelperRegistry;
-use ta_codegen_lib::registry::Registry;
 use ta_codegen_lib::streaming;
 use ta_codegen_lib::{backends, ir, parser};
 
@@ -71,13 +70,13 @@ fn streaming_funcs() -> Vec<String> {
 
 fn section(name: &str, lang: &str) -> String {
     let (func, enums) = load(name);
-    let registry = Registry::from_dir(&input_dir());
-    let helpers = HelperRegistry::from_dir(&input_dir());
+    let registry = common::make_registry();
+    let helpers = common::make_helpers();
     let full = match lang {
-        "c" => backends::c_stream::generate(&func, &enums, &registry, &helpers),
-        "rust" => backends::rust_lang::generate(&func, &enums, &registry, &helpers),
-        "java" => backends::java::generate(&func, &enums, &registry, &helpers),
-        "csharp" => backends::csharp::generate(&func, &enums, &registry, &helpers),
+        "c" => backends::c_stream::generate(&func, &enums, registry, helpers),
+        "rust" => backends::rust_lang::generate(&func, &enums, registry, helpers),
+        "java" => backends::java::generate(&func, &enums, registry, helpers),
+        "csharp" => backends::csharp::generate(&func, &enums, registry, helpers),
         other => panic!("unknown backend {other}"),
     };
     match full.find("/**** Streaming API *****/") {

@@ -14,14 +14,13 @@
 //! `lookbackTotal + 1` and drives a per-bar `TA_MA_Update` loop). Both already
 //! hand-write their two bodies and never used the shared open machinery.
 
+use crate::common;
 use std::collections::HashMap;
 use std::path::Path;
 
 use ta_codegen_lib::backends::c_stream;
-use ta_codegen_lib::helper_registry::HelperRegistry;
 use ta_codegen_lib::ir;
 use ta_codegen_lib::parser;
-use ta_codegen_lib::registry::Registry;
 
 fn input_dir() -> std::path::PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("../input")
@@ -39,9 +38,9 @@ fn load(name: &str) -> (ir::FuncDef, HashMap<String, ir::EnumDef>) {
 /// Generate the C streaming section for one function, exactly as the C backend does.
 fn stream_c(name: &str) -> String {
     let (func, enums) = load(name);
-    let registry = Registry::from_dir(&input_dir());
-    let helpers = HelperRegistry::from_dir(&input_dir());
-    c_stream::generate(&func, &enums, &registry, &helpers)
+    let registry = common::make_registry();
+    let helpers = common::make_helpers();
+    c_stream::generate(&func, &enums, registry, helpers)
 }
 
 /// The body of the first definition whose signature line matches `needle`,

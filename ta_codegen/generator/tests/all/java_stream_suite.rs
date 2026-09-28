@@ -8,10 +8,9 @@
 //! check: the transition build panics on a cursor/startIdx leak, so a clean
 //! render proves the analyzer normalizations fired.
 
+use crate::common;
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::path::PathBuf;
-use ta_codegen_lib::helper_registry::HelperRegistry;
-use ta_codegen_lib::registry::Registry;
 use ta_codegen_lib::{backends, ir, parser};
 
 fn input_dir() -> PathBuf {
@@ -51,9 +50,9 @@ fn streaming_indicators() -> Vec<String> {
 fn java_stream_section(name: &str) -> String {
     let (func, enums) = load_indicator(name);
     assert!(func.streaming, "{name}: yaml must carry the stream flag");
-    let registry = Registry::from_dir(&input_dir());
-    let helpers = HelperRegistry::from_dir(&input_dir());
-    let full = backends::java::generate(&func, &enums, &registry, &helpers);
+    let registry = common::make_registry();
+    let helpers = common::make_helpers();
+    let full = backends::java::generate(&func, &enums, registry, helpers);
     let start = full
         .find("/**** Streaming API *****/")
         .unwrap_or_else(|| panic!("{name}: stream section missing"));
@@ -449,8 +448,8 @@ fn test_java_composed_sub_open_elides_only_whole_array_copies() {
     // Sweep: no whole-array copy of an own input survives anywhere, and the
     // genuine sub-ranges are still there (a blanket elision would pass the
     // first half alone).
-    let registry = Registry::from_dir(&input_dir());
-    let helpers = HelperRegistry::from_dir(&input_dir());
+    let registry = common::make_registry();
+    let helpers = common::make_helpers();
     let enums = parser::enums::load_enums(&input_dir().join("enums.yaml"));
     let mut retained = 0usize;
     for entry in std::fs::read_dir(input_dir()).expect("input dir") {
@@ -468,7 +467,7 @@ fn test_java_composed_sub_open_elides_only_whole_array_copies() {
         }
         let parsed = parser::c_source::parse_c_source(&dir.join(format!("{name}.c")));
         parser::c_source::wire_parsed_source(&mut func, &parsed);
-        let out = backends::java::generate(&func, &enums, &registry, &helpers);
+        let out = backends::java::generate(&func, &enums, registry, helpers);
         for input in ta_codegen_lib::streaming::input_array_names(&func) {
             assert!(
                 !out.contains(&format!("copyOfRange({input}, 0, (endIdx) + 1)")),
@@ -516,8 +515,8 @@ fn test_java_adxr_sub_lag_ring() {
 /// sweep and both sides of a floor together.
 #[test]
 fn test_java_stream_emit_ratchet() {
-    let registry = Registry::from_dir(&input_dir());
-    let helpers = HelperRegistry::from_dir(&input_dir());
+    let registry = common::make_registry();
+    let helpers = common::make_helpers();
     let enums = parser::enums::load_enums(&input_dir().join("enums.yaml"));
     let mut total = 0usize;
     for name in streaming_indicators() {
@@ -526,7 +525,7 @@ fn test_java_stream_emit_ratchet() {
         total += 1;
         let parsed = parser::c_source::parse_c_source(&dir.join(format!("{name}.c")));
         parser::c_source::wire_parsed_source(&mut func, &parsed);
-        let out = backends::java::generate(&func, &enums, &registry, &helpers);
+        let out = backends::java::generate(&func, &enums, registry, helpers);
         assert!(
             out.contains("/**** Streaming API *****/"),
             "{name}: declared streamable but no Java stream section"
@@ -916,9 +915,9 @@ fn no_java_peek_copies_the_handle() {
     let mut offenders: Vec<String> = Vec::new();
     for name in streaming_indicators() {
         let (func, enums) = load_indicator(&name);
-        let registry = Registry::from_dir(&input_dir());
-        let helpers = HelperRegistry::from_dir(&input_dir());
-        let batch = backends::java::generate(&func, &enums, &registry, &helpers);
+        let registry = common::make_registry();
+        let helpers = common::make_helpers();
+        let batch = backends::java::generate(&func, &enums, registry, helpers);
         let s = java_stream_section(&name);
         let Some(at) = s.find(" peek( ") else { continue };
         let start = s[..at].rfind("      public ").expect("a peek signature");

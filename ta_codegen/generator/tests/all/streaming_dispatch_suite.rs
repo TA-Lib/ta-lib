@@ -2,8 +2,7 @@
 //! transform state, CIRCBUF plumbing) and scratch-buffer election (#146).
 //! Split out of the former `backend_suite.rs`.
 
-#[path = "common/mod.rs"]
-mod common;
+use crate::common;
 
 use common::{
     discover_indicators, generate_all, load_indicator, load_indicator_with_source, load_synth,
@@ -31,7 +30,7 @@ fn test_c_ma_dispatch_stream_section() {
     func.streaming = true; // the YAML flag flips with this milestone
     let registry = make_registry();
     let helpers = HelperRegistry::empty();
-    let c = backends::c::generate(&func, &enums, &registry, &helpers);
+    let c = backends::c::generate(&func, &enums, registry, &helpers);
 
     // Handle: params + a single tagged sub pointer, no StepImpl.
     assert!(c.contains("struct TA_MA_Stream {"), "state struct");
@@ -44,7 +43,7 @@ fn test_c_ma_dispatch_stream_section() {
     {
         let (mut sma, sma_enums) = load_indicator("sma");
         sma.streaming = true;
-        let sma_c = backends::c::generate(&sma, &sma_enums, &registry, &helpers);
+        let sma_c = backends::c::generate(&sma, &sma_enums, registry, &helpers);
         assert!(
             sma_c.contains("TA_SMA_StepImpl( struct"),
             "control: a non-dispatch tier still spells its transition fn _StepImpl"
@@ -181,8 +180,8 @@ fn test_a_stored_bool_ternary_keeps_its_int_form() {
         compound: true,
     });
     for (lang, text) in [
-        ("Java", backends::java::generate(&stored, &enums, &registry, &helpers)),
-        ("C#", backends::csharp::generate(&stored, &enums, &registry, &helpers)),
+        ("Java", backends::java::generate(&stored, &enums, registry, &helpers)),
+        ("C#", backends::csharp::generate(&stored, &enums, registry, &helpers)),
     ] {
         assert!(
             text.contains(&format!("{out}[outIdx] = (today > 0) ? 1 : 0;")),
@@ -216,8 +215,8 @@ fn test_a_stored_bool_ternary_keeps_its_int_form() {
         cond_comments: vec![],
     });
     for (lang, text) in [
-        ("Java", backends::java::generate(&tested, &enums, &registry, &helpers)),
-        ("C#", backends::csharp::generate(&tested, &enums, &registry, &helpers)),
+        ("Java", backends::java::generate(&tested, &enums, registry, &helpers)),
+        ("C#", backends::csharp::generate(&tested, &enums, registry, &helpers)),
     ] {
         assert!(
             text.contains("if( today > 0 )"),
@@ -247,8 +246,8 @@ fn test_a_nullable_output_may_not_carry_the_cursor() {
 
     // Control: the shipped shape renders. Without this the refusals below would
     // pass against a generator that refused MAMA outright.
-    let _ = backends::c::generate(&func, &enums, &registry, &helpers);
-    let _ = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
+    let _ = backends::c::generate(&func, &enums, registry, &helpers);
+    let _ = backends::rust_lang::generate(&func, &enums, registry, &helpers);
 
     // The forbidden store, built directly: `outFAMA[outIdx++] = fama;` where
     // outFAMA is the declinable output.
@@ -274,7 +273,7 @@ fn test_a_nullable_output_may_not_carry_the_cursor() {
         let moved = moved.clone();
         let enums = enums.clone();
         let err = std::panic::catch_unwind(move || {
-            emit(&moved, &enums, &make_registry(), &HelperRegistry::empty())
+            emit(&moved, &enums, make_registry(), &HelperRegistry::empty())
         })
         .expect_err("a nullable output carrying the cursor must be refused");
         let msg = panic_message(&err);
@@ -293,7 +292,7 @@ fn test_a_nullable_output_may_not_carry_the_cursor() {
     }
     let e2 = enums.clone();
     let err = std::panic::catch_unwind(move || {
-        backends::c::generate(&all_nullable, &e2, &make_registry(), &HelperRegistry::empty())
+        backends::c::generate(&all_nullable, &e2, make_registry(), &HelperRegistry::empty())
     })
     .expect_err("every output declinable leaves the cursor no store to ride");
     assert!(
@@ -419,10 +418,10 @@ fn cross_typed_output_pairs_are_compared_where_the_language_can_express_it() {
     let java_inert = format!("(Object){a} == (Object){b}");
     let render = |f: &ir::FuncDef| {
         [
-            backends::c::generate(f, &enums, &registry, &helpers),
-            backends::java::generate(f, &enums, &registry, &helpers),
-            backends::rust_lang::generate(f, &enums, &registry, &helpers),
-            backends::csharp::generate(f, &enums, &registry, &helpers),
+            backends::c::generate(f, &enums, registry, helpers),
+            backends::java::generate(f, &enums, registry, helpers),
+            backends::rust_lang::generate(f, &enums, registry, helpers),
+            backends::csharp::generate(f, &enums, registry, helpers),
         ]
     };
     let langs = ["C", "Java", "Rust", "C#"];
@@ -500,7 +499,7 @@ fn test_mama_nullable_fama_is_declinable_in_every_backend() {
 
     // Rust: `Option<&mut [f64]>` — the one backend that can spell "declined"
     // apart from "empty" and does, which leaves C# alone in overloading it.
-    let rust = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
+    let rust = backends::rust_lang::generate(&func, &enums, registry, &helpers);
     assert!(
         rust.contains("outFAMA: Option<&mut [f64]>"),
         "Rust declines a nullable output with None, not an empty slice"
@@ -518,7 +517,7 @@ fn test_mama_nullable_fama_is_declinable_in_every_backend() {
 
     // Java: `null`, and the length check has to be skipped for it and kept for
     // outMAMA — the half a caller actually sees.
-    let java = backends::java::generate(&func, &enums, &registry, &helpers);
+    let java = backends::java::generate(&func, &enums, registry, &helpers);
     assert!(
         java.contains(
             "if( outFAMA != null ) requireLength(\"MAMA\", \"outFAMA\", outFAMA, guardOutLen);"
@@ -541,7 +540,7 @@ fn test_mama_nullable_fama_is_declinable_in_every_backend() {
 
     // C#: an empty span IS the declination — a `Span<T>` is a ref struct and a
     // null array converts to an empty one, so there is nothing else to use.
-    let csharp = backends::csharp::generate(&func, &enums, &registry, &helpers);
+    let csharp = backends::csharp::generate(&func, &enums, registry, &helpers);
     assert!(
         csharp.contains(
             "if( !outFAMA.IsEmpty ) RequireLength(\"MAMA\", \"outFAMA\", outFAMA.Length, guardOutLen);"
@@ -561,11 +560,11 @@ fn test_mama_nullable_fama_is_declinable_in_every_backend() {
     // And MA's cross-call declines rather than allocating a buffer to throw away.
     let (ma, ma_enums) = load_indicator("ma");
     for (lang, out, want) in [
-        ("Rust", backends::rust_lang::generate(&ma, &ma_enums, &registry, &helpers),
+        ("Rust", backends::rust_lang::generate(&ma, &ma_enums, registry, &helpers),
          "mama(startIdx, endIdx, inReal, 0.5, 0.05, outReal, None)"),
-        ("Java", backends::java::generate(&ma, &ma_enums, &registry, &helpers),
+        ("Java", backends::java::generate(&ma, &ma_enums, registry, &helpers),
          "mama(startIdx, endIdx, inReal, 0.5, 0.05, outReal, null)"),
-        ("C#", backends::csharp::generate(&ma, &ma_enums, &registry, &helpers),
+        ("C#", backends::csharp::generate(&ma, &ma_enums, registry, &helpers),
          "Mama(startIdx, endIdx, inReal, 0.5, 0.05, outReal, default)"),
     ] {
         assert!(out.contains(want), "{lang}: MA's MAMA arm must decline FAMA ({want})");
@@ -677,7 +676,7 @@ fn test_mama_nullable_fama_is_declinable_at_the_opener_in_every_backend() {
     let registry = make_registry();
     let helpers = HelperRegistry::empty();
 
-    let rust = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
+    let rust = backends::rust_lang::generate(&func, &enums, registry, &helpers);
     assert!(
         rust.contains("outMAMA: &mut [f64], outFAMA: Option<&mut [f64]>,")
             && rust.contains("outMAMA: &mut [f64], mut outFAMA: Option<&mut [f64]>, outStride: usize,"),
@@ -692,7 +691,7 @@ fn test_mama_nullable_fama_is_declinable_at_the_opener_in_every_backend() {
         "Rust: the scalar open reports every output, so it never declines one"
     );
 
-    let java = backends::java::generate(&func, &enums, &registry, &helpers);
+    let java = backends::java::generate(&func, &enums, registry, &helpers);
     assert!(
         java.contains("if( outFAMA != null ) requireLength(\"MAMA openAndFill\", \"outFAMA\", outFAMA, guardOutLen);"),
         "Java: S5 bounds a nullable output only where it was supplied"
@@ -706,7 +705,7 @@ fn test_mama_nullable_fama_is_declinable_at_the_opener_in_every_backend() {
         "Java: reading a declined output back is the fault this rule creates"
     );
 
-    let csharp = backends::csharp::generate(&func, &enums, &registry, &helpers);
+    let csharp = backends::csharp::generate(&func, &enums, registry, &helpers);
     assert!(
         csharp.contains("if( !outFAMA.IsEmpty ) RequireFillLength(\"MAMA\", \"openAndFill\", \"outFAMA\", outFAMA.Length, guardOutLen);"),
         "C#: S5 bounds a nullable output only where it was supplied"
@@ -720,7 +719,7 @@ fn test_mama_nullable_fama_is_declinable_at_the_opener_in_every_backend() {
         "C#: reading a declined output back is the fault this rule creates"
     );
 
-    let c = backends::c::generate(&func, &enums, &registry, &helpers);
+    let c = backends::c::generate(&func, &enums, registry, &helpers);
     let at_open = c
         .find("TA_RetCode TA_MAMA_OpenImpl(")
         .expect("C: the streaming transcription");
@@ -755,11 +754,11 @@ fn test_mama_nullable_fama_is_declinable_at_the_opener_in_every_backend() {
 
     // MA's streaming arm declines instead of allocating a throwaway.
     for (lang, out, want, gone) in [
-        ("Rust", backends::rust_lang::generate(&ma, &ma_enums, &registry, &helpers),
+        ("Rust", backends::rust_lang::generate(&ma, &ma_enums, registry, &helpers),
          "outReal, None)", "vec![0.0_f64; inReal.len()][..]"),
-        ("Java", backends::java::generate(&ma, &ma_enums, &registry, &helpers),
+        ("Java", backends::java::generate(&ma, &ma_enums, registry, &helpers),
          "mamaOpenAndFill(inReal, 0.5, 0.05, outReal, null)", "new double[historyLen])"),
-        ("C#", backends::csharp::generate(&ma, &ma_enums, &registry, &helpers),
+        ("C#", backends::csharp::generate(&ma, &ma_enums, registry, &helpers),
          "MamaOpenAndFill(inReal, 0.5, 0.05, outReal, default)", "new double[historyLen])"),
     ] {
         assert!(out.contains(want), "{lang}: MA's streaming MAMA arm must decline FAMA ({want})");
@@ -824,7 +823,7 @@ fn test_a_nullable_output_is_declinable_at_update_in_c() {
         ),
     ] {
         let (func, enums) = load;
-        let c = backends::c::generate(&func, &enums, &registry, &helpers);
+        let c = backends::c::generate(&func, &enums, registry, &helpers);
         let upd = method(
             &c,
             &format!("TA_RetCode TA_{name}_Update( TA_{name}_Stream *stream,"),
@@ -856,7 +855,7 @@ fn test_synth10_two_nullable_outputs_are_declinable_at_the_opener() {
     let registry = make_registry();
     let helpers = HelperRegistry::empty();
 
-    let rust = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
+    let rust = backends::rust_lang::generate(&func, &enums, registry, &helpers);
     assert!(
         rust.contains("&self, inReal: &[f64], outFirstOptional: Option<&mut [f64]>, outRequired: &mut [f64], outSecondOptional: Option<&mut [f64]>,"),
         "Rust: each nullable output takes its own Option, the required one stays a slice"
@@ -868,9 +867,9 @@ fn test_synth10_two_nullable_outputs_are_declinable_at_the_opener() {
         );
     }
 
-    let java = backends::java::generate(&func, &enums, &registry, &helpers);
-    let csharp = backends::csharp::generate(&func, &enums, &registry, &helpers);
-    let c = backends::c::generate(&func, &enums, &registry, &helpers);
+    let java = backends::java::generate(&func, &enums, registry, &helpers);
+    let csharp = backends::csharp::generate(&func, &enums, registry, &helpers);
+    let c = backends::c::generate(&func, &enums, registry, &helpers);
 
     // The capacity bound is per output and conditional only on the declinable
     // ones — one blanket branch over "any output declined" would pass every
@@ -936,7 +935,7 @@ fn test_c_mama_nullable_fama_batch() {
 
     let registry = make_registry();
     let helpers = HelperRegistry::empty();
-    let c = backends::c::generate(&func, &enums, &registry, &helpers);
+    let c = backends::c::generate(&func, &enums, registry, &helpers);
     // Guarded validation: outMAMA required, outFAMA optional.
     assert!(c.contains("if( !outMAMA )"), "outMAMA still NULL-checked");
     assert!(!c.contains("if( !outFAMA )"), "outFAMA NULL-check skipped (nullable)");
@@ -953,7 +952,7 @@ fn test_c_mama_nullable_fama_batch() {
 
     // MA's batch arm: clean NULL delegation, no unchecked discard buffer.
     let (ma, ma_enums) = load_indicator("ma");
-    let mac = backends::c::generate(&ma, &ma_enums, &registry, &helpers);
+    let mac = backends::c::generate(&ma, &ma_enums, registry, &helpers);
     assert!(
         mac.contains(
             "TA_MAMA(startIdx,endIdx,inReal,0.5,0.05,outBegIdx,outNBElement,outReal,NULL)"
@@ -981,7 +980,7 @@ fn test_dual_mode_identity_guard_is_hoisted_above_the_predicate() {
     func.streaming = true;
     let registry = make_registry();
     let helpers = HelperRegistry::empty();
-    let c = backends::c::generate(&func, &enums, &registry, &helpers);
+    let c = backends::c::generate(&func, &enums, registry, &helpers);
 
     let step = c
         .split("static void TA_HMA_StepImpl(")
@@ -1015,7 +1014,7 @@ fn test_c_minus_dm_dual_mode_stream_section() {
     func.streaming = true;
     let registry = make_registry();
     let helpers = HelperRegistry::empty();
-    let c = backends::c::generate(&func, &enums, &registry, &helpers);
+    let c = backends::c::generate(&func, &enums, registry, &helpers);
 
     // Exactly one StepImpl (not one per mode), branching on the stored param.
     assert_eq!(c.matches("TA_MINUS_DM_StepImpl( struct").count(), 1, "one StepImpl def");
@@ -1057,7 +1056,7 @@ fn test_c_ht_dcperiod_parity_stream_section() {
     func.streaming = true;
     let registry = make_registry();
     let helpers = HelperRegistry::empty();
-    let c = backends::c::generate(&func, &enums, &registry, &helpers);
+    let c = backends::c::generate(&func, &enums, registry, &helpers);
     let stream = &c[c.find("/**** Streaming API *****/").expect("stream section")..];
 
     // (2) carried parity: int field, seeded in Open, flipped in the step.
@@ -1116,7 +1115,7 @@ fn test_c_ht_phasor_nested_gate_two_outputs_stream_section() {
     func.streaming = true;
     let registry = make_registry();
     let helpers = HelperRegistry::empty();
-    let c = backends::c::generate(&func, &enums, &registry, &helpers);
+    let c = backends::c::generate(&func, &enums, registry, &helpers);
     let stream = &c[c.find("/**** Streaming API *****/").expect("stream section")..];
 
     // Reused carried-parity machinery (same as HT_DCPERIOD).
@@ -1154,7 +1153,7 @@ fn ht_stream_section(name: &str) -> String {
     func.streaming = true;
     let registry = make_registry();
     let helpers = HelperRegistry::empty();
-    let c = backends::c::generate(&func, &enums, &registry, &helpers);
+    let c = backends::c::generate(&func, &enums, registry, &helpers);
     let start = c.find("/**** Streaming API *****/").expect("stream section");
     c[start..].to_string()
 }
@@ -1259,15 +1258,15 @@ fn test_c_folded_window_read_is_cursor_relative_and_de_moduloed() {
 fn test_c_state_struct_text_is_the_emitted_struct() {
     let registry = make_registry();
     let helpers =
-        HelperRegistry::from_dir(&Path::new(env!("CARGO_MANIFEST_DIR")).join("../../ta_codegen/input"));
+        common::make_helpers();
     let mut checked = 0usize;
     for name in discover_indicators() {
         let (func, enums) = load_indicator(&name);
         if !func.streaming {
             continue;
         }
-        let c = backends::c::generate(&func, &enums, &registry, &helpers);
-        let text = backends::c_stream::state_struct_text(&func, &registry);
+        let c = backends::c::generate(&func, &enums, registry, helpers);
+        let text = backends::c_stream::state_struct_text(&func, registry);
         assert!(
             text.contains(&format!("struct TA_{}_Stream {{", name.to_uppercase())),
             "{name}: state_struct_text produced no struct"
@@ -1291,7 +1290,7 @@ fn c_stream_constant_double_is_separated_from_stepped_state() {
     let registry = make_registry();
     let neighbours = |name: &str, field: &str| -> (String, String) {
         let (func, _enums) = load_indicator(name);
-        let text = backends::c_stream::state_struct_text(&func, &registry);
+        let text = backends::c_stream::state_struct_text(&func, registry);
         let lines: Vec<&str> = text.lines().map(str::trim).collect();
         let at = lines
             .iter()
@@ -1335,7 +1334,7 @@ fn c_stream_every_tier_is_in_the_corpus() {
         }
         let registry = make_registry();
         let resolved = func.resolved_for(ir::Lang::C);
-        let plan = streaming::validate_streamable(&resolved, &registry).expect("streamable");
+        let plan = streaming::validate_streamable(&resolved, registry).expect("streamable");
         tiers.insert(format!("{:?}", std::mem::discriminant(&plan)));
         checked += 1;
     }
@@ -1368,10 +1367,10 @@ fn the_transition_tier_is_step_impl_in_every_backend() {
     let registry = make_registry();
     let helpers = HelperRegistry::empty();
 
-    let c = backends::c::generate(&func, &enums, &registry, &helpers);
-    let rust = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
-    let java = backends::java::generate(&func, &enums, &registry, &helpers);
-    let csharp = backends::csharp::generate(&func, &enums, &registry, &helpers);
+    let c = backends::c::generate(&func, &enums, registry, &helpers);
+    let rust = backends::rust_lang::generate(&func, &enums, registry, &helpers);
+    let java = backends::java::generate(&func, &enums, registry, &helpers);
+    let csharp = backends::csharp::generate(&func, &enums, registry, &helpers);
 
     // (backend, source, definition, call sites, the retired word)
     let cases: [(&str, &str, &str, &[&str], &str); 4] = [
@@ -1447,13 +1446,13 @@ fn identity_anchor_clamps_before_it_rechecks_in_every_backend() {
     let (func, enums) = load_indicator("ma");
     let registry = make_registry();
     let helpers =
-        HelperRegistry::from_dir(&Path::new(env!("CARGO_MANIFEST_DIR")).join("../../ta_codegen/input"));
+        common::make_helpers();
 
     // (backend, emitted text, clamp needle, re-check needle)
-    let c = backends::c::generate(&func, &enums, &registry, &helpers);
-    let rust = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
-    let java = backends::java::generate(&func, &enums, &registry, &helpers);
-    let csharp = backends::csharp::generate(&func, &enums, &registry, &helpers);
+    let c = backends::c::generate(&func, &enums, registry, helpers);
+    let rust = backends::rust_lang::generate(&func, &enums, registry, helpers);
+    let java = backends::java::generate(&func, &enums, registry, helpers);
+    let csharp = backends::csharp::generate(&func, &enums, registry, helpers);
     let cases: [(&str, &str, &str, &str); 4] = [
         ("c", &c, "if( startIdx > fillLb ) fillLb = startIdx;", "if( historyLen < fillLb + 1 )"),
         (
@@ -1777,7 +1776,7 @@ fn test_c_trima_dual_mode_rings_stream_section() {
     func.streaming = true;
     let registry = make_registry();
     let helpers = HelperRegistry::empty();
-    let c = backends::c::generate(&func, &enums, &registry, &helpers);
+    let c = backends::c::generate(&func, &enums, registry, &helpers);
 
     // Union struct: shared triangular-sum scalars + the SHARED rings (one set).
     assert!(
@@ -1865,7 +1864,7 @@ fn test_c_back_offset_ring_writes_the_current_bar_once() {
     // possible in the first place.
     let (mut func, enums) = load_indicator("cdlonneck");
     func.streaming = true;
-    let c = backends::c::generate(&func, &enums, &make_registry(), &common::make_helpers());
+    let c = backends::c::generate(&func, &enums, make_registry(), common::make_helpers());
     let step = step_impl_body(&c);
 
     // The ring is found by its POSITION variable, not by a hardcoded name. The
@@ -1899,7 +1898,7 @@ fn test_c_no_step_impl_stores_a_ring_slot_twice() {
     // Corpus sweep for the same invariant: one write per ring slot per block.
     let registry = make_registry();
     let helpers =
-        HelperRegistry::from_dir(&Path::new(env!("CARGO_MANIFEST_DIR")).join("../../ta_codegen/input"));
+        common::make_helpers();
     let mut stepped = 0usize;
     let mut with_rings = 0usize;
     for name in discover_indicators() {
@@ -1907,7 +1906,7 @@ fn test_c_no_step_impl_stores_a_ring_slot_twice() {
         if !func.streaming {
             continue;
         }
-        let c = backends::c::generate(&func, &enums, &registry, &helpers);
+        let c = backends::c::generate(&func, &enums, registry, helpers);
         if !c.contains("_StepImpl( struct") {
             continue;
         }
@@ -1943,7 +1942,7 @@ fn test_c_midprice_stream_uses_the_declared_alternate() {
     func.streaming = true;
     let registry = make_registry();
     let helpers = HelperRegistry::empty();
-    let c = backends::c::generate(&func, &enums, &registry, &helpers);
+    let c = backends::c::generate(&func, &enums, registry, &helpers);
 
     assert!(c.contains("struct TA_MIDPRICE_Stream {"), "state struct");
     assert!(
@@ -1995,7 +1994,7 @@ fn test_c_stoch_composed_stream_section() {
     func.streaming = true;
     let registry = make_registry();
     let helpers = HelperRegistry::empty();
-    let c = backends::c::generate(&func, &enums, &registry, &helpers);
+    let c = backends::c::generate(&func, &enums, registry, &helpers);
     let stream = &c[c.find("/**** Streaming API *****/").expect("stream section")..];
 
     // Handle: producer extrema + typed subs (no routing flag: the frames are
@@ -2061,7 +2060,7 @@ fn test_c_adxr_open_frees_withheld_buffer_on_oom_paths() {
     func.streaming = true;
     let registry = make_registry();
     let helpers = common::make_helpers();
-    let c = backends::c::generate(&func, &enums, &registry, &helpers);
+    let c = backends::c::generate(&func, &enums, registry, helpers);
     let open = &c[c.find("TA_RetCode TA_ADXR_Open").expect("ADXR Open")..];
     for guard in [
         "if( dummyNBElement < 1 ) { *outBegIdx = 0; *outNBElement = 0; free( adx );",
@@ -2103,7 +2102,7 @@ fn test_c_composed_open_emits_one_null_check_per_intermediate() {
         func.streaming = true;
         let registry = make_registry();
         let helpers = common::make_helpers();
-        let c = backends::c::generate(&func, &enums, &registry, &helpers);
+        let c = backends::c::generate(&func, &enums, registry, helpers);
         let upper = indicator.to_uppercase();
         let open_at = c
             .find(&format!("TA_RetCode TA_{upper}_Open"))
@@ -2139,7 +2138,7 @@ fn test_c_bbands_open_frees_prior_intermediate_on_oom() {
     func.streaming = true;
     let registry = make_registry();
     let helpers = HelperRegistry::empty();
-    let c = backends::c::generate(&func, &enums, &registry, &helpers);
+    let c = backends::c::generate(&func, &enums, registry, &helpers);
     let open = &c[c.find("TA_RetCode TA_BBANDS_Open").expect("BBANDS Open")..];
 
     // tempBuffer2's malloc-failure block frees the prior intermediate tempBuffer1.
@@ -2239,7 +2238,7 @@ fn rust_bbands_elects_output_scratch_only_in_the_sma_fast_path() {
     let registry = make_registry();
     let helpers = make_helpers();
     let out = generate_all(&func, &enums);
-    let rust_out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
+    let rust_out = backends::rust_lang::generate(&func, &enums, registry, helpers);
 
     // No allocation-and-copy of an output slice survives anywhere.
     assert!(
@@ -2333,7 +2332,7 @@ fn rust_scratch_election_takes_only_the_arm_rust_reaches() {
 
     for name in ["stoch", "stochf"] {
         let (func, enums) = load_indicator(name);
-        let rust_out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
+        let rust_out = backends::rust_lang::generate(&func, &enums, registry, helpers);
         assert!(
             rust_out.contains("tempBuffer = outSlowK.to_vec();")
                 || rust_out.contains("tempBuffer = outFastK.to_vec();"),
@@ -2347,7 +2346,7 @@ fn rust_scratch_election_takes_only_the_arm_rust_reaches() {
 
     // `MAVP` elects: no staging copy in, none back, and its passes write the caller's slice.
     let (func, enums) = load_indicator("mavp");
-    let rust_out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
+    let rust_out = backends::rust_lang::generate(&func, &enums, registry, helpers);
     let code: String = rust_out.lines().filter(|l| !l.trim_start().starts_with("//")).collect::<Vec<_>>().join("\n");
     assert!(
         !code.contains(".to_vec()") && !code.contains("localFinalArray["),
@@ -2367,7 +2366,7 @@ fn rust_scratch_election_takes_only_the_arm_rust_reaches() {
     let mut fired = Vec::new();
     for name in discover_indicators() {
         let (func, enums) = load_indicator(&name);
-        if backends::rust_lang::generate(&func, &enums, &registry, &helpers).contains(NOTE) {
+        if backends::rust_lang::generate(&func, &enums, registry, helpers).contains(NOTE) {
             fired.push(name);
         }
     }

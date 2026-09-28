@@ -3,8 +3,7 @@
 //! stream-handle candle-settings scoping, and the rust_abstract category
 //! index. Split out of the former `backend_suite.rs`.
 
-#[path = "common/mod.rs"]
-mod common;
+use crate::common;
 
 use common::{
     discover_indicators, extract_section, generate_all, load_enums, load_indicator,
@@ -44,7 +43,7 @@ fn test_composed_open_fuses_every_sub_call() {
     for name in COMPOSED {
         let (mut func, enums) = load_indicator(name);
         func.streaming = true;
-        let c = backends::c::generate(&func, &enums, &registry, &helpers);
+        let c = backends::c::generate(&func, &enums, registry, helpers);
         let stream = &c[c.find("/**** Streaming API *****/").expect("stream section")..];
 
         let fused = stream.matches("_OpenAndFillInternal( &sub").count();
@@ -57,7 +56,7 @@ fn test_composed_open_fuses_every_sub_call() {
         // Anchored on the first ARGUMENT so these count call sites, not the
         // wrapper definitions (Rust sub-opens pass `&series[..n]`; both
         // definitions break the line right after the paren).
-        let r = backends::rust_stream::generate(&func, &enums, &registry, &helpers);
+        let r = backends::rust_stream::generate(&func, &enums, registry, helpers);
         assert_eq!(
             (r.matches("_open_and_fill_internal(&").count(), r.matches("_open_internal(&").count()),
             (fused, unfused),
@@ -68,7 +67,7 @@ fn test_composed_open_fuses_every_sub_call() {
         // count the lines that ASSIGN a `sub<n>` handle instead. That is what
         // separates a sub-open both from the wrapper definitions and from the
         // public `_Open`'s own delegation to `_OpenInternal`.
-        let j = backends::java_stream::generate(&func, &enums, &registry, &helpers);
+        let j = backends::java_stream::generate(&func, &enums, registry, helpers);
         let sub_opens = |needle: &str| {
             j.lines().filter(|l| l.contains("sub") && l.contains(needle)).count()
         };
@@ -126,7 +125,7 @@ fn rust_public_fill_bounds_every_output_against_its_own_lookback() {
         if !func.streaming {
             continue;
         }
-        let src = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
+        let src = backends::rust_lang::generate(&func, &enums, registry, helpers);
         let sn = func.name.to_lowercase();
         let entry = format!("pub fn {}_open_and_fill(", backends::common::snake_words(&func.name));
         let at = src
@@ -234,7 +233,7 @@ fn csharp_public_openers_reject_an_empty_history_as_an_index_fault() {
         if !func.streaming {
             continue;
         }
-        let src = backends::csharp::generate(&func, &enums, &registry, &helpers);
+        let src = backends::csharp::generate(&func, &enums, registry, helpers);
         let base = func.name.to_uppercase();
         let ident = backends::common::pascal_words(&func.name);
         let inputs = streaming::input_array_names(&func);
@@ -353,7 +352,7 @@ fn java_public_openers_check_arguments_then_the_index_pair() {
         if !func.streaming {
             continue;
         }
-        let src = backends::java::generate(&func, &enums, &registry, &helpers);
+        let src = backends::java::generate(&func, &enums, registry, helpers);
         let base = func.name.to_uppercase();
         let ident_type = backends::common::pascal_words(&func.name);
         let ident_method = backends::common::camel_words(&func.name);
@@ -520,9 +519,9 @@ fn an_opener_never_answers_the_code_its_sub_call_handed_back() {
             continue;
         }
         let sources = [
-            backends::rust_lang::generate(&func, &enums, &registry, &helpers),
-            backends::java::generate(&func, &enums, &registry, &helpers),
-            backends::csharp::generate(&func, &enums, &registry, &helpers),
+            backends::rust_lang::generate(&func, &enums, registry, helpers),
+            backends::java::generate(&func, &enums, registry, helpers),
+            backends::csharp::generate(&func, &enums, registry, helpers),
         ];
         for (b, src) in sources.iter().enumerate() {
             let (lang, def_kw, bare, needle) = specs[b];
@@ -692,10 +691,10 @@ fn every_open_pass_rejects_an_anchor_past_the_history() {
     for name in discover_indicators() {
         let Some((func, _)) = try_load_indicator(&name) else { continue };
         let sources = [
-            backends::c::generate(&func, &enums, &registry, &helpers),
-            backends::rust_lang::generate(&func, &enums, &registry, &helpers),
-            backends::java::generate(&func, &enums, &registry, &helpers),
-            backends::csharp::generate(&func, &enums, &registry, &helpers),
+            backends::c::generate(&func, &enums, registry, helpers),
+            backends::rust_lang::generate(&func, &enums, registry, helpers),
+            backends::java::generate(&func, &enums, registry, helpers),
+            backends::csharp::generate(&func, &enums, registry, helpers),
         ];
 
         for (b, src) in sources.iter().enumerate() {
@@ -795,7 +794,7 @@ fn every_declared_input_is_checked_in_every_backend() {
             continue;
         }
         let out = generate_all(&func, &enums);
-        let csharp = backends::csharp::generate(&func, &enums, &registry, &helpers);
+        let csharp = backends::csharp::generate(&func, &enums, registry, helpers);
         scanned += 1;
         let f = &func.name;
 
@@ -867,7 +866,7 @@ fn every_declared_input_is_checked_in_every_backend() {
     for (indicator, legs) in unread {
         let (func, enums) = load_indicator(indicator);
         let out = generate_all(&func, &enums);
-        let csharp = backends::csharp::generate(&func, &enums, &registry, &helpers);
+        let csharp = backends::csharp::generate(&func, &enums, registry, helpers);
         let f = &func.name;
         // The body proper: everything after the bounds-assert preamble, so the
         // asserts this test just demanded cannot themselves satisfy "is read".
@@ -949,7 +948,7 @@ fn a_stream_handle_carries_only_the_settings_its_step_reads() {
     for (name, handle, settings) in cases {
         let (func, enums) = load_indicator(name);
         assert!(func.streaming, "{name} must carry the `stream` flag");
-        let rust = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
+        let rust = backends::rust_lang::generate(&func, &enums, registry, helpers);
 
         let start = rust
             .find(&format!("pub struct {handle} {{"))
@@ -1002,7 +1001,7 @@ fn a_stream_step_reads_candle_settings_from_its_parameters() {
     let registry = make_registry();
     let helpers = common::make_helpers();
     let (func, enums) = load_indicator("cdldoji");
-    let rust = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
+    let rust = backends::rust_lang::generate(&func, &enums, registry, helpers);
 
     let step = rust
         .find("fn cdldoji_step_impl(")
@@ -1215,11 +1214,11 @@ fn no_csharp_peek_copies_the_handle() {
 
     for name in discover_indicators() {
         let (func, enums) = load_indicator(&name);
-        if !func.streaming || !backends::csharp_stream::emits_stream(&func, &registry) {
+        if !func.streaming || !backends::csharp_stream::emits_stream(&func, registry) {
             continue;
         }
-        let batch = backends::csharp::generate(&func, &enums, &registry, &helpers);
-        let s = backends::csharp_stream::generate(&func, &enums, &registry, &helpers);
+        let batch = backends::csharp::generate(&func, &enums, registry, helpers);
+        let s = backends::csharp_stream::generate(&func, &enums, registry, helpers);
         let mut at = 0usize;
         while let Some(k) = s[at..].find("\n      public ") {
             let start = at + k + 1;
@@ -1443,7 +1442,7 @@ fn the_csharp_float_overload_guards_its_real_output_against_its_real_inputs() {
         if reals.is_empty() || outs.is_empty() {
             continue;
         }
-        let src = backends::csharp::generate(&func, &enums, &registry, &helpers);
+        let src = backends::csharp::generate(&func, &enums, registry, helpers);
         if !src.contains("ReadOnlySpan<float>") {
             continue; // no float overload to check
         }

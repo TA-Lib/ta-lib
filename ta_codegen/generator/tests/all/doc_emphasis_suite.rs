@@ -20,9 +20,9 @@
 //! `Fix #112: ... a *successful* call`), which is not Markdown and must not be
 //! converted. Reading the emitter's output directly is what tells those apart.
 
+use crate::common;
 use std::collections::HashMap;
 use std::path::PathBuf;
-use ta_codegen_lib::helper_registry::HelperRegistry;
 use ta_codegen_lib::registry::Registry;
 use ta_codegen_lib::{backends, ir, parser};
 
@@ -171,10 +171,10 @@ fn emphasis_runs(line: &str, len: usize) -> usize {
 /// Every rendered Java/C# doc line that still carries a Markdown emphasis
 /// delimiter, as `label | line`.
 fn emphasis_survivors() -> Vec<String> {
-    let registry = Registry::from_dir(&input_dir());
+    let registry = common::make_registry();
     let mut out = Vec::new();
     for name in documented_indicators() {
-        for (label, block) in rendered_docs(&name, &registry) {
+        for (label, block) in rendered_docs(&name, registry) {
             for line in prose_lines(&block) {
                 let masked = mask_code_spans(&line);
                 // A `*` that pairs is emphasis the emitter should have
@@ -213,12 +213,12 @@ fn no_markdown_emphasis_reaches_the_java_or_csharp_docs() {
 /// the other direction — would read as a clean sweep.
 #[test]
 fn the_sweep_would_see_a_reintroduced_delimiter() {
-    let registry = Registry::from_dir(&input_dir());
+    let registry = common::make_registry();
     // CMOU carries `**plain moving-window sums**` and `*The New Technical
     // Trader*`; ADR carries `*within*`. Both are in the corpus, so a regression
     // in the escapers turns these assertions red.
     for (name, expected) in [("cmou", "<b>plain moving-window sums</b>"), ("adr", "<i>within</i>")] {
-        let blocks = rendered_docs(name, &registry);
+        let blocks = rendered_docs(name, registry);
         let java = blocks
             .iter()
             .find(|(l, _)| l.starts_with("java"))
@@ -242,10 +242,10 @@ fn the_sweep_would_see_a_reintroduced_delimiter() {
 
 /// Every rendered Java/C# doc line carrying TeX, as `label | line`.
 fn tex_survivors() -> Vec<String> {
-    let registry = Registry::from_dir(&input_dir());
+    let registry = common::make_registry();
     let mut out = Vec::new();
     for name in documented_indicators() {
-        for (label, block) in rendered_docs(&name, &registry) {
+        for (label, block) in rendered_docs(&name, registry) {
             for line in prose_lines(&block) {
                 // `doc_meta::renderable_notes`' rule, restated rather than
                 // called: `$100` is money and must not fail a build, and the
@@ -290,7 +290,7 @@ fn no_tex_reaches_the_java_or_csharp_docs() {
 /// TeX, and neither of them may reach either target.
 #[test]
 fn the_tex_notes_are_actually_dropped() {
-    let registry = Registry::from_dir(&input_dir());
+    let registry = common::make_registry();
     let (func, _) = load("bbands");
     let notes = &func.doc.as_ref().expect("bbands doc").notes;
     assert!(
@@ -298,7 +298,7 @@ fn the_tex_notes_are_actually_dropped() {
         "BBANDS' notes no longer carry TeX — repoint this probe at whatever does, \
          or drop it with the filter. Notes: {notes:?}"
     );
-    for (label, block) in rendered_docs("bbands", &registry) {
+    for (label, block) in rendered_docs("bbands", registry) {
         assert!(
             !block.contains("matype}$"),
             "{label} still ships BBANDS' TeX note:\n{block}"
@@ -311,8 +311,8 @@ fn the_tex_notes_are_actually_dropped() {
 /// parameter names inside `{@code ...}`.
 #[test]
 fn a_code_span_keeps_its_asterisks() {
-    let registry = Registry::from_dir(&input_dir());
-    let blocks = rendered_docs("rma", &registry);
+    let registry = common::make_registry();
+    let blocks = rendered_docs("rma", registry);
     let java = blocks
         .iter()
         .find(|(l, _)| l.starts_with("java"))
@@ -333,8 +333,8 @@ fn a_code_span_keeps_its_asterisks() {
 /// would notice an emphasis scanner consuming the bracket first.
 #[test]
 fn links_still_become_anchors() {
-    let registry = Registry::from_dir(&input_dir());
-    let blocks = rendered_docs("cdl2crows", &registry);
+    let registry = common::make_registry();
+    let blocks = rendered_docs("cdl2crows", registry);
     for (label, block) in &blocks {
         if !block.contains("thepatternsite.com") {
             continue;
@@ -361,11 +361,9 @@ fn links_still_become_anchors() {
 #[test]
 fn rust_keeps_its_markdown() {
     let (func, enums) = load("cmou");
-    let registry = Registry::from_dir(&input_dir());
-    // `from_dir` takes the input root, not the helper subdirectory, and says so
-    // loudly when given the wrong base.
-    let helpers = HelperRegistry::from_dir(&input_dir());
-    let src = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
+    let registry = common::make_registry();
+    let helpers = common::make_helpers();
+    let src = backends::rust_lang::generate(&func, &enums, registry, helpers);
     assert!(
         src.contains("**plain moving-window sums**"),
         "CMOU's Rust doc must keep the authored Markdown"

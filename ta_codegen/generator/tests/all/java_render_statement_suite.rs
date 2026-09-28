@@ -1,8 +1,7 @@
 //! Java backend: unit tests of `render_statement` and related rendering
 //! branches. Split out of the former `backend_suite.rs`.
 
-#[path = "common/mod.rs"]
-mod common;
+use crate::common;
 
 use common::{contains_call, generate_all, load_indicator, render_java_stmt};
 use ta_codegen_lib::ir;

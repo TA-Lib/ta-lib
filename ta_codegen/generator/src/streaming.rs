@@ -1650,7 +1650,7 @@ fn is_stateful_call(name: &str) -> bool {
 /// slice they are building a stream surface out of; this asks it about the
 /// function, which is the question the `period1_identity` YAML flag answers. It
 /// is the same detector rather than a second one on purpose: the flag gate
-/// (`tests/period1_suite.rs`) and the stream surfaces must not be able to
+/// (`tests/all/period1_suite.rs`) and the stream surfaces must not be able to
 /// disagree about what an identity arm is.
 ///
 /// A `None` here is not a claim that the function fails the identity — `SMA` and
@@ -4300,7 +4300,7 @@ fn plan_callees<'p>(plan: &'p StreamPlan) -> Vec<&'p str> {
 /// both real work, and both better than shipping the silent version.
 ///
 /// Today no composition names any of the seven, so this gate is dormant by
-/// construction; `nan_inf_callee_is_refused` in `tests/streaming_suite.rs` is what
+/// construction; `nan_inf_callee_is_refused` in `tests/all/streaming_suite.rs` is what
 /// keeps it from being dormant *and* broken.
 fn reject_nonfinite_callees(
     func: &FuncDef,

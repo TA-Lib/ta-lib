@@ -1,8 +1,7 @@
 //! CIRCBUF storage: the batch/stream tier split (PR #176, issue #155).
 //! Split out of the former `backend_suite.rs`.
 
-#[path = "common/mod.rs"]
-mod common;
+use crate::common;
 
 use common::{discover_indicators, extract_section, generate_all, load_indicator, make_helpers, make_registry, try_load_indicator};
 use std::path::Path;
@@ -360,7 +359,7 @@ fn c_circbuf_alloc_failure_frees_the_circbufs_before_it() {
     let mut multi_circbuf_functions = 0usize;
     for name in &names {
         let (func, enums) = load_indicator(name);
-        let c_out = backends::c::generate(&func, &enums, &registry, &helpers);
+        let c_out = backends::c::generate(&func, &enums, registry, helpers);
 
         // `declared` resets at each function body: the emitter puts a bare `{`
         // at column 0 to open one.
@@ -452,7 +451,7 @@ fn c_circbuf_omits_the_cursor_when_nothing_reads_it() {
 
     for name in ["min", "max", "minmax", "midpoint", "midprice", "willr"] {
         let (func, enums) = load_indicator(name);
-        let c_out = backends::c::generate(&func, &enums, &registry, &helpers);
+        let c_out = backends::c::generate(&func, &enums, registry, helpers);
         for decl in ["_Idx;", "maxIdx_"] {
             assert!(
                 !c_out.contains(decl),
@@ -472,7 +471,7 @@ fn c_circbuf_omits_the_cursor_when_nothing_reads_it() {
     // these would lose a cursor they genuinely read and this test would say so.
     for name in ["cci", "ultosc"] {
         let (func, enums) = load_indicator(name);
-        let c_out = backends::c::generate(&func, &enums, &registry, &helpers);
+        let c_out = backends::c::generate(&func, &enums, registry, helpers);
         assert!(
             c_out.contains("_Idx;") && c_out.contains("maxIdx_"),
             "{name} advances a real ring, so it must keep its cursor: {c_out}"
@@ -496,7 +495,7 @@ fn c_stream_keeps_a_local_read_only_by_a_circbuf_size() {
     let registry = make_registry();
     let helpers = make_helpers();
     let (func, enums) = load_indicator("hma");
-    let stream_c = backends::c_stream::generate(&func, &enums, &registry, &helpers);
+    let stream_c = backends::c_stream::generate(&func, &enums, registry, helpers);
 
     // Read only through CIRCBUF_INIT's size — the case a naive walker misses.
     assert!(

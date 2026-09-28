@@ -1,8 +1,7 @@
 //! Rust backend: unit tests of `render_statement` and related rendering
 //! branches. Split out of the former `backend_suite.rs`.
 
-#[path = "common/mod.rs"]
-mod common;
+use crate::common;
 
 use common::{
     extract_section, generate_all, load_indicator, load_synth, make_registry,
@@ -53,7 +52,7 @@ fn render_rust_stmt_with_helpers(
         &output_names,
         &opt_real_params,
         &enums,
-        &registry,
+        registry,
         helpers,
         &inline_counter,
     )
@@ -354,7 +353,7 @@ fn rust_compound_assign_types_target_by_declaration_not_by_name() {
         &[],
         &["optInThreshold".to_string()],
         &HashMap::new(),
-        &make_registry(),
+        make_registry(),
         &HelperRegistry::empty(),
         &std::cell::Cell::new(0),
     );
@@ -667,7 +666,7 @@ fn rust_switch_with_enum_label_lookup() {
     let (func, enums) = load_indicator("ma");
     let registry = make_registry();
     let helpers = make_helpers();
-    let rust_out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
+    let rust_out = backends::rust_lang::generate(&func, &enums, registry, helpers);
 
     // MA's switch renders as a match whose arms name the enum members. This
     // pins the member spelling rather than "some integer": the subject is the
@@ -924,7 +923,7 @@ fn rust_cross_indicator_call_via_generate() {
     let (func, enums) = load_indicator("ma");
     let registry = make_registry();
     let helpers = make_helpers();
-    let rust_out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
+    let rust_out = backends::rust_lang::generate(&func, &enums, registry, helpers);
 
     // Cross-indicator calls resolve to the callee's PUBLIC entry point (#267)
     assert!(
@@ -986,7 +985,7 @@ fn rust_private_cross_indicator_call() {
     let helpers = make_helpers();
 
     let (func, enums) = load_indicator("ma");
-    let rust_out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
+    let rust_out = backends::rust_lang::generate(&func, &enums, registry, helpers);
     assert!(
         rust_out.contains("match self.ema("),
         "MA Rust dispatch should call the public self.ema(): {rust_out}"
@@ -994,7 +993,7 @@ fn rust_private_cross_indicator_call() {
 
     let synth_registry = make_synth_registry();
     let (func, enums) = load_synth("synth4");
-    let rust_out = backends::rust_lang::generate(&func, &enums, &synth_registry, &helpers);
+    let rust_out = backends::rust_lang::generate(&func, &enums, &synth_registry, helpers);
     assert!(
         rust_out.contains("self.synth4_private("),
         "SYNTH4 Rust guarded body should delegate to self.synth4_private(): {rust_out}"
@@ -1024,7 +1023,7 @@ fn rust_public_entry_documents_exactly_its_parameters() {
             continue;
         }
         let (func, enums) = load_indicator(&name);
-        let out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
+        let out = backends::rust_lang::generate(&func, &enums, registry, helpers);
 
         // The public wrapper is the only fn returning Result<OutRange, RetCode>.
         let sig_open = format!("    pub fn {}(\n", backends::common::snake_words(&func.name));
@@ -1125,7 +1124,7 @@ fn every_integer_output_carries_an_example_claim() {
         if ints == 0 {
             continue;
         }
-        let out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
+        let out = backends::rust_lang::generate(&func, &enums, registry, helpers);
         // One claim per integer output, counted BY THAT OUTPUT'S OWN example
         // variable. Counting bare `[..out_range.count]` instead let a mixed
         // real+integer function satisfy the floor with the real output's
@@ -1165,7 +1164,7 @@ fn rust_cross_indicator_vec_input_gets_ref() {
     let (func, enums) = load_indicator("stoch");
     let registry = make_registry();
     let helpers = make_helpers();
-    let rust_out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
+    let rust_out = backends::rust_lang::generate(&func, &enums, registry, helpers);
 
     assert!(
         rust_out.contains("self.ma(") && rust_out.contains("&tempBuffer"),
@@ -1182,7 +1181,7 @@ fn rust_is_ta_function_renders_self_call() {
     let registry = make_registry();
     let helpers = make_helpers();
     let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        backends::rust_lang::generate(&func, &enums, &registry, &helpers)
+        backends::rust_lang::generate(&func, &enums, registry, helpers)
     }));
     if let Ok(rust_out) = result {
         // Should contain self.rsi or self.stochf calls
@@ -1207,7 +1206,7 @@ fn rust_lookback_code_rendering_cdlkicking() {
     let (func, enums) = load_indicator("cdlkicking");
     let registry = make_registry();
     let helpers = make_helpers();
-    let rust_out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
+    let rust_out = backends::rust_lang::generate(&func, &enums, registry, helpers);
 
     // Lookback function should exist
     assert!(
@@ -1227,7 +1226,7 @@ fn rust_lookback_code_with_vars() {
     let (func, enums) = load_indicator("cdlkicking");
     let registry = make_registry();
     let helpers = make_helpers();
-    let rust_out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
+    let rust_out = backends::rust_lang::generate(&func, &enums, registry, helpers);
 
     // CDL indicators have local vars in their lookback body (e.g., lookbackTotal)
     // They should be declared as `let mut` or `let`
@@ -1244,7 +1243,7 @@ fn rust_lookback_literal_renders_return() {
     let (func, enums) = load_indicator("mult");
     let registry = make_registry();
     let helpers = make_helpers();
-    let rust_out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
+    let rust_out = backends::rust_lang::generate(&func, &enums, registry, helpers);
 
     let lookback_section = extract_section(&rust_out, "_lookback(", "pub(crate) fn mult_impl(");
     assert!(
@@ -1940,7 +1939,7 @@ fn rust_lookback_param_minus() {
     let enums = HashMap::new();
     let registry = make_registry();
     let helpers = HelperRegistry::empty();
-    let rust_out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
+    let rust_out = backends::rust_lang::generate(&func, &enums, registry, &helpers);
 
     assert!(
         rust_out.contains("optInTimePeriod - 1"),
@@ -1986,7 +1985,7 @@ fn rust_lookback_none() {
     let enums = HashMap::new();
     let registry = make_registry();
     let helpers = HelperRegistry::empty();
-    let rust_out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
+    let rust_out = backends::rust_lang::generate(&func, &enums, registry, &helpers);
 
     let lookback_section = extract_section(&rust_out, "_lookback(", "pub(crate) fn test_impl(");
     assert!(
@@ -2071,7 +2070,7 @@ fn rust_while_with_for_loop_var_renders_for_in() {
         &output_names,
         &opt_real_params,
         &enums,
-        &registry,
+        registry,
         &helpers,
         &inline_counter,
     );
@@ -2190,7 +2189,7 @@ fn rust_lookback_code_renders_var_types_correctly() {
     let enums = HashMap::new();
     let registry = make_registry();
     let helpers = HelperRegistry::empty();
-    let rust_out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
+    let rust_out = backends::rust_lang::generate(&func, &enums, registry, &helpers);
 
     let lookback_section = extract_section(&rust_out, "_lookback(", "pub(crate) fn test_impl(");
     // sum has no assignments in the body, so count_assignments returns 0 => `let` not `let mut`
@@ -2287,7 +2286,7 @@ fn rust_lookback_body_never_fuses_multiply_add() {
         resolved_stream_body: None,
     };
     let enums = HashMap::new();
-    let out = backends::rust_lang::generate(&func, &enums, &make_registry(), &HelperRegistry::empty());
+    let out = backends::rust_lang::generate(&func, &enums, make_registry(), &HelperRegistry::empty());
     let section = extract_section(&out, "_lookback(", "pub fn test(");
     let section = &section[..section.find("\n    }").expect("lookback body must close")];
     assert!(
@@ -2376,7 +2375,7 @@ fn rust_lookback_body_types_locals_by_declaration_not_name() {
         let enums = HashMap::new();
         let registry = make_registry();
         let helpers = HelperRegistry::empty();
-        let out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
+        let out = backends::rust_lang::generate(&func, &enums, registry, &helpers);
         let section = extract_section(&out, "_lookback(", "pub fn test(");
         // Stop at the lookback's own closing brace — the tail of that slice is
         // the guarded function's rustdoc, whose doctest mentions `as f64`.
@@ -2437,7 +2436,7 @@ fn rust_lookback_body_types_locals_by_declaration_not_name() {
 #[test]
 fn rust_batch_body_reslices_its_inputs_past_the_empty_range_exit() {
     let (func, enums) = load_indicator("sma");
-    let rust_out = backends::rust_lang::generate(&func, &enums, &make_registry(), &make_helpers());
+    let rust_out = backends::rust_lang::generate(&func, &enums, make_registry(), make_helpers());
     let body = rust_out.split("fn sma_impl(").nth(1).expect("sma_impl");
     let exit = body.find("if startIdx > endIdx {").expect("the empty-range exit");
     let reslice = body.find("let inReal = &inReal[..=endIdx];").expect("the input reslice");
@@ -2452,7 +2451,7 @@ fn sma_impl_over(body: Vec<ir::Statement>) -> String {
     func.body = body.clone();
     func.private_body = body;
     func.streaming = false;
-    let rust_out = backends::rust_lang::generate(&func, &enums, &make_registry(), &make_helpers());
+    let rust_out = backends::rust_lang::generate(&func, &enums, make_registry(), make_helpers());
     rust_out.split("fn sma_impl(").nth(1).expect("sma_impl").to_string()
 }
 
@@ -2517,7 +2516,7 @@ fn rust_keeps_the_initializer_of_a_local_read_before_it_is_overwritten() {
     func.body = body.clone();
     func.private_body = body;
     func.streaming = false;
-    let rust_out = backends::rust_lang::generate(&func, &enums, &make_registry(), &make_helpers());
+    let rust_out = backends::rust_lang::generate(&func, &enums, make_registry(), make_helpers());
     let body = rust_out.split("fn sma_impl(").nth(1).expect("sma_impl");
     let init = body.find("lim = 1000").expect("lim's initializer was dropped");
     let min = body.find("lim = c_min(v, lim);").expect("the extreme");
@@ -2701,7 +2700,7 @@ fn rust_block_scans_run_as_counted_windows() {
     let helpers = make_helpers();
     for (name, scans) in [("min", 3), ("max", 3), ("minmax", 3), ("midpoint", 3), ("midprice", 3), ("willr", 2)] {
         let (func, enums) = load_indicator(name);
-        let rust = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
+        let rust = backends::rust_lang::generate(&func, &enums, registry, helpers);
         let loops = windowed_loop_bodies(&rust);
         assert!(loops.len() >= scans, "{name}: {} counted window loop(s), want at least {scans}:\n{rust}", loops.len());
         for body in &loops {
@@ -2737,7 +2736,7 @@ fn rust_candle_loops_read_their_inputs_through_windows() {
             continue;
         }
         let (func, enums) = load_indicator(&name);
-        let rust = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
+        let rust = backends::rust_lang::generate(&func, &enums, registry, helpers);
         let batch = &rust[..rust.find("_step_impl(").unwrap_or(rust.len())];
         if !batch.contains("TrailingIdx") {
             continue;

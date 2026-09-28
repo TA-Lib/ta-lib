@@ -4,7 +4,6 @@ use ta_codegen_lib::backends;
 use ta_codegen_lib::helper_registry::HelperRegistry;
 use ta_codegen_lib::ir;
 use ta_codegen_lib::parser;
-use ta_codegen_lib::registry::Registry;
 
 /// Empty enum map for tests that don't use enums.
 fn no_enums() -> HashMap<String, ir::EnumDef> {
@@ -18,11 +17,7 @@ fn load_enums() -> HashMap<String, ir::EnumDef> {
     parser::enums::load_enums(&enums_path)
 }
 
-/// Build registry for cross-call resolution.
-fn make_registry() -> Registry {
-    let base = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../ta_codegen/input");
-    Registry::from_dir(&base)
-}
+use crate::common::make_registry;
 
 /// Helper: parse mult.yaml + mult.c and build a FuncDef.
 fn load_mult() -> ir::FuncDef {
@@ -178,7 +173,7 @@ fn test_parse_sma_body() {
 #[test]
 fn test_c_backend_generates_mult() {
     let func = load_mult();
-    let output = backends::c::generate(&func, &no_enums(), &make_registry(), &HelperRegistry::empty());
+    let output = backends::c::generate(&func, &no_enums(), make_registry(), &HelperRegistry::empty());
     assert!(
         output.contains("TA_MULT_Lookback"),
         "C output missing lookback function"
@@ -208,7 +203,7 @@ fn test_c_backend_generates_mult() {
 #[test]
 fn test_rust_backend_generates_mult() {
     let func = load_mult();
-    let output = backends::rust_lang::generate(&func, &no_enums(), &make_registry(), &HelperRegistry::empty());
+    let output = backends::rust_lang::generate(&func, &no_enums(), make_registry(), &HelperRegistry::empty());
     assert!(
         output.contains("mult_lookback"),
         "Rust output missing lookback function"
@@ -227,7 +222,7 @@ fn test_rust_backend_generates_mult() {
 #[test]
 fn test_rust_sma_from_c_produces_valid_output() {
     let func = load_sma();
-    let output = backends::rust_lang::generate(&func, &no_enums(), &make_registry(), &HelperRegistry::empty());
+    let output = backends::rust_lang::generate(&func, &no_enums(), make_registry(), &HelperRegistry::empty());
 
     assert!(
         output.contains("sma_lookback"),
@@ -270,7 +265,7 @@ fn test_rust_sma_from_c_produces_valid_output() {
 #[test]
 fn test_java_backend_generates_mult() {
     let func = load_mult();
-    let output = backends::java::generate(&func, &no_enums(), &make_registry(), &HelperRegistry::empty());
+    let output = backends::java::generate(&func, &no_enums(), make_registry(), &HelperRegistry::empty());
     assert!(
         output.contains("multLookback("),
         "Java output missing lookback method"
@@ -380,9 +375,9 @@ fn test_all_backends_produce_nonempty_output() {
         // Try to generate; skip if generation fails
         let helpers = HelperRegistry::empty();
         let outputs = match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-            let c_out = backends::c::generate(&func, &enums, &registry, &helpers);
-            let rust_out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
-            let java_out = backends::java::generate(&func, &enums, &registry, &helpers);
+            let c_out = backends::c::generate(&func, &enums, registry, &helpers);
+            let rust_out = backends::rust_lang::generate(&func, &enums, registry, &helpers);
+            let java_out = backends::java::generate(&func, &enums, registry, &helpers);
             (c_out, rust_out, java_out)
         })) {
             Ok(o) => o,
@@ -449,7 +444,7 @@ fn test_all_backends_produce_nonempty_output() {
 #[test]
 fn test_rust_generates_generic_variants() {
     let func = load_sma();
-    let output = backends::rust_lang::generate(&func, &no_enums(), &make_registry(), &HelperRegistry::empty());
+    let output = backends::rust_lang::generate(&func, &no_enums(), make_registry(), &HelperRegistry::empty());
 
     // Guarded function (concrete f64)
     assert!(
@@ -482,7 +477,7 @@ fn test_rust_generates_generic_variants() {
 #[test]
 fn test_rust_mult_generates_generic_variants() {
     let func = load_mult();
-    let output = backends::rust_lang::generate(&func, &no_enums(), &make_registry(), &HelperRegistry::empty());
+    let output = backends::rust_lang::generate(&func, &no_enums(), make_registry(), &HelperRegistry::empty());
 
     // One batch entry point, concrete f64.
     assert!(

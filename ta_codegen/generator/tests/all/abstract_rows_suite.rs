@@ -3,8 +3,7 @@
 //! registry and the shipped C# registry all render. Split out of the
 //! former `backend_suite.rs`.
 
-#[path = "common/mod.rs"]
-mod common;
+use crate::common;
 
 use common::{all_abstract_rows, check_rust_cast_parens, generate_all, load_indicator_with_source};
 

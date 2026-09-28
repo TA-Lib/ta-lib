@@ -6,10 +6,9 @@
 //! about text the emitter did NOT produce -- an absent seed, an ordering.
 //! A gate on absence has to be swept, and it has to prove it swept something.
 
+use crate::common;
 use std::collections::{BTreeSet, HashMap};
 use std::path::PathBuf;
-use ta_codegen_lib::helper_registry::HelperRegistry;
-use ta_codegen_lib::registry::Registry;
 use ta_codegen_lib::{backends, ir, parser};
 
 fn input_dir() -> PathBuf {
@@ -53,13 +52,13 @@ fn section(name: &str, lang: &str) -> String {
 }
 
 fn render_stream(func: &ir::FuncDef, enums: &HashMap<String, ir::EnumDef>, lang: &str) -> String {
-    let registry = Registry::from_dir(&input_dir());
-    let helpers = HelperRegistry::from_dir(&input_dir());
+    let registry = common::make_registry();
+    let helpers = common::make_helpers();
     let full = match lang {
-        "c" => backends::c_stream::generate(func, enums, &registry, &helpers),
-        "rust" => backends::rust_lang::generate(func, enums, &registry, &helpers),
-        "java" => backends::java::generate(func, enums, &registry, &helpers),
-        "csharp" => backends::csharp::generate(func, enums, &registry, &helpers),
+        "c" => backends::c_stream::generate(func, enums, registry, helpers),
+        "rust" => backends::rust_lang::generate(func, enums, registry, helpers),
+        "java" => backends::java::generate(func, enums, registry, helpers),
+        "csharp" => backends::csharp::generate(func, enums, registry, helpers),
         other => panic!("unknown backend {other}"),
     };
     match full.find("/**** Streaming API *****/") {
@@ -336,7 +335,7 @@ fn no_managed_tape_peek_writes_the_handle_or_the_tape() {
         assert!(!handle_or_tape_store(read), "a read taken for a store: {read}");
     }
 
-    let registry = Registry::from_dir(&input_dir());
+    let registry = common::make_registry();
     let members: Vec<String> = streaming_funcs()
         .into_iter()
         .filter(|n| registry.in_tape_set(n))

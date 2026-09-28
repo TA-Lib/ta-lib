@@ -2,8 +2,7 @@
 //! branches (plus a handful of Java rendering tests that exercise the same
 //! fixtures side by side). Split out of the former `backend_suite.rs`.
 
-#[path = "common/mod.rs"]
-mod common;
+use crate::common;
 
 use common::{
     contains_call, generate_all, load_enums, load_indicator, make_registry, render_c_stmt,
@@ -743,7 +742,7 @@ fn java_single_precision_eq_comparison_optimization() {
     };
 
     let rendered = backends::java::render_statement(
-        &stmt, 0, true, &enums, &registry, &helpers, &inline_counter,
+        &stmt, 0, true, &enums, registry, &helpers, &inline_counter,
         &address_of_vars, &double_address_of_vars, &float_input_params,
     );
     assert!(
@@ -773,7 +772,7 @@ fn java_pointer_deref_double_address_of() {
         compound: false,
     };
     let rendered = backends::java::render_statement(
-        &stmt, 0, false, &enums, &registry, &helpers, &inline_counter,
+        &stmt, 0, false, &enums, registry, &helpers, &inline_counter,
         &address_of_vars, &double_address_of_vars, &float_input_params,
     );
     assert!(
@@ -803,7 +802,7 @@ fn java_var_address_of_renders_dot_value() {
         compound: false,
     };
     let rendered = backends::java::render_statement(
-        &stmt, 0, false, &enums, &registry, &helpers, &inline_counter,
+        &stmt, 0, false, &enums, registry, &helpers, &inline_counter,
         &address_of_vars, &double_address_of_vars, &float_input_params,
     );
     assert!(
@@ -833,7 +832,7 @@ fn java_var_double_address_of_renders_bracket_zero() {
         compound: false,
     };
     let rendered = backends::java::render_statement(
-        &stmt, 0, false, &enums, &registry, &helpers, &inline_counter,
+        &stmt, 0, false, &enums, registry, &helpers, &inline_counter,
         &address_of_vars, &double_address_of_vars, &float_input_params,
     );
     assert!(

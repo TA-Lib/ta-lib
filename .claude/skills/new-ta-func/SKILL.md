@@ -104,7 +104,7 @@ both directions:
 
 - **Omit it** and you silently ship the corpus's only batch-only function. Nothing
   catches that: the generator's corpus check
-  (`ta_codegen/generator/tests/streaming_suite.rs`) only validates functions that
+  (`ta_codegen/generator/tests/all/streaming_suite.rs`) only validates functions that
   already declare the flag, and asserts a floor rather than a total; ta_regtest's
   flag-vs-server check sees both sides agree that there is no stream. In Java it is
   worse than silent — `StreamSmokeTest` sweeps the metadata registry for a

@@ -2,8 +2,7 @@
 //! vs guarded validation, and indicator-specific feature tests. Split out of
 //! the former `backend_suite.rs`.
 
-#[path = "common/mod.rs"]
-mod common;
+use crate::common;
 
 use common::{
     all_abstract_rows, check_c_int_alias, check_c_variants, check_java_variants,
@@ -910,8 +909,8 @@ fn rust_cross_calls_target_the_public_tier() {
     for name in discover_indicators() {
         let (func, enums) = load_indicator(&name);
         let mut found: Vec<String> = Vec::new();
-        callees(&func.body, &registry, &mut found);
-        callees(func.stream_source(), &registry, &mut found);
+        callees(&func.body, registry, &mut found);
+        callees(func.stream_source(), registry, &mut found);
         found.retain(|c| *c != name);
         scanned += 1;
         if found.is_empty() {
@@ -1026,19 +1025,19 @@ fn an_answered_cross_call_guard_is_folded_in_every_ported_backend() {
         let (func, enums) = load_indicator(&name);
         scanned += 1;
 
-        let mut rust = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
-        let mut java = backends::java::generate(&func, &enums, &registry, &helpers);
-        let mut csharp = backends::csharp::generate(&func, &enums, &registry, &helpers);
+        let mut rust = backends::rust_lang::generate(&func, &enums, registry, &helpers);
+        let mut java = backends::java::generate(&func, &enums, registry, &helpers);
+        let mut csharp = backends::csharp::generate(&func, &enums, registry, &helpers);
         if func.streaming {
-            if backends::rust_stream::emits_stream(&func, &registry) {
-                rust.push_str(&backends::rust_stream::generate(&func, &enums, &registry, &helpers));
+            if backends::rust_stream::emits_stream(&func, registry) {
+                rust.push_str(&backends::rust_stream::generate(&func, &enums, registry, &helpers));
             }
-            if backends::java_stream::emits_stream(&func, &registry) {
-                java.push_str(&backends::java_stream::generate(&func, &enums, &registry, &helpers));
+            if backends::java_stream::emits_stream(&func, registry) {
+                java.push_str(&backends::java_stream::generate(&func, &enums, registry, &helpers));
             }
-            if backends::csharp_stream::emits_stream(&func, &registry) {
+            if backends::csharp_stream::emits_stream(&func, registry) {
                 csharp
-                    .push_str(&backends::csharp_stream::generate(&func, &enums, &registry, &helpers));
+                    .push_str(&backends::csharp_stream::generate(&func, &enums, registry, &helpers));
             }
         }
 
@@ -1091,20 +1090,20 @@ fn deallocation_is_dropped_only_where_the_backend_has_none() {
         let (func, enums) = load_indicator(&name);
         scanned += 1;
 
-        let mut rust = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
-        let mut java = backends::java::generate(&func, &enums, &registry, &helpers);
-        let mut csharp = backends::csharp::generate(&func, &enums, &registry, &helpers);
-        let c = backends::c::generate(&func, &enums, &registry, &helpers);
+        let mut rust = backends::rust_lang::generate(&func, &enums, registry, &helpers);
+        let mut java = backends::java::generate(&func, &enums, registry, &helpers);
+        let mut csharp = backends::csharp::generate(&func, &enums, registry, &helpers);
+        let c = backends::c::generate(&func, &enums, registry, &helpers);
         if func.streaming {
-            if backends::rust_stream::emits_stream(&func, &registry) {
-                rust.push_str(&backends::rust_stream::generate(&func, &enums, &registry, &helpers));
+            if backends::rust_stream::emits_stream(&func, registry) {
+                rust.push_str(&backends::rust_stream::generate(&func, &enums, registry, &helpers));
             }
-            if backends::java_stream::emits_stream(&func, &registry) {
-                java.push_str(&backends::java_stream::generate(&func, &enums, &registry, &helpers));
+            if backends::java_stream::emits_stream(&func, registry) {
+                java.push_str(&backends::java_stream::generate(&func, &enums, registry, &helpers));
             }
-            if backends::csharp_stream::emits_stream(&func, &registry) {
+            if backends::csharp_stream::emits_stream(&func, registry) {
                 csharp
-                    .push_str(&backends::csharp_stream::generate(&func, &enums, &registry, &helpers));
+                    .push_str(&backends::csharp_stream::generate(&func, &enums, registry, &helpers));
             }
         }
 
@@ -1265,13 +1264,13 @@ fn a_cross_call_rejection_is_answered_before_its_result_is_used() {
         let outs: Vec<String> = func.outputs.iter().map(|o| o.name.clone()).collect();
         let mut bad = Vec::new();
         for body in [func.body.as_slice(), func.private_body.as_slice(), func.stream_source()] {
-            scan(body, &outs, &registry, &mut bad);
+            scan(body, &outs, registry, &mut bad);
         }
         let mut any = false;
         for body in [func.body.as_slice(), func.stream_source()] {
             for st in body {
                 if let ir::Statement::Assign { value, .. } = st {
-                    if is_cross_call(value, &registry).is_some() {
+                    if is_cross_call(value, registry).is_some() {
                         any = true;
                     }
                 }

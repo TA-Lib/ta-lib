@@ -11,6 +11,7 @@
 //! returned the base, or always returned the alternate, fails one of the two
 //! rather than passing both.
 
+use crate::common;
 use std::collections::HashMap;
 use std::path::Path;
 
@@ -219,13 +220,13 @@ fn file_order_still_decides_between_alternates_with_several_claims() {
 fn a_two_claim_alternate_reaches_both_languages_and_no_other() {
     let mut f = wire_source(SRC_TWO_CLAIMS());
     f.streaming = false;
-    let registry = Registry::from_dir(&input_dir());
+    let registry = common::make_registry();
     let (e, h) = (enums(), HelperRegistry::empty());
     for (lang, text, alt) in [
-        ("C", backends::c::generate(&f, &e, &registry, &h), false),
-        ("Rust", backends::rust_lang::generate(&f, &e, &registry, &h), false),
-        ("Java", backends::java::generate(&f, &e, &registry, &h), true),
-        ("C#", backends::csharp::generate(&f, &e, &registry, &h), true),
+        ("C", backends::c::generate(&f, &e, registry, &h), false),
+        ("Rust", backends::rust_lang::generate(&f, &e, registry, &h), false),
+        ("Java", backends::java::generate(&f, &e, registry, &h), true),
+        ("C#", backends::csharp::generate(&f, &e, registry, &h), true),
     ] {
         let (want, not) = if alt { ("7002", "7001") } else { ("7001", "7002") };
         assert!(text.contains(want), "{lang}: the {want} body is missing");
@@ -369,7 +370,7 @@ fn free_form_pragma_is_ignored_and_never_emitted() {
 /// exists in no backend — a link error instead of a generator error.
 #[test]
 fn an_alternate_is_not_a_call_target() {
-    let registry = Registry::from_dir(&input_dir());
+    let registry = common::make_registry();
     let err = std::panic::catch_unwind(|| registry.resolve_call("sma_ALT1", Lang::C))
         .expect_err("calling an alternate must be a hard error");
     let msg = err
@@ -405,8 +406,8 @@ fn the_winning_alternate_is_named_in_the_output() {
     // No marker where the base wins — otherwise 168 files gain a line that says
     // nothing, and the marker stops meaning "something was overridden here".
     let sma = load_from(&input_dir(), "sma");
-    let registry = Registry::from_dir(&input_dir());
-    let out = backends::c::generate(&sma, &enums(), &registry, &HelperRegistry::empty());
+    let registry = common::make_registry();
+    let out = backends::c::generate(&sma, &enums(), registry, &HelperRegistry::empty());
     assert!(!out.contains("TA_ALT="), "SMA declares no alternate and must carry no marker");
 }
 

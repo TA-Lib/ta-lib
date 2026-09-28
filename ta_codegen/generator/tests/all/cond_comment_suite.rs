@@ -10,8 +10,7 @@
 //! pinned by exact set equality: a function whose input gets fixed must be
 //! deleted from `UNPLACED` here, and one that regresses must be added.
 
-#[path = "common/mod.rs"]
-mod common;
+use crate::common;
 
 use std::path::{Path, PathBuf};
 
@@ -258,7 +257,7 @@ TA_RetCode f( int isUptrend, int startIdx, int endIdx, int *outBegIdx, int *outN
         0,
         false,
         &enums,
-        &common::make_registry(),
+        common::make_registry(),
         &HelperRegistry::empty(),
         &Cell::new(0),
         &empty,

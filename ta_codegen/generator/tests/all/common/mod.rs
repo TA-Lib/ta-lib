@@ -1,14 +1,8 @@
-//! Shared test infrastructure for the `*_suite.rs` integration test binaries
-//! that used to live together in one `backend_suite.rs`. Each binary that
-//! needs it pulls it in via `#[path = "common/mod.rs"] mod common;`.
-//!
-//! Not every consumer uses every helper here, so unused ones in a given
-//! binary are expected — that is the point of sharing one module across
-//! several independent `tests/*.rs` crates.
-#![allow(dead_code)]
+//! Shared harness for the suites in `tests/all/`.
 
 use std::collections::HashMap;
 use std::path::Path;
+use std::sync::OnceLock;
 use ta_codegen_lib::backends;
 use ta_codegen_lib::helper_registry::HelperRegistry;
 use ta_codegen_lib::ir;
@@ -112,9 +106,9 @@ pub struct AllOutputs {
     pub java: String,
 }
 
-pub fn make_registry() -> Registry {
-    let base = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../ta_codegen/input");
-    Registry::from_dir(&base)
+pub fn make_registry() -> &'static Registry {
+    static REGISTRY: OnceLock<Registry> = OnceLock::new();
+    REGISTRY.get_or_init(|| Registry::from_dir(&Path::new(env!("CARGO_MANIFEST_DIR")).join("../../ta_codegen/input")))
 }
 
 /// A registry over the `input_synth/` gate fixtures. `scripts/synth_gate.py`
@@ -127,18 +121,18 @@ pub fn make_synth_registry() -> Registry {
 }
 
 /// Build a `HelperRegistry` over the shipped `.helper.c` files (issue #146+).
-pub fn make_helpers() -> HelperRegistry {
-    let base = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../ta_codegen/input");
-    HelperRegistry::from_dir(&base)
+pub fn make_helpers() -> &'static HelperRegistry {
+    static HELPERS: OnceLock<HelperRegistry> = OnceLock::new();
+    HELPERS.get_or_init(|| HelperRegistry::from_dir(&Path::new(env!("CARGO_MANIFEST_DIR")).join("../../ta_codegen/input")))
 }
 
 pub fn generate_all(func: &ir::FuncDef, enums: &HashMap<String, ir::EnumDef>) -> AllOutputs {
     let registry = make_registry();
     let helpers = HelperRegistry::empty();
     AllOutputs {
-        c: backends::c::generate(func, enums, &registry, &helpers),
-        rust: backends::rust_lang::generate(func, enums, &registry, &helpers),
-        java: backends::java::generate(func, enums, &registry, &helpers),
+        c: backends::c::generate(func, enums, registry, &helpers),
+        rust: backends::rust_lang::generate(func, enums, registry, &helpers),
+        java: backends::java::generate(func, enums, registry, &helpers),
     }
 }
 
@@ -364,7 +358,7 @@ pub fn render_java_stmt(stmt: &ir::Statement) -> String {
     let double_address_of_vars = std::collections::HashSet::new();
     let float_input_params = std::collections::HashSet::new();
     backends::java::render_statement(
-        stmt, 3, false, &enums, &registry, &helpers, &inline_counter,
+        stmt, 3, false, &enums, registry, &helpers, &inline_counter,
         &address_of_vars, &double_address_of_vars, &float_input_params,
     )
 }
@@ -376,6 +370,6 @@ pub fn render_c_stmt(stmt: &ir::Statement) -> String {
     let helpers = HelperRegistry::empty();
     let inline_counter = std::cell::Cell::new(0);
     backends::c::render_statement(
-        stmt, 3, false, &enums, &registry, &helpers, &inline_counter, &[], false,
+        stmt, 3, false, &enums, registry, &helpers, &inline_counter, &[], false,
     )
 }

@@ -19,10 +19,9 @@
 //! which, per #217, it essentially never does. Both renderings are covered: the
 //! inline arms and the hoisted statement arms from the helper body.
 
+use crate::common;
 use std::collections::HashMap;
 use std::path::PathBuf;
-use ta_codegen_lib::helper_registry::HelperRegistry;
-use ta_codegen_lib::registry::Registry;
 use ta_codegen_lib::{backends, ir, parser};
 
 fn input_dir() -> PathBuf {
@@ -52,17 +51,14 @@ enum Lang {
 }
 
 /// Generated source for one indicator, in one backend.
-///
-/// `HelperRegistry::from_dir` appends `helpers` itself, so it takes `input/`,
-/// not `input/helpers`.
 fn generated(name: &str, lang: Lang) -> String {
     let (func, enums) = load_indicator(name);
-    let registry = Registry::from_dir(&input_dir());
-    let helpers = HelperRegistry::from_dir(&input_dir());
+    let registry = common::make_registry();
+    let helpers = common::make_helpers();
     let full = match lang {
-        Lang::Rust => backends::rust_lang::generate(&func, &enums, &registry, &helpers),
-        Lang::Java => backends::java::generate(&func, &enums, &registry, &helpers),
-        Lang::CSharp => backends::csharp::generate(&func, &enums, &registry, &helpers),
+        Lang::Rust => backends::rust_lang::generate(&func, &enums, registry, helpers),
+        Lang::Java => backends::java::generate(&func, &enums, registry, helpers),
+        Lang::CSharp => backends::csharp::generate(&func, &enums, registry, helpers),
     };
     collapse(&full)
 }

@@ -20,14 +20,13 @@
 //!   would silently unfuse a multiply-add that update still fuses — a ~1 ULP
 //!   divergence in the one comparison ta_regtest declares must be bitwise.
 
+use crate::common;
 use std::collections::{BTreeSet, HashMap};
 use std::path::Path;
 
 use ta_codegen_lib::backends::c_stream;
-use ta_codegen_lib::helper_registry::HelperRegistry;
 use ta_codegen_lib::ir;
 use ta_codegen_lib::parser;
-use ta_codegen_lib::registry::Registry;
 
 fn input_dir() -> std::path::PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("../input")
@@ -61,9 +60,9 @@ fn load(name: &str) -> Option<(ir::FuncDef, HashMap<String, ir::EnumDef>)> {
 }
 
 fn stream_c(func: &ir::FuncDef, enums: &HashMap<String, ir::EnumDef>) -> String {
-    let registry = Registry::from_dir(&input_dir());
-    let helpers = HelperRegistry::from_dir(&input_dir());
-    c_stream::generate(func, enums, &registry, &helpers)
+    let registry = common::make_registry();
+    let helpers = common::make_helpers();
+    c_stream::generate(func, enums, registry, helpers)
 }
 
 /// The brace-balanced body of the definition whose signature line contains
@@ -255,7 +254,7 @@ fn a_peek_frame_stores_into_no_handle_buffer() {
     }
 
     assert!(peek_frames >= 200, "only {peek_frames} peek entry points swept");
-    let registry = Registry::from_dir(&input_dir());
+    let registry = common::make_registry();
     let tape_set = indicators().iter().filter(|n| registry.in_tape_set(n)).count();
     assert!(
         tape_set > 0 && tape_peeks == tape_set,

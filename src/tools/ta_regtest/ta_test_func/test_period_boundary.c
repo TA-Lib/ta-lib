@@ -693,7 +693,7 @@ static ErrorNumber testIdentityAtPeriodOne( const TA_History *history )
  *    check is required to carry it. A bit lost on one of the others fails the
  *    PB_MIN_FLAGGED floor, which is why that floor is a literal;
  *  - a `period1_identity` deleted from a function's YAML fails at generate time
- *    (ta_codegen/generator/tests/period1_suite.rs), which is also where the rule
+ *    (ta_codegen/generator/tests/all/period1_suite.rs), which is also where the rule
  *    for who must DECLARE it lives. That gate covers the enum members and every
  *    function carrying a recognisable identity arm, which today is all of them.
  *

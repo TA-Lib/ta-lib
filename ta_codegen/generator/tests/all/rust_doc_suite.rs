@@ -8,10 +8,10 @@
 //! docs.rs search cannot answer, and a stray one points the reader at an item
 //! that does not implement it.
 
+use crate::common;
 use std::collections::{BTreeSet, HashMap};
 use std::path::PathBuf;
 use ta_codegen_lib::helper_registry::HelperRegistry;
-use ta_codegen_lib::registry::Registry;
 use ta_codegen_lib::{backends, ir, parser};
 
 fn input_dir() -> PathBuf {
@@ -46,9 +46,9 @@ fn indicators() -> Vec<String> {
 
 fn rust_source(name: &str) -> (ir::FuncDef, String) {
     let (func, enums) = load_indicator(name);
-    let registry = Registry::from_dir(&input_dir());
+    let registry = common::make_registry();
     let helpers = HelperRegistry::empty();
-    let src = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
+    let src = backends::rust_lang::generate(&func, &enums, registry, &helpers);
     (func, src)
 }
 
