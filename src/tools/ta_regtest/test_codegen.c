@@ -696,6 +696,7 @@ static const UnstableLookup UNSTABLE_MAP[] = {
     {"RMA",          TA_FUNC_UNST_RMA},
     {"RSI",          TA_FUNC_UNST_RSI},
     {"RVI",          TA_FUNC_UNST_RVI},
+    {"FRAMA",        TA_FUNC_UNST_FRAMA},
     {"T3",           TA_FUNC_UNST_T3},
     /* EMA-derived: doRangeTest sweeps UNST_EMA, as the hand MA tests do. */
     {"DEMA",         TA_FUNC_UNST_EMA},
@@ -6587,7 +6588,7 @@ void codegen_hash_report(const char *who, TA_RetCode goldRc, int goldBeg,
  * sqrt/ceil/floor users (IEEE correctly-rounded) — stays bit-identical across
  * languages. Source-derived from a grep of ta_codegen/input. ---- */
 static const char *const CODEGEN_TRANSCENDENTAL[] = {
-    "ACOS", "ASIN", "ATAN", "COS", "COSH", "EXP",
+    "ACOS", "ASIN", "ATAN", "COS", "COSH", "EXP", "FRAMA",
     "HT_DCPERIOD", "HT_DCPHASE", "HT_PHASOR", "HT_SINE", "HT_TRENDLINE",
     "HT_TRENDMODE", "LINEARREG_ANGLE", "LN", "LOG10", "MAMA",
     "SIN", "SINH", "TAN", "TANH",
@@ -6632,9 +6633,10 @@ int codegen_call_is_transcendental(const TA_FuncHandle *handle,
  * elements: reals at `tol` (relative for |v|>1, absolute otherwise), integers
  * exact. A non-finite value must match in kind, any NaN or the same infinity:
  * a bound scaled by an infinite golden accepts every value. Output field keys come from
- * `codegen_output_field`, which ranks per type. Both gates' output lengths are
- * far under CODEGEN_TOL_MAX_OUT. */
-#define CODEGEN_TOL_MAX_OUT 512
+ * `codegen_output_field`, which ranks per type. A longer output is truncated
+ * and fails as a count mismatch, so keep this above the longest call either
+ * gate makes. */
+#define CODEGEN_TOL_MAX_OUT 4096
 CTolVerdict codegen_compare_tol(const char *resp,
                                 unsigned int nbOutput, const int *outIsInteger,
                                 const void *const *outBufs,

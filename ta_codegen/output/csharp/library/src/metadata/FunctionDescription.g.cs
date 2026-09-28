@@ -4868,6 +4868,53 @@ public static class FunctionDescription
 	</FinancialFunction>
 
 
+	<!-- FRAMA -->
+	<FinancialFunction>
+		<Abbreviation>FRAMA</Abbreviation>
+		<ShortDescription>Fractal Adaptive Moving Average</ShortDescription>
+		<GroupId>Overlap Studies</GroupId>
+		<Flags>
+			<Flag>Overlap</Flag>
+			<Flag>Unstable Period</Flag>
+			<Flag>Streaming</Flag>
+		</Flags>
+		<RequiredInputArguments>
+			<RequiredInputArgument>
+				<Type>High</Type>
+				<Name>High</Name>
+			</RequiredInputArgument>
+			<RequiredInputArgument>
+				<Type>Low</Type>
+				<Name>Low</Name>
+			</RequiredInputArgument>
+		</RequiredInputArguments>
+		<OptionalInputArguments>
+			<OptionalInputArgument>
+				<Name>Time Period</Name>
+				<ShortDescription>Number of bars, even; the window is split into two halves of optInTimePeriod/2 bars</ShortDescription>
+				<Type>Integer</Type>
+				<Range>
+					<Minimum>2</Minimum>
+					<Maximum>100000</Maximum>
+					<SuggestedStart>4</SuggestedStart>
+					<SuggestedEnd>200</SuggestedEnd>
+					<SuggestedIncrement>2</SuggestedIncrement>
+				</Range>
+				<DefaultValue>16</DefaultValue>
+			</OptionalInputArgument>
+		</OptionalInputArguments>
+		<OutputArguments>
+			<OutputArgument>
+				<Type>Double Array</Type>
+				<Name>outReal</Name>
+				<Flags>
+					<Flag>Line</Flag>
+				</Flags>
+			</OutputArgument>
+		</OutputArguments>
+	</FinancialFunction>
+
+
 	<!-- HA -->
 	<FinancialFunction>
 		<Abbreviation>HA</Abbreviation>

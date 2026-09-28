@@ -2428,6 +2428,8 @@ static void pbSweepOneFunction( const TA_FuncInfo *funcInfo, void *opaque )
     * value (min / min+1 / default+-1) — so a regression that wrongly rejects a
     * documented minimum period is caught, not silently accepted. */
    int crossConstrained = ( strcmp( funcInfo->name, "MAVP" ) == 0 );
+   /* The range cannot say "even": FRAMA must reject an odd period cleanly. */
+   int evenOnly = ( strcmp( funcInfo->name, "FRAMA" ) == 0 );
 
    if( ctx->errNb != TA_TEST_PASS )
       return;   /* Already failed: skip the rest quietly. */
@@ -2466,7 +2468,8 @@ static void pbSweepOneFunction( const TA_FuncInfo *funcInfo, void *opaque )
           * default itself must always succeed, for every function. */
          for( k = 0; k < nCand; k++ )
          {
-            int expect = ( !crossConstrained || cand[k] == def )
+            int expect = ( evenOnly && (cand[k] % 2) != 0 ) ? PB_EXPECT_REJECT
+                       : ( !crossConstrained || cand[k] == def )
                              ? PB_EXPECT_STRICT : PB_EXPECT_LENIENT;
             pbSweepRunCase( ctx, funcInfo, paramNb, optInfo, 0, cand[k], 0.0, expect );
             if( ctx->errNb != TA_TEST_PASS ) return;

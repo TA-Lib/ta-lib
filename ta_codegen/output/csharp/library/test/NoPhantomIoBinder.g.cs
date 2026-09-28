@@ -785,6 +785,12 @@ internal static class NoPhantomIoBinder
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), c.IntOpt(1), out int b, out int n, c.IntOut(0), c.IntOut(1));
             return new CallOutcome(rc, b, n);
         },
+        ["FRAMA"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.FramaImpl(
+                startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), out int b, out int n, c.RealOut(0));
+            return new CallOutcome(rc, b, n);
+        },
         ["HA"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.HaImpl(
@@ -2056,6 +2062,12 @@ internal static class NoPhantomIoBinder
                 startIdx, endIdx, Narrow(c.Price(0, PriceComponents.High)), Narrow(c.Price(0, PriceComponents.Low)), c.IntOpt(0), c.IntOpt(1), out int b, out int n, c.IntOut(0), c.IntOut(1));
             return new CallOutcome(rc, b, n);
         },
+        ["FRAMA"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.FramaImpl(
+                startIdx, endIdx, Narrow(c.Price(0, PriceComponents.High)), Narrow(c.Price(0, PriceComponents.Low)), c.IntOpt(0), out int b, out int n, c.RealOut(0));
+            return new CallOutcome(rc, b, n);
+        },
         ["HA"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.HaImpl(
@@ -2772,6 +2784,7 @@ internal static class NoPhantomIoBinder
         ["FLOOR"] = static (core, c) => core.FloorOpen(c.Series(0)),
         ["FOSC"] = static (core, c) => core.FoscOpen(c.Series(0), c.IntOpt(0)),
         ["FRACTAL"] = static (core, c) => core.FractalOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), c.IntOpt(1)),
+        ["FRAMA"] = static (core, c) => core.FramaOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0)),
         ["HA"] = static (core, c) => core.HaOpen(c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close)),
         ["HMA"] = static (core, c) => core.HmaOpen(c.Series(0), c.IntOpt(0)),
         ["HT_DCPERIOD"] = static (core, c) => core.HtDcperiodOpen(c.Series(0)),

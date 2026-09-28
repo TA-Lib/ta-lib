@@ -2542,6 +2542,27 @@ unsigned int TA_FRACTAL_FramePPLB( const TA_ParamHolderPriv *params )
    return TA_FRACTAL_Lookback(params->optIn[0].data.optInInteger, /* optInLeftBars*/
                     params->optIn[1].data.optInInteger /* optInRightBars*/ );
 }
+TA_RetCode TA_FRAMA_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+{
+   return TA_FRAMA(
+               startIdx,
+               endIdx,
+               params->in[0].data.inPrice.high, /* inHigh */
+               params->in[0].data.inPrice.low, /* inLow */
+               params->optIn[0].data.optInInteger, /* optInTimePeriod*/
+               outBegIdx, 
+               outNBElement, 
+               params->out[0].data.outReal /*  outReal */
+               );
+}
+unsigned int TA_FRAMA_FramePPLB( const TA_ParamHolderPriv *params )
+{
+   return TA_FRAMA_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
+}
 TA_RetCode TA_HA_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

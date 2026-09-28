@@ -141,6 +141,8 @@ pub enum FuncUnstId {
     HA,
     /// Unstable period of [`Core::rvi`].
     RVI,
+    /// Unstable period of [`Core::frama`].
+    FRAMA,
     /// Wildcard: set the unstable period for all functions at once.
     ///
     /// Pinned rather than sitting one past the last function id, so that adding
@@ -152,7 +154,7 @@ impl FuncUnstId {
     /// Size of the unstable-period table: one past the highest function id.
     /// [`FuncUnstId::ALL`] selects every slot and is not one. Mirrors C's
     /// `TA_FUNC_UNST_COUNT`.
-    pub(crate) const COUNT: usize = 27;
+    pub(crate) const COUNT: usize = 28;
 }
 
 /// What a candlestick setting measures a candle against. Mirrors the C

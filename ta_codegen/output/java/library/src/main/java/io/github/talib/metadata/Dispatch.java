@@ -389,6 +389,9 @@ final class Dispatch {
          case "FRACTAL":
             return core.fractal(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.intOpt(0), h.intOpt(1), h.intOutput(0), h.intOutput(1));
+         case "FRAMA":
+            return core.frama(
+               startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.intOpt(0), h.realOutput(0));
          case "HA":
             return core.ha(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.realOutput(0), h.realOutput(1), h.realOutput(2), h.realOutput(3));
@@ -922,6 +925,8 @@ final class Dispatch {
             return core.foscLookback(h.intOpt(0));
          case "FRACTAL":
             return core.fractalLookback(h.intOpt(0), h.intOpt(1));
+         case "FRAMA":
+            return core.framaLookback(h.intOpt(0));
          case "HA":
             return core.haLookback();
          case "HMA":

@@ -1046,6 +1046,15 @@ TA_RetCode TA_FRACTAL_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_FRACTAL_FramePPLB( const TA_ParamHolderPriv *params )
 ;
 
+TA_RetCode TA_FRAMA_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+;
+unsigned int TA_FRAMA_FramePPLB( const TA_ParamHolderPriv *params )
+;
+
 TA_RetCode TA_HA_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

@@ -5822,6 +5822,57 @@ static void icount_FRACTAL(int iters) {
     g_sink += acc + outNBElement;
 }
 
+static void icount_FRAMA(int iters) {
+    const char *nm = "FRAMA";
+    int outBegIdx = 0, outNBElement = 0;
+    double acc = 0.0;
+    TA_RetCode rc;
+    TA_FRAMA_Stream *st = NULL;
+    TA_FRAMA_Stream *stf = NULL;
+    double v0 = 0.0;
+
+    ICOUNT_ZERO();
+    rc = TA_FRAMA(0, g_nPoints - 1, g_high, g_low, 16, &outBegIdx, &outNBElement, g_outBuf0);
+    ICOUNT_DUMP("FRAMA/batch");
+    icount_row(nm, "batch", 1, rc);
+    acc += g_outBuf0[0];
+
+    ICOUNT_ZERO();
+    rc = TA_FRAMA_OpenAndFill(&stf, g_high, g_low, g_nPoints, 16, &outBegIdx, &outNBElement, g_outBuf0);
+    ICOUNT_DUMP("FRAMA/openfill");
+    icount_row(nm, "openfill", 1, rc);
+    acc += g_outBuf0[0];
+    if( stf ) TA_FRAMA_Close(stf);
+
+    ICOUNT_ZERO();
+    rc = TA_FRAMA_Open(&st, g_high, g_low, g_nPoints, 16, &v0);
+    ICOUNT_DUMP("FRAMA/open");
+    icount_row(nm, "open", 1, rc);
+
+    if( rc == TA_SUCCESS && st ) {
+        TA_RetCode src = TA_SUCCESS;
+        ICOUNT_ZERO();
+        for( int it = 0; it < iters; it++ ) {
+            src = TA_FRAMA_Update(st, g_high[it & ICOUNT_MASK], g_low[it & ICOUNT_MASK], &v0);
+            acc += v0;
+        }
+        ICOUNT_DUMP("FRAMA/update");
+        icount_row(nm, "update", 1, src);
+        ICOUNT_ZERO();
+        for( int it = 0; it < iters; it++ ) {
+            src = TA_FRAMA_Peek(st, g_high[it & ICOUNT_MASK], g_low[it & ICOUNT_MASK], &v0);
+            acc += v0;
+        }
+        ICOUNT_DUMP("FRAMA/peek");
+        icount_row(nm, "peek", 1, src);
+    } else {
+        icount_row(nm, "update", 0, rc);
+        icount_row(nm, "peek", 0, rc);
+    }
+    if( st ) TA_FRAMA_Close(st);
+    g_sink += acc + outNBElement;
+}
+
 static void icount_HA(int iters) {
     const char *nm = "HA";
     int outBegIdx = 0, outNBElement = 0;
@@ -11154,6 +11205,7 @@ static void icount_all(const char *filter, int iters) {
     if( func_matches(filter, "FLOOR") ) { icount_FLOOR(iters); fflush(stdout); }
     if( func_matches(filter, "FOSC") ) { icount_FOSC(iters); fflush(stdout); }
     if( func_matches(filter, "FRACTAL") ) { icount_FRACTAL(iters); fflush(stdout); }
+    if( func_matches(filter, "FRAMA") ) { icount_FRAMA(iters); fflush(stdout); }
     if( func_matches(filter, "HA") ) { icount_HA(iters); fflush(stdout); }
     if( func_matches(filter, "HMA") ) { icount_HMA(iters); fflush(stdout); }
     if( func_matches(filter, "HT_DCPERIOD") ) { icount_HT_DCPERIOD(iters); fflush(stdout); }

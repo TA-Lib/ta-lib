@@ -188,6 +188,54 @@ DEF_FUNCTION( FRACTAL,
              );
 /* FRACTAL END */
 
+/* FRAMA BEGIN */
+static const TA_IntegerRange TA_DEF_FRAMA_TimePeriod =
+{
+   2,
+   100000,
+   4,
+   200,
+   2
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_FRAMA_TimePeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInTimePeriod",
+   0,
+
+   "Time Period",
+   (const void *)&TA_DEF_FRAMA_TimePeriod,
+   16,
+   "Number of bars, even; the window is split into two halves of optInTimePeriod/2 bars",
+
+   NULL
+};
+
+static const TA_InputParameterInfo    *TA_FRAMA_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_HL,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_FRAMA_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_FRAMA_OptInputs[] =
+{ &TA_DEF_UI_D_FRAMA_TimePeriod,
+  NULL
+};
+
+DEF_FUNCTION( FRAMA,
+              TA_GroupId_OverlapStudies,
+              "Fractal Adaptive Moving Average",
+              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM
+             );
+/* FRAMA END */
+
 /****************************************************************************
  * Step 2 - Add your TA function to the table.
  *          Keep in alphabetical order. Must be NULL terminated.
@@ -197,6 +245,7 @@ const TA_FuncDef *TA_DEF_TableF[] =
    ADD_TO_TABLE(FLOOR),
    ADD_TO_TABLE(FOSC),
    ADD_TO_TABLE(FRACTAL),
+   ADD_TO_TABLE(FRAMA),
    NULL
 };
 

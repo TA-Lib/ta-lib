@@ -57,6 +57,7 @@ ErrorNumber test_func_zlema   ( TA_History *history );
 ErrorNumber test_func_vhf     ( TA_History *history );
 ErrorNumber test_func_rvi     ( TA_History *history );
 ErrorNumber test_func_rvir    ( TA_History *history );
+ErrorNumber test_func_frama   ( TA_History *history );
 ErrorNumber test_func_fractal ( TA_History *history );
 ErrorNumber test_func_ha      ( TA_History *history );
 ErrorNumber test_func_tsi     ( TA_History *history );

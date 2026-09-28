@@ -224,6 +224,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
             MakeFloor(),
             MakeFosc(),
             MakeFractal(),
+            MakeFrama(),
             MakeHa(),
             MakeHma(),
             MakeHtDcperiod(),
@@ -2745,6 +2746,29 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         invoke: static (core, c, startIdx, endIdx) =>
             core.Fractal(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), c.IntOpt(1), c.IntOut(0), c.IntOut(1)));
+
+    private static FuncInfo MakeFrama() => new(
+        name: "FRAMA",
+        group: FunctionGroup.OverlapStudies,
+        hint: "Fractal Adaptive Moving Average",
+        flags: FuncFlags.Overlap | FuncFlags.Stream | FuncFlags.UnstablePeriod,
+        unstableId: FuncUnstId.FRAMA,
+        inputs:
+        [
+            new InputInfo(InputKind.Price, "inPriceHL", PriceComponents.High | PriceComponents.Low, [PriceComponents.High, PriceComponents.Low]),
+        ],
+        optInputs:
+        [
+            new OptInputInfo("optInTimePeriod", "Time Period", "Number of bars, even; the window is split into two halves of optInTimePeriod/2 bars", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 16, 4, 200, 2)),
+        ],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+        ],
+        lookback: static (core, c) => core.FramaLookback(c.IntOpt(0)),
+        invoke: static (core, c, startIdx, endIdx) =>
+            core.Frama(
+                startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), c.RealOut(0)));
 
     private static FuncInfo MakeHa() => new(
         name: "HA",

@@ -77,3 +77,4 @@ FuncUnstId:
     - { name: RMA,          value: 24 }
     - { name: HA,           value: 25 }
     - { name: RVI,          value: 26 }
+    - { name: FRAMA,        value: 27 }

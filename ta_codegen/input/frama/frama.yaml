@@ -1,0 +1,20 @@
+name: FRAMA
+group: Overlap Studies
+hint: Fractal Adaptive Moving Average
+flags: [overlap, unstable_period, stream]
+inputs:
+  - name: inPriceHL
+    type: price
+    price_components: [high, low]
+optional_inputs:
+  - name: optInTimePeriod
+    type: integer
+    display_name: Time Period
+    hint: Number of bars, even; the window is split into two halves of optInTimePeriod/2 bars
+    range: [2, 100000]
+    default: 16
+    suggested: [4, 200, 2]
+outputs:
+  - name: outReal
+    type: real
+    flags: [line]

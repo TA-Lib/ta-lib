@@ -231,13 +231,14 @@
 //! * [`WAD`](Core::wad) — Williams' Accumulation/Distribution
 //! * [`WILLR`](Core::willr) — Williams' %R
 //!
-//! ## Overlap Studies (25)
+//! ## Overlap Studies (26)
 //!
 //! * [`ACCBANDS`](Core::accbands) — Acceleration Bands
 //! * [`BBANDS`](Core::bbands) — Bollinger Bands
 //! * [`DEMA`](Core::dema) — Double Exponential Moving Average
 //! * [`DONCHIAN`](Core::donchian) — Donchian Channels
 //! * [`EMA`](Core::ema) — Exponential Moving Average
+//! * [`FRAMA`](Core::frama) — Fractal Adaptive Moving Average
 //! * [`HMA`](Core::hma) — Hull Moving Average
 //! * [`HT_TRENDLINE`](Core::ht_trendline) — Hilbert Transform - Instantaneous Trendline
 //! * [`KAMA`](Core::kama) — Kaufman Adaptive Moving Average

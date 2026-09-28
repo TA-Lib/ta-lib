@@ -24,9 +24,9 @@ enum FuncUnstId {
     HT_DCPERIOD, HT_DCPHASE, HT_PHASOR, HT_SINE, HT_TRENDLINE, HT_TRENDMODE,
     UNUSED_12, KAMA, MAMA, UNUSED_15, MINUS_DI, MINUS_DM,
     NATR, PLUS_DI, PLUS_DM, RSI, UNUSED_22, T3,
-    RMA, HA, RVI,
+    RMA, HA, RVI, FRAMA,
     ALL;
-    static final int COUNT = 27;
+    static final int COUNT = 28;
     int value() { return this == ALL ? 65535 : ordinal(); }
 }
 
@@ -94142,6 +94142,1223 @@ class Core {
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           return fractalOpenAndFillInternal(inHigh, inLow, 0, optInLeftBars, optInRightBars, outBegIdx, outNBElement, outSwingHigh, outSwingLow);
+       }
+    /* List of contributors:
+     *
+     *  Initial  Name/description
+     *  -------------------------------------------------------------------
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
+     *
+     * Change history:
+     *
+     *  MMDDYY BY     Description
+     *  -------------------------------------------------------------------
+     *  092826 MF,CC  First version (issue #464).
+     */
+
+       /**
+        * Number of leading input bars {@link Core#frama} consumes before it can
+        * produce its first value.
+        * <p>Equivalently, the index of the first bar with a value when the whole
+        * series is requested. Feed at least {@code lookback + 1} bars to get any
+        * output.
+        * <p>This function is recursive, so the result also includes this
+        * {@code Core}'s unstable-period setting — which is why it is an instance
+        * method.
+        *
+        * @param optInTimePeriod Number of bars in the window, split into two equal
+        *        halves (default 16; range 2..100000; {@code Integer.MIN_VALUE} selects the
+        *        default).
+        * @return The lookback, or {@code -1} if a parameter is out of range.
+        */
+       public int framaLookback( int optInTimePeriod )
+       {
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 16;
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+             return -1;
+          }
+          /* The range check cannot demand an even period; without this the lookback
+           * answers a usable number for a call that cannot run.
+           */
+          if( optInTimePeriod % 2 != 0 ) {
+             return -1 ;
+          }
+          return optInTimePeriod + this.unstablePeriod[FuncUnstId.FRAMA.ordinal()] ;
+
+       }
+       RetCode framaImpl( int startIdx,
+                          int endIdx,
+                          double inHigh[],
+                          double inLow[],
+                          int optInTimePeriod,
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
+       {
+          double expScale = 0;
+          double[] slot_sufHigh;
+          double[] slot_sufLow;
+          double[] slot_oldHigh;
+          double[] slot_oldLow;
+          int slot_Idx = 0;
+          int maxIdx_slot = (32)-1;
+          double tmpHigh = 0;
+          double tmpLow = 0;
+          double preHigh = 0;
+          double preLow = 0;
+          double hi1 = 0;
+          double lo1 = 0;
+          double hi2 = 0;
+          double lo2 = 0;
+          double r1 = 0;
+          double r2 = 0;
+          double r = 0;
+          double price = 0;
+          double alpha = 0;
+          double prevFRAMA = 0;
+          int i = 0;
+          int today = 0;
+          int outIdx = 0;
+          int lookbackTotal = 0;
+          int half = 0;
+          int lastSlot = 0;
+          int seedIdx = 0;
+          if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX ;
+          }
+          if( (endIdx < 0) || (endIdx > INDEX_MAX) || (endIdx < startIdx)) {
+             return RetCode.OUT_OF_RANGE_END_INDEX ;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 16;
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          expScale = -4.6 / 0.6931471805599453;
+          /* -4.6/ln(2): alpha = exp(-4.6*(D-1)) with D-1 = log2((R1+R2)/R). */
+          /* Id, Type, Static Size */
+          outBegIdx.value = 0;
+          outNBElement.value = 0;
+          if( optInTimePeriod % 2 != 0 ) {
+             return RetCode.BAD_PARAM ;
+          }
+          lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.FRAMA.ordinal()];
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             return RetCode.SUCCESS ;
+          }
+          half = optInTimePeriod / 2;
+          lastSlot = half - 1;
+          /* van Herk / Gil-Werman over blocks of `half` bars. Slot j holds the current
+           * block's bar j (or, past the running position, the previous block's suffix
+           * extremes), and in oldHigh/oldLow the newer half's extremes from `half` bars
+           * ago, which are the older half's extremes now: R2[t] = R1[t-half].
+           *
+           * Every slot store must stay below the output store: that is what keeps the
+           * stream's Peek read-only and O(1). The slots hold copies, so outReal may
+           * alias an input.
+           */
+          if( half < 1 ) return RetCode.INTERNAL_ERROR;
+          slot_sufHigh = new double[half];
+          slot_sufLow = new double[half];
+          slot_oldHigh = new double[half];
+          slot_oldLow = new double[half];
+          maxIdx_slot = (half)-1;
+          slot_Idx = 0;
+          today = startIdx - lookbackTotal + 1;
+          seedIdx = startIdx - this.unstablePeriod[FuncUnstId.FRAMA.ordinal()] - 1;
+          /* The first block's suffix reads must see a bar inside the window. */
+          i = 0;
+          while( i < half ) {
+             slot_sufHigh[i] = inHigh[today];
+             slot_sufLow[i] = inLow[today];
+             slot_oldHigh[i] = inHigh[today];
+             slot_oldLow[i] = inLow[today];
+             i += 1;
+          }
+          preHigh = 0.0;
+          preLow = 0.0;
+          /* Through seedIdx only the blocks are built: the seed discards every value
+           * before it, so no alpha is computed there.
+           */
+          while( today <= seedIdx ) {
+             tmpHigh = inHigh[today];
+             tmpLow = inLow[today];
+             if( slot_Idx == 0 ) {
+                preHigh = tmpHigh;
+                preLow = tmpLow;
+             } else {
+                if( tmpHigh > preHigh ) {
+                   preHigh = tmpHigh;
+                }
+                if( tmpLow < preLow ) {
+                   preLow = tmpLow;
+                }
+             }
+             if( slot_Idx == lastSlot ) {
+                hi1 = preHigh;
+                lo1 = preLow;
+             } else {
+                hi1 = slot_sufHigh[slot_Idx + 1];
+                if( preHigh > hi1 ) {
+                   hi1 = preHigh;
+                }
+                lo1 = slot_sufLow[slot_Idx + 1];
+                if( preLow < lo1 ) {
+                   lo1 = preLow;
+                }
+             }
+             slot_oldHigh[slot_Idx] = hi1;
+             slot_oldLow[slot_Idx] = lo1;
+             slot_sufHigh[slot_Idx] = tmpHigh;
+             slot_sufLow[slot_Idx] = tmpLow;
+             if( slot_Idx == lastSlot ) {
+                i = lastSlot;
+                while( i > 0 ) {
+                   i -= 1;
+                   if( slot_sufHigh[i + 1] > slot_sufHigh[i] ) {
+                      slot_sufHigh[i] = slot_sufHigh[i + 1];
+                   }
+                   if( slot_sufLow[i + 1] < slot_sufLow[i] ) {
+                      slot_sufLow[i] = slot_sufLow[i + 1];
+                   }
+                }
+             }
+             slot_Idx++;
+             if( slot_Idx > maxIdx_slot ) { slot_Idx = 0; }
+             today += 1;
+          }
+          prevFRAMA = (inHigh[seedIdx] + inLow[seedIdx]) / 2.0;
+          outIdx = 0;
+          while( today <= endIdx ) {
+             tmpHigh = inHigh[today];
+             tmpLow = inLow[today];
+             price = (tmpHigh + tmpLow) / 2.0;
+             if( slot_Idx == 0 ) {
+                preHigh = tmpHigh;
+                preLow = tmpLow;
+             } else {
+                if( tmpHigh > preHigh ) {
+                   preHigh = tmpHigh;
+                }
+                if( tmpLow < preLow ) {
+                   preLow = tmpLow;
+                }
+             }
+             if( slot_Idx == lastSlot ) {
+                hi1 = preHigh;
+                lo1 = preLow;
+             } else {
+                hi1 = slot_sufHigh[slot_Idx + 1];
+                if( preHigh > hi1 ) {
+                   hi1 = preHigh;
+                }
+                lo1 = slot_sufLow[slot_Idx + 1];
+                if( preLow < lo1 ) {
+                   lo1 = preLow;
+                }
+             }
+             hi2 = slot_oldHigh[slot_Idx];
+             lo2 = slot_oldLow[slot_Idx];
+             r1 = hi1 - lo1;
+             r2 = hi2 - lo2;
+             r = ((hi1 > hi2) ? hi1 : hi2) - ((lo1 < lo2) ? lo1 : lo2);
+             /* R >= max(R1,R2) makes R1+R2 <= R exactly the alpha >= 1 clamp, so a
+              * clamped or flat bar returns the price with no transcendental. Keep the
+              * recursion as alpha*P + (1-alpha)*prev: a computed alpha of 1.0 then
+              * returns the price exactly too.
+              */
+             if( r1 > 0.0 && r2 > 0.0 && r1 + r2 > r ) {
+                alpha = Math.exp(expScale * Math.log((r1 + r2) / r));
+                prevFRAMA = Math.fma(1.0 - alpha, prevFRAMA, alpha * price);
+             } else {
+                prevFRAMA = price;
+             }
+             if( today >= startIdx ) {
+                outReal[outIdx++] = prevFRAMA;
+             }
+             slot_oldHigh[slot_Idx] = hi1;
+             slot_oldLow[slot_Idx] = lo1;
+             slot_sufHigh[slot_Idx] = tmpHigh;
+             slot_sufLow[slot_Idx] = tmpLow;
+             if( slot_Idx == lastSlot ) {
+                i = lastSlot;
+                while( i > 0 ) {
+                   i -= 1;
+                   if( slot_sufHigh[i + 1] > slot_sufHigh[i] ) {
+                      slot_sufHigh[i] = slot_sufHigh[i + 1];
+                   }
+                   if( slot_sufLow[i + 1] < slot_sufLow[i] ) {
+                      slot_sufLow[i] = slot_sufLow[i + 1];
+                   }
+                }
+             }
+             slot_Idx++;
+             if( slot_Idx > maxIdx_slot ) { slot_Idx = 0; }
+             today += 1;
+          }
+          outBegIdx.value = startIdx;
+          outNBElement.value = outIdx;
+          return RetCode.SUCCESS ;
+       }
+       RetCode framaImpl( int startIdx,
+                          int endIdx,
+                          float inHigh[],
+                          float inLow[],
+                          int optInTimePeriod,
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
+       {
+          double expScale = 0;
+          double[] slot_sufHigh;
+          double[] slot_sufLow;
+          double[] slot_oldHigh;
+          double[] slot_oldLow;
+          int slot_Idx = 0;
+          int maxIdx_slot = (32)-1;
+          double tmpHigh = 0;
+          double tmpLow = 0;
+          double preHigh = 0;
+          double preLow = 0;
+          double hi1 = 0;
+          double lo1 = 0;
+          double hi2 = 0;
+          double lo2 = 0;
+          double r1 = 0;
+          double r2 = 0;
+          double r = 0;
+          double price = 0;
+          double alpha = 0;
+          double prevFRAMA = 0;
+          int i = 0;
+          int today = 0;
+          int outIdx = 0;
+          int lookbackTotal = 0;
+          int half = 0;
+          int lastSlot = 0;
+          int seedIdx = 0;
+          if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX ;
+          }
+          if( (endIdx < 0) || (endIdx > INDEX_MAX) || (endIdx < startIdx)) {
+             return RetCode.OUT_OF_RANGE_END_INDEX ;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 16;
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          expScale = -4.6 / 0.6931471805599453;
+          outBegIdx.value = 0;
+          outNBElement.value = 0;
+          if( optInTimePeriod % 2 != 0 ) {
+             return RetCode.BAD_PARAM ;
+          }
+          lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.FRAMA.ordinal()];
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             return RetCode.SUCCESS ;
+          }
+          half = optInTimePeriod / 2;
+          lastSlot = half - 1;
+          if( half < 1 ) return RetCode.INTERNAL_ERROR;
+          slot_sufHigh = new double[half];
+          slot_sufLow = new double[half];
+          slot_oldHigh = new double[half];
+          slot_oldLow = new double[half];
+          maxIdx_slot = (half)-1;
+          slot_Idx = 0;
+          today = startIdx - lookbackTotal + 1;
+          seedIdx = startIdx - this.unstablePeriod[FuncUnstId.FRAMA.ordinal()] - 1;
+          i = 0;
+          while( i < half ) {
+             slot_sufHigh[i] = (double)inHigh[today];
+             slot_sufLow[i] = (double)inLow[today];
+             slot_oldHigh[i] = (double)inHigh[today];
+             slot_oldLow[i] = (double)inLow[today];
+             i += 1;
+          }
+          preHigh = 0.0;
+          preLow = 0.0;
+          while( today <= seedIdx ) {
+             tmpHigh = (double)inHigh[today];
+             tmpLow = (double)inLow[today];
+             if( slot_Idx == 0 ) {
+                preHigh = tmpHigh;
+                preLow = tmpLow;
+             } else {
+                if( tmpHigh > preHigh ) {
+                   preHigh = tmpHigh;
+                }
+                if( tmpLow < preLow ) {
+                   preLow = tmpLow;
+                }
+             }
+             if( slot_Idx == lastSlot ) {
+                hi1 = preHigh;
+                lo1 = preLow;
+             } else {
+                hi1 = slot_sufHigh[slot_Idx + 1];
+                if( preHigh > hi1 ) {
+                   hi1 = preHigh;
+                }
+                lo1 = slot_sufLow[slot_Idx + 1];
+                if( preLow < lo1 ) {
+                   lo1 = preLow;
+                }
+             }
+             slot_oldHigh[slot_Idx] = hi1;
+             slot_oldLow[slot_Idx] = lo1;
+             slot_sufHigh[slot_Idx] = tmpHigh;
+             slot_sufLow[slot_Idx] = tmpLow;
+             if( slot_Idx == lastSlot ) {
+                i = lastSlot;
+                while( i > 0 ) {
+                   i -= 1;
+                   if( slot_sufHigh[i + 1] > slot_sufHigh[i] ) {
+                      slot_sufHigh[i] = slot_sufHigh[i + 1];
+                   }
+                   if( slot_sufLow[i + 1] < slot_sufLow[i] ) {
+                      slot_sufLow[i] = slot_sufLow[i + 1];
+                   }
+                }
+             }
+             slot_Idx++;
+             if( slot_Idx > maxIdx_slot ) { slot_Idx = 0; }
+             today += 1;
+          }
+          prevFRAMA = ((double)inHigh[seedIdx] + (double)inLow[seedIdx]) / 2.0;
+          outIdx = 0;
+          while( today <= endIdx ) {
+             tmpHigh = (double)inHigh[today];
+             tmpLow = (double)inLow[today];
+             price = (tmpHigh + tmpLow) / 2.0;
+             if( slot_Idx == 0 ) {
+                preHigh = tmpHigh;
+                preLow = tmpLow;
+             } else {
+                if( tmpHigh > preHigh ) {
+                   preHigh = tmpHigh;
+                }
+                if( tmpLow < preLow ) {
+                   preLow = tmpLow;
+                }
+             }
+             if( slot_Idx == lastSlot ) {
+                hi1 = preHigh;
+                lo1 = preLow;
+             } else {
+                hi1 = slot_sufHigh[slot_Idx + 1];
+                if( preHigh > hi1 ) {
+                   hi1 = preHigh;
+                }
+                lo1 = slot_sufLow[slot_Idx + 1];
+                if( preLow < lo1 ) {
+                   lo1 = preLow;
+                }
+             }
+             hi2 = slot_oldHigh[slot_Idx];
+             lo2 = slot_oldLow[slot_Idx];
+             r1 = hi1 - lo1;
+             r2 = hi2 - lo2;
+             r = ((hi1 > hi2) ? hi1 : hi2) - ((lo1 < lo2) ? lo1 : lo2);
+             if( r1 > 0.0 && r2 > 0.0 && r1 + r2 > r ) {
+                alpha = Math.exp(expScale * Math.log((r1 + r2) / r));
+                prevFRAMA = Math.fma(1.0 - alpha, prevFRAMA, alpha * price);
+             } else {
+                prevFRAMA = price;
+             }
+             if( today >= startIdx ) {
+                outReal[outIdx++] = prevFRAMA;
+             }
+             slot_oldHigh[slot_Idx] = hi1;
+             slot_oldLow[slot_Idx] = lo1;
+             slot_sufHigh[slot_Idx] = tmpHigh;
+             slot_sufLow[slot_Idx] = tmpLow;
+             if( slot_Idx == lastSlot ) {
+                i = lastSlot;
+                while( i > 0 ) {
+                   i -= 1;
+                   if( slot_sufHigh[i + 1] > slot_sufHigh[i] ) {
+                      slot_sufHigh[i] = slot_sufHigh[i + 1];
+                   }
+                   if( slot_sufLow[i + 1] < slot_sufLow[i] ) {
+                      slot_sufLow[i] = slot_sufLow[i + 1];
+                   }
+                }
+             }
+             slot_Idx++;
+             if( slot_Idx > maxIdx_slot ) { slot_Idx = 0; }
+             today += 1;
+          }
+          outBegIdx.value = startIdx;
+          outNBElement.value = outIdx;
+          return RetCode.SUCCESS ;
+       }
+       /**
+        * Fractal Adaptive Moving Average (John Ehlers): an EMA whose smoothing
+        * factor adapts each bar to the fractal dimension of the window, estimated
+        * from the high-low ranges of the window and of its two halves. A straight
+        * run gives dimension 1 and the output follows the price; dense congestion
+        * gives dimension 2 and very slow smoothing.
+        * <p>Formula and more info at <a
+        * href="https://ta-lib.org/functions/frama">ta-lib.org/functions/frama</a>.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>The period must be even; an odd period is rejected rather than rounded.</li>
+        * <li>The output is a convex combination of past median prices.</li>
+        * </ul>
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are; nothing
+        * outside that range is touched, and the library never pads with NaN. A
+        * valid range that ends before {@link Core#framaLookback} is a <b>success
+        * with no values</b> ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inHigh High price of each bar.
+        * @param inLow Low price of each bar.
+        * @param optInTimePeriod Number of bars in the window, split into two equal
+        *        halves (default 16; range 2..100000; {@code Integer.MIN_VALUE} selects the
+        *        default).
+        * @param outReal Adaptive moving average line. Must hold at least
+        *        {@code endIdx - max(startIdx, framaLookback(...)) + 1} values, the count
+        *        the call produces (none when that is not positive).
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#INDEX_MAX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. An output this function documents as declinable is the one
+        *        exception: {@code null} is how you decline it. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
+        *
+        * @see Core#kama
+        * @see Core#mama
+        * @see Core#medprice
+        */
+       public OutRange frama( int startIdx,
+                              int endIdx,
+                              double inHigh[],
+                              double inLow[],
+                              int optInTimePeriod,
+                              double outReal[] )
+       {
+          requireIndexRange("FRAMA", startIdx, endIdx);
+          int guardStart = clampedStart("FRAMA", startIdx, framaLookback(optInTimePeriod));
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("FRAMA", "inHigh", inHigh, guardInLen);
+          requireLength("FRAMA", "inLow", inLow, guardInLen);
+          requireLength("FRAMA", "outReal", outReal, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = framaImpl(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outReal);
+          if( retCode != RetCode.SUCCESS ) {
+             throw failure("FRAMA", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+       /**
+        * Fractal Adaptive Moving Average (John Ehlers): an EMA whose smoothing
+        * factor adapts each bar to the fractal dimension of the window, estimated
+        * from the high-low ranges of the window and of its two halves. A straight
+        * run gives dimension 1 and the output follows the price; dense congestion
+        * gives dimension 2 and very slow smoothing.
+        * <p>Formula and more info at <a
+        * href="https://ta-lib.org/functions/frama">ta-lib.org/functions/frama</a>.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>The period must be even; an odd period is rejected rather than rounded.</li>
+        * <li>The output is a convex combination of past median prices.</li>
+        * </ul>
+        * <p>This is the {@code float[]} overload. The arithmetic is performed in
+        * {@code double} before being written to the {@code double[]} output, so a
+        * result beyond {@code float} range is still representable.
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are; nothing
+        * outside that range is touched, and the library never pads with NaN. A
+        * valid range that ends before {@link Core#framaLookback} is a <b>success
+        * with no values</b> ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inHigh High price of each bar.
+        * @param inLow Low price of each bar.
+        * @param optInTimePeriod Number of bars in the window, split into two equal
+        *        halves (default 16; range 2..100000; {@code Integer.MIN_VALUE} selects the
+        *        default).
+        * @param outReal Adaptive moving average line. Must hold at least
+        *        {@code endIdx - max(startIdx, framaLookback(...)) + 1} values, the count
+        *        the call produces (none when that is not positive).
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#INDEX_MAX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. An output this function documents as declinable is the one
+        *        exception: {@code null} is how you decline it. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
+        *
+        * @see Core#kama
+        * @see Core#mama
+        * @see Core#medprice
+        */
+       public OutRange frama( int startIdx,
+                              int endIdx,
+                              float inHigh[],
+                              float inLow[],
+                              int optInTimePeriod,
+                              double outReal[] )
+       {
+          requireIndexRange("FRAMA", startIdx, endIdx);
+          int guardStart = clampedStart("FRAMA", startIdx, framaLookback(optInTimePeriod));
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("FRAMA", "inHigh", inHigh, guardInLen);
+          requireLength("FRAMA", "inLow", inLow, guardInLen);
+          requireLength("FRAMA", "outReal", outReal, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = framaImpl(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outReal);
+          if( retCode != RetCode.SUCCESS ) {
+             throw failure("FRAMA", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+    /**** Streaming API *****/
+
+       /**
+        * A live FRAMA stream (unrelated to {@code java.util.stream}): one value per
+        * closed bar, bit-identical to {@link Core#frama} over the same series.
+        * Open with {@link Core#framaOpen}; there is no close — the handle is
+        * ordinary heap state, unreferenced handles are simply garbage-collected.
+        * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
+        * {@code value} and {@code clone} must not race with an {@code update} on
+        * the same handle. With no concurrent {@code update}, {@code peek}/
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
+        * <p>Not serializable by design: to checkpoint, retain the history and
+        * re-open — the result is bit-identical by contract.
+        */
+       public static final class FramaStream {
+          private Core core;
+          private int optInTimePeriod;
+          private double expScale;
+          private double preHigh;
+          private double preLow;
+          private double prevFRAMA;
+          private int lastSlot;
+          private int slot_Idx;
+          private int maxIdx_slot;
+          private int cbSize_slot;
+          private double[] cb_slot_sufHigh;
+          private double[] cb_slot_sufLow;
+          private double[] cb_slot_oldHigh;
+          private double[] cb_slot_oldLow;
+          private double cur_outReal;
+          private int outRangeBegIdx;
+          private int outRangeCount;
+
+          private FramaStream( Core core ) { this.core = core; }
+
+          /**
+           * The bars this stream has an output for, in the input series'
+           * coordinates: {@code [begIdx, begIdx + count)}.
+           * <p>It is what {@link Core#frama} reports over the same bars: the
+           * opener sets it to {@code (lookback, historyLen - lookback)}, every
+           * accepted {@code update} adds one to the count — a rejected one
+           * changes nothing, and neither does {@code peek} — and
+           * {@code clone()} carries it verbatim. A plain
+           * {@code open} hands back only the last value, a subset of this range,
+           * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#INDEX_MAX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
+           */
+          public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
+
+          /**
+           * Count one bar this stream was not fed: {@link #outRange()} advances
+           * by one and nothing else moves — {@link #value()} keeps answering the previous
+           * output, which is this bar's output too.
+           * <p>For a bar the caller leaves out: one an {@code update} rejected
+           * and that will not be re-fed, or a session with no print. Without it
+           * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#INDEX_MAX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
+           */
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
+                throw failure("FRAMA advance", RetCode.OUT_OF_RANGE_END_INDEX);
+             this.outRangeCount++;
+          }
+
+          private FramaStream( FramaStream other ) {
+             this.core = other.core;
+             this.optInTimePeriod = other.optInTimePeriod;
+             this.expScale = other.expScale;
+             this.preHigh = other.preHigh;
+             this.preLow = other.preLow;
+             this.prevFRAMA = other.prevFRAMA;
+             this.lastSlot = other.lastSlot;
+             this.slot_Idx = other.slot_Idx;
+             this.maxIdx_slot = other.maxIdx_slot;
+             this.cbSize_slot = other.cbSize_slot;
+             this.cb_slot_sufHigh = other.cb_slot_sufHigh.clone();
+             this.cb_slot_sufLow = other.cb_slot_sufLow.clone();
+             this.cb_slot_oldHigh = other.cb_slot_oldHigh.clone();
+             this.cb_slot_oldLow = other.cb_slot_oldLow.clone();
+             this.cur_outReal = other.cur_outReal;
+             this.outRangeBegIdx = other.outRangeBegIdx;
+             this.outRangeCount = other.outRangeCount;
+          }
+
+          /**
+           * Commit one closed bar, returning the new current value.
+           * <p>Throws {@link IllegalArgumentException} if any bar value is not
+           * finite (NaN or an infinity). That check runs before anything is
+           * written, so nothing moves — {@link #outRange()} included — and
+           * {@link #value()} still answers the previous value. Re-feed the bar when a
+           * corrected value arrives, or call {@link #advance()} to count it and
+           * carry on; two handles on one feed drift a bar apart if neither
+           * happens.
+           * This is the one place the streaming tier is stricter than
+           * the batch API, which computes on whatever it is given: a handle
+           * retains its state, so a single non-finite bar would poison every
+           * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#INDEX_MAX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
+           */
+          public double update( double inHigh, double inLow ) {
+             if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
+                throw failure("FRAMA update", RetCode.OUT_OF_RANGE_END_INDEX);
+             if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
+                throw nonFiniteBar("FRAMA update", !Double.isFinite(inHigh) ? "inHigh" : "inLow");
+             core.framaStepImpl(this, inHigh, inLow);
+             this.outRangeCount++;
+             return this.cur_outReal;
+          }
+
+          /**
+           * Evaluate a forming bar without committing — bit-identical to what the
+           * next {@code update} with the same bar would return — the same
+           * transition, with every store it would make carried in a local instead.
+           * Never writes this handle, so peeks may run concurrently with each other.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
+           */
+          public double peek( double inHigh, double inLow ) {
+             if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
+                throw nonFiniteBar("FRAMA peek", !Double.isFinite(inHigh) ? "inHigh" : "inLow");
+             FramaStream sp = this;
+             double tmpHigh = 0.0;
+             double tmpLow = 0.0;
+             double hi1 = 0.0;
+             double lo1 = 0.0;
+             double hi2 = 0.0;
+             double lo2 = 0.0;
+             double r1 = 0.0;
+             double r2 = 0.0;
+             double r = 0.0;
+             double price = 0.0;
+             double alpha = 0.0;
+             double cur_outReal = 0.0;
+             double preHigh = sp.preHigh;
+             double preLow = sp.preLow;
+             double prevFRAMA = sp.prevFRAMA;
+             tmpHigh = inHigh;
+             tmpLow = inLow;
+             price = (tmpHigh + tmpLow) / 2.0;
+             if( sp.slot_Idx == 0 ) {
+                preHigh = tmpHigh;
+                preLow = tmpLow;
+             } else {
+                if( tmpHigh > preHigh ) {
+                   preHigh = tmpHigh;
+                }
+                if( tmpLow < preLow ) {
+                   preLow = tmpLow;
+                }
+             }
+             if( sp.slot_Idx == sp.lastSlot ) {
+                hi1 = preHigh;
+                lo1 = preLow;
+             } else {
+                hi1 = sp.cb_slot_sufHigh[sp.slot_Idx + 1];
+                if( preHigh > hi1 ) {
+                   hi1 = preHigh;
+                }
+                lo1 = sp.cb_slot_sufLow[sp.slot_Idx + 1];
+                if( preLow < lo1 ) {
+                   lo1 = preLow;
+                }
+             }
+             hi2 = sp.cb_slot_oldHigh[sp.slot_Idx];
+             lo2 = sp.cb_slot_oldLow[sp.slot_Idx];
+             r1 = hi1 - lo1;
+             r2 = hi2 - lo2;
+             r = ((hi1 > hi2) ? hi1 : hi2) - ((lo1 < lo2) ? lo1 : lo2);
+             /* R >= max(R1,R2) makes R1+R2 <= R exactly the alpha >= 1 clamp, so a
+              * clamped or flat bar returns the price with no transcendental. Keep the
+              * recursion as alpha*P + (1-alpha)*prev: a computed alpha of 1.0 then
+              * returns the price exactly too.
+              */
+             if( r1 > 0.0 && r2 > 0.0 && r1 + r2 > r ) {
+                alpha = Math.exp(sp.expScale * Math.log((r1 + r2) / r));
+                prevFRAMA = Math.fma(1.0 - alpha, prevFRAMA, alpha * price);
+             } else {
+                prevFRAMA = price;
+             }
+             cur_outReal = prevFRAMA;
+             return cur_outReal;
+          }
+
+          /**
+           * The value at the last bar this stream counted — the bar
+           * {@link #outRange()} ends on. The last history bar right after open,
+           * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
+           */
+          public double value() {
+             return this.cur_outReal;
+          }
+
+          /**
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
+           */
+          @Override
+          public FramaStream clone() {
+             return new FramaStream(this);
+          }
+       }
+       private void framaStepImpl( FramaStream sp, double inHigh, double inLow )
+       {
+          double tmpHigh = 0.0;
+          double tmpLow = 0.0;
+          double hi1 = 0.0;
+          double lo1 = 0.0;
+          double hi2 = 0.0;
+          double lo2 = 0.0;
+          double r1 = 0.0;
+          double r2 = 0.0;
+          double r = 0.0;
+          double price = 0.0;
+          double alpha = 0.0;
+          int i = 0;
+          tmpHigh = inHigh;
+          tmpLow = inLow;
+          price = (tmpHigh + tmpLow) / 2.0;
+          if( sp.slot_Idx == 0 ) {
+             sp.preHigh = tmpHigh;
+             sp.preLow = tmpLow;
+          } else {
+             if( tmpHigh > sp.preHigh ) {
+                sp.preHigh = tmpHigh;
+             }
+             if( tmpLow < sp.preLow ) {
+                sp.preLow = tmpLow;
+             }
+          }
+          if( sp.slot_Idx == sp.lastSlot ) {
+             hi1 = sp.preHigh;
+             lo1 = sp.preLow;
+          } else {
+             hi1 = sp.cb_slot_sufHigh[sp.slot_Idx + 1];
+             if( sp.preHigh > hi1 ) {
+                hi1 = sp.preHigh;
+             }
+             lo1 = sp.cb_slot_sufLow[sp.slot_Idx + 1];
+             if( sp.preLow < lo1 ) {
+                lo1 = sp.preLow;
+             }
+          }
+          hi2 = sp.cb_slot_oldHigh[sp.slot_Idx];
+          lo2 = sp.cb_slot_oldLow[sp.slot_Idx];
+          r1 = hi1 - lo1;
+          r2 = hi2 - lo2;
+          r = ((hi1 > hi2) ? hi1 : hi2) - ((lo1 < lo2) ? lo1 : lo2);
+          /* R >= max(R1,R2) makes R1+R2 <= R exactly the alpha >= 1 clamp, so a
+           * clamped or flat bar returns the price with no transcendental. Keep the
+           * recursion as alpha*P + (1-alpha)*prev: a computed alpha of 1.0 then
+           * returns the price exactly too.
+           */
+          if( r1 > 0.0 && r2 > 0.0 && r1 + r2 > r ) {
+             alpha = Math.exp(sp.expScale * Math.log((r1 + r2) / r));
+             sp.prevFRAMA = Math.fma(1.0 - alpha, sp.prevFRAMA, alpha * price);
+          } else {
+             sp.prevFRAMA = price;
+          }
+          sp.cur_outReal = sp.prevFRAMA;
+          sp.cb_slot_oldHigh[sp.slot_Idx] = hi1;
+          sp.cb_slot_oldLow[sp.slot_Idx] = lo1;
+          sp.cb_slot_sufHigh[sp.slot_Idx] = tmpHigh;
+          sp.cb_slot_sufLow[sp.slot_Idx] = tmpLow;
+          if( sp.slot_Idx == sp.lastSlot ) {
+             i = sp.lastSlot;
+             while( i > 0 ) {
+                i -= 1;
+                if( sp.cb_slot_sufHigh[i + 1] > sp.cb_slot_sufHigh[i] ) {
+                   sp.cb_slot_sufHigh[i] = sp.cb_slot_sufHigh[i + 1];
+                }
+                if( sp.cb_slot_sufLow[i + 1] < sp.cb_slot_sufLow[i] ) {
+                   sp.cb_slot_sufLow[i] = sp.cb_slot_sufLow[i + 1];
+                }
+             }
+          }
+          sp.slot_Idx = sp.slot_Idx + 1;
+          if( sp.slot_Idx > sp.maxIdx_slot ) {
+             sp.slot_Idx = 0;
+          }
+       }
+       private RetCode framaOpenImpl( FramaStream sp, double inHigh[], double inLow[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+       {
+          double expScale = 0;
+          double[] slot_sufHigh;
+          double[] slot_sufLow;
+          double[] slot_oldHigh;
+          double[] slot_oldLow;
+          int slot_Idx = 0;
+          int maxIdx_slot = (32)-1;
+          double tmpHigh = 0;
+          double tmpLow = 0;
+          double preHigh = 0;
+          double preLow = 0;
+          double hi1 = 0;
+          double lo1 = 0;
+          double hi2 = 0;
+          double lo2 = 0;
+          double r1 = 0;
+          double r2 = 0;
+          double r = 0;
+          double price = 0;
+          double alpha = 0;
+          double prevFRAMA = 0;
+          int i = 0;
+          int today = 0;
+          int outIdx = 0;
+          int lookbackTotal = 0;
+          int half = 0;
+          int lastSlot = 0;
+          int seedIdx = 0;
+          int historyLen = inHigh.length;
+          int endIdx = historyLen - 1;
+          if( historyLen < 1 ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX;
+          }
+          if( historyLen > INDEX_MAX + 1 ) {
+             return RetCode.OUT_OF_RANGE_END_INDEX;
+          }
+          if( inLow.length != inHigh.length ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 16;
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.INSUFFICIENT_HISTORY;
+          }
+          expScale = -4.6 / 0.6931471805599453;
+          /* -4.6/ln(2): alpha = exp(-4.6*(D-1)) with D-1 = log2((R1+R2)/R). */
+          /* Id, Type, Static Size */
+          outBegIdx.value = 0;
+          outNBElement.value = 0;
+          if( optInTimePeriod % 2 != 0 ) {
+             return RetCode.BAD_PARAM ;
+          }
+          lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.FRAMA.ordinal()];
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             return RetCode.INSUFFICIENT_HISTORY ;
+          }
+          half = optInTimePeriod / 2;
+          lastSlot = half - 1;
+          /* van Herk / Gil-Werman over blocks of `half` bars. Slot j holds the current
+           * block's bar j (or, past the running position, the previous block's suffix
+           * extremes), and in oldHigh/oldLow the newer half's extremes from `half` bars
+           * ago, which are the older half's extremes now: R2[t] = R1[t-half].
+           *
+           * Every slot store must stay below the output store: that is what keeps the
+           * stream's Peek read-only and O(1). The slots hold copies, so outReal may
+           * alias an input.
+           */
+          if( half < 1 ) return RetCode.INTERNAL_ERROR;
+          slot_sufHigh = new double[half];
+          slot_sufLow = new double[half];
+          slot_oldHigh = new double[half];
+          slot_oldLow = new double[half];
+          maxIdx_slot = (half)-1;
+          slot_Idx = 0;
+          today = startIdx - lookbackTotal + 1;
+          seedIdx = startIdx - this.unstablePeriod[FuncUnstId.FRAMA.ordinal()] - 1;
+          /* The first block's suffix reads must see a bar inside the window. */
+          i = 0;
+          while( i < half ) {
+             slot_sufHigh[i] = inHigh[today];
+             slot_sufLow[i] = inLow[today];
+             slot_oldHigh[i] = inHigh[today];
+             slot_oldLow[i] = inLow[today];
+             i += 1;
+          }
+          preHigh = 0.0;
+          preLow = 0.0;
+          /* Through seedIdx only the blocks are built: the seed discards every value
+           * before it, so no alpha is computed there.
+           */
+          while( today <= seedIdx ) {
+             tmpHigh = inHigh[today];
+             tmpLow = inLow[today];
+             if( slot_Idx == 0 ) {
+                preHigh = tmpHigh;
+                preLow = tmpLow;
+             } else {
+                if( tmpHigh > preHigh ) {
+                   preHigh = tmpHigh;
+                }
+                if( tmpLow < preLow ) {
+                   preLow = tmpLow;
+                }
+             }
+             if( slot_Idx == lastSlot ) {
+                hi1 = preHigh;
+                lo1 = preLow;
+             } else {
+                hi1 = slot_sufHigh[slot_Idx + 1];
+                if( preHigh > hi1 ) {
+                   hi1 = preHigh;
+                }
+                lo1 = slot_sufLow[slot_Idx + 1];
+                if( preLow < lo1 ) {
+                   lo1 = preLow;
+                }
+             }
+             slot_oldHigh[slot_Idx] = hi1;
+             slot_oldLow[slot_Idx] = lo1;
+             slot_sufHigh[slot_Idx] = tmpHigh;
+             slot_sufLow[slot_Idx] = tmpLow;
+             if( slot_Idx == lastSlot ) {
+                i = lastSlot;
+                while( i > 0 ) {
+                   i -= 1;
+                   if( slot_sufHigh[i + 1] > slot_sufHigh[i] ) {
+                      slot_sufHigh[i] = slot_sufHigh[i + 1];
+                   }
+                   if( slot_sufLow[i + 1] < slot_sufLow[i] ) {
+                      slot_sufLow[i] = slot_sufLow[i + 1];
+                   }
+                }
+             }
+             slot_Idx++;
+             if( slot_Idx > maxIdx_slot ) { slot_Idx = 0; }
+             today += 1;
+          }
+          prevFRAMA = (inHigh[seedIdx] + inLow[seedIdx]) / 2.0;
+          outIdx = 0;
+          while( today <= endIdx ) {
+             tmpHigh = inHigh[today];
+             tmpLow = inLow[today];
+             price = (tmpHigh + tmpLow) / 2.0;
+             if( slot_Idx == 0 ) {
+                preHigh = tmpHigh;
+                preLow = tmpLow;
+             } else {
+                if( tmpHigh > preHigh ) {
+                   preHigh = tmpHigh;
+                }
+                if( tmpLow < preLow ) {
+                   preLow = tmpLow;
+                }
+             }
+             if( slot_Idx == lastSlot ) {
+                hi1 = preHigh;
+                lo1 = preLow;
+             } else {
+                hi1 = slot_sufHigh[slot_Idx + 1];
+                if( preHigh > hi1 ) {
+                   hi1 = preHigh;
+                }
+                lo1 = slot_sufLow[slot_Idx + 1];
+                if( preLow < lo1 ) {
+                   lo1 = preLow;
+                }
+             }
+             hi2 = slot_oldHigh[slot_Idx];
+             lo2 = slot_oldLow[slot_Idx];
+             r1 = hi1 - lo1;
+             r2 = hi2 - lo2;
+             r = ((hi1 > hi2) ? hi1 : hi2) - ((lo1 < lo2) ? lo1 : lo2);
+             /* R >= max(R1,R2) makes R1+R2 <= R exactly the alpha >= 1 clamp, so a
+              * clamped or flat bar returns the price with no transcendental. Keep the
+              * recursion as alpha*P + (1-alpha)*prev: a computed alpha of 1.0 then
+              * returns the price exactly too.
+              */
+             if( r1 > 0.0 && r2 > 0.0 && r1 + r2 > r ) {
+                alpha = Math.exp(expScale * Math.log((r1 + r2) / r));
+                prevFRAMA = Math.fma(1.0 - alpha, prevFRAMA, alpha * price);
+             } else {
+                prevFRAMA = price;
+             }
+             if( today >= startIdx ) {
+                outReal[outIdx++ * outStride] = prevFRAMA;
+             }
+             slot_oldHigh[slot_Idx] = hi1;
+             slot_oldLow[slot_Idx] = lo1;
+             slot_sufHigh[slot_Idx] = tmpHigh;
+             slot_sufLow[slot_Idx] = tmpLow;
+             if( slot_Idx == lastSlot ) {
+                i = lastSlot;
+                while( i > 0 ) {
+                   i -= 1;
+                   if( slot_sufHigh[i + 1] > slot_sufHigh[i] ) {
+                      slot_sufHigh[i] = slot_sufHigh[i + 1];
+                   }
+                   if( slot_sufLow[i + 1] < slot_sufLow[i] ) {
+                      slot_sufLow[i] = slot_sufLow[i + 1];
+                   }
+                }
+             }
+             slot_Idx++;
+             if( slot_Idx > maxIdx_slot ) { slot_Idx = 0; }
+             today += 1;
+          }
+          outBegIdx.value = startIdx;
+          outNBElement.value = outIdx;
+          /* Capture the live batch state into the handle. */
+          int capCb_slot = maxIdx_slot + 1;
+          if( capCb_slot > historyLen + 1 ) {
+             return RetCode.INTERNAL_ERROR;
+          }
+          sp.optInTimePeriod = optInTimePeriod;
+          sp.expScale = expScale;
+          sp.preHigh = preHigh;
+          sp.preLow = preLow;
+          sp.prevFRAMA = prevFRAMA;
+          sp.lastSlot = lastSlot;
+          sp.slot_Idx = slot_Idx;
+          sp.maxIdx_slot = maxIdx_slot;
+          sp.cbSize_slot = capCb_slot;
+          sp.cb_slot_sufHigh = slot_sufHigh;
+          sp.cb_slot_sufLow = slot_sufLow;
+          sp.cb_slot_oldHigh = slot_oldHigh;
+          sp.cb_slot_oldLow = slot_oldLow;
+          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
+          return RetCode.SUCCESS;
+       }
+       /* framaOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+       FramaStream framaOpenAndFillInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+       {
+          FramaStream sp = new FramaStream(this);
+          RetCode retCode = framaOpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.SUCCESS ) {
+             return sp;
+          }
+          if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
+             throw insufficientHistory("FRAMA openAndFill", inHigh.length, startIdx, framaLookback(optInTimePeriod));
+          }
+          throw streamFailure("FRAMA openAndFill", retCode);
+       }
+       /* Internal startIdx-anchored open behind framaOpen (composition seam). */
+       FramaStream framaOpenInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod )
+       {
+          FramaStream sp = new FramaStream(this);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          double[] sink_outReal = new double[1];
+          RetCode retCode = framaOpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.SUCCESS ) {
+             return sp;
+          }
+          if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
+             throw insufficientHistory("FRAMA open", inHigh.length, startIdx, framaLookback(optInTimePeriod));
+          }
+          throw streamFailure("FRAMA open", retCode);
+       }
+       /**
+        * Open a live FRAMA stream over the warm-up history; the handle's
+        * {@code value()} starts at the last history bar's value — bit-identical
+        * to {@link Core#frama} at that bar.
+        * <p>The history must hold at least {@code framaLookback(...) + 1} bars
+        * (unstable-period aware), or {@link InsufficientHistoryException} is
+        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+        * as in the batch API). An EMPTY history throws
+        * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+        * names no bar — and a null argument {@link IllegalArgumentException},
+        * both ahead of everything above.
+        */
+       public FramaStream framaOpen( double inHigh[], double inLow[], int optInTimePeriod )
+       {
+          requireArgument("FRAMA open", "inHigh", inHigh);
+          requireHistory("FRAMA open", inHigh.length);
+          requireArgument("FRAMA open", "inLow", inLow);
+          requireHistoryLength("FRAMA open", "inLow", inLow.length, inHigh.length);
+          return framaOpenInternal(inHigh, inLow, 0, optInTimePeriod);
+       }
+       /**
+        * {@link Core#framaOpen} that also fills the output array(s) bit-identically
+        * to {@link Core#frama} over the whole history in the same single pass
+        * (no separate batch call needed for the warm-up plot). Output arrays must
+        * not alias the inputs or each other, and must hold
+        * {@code historyLen - lookback} values — both checked before anything is
+        * written, so an undersized array is an {@link IllegalArgumentException}
+        * naming it rather than a fault from inside the fill.
+        * <p>The range written is on the returned handle:
+        * {@link FramaStream#outRange()}.
+        */
+       public FramaStream framaOpenAndFill( double inHigh[], double inLow[], int optInTimePeriod, double outReal[] )
+       {
+          requireArgument("FRAMA openAndFill", "inHigh", inHigh);
+          requireHistory("FRAMA openAndFill", inHigh.length);
+          requireArgument("FRAMA openAndFill", "inLow", inLow);
+          int guardOutLen = openFillCount("FRAMA openAndFill", inHigh.length, framaLookback(optInTimePeriod));
+          requireHistoryLength("FRAMA openAndFill", "inLow", inLow.length, inHigh.length);
+          requireLength("FRAMA openAndFill", "outReal", outReal, guardOutLen);
+          if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
+             throw streamFailure("FRAMA openAndFill", RetCode.BAD_PARAM);
+          }
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          return framaOpenAndFillInternal(inHigh, inLow, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
        }
     /* List of contributors:
      *
@@ -194696,7 +195913,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "963643b753be6ca4";
+    static final String SPLICED_GENCODE_DIGEST = "24cb247d950c3474";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];
@@ -195304,6 +196521,10 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(0,"inPriceHL",6) },
             new AbsOpt[]{ new AbsOpt(2,"optInLeftBars",0,"Left Bars","Number of bars required to be lower/higher before the pivot",2.0, 0,0,0,0,0,0, 1,100000,1,10,1, null), new AbsOpt(2,"optInRightBars",0,"Right Bars","Number of bars required to be lower/higher after the pivot",2.0, 0,0,0,0,0,0, 1,100000,1,10,1, null) },
             new AbsOut[]{ new AbsOut(1,"outSwingHigh",1), new AbsOut(1,"outSwingLow",1) }));
+        ABSTRACT.put("FRAMA", new AbsFunc("FRAMA", "Overlap Studies", "Fractal Adaptive Moving Average", 184549376,
+            new AbsIn[]{ new AbsIn(0,"inPriceHL",6) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Number of bars, even; the window is split into two halves of optInTimePeriod/2 bars",16.0, 0,0,0,0,0,0, 2,100000,4,200,2, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("HA", new AbsFunc("HA", "Price Transform", "Heikin-Ashi Candles", 184549376,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{  },
@@ -195941,6 +197162,7 @@ public class TaCodegenServe {
         else if (json.contains("\"TA_FLOOR\"")) return handle_FLOOR(json);
         else if (json.contains("\"TA_FOSC\"")) return handle_FOSC(json);
         else if (json.contains("\"TA_FRACTAL\"")) return handle_FRACTAL(json);
+        else if (json.contains("\"TA_FRAMA\"")) return handle_FRAMA(json);
         else if (json.contains("\"TA_HA\"")) return handle_HA(json);
         else if (json.contains("\"TA_HMA\"")) return handle_HMA(json);
         else if (json.contains("\"TA_HT_DCPERIOD\"")) return handle_HT_DCPERIOD(json);
@@ -196269,6 +197491,8 @@ public class TaCodegenServe {
             sb.append("\"TA_FOSC\"");
             sb.append(",");
             sb.append("\"TA_FRACTAL\"");
+            sb.append(",");
+            sb.append("\"TA_FRAMA\"");
             sb.append(",");
             sb.append("\"TA_HA\"");
             sb.append(",");
@@ -214452,6 +215676,161 @@ public class TaCodegenServe {
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         rideFractal(core, json, endIdx, inHigh, inLow, optInLeftBars, optInRightBars, sb);
+        sb.append("}");
+        return sb.toString();
+    }
+
+    static String handle_FRAMA(String json) {
+        int startIdx = jsonInt(json, "startIdx");
+        int endIdx = jsonInt(json, "endIdx");
+        int use_preloaded = jsonInt(json, "use_preloaded");
+        int bench_iters = jsonInt(json, "iters");
+        if (bench_iters < 1) bench_iters = 1;
+        double[] inHigh = new double[MAX_ARRAY_SIZE];
+        double[] inLow = new double[MAX_ARRAY_SIZE];
+        if (use_preloaded != 0 && refN > 0) {
+            System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            System.arraycopy(refLow, 0, inLow, 0, refN);
+        } else {
+            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
+            inHigh = _tmp_inHigh;
+            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
+            inLow = _tmp_inLow;
+        }
+        boolean _optRejected = false;
+        int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+        core.unstablePeriod[27] = jsonInt(json, "unstablePeriod");
+        // The output buffers are sized to the count the call actually PRODUCES --
+        // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
+        // never below one. Not to the width of the requested range: that is the bound the
+        // managed backends check and the Rust asserts state, and at the range width it was
+        // slack by exactly the lookback, so no call could ever approach it.
+        // The pad is there because a bound is a MINIMUM, never an equality. A caller
+        // re-using a pre-allocated buffer passes a larger one, and that is not an error --
+        // the reported OutRange is what says which part was written. So the harness sends
+        // both: the startIdx axis sends no pad (the bound is reachable) while the
+        // full-range value comparison sends one (slack is legal). Sizing every call one way
+        // would silently drop the other property.
+        // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
+        // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
+        // for a range shorter than the lookback, where the output bound switches off and
+        // the spec says any length will do, including none. It does not: two EMPTY output
+        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
+        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
+        // accepted by C and Java -- a four-way divergence on a call the specification says
+        // all four accept. Sizing to zero here would reach it on every multi-output
+        // function, which is a semantic question, not a harness one. Recorded as
+        // error-handling-spec, open item 11.
+        // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
+        // sizes and cannot make the check, so an exact buffer would test nothing there.
+        int _lb = core.framaLookback(optInTimePeriod);
+        int _cs = startIdx > _lb ? startIdx : _lb;
+        int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
+        double[] outArr0 = new double[_outLen];
+        MInteger outBegIdx = new MInteger();
+        MInteger outNBElement = new MInteger();
+        RetCode rc = RetCode.SUCCESS;
+        int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        long startNs = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+        if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                rc = core.framaImpl(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        } else {
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _pr = core.frama(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.SUCCESS;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        }
+        }
+        else if (_optRejected) { rc = RetCode.BAD_PARAM; }
+        else { try {
+            if (bench_mode == 1) {
+                core.framaOpen(_warm_inHigh, _warm_inLow, optInTimePeriod);
+            } else {
+                Core.FramaStream _wh = core.framaOpenAndFill(_warm_inHigh, _warm_inLow, optInTimePeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
+            }
+            rc = RetCode.SUCCESS;
+        } catch (RuntimeException _e) { rc = _e instanceof TALibFailure ? ((TALibFailure)_e).retCode() : RetCode.BAD_PARAM; } }
+        }
+        long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _fr = core.frama(startIdx, endIdx, f_inHigh, f_inLow, optInTimePeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.SUCCESS;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+            usedFloat = 1;
+        }
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            StringBuilder hb = new StringBuilder();
+            hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            rideFrama(core, json, endIdx, inHigh, inLow, optInTimePeriod, hb);
+            hb.append("}");
+            return hb.toString();
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"retCode\":").append(rc.toInt());
+        sb.append(",\"outBegIdx\":").append(outBegIdx.value);
+        sb.append(",\"outNBElement\":").append(outNBElement.value);
+        sb.append(",\"out_len\":").append(_outLen);
+        sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
+        sb.append(",\"timing_ns\":").append(elapsedNs);
+        rideFrama(core, json, endIdx, inHigh, inLow, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -248003,6 +249382,170 @@ public class TaCodegenServe {
         return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
+    static String sv_FRAMA(String json) {
+        int svShape = jsonInt(json, "gen_shape");
+        int svSeed = jsonInt(json, "gen_seed");
+        int svN = jsonInt(json, "gen_n");
+        if (svN < 2) svN = 2;
+        if (svN > 256) svN = 256;
+        int svK = jsonInt(json, "unstablePeriod");
+        int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 16;
+        double[] fz_o = new double[svN];
+        double[] fz_h = new double[svN];
+        double[] fz_l = new double[svN];
+        double[] fz_c = new double[svN];
+        double[] fz_v = new double[svN];
+        double[] fz_oi = new double[svN];
+        FuzzData.fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
+        double[] b0 = new double[svN];
+        long legs = 0;
+        boolean allOk = true;
+        boolean peekAll = true;
+        long peekReps = 0;
+        long peekRejects = 0;
+        boolean peekRepAll = true;
+        int fillChecked = 0;
+        boolean fillOk = true;
+        MInteger beg = new MInteger();
+        MInteger nb = new MInteger();
+        String diag = "";
+        int rangeChecked = 0;
+        boolean rangeOk = true;
+        long rangeLegs = 0;
+        int rangeSites = 0;
+        long[] zsign = { 0 };
+        int rounds = 1;
+        for (int rd = 0; rd < rounds; rd++) {
+            Core c2 = new Core();
+            c2.unstablePeriod[27] = svK;
+            RetCode rc;
+            try { rc = c2.framaImpl(0, svN - 1, fz_h, fz_l, optInTimePeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
+            int lb = c2.framaLookback(optInTimePeriod);
+            if (rc != RetCode.SUCCESS || nb.value == 0) {
+                boolean openRejects;
+                try { c2.framaOpen(fz_h, fz_l, optInTimePeriod); openRejects = false; } catch (IllegalArgumentException _e) { openRejects = true; }
+                return "{\"retCode\":" + rc.toInt() + ",\"legs\":0,\"nb\":" + nb.value + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
+            }
+            fillChecked = 1;
+            try {
+                double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                Core.FramaStream _fh = c2.framaOpenAndFill(fz_h, fz_l, optInTimePeriod, f0);
+                OutRange _fr = _fh.outRange();
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
+                else {
+                    for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
+                }
+                try { c2.framaOpenAndFill(fz_h, fz_l, optInTimePeriod, fz_h); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
+            } catch (IllegalArgumentException _e) { fillOk = false; }
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
+            java.util.Arrays.sort(pcs);
+            int prevP = -1;
+            for (int pi = 0; pi < pcs.length; pi++) {
+                int p = pcs[pi];
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
+                prevP = p;
+                Core.FramaStream st;
+                try { st = c2.framaOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), optInTimePeriod); }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
+                legs++;
+                if (svXtierNe(st.value(), b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                for (int t = p; t < svN; t++) {
+                    boolean pkTook = true;
+                    double pk = 0;
+                    try { pk = st.peek(fz_h[t], fz_l[t]); } catch (IllegalArgumentException _e) { pkTook = false; peekRejects++; }
+                    if (t % 7 == 0) {
+                        boolean rpTook = pkTook;
+                        try { st.peek(fz_h[t - 1], fz_l[t - 1]); } catch (IllegalArgumentException _e) { peekRejects++; }
+                        double rp = 0;
+                        try { rp = st.peek(fz_h[t], fz_l[t]); } catch (IllegalArgumentException _e) { rpTook = false; }
+                        if (rpTook) {
+                            peekReps++;
+                            if (svBne(rp, pk)) peekRepAll = false;
+                        } else { peekRejects++; }
+                    }
+                    double up = st.update(fz_h[t], fz_l[t]);
+                    if (pkTook && svBne(pk, up)) peekAll = false;
+                    try { st.peek(fz_h[t - 1], fz_l[t - 1]); } catch (IllegalArgumentException _e) { peekRejects++; }
+                    if (svBne(st.value(), up)) allOk = false;
+                    if (svXtierNe(up, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up)) + "\""; }
+                }
+                if (allOk) {
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
+                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
+                    rangeLegs++; rangeSites |= 16;
+                    st.advance();
+                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value + 1) rangeOk = false;
+                }
+            }
+            {
+                int p0 = lb + 1;
+                if (p0 <= svN - 1) {
+                    try {
+                        Core.FramaStream sA = c2.framaOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), optInTimePeriod);
+                        int mid = (p0 + svN) / 2;
+                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t]);
+                        Core.FramaStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_h[t], fz_l[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        for (int t = mid; t < svN; t++) {
+                            double uA = sA.update(fz_h[t], fz_l[t]);
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        if (allOk) {
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 8;
+                            if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                        }
+                    } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
+                }
+            }
+            if (lb >= 1 && lb < svN) {
+                try { c2.framaOpen(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
+                catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.framaOpenAndFill(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
+            }
+            try {
+                Core.FramaStream sD = c2.framaOpen(fz_h, fz_l, Integer.MIN_VALUE);
+                Core.FramaStream sE = c2.framaOpen(fz_h, fz_l, 16);
+                if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+            } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.framaImpl(Sidx, svN - 1, fz_h, fz_l, optInTimePeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rcS = ((TALibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.SUCCESS && nbS.value > 0) {
+                        try {
+                            Core.FramaStream stA = c2.framaOpenInternal(java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
+        }
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign[0] + diag + "}";
+    }
+
     static String sv_HA(String json) {
         int svShape = jsonInt(json, "gen_shape");
         int svSeed = jsonInt(json, "gen_seed");
@@ -265017,6 +266560,7 @@ public class TaCodegenServe {
         case "TA_FLOOR": return sv_FLOOR(json);
         case "TA_FOSC": return sv_FOSC(json);
         case "TA_FRACTAL": return sv_FRACTAL(json);
+        case "TA_FRAMA": return sv_FRAMA(json);
         case "TA_HA": return sv_HA(json);
         case "TA_HMA": return sv_HMA(json);
         case "TA_HT_DCPERIOD": return sv_HT_DCPERIOD(json);
@@ -276414,6 +277958,105 @@ public class TaCodegenServe {
                         boolean cmp = true;
                         if (cmp && fib0[k] != rib0[k]) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rib0[k]); r.stream = Double.doubleToRawLongBits(fib0[k]); }
                         if (cmp && fib1[k] != rib1[k]) { cmp = false; r.out = 1; r.batch = Double.doubleToRawLongBits(rib1[k]); r.stream = Double.doubleToRawLongBits(fib1[k]); }
+                        if (cmp) r.fillBars++;
+                        if (!cmp) { r.ok = false; r.leg = 2; r.bar = beg + k; break; }
+                    }
+                }
+            } catch (RuntimeException _e) { r.ok = false; r.leg = 2; }
+        }
+
+        if (r.ok) {
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
+            rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
+        }
+    }
+
+    static void rideFrama(Core core, String json, int endIdx, double[] inHigh, double[] inLow, int optInTimePeriod, StringBuilder sb) {
+        if (!rideGate(json)) return;
+        RideResult r = new RideResult();
+        rideBodyFrama(core, json, endIdx, inHigh, inLow, optInTimePeriod, r);
+        r.emit(sb);
+    }
+
+    @SuppressWarnings("unused")
+    static void rideBodyFrama(Core core, String json, int endIdx, double[] inHigh, double[] inLow, int optInTimePeriod, RideResult r) {
+        try { r.lb = core.framaLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
+        int lb = r.lb;
+        int navail = endIdx + 1;
+        if (inHigh.length < navail) navail = inHigh.length;
+        if (inLow.length < navail) navail = inLow.length;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
+        if (m > navail) m = navail;
+        r.m = m;
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
+        if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || false) { r.skip = 4; return; }
+
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_FRAMA");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
+            r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
+        }
+
+        double[] rb0 = new double[m];
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
+        try { OutRange _rr = core.frama(0, m - 1, java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.framaOpen(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.framaOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
+        if (nb == 0) { r.skip = 5; return; }
+        if (beg != lb) { r.skip = 6; return; }
+
+        try {
+            boolean cmp;
+            Core.FramaStream st = core.framaOpen(java.util.Arrays.copyOf(inHigh, lb + 1), java.util.Arrays.copyOf(inLow, lb + 1), optInTimePeriod);
+            double uv = st.value();
+            cmp = true;
+            if (cmp && svXtierNe(rb0[lb - beg], uv, r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[lb - beg]); r.stream = Double.doubleToRawLongBits(uv); }
+            if (cmp) r.openBars++;
+            if (!cmp) { r.ok = false; r.leg = 1; r.bar = lb; }
+            for (int t = lb + 1; r.ok && t < m; t++) {
+                double uv2 = st.update(inHigh[t], inLow[t]);
+                uv = uv2;
+                cmp = true;
+                if (cmp && svXtierNe(rb0[t - beg], uv, r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[t - beg]); r.stream = Double.doubleToRawLongBits(uv); }
+                if (cmp) r.openBars++;
+                if (!cmp) { r.ok = false; r.leg = 1; r.bar = t; }
+            }
+        } catch (RuntimeException _e) { r.ok = false; r.leg = 1; }
+
+        if (r.ok) {
+            double[] fb0 = new double[m];
+            try {
+                Core.FramaStream st2 = core.framaOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), optInTimePeriod, fb0);
+                if (st2.outRange().begIdx() != beg || st2.outRange().count() != nb) { r.ok = false; r.leg = 2; }
+                if (r.ok) {
+                    for (int k = 0; k < nb; k++) {
+                        boolean cmp = true;
+                        if (cmp && svXtierNe(rb0[k], fb0[k], r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[k]); r.stream = Double.doubleToRawLongBits(fb0[k]); }
                         if (cmp) r.fillBars++;
                         if (!cmp) { r.ok = false; r.leg = 2; r.bar = beg + k; break; }
                     }

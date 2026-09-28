@@ -264,6 +264,8 @@ pub enum FuncId {
     FOSC,
     /// Williams Fractal — [`Core::fractal`](crate::Core::fractal).
     FRACTAL,
+    /// Fractal Adaptive Moving Average — [`Core::frama`](crate::Core::frama).
+    FRAMA,
     /// Heikin-Ashi Candles — [`Core::ha`](crate::Core::ha).
     HA,
     /// Hull Moving Average — [`Core::hma`](crate::Core::hma).
@@ -468,7 +470,7 @@ pub enum FuncId {
 
 impl FuncId {
     /// Number of functions in the registry.
-    pub const COUNT: usize = 211;
+    pub const COUNT: usize = 212;
     /// Metadata for this function (O(1) index into the const table).
     #[inline] pub fn info(self) -> &'static FuncInfo { &FUNC_TABLE[self as usize] }
     /// Upper-case TA name, e.g. "RSI".
@@ -795,7 +797,7 @@ impl FuncInfo {
 
 /// Backing storage for [`FUNCS`], indexed by [`FuncId`]. Link-time const, in
 /// `.rodata`. Private, so its length is nobody's business but this module's.
-static FUNC_TABLE: [FuncInfo; 211] = [
+static FUNC_TABLE: [FuncInfo; 212] = [
     FuncInfo {
         id: FuncId::AC,
         name: "AC",
@@ -2016,6 +2018,17 @@ static FUNC_TABLE: [FuncInfo; 211] = [
         opt_inputs: &[OptInputInfo { param_name: "optInLeftBars", display_name: "Left Bars", hint: "Number of bars required to be lower/higher before the pivot", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 2, suggested: (1, 10, 1) } }, OptInputInfo { param_name: "optInRightBars", display_name: "Right Bars", hint: "Number of bars required to be lower/higher after the pivot", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 2, suggested: (1, 10, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outSwingHigh", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outSwingLow", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
         unst_id: None,
+    },
+    FuncInfo {
+        id: FuncId::FRAMA,
+        name: "FRAMA",
+        group: Group::OverlapStudies,
+        hint: "Fractal Adaptive Moving Average",
+        flags: FuncFlags(0x0b000000),
+        inputs: &[InputInfo { param_name: "inPriceHL", kind: InputType::Price, flags: InputFlags(0x00000006) }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Number of bars, even; the window is split into two halves of optInTimePeriod/2 bars", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 16, suggested: (4, 200, 2) } }, ],
+        outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        unst_id: Some(FuncUnstId::FRAMA),
     },
     FuncInfo {
         id: FuncId::HA,
@@ -3246,6 +3259,7 @@ fn get_func_handle_exact(name: &str) -> Option<FuncId> {
         "FLOOR" => FuncId::FLOOR,
         "FOSC" => FuncId::FOSC,
         "FRACTAL" => FuncId::FRACTAL,
+        "FRAMA" => FuncId::FRAMA,
         "HA" => FuncId::HA,
         "HMA" => FuncId::HMA,
         "HT_DCPERIOD" => FuncId::HT_DCPERIOD,
@@ -3714,6 +3728,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::FLOOR => self.core.floor_lookback(),
             FuncId::FOSC => self.core.fosc_lookback(self.int_opt[0]),
             FuncId::FRACTAL => self.core.fractal_lookback(self.int_opt[0], self.int_opt[1]),
+            FuncId::FRAMA => self.core.frama_lookback(self.int_opt[0]),
             FuncId::HA => self.core.ha_lookback(),
             FuncId::HMA => self.core.hma_lookback(self.int_opt[0]),
             FuncId::HT_DCPERIOD => self.core.ht_dcperiod_lookback(),
@@ -5209,6 +5224,17 @@ impl<'a> ParamHolder<'a> {
                 let res = self.core.fractal(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], self.int_opt[1], &mut *o0, &mut *o1);
                 self.int_out[0] = Some(o0);
                 self.int_out[1] = Some(o1);
+                match res {
+                    Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
+                    Err(e) => e,
+                }
+            }
+            FuncId::FRAMA => {
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let res = self.core.frama(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], &mut *o0);
+                self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
                     Err(e) => e,

@@ -532,6 +532,9 @@ typedef enum
   TA_MAVP_STREAM_MISMATCH            = 1686,
   TA_MAVP_STREAM_VACUOUS             = 1687,
 
+  /* (#464) FRAMA legs that ran while comparing nothing. */
+  TA_FRAMA_VACUOUS                   = 1688,
+
   /* One code for every suite that routes a fixed vector through server_verify
    * (#427), because it reports one failure and the message names the leg.
    * server_verify answers TA_TEST_PASS when it cannot build the request, so a

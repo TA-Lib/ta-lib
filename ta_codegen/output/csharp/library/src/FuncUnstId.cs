@@ -93,6 +93,8 @@ public enum FuncUnstId
     HA = 25,
     /// <summary>Unstable-period id for <c>TA_FUNC_UNST_RVI</c>.</summary>
     RVI = 26,
+    /// <summary>Unstable-period id for <c>TA_FUNC_UNST_FRAMA</c>.</summary>
+    FRAMA = 27,
 
     /// <summary>Wildcard: sets the unstable period for every function at
     /// once. Pinned, so adding an indicator can never move it.</summary>
@@ -105,5 +107,5 @@ internal static class FuncUnstIds
     /// <summary>Size of the unstable-period table: one past the highest
     /// function id. <see cref="FuncUnstId.ALL"/> selects every slot and is
     /// not one. Mirrors C's TA_FUNC_UNST_COUNT.</summary>
-    public const int Count = 27;
+    public const int Count = 28;
 }

@@ -151,6 +151,7 @@ extern const TA_FuncDef TA_DEF_EXP;
 extern const TA_FuncDef TA_DEF_FLOOR;
 extern const TA_FuncDef TA_DEF_FOSC;
 extern const TA_FuncDef TA_DEF_FRACTAL;
+extern const TA_FuncDef TA_DEF_FRAMA;
 extern const TA_FuncDef TA_DEF_HA;
 extern const TA_FuncDef TA_DEF_HMA;
 extern const TA_FuncDef TA_DEF_HT_DCPERIOD;
@@ -293,6 +294,7 @@ const TA_FuncDef *TA_PerGroupFunc_2[] = {
 &TA_DEF_DEMA,
 &TA_DEF_DONCHIAN,
 &TA_DEF_EMA,
+&TA_DEF_FRAMA,
 &TA_DEF_HMA,
 &TA_DEF_HT_TRENDLINE,
 &TA_DEF_KAMA,

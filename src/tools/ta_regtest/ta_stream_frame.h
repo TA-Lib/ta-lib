@@ -4589,6 +4589,44 @@ static TA_RetCode TA_FRACTAL_SFrameClose( void *stream )
    return TA_FRACTAL_Close( (TA_FRACTAL_Stream *)stream );
 }
 
+static TA_RetCode TA_FRAMA_SFrameOpen( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_FRAMA_Open(
+               (TA_FRAMA_Stream **)stream,
+               in[0] /* inHigh */,
+               in[1] /* inLow */,
+               historyLen,
+               (int)optIn[0] /* optInTimePeriod */,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_FRAMA_SFrameFill( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_FRAMA_OpenAndFill(
+               (TA_FRAMA_Stream **)stream,
+               in[0] /* inHigh */,
+               in[1] /* inLow */,
+               historyLen,
+               (int)optIn[0] /* optInTimePeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_FRAMA_SFrameClose( void *stream )
+{
+   return TA_FRAMA_Close( (TA_FRAMA_Stream *)stream );
+}
+
 static TA_RetCode TA_HA_SFrameOpen( void **stream,
                   const double *const in[], int historyLen,
                   const double optIn[],
@@ -8696,6 +8734,8 @@ static const TA_StreamEntry TA_StreamTable[] = {
      1, TA_VIn_FOSC, 1, TA_VOpt_FOSC, 1, TA_VOutIsInt_FOSC },
    { "FRACTAL", TA_FRACTAL_SFrameOpen, TA_FRACTAL_SFrameFill, TA_FRACTAL_SFrameClose,
      2, TA_VIn_FRACTAL, 2, TA_VOpt_FRACTAL, 2, TA_VOutIsInt_FRACTAL },
+   { "FRAMA", TA_FRAMA_SFrameOpen, TA_FRAMA_SFrameFill, TA_FRAMA_SFrameClose,
+     2, TA_VIn_FRAMA, 1, TA_VOpt_FRAMA, 1, TA_VOutIsInt_FRAMA },
    { "HA", TA_HA_SFrameOpen, TA_HA_SFrameFill, TA_HA_SFrameClose,
      4, TA_VIn_HA, 0, NULL, 4, TA_VOutIsInt_HA },
    { "HMA", TA_HMA_SFrameOpen, TA_HMA_SFrameFill, TA_HMA_SFrameClose,
@@ -8898,6 +8938,6 @@ static const TA_StreamEntry TA_StreamTable[] = {
      1, TA_VIn_ZLEMA, 1, TA_VOpt_ZLEMA, 1, TA_VOutIsInt_ZLEMA },
 };
 
-#define TA_STREAM_TABLE_SIZE 211
+#define TA_STREAM_TABLE_SIZE 212
 
 #endif /* TA_STREAM_FRAME_H */

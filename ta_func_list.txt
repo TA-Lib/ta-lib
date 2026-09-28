@@ -109,6 +109,7 @@ EXP                 Vector Arithmetic Exp
 FLOOR               Vector Floor
 FOSC                Forecast Oscillator
 FRACTAL             Williams Fractal
+FRAMA               Fractal Adaptive Moving Average
 HA                  Heikin-Ashi Candles
 HMA                 Hull Moving Average
 HT_DCPERIOD         Hilbert Transform - Dominant Cycle Period

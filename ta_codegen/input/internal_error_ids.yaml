@@ -18,7 +18,7 @@
 # Written by `ta_codegen generate`. Do not renumber by hand -- the number is
 # the only thing a bug report carries, and it has to mean the same guard in the
 # next release as it did in the last.
-next: 438
+next: 440
 sites:
   AC.cbsize.oscBuffer: 184
   AC.circbuf.oscBuffer: 181
@@ -175,6 +175,8 @@ sites:
   ERI.dualmode: 425
   FOSC.extrema: 406
   FRACTAL.wincap.i: 427
+  FRAMA.cbsize.slot: 439
+  FRAMA.circbuf.slot: 438
   HMA.cbsize.dRing: 324
   HMA.circbuf.dRing: 319
   HMA.dualmode: 325
