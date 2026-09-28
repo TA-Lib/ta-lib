@@ -207,8 +207,9 @@ do this:**
   against the in-process C library generated from the same source: it proves the
   four languages agree, not that the numbers are right.
 
-So: write a golden-value test (`src/tools/ta_regtest/ta_test_func/test_composite.c` is
-the pattern for a composite; `test_marketfi.c` for a standalone file), with values from
+So: write a golden-value test (`test_composite1.c` / `test_composite2.c` under
+`src/tools/ta_regtest/ta_test_func/` are the pattern for a composite; `test_marketfi.c`
+and `test_emv.c` for a standalone file), with values from
 an independent source, documenting the source, its version and the tolerance at the
 call site. Then register it:
 
@@ -220,11 +221,15 @@ call site. Then register it:
    region) and `src/tools/ta_regtest/Makefile.am`. The autotools list is what the dist
    nightly builds; `scripts/build.py check-source-lists` catches a one-sided edit.
 
-The sweep reaches the servers only on its own inputs. Wrap each golden call site in
+The sweep reaches the servers only on its own inputs: the 252-bar corpus, each
+parameter moved off its default one at a time. Route a golden call through
 `if( server_verify_active() ) { … server_verify( "<NAME>", … ); }` (declared in
-`src/tools/ta_regtest/server_verify.h`; `test_cmf.c` is the exemplar) —
-it replays that exact call on all four language servers and compares it as the sweep
-does. It is inert without `--codegen`, so adding it costs a bare run nothing.
+`src/tools/ta_regtest/server_verify.h`; `test_cmf.c` is the exemplar) when its inputs
+or parameter vector are ones the sweep never sends: hand-built bars, a flat or
+zero-volume bar, a published vector, two parameters off their defaults at once. A
+routed call on the sweep's own corpus and parameters buys a duplicate. It replays that
+exact call on all four language servers and is inert without `--codegen`. Under
+`--codegen`, a group that routes nothing fails.
 
 A new `MAType` member needs a direct pin of `TA_MA_Lookback(n, X) == TA_X_Lookback(n)`,
 at a non-zero unstable period when X has one. No value comparison can see a wrong MA
