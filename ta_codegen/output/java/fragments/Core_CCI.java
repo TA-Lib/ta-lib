@@ -542,11 +542,7 @@
          double lastValue = 0.0;
          int j = 0;
          double cur_outReal = 0.0;
-         int pkSlot0 = -1;
-         double pkVal0 = 0.0;
          lastValue = (inHigh + inLow + inClose) / 3;
-         pkSlot0 = sp.circBuffer_Idx;
-         pkVal0 = lastValue;
          /* Calculate the average for the whole period. Both sums take the
           * slot just stored from lastValue, in the same order, so no load reads
           * it back: a vector load spanning that slot stalls until the store
@@ -554,11 +550,11 @@
           */
          theAverage = 0;
          for( j = 0; j < sp.circBuffer_Idx; j += 1 ) {
-            theAverage += (j != pkSlot0) ? sp.cb_circBuffer[j] : pkVal0;
+            theAverage += sp.cb_circBuffer[j];
          }
          theAverage += lastValue;
          for( j = sp.circBuffer_Idx + 1; j < sp.optInTimePeriod; j += 1 ) {
-            theAverage += (j != pkSlot0) ? sp.cb_circBuffer[j] : pkVal0;
+            theAverage += sp.cb_circBuffer[j];
          }
          theAverage /= sp.optInTimePeriod;
          /* Do the summation of the ABS(TypePrice-average)
@@ -566,11 +562,11 @@
           */
          tempReal2 = 0;
          for( j = 0; j < sp.circBuffer_Idx; j += 1 ) {
-            tempReal2 += Math.abs(((j != pkSlot0) ? sp.cb_circBuffer[j] : pkVal0) - theAverage);
+            tempReal2 += Math.abs(sp.cb_circBuffer[j] - theAverage);
          }
          tempReal2 += Math.abs(lastValue - theAverage);
          for( j = sp.circBuffer_Idx + 1; j < sp.optInTimePeriod; j += 1 ) {
-            tempReal2 += Math.abs(((j != pkSlot0) ? sp.cb_circBuffer[j] : pkVal0) - theAverage);
+            tempReal2 += Math.abs(sp.cb_circBuffer[j] - theAverage);
          }
          tempReal2 /= sp.optInTimePeriod;
          /* And finally, the CCI... */

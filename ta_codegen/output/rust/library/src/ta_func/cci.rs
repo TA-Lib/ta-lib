@@ -852,11 +852,7 @@ impl CciStream {
             let mut theAverage: f64 = 0.0_f64;
             let mut lastValue: f64 = 0.0_f64;
             let mut j: usize = 0_usize;
-            let mut pkSlot0: usize = usize::MAX;
-            let mut pkVal0: f64 = 0.0_f64;
             lastValue = (inHigh + inLow + inClose) / 3_f64;
-            pkSlot0 = sp.circBuffer_Idx as usize;
-            pkVal0 = lastValue;
             // Calculate the average for the whole period. Both sums take the
             // slot just stored from lastValue, in the same order, so no load reads
             // it back: a vector load spanning that slot stalls until the store
@@ -865,14 +861,14 @@ impl CciStream {
             // for( j = 0; j < sp.circBuffer_Idx; j += 1 )
             j = 0;
             while j < sp.circBuffer_Idx {
-                theAverage += (if (j as usize) != pkSlot0 { sp.cb_circBuffer[j] } else { pkVal0 });
+                theAverage += sp.cb_circBuffer[j];
                 j += 1;
             }
             theAverage += lastValue;
             // for( j = sp.circBuffer_Idx + 1; j < ((sp.optInTimePeriod) as usize); j += 1 )
             j = sp.circBuffer_Idx + 1;
             while j < ((sp.optInTimePeriod) as usize) {
-                theAverage += (if (j as usize) != pkSlot0 { sp.cb_circBuffer[j] } else { pkVal0 });
+                theAverage += sp.cb_circBuffer[j];
                 j += 1;
             }
             theAverage /= ((sp.optInTimePeriod) as f64);
@@ -882,14 +878,14 @@ impl CciStream {
             // for( j = 0; j < sp.circBuffer_Idx; j += 1 )
             j = 0;
             while j < sp.circBuffer_Idx {
-                tempReal2 += ((if (j as usize) != pkSlot0 { sp.cb_circBuffer[j] } else { pkVal0 }) - theAverage).abs();
+                tempReal2 += (sp.cb_circBuffer[j] - theAverage).abs();
                 j += 1;
             }
             tempReal2 += (lastValue - theAverage).abs();
             // for( j = sp.circBuffer_Idx + 1; j < ((sp.optInTimePeriod) as usize); j += 1 )
             j = sp.circBuffer_Idx + 1;
             while j < ((sp.optInTimePeriod) as usize) {
-                tempReal2 += ((if (j as usize) != pkSlot0 { sp.cb_circBuffer[j] } else { pkVal0 }) - theAverage).abs();
+                tempReal2 += (sp.cb_circBuffer[j] - theAverage).abs();
                 j += 1;
             }
             tempReal2 /= ((sp.optInTimePeriod) as f64);

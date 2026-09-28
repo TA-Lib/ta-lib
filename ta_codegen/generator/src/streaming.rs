@@ -8857,10 +8857,10 @@ pub fn purge_dead_temp_stores(
 /// Rewrite `transition` so it computes the same values without storing into
 /// any handle buffer — see [`PeekShadow`].
 ///
-/// Correctness does not rest on the analysis: every store becomes a shadow and
-/// every read a store could reach becomes a select, and a shadow whose store
-/// did not run holds a slot no read matches. The analysis only decides which
-/// reads may skip the select, which is a speed question, not a correctness one.
+/// A store a later load could reach becomes a shadow, and that load a select,
+/// unless the load provably misses the store's slot; a shadow whose store did
+/// not run holds a slot no load matches. A missing proof costs speed; a wrong
+/// one peeks a stale value silently.
 ///
 /// # Errors
 /// A buffer named outside an index expression, a compound store into one, or a
@@ -8900,6 +8900,8 @@ pub fn peek_transition(
         armed: BTreeMap::new(),
         pending: Vec::new(),
         cond_depth: 0,
+        slot_exprs: Vec::new(),
+        ranges: Vec::new(),
         out: PeekTransition::default(),
     };
     let body = rw.stmts(transition);
@@ -9054,6 +9056,56 @@ fn validate_peekable(
     Ok(())
 }
 
+/// Scalars and integer arithmetic only: a value that stays the same while none
+/// of the names in it is reassigned.
+fn is_scalar_arith(e: &Expr) -> bool {
+    match e {
+        Expr::Var(_) | Expr::IntLiteral(_) => true,
+        Expr::BinOp(l, BinOp::Add | BinOp::Sub | BinOp::Mul, r) => is_scalar_arith(l) && is_scalar_arith(r),
+        Expr::Cast(_, i) => is_scalar_arith(i),
+        _ => false,
+    }
+}
+
+/// Every name `stmts` may write, nested bodies and loop headers included.
+fn names_written(stmts: &[Statement]) -> BTreeSet<String> {
+    let mut out = BTreeSet::new();
+    for_each_stmt(stmts, &mut |s| {
+        own_writes(s, &mut |t| {
+            if let Expr::Var(v) = t {
+                out.insert(v.clone());
+            }
+        });
+        if let Statement::VarDecl { name, .. } | Statement::For { var: name, .. } = s {
+            out.insert(name.clone());
+        }
+    });
+    out
+}
+
+/// `(j, L, U)` for `for (j = L; j < U; j += 1)` whose body never writes `j`.
+/// `U` may still move: a slot equal to it is trusted only because entering the
+/// loop forgot every slot naming something the loop writes. The IR spells
+/// `j += 1` and `j++` alike as `j = j + 1`.
+fn counted_range(init: &Statement, condition: &Expr, update: &Statement, body: &[Statement]) -> Option<(String, Expr, Expr)> {
+    let Statement::Assign { target: Expr::Var(j), value: from, compound: false } = init else {
+        return None;
+    };
+    let Expr::BinOp(l, BinOp::Less, below) = condition else {
+        return None;
+    };
+    let jv = Expr::Var(j.clone());
+    let next = Expr::BinOp(Box::new(jv.clone()), BinOp::Add, Box::new(Expr::IntLiteral(1)));
+    let steps = matches!(update, Statement::Assign { target, value, .. } if *target == jv && *value == next);
+    if **l != jv || !steps || !is_scalar_arith(from) || !is_scalar_arith(below) {
+        return None;
+    }
+    if names_written(body).contains(j) {
+        return None;
+    }
+    Some((j.clone(), from.clone(), (**below).clone()))
+}
+
 struct PeekRewrite<'a> {
     bufs: &'a BTreeMap<String, bool>,
     shadowed: &'a BTreeSet<String>,
@@ -9067,6 +9119,11 @@ struct PeekRewrite<'a> {
     /// depth 0 — inside a ternary arm it would run an index the original
     /// skipped, and the one index that needs hoisting moves a counter.
     cond_depth: usize,
+    /// Per shadow, the index expression its store used, while it is a pure
+    /// function of scalars nothing has reassigned since; `None` once it is not.
+    slot_exprs: Vec<Option<Expr>>,
+    /// The enclosing [`counted_range`]s, innermost last.
+    ranges: Vec<(String, Expr, Expr)>,
     out: PeekTransition,
 }
 
@@ -9101,6 +9158,7 @@ impl PeekRewrite<'_> {
         for arm in arms {
             self.armed.clone_from(&entry);
             out.push(self.stmts(arm));
+            self.end_scope(arm);
             for (k, v) in std::mem::take(&mut self.armed) {
                 let e = merged.entry(k).or_default();
                 for i in v {
@@ -9123,6 +9181,7 @@ impl PeekRewrite<'_> {
                 if self.bufs.contains_key(buf) =>
             {
                 debug_assert!(!*compound, "validated away");
+                let slot_expr = is_scalar_arith(idx).then(|| (**idx).clone());
                 let idx = self.expr(idx);
                 let value = self.expr(value);
                 if !self.shadowed.contains(buf) {
@@ -9150,43 +9209,48 @@ impl PeekRewrite<'_> {
                     },
                 ];
                 self.out.shadows.push(sh);
+                self.slot_exprs.push(slot_expr);
                 self.armed.entry(buf.clone()).or_default().push(k);
                 Statement::Block { body: stmts }
             }
-            Statement::Assign { target, value, compound } => Statement::Assign {
-                target: self.expr(target),
-                value: self.expr(value),
-                compound: *compound,
-            },
-            Statement::VarDecl { var_type, name, init } => Statement::VarDecl {
-                var_type: var_type.clone(),
-                name: name.clone(),
-                init: init.as_ref().map(|e| self.expr(e)),
-            },
+            Statement::Assign { target, value, compound } => {
+                if let Expr::Var(v) = target {
+                    self.reassigned(v);
+                }
+                Statement::Assign {
+                    target: self.expr(target),
+                    value: self.expr(value),
+                    compound: *compound,
+                }
+            }
+            Statement::VarDecl { var_type, name, init } => {
+                self.reassigned(name);
+                Statement::VarDecl {
+                    var_type: var_type.clone(),
+                    name: name.clone(),
+                    init: init.as_ref().map(|e| self.expr(e)),
+                }
+            }
             Statement::Return { value } => Statement::Return {
                 value: value.as_ref().map(|e| self.expr(e)),
             },
             Statement::Expr(e) => Statement::Expr(self.expr(e)),
-            Statement::While { condition, body } => Statement::While {
-                condition: self.conditional_expr(condition),
-                body: self.stmts(body),
-            },
-            Statement::DoWhile { condition, body } => Statement::DoWhile {
-                condition: self.conditional_expr(condition),
-                body: self.stmts(body),
-            },
-            Statement::For { var, count, body } => Statement::For {
-                var: var.clone(),
-                count: self.expr(count),
-                body: self.stmts(body),
-            },
+            Statement::While { condition, body } => {
+                self.forget_written(s);
+                Statement::While { condition: self.conditional_expr(condition), body: self.stmts(body) }
+            }
+            Statement::DoWhile { condition, body } => {
+                self.forget_written(s);
+                Statement::DoWhile { condition: self.conditional_expr(condition), body: self.stmts(body) }
+            }
+            Statement::For { var, count, body } => {
+                self.reassigned(var);
+                self.forget_written(s);
+                Statement::For { var: var.clone(), count: self.expr(count), body: self.stmts(body) }
+            }
             Statement::ForC { init, condition, update, body } => {
-                let init = Box::new(self.stmt(init));
-                let condition = self.conditional_expr(condition);
-                self.cond_depth += 1;
-                let update = Box::new(self.stmt(update));
-                self.cond_depth -= 1;
-                Statement::ForC { init, condition, update, body: self.stmts(body) }
+                self.forget_written(s);
+                self.for_c(init, condition, update, body)
             }
             Statement::If { condition, then_body, else_body, cond_comments } => {
                 let condition = self.expr(condition);
@@ -9208,9 +9272,76 @@ impl PeekRewrite<'_> {
                     .collect();
                 Statement::Switch { expr, cases, default }
             }
-            Statement::Block { body } => Statement::Block { body: self.stmts(body) },
+            Statement::Block { body } => self.block(body),
             other => other.clone(),
         }
+    }
+
+    fn block(&mut self, body: &[Statement]) -> Statement {
+        let out = self.stmts(body);
+        self.end_scope(body);
+        Statement::Block { body: out }
+    }
+
+    /// A scope's own declarations end with it: a slot naming one names a
+    /// variable the code after the scope cannot see.
+    fn end_scope(&mut self, list: &[Statement]) {
+        for s in list {
+            if let Statement::VarDecl { name, .. } = s {
+                self.reassigned(name);
+            }
+        }
+    }
+
+    fn for_c(&mut self, init: &Statement, condition: &Expr, update: &Statement, body: &[Statement]) -> Statement {
+        let range = counted_range(init, condition, update, body);
+        let init = Box::new(self.stmt(init));
+        let condition = self.conditional_expr(condition);
+        self.cond_depth += 1;
+        let update = Box::new(self.stmt(update));
+        self.cond_depth -= 1;
+        let pushed = range.is_some();
+        self.ranges.extend(range);
+        let body = self.stmts(body);
+        if pushed {
+            self.ranges.pop();
+        }
+        Statement::ForC { init, condition, update, body }
+    }
+
+    /// Forget every slot expression that reads `v`.
+    fn reassigned(&mut self, v: &str) {
+        for slot in &mut self.slot_exprs {
+            if slot.as_ref().is_some_and(|e| {
+                let mut names = BTreeSet::new();
+                expr_var_names(e, &mut names);
+                names.contains(v)
+            }) {
+                *slot = None;
+            }
+        }
+    }
+
+    /// A loop's header and body run again after its writes, so no load anywhere
+    /// in it may trust a slot that names what the loop writes.
+    fn forget_written(&mut self, lp: &Statement) {
+        for v in names_written(std::slice::from_ref(lp)) {
+            self.reassigned(&v);
+        }
+    }
+
+    /// A load that cannot land on shadow `k`'s slot, so its select would never
+    /// pick the shadow though a compiler keeps it: `buf[j]` inside
+    /// `for (j = L; j < U; ...)` with `U` being the slot or `L` one past it.
+    fn slot_excluded(&self, idx: &Expr, k: usize) -> bool {
+        let (Expr::Var(j), Some(Some(slot))) = (idx, self.slot_exprs.get(k)) else {
+            return false;
+        };
+        let Some((_, from, below)) = self.ranges.iter().rev().find(|(v, _, _)| v == j) else {
+            return false;
+        };
+        let after = Expr::BinOp(Box::new(slot.clone()), BinOp::Add, Box::new(Expr::IntLiteral(1)));
+        below == slot || *from == after
     }
 
     /// An index as the SLOT type — what the subscript would coerce it to.
@@ -9238,8 +9369,9 @@ impl PeekRewrite<'_> {
     fn expr(&mut self, e: &Expr) -> Expr {
         match e {
             Expr::ArrayAccess(name, idx) => {
+                let mut armed = self.armed.get(name).cloned().unwrap_or_default();
+                armed.retain(|&k| !self.slot_excluded(idx, k));
                 let idx = self.expr(idx);
-                let armed = self.armed.get(name).cloned().unwrap_or_default();
                 if armed.is_empty() {
                     return Expr::ArrayAccess(name.clone(), Box::new(idx));
                 }
@@ -9295,11 +9427,24 @@ impl PeekRewrite<'_> {
             Expr::Not(i) => Expr::Not(Box::new(self.expr(i))),
             Expr::BitwiseNot(i) => Expr::BitwiseNot(Box::new(self.expr(i))),
             Expr::Neg(i) => Expr::Neg(Box::new(self.expr(i))),
-            Expr::AddressOf(i) => Expr::AddressOf(Box::new(self.expr(i))),
-            Expr::PostIncrement(i) => Expr::PostIncrement(Box::new(self.expr(i))),
-            Expr::PostDecrement(i) => Expr::PostDecrement(Box::new(self.expr(i))),
-            Expr::PreIncrement(i) => Expr::PreIncrement(Box::new(self.expr(i))),
-            Expr::PreDecrement(i) => Expr::PreDecrement(Box::new(self.expr(i))),
+            Expr::AddressOf(i) => {
+                if let Expr::Var(v) = &**i {
+                    self.reassigned(v);
+                }
+                Expr::AddressOf(Box::new(self.expr(i)))
+            }
+            Expr::PostIncrement(i) | Expr::PostDecrement(i) | Expr::PreIncrement(i) | Expr::PreDecrement(i) => {
+                if let Expr::Var(v) = &**i {
+                    self.reassigned(v);
+                }
+                let inner = Box::new(self.expr(i));
+                match e {
+                    Expr::PostIncrement(_) => Expr::PostIncrement(inner),
+                    Expr::PostDecrement(_) => Expr::PostDecrement(inner),
+                    Expr::PreIncrement(_) => Expr::PreIncrement(inner),
+                    _ => Expr::PreDecrement(inner),
+                }
+            }
             Expr::FuncCall(n, args) => {
                 Expr::FuncCall(n.clone(), args.iter().map(|a| self.expr(a)).collect())
             }
@@ -9380,6 +9525,170 @@ mod tests {
             matches!(cond.as_ref(), Expr::BinOp(_, BinOp::NotEq, r) if **r == Expr::Var("pkSlot0".into())),
             "compared against the slot the store targeted: {cond:?}"
         );
+    }
+
+    fn sum_loop(lo: Expr, hi: Expr) -> Statement {
+        let j = || Expr::Var("j".into());
+        Statement::ForC {
+            init: Box::new(Statement::Assign { target: j(), value: lo, compound: false }),
+            condition: Expr::BinOp(Box::new(j()), BinOp::Less, Box::new(hi)),
+            update: Box::new(Statement::Assign {
+                target: j(),
+                value: Expr::BinOp(Box::new(j()), BinOp::Add, Box::new(Expr::IntLiteral(1))),
+                compound: true,
+            }),
+            body: vec![Statement::Assign {
+                target: Expr::Var("acc".into()),
+                value: Expr::ArrayAccess("buf".into(), Box::new(j())),
+                compound: true,
+            }],
+        }
+    }
+
+    fn loads_bare(body: &[Statement]) -> bool {
+        body.iter().any(|s| matches!(s, Statement::ForC { .. }))
+            && body.iter().all(|s| match s {
+            Statement::ForC { body, .. } => {
+                matches!(&body[0], Statement::Assign { value: Expr::ArrayAccess(..), .. })
+            }
+            _ => true,
+        })
+    }
+
+    /// CCI sums the ring around the slot it just stored: a loop ending at that
+    /// slot, or starting one past it, never loads it, so its load needs no select.
+    #[test]
+    fn a_loop_whose_bounds_exclude_the_slot_loads_bare() {
+        let pos = || Expr::Var("pos".into());
+        let past = Expr::BinOp(Box::new(pos()), BinOp::Add, Box::new(Expr::IntLiteral(1)));
+        let out = pk(&[
+            buf_store("buf", pos(), Expr::Var("bar".into())),
+            sum_loop(Expr::IntLiteral(0), pos()),
+            sum_loop(past, Expr::Var("n".into())),
+        ]);
+        assert!(loads_bare(&out.body), "no select: {:?}", out.body);
+        assert!(out.shadows.is_empty(), "the unselected shadow is pruned: {:?}", out.shadows);
+
+        let whole = pk(&[
+            buf_store("buf", pos(), Expr::Var("bar".into())),
+            sum_loop(Expr::IntLiteral(0), Expr::Var("n".into())),
+        ]);
+        assert!(!loads_bare(&whole.body), "a loop over the whole ring keeps the select");
+
+        let moved = pk(&[
+            buf_store("buf", pos(), Expr::Var("bar".into())),
+            Statement::Assign {
+                target: pos(),
+                value: Expr::BinOp(Box::new(pos()), BinOp::Add, Box::new(Expr::IntLiteral(1))),
+                compound: false,
+            },
+            sum_loop(Expr::IntLiteral(0), pos()),
+        ]);
+        assert!(!loads_bare(&moved.body), "a bound read after the slot moved keeps the select");
+
+        let mut counter_moved = sum_loop(Expr::IntLiteral(0), pos());
+        if let Statement::ForC { body, .. } = &mut counter_moved {
+            body.push(Statement::Assign { target: Expr::Var("j".into()), value: pos(), compound: false });
+        }
+        let counter = pk(&[buf_store("buf", pos(), Expr::Var("bar".into())), counter_moved]);
+        assert!(!loads_bare(&counter.body), "a counter the body writes proves no range");
+    }
+
+    /// A slot a loop moves is not the slot its next iteration's loads face:
+    /// every name the loop writes, anywhere in it, voids the proof up front.
+    #[test]
+    fn a_slot_a_loop_or_a_redeclaration_moves_keeps_its_select() {
+        let pos = || Expr::Var("pos".into());
+        let bump = Statement::Assign {
+            target: pos(),
+            value: Expr::BinOp(Box::new(pos()), BinOp::Add, Box::new(Expr::IntLiteral(1))),
+            compound: false,
+        };
+        let inner_selects = |out: &PeekTransition| {
+            let mut n = 0;
+            for st in &out.body {
+                walk_stmt_exprs(st, &mut |top| walk_expr(top, &mut |e| n += usize::from(matches!(e, Expr::Ternary(..)))));
+            }
+            n
+        };
+        let store = || buf_store("buf", pos(), Expr::Var("bar".into()));
+        let in_while = pk(&[
+            store(),
+            Statement::While {
+                condition: Expr::Var("go".into()),
+                body: vec![sum_loop(Expr::IntLiteral(0), pos()), bump.clone()],
+            },
+        ]);
+        assert_eq!(inner_selects(&in_while), 1, "the second pass of the while reads the slot: {:?}", in_while.body);
+        let redeclared = pk(&[
+            store(),
+            Statement::Block {
+                body: vec![
+                    Statement::VarDecl { var_type: VarType::Integer, name: "pos".into(), init: Some(Expr::Var("q".into())) },
+                    sum_loop(Expr::IntLiteral(0), pos()),
+                ],
+            },
+        ]);
+        assert_eq!(inner_selects(&redeclared), 1, "an inner `pos` is another value: {:?}", redeclared.body);
+        let escaped = pk(&[
+            store(),
+            Statement::Expr(Expr::FuncCall("f".into(), vec![Expr::AddressOf(Box::new(pos()))])),
+            sum_loop(Expr::IntLiteral(0), pos()),
+        ]);
+        assert_eq!(inner_selects(&escaped), 1, "a call handed `&pos` may move it: {:?}", escaped.body);
+
+        let with_body_tail = |tail: Statement| {
+            let mut lp = sum_loop(Expr::IntLiteral(0), pos());
+            if let Statement::ForC { body, .. } = &mut lp {
+                body.push(tail);
+            }
+            pk(&[store(), lp])
+        };
+        let call_after = with_body_tail(Statement::Expr(Expr::FuncCall(
+            "f".into(),
+            vec![Expr::AddressOf(Box::new(pos()))],
+        )));
+        assert_eq!(inner_selects(&call_after), 1, "`&pos` after the load moves the next pass's bound");
+        let counter_reused = with_body_tail(Statement::For {
+            var: "j".into(),
+            count: Expr::IntLiteral(3),
+            body: vec![],
+        });
+        assert_eq!(inner_selects(&counter_reused), 1, "a nested `for` over `j` rewrites the counter");
+        let bumped_after = pk(&[
+            store(),
+            Statement::DoWhile {
+                condition: Expr::Var("go".into()),
+                body: vec![
+                    sum_loop(Expr::IntLiteral(0), pos()),
+                    Statement::Expr(Expr::PostIncrement(Box::new(pos()))),
+                ],
+            },
+        ]);
+        assert_eq!(inner_selects(&bumped_after), 1, "the do-while's next pass sees `pos++`");
+        let stored_under_inner = pk(&[
+            Statement::Block {
+                body: vec![
+                    Statement::VarDecl { var_type: VarType::Integer, name: "pos".into(), init: Some(Expr::Var("q".into())) },
+                    store(),
+                ],
+            },
+            sum_loop(Expr::IntLiteral(0), pos()),
+        ]);
+        assert_eq!(inner_selects(&stored_under_inner), 1, "the slot named an inner `pos` the loop cannot see");
+        let stored_in_arm = pk(&[
+            Statement::If {
+                condition: Expr::Var("c".into()),
+                then_body: vec![
+                    Statement::VarDecl { var_type: VarType::Integer, name: "pos".into(), init: Some(Expr::Var("q".into())) },
+                    store(),
+                ],
+                else_body: vec![],
+                cond_comments: vec![],
+            },
+            sum_loop(Expr::IntLiteral(0), pos()),
+        ]);
+        assert_eq!(inner_selects(&stored_in_arm), 1, "an arm's own `pos` ends with the arm");
     }
 
     /// TRIMA's two arms share one ring. A store in one arm must not arm a load

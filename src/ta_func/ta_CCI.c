@@ -739,15 +739,11 @@ TA_LIB_API TA_RetCode TA_CCI_Peek( const TA_CCI_Stream *stream, double inHigh, d
    double lastValue;
    int j;
    double *cb_circBuffer;
-   int pkSlot0 = -1;
-   double pkVal0 = 0.0;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
    cb_circBuffer = sp->cb_circBuffer;
    lastValue = (inHigh + inLow + inClose) / 3;
-   pkSlot0 = sp->circBuffer_Idx;
-   pkVal0 = lastValue;
    /* Calculate the average for the whole period. Both sums take the
     * slot just stored from lastValue, in the same order, so no load reads
     * it back: a vector load spanning that slot stalls until the store
@@ -756,12 +752,12 @@ TA_LIB_API TA_RetCode TA_CCI_Peek( const TA_CCI_Stream *stream, double inHigh, d
    theAverage = 0;
    for( j = 0; j < sp->circBuffer_Idx; j += 1 )
    {
-      theAverage += (j != pkSlot0) ? cb_circBuffer[j] : pkVal0;
+      theAverage += cb_circBuffer[j];
    }
    theAverage += lastValue;
    for( j = sp->circBuffer_Idx + 1; j < sp->optInTimePeriod; j += 1 )
    {
-      theAverage += (j != pkSlot0) ? cb_circBuffer[j] : pkVal0;
+      theAverage += cb_circBuffer[j];
    }
    theAverage /= sp->optInTimePeriod;
    /* Do the summation of the ABS(TypePrice-average)
@@ -770,12 +766,12 @@ TA_LIB_API TA_RetCode TA_CCI_Peek( const TA_CCI_Stream *stream, double inHigh, d
    tempReal2 = 0;
    for( j = 0; j < sp->circBuffer_Idx; j += 1 )
    {
-      tempReal2 += fabs(((j != pkSlot0) ? cb_circBuffer[j] : pkVal0) - theAverage);
+      tempReal2 += fabs(cb_circBuffer[j] - theAverage);
    }
    tempReal2 += fabs(lastValue - theAverage);
    for( j = sp->circBuffer_Idx + 1; j < sp->optInTimePeriod; j += 1 )
    {
-      tempReal2 += fabs(((j != pkSlot0) ? cb_circBuffer[j] : pkVal0) - theAverage);
+      tempReal2 += fabs(cb_circBuffer[j] - theAverage);
    }
    tempReal2 /= sp->optInTimePeriod;
    /* And finally, the CCI... */
