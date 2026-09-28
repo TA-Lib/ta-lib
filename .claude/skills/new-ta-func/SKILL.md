@@ -226,6 +226,11 @@ The sweep reaches the servers only on its own inputs. Wrap each golden call site
 it replays that exact call on all four language servers and compares it as the sweep
 does. It is inert without `--codegen`, so adding it costs a bare run nothing.
 
+A new `MAType` member needs a direct pin of `TA_MA_Lookback(n, X) == TA_X_Lookback(n)`,
+at a non-zero unstable period when X has one. No value comparison can see a wrong MA
+lookback arm: `MA` forwards to the callee, which clamps to its own lookback, so only
+the caller's buffer sizing is wrong.
+
 Add the CHANGELOG entry too: one bullet under `### Added` → `- New TA Functions:`,
 formatted `  - NAME: Human name, short clause (#NNN)`.
 

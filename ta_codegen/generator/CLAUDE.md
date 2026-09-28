@@ -79,6 +79,12 @@ that names no indicator.
 | `server_gen`, `bench_gen` | JSON-RPC servers; direct-call benchmark binaries |
 | `registry` | Which indicators exist, and each backend's spelling of a name |
 
+**Emission helpers stay per backend.** Factor a repeated prologue or validation
+emitter within its own backend file, not into `backends/common.rs`: the backends
+differ in tier shape (C returns a code, Java and C# throw, Rust cannot express an
+absent argument), so a shared emitter becomes a switch on the language.
+`common.rs` holds backend-neutral data and IR queries.
+
 **The stream `NameMap` prefixes are shared on purpose.** `fma::stream_base`
 strips exactly `sp->`, `sp.` and `cur_` to decide integer-vs-float typing, so a
 backend inventing its own spelling silently changes which sites fuse `a*b+c` —
@@ -118,6 +124,11 @@ cargo clippy    # strict pedantic lints
 Value gates that need the *generated* library live in the crate itself as
 `#[cfg(test)]` modules (see the templates above); run them with
 `cargo test --tests -p ta-lib` from `ta_codegen/output/rust/`.
+
+A gate that finds its subject by name in emitted text must match at an
+identifier boundary, never by substring: a rename can make one name a suffix of
+another in the same function (`trend` in `supertrend`), and the wrong site then
+answers the needle with the gate still green. The suites' `mentions_word` does this.
 
 Cross-language verification is `ta_regtest`'s job, and
 `src/tools/ta_regtest/CLAUDE.md` is its spec — including the wire format and the
@@ -268,6 +279,9 @@ panicking on `attempt to subtract with overflow`.
 Strict Clippy pedantic in `src/lib.rs`, with `module_name_repetitions`,
 `must_use_candidate`, `format_push_string` and `doc_markdown` allowed.
 `rustfmt.toml`: edition 2021, max_width 100, `use_field_init_shorthand`.
+
+Never run `cargo fmt` on this crate. It is not rustfmt-clean, so the run reformats
+thousands of lines across `src/` and `tests/` and buries any real change.
 
 ## Performance: C server compilation
 

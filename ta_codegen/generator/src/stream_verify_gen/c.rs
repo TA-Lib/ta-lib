@@ -1773,6 +1773,8 @@ pub(crate) fn generate_c_stream_verify(
         s.push_str("              (void)stSF; (void)sfB; (void)sfN; }\n");
         s.push_str("        }\n");
         s.push_str("        if( shortHistChecked && !shortHistOk ) allOk = 0;\n");
+        // Emit every new leg above this restore: `lb` includes svK, and past it the
+        // library runs at K=0, which agrees with `lb` only when svK is 0.
         for id in &pin_ids {
             s.push_str(&format!("        TA_SetUnstablePeriod({id}, 0);\n"));
         }

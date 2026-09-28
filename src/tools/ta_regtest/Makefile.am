@@ -95,6 +95,8 @@ ta_regtest_CPPFLAGS = -I../../ta_func \
 		      -I../../ta_common \
 		      -I../../ta_abstract
 ta_regtest_LDFLAGS = -no-undefined
+# Keep linking the libtool library: packagers install and run
+# .libs/ta_regtest, which libtool creates only for a libtool-linked binary.
 ta_regtest_LDADD = ../../libta-lib.la $(LIBM)
 
 all-local: ta_regtest

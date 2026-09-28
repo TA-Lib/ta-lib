@@ -14,6 +14,16 @@ compared nothing fails on its own floor — or, for a waiver count, its ceiling.
 New coverage brings its own assert; a green run has no other output for it to
 land in.
 
+A new class gets its own counter and floor. Adding into a counter another class
+already drives above zero lets the new loop go dead with the floor still met.
+Count from the value the case actually assigned, not from the table entry that
+made it eligible, and skip a pass that would repeat the previous one bit for bit.
+
+An exact count pinned in a test must be platform-free: count only what the test
+decides from inputs built with IEEE basic operations (no libm, at most one RNG
+draw per expression, since evaluation order is unspecified). Never pin a count
+of a property of library output; it moves with FMA dispatch, libm and compiler.
+
 ## CLI Flags
 
 | Flag | Description |
@@ -148,6 +158,11 @@ they carry no unstable flag and stay out of `UNSTABLE_MAP`, keeping the tight
 tolerance. **ADXR** and **STOCHRSI** follow their internal ADX/RSI, so
 `UNSTABLE_MAP` maps them to `TA_FUNC_UNST_ADX`/`_RSI` while their own ids stay
 unread.
+
+Every function that converges through a callee without an unstable flag of its
+own needs a `UNSTABLE_MAP` row in `test_codegen.c`, one per inherited id. A
+missing row classes it `EPSILON`, so the range sweep fails, and the stream
+K-leg never runs it warm; only `--codegen` sees either.
 
 ## Abstract-metadata parity — every language server vs the C library
 

@@ -95,7 +95,7 @@ Array parameters may be written either `const double inReal[]` (the common style
 | `TA_RetCode` | main function return type |
 | `double`, `const double inReal[]`, `double outReal[]` | price inputs and outputs |
 | `int` | optional params, counters, `int *outBegIdx` / `int *outNBElement` |
-| `size_t` | array indices and counts |
+| `size_t` | array indices and counts. Only Rust renders it unsigned (`usize`); C, Java and C# render `int`, so a `size_t` cast or declaration never widens arithmetic or guards an overflow |
 
 Outputs are written through their pointer/array parameters: `*outBegIdx = ...`,
 `*outNBElement = ...`, `outReal[outIdx] = ...`.
