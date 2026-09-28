@@ -3127,6 +3127,16 @@ impl StatementEmitter for RustStmt<'_, '_> {
         super::stmt_walk::line_comment(lines, indent)
     }
 
+    fn opaque(&self, vars: &[Expr], indent: usize) -> String {
+        let pad = " ".repeat(indent);
+        let mut out = String::new();
+        for v in vars {
+            let t = render_assign_target(v, self.ctx, self.opt_real_params, self.registry, self.helpers);
+            let _ = std::fmt::Write::write_fmt(&mut out, format_args!("{pad}{t} = core::hint::black_box({t});\n"));
+        }
+        out
+    }
+
     fn circ_buf(&self, op: &CircBuf, indent: usize) -> String {
         let pad = " ".repeat(indent);
         match op {

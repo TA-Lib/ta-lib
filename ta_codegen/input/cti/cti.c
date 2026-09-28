@@ -85,6 +85,7 @@ TA_RetCode cti(int startIdx, int endIdx,
       sumX2 += x*x;
       sumXY += x * (double)(startIdx - j);
    }
+   TA_OPAQUE(sumX, sumX2, sumXY);
 
    today = startIdx;
    outIdx = 0;
@@ -135,6 +136,7 @@ TA_RetCode cti(int startIdx, int endIdx,
             sumX2 += x*x;
             sumXY += x * (double)(today - j);
          }
+         TA_OPAQUE(sumX, sumX2, sumXY);
 
          /* A window flat to within the rounding of its own mean leaves ssX at
           * that rounding, which would fire the trigger again on every bar.
@@ -153,6 +155,7 @@ TA_RetCode cti(int startIdx, int endIdx,
                sumX2 += x*x;
                sumXY += x * (double)(today - j);
             }
+            TA_OPAQUE(sumX, sumX2, sumXY);
          }
          peakX2 = sumX2;
 

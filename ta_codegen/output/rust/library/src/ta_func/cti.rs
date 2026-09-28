@@ -188,6 +188,9 @@ impl Core {
             sumXY += x * ((startIdx - j) as f64);
             j += 1;
         }
+        sumX = core::hint::black_box(sumX);
+        sumX2 = core::hint::black_box(sumX2);
+        sumXY = core::hint::black_box(sumXY);
         today = startIdx;
         outIdx = 0;
         barsSinceReseed = (32 * optInTimePeriod) as usize;
@@ -232,6 +235,9 @@ impl Core {
                     sumXY += x * ((today - j) as f64);
                 }
                 j = (today as usize) + 1;
+                sumX = core::hint::black_box(sumX);
+                sumX2 = core::hint::black_box(sumX2);
+                sumXY = core::hint::black_box(sumXY);
                 // A window flat to within the rounding of its own mean leaves ssX at
                 // that rounding, which would fire the trigger again on every bar.
                 // Anchored on one of its own values instead, ssX is at least half the
@@ -249,6 +255,9 @@ impl Core {
                         sumXY += x * ((today - j) as f64);
                     }
                     j = (today as usize) + 1;
+                    sumX = core::hint::black_box(sumX);
+                    sumX2 = core::hint::black_box(sumX2);
+                    sumXY = core::hint::black_box(sumXY);
                 }
                 peakX2 = sumX2;
                 ssX = sumX2 - sumX * sumX * invPeriod;
@@ -509,6 +518,9 @@ impl Core {
                 sp.sumXY += x * ((sp.today - sp.j) as f64);
                 sp.j += 1;
             }
+            sp.sumX = core::hint::black_box(sp.sumX);
+            sp.sumX2 = core::hint::black_box(sp.sumX2);
+            sp.sumXY = core::hint::black_box(sp.sumXY);
             // A window flat to within the rounding of its own mean leaves ssX at
             // that rounding, which would fire the trigger again on every bar.
             // Anchored on one of its own values instead, ssX is at least half the
@@ -528,6 +540,9 @@ impl Core {
                     sp.sumXY += x * ((sp.today - sp.j) as f64);
                     sp.j += 1;
                 }
+                sp.sumX = core::hint::black_box(sp.sumX);
+                sp.sumX2 = core::hint::black_box(sp.sumX2);
+                sp.sumXY = core::hint::black_box(sp.sumXY);
             }
             sp.peakX2 = sp.sumX2;
             ssX = sp.sumX2 - sp.sumX * sp.sumX * sp.invPeriod;
@@ -674,6 +689,9 @@ impl Core {
             sumXY += x * ((startIdx - j) as f64);
             j += 1;
         }
+        sumX = core::hint::black_box(sumX);
+        sumX2 = core::hint::black_box(sumX2);
+        sumXY = core::hint::black_box(sumXY);
         today = startIdx;
         outIdx = 0;
         barsSinceReseed = (32 * optInTimePeriod) as usize;
@@ -718,6 +736,9 @@ impl Core {
                     sumXY += x * ((today - j) as f64);
                 }
                 j = (today as usize) + 1;
+                sumX = core::hint::black_box(sumX);
+                sumX2 = core::hint::black_box(sumX2);
+                sumXY = core::hint::black_box(sumXY);
                 // A window flat to within the rounding of its own mean leaves ssX at
                 // that rounding, which would fire the trigger again on every bar.
                 // Anchored on one of its own values instead, ssX is at least half the
@@ -735,6 +756,9 @@ impl Core {
                         sumXY += x * ((today - j) as f64);
                     }
                     j = (today as usize) + 1;
+                    sumX = core::hint::black_box(sumX);
+                    sumX2 = core::hint::black_box(sumX2);
+                    sumXY = core::hint::black_box(sumXY);
                 }
                 peakX2 = sumX2;
                 ssX = sumX2 - sumX * sumX * invPeriod;
@@ -1049,6 +1073,9 @@ impl CtiStream {
                     sumXY += x * ((sp.today - j) as f64);
                     j += 1;
                 }
+                sumX = core::hint::black_box(sumX);
+                sumX2 = core::hint::black_box(sumX2);
+                sumXY = core::hint::black_box(sumXY);
                 // A window flat to within the rounding of its own mean leaves ssX at
                 // that rounding, which would fire the trigger again on every bar.
                 // Anchored on one of its own values instead, ssX is at least half the
@@ -1068,6 +1095,9 @@ impl CtiStream {
                         sumXY += x * ((sp.today - j) as f64);
                         j += 1;
                     }
+                    sumX = core::hint::black_box(sumX);
+                    sumX2 = core::hint::black_box(sumX2);
+                    sumXY = core::hint::black_box(sumXY);
                 }
                 peakX2 = sumX2;
                 ssX = sumX2 - sumX * sumX * sp.invPeriod;

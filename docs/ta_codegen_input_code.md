@@ -160,6 +160,7 @@ generator recognizes and maps per language:
 | `TA_IS_ZERO(x)` / `TA_IS_ZERO_OR_NEG(x)` | epsilon comparison against zero |
 | `TA_GetUnstablePeriod(TA_FUNC_UNST_<NAME>)` | this function's configured unstable period |
 | candle-settings access (CDL* patterns) | resolved via the generated candle helpers |
+| `TA_OPAQUE(a, b, …);` | statement: the listed locals keep their values, but Rust's optimizer may not see through them there (`core::hint::black_box`; every other language emits nothing). Place it after each loop whose float accumulators LLVM would otherwise carry packed in one vector register through a later loop; see `cti.c` |
 | `CIRCBUF_PROLOG_CLASS` / `CIRCBUF_INIT_CLASS` / `CIRCBUF_NEXT` / `CIRCBUF_DESTROY` | circular scratch buffer over a local `typedef struct` element type (`src/ta_common/ta_memory.h`); see `cmf.c` or `ultosc.c` for usage |
 
 Standard math functions (`sqrt`, `floor`, `ceil`, `fabs`, `sin`, `cos`, `atan`,

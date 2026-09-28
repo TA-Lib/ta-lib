@@ -3999,6 +3999,7 @@ impl ReloadScan<'_> {
             Statement::Comment(_)
             | Statement::UnrollHint { .. }
             | Statement::VarDecl { init: None, .. } => {}
+            Statement::Expr(Expr::FuncCall(name, _)) if name == super::stmt_walk::OPAQUE => {}
             Statement::Switch {
                 expr,
                 cases,

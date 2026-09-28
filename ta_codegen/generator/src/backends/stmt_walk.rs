@@ -16,6 +16,10 @@
 
 use crate::ir::{BinOp, CircBuf, Expr, Statement, VarType};
 
+/// The `TA_OPAQUE(..)` statement name. Outside Rust it emits no code, so a
+/// pass that models what a statement may touch treats it as trivia.
+pub const OPAQUE: &str = "TA_OPAQUE";
+
 /// One line of a rendered condition: the code, carrying its indent *relative to*
 /// the condition's first column but not the caller's base padding, plus the
 /// comment annotating the leaf the line ends on.
@@ -277,6 +281,14 @@ pub trait StatementEmitter {
         String::new()
     }
 
+    /// Render `TA_OPAQUE(a, b, ...);` — the listed locals keep their values but
+    /// the optimizer may not see through them there. Only Rust needs it
+    /// (LLVM's SLP vectorizer otherwise packs independent running sums into
+    /// one register across a loop); every other backend emits nothing.
+    fn opaque(&self, _vars: &[Expr], _indent: usize) -> String {
+        String::new()
+    }
+
     /// Render a `Statement::Break` (`break;`). Identical across backends.
     fn break_stmt(&self, indent: usize) -> String {
         format!("{}break;\n", " ".repeat(indent))
@@ -309,6 +321,7 @@ pub trait StatementEmitter {
             Statement::Assign { target, value, compound } => {
                 self.assign(target, value, *compound, indent)
             }
+            Statement::Expr(Expr::FuncCall(name, args)) if name == OPAQUE => self.opaque(args, indent),
             Statement::Expr(e) => self.expr_stmt(e, indent),
             Statement::While { condition, body } => self.while_loop(condition, body, indent),
             Statement::DoWhile { condition, body } => self.do_while(condition, body, indent),
