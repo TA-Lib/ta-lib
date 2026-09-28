@@ -329,6 +329,7 @@ struct TA_CDLABANDONEDBABY_Stream {
    /* The value(s) at the last bar the stream counted (see TA_CDLABANDONEDBABY_Value). */
    int cur_outInteger;
    double optInPenetration;
+   double pad_0;
    double BodyDojiPeriodTotal;
    double BodyLongPeriodTotal;
    double BodyShortPeriodTotal;

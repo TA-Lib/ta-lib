@@ -327,7 +327,9 @@ struct TA_EFI_Stream {
    double cur_outReal;
    int optInTimePeriod;
    double prevClose;
+   double pad_0;
    double optInK_1;
+   double pad_1;
    double prevMA;
 };
 

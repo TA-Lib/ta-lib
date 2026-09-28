@@ -376,7 +376,9 @@ struct TA_CMO_Stream {
    int optInTimePeriod;
    double prevGain;
    double prevLoss;
+   double pad_0;
    double invPeriod;
+   double pad_1;
    double prevValue;
 };
 

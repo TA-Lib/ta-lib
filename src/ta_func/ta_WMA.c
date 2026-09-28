@@ -403,6 +403,7 @@ struct TA_WMA_Stream {
    double periodSum;
    double periodSub;
    double trailingValue;
+   double pad_0;
    double divider;
    int ringPos_trailingIdx;
    int ringCap_trailingIdx;

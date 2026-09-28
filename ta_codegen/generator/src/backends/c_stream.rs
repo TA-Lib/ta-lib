@@ -1311,8 +1311,8 @@ pub fn state_struct_text(func: &FuncDef, lookup: &dyn streaming::CalleeLookup) -
         StreamPlan::Composed(cp) => {
             let extra = composed_extra_fields(cp);
             match &cp.producer {
-                Some(model) => emit_state_struct_ex(&mut o, func, model, &extra),
-                None => emit_composed_struct_noproducer(&mut o, func, &extra),
+                Some(model) => emit_state_struct_ex(&mut o, func, model, extra),
+                None => emit_composed_struct_noproducer(&mut o, func, extra),
             }
         }
         StreamPlan::DualMode(dmp) => emit_dual_state_struct(&mut o, func, &dmp.mode_a, &dmp.mode_b),
@@ -1747,10 +1747,10 @@ fn emit_composed(
     let extra = composed_extra_fields(cp);
     match &cp.producer {
         Some(model) => {
-            emit_state_struct_ex(o, func, model, &extra);
+            emit_state_struct_ex(o, func, model, extra);
             emit_release(o, func, model);
         }
-        None => emit_composed_struct_noproducer(o, func, &extra),
+        None => emit_composed_struct_noproducer(o, func, extra),
     }
 
     // --- StepImpl -----------------------------------------------------------
@@ -1798,21 +1798,21 @@ fn emit_composed(
 
 /// The trailing struct fields every composed tier carries after the producer's
 /// own: one typed handle per sub-stream, and the sub-output lag rings.
-fn composed_extra_fields(cp: &streaming::ComposedPlan) -> String {
-    let mut extra = String::new();
+fn composed_extra_fields(cp: &streaming::ComposedPlan) -> Vec<StructLine> {
+    let mut extra = Vec::new();
     for (i, sub) in cp.subs.iter().enumerate() {
-        let _ = writeln!(extra, "   {}_Stream *sub{i};", callee_prefix(&sub.callee));
+        extra.push(StructLine::other(&format!("{}_Stream *", callee_prefix(&sub.callee)), &format!("sub{i}")));
     }
     // Sub-output lag rings (ADXR): a fixed-capacity ring of the last `lag`
     // sub-output values.
     for ring in &cp.sub_lag_rings {
         let s = &ring.series;
-        let _ = writeln!(extra, "   int lagRingPos_{s};");
-        let _ = writeln!(extra, "   int lagRingCap_{s};");
-        let _ = writeln!(extra, "   double *lagRing_{s};");
+        extra.push(StructLine::typed(&VarType::Integer, &format!("lagRingPos_{s}"), true));
+        extra.push(StructLine::typed(&VarType::Integer, &format!("lagRingCap_{s}"), false));
+        extra.push(StructLine::typed(&VarType::RealPointer, &format!("lagRing_{s}"), false));
     }
     for st in &cp.map_state {
-        let _ = writeln!(extra, "   {};", c_decl(&st.ty, &st.name));
+        extra.push(StructLine::typed(&st.ty, &st.name, st.carried));
     }
     extra
 }
@@ -1821,19 +1821,11 @@ fn composed_extra_fields(cp: &streaming::ComposedPlan) -> String {
 /// optional params (referenced by combine maps as `sp-><param>`), plus the
 /// peek flag and typed sub handles. Dispatch-style — no ring/window/circ/
 /// extrema fields, so no `ReleaseImpl`.
-fn emit_composed_struct_noproducer(o: &mut String, func: &FuncDef, extra: &str) {
-    let n = uname(func);
-    let _ = writeln!(o, "struct TA_{n}_Stream {{");
-    emit_range_head_fields(o, func);
-    emit_cur_fields(o, func);
-    for p in &func.optional_inputs {
-        let _ = writeln!(o, "   {} {};", opt_param_c_type(&p.param_type), p.name);
-    }
-    for (name, c_type) in &func.private_extra_params {
-        let _ = writeln!(o, "   {c_type} {name};");
-    }
-    o.push_str(extra);
-    let _ = writeln!(o, "}};\n");
+fn emit_composed_struct_noproducer(o: &mut String, func: &FuncDef, extra: Vec<StructLine>) {
+    let mut lines = handle_head_lines(func);
+    lines.extend(private_extra_lines(func));
+    lines.extend(extra);
+    render_state_struct(o, func, lines);
 }
 
 /// Open one sub-stream on its source series at the anchor
@@ -2804,20 +2796,13 @@ fn emit_dispatch_open(
 /// State struct for a dispatch tier: the optional params plus one untyped sub
 /// handle, whose concrete type the discriminator param names.
 fn emit_dispatch_struct(o: &mut String, func: &FuncDef, dp: &DispatchPlan) {
-    let n = uname(func);
-    let _ = writeln!(o, "struct TA_{n}_Stream {{");
-    emit_range_head_fields(o, func);
-    emit_cur_fields(o, func);
-    for p in &func.optional_inputs {
-        let _ = writeln!(o, "   {} {};", opt_param_c_type(&p.param_type), p.name);
-    }
-    let _ = writeln!(
-        o,
-        "   /* Sub-stream handle, tagged by {}; NULL on the identity path. */",
+    let mut lines = handle_head_lines(func);
+    lines.push(StructLine::Comment(format!(
+        "/* Sub-stream handle, tagged by {}; NULL on the identity path. */",
         dp.param
-    );
-    let _ = writeln!(o, "   void *sub;");
-    let _ = writeln!(o, "}};\n");
+    )));
+    lines.push(StructLine::other("void *", "sub"));
+    render_state_struct(o, func, lines);
 }
 
 /// Per-arm dispatch bodies for Update/Peek/Close, plus the shared open
@@ -3087,70 +3072,42 @@ fn render_dual_pred(
 /// each arm touches only its own fields; Open's memset leaves the inactive
 /// mode's buffer pointers NULL (Release/Peek guard on them).
 fn emit_dual_state_struct(o: &mut String, func: &FuncDef, ma: &StreamModel, mb: &StreamModel) {
-    let mut a_nonscalar = String::new();
-    emit_nonscalar_struct_fields(&mut a_nonscalar, func, ma);
-    let mut b_nonscalar = String::new();
-    emit_nonscalar_struct_fields(&mut b_nonscalar, func, mb);
-    // Line-level union: every field line is `   <type> <name>;` with the name
-    // derived from its spec, so a spec both modes share renders the identical
-    // line and dedups away. A same-named field rendering DIFFERENTLY across
-    // modes is a type conflict — caught by the member-name check below.
-    let a_lines: std::collections::BTreeSet<&str> = a_nonscalar.lines().collect();
-    let mut union_nonscalar = a_nonscalar.clone();
-    for line in b_nonscalar.lines() {
-        if !a_lines.contains(line) {
-            union_nonscalar.push_str(line);
-            union_nonscalar.push('\n');
+    let stepped: std::collections::BTreeSet<String> = streaming::assigned_per_bar(ma)
+        .into_iter()
+        .chain(streaming::assigned_per_bar(mb))
+        .collect();
+    let mut lines = handle_head_lines(func);
+    lines.extend(private_extra_lines(func));
+    let union = |a: Vec<(String, VarType)>, b: Vec<(String, VarType)>, what: &str| {
+        let mut seen: std::collections::BTreeMap<String, VarType> = std::collections::BTreeMap::new();
+        let mut order: Vec<(String, VarType)> = Vec::new();
+        for (name, ty) in a.into_iter().chain(b) {
+            if let Some(prev) = seen.get(&name) {
+                assert!(
+                    *prev == ty,
+                    "{}: dual-mode {what} `{name}` has conflicting types across modes",
+                    func.name
+                );
+            } else {
+                seen.insert(name.clone(), ty.clone());
+                order.push((name, ty));
+            }
         }
+        order
+    };
+    for (name, ty) in union(ma.state.clone(), mb.state.clone(), "state") {
+        let per_bar = stepped.contains(&name);
+        lines.push(StructLine::typed(&ty, &name, per_bar));
     }
-    let mut member_names = std::collections::BTreeSet::new();
-    for line in union_nonscalar.lines() {
-        let name = line
-            .trim()
-            .trim_end_matches(';')
-            .split_whitespace()
-            .last()
-            .unwrap_or("")
-            .trim_start_matches('*')
-            .to_string();
-        assert!(
-            member_names.insert(name.clone()),
-            "{}: dual-mode non-scalar field `{name}` renders differently across modes",
-            func.name
-        );
+    let nonscalar = union(
+        nonscalar_struct_fields(func, ma),
+        nonscalar_struct_fields(func, mb),
+        "non-scalar field",
+    );
+    for (name, ty) in nonscalar {
+        lines.push(StructLine::typed(&ty, &name, true));
     }
-
-    let n = uname(func);
-    let _ = writeln!(o, "struct TA_{n}_Stream {{");
-    emit_range_head_fields(o, func);
-    emit_cur_fields(o, func);
-    for p in &func.optional_inputs {
-        let _ = writeln!(o, "   {} {};", opt_param_c_type(&p.param_type), p.name);
-    }
-    for (name, c_type) in &func.private_extra_params {
-        let _ = writeln!(o, "   {c_type} {name};");
-    }
-    // Union of the two modes' SCALAR state, mode-A order first, dedup by name.
-    let mut seen: std::collections::BTreeMap<String, &crate::ir::VarType> =
-        std::collections::BTreeMap::new();
-    let mut order: Vec<(String, VarType)> = Vec::new();
-    for (name, ty) in ma.state.iter().chain(mb.state.iter()) {
-        if let Some(prev) = seen.get(name) {
-            assert!(
-                *prev == ty,
-                "{}: dual-mode state `{name}` has conflicting types across modes",
-                func.name
-            );
-        } else {
-            seen.insert(name.clone(), ty);
-            order.push((name.clone(), ty.clone()));
-        }
-    }
-    for (name, ty) in &order {
-        let _ = writeln!(o, "   {};", c_decl(ty, name));
-    }
-    o.push_str(&union_nonscalar);
-    let _ = writeln!(o, "}};\n");
+    render_state_struct(o, func, lines);
 }
 
 /// Union of both modes' circs (mode-A order first, dedup by id). A shared id
@@ -3473,11 +3430,15 @@ fn emit_dual_frame_body(
 /// (`max(startIdx, lookback)`), and neither `startIdx` nor the lookback is
 /// otherwise on the handle, so there is nothing to derive it from at accessor
 /// time.
-fn emit_range_head_fields(o: &mut String, func: &FuncDef) {
-    let _ = writeln!(o, "   /* The bars this handle has an output for (see TA_{}_OutRange). */", uname(func));
-    for decl in RANGE_HEAD_FIELDS {
-        let _ = writeln!(o, "   {decl}");
+fn range_head_lines(func: &FuncDef) -> Vec<StructLine> {
+    let mut lines = vec![StructLine::Comment(format!(
+        "/* The bars this handle has an output for (see TA_{}_OutRange). */",
+        uname(func)
+    ))];
+    for name in RANGE_HEAD_FIELDS {
+        lines.push(StructLine::typed(&VarType::Integer, name, false));
     }
+    lines
 }
 
 /// The `cur_<output>` fields: the value(s) at the last bar the stream counted,
@@ -3488,15 +3449,119 @@ fn emit_range_head_fields(o: &mut String, func: &FuncDef) {
 /// Distinct from `lastOut_<output>` even where both exist (DX): `lastOut_` is
 /// the PREVIOUS bar's output, read by the body while computing this one, and
 /// it is emitted only for the outputs a body actually reads back.
-fn emit_cur_fields(o: &mut String, func: &FuncDef) {
-    let _ = writeln!(o, "   /* The value(s) at the last bar the stream counted (see TA_{}_Value). */", uname(func));
+fn cur_lines(func: &FuncDef) -> Vec<StructLine> {
+    let mut lines = vec![StructLine::Comment(format!(
+        "/* The value(s) at the last bar the stream counted (see TA_{}_Value). */",
+        uname(func)
+    ))];
     for out in &func.outputs {
-        let _ = writeln!(o, "   {} cur_{};", out_c_type(func, &out.name), out.name);
+        let ty = if out_c_type(func, &out.name) == "int" { VarType::Integer } else { VarType::Real };
+        lines.push(StructLine::typed(&ty, &format!("cur_{}", out.name), true));
+    }
+    lines
+}
+
+/// Range head, `cur_` values and optional params: the fields every tier's
+/// handle opens with.
+fn handle_head_lines(func: &FuncDef) -> Vec<StructLine> {
+    let mut lines = range_head_lines(func);
+    lines.extend(cur_lines(func));
+    for p in &func.optional_inputs {
+        let class = if p.param_type == ParamType::Real { FieldClass::Constant } else { FieldClass::Other };
+        lines.push(StructLine::Field {
+            name: p.name.clone(),
+            decl: format!("{} {}", opt_param_c_type(&p.param_type), p.name),
+            class,
+        });
+    }
+    lines
+}
+
+fn private_extra_lines(func: &FuncDef) -> Vec<StructLine> {
+    func.private_extra_params
+        .iter()
+        .map(|(name, c_type)| {
+            let class = if c_type == "double" { FieldClass::Constant } else { FieldClass::Other };
+            StructLine::Field { name: name.clone(), decl: format!("{c_type} {name}"), class }
+        })
+        .collect()
+}
+
+/// One line of a C stream handle's declaration, classed for the separation
+/// rule in [`render_state_struct`].
+enum StructLine {
+    Comment(String),
+    Field { name: String, decl: String, class: FieldClass },
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum FieldClass {
+    /// An int, an enum or a pointer.
+    Other,
+    /// A double some per-bar path stores to.
+    Stepped,
+    /// A double only `Open` writes.
+    Constant,
+}
+
+impl StructLine {
+    /// `per_bar`: a per-bar path stores the field. Only a double's class reads it.
+    fn typed(ty: &VarType, name: &str, per_bar: bool) -> Self {
+        let class = match ty {
+            VarType::Real | VarType::RealArray(_) if per_bar => FieldClass::Stepped,
+            VarType::Real | VarType::RealArray(_) => FieldClass::Constant,
+            _ => FieldClass::Other,
+        };
+        Self::Field { name: name.to_string(), decl: c_decl(ty, name), class }
+    }
+
+    /// A handle pointer: a field whose type has no [`VarType`].
+    fn other(c_type: &str, name: &str) -> Self {
+        let sep = if c_type.ends_with('*') { "" } else { " " };
+        Self::Field { name: name.to_string(), decl: format!("{c_type}{sep}{name}"), class: FieldClass::Other }
     }
 }
 
-/// The C declarations of the range head.
-pub const RANGE_HEAD_FIELDS: [&str; 2] = ["int outRangeBegIdx;", "int outRangeCount;"];
+/// Name prefix of the separators [`render_state_struct`] inserts.
+pub const STATE_PAD_PREFIX: &str = "pad_";
+
+/// Renders `struct TA_<N>_Stream`, with an unused double between a constant
+/// double and a stepped one that would otherwise touch. gcc can load a double
+/// as 16 bytes together with either neighbour; over a stepped neighbour that
+/// load overlaps a separate 8-byte store and cannot be forwarded.
+fn render_state_struct(o: &mut String, func: &FuncDef, lines: Vec<StructLine>) {
+    let n = uname(func);
+    let _ = writeln!(o, "struct TA_{n}_Stream {{");
+    let mut prev = FieldClass::Other;
+    let mut pads = 0usize;
+    for line in lines {
+        match line {
+            StructLine::Comment(c) => {
+                let _ = writeln!(o, "   {c}");
+            }
+            StructLine::Field { name, decl, class } => {
+                assert!(
+                    !name.starts_with(STATE_PAD_PREFIX),
+                    "{}: stream state field `{name}` takes the separator prefix",
+                    func.name
+                );
+                if matches!(
+                    (prev, class),
+                    (FieldClass::Constant, FieldClass::Stepped) | (FieldClass::Stepped, FieldClass::Constant)
+                ) {
+                    let _ = writeln!(o, "   {};", c_decl(&VarType::Real, &format!("{STATE_PAD_PREFIX}{pads}")));
+                    pads += 1;
+                }
+                let _ = writeln!(o, "   {decl};");
+                prev = class;
+            }
+        }
+    }
+    let _ = writeln!(o, "}};\n");
+}
+
+/// The range head's members, both `int`.
+const RANGE_HEAD_FIELDS: [&str; 2] = ["outRangeBegIdx", "outRangeCount"];
 
 /// Advance the handle's count by one bar it has an output for (issue #241).
 /// Emitted for a committing step and for `TA_<N>_Advance`, which counts a bar
@@ -3558,26 +3623,13 @@ fn emit_cur_capture(o: &mut String, indent: &str, func: &FuncDef, strided: bool)
 }
 
 fn emit_state_struct(o: &mut String, func: &FuncDef, model: &StreamModel) {
-    emit_state_struct_ex(o, func, model, "");
-}
-
-/// State struct with extra trailing fields (composed tier: typed sub handles
-/// appended after the producer's own fields).
-/// The non-scalar handle fields (out-feedback, lag slots, ring/window/circ/
-/// extrema buffers + their Peek mirrors) for one model. Shared by the loop-tier
-/// struct and the dual-mode union struct (whose two modes carry identical
-/// non-scalar state — TRIMA's odd/even arms share the same rings — so the union
-/// emits one model's set).
-fn emit_nonscalar_struct_fields(o: &mut String, func: &FuncDef, model: &StreamModel) {
-    for (name, ty) in nonscalar_struct_fields(func, model) {
-        let _ = writeln!(o, "   {};", c_decl(&ty, &name));
-    }
+    emit_state_struct_ex(o, func, model, Vec::new());
 }
 
 /// The struct's non-`model.state` fields, in declaration order, with the type
 /// each is declared with.
 ///
-/// One list, two readers: [`emit_nonscalar_struct_fields`] renders it, and the
+/// One list, two readers: the handle struct declares it, and the
 /// peek localizer types a local against it. A second hand-written type map
 /// would be a silent miscompile the first time the two disagreed about an
 /// `int`.
@@ -3635,23 +3687,20 @@ fn nonscalar_struct_fields(func: &FuncDef, model: &StreamModel) -> Vec<(String, 
     out
 }
 
-fn emit_state_struct_ex(o: &mut String, func: &FuncDef, model: &StreamModel, extra: &str) {
-    let n = uname(func);
-    let _ = writeln!(o, "struct TA_{n}_Stream {{");
-    emit_range_head_fields(o, func);
-    emit_cur_fields(o, func);
-    for p in &func.optional_inputs {
-        let _ = writeln!(o, "   {} {};", opt_param_c_type(&p.param_type), p.name);
-    }
-    for (name, c_type) in &func.private_extra_params {
-        let _ = writeln!(o, "   {c_type} {name};");
-    }
+/// State struct with extra trailing fields (composed tier: typed sub handles
+/// appended after the producer's own fields).
+fn emit_state_struct_ex(o: &mut String, func: &FuncDef, model: &StreamModel, extra: Vec<StructLine>) {
+    let stepped = streaming::assigned_per_bar(model);
+    let mut lines = handle_head_lines(func);
+    lines.extend(private_extra_lines(func));
     for (name, ty) in &model.state {
-        let _ = writeln!(o, "   {};", c_decl(ty, name));
+        lines.push(StructLine::typed(ty, name, stepped.contains(name)));
     }
-    emit_nonscalar_struct_fields(o, func, model);
-    o.push_str(extra);
-    let _ = writeln!(o, "}};\n");
+    for (name, ty) in nonscalar_struct_fields(func, model) {
+        lines.push(StructLine::typed(&ty, &name, true));
+    }
+    lines.extend(extra);
+    render_state_struct(o, func, lines);
 }
 
 /// Free-line list for one model's heap buffers (the `ReleaseImpl` body,
@@ -4709,21 +4758,15 @@ fn emit_tape_entries(
 /// per-period sub handles, the scratch the bank writes its outputs into, and
 /// the tape of recent prices every slot reads its history from.
 fn emit_period_bank_struct(o: &mut String, func: &FuncDef, plan: &streaming::PeriodBankPlan) {
-    let n = uname(func);
     let subty = format!("struct {}_Stream", callee_prefix(&plan.callee));
-    let _ = writeln!(o, "struct TA_{n}_Stream {{");
-    emit_range_head_fields(o, func);
-    emit_cur_fields(o, func);
-    for p in &func.optional_inputs {
-        let _ = writeln!(o, "   {} {};", opt_param_c_type(&p.param_type), p.name);
-    }
-    let _ = writeln!(o, "   int nBank;");
-    let _ = writeln!(o, "   {subty} **bank;");
-    let _ = writeln!(o, "   double *scratch;");
-    let _ = writeln!(o, "   int tapeMask;");
-    let _ = writeln!(o, "   int tapePos;");
-    let _ = writeln!(o, "   double *tape;");
-    let _ = writeln!(o, "}};\n");
+    let mut lines = handle_head_lines(func);
+    lines.push(StructLine::typed(&VarType::Integer, "nBank", false));
+    lines.push(StructLine::other(&format!("{subty} **"), "bank"));
+    lines.push(StructLine::typed(&VarType::RealPointer, "scratch", false));
+    lines.push(StructLine::typed(&VarType::Integer, "tapeMask", false));
+    lines.push(StructLine::typed(&VarType::Integer, "tapePos", true));
+    lines.push(StructLine::typed(&VarType::RealPointer, "tape", false));
+    render_state_struct(o, func, lines);
 }
 
 /// Emit the period-bank stream section (MAVP): a moving average whose period

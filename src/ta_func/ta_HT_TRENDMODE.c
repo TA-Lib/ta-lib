@@ -1067,6 +1067,7 @@ struct TA_HT_TRENDMODE_Stream {
    double iTrend1;
    double iTrend2;
    double iTrend3;
+   double pad_0;
    double a;
    double b;
    int hilbertIdx;
@@ -1102,9 +1103,11 @@ struct TA_HT_TRENDMODE_Stream {
    double I1ForOddPrev3;
    double I1ForEvenPrev2;
    double I1ForEvenPrev3;
+   double pad_1;
    double rad2Deg;
    double deg2Rad;
    double constDeg2RadBy360;
+   double pad_2;
    double smoothPeriod;
    double DCPhase;
    int daysInTrend;

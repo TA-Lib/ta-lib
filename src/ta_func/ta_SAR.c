@@ -577,6 +577,7 @@ struct TA_SAR_Stream {
    int outRangeCount;
    /* The value(s) at the last bar the stream counted (see TA_SAR_Value). */
    double cur_outReal;
+   double pad_0;
    double optInAcceleration;
    double optInMaximum;
    int isLong;

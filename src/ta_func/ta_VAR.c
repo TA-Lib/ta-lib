@@ -408,10 +408,13 @@ struct TA_VAR_Stream {
    double cur_outReal;
    int optInTimePeriod;
    double optInNbDev;
+   double pad_0;
    double shift;
    double periodTotal1;
    double periodTotal2;
+   double pad_1;
    double invPeriod;
+   double pad_2;
    double peakTotal2;
    int trailingIdx;
    int nbInitialElementNeeded;

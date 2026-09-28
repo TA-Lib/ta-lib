@@ -440,12 +440,14 @@ struct TA_T3_Stream {
    double optInVFactor;
    double k;
    double one_minus_k;
+   double pad_0;
    double e1;
    double e2;
    double e3;
    double e4;
    double e5;
    double e6;
+   double pad_1;
    double c1;
    double c2;
    double c3;

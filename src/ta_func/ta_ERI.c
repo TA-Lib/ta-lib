@@ -325,6 +325,7 @@ struct TA_ERI_Stream {
    double cur_outBearPower;
    int optInTimePeriod;
    double prevMA;
+   double pad_0;
    double k;
 };
 

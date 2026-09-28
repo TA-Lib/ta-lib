@@ -333,6 +333,7 @@ struct TA_AROON_Stream {
    int optInTimePeriod;
    double lowest;
    double highest;
+   double pad_0;
    double factor;
    int trailingIdx;
    int lowestIdx;

@@ -521,7 +521,9 @@ struct TA_TRIMA_Stream {
    double numerator;
    double numeratorSub;
    double numeratorAdd;
+   double pad_0;
    double factor;
+   double pad_1;
    double tempReal;
    int ringPos_middleIdx;
    int ringCap_middleIdx;

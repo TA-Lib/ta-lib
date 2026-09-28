@@ -885,12 +885,15 @@ struct TA_MAMA_Stream {
    /* The value(s) at the last bar the stream counted (see TA_MAMA_Value). */
    double cur_outMAMA;
    double cur_outFAMA;
+   double pad_0;
    double optInFastLimit;
    double optInSlowLimit;
+   double pad_1;
    double period;
    double periodWMASum;
    double periodWMASub;
    double trailingWMAValue;
+   double pad_2;
    double a;
    double b;
    int hilbertIdx;
@@ -926,7 +929,9 @@ struct TA_MAMA_Stream {
    double I1ForOddPrev3;
    double I1ForEvenPrev2;
    double I1ForEvenPrev3;
+   double pad_3;
    double rad2Deg;
+   double pad_4;
    double mama;
    double fama;
    double prevPhase;

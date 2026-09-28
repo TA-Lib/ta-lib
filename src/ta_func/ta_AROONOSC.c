@@ -339,6 +339,7 @@ struct TA_AROONOSC_Stream {
    int optInTimePeriod;
    double lowest;
    double highest;
+   double pad_0;
    double factor;
    int trailingIdx;
    int lowestIdx;

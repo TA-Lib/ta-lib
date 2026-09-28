@@ -403,6 +403,7 @@ struct TA_RSI_Stream {
    double cur_outReal;
    int optInTimePeriod;
    double invPeriod;
+   double pad_0;
    double prevGain;
    double prevLoss;
    double prevValue;

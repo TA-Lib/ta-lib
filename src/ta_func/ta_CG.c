@@ -1002,6 +1002,7 @@ struct TA_CG_Stream {
    int stickyBars;
    double num;
    double den;
+   double pad_0;
    double periodDouble;
    double flatValue;
    double width2;
@@ -1010,6 +1011,7 @@ struct TA_CG_Stream {
    double ylim3;
    double head2;
    double head3;
+   double pad_1;
    double scale;
    double width;
    double invWidth;

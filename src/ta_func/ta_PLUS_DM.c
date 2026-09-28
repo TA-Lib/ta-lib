@@ -457,7 +457,9 @@ struct TA_PLUS_DM_Stream {
    int optInTimePeriod;
    double prevHigh;
    double prevLow;
+   double pad_0;
    double invPeriod;
+   double pad_1;
    double prevPlusDM;
 };
 

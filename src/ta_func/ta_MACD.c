@@ -509,6 +509,7 @@ struct TA_MACD_Stream {
    double prevFast;
    double prevSlow;
    double prevSignal;
+   double pad_0;
    double slowK;
    double fastK;
    double signalK;

@@ -1722,6 +1722,7 @@ struct TA_PERCENTILE_Stream {
    double cur_outReal;
    int optInTimePeriod;
    double optInPercentile;
+   double pad_0;
    double loV;
    double hiV;
    double last;

@@ -458,6 +458,7 @@ struct TA_CTI_Stream {
    double sumXY;
    double peakX2;
    double shift;
+   double pad_0;
    double invPeriod;
    double dPeriod;
    double sumY;

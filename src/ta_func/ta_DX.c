@@ -669,7 +669,9 @@ struct TA_DX_Stream {
    int optInTimePeriod;
    double prevHigh;
    double prevLow;
+   double pad_0;
    double invPeriod;
+   double pad_1;
    double prevClose;
    double prevMinusDM;
    double prevPlusDM;

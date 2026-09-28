@@ -391,6 +391,7 @@ struct TA_TEMA_Stream {
    double prevEMA1;
    double prevEMA2;
    double prevEMA3;
+   double pad_0;
    double optInK_1;
 };
 

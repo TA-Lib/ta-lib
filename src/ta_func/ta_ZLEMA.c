@@ -283,6 +283,7 @@ struct TA_ZLEMA_Stream {
    double cur_outReal;
    int optInTimePeriod;
    double optInK_1;
+   double pad_0;
    double prevMA;
    int ringPos_trailingIdx;
    int ringCap_trailingIdx;

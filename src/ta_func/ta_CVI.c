@@ -337,6 +337,7 @@ struct TA_CVI_Stream {
    int optInTimePeriod;
    int optInROCPeriod;
    double prevEMA;
+   double pad_0;
    double optInK_1;
    int emaRing_Idx;
    int maxIdx_emaRing;

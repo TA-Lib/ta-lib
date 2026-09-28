@@ -262,6 +262,7 @@ struct TA_CDLDARKCLOUDCOVER_Stream {
    /* The value(s) at the last bar the stream counted (see TA_CDLDARKCLOUDCOVER_Value). */
    int cur_outInteger;
    double optInPenetration;
+   double pad_0;
    double BodyLongPeriodTotal;
    double lag1_inOpen;
    double lag1_inHigh;

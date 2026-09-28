@@ -480,10 +480,12 @@ struct TA_KURTOSIS_Stream {
    double total2;
    double total3;
    double total4;
+   double pad_0;
    double dPeriod;
    double coefA;
    double coefB;
    double invPeriod;
+   double pad_1;
    double peak2;
    double peak4;
    int trailingIdx;

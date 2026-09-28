@@ -600,6 +600,7 @@ struct TA_CORREL_Stream {
    double shiftY;
    double peakX2;
    double peakY2;
+   double pad_0;
    double invPeriod;
    int lookbackTotal;
    int trailingIdx;

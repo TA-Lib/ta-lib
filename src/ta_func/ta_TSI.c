@@ -430,6 +430,7 @@ struct TA_TSI_Stream {
    int optInSecondPeriod;
    double kFirst;
    double kSecond;
+   double pad_0;
    double emaFirstNum;
    double emaFirstDen;
    double emaSecondNum;

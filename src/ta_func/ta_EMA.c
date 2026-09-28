@@ -256,6 +256,7 @@ struct TA_EMA_Stream {
    double cur_outReal;
    int optInTimePeriod;
    double optInK_1;
+   double pad_0;
    double prevMA;
 };
 

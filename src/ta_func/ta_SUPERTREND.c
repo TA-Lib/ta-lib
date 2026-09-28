@@ -506,8 +506,10 @@ struct TA_SUPERTREND_Stream {
    double optInMultiplier;
    int isUptrend;
    double prevATR;
+   double pad_0;
    double wAlpha;
    double wBeta;
+   double pad_1;
    double finalUpper;
    double finalLower;
    double prevClose;

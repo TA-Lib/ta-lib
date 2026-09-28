@@ -1282,6 +1282,38 @@ fn test_c_state_struct_text_is_the_emitted_struct() {
     assert!(checked >= 200, "expected the streaming corpus, saw {checked}");
 }
 
+/// The instruction-count bench cannot see a failed store forward, so a
+/// constant double losing its separator from stepped state shows only as time.
+/// CMO and RSI are where gcc 14 widened the constant's load; in DEMA the pad
+/// also stops gcc packing the two stepped EMAs into one store.
+#[test]
+fn c_stream_constant_double_is_separated_from_stepped_state() {
+    let registry = make_registry();
+    let neighbours = |name: &str, field: &str| -> (String, String) {
+        let (func, _enums) = load_indicator(name);
+        let text = backends::c_stream::state_struct_text(&func, &registry);
+        let lines: Vec<&str> = text.lines().map(str::trim).collect();
+        let at = lines
+            .iter()
+            .position(|l| *l == field)
+            .unwrap_or_else(|| panic!("{name}: no `{field}` in\n{text}"));
+        (lines[at - 1].to_string(), lines[at + 1].to_string())
+    };
+    for (name, field, before, after) in [
+        ("cmo", "double invPeriod;", true, true),
+        ("rsi", "double invPeriod;", false, true),
+        ("dema", "double prevEMA2;", false, true),
+    ] {
+        let (prev, next) = neighbours(name, field);
+        if before {
+            assert!(prev.starts_with("double pad_"), "{name}: `{field}` follows `{prev}`");
+        }
+        if after {
+            assert!(next.starts_with("double pad_"), "{name}: `{field}` is followed by `{next}`");
+        }
+    }
+}
+
 /// Every stream tier is represented in the shipped corpus.
 ///
 /// The suites that reason per tier — this one, `peek_suite`, the four backends'

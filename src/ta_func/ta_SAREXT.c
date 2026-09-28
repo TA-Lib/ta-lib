@@ -776,6 +776,7 @@ struct TA_SAREXT_Stream {
    int outRangeCount;
    /* The value(s) at the last bar the stream counted (see TA_SAREXT_Value). */
    double cur_outReal;
+   double pad_0;
    double optInStartValue;
    double optInOffsetOnReverse;
    double optInAccelerationInitLong;

@@ -734,6 +734,7 @@ struct TA_SMI_Stream {
    double kSlow;
    double kFast;
    double kSignal;
+   double pad_0;
    double highest;
    double lowest;
    double emaSlowNum;

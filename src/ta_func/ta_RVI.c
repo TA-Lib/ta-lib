@@ -765,9 +765,12 @@ struct TA_RVI_Stream {
    double periodTotal1;
    double periodTotal2;
    double peakTotal2;
+   double pad_0;
    double invPeriod;
+   double pad_1;
    double prevUp;
    double prevDn;
+   double pad_2;
    double wAlpha;
    double wBeta;
    int trailingIdx;

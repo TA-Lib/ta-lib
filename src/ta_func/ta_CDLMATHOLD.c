@@ -319,6 +319,7 @@ struct TA_CDLMATHOLD_Stream {
    /* The value(s) at the last bar the stream counted (see TA_CDLMATHOLD_Value). */
    int cur_outInteger;
    double optInPenetration;
+   double pad_0;
    double BodyPeriodTotal[5];
    double lag1_inOpen;
    double lag2_inOpen;

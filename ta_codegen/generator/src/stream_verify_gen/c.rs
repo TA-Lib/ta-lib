@@ -332,6 +332,9 @@ fn sv_parse_state_struct(name: &str, text: &str) -> Vec<SvDecl> {
             !declarator.is_empty() && !ty.is_empty(),
             "{name}: unparsable stream state line `{line}`"
         );
+        if declarator.starts_with(crate::backends::c_stream::STATE_PAD_PREFIX) {
+            continue;
+        }
         // `double` and `int` are the only scalar storages the tiers emit; an
         // enum param (TA_MAType) compares like an int.
         out.push(SvDecl { name: declarator, ptr, len, is_int: ty != "double" });

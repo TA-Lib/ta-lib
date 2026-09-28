@@ -765,6 +765,7 @@ struct TA_HT_PHASOR_Stream {
    double periodWMASum;
    double periodWMASub;
    double trailingWMAValue;
+   double pad_0;
    double a;
    double b;
    int hilbertIdx;
@@ -800,6 +801,7 @@ struct TA_HT_PHASOR_Stream {
    double I1ForOddPrev3;
    double I1ForEvenPrev2;
    double I1ForEvenPrev3;
+   double pad_1;
    double rad2Deg;
    int streamParity;
    int ringPos_trailingWMAIdx;

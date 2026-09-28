@@ -491,8 +491,10 @@ struct TA_NATR_Stream {
    double cur_outReal;
    int optInTimePeriod;
    double prevATR;
+   double pad_0;
    double wAlpha;
    double wBeta;
+   double pad_1;
    double lag1_inClose;
 };
 

@@ -511,6 +511,7 @@ struct TA_COPPOCK_Stream {
    double periodSum;
    double periodSub;
    double trailingValue;
+   double pad_0;
    double divider;
    int sRing_Idx;
    int maxIdx_sRing;

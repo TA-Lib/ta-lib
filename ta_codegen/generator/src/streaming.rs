@@ -5295,6 +5295,12 @@ fn classify_v(
     }
 }
 
+/// The names the per-bar transition's statements assign. State the emitter
+/// itself updates per bar (the parity flag) is not among them.
+pub fn assigned_per_bar(model: &StreamModel) -> BTreeSet<String> {
+    assigned_in(&model.steady_stmts)
+}
+
 /// Names written anywhere in the steady loop -- everything else a scalar leaf
 /// can name is loop-invariant (a parameter, a setting, a lookback constant).
 fn assigned_in(stmts: &[Statement]) -> BTreeSet<String> {

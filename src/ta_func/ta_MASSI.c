@@ -461,6 +461,7 @@ struct TA_MASSI_Stream {
    int optInFastPeriod;
    int optInSlowPeriod;
    double optInK_1;
+   double pad_0;
    double ema1;
    double ema2;
    double total;

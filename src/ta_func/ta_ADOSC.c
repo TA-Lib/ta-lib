@@ -382,11 +382,15 @@ struct TA_ADOSC_Stream {
    int optInFastPeriod;
    int optInSlowPeriod;
    double slowEMA;
+   double pad_0;
    double slowk;
    double one_minus_slowk;
+   double pad_1;
    double fastEMA;
+   double pad_2;
    double fastk;
    double one_minus_fastk;
+   double pad_3;
    double ad;
 };
 

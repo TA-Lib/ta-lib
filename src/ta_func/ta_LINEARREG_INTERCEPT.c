@@ -398,8 +398,10 @@ struct TA_LINEARREG_INTERCEPT_Stream {
    int lookbackTotal;
    int trailingIdx;
    double SumX;
+   double pad_0;
    double SumXY;
    double SumY;
+   double pad_1;
    double Divisor;
    int barsSinceReseed;
    double trailingValue;

@@ -568,6 +568,7 @@ struct TA_KAMA_Stream {
    int optInTimePeriod;
    double constMax;
    double constDiff;
+   double pad_0;
    double sumROC1;
    double prevKAMA;
    int nullRun;

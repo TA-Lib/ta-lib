@@ -703,7 +703,9 @@ struct TA_PLUS_DI_Stream {
    double prevHigh;
    double prevLow;
    double prevClose;
+   double pad_0;
    double invPeriod;
+   double pad_1;
    double prevPlusDM;
    double prevTR;
 };

@@ -254,6 +254,7 @@ struct TA_RMA_Stream {
    double cur_outReal;
    int optInTimePeriod;
    double prevRMA;
+   double pad_0;
    double wAlpha;
    double wBeta;
 };

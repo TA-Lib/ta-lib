@@ -349,6 +349,7 @@ struct TA_DEMA_Stream {
    int optInTimePeriod;
    double prevEMA1;
    double prevEMA2;
+   double pad_0;
    double optInK_1;
 };
 

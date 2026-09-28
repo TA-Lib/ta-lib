@@ -801,6 +801,7 @@ struct TA_HMA_Stream {
    double cur_outReal;
    int optInTimePeriod;
    double dividerFull;
+   double pad_0;
    double periodSubFull;
    double periodSumFull;
    double trailingFull;
@@ -811,6 +812,7 @@ struct TA_HMA_Stream {
    int ringSize;
    double dividerHalf;
    double dividerSqrt;
+   double pad_1;
    double periodSubHalf;
    double periodSumHalf;
    double trailingHalf;

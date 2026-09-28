@@ -276,7 +276,9 @@ struct TA_SI_Stream {
    int outRangeCount;
    /* The value(s) at the last bar the stream counted (see TA_SI_Value). */
    double cur_outReal;
+   double pad_0;
    double optInLimitMove;
+   double pad_1;
    double prevClose;
    double prevBody;
 };
