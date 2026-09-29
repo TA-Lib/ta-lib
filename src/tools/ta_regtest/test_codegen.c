@@ -6585,7 +6585,7 @@ void codegen_hash_report(const char *who, TA_RetCode goldRc, int goldBeg,
  * sqrt/ceil/floor users (IEEE correctly-rounded) — stays bit-identical across
  * languages. Source-derived from a grep of ta_codegen/input. ---- */
 static const char *const CODEGEN_TRANSCENDENTAL[] = {
-    "ACOS", "ASIN", "ATAN", "COS", "COSH", "EXP", "FRAMA",
+    "ACOS", "ASIN", "ATAN", "CHOP", "CHOPTR", "COS", "COSH", "EXP", "FRAMA",
     "HT_DCPERIOD", "HT_DCPHASE", "HT_PHASOR", "HT_SINE", "HT_TRENDLINE",
     "HT_TRENDMODE", "LINEARREG_ANGLE", "LN", "LOG10", "MAMA",
     "SIN", "SINH", "TAN", "TANH",

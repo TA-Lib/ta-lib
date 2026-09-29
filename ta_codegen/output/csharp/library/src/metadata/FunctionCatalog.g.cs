@@ -200,6 +200,8 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
             MakeCdlxsidegap3methods(),
             MakeCeil(),
             MakeCg(),
+            MakeChop(),
+            MakeChoptr(),
             MakeCmf(),
             MakeCmo(),
             MakeCmou(),
@@ -2203,6 +2205,52 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         invoke: static (core, c, startIdx, endIdx) =>
             core.Cg(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0)));
+
+    private static FuncInfo MakeChop() => new(
+        name: "CHOP",
+        group: FunctionGroup.MomentumIndicators,
+        hint: "Choppiness Index",
+        flags: FuncFlags.Stream,
+        unstableId: null,
+        inputs:
+        [
+            new InputInfo(InputKind.Price, "inPriceHLC", PriceComponents.High | PriceComponents.Low | PriceComponents.Close, [PriceComponents.High, PriceComponents.Low, PriceComponents.Close]),
+        ],
+        optInputs:
+        [
+            new OptInputInfo("optInTimePeriod", "Time Period", "Time period", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 14, 4, 200, 1)),
+        ],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+        ],
+        lookback: static (core, c) => core.ChopLookback(c.IntOpt(0)),
+        invoke: static (core, c, startIdx, endIdx) =>
+            core.Chop(
+                startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.RealOut(0)));
+
+    private static FuncInfo MakeChoptr() => new(
+        name: "CHOPTR",
+        group: FunctionGroup.MomentumIndicators,
+        hint: "Choppiness Index (True Range Box)",
+        flags: FuncFlags.Stream,
+        unstableId: null,
+        inputs:
+        [
+            new InputInfo(InputKind.Price, "inPriceHLC", PriceComponents.High | PriceComponents.Low | PriceComponents.Close, [PriceComponents.High, PriceComponents.Low, PriceComponents.Close]),
+        ],
+        optInputs:
+        [
+            new OptInputInfo("optInTimePeriod", "Time Period", "Time period", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 14, 4, 200, 1)),
+        ],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+        ],
+        lookback: static (core, c) => core.ChoptrLookback(c.IntOpt(0)),
+        invoke: static (core, c, startIdx, endIdx) =>
+            core.Choptr(
+                startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.RealOut(0)));
 
     private static FuncInfo MakeCmf() => new(
         name: "CMF",

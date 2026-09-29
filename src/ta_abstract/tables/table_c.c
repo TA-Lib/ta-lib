@@ -1542,6 +1542,56 @@ DEF_FUNCTION( CG,
              );
 /* CG END */
 
+/* CHOP BEGIN */
+static const TA_InputParameterInfo    *TA_CHOP_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_HLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_CHOP_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_CHOP_OptInputs[] =
+{ &TA_DEF_UI_TimePeriod_14_MINIMUM2,
+  NULL
+};
+
+DEF_FUNCTION( CHOP,
+              TA_GroupId_MomentumIndicators,
+              "Choppiness Index",
+              TA_FUNC_FLG_STREAM
+             );
+/* CHOP END */
+
+/* CHOPTR BEGIN */
+static const TA_InputParameterInfo    *TA_CHOPTR_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_HLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_CHOPTR_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_CHOPTR_OptInputs[] =
+{ &TA_DEF_UI_TimePeriod_14_MINIMUM2,
+  NULL
+};
+
+DEF_FUNCTION( CHOPTR,
+              TA_GroupId_MomentumIndicators,
+              "Choppiness Index (True Range Box)",
+              TA_FUNC_FLG_STREAM
+             );
+/* CHOPTR END */
+
 /* CMF BEGIN */
 static const TA_InputParameterInfo    *TA_CMF_Inputs[]    =
 {
@@ -2058,6 +2108,8 @@ const TA_FuncDef *TA_DEF_TableC[] =
    ADD_TO_TABLE(CDLXSIDEGAP3METHODS),
    ADD_TO_TABLE(CEIL),
    ADD_TO_TABLE(CG),
+   ADD_TO_TABLE(CHOP),
+   ADD_TO_TABLE(CHOPTR),
    ADD_TO_TABLE(CMF),
    ADD_TO_TABLE(CMO),
    ADD_TO_TABLE(CMOU),

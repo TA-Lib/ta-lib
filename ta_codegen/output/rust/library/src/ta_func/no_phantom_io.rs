@@ -8982,6 +8982,184 @@ fn legs_CG(r: &mut Report) {
     r.legs_done("CG", 1);
 }
 
+const V_CHOP: &[(&str, i32)] = &[
+    ("defaults", i32::MIN),
+    ("minimums", 2i32),
+];
+
+fn sub_CHOP(r: &mut Report) {
+    let core = Core::new();
+    for &(label, optInTimePeriod) in V_CHOP {
+        let Ok(lb) = core.chop_lookback(optInTimePeriod) else { continue; };
+        r.control("CHOP", label, run(|| {
+            let inHigh: Vec<f64> = Vec::with_capacity(1);
+            let inLow: Vec<f64> = Vec::with_capacity(1);
+            let inClose: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.chop_impl(0, lb, &inHigh, &inLow, &inClose, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+        if lb < 1 { r.no_quiet_range("CHOP", label); continue; }
+        r.quiet("CHOP", label, lb, run(|| {
+            let inHigh: Vec<f64> = Vec::with_capacity(1);
+            let inLow: Vec<f64> = Vec::with_capacity(1);
+            let inClose: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.chop_impl(0, lb - 1, &inHigh, &inLow, &inClose, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+}
+
+fn legs_CHOP(r: &mut Report) {
+    let core = Core::new();
+    let optInTimePeriod = i32::MIN;
+    let Ok(lb) = core.chop_lookback(optInTimePeriod) else { r.no_legs("CHOP"); return; };
+    let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("CHOP", run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.chop_impl(startIdx, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    {
+        let inHigh: Vec<f64> = Vec::with_capacity(1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("CHOP", "inHigh", 0, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.chop_impl(startIdx, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = Vec::with_capacity(1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("CHOP", "inLow", 1, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.chop_impl(startIdx, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = Vec::with_capacity(1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("CHOP", "inClose", 2, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.chop_impl(startIdx, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    r.legs_done("CHOP", 3);
+}
+
+const V_CHOPTR: &[(&str, i32)] = &[
+    ("defaults", i32::MIN),
+    ("minimums", 2i32),
+];
+
+fn sub_CHOPTR(r: &mut Report) {
+    let core = Core::new();
+    for &(label, optInTimePeriod) in V_CHOPTR {
+        let Ok(lb) = core.choptr_lookback(optInTimePeriod) else { continue; };
+        r.control("CHOPTR", label, run(|| {
+            let inHigh: Vec<f64> = Vec::with_capacity(1);
+            let inLow: Vec<f64> = Vec::with_capacity(1);
+            let inClose: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.choptr_impl(0, lb, &inHigh, &inLow, &inClose, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+        if lb < 1 { r.no_quiet_range("CHOPTR", label); continue; }
+        r.quiet("CHOPTR", label, lb, run(|| {
+            let inHigh: Vec<f64> = Vec::with_capacity(1);
+            let inLow: Vec<f64> = Vec::with_capacity(1);
+            let inClose: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.choptr_impl(0, lb - 1, &inHigh, &inLow, &inClose, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+}
+
+fn legs_CHOPTR(r: &mut Report) {
+    let core = Core::new();
+    let optInTimePeriod = i32::MIN;
+    let Ok(lb) = core.choptr_lookback(optInTimePeriod) else { r.no_legs("CHOPTR"); return; };
+    let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("CHOPTR", run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.choptr_impl(startIdx, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    {
+        let inHigh: Vec<f64> = Vec::with_capacity(1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("CHOPTR", "inHigh", 0, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.choptr_impl(startIdx, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = Vec::with_capacity(1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("CHOPTR", "inLow", 1, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.choptr_impl(startIdx, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = Vec::with_capacity(1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("CHOPTR", "inClose", 2, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.choptr_impl(startIdx, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    r.legs_done("CHOPTR", 3);
+}
+
 const V_CMF: &[(&str, i32)] = &[
     ("defaults", i32::MIN),
     ("minimums", 2i32),
@@ -18183,6 +18361,8 @@ const PROBES: &[(&str, Probe, Probe)] = &[
     ("CDLXSIDEGAP3METHODS", sub_CDLXSIDEGAP3METHODS, legs_CDLXSIDEGAP3METHODS),
     ("CEIL", sub_CEIL, legs_CEIL),
     ("CG", sub_CG, legs_CG),
+    ("CHOP", sub_CHOP, legs_CHOP),
+    ("CHOPTR", sub_CHOPTR, legs_CHOPTR),
     ("CMF", sub_CMF, legs_CMF),
     ("CMO", sub_CMO, legs_CMO),
     ("CMOU", sub_CMOU, legs_CMOU),
@@ -18349,7 +18529,7 @@ fn no_phantom_io() {
     // The corpus is the generator's, not a list kept by hand: a probe that
     // stopped being emitted is a shrinking sweep, which is the one way this
     // file can fail open.
-    assert_eq!(PROBES.len(), 215, "probe count");
+    assert_eq!(PROBES.len(), 217, "probe count");
     assert_eq!(
         PROBES.len(),
         crate::abstract_api::funcs().count(),

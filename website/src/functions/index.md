@@ -59,6 +59,8 @@ All technical-analysis functions, grouped by category. Each page documents the f
 - [BOP](/functions/bop.md) — Balance Of Power
 - [CCI](/functions/cci.md) — Commodity Channel Index
 - [CG](/functions/cg.md) — Center of Gravity Oscillator
+- [CHOP](/functions/chop.md) — Choppiness Index
+- [CHOPTR](/functions/choptr.md) — Choppiness Index (True Range Box)
 - [CMO](/functions/cmo.md) — Chande Momentum Oscillator
 - [CMOU](/functions/cmou.md) — Chande Momentum Oscillator (Unsmoothed)
 - [COPPOCK](/functions/coppock.md) — Coppock Curve

@@ -641,6 +641,18 @@ internal static class NoPhantomIoBinder
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
+        ["CHOP"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.ChopImpl(
+                startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), out int b, out int n, c.RealOut(0));
+            return new CallOutcome(rc, b, n);
+        },
+        ["CHOPTR"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.ChoptrImpl(
+                startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), out int b, out int n, c.RealOut(0));
+            return new CallOutcome(rc, b, n);
+        },
         ["CMF"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.CmfImpl(
@@ -1936,6 +1948,18 @@ internal static class NoPhantomIoBinder
                 startIdx, endIdx, Narrow(c.Series(0)), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
+        ["CHOP"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.ChopImpl(
+                startIdx, endIdx, Narrow(c.Price(0, PriceComponents.High)), Narrow(c.Price(0, PriceComponents.Low)), Narrow(c.Price(0, PriceComponents.Close)), c.IntOpt(0), out int b, out int n, c.RealOut(0));
+            return new CallOutcome(rc, b, n);
+        },
+        ["CHOPTR"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.ChoptrImpl(
+                startIdx, endIdx, Narrow(c.Price(0, PriceComponents.High)), Narrow(c.Price(0, PriceComponents.Low)), Narrow(c.Price(0, PriceComponents.Close)), c.IntOpt(0), out int b, out int n, c.RealOut(0));
+            return new CallOutcome(rc, b, n);
+        },
         ["CMF"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.CmfImpl(
@@ -2796,6 +2820,8 @@ internal static class NoPhantomIoBinder
         ["CDLXSIDEGAP3METHODS"] = static (core, c) => core.Cdlxsidegap3methodsOpen(c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close)),
         ["CEIL"] = static (core, c) => core.CeilOpen(c.Series(0)),
         ["CG"] = static (core, c) => core.CgOpen(c.Series(0), c.IntOpt(0)),
+        ["CHOP"] = static (core, c) => core.ChopOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0)),
+        ["CHOPTR"] = static (core, c) => core.ChoptrOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0)),
         ["CMF"] = static (core, c) => core.CmfOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.Price(0, PriceComponents.Volume), c.IntOpt(0)),
         ["CMO"] = static (core, c) => core.CmoOpen(c.Series(0), c.IntOpt(0)),
         ["CMOU"] = static (core, c) => core.CmouOpen(c.Series(0), c.IntOpt(0)),

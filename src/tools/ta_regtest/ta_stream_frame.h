@@ -3679,6 +3679,86 @@ static TA_RetCode TA_CG_SFrameClose( void *stream )
    return TA_CG_Close( (TA_CG_Stream *)stream );
 }
 
+static TA_RetCode TA_CHOP_SFrameOpen( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_CHOP_Open(
+               (TA_CHOP_Stream **)stream,
+               in[0] /* inHigh */,
+               in[1] /* inLow */,
+               in[2] /* inClose */,
+               historyLen,
+               (int)optIn[0] /* optInTimePeriod */,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_CHOP_SFrameFill( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_CHOP_OpenAndFill(
+               (TA_CHOP_Stream **)stream,
+               in[0] /* inHigh */,
+               in[1] /* inLow */,
+               in[2] /* inClose */,
+               historyLen,
+               (int)optIn[0] /* optInTimePeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_CHOP_SFrameClose( void *stream )
+{
+   return TA_CHOP_Close( (TA_CHOP_Stream *)stream );
+}
+
+static TA_RetCode TA_CHOPTR_SFrameOpen( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_CHOPTR_Open(
+               (TA_CHOPTR_Stream **)stream,
+               in[0] /* inHigh */,
+               in[1] /* inLow */,
+               in[2] /* inClose */,
+               historyLen,
+               (int)optIn[0] /* optInTimePeriod */,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_CHOPTR_SFrameFill( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_CHOPTR_OpenAndFill(
+               (TA_CHOPTR_Stream **)stream,
+               in[0] /* inHigh */,
+               in[1] /* inLow */,
+               in[2] /* inClose */,
+               historyLen,
+               (int)optIn[0] /* optInTimePeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_CHOPTR_SFrameClose( void *stream )
+{
+   return TA_CHOPTR_Close( (TA_CHOPTR_Stream *)stream );
+}
+
 static TA_RetCode TA_CMF_SFrameOpen( void **stream,
                   const double *const in[], int historyLen,
                   const double optIn[],
@@ -8818,6 +8898,10 @@ static const TA_StreamEntry TA_StreamTable[] = {
      1, TA_VIn_CEIL, 0, NULL, 1, TA_VOutIsInt_CEIL },
    { "CG", TA_CG_SFrameOpen, TA_CG_SFrameFill, TA_CG_SFrameClose,
      1, TA_VIn_CG, 1, TA_VOpt_CG, 1, TA_VOutIsInt_CG },
+   { "CHOP", TA_CHOP_SFrameOpen, TA_CHOP_SFrameFill, TA_CHOP_SFrameClose,
+     3, TA_VIn_CHOP, 1, TA_VOpt_CHOP, 1, TA_VOutIsInt_CHOP },
+   { "CHOPTR", TA_CHOPTR_SFrameOpen, TA_CHOPTR_SFrameFill, TA_CHOPTR_SFrameClose,
+     3, TA_VIn_CHOPTR, 1, TA_VOpt_CHOPTR, 1, TA_VOutIsInt_CHOPTR },
    { "CMF", TA_CMF_SFrameOpen, TA_CMF_SFrameFill, TA_CMF_SFrameClose,
      4, TA_VIn_CMF, 1, TA_VOpt_CMF, 1, TA_VOutIsInt_CMF },
    { "CMO", TA_CMO_SFrameOpen, TA_CMO_SFrameFill, TA_CMO_SFrameClose,
@@ -9076,6 +9160,6 @@ static const TA_StreamEntry TA_StreamTable[] = {
      1, TA_VIn_ZLEMA, 1, TA_VOpt_ZLEMA, 1, TA_VOutIsInt_ZLEMA },
 };
 
-#define TA_STREAM_TABLE_SIZE 215
+#define TA_STREAM_TABLE_SIZE 217
 
 #endif /* TA_STREAM_FRAME_H */

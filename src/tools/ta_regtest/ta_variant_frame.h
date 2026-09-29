@@ -3800,6 +3800,92 @@ static const TA_VOptSpec TA_VOpt_CG[] = {
    { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 10.0 },
 };
 
+static TA_RetCode TA_CHOP_VFrameD( int startIdx, int endIdx,
+                  const double *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_CHOP(
+               startIdx,
+               endIdx,
+               in[0] /* inHigh */,
+               in[1] /* inLow */,
+               in[2] /* inClose */,
+               (int)optIn[0] /* optInTimePeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_CHOP_VFrameS( int startIdx, int endIdx,
+                  const float *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_S_CHOP(
+               startIdx,
+               endIdx,
+               in[0] /* inHigh */,
+               in[1] /* inLow */,
+               in[2] /* inClose */,
+               (int)optIn[0] /* optInTimePeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+
+static const TA_VInputKind TA_VIn_CHOP[] = { TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CHOP[] = { 0 };
+static const TA_VOptSpec TA_VOpt_CHOP[] = {
+   { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 14.0 },
+};
+
+static TA_RetCode TA_CHOPTR_VFrameD( int startIdx, int endIdx,
+                  const double *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_CHOPTR(
+               startIdx,
+               endIdx,
+               in[0] /* inHigh */,
+               in[1] /* inLow */,
+               in[2] /* inClose */,
+               (int)optIn[0] /* optInTimePeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_CHOPTR_VFrameS( int startIdx, int endIdx,
+                  const float *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_S_CHOPTR(
+               startIdx,
+               endIdx,
+               in[0] /* inHigh */,
+               in[1] /* inLow */,
+               in[2] /* inClose */,
+               (int)optIn[0] /* optInTimePeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+
+static const TA_VInputKind TA_VIn_CHOPTR[] = { TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CHOPTR[] = { 0 };
+static const TA_VOptSpec TA_VOpt_CHOPTR[] = {
+   { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 14.0 },
+};
+
 static TA_RetCode TA_CMF_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -9294,6 +9380,10 @@ static const TA_VariantEntry TA_VariantTable[] = {
      1, TA_VIn_CEIL, 0, NULL, 1, TA_VOutIsInt_CEIL, 0 },
    { "CG", TA_CG_VFrameD, TA_CG_VFrameS,
      1, TA_VIn_CG, 1, TA_VOpt_CG, 1, TA_VOutIsInt_CG, 0 },
+   { "CHOP", TA_CHOP_VFrameD, TA_CHOP_VFrameS,
+     3, TA_VIn_CHOP, 1, TA_VOpt_CHOP, 1, TA_VOutIsInt_CHOP, 0 },
+   { "CHOPTR", TA_CHOPTR_VFrameD, TA_CHOPTR_VFrameS,
+     3, TA_VIn_CHOPTR, 1, TA_VOpt_CHOPTR, 1, TA_VOutIsInt_CHOPTR, 0 },
    { "CMF", TA_CMF_VFrameD, TA_CMF_VFrameS,
      4, TA_VIn_CMF, 1, TA_VOpt_CMF, 1, TA_VOutIsInt_CMF, 0 },
    { "CMO", TA_CMO_VFrameD, TA_CMO_VFrameS,
@@ -9552,6 +9642,6 @@ static const TA_VariantEntry TA_VariantTable[] = {
      1, TA_VIn_ZLEMA, 1, TA_VOpt_ZLEMA, 1, TA_VOutIsInt_ZLEMA, 0 },
 };
 
-#define TA_VARIANT_TABLE_SIZE 215
+#define TA_VARIANT_TABLE_SIZE 217
 
 #endif /* TA_VARIANT_FRAME_H */

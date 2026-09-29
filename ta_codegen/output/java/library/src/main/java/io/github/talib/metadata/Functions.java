@@ -207,6 +207,8 @@ public final class Functions {
       put(m, f_CDLXSIDEGAP3METHODS());
       put(m, f_CEIL());
       put(m, f_CG());
+      put(m, f_CHOP());
+      put(m, f_CHOPTR());
       put(m, f_CMF());
       put(m, f_CMO());
       put(m, f_CMOU());
@@ -1595,6 +1597,42 @@ public final class Functions {
             new OptInputInfo(
                OptInputType.INTEGER_RANGE, "optInTimePeriod", 0x00000000,
                "Time Period", "Number of bars in the window", 10.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               2, 100000, 4, 200, 1, null)
+         ),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
+         ));
+   }
+
+   private static FuncInfo f_CHOP() {
+      return new FuncInfo(
+         "CHOP", "Momentum Indicators", "Choppiness Index", 0x02000000,
+         List.of(
+            new InputInfo(InputType.PRICE, "inPriceHLC", 0x0000000E)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInTimePeriod", 0x00000000,
+               "Time Period", "Time period", 14.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               2, 100000, 4, 200, 1, null)
+         ),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
+         ));
+   }
+
+   private static FuncInfo f_CHOPTR() {
+      return new FuncInfo(
+         "CHOPTR", "Momentum Indicators", "Choppiness Index (True Range Box)", 0x02000000,
+         List.of(
+            new InputInfo(InputType.PRICE, "inPriceHLC", 0x0000000E)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInTimePeriod", 0x00000000,
+               "Time Period", "Time period", 14.0,
                0.0, 0.0, 0, 0.0, 0.0, 0.0,
                2, 100000, 4, 200, 1, null)
          ),

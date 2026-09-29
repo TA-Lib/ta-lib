@@ -4578,6 +4578,108 @@ static void icount_CG(int iters) {
     g_sink += acc + outNBElement;
 }
 
+static void icount_CHOP(int iters) {
+    const char *nm = "CHOP";
+    int outBegIdx = 0, outNBElement = 0;
+    double acc = 0.0;
+    TA_RetCode rc;
+    TA_CHOP_Stream *st = NULL;
+    TA_CHOP_Stream *stf = NULL;
+    double v0 = 0.0;
+
+    ICOUNT_ZERO();
+    rc = TA_CHOP(0, g_nPoints - 1, g_high, g_low, g_close, 14, &outBegIdx, &outNBElement, g_outBuf0);
+    ICOUNT_DUMP("CHOP/batch");
+    icount_row(nm, "batch", 1, rc);
+    acc += g_outBuf0[0];
+
+    ICOUNT_ZERO();
+    rc = TA_CHOP_OpenAndFill(&stf, g_high, g_low, g_close, g_nPoints, 14, &outBegIdx, &outNBElement, g_outBuf0);
+    ICOUNT_DUMP("CHOP/openfill");
+    icount_row(nm, "openfill", 1, rc);
+    acc += g_outBuf0[0];
+    if( stf ) TA_CHOP_Close(stf);
+
+    ICOUNT_ZERO();
+    rc = TA_CHOP_Open(&st, g_high, g_low, g_close, g_nPoints, 14, &v0);
+    ICOUNT_DUMP("CHOP/open");
+    icount_row(nm, "open", 1, rc);
+
+    if( rc == TA_SUCCESS && st ) {
+        TA_RetCode src = TA_SUCCESS;
+        ICOUNT_ZERO();
+        for( int it = 0; it < iters; it++ ) {
+            src = TA_CHOP_Update(st, g_high[it & ICOUNT_MASK], g_low[it & ICOUNT_MASK], g_close[it & ICOUNT_MASK], &v0);
+            acc += v0;
+        }
+        ICOUNT_DUMP("CHOP/update");
+        icount_row(nm, "update", 1, src);
+        ICOUNT_ZERO();
+        for( int it = 0; it < iters; it++ ) {
+            src = TA_CHOP_Peek(st, g_high[it & ICOUNT_MASK], g_low[it & ICOUNT_MASK], g_close[it & ICOUNT_MASK], &v0);
+            acc += v0;
+        }
+        ICOUNT_DUMP("CHOP/peek");
+        icount_row(nm, "peek", 1, src);
+    } else {
+        icount_row(nm, "update", 0, rc);
+        icount_row(nm, "peek", 0, rc);
+    }
+    if( st ) TA_CHOP_Close(st);
+    g_sink += acc + outNBElement;
+}
+
+static void icount_CHOPTR(int iters) {
+    const char *nm = "CHOPTR";
+    int outBegIdx = 0, outNBElement = 0;
+    double acc = 0.0;
+    TA_RetCode rc;
+    TA_CHOPTR_Stream *st = NULL;
+    TA_CHOPTR_Stream *stf = NULL;
+    double v0 = 0.0;
+
+    ICOUNT_ZERO();
+    rc = TA_CHOPTR(0, g_nPoints - 1, g_high, g_low, g_close, 14, &outBegIdx, &outNBElement, g_outBuf0);
+    ICOUNT_DUMP("CHOPTR/batch");
+    icount_row(nm, "batch", 1, rc);
+    acc += g_outBuf0[0];
+
+    ICOUNT_ZERO();
+    rc = TA_CHOPTR_OpenAndFill(&stf, g_high, g_low, g_close, g_nPoints, 14, &outBegIdx, &outNBElement, g_outBuf0);
+    ICOUNT_DUMP("CHOPTR/openfill");
+    icount_row(nm, "openfill", 1, rc);
+    acc += g_outBuf0[0];
+    if( stf ) TA_CHOPTR_Close(stf);
+
+    ICOUNT_ZERO();
+    rc = TA_CHOPTR_Open(&st, g_high, g_low, g_close, g_nPoints, 14, &v0);
+    ICOUNT_DUMP("CHOPTR/open");
+    icount_row(nm, "open", 1, rc);
+
+    if( rc == TA_SUCCESS && st ) {
+        TA_RetCode src = TA_SUCCESS;
+        ICOUNT_ZERO();
+        for( int it = 0; it < iters; it++ ) {
+            src = TA_CHOPTR_Update(st, g_high[it & ICOUNT_MASK], g_low[it & ICOUNT_MASK], g_close[it & ICOUNT_MASK], &v0);
+            acc += v0;
+        }
+        ICOUNT_DUMP("CHOPTR/update");
+        icount_row(nm, "update", 1, src);
+        ICOUNT_ZERO();
+        for( int it = 0; it < iters; it++ ) {
+            src = TA_CHOPTR_Peek(st, g_high[it & ICOUNT_MASK], g_low[it & ICOUNT_MASK], g_close[it & ICOUNT_MASK], &v0);
+            acc += v0;
+        }
+        ICOUNT_DUMP("CHOPTR/peek");
+        icount_row(nm, "peek", 1, src);
+    } else {
+        icount_row(nm, "update", 0, rc);
+        icount_row(nm, "peek", 0, rc);
+    }
+    if( st ) TA_CHOPTR_Close(st);
+    g_sink += acc + outNBElement;
+}
+
 static void icount_CMF(int iters) {
     const char *nm = "CMF";
     int outBegIdx = 0, outNBElement = 0;
@@ -11339,6 +11441,8 @@ static void icount_all(const char *filter, int iters) {
     if( func_matches(filter, "CDLXSIDEGAP3METHODS") ) { icount_CDLXSIDEGAP3METHODS(iters); fflush(stdout); }
     if( func_matches(filter, "CEIL") ) { icount_CEIL(iters); fflush(stdout); }
     if( func_matches(filter, "CG") ) { icount_CG(iters); fflush(stdout); }
+    if( func_matches(filter, "CHOP") ) { icount_CHOP(iters); fflush(stdout); }
+    if( func_matches(filter, "CHOPTR") ) { icount_CHOPTR(iters); fflush(stdout); }
     if( func_matches(filter, "CMF") ) { icount_CMF(iters); fflush(stdout); }
     if( func_matches(filter, "CMO") ) { icount_CMO(iters); fflush(stdout); }
     if( func_matches(filter, "CMOU") ) { icount_CMOU(iters); fflush(stdout); }

@@ -216,6 +216,10 @@ pub enum FuncId {
     CEIL,
     /// Center of Gravity Oscillator — [`Core::cg`](crate::Core::cg).
     CG,
+    /// Choppiness Index — [`Core::chop`](crate::Core::chop).
+    CHOP,
+    /// Choppiness Index (True Range Box) — [`Core::choptr`](crate::Core::choptr).
+    CHOPTR,
     /// Chaikin Money Flow — [`Core::cmf`](crate::Core::cmf).
     CMF,
     /// Chande Momentum Oscillator — [`Core::cmo`](crate::Core::cmo).
@@ -476,7 +480,7 @@ pub enum FuncId {
 
 impl FuncId {
     /// Number of functions in the registry.
-    pub const COUNT: usize = 215;
+    pub const COUNT: usize = 217;
     /// Metadata for this function (O(1) index into the const table).
     #[inline] pub fn info(self) -> &'static FuncInfo { &FUNC_TABLE[self as usize] }
     /// Upper-case TA name, e.g. "RSI".
@@ -803,7 +807,7 @@ impl FuncInfo {
 
 /// Backing storage for [`FUNCS`], indexed by [`FuncId`]. Link-time const, in
 /// `.rodata`. Private, so its length is nobody's business but this module's.
-static FUNC_TABLE: [FuncInfo; 215] = [
+static FUNC_TABLE: [FuncInfo; 217] = [
     FuncInfo {
         id: FuncId::AC,
         name: "AC",
@@ -1758,6 +1762,28 @@ static FUNC_TABLE: [FuncInfo; 215] = [
         flags: FuncFlags(0x02000000),
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Number of bars in the window", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 10, suggested: (4, 200, 1) } }, ],
+        outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        unst_id: None,
+    },
+    FuncInfo {
+        id: FuncId::CHOP,
+        name: "CHOP",
+        group: Group::MomentumIndicators,
+        hint: "Choppiness Index",
+        flags: FuncFlags(0x02000000),
+        inputs: &[InputInfo { param_name: "inPriceHLC", kind: InputType::Price, flags: InputFlags(0x0000000e) }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 14, suggested: (4, 200, 1) } }, ],
+        outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        unst_id: None,
+    },
+    FuncInfo {
+        id: FuncId::CHOPTR,
+        name: "CHOPTR",
+        group: Group::MomentumIndicators,
+        hint: "Choppiness Index (True Range Box)",
+        flags: FuncFlags(0x02000000),
+        inputs: &[InputInfo { param_name: "inPriceHLC", kind: InputType::Price, flags: InputFlags(0x0000000e) }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 14, suggested: (4, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
         unst_id: None,
     },
@@ -3274,6 +3300,8 @@ fn get_func_handle_exact(name: &str) -> Option<FuncId> {
         "CDLXSIDEGAP3METHODS" => FuncId::CDLXSIDEGAP3METHODS,
         "CEIL" => FuncId::CEIL,
         "CG" => FuncId::CG,
+        "CHOP" => FuncId::CHOP,
+        "CHOPTR" => FuncId::CHOPTR,
         "CMF" => FuncId::CMF,
         "CMO" => FuncId::CMO,
         "CMOU" => FuncId::CMOU,
@@ -3746,6 +3774,8 @@ impl<'a> ParamHolder<'a> {
             FuncId::CDLXSIDEGAP3METHODS => self.core.cdlxsidegap3methods_lookback(),
             FuncId::CEIL => self.core.ceil_lookback(),
             FuncId::CG => self.core.cg_lookback(self.int_opt[0]),
+            FuncId::CHOP => self.core.chop_lookback(self.int_opt[0]),
+            FuncId::CHOPTR => self.core.choptr_lookback(self.int_opt[0]),
             FuncId::CMF => self.core.cmf_lookback(self.int_opt[0]),
             FuncId::CMO => self.core.cmo_lookback(self.int_opt[0]),
             FuncId::CMOU => self.core.cmou_lookback(self.int_opt[0]),
@@ -5004,6 +5034,30 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 let res = self.core.cg(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
+                self.real_out[0] = Some(o0);
+                match res {
+                    Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
+                    Err(e) => e,
+                }
+            }
+            FuncId::CHOP => {
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let res = self.core.chop(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut *o0);
+                self.real_out[0] = Some(o0);
+                match res {
+                    Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
+                    Err(e) => e,
+                }
+            }
+            FuncId::CHOPTR => {
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let res = self.core.choptr(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }

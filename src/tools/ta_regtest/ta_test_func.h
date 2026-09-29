@@ -43,6 +43,7 @@ ErrorNumber test_func_composite2( TA_History *history );
 ErrorNumber test_func_marketfi( TA_History *history );
 ErrorNumber test_func_emv     ( TA_History *history );
 ErrorNumber test_func_kst     ( TA_History *history );
+ErrorNumber test_func_chop    ( TA_History *history );
 ErrorNumber test_func_cmf     ( TA_History *history );
 ErrorNumber test_func_kc      ( TA_History *history );
 ErrorNumber test_func_donchian( TA_History *history );

@@ -317,6 +317,12 @@ final class Dispatch {
          case "CG":
             return core.cg(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
+         case "CHOP":
+            return core.chop(
+               startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOpt(0), h.realOutput(0));
+         case "CHOPTR":
+            return core.choptr(
+               startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOpt(0), h.realOutput(0));
          case "CMF":
             return core.cmf(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.price(0, 4), h.intOpt(0), h.realOutput(0));
@@ -886,6 +892,10 @@ final class Dispatch {
             return core.ceilLookback();
          case "CG":
             return core.cgLookback(h.intOpt(0));
+         case "CHOP":
+            return core.chopLookback(h.intOpt(0));
+         case "CHOPTR":
+            return core.choptrLookback(h.intOpt(0));
          case "CMF":
             return core.cmfLookback(h.intOpt(0));
          case "CMO":

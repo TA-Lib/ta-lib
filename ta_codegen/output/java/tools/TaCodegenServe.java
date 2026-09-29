@@ -74077,6 +74077,1700 @@ class Core {
      *
      *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
+     *  092926 MF,CC  Initial version (#469).
+     */
+
+       /**
+        * Number of leading input bars {@link Core#chop} consumes before it can
+        * produce its first value.
+        * <p>Equivalently, the index of the first bar with a value when the whole
+        * series is requested. Feed at least {@code lookback + 1} bars to get any
+        * output.
+        *
+        * @param optInTimePeriod Number of bars in the window (default 14; range
+        *        2..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @return The lookback, or {@code -1} if a parameter is out of range.
+        */
+       public int chopLookback( int optInTimePeriod )
+       {
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 14;
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+             return -1;
+          }
+          return optInTimePeriod ;
+
+       }
+       RetCode chopImpl( int startIdx,
+                         int endIdx,
+                         double inHigh[],
+                         double inLow[],
+                         double inClose[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
+       {
+          int today = 0;
+          int outIdx = 0;
+          int lookbackTotal = 0;
+          int i = 0;
+          double highest = 0;
+          double lowest = 0;
+          double sumTR = 0;
+          double logPeriod = 0;
+          double tempHT = 0;
+          double tempLT = 0;
+          double prevClose = 0;
+          double trueHigh = 0;
+          double trueLow = 0;
+          if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX ;
+          }
+          if( (endIdx < 0) || (endIdx > INDEX_MAX) || (endIdx < startIdx)) {
+             return RetCode.OUT_OF_RANGE_END_INDEX ;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 14;
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          outBegIdx.value = 0;
+          outNBElement.value = 0;
+          lookbackTotal = chopLookback(optInTimePeriod);
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          /* Make sure there is still something to evaluate. */
+          if( startIdx > endIdx ) {
+             return RetCode.SUCCESS ;
+          }
+          logPeriod = Math.log10((double)optInTimePeriod);
+          outIdx = 0;
+          today = startIdx;
+          while( today <= endIdx ) {
+             /* Re-summed oldest to newest every bar, never a running total: a
+              * running total leaves a residue on a window of zero true ranges, which
+              * the exact guard below would then read as a trend.
+              */
+             highest = inHigh[today];
+             lowest = inLow[today];
+             sumTR = 0.0;
+             prevClose = 0.0;
+             for( i = optInTimePeriod; i >= 0; i -= 1 ) {
+                if( i < optInTimePeriod ) {
+                   tempHT = inHigh[today - i];
+                   tempLT = inLow[today - i];
+                   trueHigh = tempHT;
+                   if( prevClose > trueHigh ) {
+                      trueHigh = prevClose;
+                   }
+                   trueLow = tempLT;
+                   if( prevClose < trueLow ) {
+                      trueLow = prevClose;
+                   }
+                   sumTR += trueHigh - trueLow;
+                   if( tempHT > highest ) {
+                      highest = tempHT;
+                   }
+                   if( tempLT < lowest ) {
+                      lowest = tempLT;
+                   }
+                }
+                prevClose = inClose[today - i];
+             }
+             /* Exact tests, never an epsilon band (issue #253). Keep the "<=" form:
+              * a NaN box, or a NaN sum over a non-empty box, must reach the log
+              * rather than read as 100.
+              * Keep the parenthesised quotient: it returns exactly 100 whenever the
+              * computed ratio is exactly the period.
+              */
+             if( highest - lowest <= 0.0 || sumTR <= 0.0 ) {
+                outReal[outIdx] = 100.0;
+             } else {
+                outReal[outIdx] = 100.0 * (Math.log10(sumTR / (highest - lowest)) / logPeriod);
+             }
+             outIdx += 1;
+             today += 1;
+          }
+          outBegIdx.value = startIdx;
+          outNBElement.value = outIdx;
+          return RetCode.SUCCESS ;
+       }
+       RetCode chopImpl( int startIdx,
+                         int endIdx,
+                         float inHigh[],
+                         float inLow[],
+                         float inClose[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
+       {
+          int today = 0;
+          int outIdx = 0;
+          int lookbackTotal = 0;
+          int i = 0;
+          double highest = 0;
+          double lowest = 0;
+          double sumTR = 0;
+          double logPeriod = 0;
+          double tempHT = 0;
+          double tempLT = 0;
+          double prevClose = 0;
+          double trueHigh = 0;
+          double trueLow = 0;
+          if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX ;
+          }
+          if( (endIdx < 0) || (endIdx > INDEX_MAX) || (endIdx < startIdx)) {
+             return RetCode.OUT_OF_RANGE_END_INDEX ;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 14;
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          outBegIdx.value = 0;
+          outNBElement.value = 0;
+          lookbackTotal = chopLookback(optInTimePeriod);
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             return RetCode.SUCCESS ;
+          }
+          logPeriod = Math.log10((double)optInTimePeriod);
+          outIdx = 0;
+          today = startIdx;
+          while( today <= endIdx ) {
+             highest = (double)inHigh[today];
+             lowest = (double)inLow[today];
+             sumTR = 0.0;
+             prevClose = 0.0;
+             for( i = optInTimePeriod; i >= 0; i -= 1 ) {
+                if( i < optInTimePeriod ) {
+                   tempHT = (double)inHigh[today - i];
+                   tempLT = (double)inLow[today - i];
+                   trueHigh = tempHT;
+                   if( prevClose > trueHigh ) {
+                      trueHigh = prevClose;
+                   }
+                   trueLow = tempLT;
+                   if( prevClose < trueLow ) {
+                      trueLow = prevClose;
+                   }
+                   sumTR += trueHigh - trueLow;
+                   if( tempHT > highest ) {
+                      highest = tempHT;
+                   }
+                   if( tempLT < lowest ) {
+                      lowest = tempLT;
+                   }
+                }
+                prevClose = (double)inClose[today - i];
+             }
+             if( highest - lowest <= 0.0 || sumTR <= 0.0 ) {
+                outReal[outIdx] = 100.0;
+             } else {
+                outReal[outIdx] = 100.0 * (Math.log10(sumTR / (highest - lowest)) / logPeriod);
+             }
+             outIdx += 1;
+             today += 1;
+          }
+          outBegIdx.value = startIdx;
+          outNBElement.value = outIdx;
+          return RetCode.SUCCESS ;
+       }
+       /**
+        * Choppiness Index: a trend-versus-consolidation gauge, the true range
+        * travelled over a window against the height of the box its bars span.
+        * Devised by Bill Dreiss. Log-scaled so that a straight run reads 0 and bars
+        * that each fill the whole box read 100. Like ADX and VHF it measures
+        * whether the market is trending, not in which direction: low values mean a
+        * directional run, high values sideways chop.
+        * <p>Formula and more info at <a
+        * href="https://ta-lib.org/functions/chop">ta-lib.org/functions/chop</a>.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>The box is the window's highest high minus its lowest low. The 1993 publication instead spans the highest true high and the lowest true low, which also reach the close just before each bar; that form is CHOPTR. The two differ only on bars where the close before the window lies outside the window's high-low range: a gap into the window.</li>
+        * <li>Because a gap into the window adds to the true range but not to the box, CHOP has no upper bound and can exceed 100.</li>
+        * <li>A window with no box height, or no true range, reports 100.</li>
+        * <li>Dreiss's 3-bar smoothing of the index is not built in; apply a moving average to {@code outReal} to obtain it.</li>
+        * </ul>
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are; nothing
+        * outside that range is touched, and the library never pads with NaN. A
+        * valid range that ends before {@link Core#chopLookback} is a <b>success
+        * with no values</b> ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inHigh High price of each bar.
+        * @param inLow Low price of each bar.
+        * @param inClose Close price of each bar.
+        * @param optInTimePeriod Number of bars in the window (default 14; range
+        *        2..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param outReal Choppiness Index value. Must hold at least
+        *        {@code endIdx - max(startIdx, chopLookback(...)) + 1} values, the count
+        *        the call produces (none when that is not positive).
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#INDEX_MAX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. An output this function documents as declinable is the one
+        *        exception: {@code null} is how you decline it. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
+        *
+        * @see Core#choptr
+        * @see Core#vhf
+        * @see Core#adx
+        * @see Core#trange
+        */
+       public OutRange chop( int startIdx,
+                             int endIdx,
+                             double inHigh[],
+                             double inLow[],
+                             double inClose[],
+                             int optInTimePeriod,
+                             double outReal[] )
+       {
+          requireIndexRange("CHOP", startIdx, endIdx);
+          int guardStart = clampedStart("CHOP", startIdx, chopLookback(optInTimePeriod));
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CHOP", "inHigh", inHigh, guardInLen);
+          requireLength("CHOP", "inLow", inLow, guardInLen);
+          requireLength("CHOP", "inClose", inClose, guardInLen);
+          requireLength("CHOP", "outReal", outReal, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = chopImpl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+          if( retCode != RetCode.SUCCESS ) {
+             throw failure("CHOP", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+       /**
+        * Choppiness Index: a trend-versus-consolidation gauge, the true range
+        * travelled over a window against the height of the box its bars span.
+        * Devised by Bill Dreiss. Log-scaled so that a straight run reads 0 and bars
+        * that each fill the whole box read 100. Like ADX and VHF it measures
+        * whether the market is trending, not in which direction: low values mean a
+        * directional run, high values sideways chop.
+        * <p>Formula and more info at <a
+        * href="https://ta-lib.org/functions/chop">ta-lib.org/functions/chop</a>.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>The box is the window's highest high minus its lowest low. The 1993 publication instead spans the highest true high and the lowest true low, which also reach the close just before each bar; that form is CHOPTR. The two differ only on bars where the close before the window lies outside the window's high-low range: a gap into the window.</li>
+        * <li>Because a gap into the window adds to the true range but not to the box, CHOP has no upper bound and can exceed 100.</li>
+        * <li>A window with no box height, or no true range, reports 100.</li>
+        * <li>Dreiss's 3-bar smoothing of the index is not built in; apply a moving average to {@code outReal} to obtain it.</li>
+        * </ul>
+        * <p>This is the {@code float[]} overload. The arithmetic is performed in
+        * {@code double} before being written to the {@code double[]} output, so a
+        * result beyond {@code float} range is still representable.
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are; nothing
+        * outside that range is touched, and the library never pads with NaN. A
+        * valid range that ends before {@link Core#chopLookback} is a <b>success
+        * with no values</b> ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inHigh High price of each bar.
+        * @param inLow Low price of each bar.
+        * @param inClose Close price of each bar.
+        * @param optInTimePeriod Number of bars in the window (default 14; range
+        *        2..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param outReal Choppiness Index value. Must hold at least
+        *        {@code endIdx - max(startIdx, chopLookback(...)) + 1} values, the count
+        *        the call produces (none when that is not positive).
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#INDEX_MAX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. An output this function documents as declinable is the one
+        *        exception: {@code null} is how you decline it. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
+        *
+        * @see Core#choptr
+        * @see Core#vhf
+        * @see Core#adx
+        * @see Core#trange
+        */
+       public OutRange chop( int startIdx,
+                             int endIdx,
+                             float inHigh[],
+                             float inLow[],
+                             float inClose[],
+                             int optInTimePeriod,
+                             double outReal[] )
+       {
+          requireIndexRange("CHOP", startIdx, endIdx);
+          int guardStart = clampedStart("CHOP", startIdx, chopLookback(optInTimePeriod));
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CHOP", "inHigh", inHigh, guardInLen);
+          requireLength("CHOP", "inLow", inLow, guardInLen);
+          requireLength("CHOP", "inClose", inClose, guardInLen);
+          requireLength("CHOP", "outReal", outReal, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = chopImpl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+          if( retCode != RetCode.SUCCESS ) {
+             throw failure("CHOP", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+    /**** Streaming API *****/
+
+       /**
+        * A live CHOP stream (unrelated to {@code java.util.stream}): one value per
+        * closed bar, bit-identical to {@link Core#chop} over the same series.
+        * Open with {@link Core#chopOpen}; there is no close — the handle is
+        * ordinary heap state, unreferenced handles are simply garbage-collected.
+        * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
+        * {@code value} and {@code clone} must not race with an {@code update} on
+        * the same handle. With no concurrent {@code update}, {@code peek}/
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
+        * <p>Not serializable by design: to checkpoint, retain the history and
+        * re-open — the result is bit-identical by contract.
+        */
+       public static final class ChopStream {
+          private Core core;
+          private int optInTimePeriod;
+          private double logPeriod;
+          private int winPos_i;
+          private int winCap_i;
+          private double[] win_i_inHigh;
+          private double[] win_i_inLow;
+          private double[] win_i_inClose;
+          private double cur_outReal;
+          private int outRangeBegIdx;
+          private int outRangeCount;
+
+          private ChopStream( Core core ) { this.core = core; }
+
+          /**
+           * The bars this stream has an output for, in the input series'
+           * coordinates: {@code [begIdx, begIdx + count)}.
+           * <p>It is what {@link Core#chop} reports over the same bars: the
+           * opener sets it to {@code (lookback, historyLen - lookback)}, every
+           * accepted {@code update} adds one to the count — a rejected one
+           * changes nothing, and neither does {@code peek} — and
+           * {@code clone()} carries it verbatim. A plain
+           * {@code open} hands back only the last value, a subset of this range,
+           * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#INDEX_MAX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
+           */
+          public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
+
+          /**
+           * Count one bar this stream was not fed: {@link #outRange()} advances
+           * by one and nothing else moves — {@link #value()} keeps answering the previous
+           * output, which is this bar's output too.
+           * <p>For a bar the caller leaves out: one an {@code update} rejected
+           * and that will not be re-fed, or a session with no print. Without it
+           * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#INDEX_MAX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
+           */
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
+                throw failure("CHOP advance", RetCode.OUT_OF_RANGE_END_INDEX);
+             this.outRangeCount++;
+          }
+
+          private ChopStream( ChopStream other ) {
+             this.core = other.core;
+             this.optInTimePeriod = other.optInTimePeriod;
+             this.logPeriod = other.logPeriod;
+             this.winPos_i = other.winPos_i;
+             this.winCap_i = other.winCap_i;
+             this.win_i_inHigh = other.win_i_inHigh.clone();
+             this.win_i_inLow = other.win_i_inLow.clone();
+             this.win_i_inClose = other.win_i_inClose.clone();
+             this.cur_outReal = other.cur_outReal;
+             this.outRangeBegIdx = other.outRangeBegIdx;
+             this.outRangeCount = other.outRangeCount;
+          }
+
+          /**
+           * Commit one closed bar, returning the new current value.
+           * <p>Throws {@link IllegalArgumentException} if any bar value is not
+           * finite (NaN or an infinity). That check runs before anything is
+           * written, so nothing moves — {@link #outRange()} included — and
+           * {@link #value()} still answers the previous value. Re-feed the bar when a
+           * corrected value arrives, or call {@link #advance()} to count it and
+           * carry on; two handles on one feed drift a bar apart if neither
+           * happens.
+           * This is the one place the streaming tier is stricter than
+           * the batch API, which computes on whatever it is given: a handle
+           * retains its state, so a single non-finite bar would poison every
+           * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#INDEX_MAX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
+           */
+          public double update( double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
+                throw failure("CHOP update", RetCode.OUT_OF_RANGE_END_INDEX);
+             if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
+                throw nonFiniteBar("CHOP update", !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
+             core.chopStepImpl(this, inHigh, inLow, inClose);
+             this.outRangeCount++;
+             return this.cur_outReal;
+          }
+
+          /**
+           * Evaluate a forming bar without committing — bit-identical to what the
+           * next {@code update} with the same bar would return — the same
+           * transition, with every store it would make carried in a local instead.
+           * Never writes this handle, so peeks may run concurrently with each other.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
+           */
+          public double peek( double inHigh, double inLow, double inClose ) {
+             if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
+                throw nonFiniteBar("CHOP peek", !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
+             ChopStream sp = this;
+             int i = 0;
+             double highest = 0.0;
+             double lowest = 0.0;
+             double sumTR = 0.0;
+             double tempHT = 0.0;
+             double tempLT = 0.0;
+             double prevClose = 0.0;
+             double trueHigh = 0.0;
+             double trueLow = 0.0;
+             double cur_outReal = 0.0;
+             int pkSlot0 = -1;
+             double pkVal0 = 0.0;
+             int pkSlot1 = -1;
+             double pkVal1 = 0.0;
+             int pkSlot2 = -1;
+             double pkVal2 = 0.0;
+             pkSlot0 = sp.winPos_i;
+             pkVal0 = inHigh;
+             pkSlot1 = sp.winPos_i;
+             pkVal1 = inLow;
+             pkSlot2 = sp.winPos_i;
+             pkVal2 = inClose;
+             /* Re-summed oldest to newest every bar, never a running total: a
+              * running total leaves a residue on a window of zero true ranges, which
+              * the exact guard below would then read as a trend.
+              */
+             highest = inHigh;
+             lowest = inLow;
+             sumTR = 0.0;
+             prevClose = 0.0;
+             for( i = sp.optInTimePeriod; i >= 0; i -= 1 ) {
+                if( i < sp.optInTimePeriod ) {
+                   tempHT = (((sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i) != pkSlot0) ? sp.win_i_inHigh[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i] : pkVal0;
+                   tempLT = (((sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i) != pkSlot1) ? sp.win_i_inLow[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i] : pkVal1;
+                   trueHigh = tempHT;
+                   if( prevClose > trueHigh ) {
+                      trueHigh = prevClose;
+                   }
+                   trueLow = tempLT;
+                   if( prevClose < trueLow ) {
+                      trueLow = prevClose;
+                   }
+                   sumTR += trueHigh - trueLow;
+                   if( tempHT > highest ) {
+                      highest = tempHT;
+                   }
+                   if( tempLT < lowest ) {
+                      lowest = tempLT;
+                   }
+                }
+                prevClose = (((sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i) != pkSlot2) ? sp.win_i_inClose[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i] : pkVal2;
+             }
+             /* Exact tests, never an epsilon band (issue #253). Keep the "<=" form:
+              * a NaN box, or a NaN sum over a non-empty box, must reach the log
+              * rather than read as 100.
+              * Keep the parenthesised quotient: it returns exactly 100 whenever the
+              * computed ratio is exactly the period.
+              */
+             if( highest - lowest <= 0.0 || sumTR <= 0.0 ) {
+                cur_outReal = 100.0;
+             } else {
+                cur_outReal = 100.0 * (Math.log10(sumTR / (highest - lowest)) / sp.logPeriod);
+             }
+             return cur_outReal;
+          }
+
+          /**
+           * The value at the last bar this stream counted — the bar
+           * {@link #outRange()} ends on. The last history bar right after open,
+           * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
+           */
+          public double value() {
+             return this.cur_outReal;
+          }
+
+          /**
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
+           */
+          @Override
+          public ChopStream clone() {
+             return new ChopStream(this);
+          }
+       }
+       private void chopStepImpl( ChopStream sp, double inHigh, double inLow, double inClose )
+       {
+          int i = 0;
+          double highest = 0.0;
+          double lowest = 0.0;
+          double sumTR = 0.0;
+          double tempHT = 0.0;
+          double tempLT = 0.0;
+          double prevClose = 0.0;
+          double trueHigh = 0.0;
+          double trueLow = 0.0;
+          sp.win_i_inHigh[sp.winPos_i] = inHigh;
+          sp.win_i_inLow[sp.winPos_i] = inLow;
+          sp.win_i_inClose[sp.winPos_i] = inClose;
+          /* Re-summed oldest to newest every bar, never a running total: a
+           * running total leaves a residue on a window of zero true ranges, which
+           * the exact guard below would then read as a trend.
+           */
+          highest = inHigh;
+          lowest = inLow;
+          sumTR = 0.0;
+          prevClose = 0.0;
+          for( i = sp.optInTimePeriod; i >= 0; i -= 1 ) {
+             if( i < sp.optInTimePeriod ) {
+                tempHT = sp.win_i_inHigh[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i];
+                tempLT = sp.win_i_inLow[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i];
+                trueHigh = tempHT;
+                if( prevClose > trueHigh ) {
+                   trueHigh = prevClose;
+                }
+                trueLow = tempLT;
+                if( prevClose < trueLow ) {
+                   trueLow = prevClose;
+                }
+                sumTR += trueHigh - trueLow;
+                if( tempHT > highest ) {
+                   highest = tempHT;
+                }
+                if( tempLT < lowest ) {
+                   lowest = tempLT;
+                }
+             }
+             prevClose = sp.win_i_inClose[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i];
+          }
+          /* Exact tests, never an epsilon band (issue #253). Keep the "<=" form:
+           * a NaN box, or a NaN sum over a non-empty box, must reach the log
+           * rather than read as 100.
+           * Keep the parenthesised quotient: it returns exactly 100 whenever the
+           * computed ratio is exactly the period.
+           */
+          if( highest - lowest <= 0.0 || sumTR <= 0.0 ) {
+             sp.cur_outReal = 100.0;
+          } else {
+             sp.cur_outReal = 100.0 * (Math.log10(sumTR / (highest - lowest)) / sp.logPeriod);
+          }
+          sp.winPos_i = sp.winPos_i + 1;
+          if( sp.winPos_i >= sp.winCap_i ) {
+             sp.winPos_i = 0;
+          }
+       }
+       private RetCode chopOpenImpl( ChopStream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+       {
+          int today = 0;
+          int outIdx = 0;
+          int lookbackTotal = 0;
+          int i = 0;
+          double highest = 0;
+          double lowest = 0;
+          double sumTR = 0;
+          double logPeriod = 0;
+          double tempHT = 0;
+          double tempLT = 0;
+          double prevClose = 0;
+          double trueHigh = 0;
+          double trueLow = 0;
+          int historyLen = inHigh.length;
+          int endIdx = historyLen - 1;
+          if( historyLen < 1 ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX;
+          }
+          if( historyLen > INDEX_MAX + 1 ) {
+             return RetCode.OUT_OF_RANGE_END_INDEX;
+          }
+          if( inLow.length != inHigh.length || inClose.length != inHigh.length ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 14;
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.INSUFFICIENT_HISTORY;
+          }
+          outBegIdx.value = 0;
+          outNBElement.value = 0;
+          lookbackTotal = chopLookback(optInTimePeriod);
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          /* Make sure there is still something to evaluate. */
+          if( startIdx > endIdx ) {
+             return RetCode.INSUFFICIENT_HISTORY ;
+          }
+          logPeriod = Math.log10((double)optInTimePeriod);
+          outIdx = 0;
+          today = startIdx;
+          while( today <= endIdx ) {
+             /* Re-summed oldest to newest every bar, never a running total: a
+              * running total leaves a residue on a window of zero true ranges, which
+              * the exact guard below would then read as a trend.
+              */
+             highest = inHigh[today];
+             lowest = inLow[today];
+             sumTR = 0.0;
+             prevClose = 0.0;
+             for( i = optInTimePeriod; i >= 0; i -= 1 ) {
+                if( i < optInTimePeriod ) {
+                   tempHT = inHigh[today - i];
+                   tempLT = inLow[today - i];
+                   trueHigh = tempHT;
+                   if( prevClose > trueHigh ) {
+                      trueHigh = prevClose;
+                   }
+                   trueLow = tempLT;
+                   if( prevClose < trueLow ) {
+                      trueLow = prevClose;
+                   }
+                   sumTR += trueHigh - trueLow;
+                   if( tempHT > highest ) {
+                      highest = tempHT;
+                   }
+                   if( tempLT < lowest ) {
+                      lowest = tempLT;
+                   }
+                }
+                prevClose = inClose[today - i];
+             }
+             /* Exact tests, never an epsilon band (issue #253). Keep the "<=" form:
+              * a NaN box, or a NaN sum over a non-empty box, must reach the log
+              * rather than read as 100.
+              * Keep the parenthesised quotient: it returns exactly 100 whenever the
+              * computed ratio is exactly the period.
+              */
+             if( highest - lowest <= 0.0 || sumTR <= 0.0 ) {
+                outReal[outIdx * outStride] = 100.0;
+             } else {
+                outReal[outIdx * outStride] = 100.0 * (Math.log10(sumTR / (highest - lowest)) / logPeriod);
+             }
+             outIdx += 1;
+             today += 1;
+          }
+          outBegIdx.value = startIdx;
+          outNBElement.value = outIdx;
+          /* Capture the live batch state into the handle. */
+          int cap_i = (int)(optInTimePeriod + 1);
+          if( cap_i < 1 || cap_i > historyLen ) {
+             return RetCode.INTERNAL_ERROR;
+          }
+          double[] capWin_i_inHigh = new double[cap_i];
+          System.arraycopy(inHigh, historyLen - cap_i, capWin_i_inHigh, 0, cap_i);
+          double[] capWin_i_inLow = new double[cap_i];
+          System.arraycopy(inLow, historyLen - cap_i, capWin_i_inLow, 0, cap_i);
+          double[] capWin_i_inClose = new double[cap_i];
+          System.arraycopy(inClose, historyLen - cap_i, capWin_i_inClose, 0, cap_i);
+          sp.optInTimePeriod = optInTimePeriod;
+          sp.logPeriod = logPeriod;
+          sp.winPos_i = 0;
+          sp.winCap_i = cap_i;
+          sp.win_i_inHigh = capWin_i_inHigh;
+          sp.win_i_inLow = capWin_i_inLow;
+          sp.win_i_inClose = capWin_i_inClose;
+          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
+          return RetCode.SUCCESS;
+       }
+       /* chopOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+       ChopStream chopOpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+       {
+          ChopStream sp = new ChopStream(this);
+          RetCode retCode = chopOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.SUCCESS ) {
+             return sp;
+          }
+          if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
+             throw insufficientHistory("CHOP openAndFill", inHigh.length, startIdx, chopLookback(optInTimePeriod));
+          }
+          throw streamFailure("CHOP openAndFill", retCode);
+       }
+       /* Internal startIdx-anchored open behind chopOpen (composition seam). */
+       ChopStream chopOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
+       {
+          ChopStream sp = new ChopStream(this);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          double[] sink_outReal = new double[1];
+          RetCode retCode = chopOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.SUCCESS ) {
+             return sp;
+          }
+          if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
+             throw insufficientHistory("CHOP open", inHigh.length, startIdx, chopLookback(optInTimePeriod));
+          }
+          throw streamFailure("CHOP open", retCode);
+       }
+       /**
+        * Open a live CHOP stream over the warm-up history; the handle's
+        * {@code value()} starts at the last history bar's value — bit-identical
+        * to {@link Core#chop} at that bar.
+        * <p>The history must hold at least {@code chopLookback(...) + 1} bars
+        * (unstable-period aware), or {@link InsufficientHistoryException} is
+        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+        * as in the batch API). An EMPTY history throws
+        * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+        * names no bar — and a null argument {@link IllegalArgumentException},
+        * both ahead of everything above.
+        */
+       public ChopStream chopOpen( double inHigh[], double inLow[], double inClose[], int optInTimePeriod )
+       {
+          requireArgument("CHOP open", "inHigh", inHigh);
+          requireHistory("CHOP open", inHigh.length);
+          requireArgument("CHOP open", "inLow", inLow);
+          requireArgument("CHOP open", "inClose", inClose);
+          requireHistoryLength("CHOP open", "inLow", inLow.length, inHigh.length);
+          requireHistoryLength("CHOP open", "inClose", inClose.length, inHigh.length);
+          return chopOpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
+       }
+       /**
+        * {@link Core#chopOpen} that also fills the output array(s) bit-identically
+        * to {@link Core#chop} over the whole history in the same single pass
+        * (no separate batch call needed for the warm-up plot). Output arrays must
+        * not alias the inputs or each other, and must hold
+        * {@code historyLen - lookback} values — both checked before anything is
+        * written, so an undersized array is an {@link IllegalArgumentException}
+        * naming it rather than a fault from inside the fill.
+        * <p>The range written is on the returned handle:
+        * {@link ChopStream#outRange()}.
+        */
+       public ChopStream chopOpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double outReal[] )
+       {
+          requireArgument("CHOP openAndFill", "inHigh", inHigh);
+          requireHistory("CHOP openAndFill", inHigh.length);
+          requireArgument("CHOP openAndFill", "inLow", inLow);
+          requireArgument("CHOP openAndFill", "inClose", inClose);
+          int guardOutLen = openFillCount("CHOP openAndFill", inHigh.length, chopLookback(optInTimePeriod));
+          requireHistoryLength("CHOP openAndFill", "inLow", inLow.length, inHigh.length);
+          requireHistoryLength("CHOP openAndFill", "inClose", inClose.length, inHigh.length);
+          requireLength("CHOP openAndFill", "outReal", outReal, guardOutLen);
+          if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
+             throw streamFailure("CHOP openAndFill", RetCode.BAD_PARAM);
+          }
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          return chopOpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
+       }
+    /* List of contributors:
+     *
+     *  Initial  Name/description
+     *  -------------------------------------------------------------------
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
+     *
+     * Change history:
+     *
+     *  MMDDYY BY     Description
+     *  -------------------------------------------------------------------
+     *  092926 MF,CC  Initial version (#469).
+     */
+
+       /**
+        * Number of leading input bars {@link Core#choptr} consumes before it can
+        * produce its first value.
+        * <p>Equivalently, the index of the first bar with a value when the whole
+        * series is requested. Feed at least {@code lookback + 1} bars to get any
+        * output.
+        *
+        * @param optInTimePeriod Number of bars in the window (default 14; range
+        *        2..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @return The lookback, or {@code -1} if a parameter is out of range.
+        */
+       public int choptrLookback( int optInTimePeriod )
+       {
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 14;
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+             return -1;
+          }
+          return optInTimePeriod ;
+
+       }
+       RetCode choptrImpl( int startIdx,
+                           int endIdx,
+                           double inHigh[],
+                           double inLow[],
+                           double inClose[],
+                           int optInTimePeriod,
+                           MInteger outBegIdx,
+                           MInteger outNBElement,
+                           double outReal[] )
+       {
+          int today = 0;
+          int outIdx = 0;
+          int lookbackTotal = 0;
+          int i = 0;
+          double highest = 0;
+          double lowest = 0;
+          double sumTR = 0;
+          double logPeriod = 0;
+          double tempHT = 0;
+          double tempLT = 0;
+          double prevClose = 0;
+          double trueHigh = 0;
+          double trueLow = 0;
+          if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX ;
+          }
+          if( (endIdx < 0) || (endIdx > INDEX_MAX) || (endIdx < startIdx)) {
+             return RetCode.OUT_OF_RANGE_END_INDEX ;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 14;
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          outBegIdx.value = 0;
+          outNBElement.value = 0;
+          lookbackTotal = choptrLookback(optInTimePeriod);
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          /* Make sure there is still something to evaluate. */
+          if( startIdx > endIdx ) {
+             return RetCode.SUCCESS ;
+          }
+          logPeriod = Math.log10((double)optInTimePeriod);
+          outIdx = 0;
+          today = startIdx;
+          while( today <= endIdx ) {
+             /* Re-summed oldest to newest every bar, never a running total: a
+              * running total leaves a residue on a window of zero true ranges, which
+              * the exact guard below would then read as a trend.
+              */
+             highest = inHigh[today];
+             lowest = inLow[today];
+             sumTR = 0.0;
+             prevClose = 0.0;
+             for( i = optInTimePeriod; i >= 0; i -= 1 ) {
+                if( i < optInTimePeriod ) {
+                   tempHT = inHigh[today - i];
+                   tempLT = inLow[today - i];
+                   trueHigh = tempHT;
+                   if( prevClose > trueHigh ) {
+                      trueHigh = prevClose;
+                   }
+                   trueLow = tempLT;
+                   if( prevClose < trueLow ) {
+                      trueLow = prevClose;
+                   }
+                   sumTR += trueHigh - trueLow;
+                   if( trueHigh > highest ) {
+                      highest = trueHigh;
+                   }
+                   if( trueLow < lowest ) {
+                      lowest = trueLow;
+                   }
+                }
+                prevClose = inClose[today - i];
+             }
+             /* The seeds are the raw extrema of today's bar, which its own true
+              * high and low always enclose, so they never outrun the true box.
+              *
+              * Exact test, never an epsilon band (issue #253). Every true range lies
+              * inside the box, so a positive sum implies a positive box. Keep the
+              * "<=" form: a NaN sum must fall through to the log, not read as 100.
+              * Keep the parenthesised quotient: it returns exactly 100 whenever the
+              * computed ratio is exactly the period.
+              */
+             if( sumTR <= 0.0 ) {
+                outReal[outIdx] = 100.0;
+             } else {
+                outReal[outIdx] = 100.0 * (Math.log10(sumTR / (highest - lowest)) / logPeriod);
+             }
+             outIdx += 1;
+             today += 1;
+          }
+          outBegIdx.value = startIdx;
+          outNBElement.value = outIdx;
+          return RetCode.SUCCESS ;
+       }
+       RetCode choptrImpl( int startIdx,
+                           int endIdx,
+                           float inHigh[],
+                           float inLow[],
+                           float inClose[],
+                           int optInTimePeriod,
+                           MInteger outBegIdx,
+                           MInteger outNBElement,
+                           double outReal[] )
+       {
+          int today = 0;
+          int outIdx = 0;
+          int lookbackTotal = 0;
+          int i = 0;
+          double highest = 0;
+          double lowest = 0;
+          double sumTR = 0;
+          double logPeriod = 0;
+          double tempHT = 0;
+          double tempLT = 0;
+          double prevClose = 0;
+          double trueHigh = 0;
+          double trueLow = 0;
+          if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX ;
+          }
+          if( (endIdx < 0) || (endIdx > INDEX_MAX) || (endIdx < startIdx)) {
+             return RetCode.OUT_OF_RANGE_END_INDEX ;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 14;
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          outBegIdx.value = 0;
+          outNBElement.value = 0;
+          lookbackTotal = choptrLookback(optInTimePeriod);
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             return RetCode.SUCCESS ;
+          }
+          logPeriod = Math.log10((double)optInTimePeriod);
+          outIdx = 0;
+          today = startIdx;
+          while( today <= endIdx ) {
+             highest = (double)inHigh[today];
+             lowest = (double)inLow[today];
+             sumTR = 0.0;
+             prevClose = 0.0;
+             for( i = optInTimePeriod; i >= 0; i -= 1 ) {
+                if( i < optInTimePeriod ) {
+                   tempHT = (double)inHigh[today - i];
+                   tempLT = (double)inLow[today - i];
+                   trueHigh = tempHT;
+                   if( prevClose > trueHigh ) {
+                      trueHigh = prevClose;
+                   }
+                   trueLow = tempLT;
+                   if( prevClose < trueLow ) {
+                      trueLow = prevClose;
+                   }
+                   sumTR += trueHigh - trueLow;
+                   if( trueHigh > highest ) {
+                      highest = trueHigh;
+                   }
+                   if( trueLow < lowest ) {
+                      lowest = trueLow;
+                   }
+                }
+                prevClose = (double)inClose[today - i];
+             }
+             if( sumTR <= 0.0 ) {
+                outReal[outIdx] = 100.0;
+             } else {
+                outReal[outIdx] = 100.0 * (Math.log10(sumTR / (highest - lowest)) / logPeriod);
+             }
+             outIdx += 1;
+             today += 1;
+          }
+          outBegIdx.value = startIdx;
+          outNBElement.value = outIdx;
+          return RetCode.SUCCESS ;
+       }
+       /**
+        * Choppiness Index with a true-range box: the true range travelled over a
+        * window against the span from its highest true high to its lowest true low.
+        * Bill Dreiss's form as published in 1993. Log-scaled so that a straight run
+        * reads 0 and bars that each fill the whole box read 100. Measures whether
+        * the market is trending, not in which direction: low values mean a
+        * directional run, high values sideways chop.
+        * <p>Formula and more info at <a
+        * href="https://ta-lib.org/functions/choptr">ta-lib.org/functions/choptr</a>.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>The box reaches the close just before each bar. Most charting platforms instead use the window's highest high minus its lowest low; that form is CHOP. The two differ only on bars where the close before the window lies outside the window's high-low range: a gap into the window.</li>
+        * <li>With every close inside its own bar's high-low range, the value stays within 0 to 100, up to rounding.</li>
+        * <li>A window with no true range reports 100.</li>
+        * <li>Dreiss's 3-bar smoothing of the index is not built in; apply a moving average to {@code outReal} to obtain it.</li>
+        * </ul>
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are; nothing
+        * outside that range is touched, and the library never pads with NaN. A
+        * valid range that ends before {@link Core#choptrLookback} is a <b>success
+        * with no values</b> ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inHigh High price of each bar.
+        * @param inLow Low price of each bar.
+        * @param inClose Close price of each bar.
+        * @param optInTimePeriod Number of bars in the window (default 14; range
+        *        2..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param outReal Choppiness Index value. Must hold at least
+        *        {@code endIdx - max(startIdx, choptrLookback(...)) + 1} values, the count
+        *        the call produces (none when that is not positive).
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#INDEX_MAX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. An output this function documents as declinable is the one
+        *        exception: {@code null} is how you decline it. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
+        *
+        * @see Core#chop
+        * @see Core#vhf
+        * @see Core#adx
+        * @see Core#trange
+        */
+       public OutRange choptr( int startIdx,
+                               int endIdx,
+                               double inHigh[],
+                               double inLow[],
+                               double inClose[],
+                               int optInTimePeriod,
+                               double outReal[] )
+       {
+          requireIndexRange("CHOPTR", startIdx, endIdx);
+          int guardStart = clampedStart("CHOPTR", startIdx, choptrLookback(optInTimePeriod));
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CHOPTR", "inHigh", inHigh, guardInLen);
+          requireLength("CHOPTR", "inLow", inLow, guardInLen);
+          requireLength("CHOPTR", "inClose", inClose, guardInLen);
+          requireLength("CHOPTR", "outReal", outReal, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = choptrImpl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+          if( retCode != RetCode.SUCCESS ) {
+             throw failure("CHOPTR", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+       /**
+        * Choppiness Index with a true-range box: the true range travelled over a
+        * window against the span from its highest true high to its lowest true low.
+        * Bill Dreiss's form as published in 1993. Log-scaled so that a straight run
+        * reads 0 and bars that each fill the whole box read 100. Measures whether
+        * the market is trending, not in which direction: low values mean a
+        * directional run, high values sideways chop.
+        * <p>Formula and more info at <a
+        * href="https://ta-lib.org/functions/choptr">ta-lib.org/functions/choptr</a>.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>The box reaches the close just before each bar. Most charting platforms instead use the window's highest high minus its lowest low; that form is CHOP. The two differ only on bars where the close before the window lies outside the window's high-low range: a gap into the window.</li>
+        * <li>With every close inside its own bar's high-low range, the value stays within 0 to 100, up to rounding.</li>
+        * <li>A window with no true range reports 100.</li>
+        * <li>Dreiss's 3-bar smoothing of the index is not built in; apply a moving average to {@code outReal} to obtain it.</li>
+        * </ul>
+        * <p>This is the {@code float[]} overload. The arithmetic is performed in
+        * {@code double} before being written to the {@code double[]} output, so a
+        * result beyond {@code float} range is still representable.
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are; nothing
+        * outside that range is touched, and the library never pads with NaN. A
+        * valid range that ends before {@link Core#choptrLookback} is a <b>success
+        * with no values</b> ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inHigh High price of each bar.
+        * @param inLow Low price of each bar.
+        * @param inClose Close price of each bar.
+        * @param optInTimePeriod Number of bars in the window (default 14; range
+        *        2..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param outReal Choppiness Index value. Must hold at least
+        *        {@code endIdx - max(startIdx, choptrLookback(...)) + 1} values, the count
+        *        the call produces (none when that is not positive).
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#INDEX_MAX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. An output this function documents as declinable is the one
+        *        exception: {@code null} is how you decline it. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
+        *
+        * @see Core#chop
+        * @see Core#vhf
+        * @see Core#adx
+        * @see Core#trange
+        */
+       public OutRange choptr( int startIdx,
+                               int endIdx,
+                               float inHigh[],
+                               float inLow[],
+                               float inClose[],
+                               int optInTimePeriod,
+                               double outReal[] )
+       {
+          requireIndexRange("CHOPTR", startIdx, endIdx);
+          int guardStart = clampedStart("CHOPTR", startIdx, choptrLookback(optInTimePeriod));
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CHOPTR", "inHigh", inHigh, guardInLen);
+          requireLength("CHOPTR", "inLow", inLow, guardInLen);
+          requireLength("CHOPTR", "inClose", inClose, guardInLen);
+          requireLength("CHOPTR", "outReal", outReal, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = choptrImpl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+          if( retCode != RetCode.SUCCESS ) {
+             throw failure("CHOPTR", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+    /**** Streaming API *****/
+
+       /**
+        * A live CHOPTR stream (unrelated to {@code java.util.stream}): one value per
+        * closed bar, bit-identical to {@link Core#choptr} over the same series.
+        * Open with {@link Core#choptrOpen}; there is no close — the handle is
+        * ordinary heap state, unreferenced handles are simply garbage-collected.
+        * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
+        * {@code value} and {@code clone} must not race with an {@code update} on
+        * the same handle. With no concurrent {@code update}, {@code peek}/
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
+        * <p>Not serializable by design: to checkpoint, retain the history and
+        * re-open — the result is bit-identical by contract.
+        */
+       public static final class ChoptrStream {
+          private Core core;
+          private int optInTimePeriod;
+          private double logPeriod;
+          private int winPos_i;
+          private int winCap_i;
+          private double[] win_i_inHigh;
+          private double[] win_i_inLow;
+          private double[] win_i_inClose;
+          private double cur_outReal;
+          private int outRangeBegIdx;
+          private int outRangeCount;
+
+          private ChoptrStream( Core core ) { this.core = core; }
+
+          /**
+           * The bars this stream has an output for, in the input series'
+           * coordinates: {@code [begIdx, begIdx + count)}.
+           * <p>It is what {@link Core#choptr} reports over the same bars: the
+           * opener sets it to {@code (lookback, historyLen - lookback)}, every
+           * accepted {@code update} adds one to the count — a rejected one
+           * changes nothing, and neither does {@code peek} — and
+           * {@code clone()} carries it verbatim. A plain
+           * {@code open} hands back only the last value, a subset of this range,
+           * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#INDEX_MAX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
+           */
+          public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
+
+          /**
+           * Count one bar this stream was not fed: {@link #outRange()} advances
+           * by one and nothing else moves — {@link #value()} keeps answering the previous
+           * output, which is this bar's output too.
+           * <p>For a bar the caller leaves out: one an {@code update} rejected
+           * and that will not be re-fed, or a session with no print. Without it
+           * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#INDEX_MAX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
+           */
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
+                throw failure("CHOPTR advance", RetCode.OUT_OF_RANGE_END_INDEX);
+             this.outRangeCount++;
+          }
+
+          private ChoptrStream( ChoptrStream other ) {
+             this.core = other.core;
+             this.optInTimePeriod = other.optInTimePeriod;
+             this.logPeriod = other.logPeriod;
+             this.winPos_i = other.winPos_i;
+             this.winCap_i = other.winCap_i;
+             this.win_i_inHigh = other.win_i_inHigh.clone();
+             this.win_i_inLow = other.win_i_inLow.clone();
+             this.win_i_inClose = other.win_i_inClose.clone();
+             this.cur_outReal = other.cur_outReal;
+             this.outRangeBegIdx = other.outRangeBegIdx;
+             this.outRangeCount = other.outRangeCount;
+          }
+
+          /**
+           * Commit one closed bar, returning the new current value.
+           * <p>Throws {@link IllegalArgumentException} if any bar value is not
+           * finite (NaN or an infinity). That check runs before anything is
+           * written, so nothing moves — {@link #outRange()} included — and
+           * {@link #value()} still answers the previous value. Re-feed the bar when a
+           * corrected value arrives, or call {@link #advance()} to count it and
+           * carry on; two handles on one feed drift a bar apart if neither
+           * happens.
+           * This is the one place the streaming tier is stricter than
+           * the batch API, which computes on whatever it is given: a handle
+           * retains its state, so a single non-finite bar would poison every
+           * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#INDEX_MAX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
+           */
+          public double update( double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
+                throw failure("CHOPTR update", RetCode.OUT_OF_RANGE_END_INDEX);
+             if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
+                throw nonFiniteBar("CHOPTR update", !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
+             core.choptrStepImpl(this, inHigh, inLow, inClose);
+             this.outRangeCount++;
+             return this.cur_outReal;
+          }
+
+          /**
+           * Evaluate a forming bar without committing — bit-identical to what the
+           * next {@code update} with the same bar would return — the same
+           * transition, with every store it would make carried in a local instead.
+           * Never writes this handle, so peeks may run concurrently with each other.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
+           */
+          public double peek( double inHigh, double inLow, double inClose ) {
+             if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
+                throw nonFiniteBar("CHOPTR peek", !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
+             ChoptrStream sp = this;
+             int i = 0;
+             double highest = 0.0;
+             double lowest = 0.0;
+             double sumTR = 0.0;
+             double tempHT = 0.0;
+             double tempLT = 0.0;
+             double prevClose = 0.0;
+             double trueHigh = 0.0;
+             double trueLow = 0.0;
+             double cur_outReal = 0.0;
+             int pkSlot0 = -1;
+             double pkVal0 = 0.0;
+             int pkSlot1 = -1;
+             double pkVal1 = 0.0;
+             int pkSlot2 = -1;
+             double pkVal2 = 0.0;
+             pkSlot0 = sp.winPos_i;
+             pkVal0 = inHigh;
+             pkSlot1 = sp.winPos_i;
+             pkVal1 = inLow;
+             pkSlot2 = sp.winPos_i;
+             pkVal2 = inClose;
+             /* Re-summed oldest to newest every bar, never a running total: a
+              * running total leaves a residue on a window of zero true ranges, which
+              * the exact guard below would then read as a trend.
+              */
+             highest = inHigh;
+             lowest = inLow;
+             sumTR = 0.0;
+             prevClose = 0.0;
+             for( i = sp.optInTimePeriod; i >= 0; i -= 1 ) {
+                if( i < sp.optInTimePeriod ) {
+                   tempHT = (((sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i) != pkSlot0) ? sp.win_i_inHigh[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i] : pkVal0;
+                   tempLT = (((sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i) != pkSlot1) ? sp.win_i_inLow[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i] : pkVal1;
+                   trueHigh = tempHT;
+                   if( prevClose > trueHigh ) {
+                      trueHigh = prevClose;
+                   }
+                   trueLow = tempLT;
+                   if( prevClose < trueLow ) {
+                      trueLow = prevClose;
+                   }
+                   sumTR += trueHigh - trueLow;
+                   if( trueHigh > highest ) {
+                      highest = trueHigh;
+                   }
+                   if( trueLow < lowest ) {
+                      lowest = trueLow;
+                   }
+                }
+                prevClose = (((sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i) != pkSlot2) ? sp.win_i_inClose[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i] : pkVal2;
+             }
+             /* The seeds are the raw extrema of today's bar, which its own true
+              * high and low always enclose, so they never outrun the true box.
+              *
+              * Exact test, never an epsilon band (issue #253). Every true range lies
+              * inside the box, so a positive sum implies a positive box. Keep the
+              * "<=" form: a NaN sum must fall through to the log, not read as 100.
+              * Keep the parenthesised quotient: it returns exactly 100 whenever the
+              * computed ratio is exactly the period.
+              */
+             if( sumTR <= 0.0 ) {
+                cur_outReal = 100.0;
+             } else {
+                cur_outReal = 100.0 * (Math.log10(sumTR / (highest - lowest)) / sp.logPeriod);
+             }
+             return cur_outReal;
+          }
+
+          /**
+           * The value at the last bar this stream counted — the bar
+           * {@link #outRange()} ends on. The last history bar right after open,
+           * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
+           */
+          public double value() {
+             return this.cur_outReal;
+          }
+
+          /**
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
+           */
+          @Override
+          public ChoptrStream clone() {
+             return new ChoptrStream(this);
+          }
+       }
+       private void choptrStepImpl( ChoptrStream sp, double inHigh, double inLow, double inClose )
+       {
+          int i = 0;
+          double highest = 0.0;
+          double lowest = 0.0;
+          double sumTR = 0.0;
+          double tempHT = 0.0;
+          double tempLT = 0.0;
+          double prevClose = 0.0;
+          double trueHigh = 0.0;
+          double trueLow = 0.0;
+          sp.win_i_inHigh[sp.winPos_i] = inHigh;
+          sp.win_i_inLow[sp.winPos_i] = inLow;
+          sp.win_i_inClose[sp.winPos_i] = inClose;
+          /* Re-summed oldest to newest every bar, never a running total: a
+           * running total leaves a residue on a window of zero true ranges, which
+           * the exact guard below would then read as a trend.
+           */
+          highest = inHigh;
+          lowest = inLow;
+          sumTR = 0.0;
+          prevClose = 0.0;
+          for( i = sp.optInTimePeriod; i >= 0; i -= 1 ) {
+             if( i < sp.optInTimePeriod ) {
+                tempHT = sp.win_i_inHigh[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i];
+                tempLT = sp.win_i_inLow[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i];
+                trueHigh = tempHT;
+                if( prevClose > trueHigh ) {
+                   trueHigh = prevClose;
+                }
+                trueLow = tempLT;
+                if( prevClose < trueLow ) {
+                   trueLow = prevClose;
+                }
+                sumTR += trueHigh - trueLow;
+                if( trueHigh > highest ) {
+                   highest = trueHigh;
+                }
+                if( trueLow < lowest ) {
+                   lowest = trueLow;
+                }
+             }
+             prevClose = sp.win_i_inClose[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i];
+          }
+          /* The seeds are the raw extrema of today's bar, which its own true
+           * high and low always enclose, so they never outrun the true box.
+           *
+           * Exact test, never an epsilon band (issue #253). Every true range lies
+           * inside the box, so a positive sum implies a positive box. Keep the
+           * "<=" form: a NaN sum must fall through to the log, not read as 100.
+           * Keep the parenthesised quotient: it returns exactly 100 whenever the
+           * computed ratio is exactly the period.
+           */
+          if( sumTR <= 0.0 ) {
+             sp.cur_outReal = 100.0;
+          } else {
+             sp.cur_outReal = 100.0 * (Math.log10(sumTR / (highest - lowest)) / sp.logPeriod);
+          }
+          sp.winPos_i = sp.winPos_i + 1;
+          if( sp.winPos_i >= sp.winCap_i ) {
+             sp.winPos_i = 0;
+          }
+       }
+       private RetCode choptrOpenImpl( ChoptrStream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+       {
+          int today = 0;
+          int outIdx = 0;
+          int lookbackTotal = 0;
+          int i = 0;
+          double highest = 0;
+          double lowest = 0;
+          double sumTR = 0;
+          double logPeriod = 0;
+          double tempHT = 0;
+          double tempLT = 0;
+          double prevClose = 0;
+          double trueHigh = 0;
+          double trueLow = 0;
+          int historyLen = inHigh.length;
+          int endIdx = historyLen - 1;
+          if( historyLen < 1 ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX;
+          }
+          if( historyLen > INDEX_MAX + 1 ) {
+             return RetCode.OUT_OF_RANGE_END_INDEX;
+          }
+          if( inLow.length != inHigh.length || inClose.length != inHigh.length ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 14;
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.INSUFFICIENT_HISTORY;
+          }
+          outBegIdx.value = 0;
+          outNBElement.value = 0;
+          lookbackTotal = choptrLookback(optInTimePeriod);
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          /* Make sure there is still something to evaluate. */
+          if( startIdx > endIdx ) {
+             return RetCode.INSUFFICIENT_HISTORY ;
+          }
+          logPeriod = Math.log10((double)optInTimePeriod);
+          outIdx = 0;
+          today = startIdx;
+          while( today <= endIdx ) {
+             /* Re-summed oldest to newest every bar, never a running total: a
+              * running total leaves a residue on a window of zero true ranges, which
+              * the exact guard below would then read as a trend.
+              */
+             highest = inHigh[today];
+             lowest = inLow[today];
+             sumTR = 0.0;
+             prevClose = 0.0;
+             for( i = optInTimePeriod; i >= 0; i -= 1 ) {
+                if( i < optInTimePeriod ) {
+                   tempHT = inHigh[today - i];
+                   tempLT = inLow[today - i];
+                   trueHigh = tempHT;
+                   if( prevClose > trueHigh ) {
+                      trueHigh = prevClose;
+                   }
+                   trueLow = tempLT;
+                   if( prevClose < trueLow ) {
+                      trueLow = prevClose;
+                   }
+                   sumTR += trueHigh - trueLow;
+                   if( trueHigh > highest ) {
+                      highest = trueHigh;
+                   }
+                   if( trueLow < lowest ) {
+                      lowest = trueLow;
+                   }
+                }
+                prevClose = inClose[today - i];
+             }
+             /* The seeds are the raw extrema of today's bar, which its own true
+              * high and low always enclose, so they never outrun the true box.
+              *
+              * Exact test, never an epsilon band (issue #253). Every true range lies
+              * inside the box, so a positive sum implies a positive box. Keep the
+              * "<=" form: a NaN sum must fall through to the log, not read as 100.
+              * Keep the parenthesised quotient: it returns exactly 100 whenever the
+              * computed ratio is exactly the period.
+              */
+             if( sumTR <= 0.0 ) {
+                outReal[outIdx * outStride] = 100.0;
+             } else {
+                outReal[outIdx * outStride] = 100.0 * (Math.log10(sumTR / (highest - lowest)) / logPeriod);
+             }
+             outIdx += 1;
+             today += 1;
+          }
+          outBegIdx.value = startIdx;
+          outNBElement.value = outIdx;
+          /* Capture the live batch state into the handle. */
+          int cap_i = (int)(optInTimePeriod + 1);
+          if( cap_i < 1 || cap_i > historyLen ) {
+             return RetCode.INTERNAL_ERROR;
+          }
+          double[] capWin_i_inHigh = new double[cap_i];
+          System.arraycopy(inHigh, historyLen - cap_i, capWin_i_inHigh, 0, cap_i);
+          double[] capWin_i_inLow = new double[cap_i];
+          System.arraycopy(inLow, historyLen - cap_i, capWin_i_inLow, 0, cap_i);
+          double[] capWin_i_inClose = new double[cap_i];
+          System.arraycopy(inClose, historyLen - cap_i, capWin_i_inClose, 0, cap_i);
+          sp.optInTimePeriod = optInTimePeriod;
+          sp.logPeriod = logPeriod;
+          sp.winPos_i = 0;
+          sp.winCap_i = cap_i;
+          sp.win_i_inHigh = capWin_i_inHigh;
+          sp.win_i_inLow = capWin_i_inLow;
+          sp.win_i_inClose = capWin_i_inClose;
+          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
+          return RetCode.SUCCESS;
+       }
+       /* choptrOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+       ChoptrStream choptrOpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+       {
+          ChoptrStream sp = new ChoptrStream(this);
+          RetCode retCode = choptrOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.SUCCESS ) {
+             return sp;
+          }
+          if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
+             throw insufficientHistory("CHOPTR openAndFill", inHigh.length, startIdx, choptrLookback(optInTimePeriod));
+          }
+          throw streamFailure("CHOPTR openAndFill", retCode);
+       }
+       /* Internal startIdx-anchored open behind choptrOpen (composition seam). */
+       ChoptrStream choptrOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
+       {
+          ChoptrStream sp = new ChoptrStream(this);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          double[] sink_outReal = new double[1];
+          RetCode retCode = choptrOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.SUCCESS ) {
+             return sp;
+          }
+          if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
+             throw insufficientHistory("CHOPTR open", inHigh.length, startIdx, choptrLookback(optInTimePeriod));
+          }
+          throw streamFailure("CHOPTR open", retCode);
+       }
+       /**
+        * Open a live CHOPTR stream over the warm-up history; the handle's
+        * {@code value()} starts at the last history bar's value — bit-identical
+        * to {@link Core#choptr} at that bar.
+        * <p>The history must hold at least {@code choptrLookback(...) + 1} bars
+        * (unstable-period aware), or {@link InsufficientHistoryException} is
+        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+        * as in the batch API). An EMPTY history throws
+        * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+        * names no bar — and a null argument {@link IllegalArgumentException},
+        * both ahead of everything above.
+        */
+       public ChoptrStream choptrOpen( double inHigh[], double inLow[], double inClose[], int optInTimePeriod )
+       {
+          requireArgument("CHOPTR open", "inHigh", inHigh);
+          requireHistory("CHOPTR open", inHigh.length);
+          requireArgument("CHOPTR open", "inLow", inLow);
+          requireArgument("CHOPTR open", "inClose", inClose);
+          requireHistoryLength("CHOPTR open", "inLow", inLow.length, inHigh.length);
+          requireHistoryLength("CHOPTR open", "inClose", inClose.length, inHigh.length);
+          return choptrOpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
+       }
+       /**
+        * {@link Core#choptrOpen} that also fills the output array(s) bit-identically
+        * to {@link Core#choptr} over the whole history in the same single pass
+        * (no separate batch call needed for the warm-up plot). Output arrays must
+        * not alias the inputs or each other, and must hold
+        * {@code historyLen - lookback} values — both checked before anything is
+        * written, so an undersized array is an {@link IllegalArgumentException}
+        * naming it rather than a fault from inside the fill.
+        * <p>The range written is on the returned handle:
+        * {@link ChoptrStream#outRange()}.
+        */
+       public ChoptrStream choptrOpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double outReal[] )
+       {
+          requireArgument("CHOPTR openAndFill", "inHigh", inHigh);
+          requireHistory("CHOPTR openAndFill", inHigh.length);
+          requireArgument("CHOPTR openAndFill", "inLow", inLow);
+          requireArgument("CHOPTR openAndFill", "inClose", inClose);
+          int guardOutLen = openFillCount("CHOPTR openAndFill", inHigh.length, choptrLookback(optInTimePeriod));
+          requireHistoryLength("CHOPTR openAndFill", "inLow", inLow.length, inHigh.length);
+          requireHistoryLength("CHOPTR openAndFill", "inClose", inClose.length, inHigh.length);
+          requireLength("CHOPTR openAndFill", "outReal", outReal, guardOutLen);
+          if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
+             throw streamFailure("CHOPTR openAndFill", RetCode.BAD_PARAM);
+          }
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          return choptrOpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
+       }
+    /* List of contributors:
+     *
+     *  Initial  Name/description
+     *  -------------------------------------------------------------------
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
+     *
+     * Change history:
+     *
+     *  MMDDYY BY     Description
+     *  -------------------------------------------------------------------
      *  072126 MF,CC  First version (issue #134).
      *  092526 MF,CC  #446 exact zero sums on a dead volume window.
      *  092626 MF,CC  #446 branch-free zero run.
@@ -198864,7 +200558,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "158e13aee8cdd4b0";
+    static final String SPLICED_GENCODE_DIGEST = "f7bd1b9abbb8ceec";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];
@@ -199375,6 +201069,14 @@ public class TaCodegenServe {
         ABSTRACT.put("CG", new AbsFunc("CG", "Momentum Indicators", "Center of Gravity Oscillator", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Number of bars in the window",10.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("CHOP", new AbsFunc("CHOP", "Momentum Indicators", "Choppiness Index", 33554432,
+            new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("CHOPTR", new AbsFunc("CHOPTR", "Momentum Indicators", "Choppiness Index (True Range Box)", 33554432,
+            new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("CMF", new AbsFunc("CMF", "Volume Indicators", "Chaikin Money Flow", 33554432,
             new AbsIn[]{ new AbsIn(0,"inPriceHLCV",30) },
@@ -200083,6 +201785,8 @@ public class TaCodegenServe {
         "TA_CDLXSIDEGAP3METHODS",
         "TA_CEIL",
         "TA_CG",
+        "TA_CHOP",
+        "TA_CHOPTR",
         "TA_CMF",
         "TA_CMO",
         "TA_CMOU",
@@ -200304,134 +202008,136 @@ public class TaCodegenServe {
             case 84: return handle_CDLXSIDEGAP3METHODS(json);
             case 85: return handle_CEIL(json);
             case 86: return handle_CG(json);
-            case 87: return handle_CMF(json);
-            case 88: return handle_CMO(json);
-            case 89: return handle_CMOU(json);
-            case 90: return handle_COPPOCK(json);
-            case 91: return handle_CORREL(json);
-            case 92: return handle_COS(json);
-            case 93: return handle_COSH(json);
-            case 94: return handle_CRSI(json);
-            case 95: return handle_CTI(json);
-            case 96: return handle_CUMSUM(json);
-            case 97: return handle_CVI(json);
-            case 98: return handle_DEMA(json);
-            case 99: return handle_DIV(json);
-            case 100: return handle_DONCHIAN(json);
-            case 101: return handle_DPO(json);
-            case 102: return handle_DX(json);
-            case 103: return handle_EFI(json);
-            case 104: return handle_EMA(json);
-            case 105: return handle_EMV(json);
-            case 106: return handle_ER(json);
-            case 107: return handle_ERI(json);
-            case 108: return handle_EXP(json);
-            case 109: return handle_FLOOR(json);
-            case 110: return handle_FOSC(json);
-            case 111: return handle_FRACTAL(json);
-            case 112: return handle_FRAMA(json);
-            case 113: return handle_HA(json);
-            case 114: return handle_HMA(json);
-            case 115: return handle_HT_DCPERIOD(json);
-            case 116: return handle_HT_DCPHASE(json);
-            case 117: return handle_HT_PHASOR(json);
-            case 118: return handle_HT_SINE(json);
-            case 119: return handle_HT_TRENDLINE(json);
-            case 120: return handle_HT_TRENDMODE(json);
-            case 121: return handle_IMI(json);
-            case 122: return handle_KAMA(json);
-            case 123: return handle_KC(json);
-            case 124: return handle_KDJ(json);
-            case 125: return handle_KST(json);
-            case 126: return handle_KURTOSIS(json);
-            case 127: return handle_LINEARREG(json);
-            case 128: return handle_LINEARREG_ANGLE(json);
-            case 129: return handle_LINEARREG_INTERCEPT(json);
-            case 130: return handle_LINEARREG_SLOPE(json);
-            case 131: return handle_LN(json);
-            case 132: return handle_LOG10(json);
-            case 133: return handle_MA(json);
-            case 134: return handle_MACD(json);
-            case 135: return handle_MACDEXT(json);
-            case 136: return handle_MACDFIX(json);
-            case 137: return handle_MAMA(json);
-            case 138: return handle_MARKETFI(json);
-            case 139: return handle_MASSI(json);
-            case 140: return handle_MAVP(json);
-            case 141: return handle_MAX(json);
-            case 142: return handle_MAXINDEX(json);
-            case 143: return handle_MCGD(json);
-            case 144: return handle_MEDIAN(json);
-            case 145: return handle_MEDPRICE(json);
-            case 146: return handle_MFI(json);
-            case 147: return handle_MIDPOINT(json);
-            case 148: return handle_MIDPRICE(json);
-            case 149: return handle_MIN(json);
-            case 150: return handle_MININDEX(json);
-            case 151: return handle_MINMAX(json);
-            case 152: return handle_MINMAXINDEX(json);
-            case 153: return handle_MINUS_DI(json);
-            case 154: return handle_MINUS_DM(json);
-            case 155: return handle_MOM(json);
-            case 156: return handle_MULT(json);
-            case 157: return handle_NATR(json);
-            case 158: return handle_NVI(json);
-            case 159: return handle_OBV(json);
-            case 160: return handle_PERCENTB(json);
-            case 161: return handle_PERCENTILE(json);
-            case 162: return handle_PERCENTRANK(json);
-            case 163: return handle_PLUS_DI(json);
-            case 164: return handle_PLUS_DM(json);
-            case 165: return handle_PPO(json);
-            case 166: return handle_PVI(json);
-            case 167: return handle_PVO(json);
-            case 168: return handle_PVT(json);
-            case 169: return handle_QSTICK(json);
-            case 170: return handle_RMA(json);
-            case 171: return handle_ROC(json);
-            case 172: return handle_ROCP(json);
-            case 173: return handle_ROCR(json);
-            case 174: return handle_ROCR100(json);
-            case 175: return handle_RSI(json);
-            case 176: return handle_RVI(json);
-            case 177: return handle_RVIR(json);
-            case 178: return handle_RVOL(json);
-            case 179: return handle_SAR(json);
-            case 180: return handle_SAREXT(json);
-            case 181: return handle_SI(json);
-            case 182: return handle_SIN(json);
-            case 183: return handle_SINH(json);
-            case 184: return handle_SMA(json);
-            case 185: return handle_SMI(json);
-            case 186: return handle_SQRT(json);
-            case 187: return handle_STDDEV(json);
-            case 188: return handle_STOCH(json);
-            case 189: return handle_STOCHF(json);
-            case 190: return handle_STOCHRSI(json);
-            case 191: return handle_SUB(json);
-            case 192: return handle_SUM(json);
-            case 193: return handle_SUPERTREND(json);
-            case 194: return handle_T3(json);
-            case 195: return handle_TAN(json);
-            case 196: return handle_TANH(json);
-            case 197: return handle_TEMA(json);
-            case 198: return handle_TRANGE(json);
-            case 199: return handle_TRIMA(json);
-            case 200: return handle_TRIX(json);
-            case 201: return handle_TSF(json);
-            case 202: return handle_TSI(json);
-            case 203: return handle_TYPPRICE(json);
-            case 204: return handle_ULTOSC(json);
-            case 205: return handle_VAR(json);
-            case 206: return handle_VHF(json);
-            case 207: return handle_VORTEX(json);
-            case 208: return handle_VWAP(json);
-            case 209: return handle_VWMA(json);
-            case 210: return handle_WAD(json);
-            case 211: return handle_WCLPRICE(json);
-            case 212: return handle_WILLR(json);
-            case 213: return handle_WMA(json);
-            case 214: return handle_ZLEMA(json);
+            case 87: return handle_CHOP(json);
+            case 88: return handle_CHOPTR(json);
+            case 89: return handle_CMF(json);
+            case 90: return handle_CMO(json);
+            case 91: return handle_CMOU(json);
+            case 92: return handle_COPPOCK(json);
+            case 93: return handle_CORREL(json);
+            case 94: return handle_COS(json);
+            case 95: return handle_COSH(json);
+            case 96: return handle_CRSI(json);
+            case 97: return handle_CTI(json);
+            case 98: return handle_CUMSUM(json);
+            case 99: return handle_CVI(json);
+            case 100: return handle_DEMA(json);
+            case 101: return handle_DIV(json);
+            case 102: return handle_DONCHIAN(json);
+            case 103: return handle_DPO(json);
+            case 104: return handle_DX(json);
+            case 105: return handle_EFI(json);
+            case 106: return handle_EMA(json);
+            case 107: return handle_EMV(json);
+            case 108: return handle_ER(json);
+            case 109: return handle_ERI(json);
+            case 110: return handle_EXP(json);
+            case 111: return handle_FLOOR(json);
+            case 112: return handle_FOSC(json);
+            case 113: return handle_FRACTAL(json);
+            case 114: return handle_FRAMA(json);
+            case 115: return handle_HA(json);
+            case 116: return handle_HMA(json);
+            case 117: return handle_HT_DCPERIOD(json);
+            case 118: return handle_HT_DCPHASE(json);
+            case 119: return handle_HT_PHASOR(json);
+            case 120: return handle_HT_SINE(json);
+            case 121: return handle_HT_TRENDLINE(json);
+            case 122: return handle_HT_TRENDMODE(json);
+            case 123: return handle_IMI(json);
+            case 124: return handle_KAMA(json);
+            case 125: return handle_KC(json);
+            case 126: return handle_KDJ(json);
+            case 127: return handle_KST(json);
+            case 128: return handle_KURTOSIS(json);
+            case 129: return handle_LINEARREG(json);
+            case 130: return handle_LINEARREG_ANGLE(json);
+            case 131: return handle_LINEARREG_INTERCEPT(json);
+            case 132: return handle_LINEARREG_SLOPE(json);
+            case 133: return handle_LN(json);
+            case 134: return handle_LOG10(json);
+            case 135: return handle_MA(json);
+            case 136: return handle_MACD(json);
+            case 137: return handle_MACDEXT(json);
+            case 138: return handle_MACDFIX(json);
+            case 139: return handle_MAMA(json);
+            case 140: return handle_MARKETFI(json);
+            case 141: return handle_MASSI(json);
+            case 142: return handle_MAVP(json);
+            case 143: return handle_MAX(json);
+            case 144: return handle_MAXINDEX(json);
+            case 145: return handle_MCGD(json);
+            case 146: return handle_MEDIAN(json);
+            case 147: return handle_MEDPRICE(json);
+            case 148: return handle_MFI(json);
+            case 149: return handle_MIDPOINT(json);
+            case 150: return handle_MIDPRICE(json);
+            case 151: return handle_MIN(json);
+            case 152: return handle_MININDEX(json);
+            case 153: return handle_MINMAX(json);
+            case 154: return handle_MINMAXINDEX(json);
+            case 155: return handle_MINUS_DI(json);
+            case 156: return handle_MINUS_DM(json);
+            case 157: return handle_MOM(json);
+            case 158: return handle_MULT(json);
+            case 159: return handle_NATR(json);
+            case 160: return handle_NVI(json);
+            case 161: return handle_OBV(json);
+            case 162: return handle_PERCENTB(json);
+            case 163: return handle_PERCENTILE(json);
+            case 164: return handle_PERCENTRANK(json);
+            case 165: return handle_PLUS_DI(json);
+            case 166: return handle_PLUS_DM(json);
+            case 167: return handle_PPO(json);
+            case 168: return handle_PVI(json);
+            case 169: return handle_PVO(json);
+            case 170: return handle_PVT(json);
+            case 171: return handle_QSTICK(json);
+            case 172: return handle_RMA(json);
+            case 173: return handle_ROC(json);
+            case 174: return handle_ROCP(json);
+            case 175: return handle_ROCR(json);
+            case 176: return handle_ROCR100(json);
+            case 177: return handle_RSI(json);
+            case 178: return handle_RVI(json);
+            case 179: return handle_RVIR(json);
+            case 180: return handle_RVOL(json);
+            case 181: return handle_SAR(json);
+            case 182: return handle_SAREXT(json);
+            case 183: return handle_SI(json);
+            case 184: return handle_SIN(json);
+            case 185: return handle_SINH(json);
+            case 186: return handle_SMA(json);
+            case 187: return handle_SMI(json);
+            case 188: return handle_SQRT(json);
+            case 189: return handle_STDDEV(json);
+            case 190: return handle_STOCH(json);
+            case 191: return handle_STOCHF(json);
+            case 192: return handle_STOCHRSI(json);
+            case 193: return handle_SUB(json);
+            case 194: return handle_SUM(json);
+            case 195: return handle_SUPERTREND(json);
+            case 196: return handle_T3(json);
+            case 197: return handle_TAN(json);
+            case 198: return handle_TANH(json);
+            case 199: return handle_TEMA(json);
+            case 200: return handle_TRANGE(json);
+            case 201: return handle_TRIMA(json);
+            case 202: return handle_TRIX(json);
+            case 203: return handle_TSF(json);
+            case 204: return handle_TSI(json);
+            case 205: return handle_TYPPRICE(json);
+            case 206: return handle_ULTOSC(json);
+            case 207: return handle_VAR(json);
+            case 208: return handle_VHF(json);
+            case 209: return handle_VORTEX(json);
+            case 210: return handle_VWAP(json);
+            case 211: return handle_VWMA(json);
+            case 212: return handle_WAD(json);
+            case 213: return handle_WCLPRICE(json);
+            case 214: return handle_WILLR(json);
+            case 215: return handle_WMA(json);
+            case 216: return handle_ZLEMA(json);
             default: return null;
         }
     }
@@ -214817,6 +216523,328 @@ public class TaCodegenServe {
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         rideCg(core, json, endIdx, inReal, optInTimePeriod, sb);
+        sb.append("}");
+        return sb.toString();
+    }
+
+    static String handle_CHOP(String json) {
+        int startIdx = jsonInt(json, "startIdx");
+        int endIdx = jsonInt(json, "endIdx");
+        int use_preloaded = jsonInt(json, "use_preloaded");
+        int bench_iters = jsonInt(json, "iters");
+        if (bench_iters < 1) bench_iters = 1;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
+        if (use_preloaded != 0 && refN > 0) {
+            inHigh = new double[MAX_ARRAY_SIZE];
+            System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
+            System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
+            System.arraycopy(refClose, 0, inClose, 0, refN);
+        } else {
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
+        }
+        boolean _optRejected = false;
+        int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+        // The output buffers are sized to the count the call actually PRODUCES --
+        // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
+        // never below one. Not to the width of the requested range: that is the bound the
+        // managed backends check and the Rust asserts state, and at the range width it was
+        // slack by exactly the lookback, so no call could ever approach it.
+        // The pad is there because a bound is a MINIMUM, never an equality. A caller
+        // re-using a pre-allocated buffer passes a larger one, and that is not an error --
+        // the reported OutRange is what says which part was written. So the harness sends
+        // both: the startIdx axis sends no pad (the bound is reachable) while the
+        // full-range value comparison sends one (slack is legal). Sizing every call one way
+        // would silently drop the other property.
+        // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
+        // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
+        // for a range shorter than the lookback, where the output bound switches off and
+        // the spec says any length will do, including none. It does not: two EMPTY output
+        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
+        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
+        // accepted by C and Java -- a four-way divergence on a call the specification says
+        // all four accept. Sizing to zero here would reach it on every multi-output
+        // function, which is a semantic question, not a harness one. Recorded as
+        // error-handling-spec, open item 11.
+        // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
+        // sizes and cannot make the check, so an exact buffer would test nothing there.
+        int _lb = core.chopLookback(optInTimePeriod);
+        int _cs = startIdx > _lb ? startIdx : _lb;
+        int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
+        double[] outArr0 = new double[_outLen];
+        MInteger outBegIdx = new MInteger();
+        MInteger outNBElement = new MInteger();
+        RetCode rc = RetCode.SUCCESS;
+        int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        long startNs = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+        if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                rc = core.chopImpl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        } else {
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _pr = core.chop(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.SUCCESS;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        }
+        }
+        else if (_optRejected) { rc = RetCode.BAD_PARAM; }
+        else { try {
+            if (bench_mode == 1) {
+                core.chopOpen(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod);
+            } else {
+                Core.ChopStream _wh = core.chopOpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
+            }
+            rc = RetCode.SUCCESS;
+        } catch (RuntimeException _e) { rc = _e instanceof TALibFailure ? ((TALibFailure)_e).retCode() : RetCode.BAD_PARAM; } }
+        }
+        long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _fr = core.chop(startIdx, endIdx, f_inHigh, f_inLow, f_inClose, optInTimePeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.SUCCESS;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+            usedFloat = 1;
+        }
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            StringBuilder hb = new StringBuilder();
+            hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            rideChop(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, hb);
+            hb.append("}");
+            return hb.toString();
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"retCode\":").append(rc.toInt());
+        sb.append(",\"outBegIdx\":").append(outBegIdx.value);
+        sb.append(",\"outNBElement\":").append(outNBElement.value);
+        sb.append(",\"out_len\":").append(_outLen);
+        sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
+        sb.append(",\"timing_ns\":").append(elapsedNs);
+        rideChop(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, sb);
+        sb.append("}");
+        return sb.toString();
+    }
+
+    static String handle_CHOPTR(String json) {
+        int startIdx = jsonInt(json, "startIdx");
+        int endIdx = jsonInt(json, "endIdx");
+        int use_preloaded = jsonInt(json, "use_preloaded");
+        int bench_iters = jsonInt(json, "iters");
+        if (bench_iters < 1) bench_iters = 1;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
+        if (use_preloaded != 0 && refN > 0) {
+            inHigh = new double[MAX_ARRAY_SIZE];
+            System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
+            System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
+            System.arraycopy(refClose, 0, inClose, 0, refN);
+        } else {
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
+        }
+        boolean _optRejected = false;
+        int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+        // The output buffers are sized to the count the call actually PRODUCES --
+        // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
+        // never below one. Not to the width of the requested range: that is the bound the
+        // managed backends check and the Rust asserts state, and at the range width it was
+        // slack by exactly the lookback, so no call could ever approach it.
+        // The pad is there because a bound is a MINIMUM, never an equality. A caller
+        // re-using a pre-allocated buffer passes a larger one, and that is not an error --
+        // the reported OutRange is what says which part was written. So the harness sends
+        // both: the startIdx axis sends no pad (the bound is reachable) while the
+        // full-range value comparison sends one (slack is legal). Sizing every call one way
+        // would silently drop the other property.
+        // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
+        // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
+        // for a range shorter than the lookback, where the output bound switches off and
+        // the spec says any length will do, including none. It does not: two EMPTY output
+        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
+        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
+        // accepted by C and Java -- a four-way divergence on a call the specification says
+        // all four accept. Sizing to zero here would reach it on every multi-output
+        // function, which is a semantic question, not a harness one. Recorded as
+        // error-handling-spec, open item 11.
+        // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
+        // sizes and cannot make the check, so an exact buffer would test nothing there.
+        int _lb = core.choptrLookback(optInTimePeriod);
+        int _cs = startIdx > _lb ? startIdx : _lb;
+        int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
+        double[] outArr0 = new double[_outLen];
+        MInteger outBegIdx = new MInteger();
+        MInteger outNBElement = new MInteger();
+        RetCode rc = RetCode.SUCCESS;
+        int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        long startNs = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+        if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                rc = core.choptrImpl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        } else {
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _pr = core.choptr(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.SUCCESS;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        }
+        }
+        else if (_optRejected) { rc = RetCode.BAD_PARAM; }
+        else { try {
+            if (bench_mode == 1) {
+                core.choptrOpen(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod);
+            } else {
+                Core.ChoptrStream _wh = core.choptrOpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
+            }
+            rc = RetCode.SUCCESS;
+        } catch (RuntimeException _e) { rc = _e instanceof TALibFailure ? ((TALibFailure)_e).retCode() : RetCode.BAD_PARAM; } }
+        }
+        long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _fr = core.choptr(startIdx, endIdx, f_inHigh, f_inLow, f_inClose, optInTimePeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.SUCCESS;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+            usedFloat = 1;
+        }
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            StringBuilder hb = new StringBuilder();
+            hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            rideChoptr(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, hb);
+            hb.append("}");
+            return hb.toString();
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"retCode\":").append(rc.toInt());
+        sb.append(",\"outBegIdx\":").append(outBegIdx.value);
+        sb.append(",\"outNBElement\":").append(outNBElement.value);
+        sb.append(",\"out_len\":").append(_outLen);
+        sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
+        sb.append(",\"timing_ns\":").append(elapsedNs);
+        rideChoptr(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -248643,6 +250671,332 @@ public class TaCodegenServe {
         return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
+    static String sv_CHOP(String json) {
+        int svShape = jsonInt(json, "gen_shape");
+        int svSeed = jsonInt(json, "gen_seed");
+        int svN = jsonInt(json, "gen_n");
+        if (svN < 2) svN = 2;
+        if (svN > 256) svN = 256;
+        int svK = jsonInt(json, "unstablePeriod");
+        int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 14;
+        double[] fz_o = new double[svN];
+        double[] fz_h = new double[svN];
+        double[] fz_l = new double[svN];
+        double[] fz_c = new double[svN];
+        double[] fz_v = new double[svN];
+        double[] fz_oi = new double[svN];
+        FuzzData.fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
+        double[] b0 = new double[svN];
+        long legs = 0;
+        boolean allOk = true;
+        boolean peekAll = true;
+        long peekReps = 0;
+        long peekRejects = 0;
+        boolean peekRepAll = true;
+        int fillChecked = 0;
+        boolean fillOk = true;
+        MInteger beg = new MInteger();
+        MInteger nb = new MInteger();
+        String diag = "";
+        int rangeChecked = 0;
+        boolean rangeOk = true;
+        long rangeLegs = 0;
+        int rangeSites = 0;
+        long[] zsign = { 0 };
+        int rounds = 1;
+        for (int rd = 0; rd < rounds; rd++) {
+            Core c2 = new Core();
+            RetCode rc;
+            try { rc = c2.chopImpl(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
+            int lb = c2.chopLookback(optInTimePeriod);
+            if (rc != RetCode.SUCCESS || nb.value == 0) {
+                boolean openRejects;
+                try { c2.chopOpen(fz_h, fz_l, fz_c, optInTimePeriod); openRejects = false; } catch (IllegalArgumentException _e) { openRejects = true; }
+                return "{\"retCode\":" + rc.toInt() + ",\"legs\":0,\"nb\":" + nb.value + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
+            }
+            fillChecked = 1;
+            try {
+                double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                Core.ChopStream _fh = c2.chopOpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, f0);
+                OutRange _fr = _fh.outRange();
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
+                else {
+                    for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
+                }
+                try { c2.chopOpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, fz_h); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
+            } catch (IllegalArgumentException _e) { fillOk = false; }
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
+            java.util.Arrays.sort(pcs);
+            int prevP = -1;
+            for (int pi = 0; pi < pcs.length; pi++) {
+                int p = pcs[pi];
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
+                prevP = p;
+                Core.ChopStream st;
+                try { st = c2.chopOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
+                legs++;
+                if (svXtierNe(st.value(), b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                for (int t = p; t < svN; t++) {
+                    boolean pkTook = true;
+                    double pk = 0;
+                    try { pk = st.peek(fz_h[t], fz_l[t], fz_c[t]); } catch (IllegalArgumentException _e) { pkTook = false; peekRejects++; }
+                    if (t % 7 == 0) {
+                        boolean rpTook = pkTook;
+                        try { st.peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]); } catch (IllegalArgumentException _e) { peekRejects++; }
+                        double rp = 0;
+                        try { rp = st.peek(fz_h[t], fz_l[t], fz_c[t]); } catch (IllegalArgumentException _e) { rpTook = false; }
+                        if (rpTook) {
+                            peekReps++;
+                            if (svBne(rp, pk)) peekRepAll = false;
+                        } else { peekRejects++; }
+                    }
+                    double up = st.update(fz_h[t], fz_l[t], fz_c[t]);
+                    if (pkTook && svBne(pk, up)) peekAll = false;
+                    try { st.peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]); } catch (IllegalArgumentException _e) { peekRejects++; }
+                    if (svBne(st.value(), up)) allOk = false;
+                    if (svXtierNe(up, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up)) + "\""; }
+                }
+                if (allOk) {
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
+                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
+                    rangeLegs++; rangeSites |= 16;
+                    st.advance();
+                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value + 1) rangeOk = false;
+                }
+            }
+            {
+                int p0 = lb + 1;
+                if (p0 <= svN - 1) {
+                    try {
+                        Core.ChopStream sA = c2.chopOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
+                        int mid = (p0 + svN) / 2;
+                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t]);
+                        Core.ChopStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        for (int t = mid; t < svN; t++) {
+                            double uA = sA.update(fz_h[t], fz_l[t], fz_c[t]);
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        if (allOk) {
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 8;
+                            if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                        }
+                    } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
+                }
+            }
+            if (lb >= 1 && lb < svN) {
+                try { c2.chopOpen(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
+                catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.chopOpenAndFill(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
+            }
+            try {
+                Core.ChopStream sD = c2.chopOpen(fz_h, fz_l, fz_c, Integer.MIN_VALUE);
+                Core.ChopStream sE = c2.chopOpen(fz_h, fz_l, fz_c, 14);
+                if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+            } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.chopImpl(Sidx, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rcS = ((TALibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.SUCCESS && nbS.value > 0) {
+                        try {
+                            Core.ChopStream stA = c2.chopOpenInternal(java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
+        }
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign[0] + diag + "}";
+    }
+
+    static String sv_CHOPTR(String json) {
+        int svShape = jsonInt(json, "gen_shape");
+        int svSeed = jsonInt(json, "gen_seed");
+        int svN = jsonInt(json, "gen_n");
+        if (svN < 2) svN = 2;
+        if (svN > 256) svN = 256;
+        int svK = jsonInt(json, "unstablePeriod");
+        int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 14;
+        double[] fz_o = new double[svN];
+        double[] fz_h = new double[svN];
+        double[] fz_l = new double[svN];
+        double[] fz_c = new double[svN];
+        double[] fz_v = new double[svN];
+        double[] fz_oi = new double[svN];
+        FuzzData.fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
+        double[] b0 = new double[svN];
+        long legs = 0;
+        boolean allOk = true;
+        boolean peekAll = true;
+        long peekReps = 0;
+        long peekRejects = 0;
+        boolean peekRepAll = true;
+        int fillChecked = 0;
+        boolean fillOk = true;
+        MInteger beg = new MInteger();
+        MInteger nb = new MInteger();
+        String diag = "";
+        int rangeChecked = 0;
+        boolean rangeOk = true;
+        long rangeLegs = 0;
+        int rangeSites = 0;
+        long[] zsign = { 0 };
+        int rounds = 1;
+        for (int rd = 0; rd < rounds; rd++) {
+            Core c2 = new Core();
+            RetCode rc;
+            try { rc = c2.choptrImpl(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
+            int lb = c2.choptrLookback(optInTimePeriod);
+            if (rc != RetCode.SUCCESS || nb.value == 0) {
+                boolean openRejects;
+                try { c2.choptrOpen(fz_h, fz_l, fz_c, optInTimePeriod); openRejects = false; } catch (IllegalArgumentException _e) { openRejects = true; }
+                return "{\"retCode\":" + rc.toInt() + ",\"legs\":0,\"nb\":" + nb.value + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
+            }
+            fillChecked = 1;
+            try {
+                double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                Core.ChoptrStream _fh = c2.choptrOpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, f0);
+                OutRange _fr = _fh.outRange();
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
+                else {
+                    for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
+                }
+                try { c2.choptrOpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, fz_h); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
+            } catch (IllegalArgumentException _e) { fillOk = false; }
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
+            java.util.Arrays.sort(pcs);
+            int prevP = -1;
+            for (int pi = 0; pi < pcs.length; pi++) {
+                int p = pcs[pi];
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
+                prevP = p;
+                Core.ChoptrStream st;
+                try { st = c2.choptrOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
+                legs++;
+                if (svXtierNe(st.value(), b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                for (int t = p; t < svN; t++) {
+                    boolean pkTook = true;
+                    double pk = 0;
+                    try { pk = st.peek(fz_h[t], fz_l[t], fz_c[t]); } catch (IllegalArgumentException _e) { pkTook = false; peekRejects++; }
+                    if (t % 7 == 0) {
+                        boolean rpTook = pkTook;
+                        try { st.peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]); } catch (IllegalArgumentException _e) { peekRejects++; }
+                        double rp = 0;
+                        try { rp = st.peek(fz_h[t], fz_l[t], fz_c[t]); } catch (IllegalArgumentException _e) { rpTook = false; }
+                        if (rpTook) {
+                            peekReps++;
+                            if (svBne(rp, pk)) peekRepAll = false;
+                        } else { peekRejects++; }
+                    }
+                    double up = st.update(fz_h[t], fz_l[t], fz_c[t]);
+                    if (pkTook && svBne(pk, up)) peekAll = false;
+                    try { st.peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]); } catch (IllegalArgumentException _e) { peekRejects++; }
+                    if (svBne(st.value(), up)) allOk = false;
+                    if (svXtierNe(up, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up)) + "\""; }
+                }
+                if (allOk) {
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
+                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
+                    rangeLegs++; rangeSites |= 16;
+                    st.advance();
+                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value + 1) rangeOk = false;
+                }
+            }
+            {
+                int p0 = lb + 1;
+                if (p0 <= svN - 1) {
+                    try {
+                        Core.ChoptrStream sA = c2.choptrOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
+                        int mid = (p0 + svN) / 2;
+                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t]);
+                        Core.ChoptrStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        for (int t = mid; t < svN; t++) {
+                            double uA = sA.update(fz_h[t], fz_l[t], fz_c[t]);
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        if (allOk) {
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 8;
+                            if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                        }
+                    } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
+                }
+            }
+            if (lb >= 1 && lb < svN) {
+                try { c2.choptrOpen(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
+                catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.choptrOpenAndFill(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
+            }
+            try {
+                Core.ChoptrStream sD = c2.choptrOpen(fz_h, fz_l, fz_c, Integer.MIN_VALUE);
+                Core.ChoptrStream sE = c2.choptrOpen(fz_h, fz_l, fz_c, 14);
+                if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+            } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.choptrImpl(Sidx, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rcS = ((TALibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.SUCCESS && nbS.value > 0) {
+                        try {
+                            Core.ChoptrStream stA = c2.choptrOpenInternal(java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
+        }
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign[0] + diag + "}";
+    }
+
     static String sv_CMF(String json) {
         int svShape = jsonInt(json, "gen_shape");
         int svSeed = jsonInt(json, "gen_seed");
@@ -270304,6 +272658,8 @@ public class TaCodegenServe {
         case "TA_CDLXSIDEGAP3METHODS": return sv_CDLXSIDEGAP3METHODS(json);
         case "TA_CEIL": return sv_CEIL(json);
         case "TA_CG": return sv_CG(json);
+        case "TA_CHOP": return sv_CHOP(json);
+        case "TA_CHOPTR": return sv_CHOPTR(json);
         case "TA_CMF": return sv_CMF(json);
         case "TA_CMO": return sv_CMO(json);
         case "TA_CMOU": return sv_CMOU(json);
@@ -279349,6 +281705,208 @@ public class TaCodegenServe {
             double[] fb0 = new double[m];
             try {
                 Core.CgStream st2 = core.cgOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, fb0);
+                if (st2.outRange().begIdx() != beg || st2.outRange().count() != nb) { r.ok = false; r.leg = 2; }
+                if (r.ok) {
+                    for (int k = 0; k < nb; k++) {
+                        boolean cmp = true;
+                        if (cmp && svXtierNe(rb0[k], fb0[k], r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[k]); r.stream = Double.doubleToRawLongBits(fb0[k]); }
+                        if (cmp) r.fillBars++;
+                        if (!cmp) { r.ok = false; r.leg = 2; r.bar = beg + k; break; }
+                    }
+                }
+            } catch (RuntimeException _e) { r.ok = false; r.leg = 2; }
+        }
+
+        if (r.ok) {
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
+            rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
+        }
+    }
+
+    static void rideChop(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, StringBuilder sb) {
+        if (!rideGate(json)) return;
+        RideResult r = new RideResult();
+        rideBodyChop(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, r);
+        r.emit(sb);
+    }
+
+    @SuppressWarnings("unused")
+    static void rideBodyChop(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, RideResult r) {
+        try { r.lb = core.chopLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
+        int lb = r.lb;
+        int navail = endIdx + 1;
+        if (inHigh.length < navail) navail = inHigh.length;
+        if (inLow.length < navail) navail = inLow.length;
+        if (inClose.length < navail) navail = inClose.length;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
+        if (m > navail) m = navail;
+        r.m = m;
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
+        if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
+
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CHOP");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
+            r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
+        }
+
+        double[] rb0 = new double[m];
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
+        try { OutRange _rr = core.chop(0, m - 1, java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.chopOpen(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.chopOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
+        if (nb == 0) { r.skip = 5; return; }
+        if (beg != lb) { r.skip = 6; return; }
+
+        try {
+            boolean cmp;
+            Core.ChopStream st = core.chopOpen(java.util.Arrays.copyOf(inHigh, lb + 1), java.util.Arrays.copyOf(inLow, lb + 1), java.util.Arrays.copyOf(inClose, lb + 1), optInTimePeriod);
+            double uv = st.value();
+            cmp = true;
+            if (cmp && svXtierNe(rb0[lb - beg], uv, r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[lb - beg]); r.stream = Double.doubleToRawLongBits(uv); }
+            if (cmp) r.openBars++;
+            if (!cmp) { r.ok = false; r.leg = 1; r.bar = lb; }
+            for (int t = lb + 1; r.ok && t < m; t++) {
+                double uv2 = st.update(inHigh[t], inLow[t], inClose[t]);
+                uv = uv2;
+                cmp = true;
+                if (cmp && svXtierNe(rb0[t - beg], uv, r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[t - beg]); r.stream = Double.doubleToRawLongBits(uv); }
+                if (cmp) r.openBars++;
+                if (!cmp) { r.ok = false; r.leg = 1; r.bar = t; }
+            }
+        } catch (RuntimeException _e) { r.ok = false; r.leg = 1; }
+
+        if (r.ok) {
+            double[] fb0 = new double[m];
+            try {
+                Core.ChopStream st2 = core.chopOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod, fb0);
+                if (st2.outRange().begIdx() != beg || st2.outRange().count() != nb) { r.ok = false; r.leg = 2; }
+                if (r.ok) {
+                    for (int k = 0; k < nb; k++) {
+                        boolean cmp = true;
+                        if (cmp && svXtierNe(rb0[k], fb0[k], r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[k]); r.stream = Double.doubleToRawLongBits(fb0[k]); }
+                        if (cmp) r.fillBars++;
+                        if (!cmp) { r.ok = false; r.leg = 2; r.bar = beg + k; break; }
+                    }
+                }
+            } catch (RuntimeException _e) { r.ok = false; r.leg = 2; }
+        }
+
+        if (r.ok) {
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
+            rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
+        }
+    }
+
+    static void rideChoptr(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, StringBuilder sb) {
+        if (!rideGate(json)) return;
+        RideResult r = new RideResult();
+        rideBodyChoptr(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, r);
+        r.emit(sb);
+    }
+
+    @SuppressWarnings("unused")
+    static void rideBodyChoptr(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, RideResult r) {
+        try { r.lb = core.choptrLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
+        int lb = r.lb;
+        int navail = endIdx + 1;
+        if (inHigh.length < navail) navail = inHigh.length;
+        if (inLow.length < navail) navail = inLow.length;
+        if (inClose.length < navail) navail = inClose.length;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
+        if (m > navail) m = navail;
+        r.m = m;
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
+        if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
+
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CHOPTR");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
+            r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
+        }
+
+        double[] rb0 = new double[m];
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
+        try { OutRange _rr = core.choptr(0, m - 1, java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.choptrOpen(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.choptrOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
+        if (nb == 0) { r.skip = 5; return; }
+        if (beg != lb) { r.skip = 6; return; }
+
+        try {
+            boolean cmp;
+            Core.ChoptrStream st = core.choptrOpen(java.util.Arrays.copyOf(inHigh, lb + 1), java.util.Arrays.copyOf(inLow, lb + 1), java.util.Arrays.copyOf(inClose, lb + 1), optInTimePeriod);
+            double uv = st.value();
+            cmp = true;
+            if (cmp && svXtierNe(rb0[lb - beg], uv, r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[lb - beg]); r.stream = Double.doubleToRawLongBits(uv); }
+            if (cmp) r.openBars++;
+            if (!cmp) { r.ok = false; r.leg = 1; r.bar = lb; }
+            for (int t = lb + 1; r.ok && t < m; t++) {
+                double uv2 = st.update(inHigh[t], inLow[t], inClose[t]);
+                uv = uv2;
+                cmp = true;
+                if (cmp && svXtierNe(rb0[t - beg], uv, r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[t - beg]); r.stream = Double.doubleToRawLongBits(uv); }
+                if (cmp) r.openBars++;
+                if (!cmp) { r.ok = false; r.leg = 1; r.bar = t; }
+            }
+        } catch (RuntimeException _e) { r.ok = false; r.leg = 1; }
+
+        if (r.ok) {
+            double[] fb0 = new double[m];
+            try {
+                Core.ChoptrStream st2 = core.choptrOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod, fb0);
                 if (st2.outRange().begIdx() != beg || st2.outRange().count() != nb) { r.ok = false; r.leg = 2; }
                 if (r.ok) {
                     for (int k = 0; k < nb; k++) {

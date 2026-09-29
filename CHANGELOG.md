@@ -16,6 +16,8 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   - ASI: Wilder Accumulative Swing Index, the running total of SI (#451)
   - BBW: Bollinger BandWidth, the band spread as a percentage of the middle band (#447)
   - CG: Center of Gravity Oscillator, Ehlers' balance point of the window (#450)
+  - CHOP: Choppiness Index (#469)
+  - CHOPTR: Choppiness Index - True-Range Variant (#469)
   - CRSI: Connors RSI (#431)
   - CTI: Correlation Trend Indicator (#430)
   - EMV: Arms Ease of Movement, the midpoint move per unit of volume-to-range, SMA-smoothed (#465)

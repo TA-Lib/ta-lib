@@ -922,6 +922,7 @@ static ErrorNumber testTAFunction_ALL( void )
    DO_TEST( test_func_marketfi, "MARKETFI" );
    DO_TEST( test_func_emv,       "EMV" );
    DO_TEST( test_func_kst,       "KST" );
+   DO_TEST( test_func_chop,      "CHOP,CHOPTR" );
    DO_TEST( test_func_cmf,       "CMF" );
    DO_TEST( test_func_kc,        "KC" );
    DO_TEST( test_func_donchian,  "DONCHIAN" );

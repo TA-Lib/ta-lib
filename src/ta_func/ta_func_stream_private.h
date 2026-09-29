@@ -102,6 +102,8 @@ struct TA_CDLUPSIDEGAP2CROWS_Stream;
 struct TA_CDLXSIDEGAP3METHODS_Stream;
 struct TA_CEIL_Stream;
 struct TA_CG_Stream;
+struct TA_CHOP_Stream;
+struct TA_CHOPTR_Stream;
 struct TA_CMF_Stream;
 struct TA_CMO_Stream;
 struct TA_CMOU_Stream;
@@ -317,6 +319,8 @@ TA_RetCode TA_CDLUPSIDEGAP2CROWS_OpenInternal( struct TA_CDLUPSIDEGAP2CROWS_Stre
 TA_RetCode TA_CDLXSIDEGAP3METHODS_OpenInternal( struct TA_CDLXSIDEGAP3METHODS_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outInteger );
 TA_RetCode TA_CEIL_OpenInternal( struct TA_CEIL_Stream **stream, const double inReal[], int startIdx, int historyLen, double *outReal );
 TA_RetCode TA_CG_OpenInternal( struct TA_CG_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double *outReal );
+TA_RetCode TA_CHOP_OpenInternal( struct TA_CHOP_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, double *outReal );
+TA_RetCode TA_CHOPTR_OpenInternal( struct TA_CHOPTR_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, double *outReal );
 TA_RetCode TA_CMF_OpenInternal( struct TA_CMF_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int startIdx, int historyLen, int optInTimePeriod, double *outReal );
 TA_RetCode TA_CMO_OpenInternal( struct TA_CMO_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double *outReal );
 TA_RetCode TA_CMOU_OpenInternal( struct TA_CMOU_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double *outReal );
@@ -534,6 +538,8 @@ TA_RetCode TA_CDLUPSIDEGAP2CROWS_OpenAndFillInternal( struct TA_CDLUPSIDEGAP2CRO
 TA_RetCode TA_CDLXSIDEGAP3METHODS_OpenAndFillInternal( struct TA_CDLXSIDEGAP3METHODS_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] );
 TA_RetCode TA_CEIL_OpenAndFillInternal( struct TA_CEIL_Stream **stream, const double inReal[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_CG_OpenAndFillInternal( struct TA_CG_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
+TA_RetCode TA_CHOP_OpenAndFillInternal( struct TA_CHOP_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
+TA_RetCode TA_CHOPTR_OpenAndFillInternal( struct TA_CHOPTR_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_CMF_OpenAndFillInternal( struct TA_CMF_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_CMO_OpenAndFillInternal( struct TA_CMO_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_CMOU_OpenAndFillInternal( struct TA_CMOU_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );

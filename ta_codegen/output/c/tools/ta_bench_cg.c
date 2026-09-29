@@ -113,6 +113,8 @@
 #include "ta_CDLXSIDEGAP3METHODS.c"
 #include "ta_CEIL.c"
 #include "ta_CG.c"
+#include "ta_CHOP.c"
+#include "ta_CHOPTR.c"
 #include "ta_CMF.c"
 #include "ta_CMO.c"
 #include "ta_CMOU.c"
@@ -1737,6 +1739,38 @@ static void bench_all(const char *filter, int iters) {
             g_sink += g_outBuf0[0];
         }
         printf("CG %lld\n", best / iters);
+        fflush(stdout);
+    }
+    if( func_matches(filter, "CHOP") ) {
+        long long best = 0;
+        for( int pass = 0; pass < 3; pass++ ) {
+            int outBegIdx, outNBElement;
+            long long t0 = get_nanotime();
+            for( int it = 0; it < iters; it++ ) {
+                TA_CHOP(0, g_nPoints - 1, g_high, g_low, g_close, 14, &outBegIdx, &outNBElement, g_outBuf0);
+            }
+            long long elapsed = get_nanotime() - t0;
+            if( !best || elapsed < best ) best = elapsed;
+            g_sink += outNBElement;
+            g_sink += g_outBuf0[0];
+        }
+        printf("CHOP %lld\n", best / iters);
+        fflush(stdout);
+    }
+    if( func_matches(filter, "CHOPTR") ) {
+        long long best = 0;
+        for( int pass = 0; pass < 3; pass++ ) {
+            int outBegIdx, outNBElement;
+            long long t0 = get_nanotime();
+            for( int it = 0; it < iters; it++ ) {
+                TA_CHOPTR(0, g_nPoints - 1, g_high, g_low, g_close, 14, &outBegIdx, &outNBElement, g_outBuf0);
+            }
+            long long elapsed = get_nanotime() - t0;
+            if( !best || elapsed < best ) best = elapsed;
+            g_sink += outNBElement;
+            g_sink += g_outBuf0[0];
+        }
+        printf("CHOPTR %lld\n", best / iters);
         fflush(stdout);
     }
     if( func_matches(filter, "CMF") ) {

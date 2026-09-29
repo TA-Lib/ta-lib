@@ -7575,6 +7575,186 @@ TA_LIB_API TA_RetCode TA_CG_Advance( TA_CG_Stream *stream );
 TA_LIB_API TA_RetCode TA_CG_Clone( const TA_CG_Stream *stream, TA_CG_Stream **clone );
 
 /*
+ * TA_CHOP - Choppiness Index
+ * 
+ * Input  = High, Low, Close
+ * Output = double
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod:(From 2 to 100000)
+ *    Time period
+ * 
+ * 
+ */
+TA_LIB_API TA_RetCode TA_CHOP( int    startIdx,
+                               int    endIdx,
+                                          const double inHigh[],
+                                          const double inLow[],
+                                          const double inClose[],
+                                          int           optInTimePeriod, /* From 2 to 100000 */
+                                          int          *outBegIdx,
+                                          int          *outNBElement,
+                                          double        outReal[] );
+
+TA_LIB_API TA_RetCode TA_S_CHOP( int    startIdx,
+                                 int    endIdx,
+                                            const float  inHigh[],
+                                            const float  inLow[],
+                                            const float  inClose[],
+                                            int           optInTimePeriod, /* From 2 to 100000 */
+                                            int          *outBegIdx,
+                                            int          *outNBElement,
+                                            double        outReal[] );
+
+TA_LIB_API int TA_CHOP_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+
+
+
+/*
+ * Streaming API for TA_CHOP: incremental per-bar evaluation.
+ */
+typedef struct TA_CHOP_Stream TA_CHOP_Stream;
+
+TA_LIB_API TA_RetCode TA_CHOP_Open( TA_CHOP_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInTimePeriod, double *outReal );
+
+TA_LIB_API TA_RetCode TA_CHOP_Update( TA_CHOP_Stream *stream, double inHigh, double inLow, double inClose, double *outReal );
+
+TA_LIB_API TA_RetCode TA_CHOP_Peek( const TA_CHOP_Stream *stream, double inHigh, double inLow, double inClose, double *outReal );
+
+TA_LIB_API TA_RetCode TA_CHOP_Close( TA_CHOP_Stream *stream );
+
+/*
+ * OpenAndFill: like Open, but a single pass ALSO fills the caller's arrays
+ * with the whole warm-up history. The fill is bit-identical to
+ * TA_CHOP( 0, historyLen-1, ... ).
+ */
+TA_LIB_API TA_RetCode TA_CHOP_OpenAndFill( TA_CHOP_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
+ * Value: the value(s) at the last bar the stream counted (the bar
+ * TA_CHOP_OutRange ends on), without recomputing. Seeded by Open, refreshed by
+ * every accepted Update, left alone by Peek.
+ */
+TA_LIB_API TA_RetCode TA_CHOP_Value( const TA_CHOP_Stream *stream, double *outReal );
+
+/*
+ * OutRange: the bars this stream has an output for, in the input series'
+ * coordinates. That is [*outBegIdx, *outBegIdx + *outNBElement), the range
+ * TA_CHOP reports over the same bars. Open seeds it; every accepted Update and every
+ * TA_CHOP_Advance adds one; a rejected Update and a Peek change nothing. The
+ * last bar it can reach is TA_INDEX_MAX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
+ */
+TA_LIB_API TA_RetCode TA_CHOP_OutRange( const TA_CHOP_Stream *stream, int *outBegIdx, int *outNBElement );
+
+/*
+ * Advance: count one bar this stream was not fed (one an Update rejected and
+ * that will not be re-fed, or a session with no print). The range moves by one
+ * and nothing else does, so TA_CHOP_Value keeps answering the previous output,
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_INDEX_MAX.
+ */
+TA_LIB_API TA_RetCode TA_CHOP_Advance( TA_CHOP_Stream *stream );
+
+/*
+ * Clone: fork the stream. The fork is an independent stream at the same bar,
+ * owning its own copy of everything the original owns. Both must be closed.
+ * The fork carries the value and the range verbatim.
+ */
+TA_LIB_API TA_RetCode TA_CHOP_Clone( const TA_CHOP_Stream *stream, TA_CHOP_Stream **clone );
+
+/*
+ * TA_CHOPTR - Choppiness Index (True Range Box)
+ * 
+ * Input  = High, Low, Close
+ * Output = double
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod:(From 2 to 100000)
+ *    Time period
+ * 
+ * 
+ */
+TA_LIB_API TA_RetCode TA_CHOPTR( int    startIdx,
+                                 int    endIdx,
+                                            const double inHigh[],
+                                            const double inLow[],
+                                            const double inClose[],
+                                            int           optInTimePeriod, /* From 2 to 100000 */
+                                            int          *outBegIdx,
+                                            int          *outNBElement,
+                                            double        outReal[] );
+
+TA_LIB_API TA_RetCode TA_S_CHOPTR( int    startIdx,
+                                   int    endIdx,
+                                              const float  inHigh[],
+                                              const float  inLow[],
+                                              const float  inClose[],
+                                              int           optInTimePeriod, /* From 2 to 100000 */
+                                              int          *outBegIdx,
+                                              int          *outNBElement,
+                                              double        outReal[] );
+
+TA_LIB_API int TA_CHOPTR_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+
+
+
+/*
+ * Streaming API for TA_CHOPTR: incremental per-bar evaluation.
+ */
+typedef struct TA_CHOPTR_Stream TA_CHOPTR_Stream;
+
+TA_LIB_API TA_RetCode TA_CHOPTR_Open( TA_CHOPTR_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInTimePeriod, double *outReal );
+
+TA_LIB_API TA_RetCode TA_CHOPTR_Update( TA_CHOPTR_Stream *stream, double inHigh, double inLow, double inClose, double *outReal );
+
+TA_LIB_API TA_RetCode TA_CHOPTR_Peek( const TA_CHOPTR_Stream *stream, double inHigh, double inLow, double inClose, double *outReal );
+
+TA_LIB_API TA_RetCode TA_CHOPTR_Close( TA_CHOPTR_Stream *stream );
+
+/*
+ * OpenAndFill: like Open, but a single pass ALSO fills the caller's arrays
+ * with the whole warm-up history. The fill is bit-identical to
+ * TA_CHOPTR( 0, historyLen-1, ... ).
+ */
+TA_LIB_API TA_RetCode TA_CHOPTR_OpenAndFill( TA_CHOPTR_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
+ * Value: the value(s) at the last bar the stream counted (the bar
+ * TA_CHOPTR_OutRange ends on), without recomputing. Seeded by Open, refreshed by
+ * every accepted Update, left alone by Peek.
+ */
+TA_LIB_API TA_RetCode TA_CHOPTR_Value( const TA_CHOPTR_Stream *stream, double *outReal );
+
+/*
+ * OutRange: the bars this stream has an output for, in the input series'
+ * coordinates. That is [*outBegIdx, *outBegIdx + *outNBElement), the range
+ * TA_CHOPTR reports over the same bars. Open seeds it; every accepted Update and every
+ * TA_CHOPTR_Advance adds one; a rejected Update and a Peek change nothing. The
+ * last bar it can reach is TA_INDEX_MAX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
+ */
+TA_LIB_API TA_RetCode TA_CHOPTR_OutRange( const TA_CHOPTR_Stream *stream, int *outBegIdx, int *outNBElement );
+
+/*
+ * Advance: count one bar this stream was not fed (one an Update rejected and
+ * that will not be re-fed, or a session with no print). The range moves by one
+ * and nothing else does, so TA_CHOPTR_Value keeps answering the previous output,
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_INDEX_MAX.
+ */
+TA_LIB_API TA_RetCode TA_CHOPTR_Advance( TA_CHOPTR_Stream *stream );
+
+/*
+ * Clone: fork the stream. The fork is an independent stream at the same bar,
+ * owning its own copy of everything the original owns. Both must be closed.
+ * The fork carries the value and the range verbatim.
+ */
+TA_LIB_API TA_RetCode TA_CHOPTR_Clone( const TA_CHOPTR_Stream *stream, TA_CHOPTR_Stream **clone );
+
+/*
  * TA_CMF - Chaikin Money Flow
  * 
  * Input  = High, Low, Close, Volume
