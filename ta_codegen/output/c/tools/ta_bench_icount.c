@@ -7539,6 +7539,57 @@ static void icount_MAXINDEX(int iters) {
     g_sink += acc + outNBElement;
 }
 
+static void icount_MCGD(int iters) {
+    const char *nm = "MCGD";
+    int outBegIdx = 0, outNBElement = 0;
+    double acc = 0.0;
+    TA_RetCode rc;
+    TA_MCGD_Stream *st = NULL;
+    TA_MCGD_Stream *stf = NULL;
+    double v0 = 0.0;
+
+    ICOUNT_ZERO();
+    rc = TA_MCGD(0, g_nPoints - 1, g_close, 14, &outBegIdx, &outNBElement, g_outBuf0);
+    ICOUNT_DUMP("MCGD/batch");
+    icount_row(nm, "batch", 1, rc);
+    acc += g_outBuf0[0];
+
+    ICOUNT_ZERO();
+    rc = TA_MCGD_OpenAndFill(&stf, g_close, g_nPoints, 14, &outBegIdx, &outNBElement, g_outBuf0);
+    ICOUNT_DUMP("MCGD/openfill");
+    icount_row(nm, "openfill", 1, rc);
+    acc += g_outBuf0[0];
+    if( stf ) TA_MCGD_Close(stf);
+
+    ICOUNT_ZERO();
+    rc = TA_MCGD_Open(&st, g_close, g_nPoints, 14, &v0);
+    ICOUNT_DUMP("MCGD/open");
+    icount_row(nm, "open", 1, rc);
+
+    if( rc == TA_SUCCESS && st ) {
+        TA_RetCode src = TA_SUCCESS;
+        ICOUNT_ZERO();
+        for( int it = 0; it < iters; it++ ) {
+            src = TA_MCGD_Update(st, g_close[it & ICOUNT_MASK], &v0);
+            acc += v0;
+        }
+        ICOUNT_DUMP("MCGD/update");
+        icount_row(nm, "update", 1, src);
+        ICOUNT_ZERO();
+        for( int it = 0; it < iters; it++ ) {
+            src = TA_MCGD_Peek(st, g_close[it & ICOUNT_MASK], &v0);
+            acc += v0;
+        }
+        ICOUNT_DUMP("MCGD/peek");
+        icount_row(nm, "peek", 1, src);
+    } else {
+        icount_row(nm, "update", 0, rc);
+        icount_row(nm, "peek", 0, rc);
+    }
+    if( st ) TA_MCGD_Close(st);
+    g_sink += acc + outNBElement;
+}
+
 static void icount_MEDIAN(int iters) {
     const char *nm = "MEDIAN";
     int outBegIdx = 0, outNBElement = 0;
@@ -11344,6 +11395,7 @@ static void icount_all(const char *filter, int iters) {
     if( func_matches(filter, "MAVP") ) { icount_MAVP(iters); fflush(stdout); }
     if( func_matches(filter, "MAX") ) { icount_MAX(iters); fflush(stdout); }
     if( func_matches(filter, "MAXINDEX") ) { icount_MAXINDEX(iters); fflush(stdout); }
+    if( func_matches(filter, "MCGD") ) { icount_MCGD(iters); fflush(stdout); }
     if( func_matches(filter, "MEDIAN") ) { icount_MEDIAN(iters); fflush(stdout); }
     if( func_matches(filter, "MEDPRICE") ) { icount_MEDPRICE(iters); fflush(stdout); }
     if( func_matches(filter, "MFI") ) { icount_MFI(iters); fflush(stdout); }

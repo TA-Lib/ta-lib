@@ -232,7 +232,7 @@
 //! * [`WAD`](Core::wad) — Williams' Accumulation/Distribution
 //! * [`WILLR`](Core::willr) — Williams' %R
 //!
-//! ## Overlap Studies (26)
+//! ## Overlap Studies (27)
 //!
 //! * [`ACCBANDS`](Core::accbands) — Acceleration Bands
 //! * [`BBANDS`](Core::bbands) — Bollinger Bands
@@ -247,6 +247,7 @@
 //! * [`MA`](Core::ma) — Moving average
 //! * [`MAMA`](Core::mama) — MESA Adaptive Moving Average
 //! * [`MAVP`](Core::mavp) — Moving average with variable period
+//! * [`MCGD`](Core::mcgd) — McGinley Dynamic
 //! * [`MIDPOINT`](Core::midpoint) — MidPoint over period
 //! * [`MIDPRICE`](Core::midprice) — Midpoint Price over period
 //! * [`RMA`](Core::rma) — Wilder's Smoothed Moving Average

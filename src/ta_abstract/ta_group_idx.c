@@ -183,6 +183,7 @@ extern const TA_FuncDef TA_DEF_MASSI;
 extern const TA_FuncDef TA_DEF_MAVP;
 extern const TA_FuncDef TA_DEF_MAX;
 extern const TA_FuncDef TA_DEF_MAXINDEX;
+extern const TA_FuncDef TA_DEF_MCGD;
 extern const TA_FuncDef TA_DEF_MEDIAN;
 extern const TA_FuncDef TA_DEF_MEDPRICE;
 extern const TA_FuncDef TA_DEF_MFI;
@@ -304,6 +305,7 @@ const TA_FuncDef *TA_PerGroupFunc_2[] = {
 &TA_DEF_MA,
 &TA_DEF_MAMA,
 &TA_DEF_MAVP,
+&TA_DEF_MCGD,
 &TA_DEF_MIDPOINT,
 &TA_DEF_MIDPRICE,
 &TA_DEF_RMA,

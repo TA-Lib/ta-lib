@@ -24,9 +24,9 @@ enum FuncUnstId {
     HT_DCPERIOD, HT_DCPHASE, HT_PHASOR, HT_SINE, HT_TRENDLINE, HT_TRENDMODE,
     UNUSED_12, KAMA, MAMA, UNUSED_15, MINUS_DI, MINUS_DM,
     NATR, PLUS_DI, PLUS_DM, RSI, UNUSED_22, T3,
-    RMA, HA, RVI, FRAMA,
+    RMA, HA, RVI, FRAMA, MCGD,
     ALL;
-    static final int COUNT = 28;
+    static final int COUNT = 29;
     int value() { return this == ALL ? 65535 : ordinal(); }
 }
 
@@ -134881,6 +134881,660 @@ class Core {
      *
      *  Initial  Name/description
      *  -------------------------------------------------------------------
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
+     *
+     * Change history:
+     *
+     *  MMDDYY BY     Description
+     *  -------------------------------------------------------------------
+     *  092926 MF,CC  First version (issue #471).
+     */
+
+       /**
+        * Number of leading input bars {@link Core#mcgd} consumes before it can
+        * produce its first value.
+        * <p>Equivalently, the index of the first bar with a value when the whole
+        * series is requested. Feed at least {@code lookback + 1} bars to get any
+        * output.
+        * <p>This function is recursive, so the result also includes this
+        * {@code Core}'s unstable-period setting — which is why it is an instance
+        * method.
+        *
+        * @param optInTimePeriod The N of the step's denominator (default 14; range
+        *        2..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @return The lookback, or {@code -1} if a parameter is out of range.
+        */
+       public int mcgdLookback( int optInTimePeriod )
+       {
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 14;
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+             return -1;
+          }
+          return optInTimePeriod - 1 + this.unstablePeriod[FuncUnstId.MCGD.ordinal()] ;
+
+       }
+       RetCode mcgdImpl( int startIdx,
+                         int endIdx,
+                         double inReal[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
+       {
+          int i = 0;
+          int outIdx = 0;
+          int today = 0;
+          int lookbackTotal = 0;
+          int nbMCGD = 0;
+          double prevMD = 0;
+          double tempMD = 0;
+          double tempReal = 0;
+          double ratio = 0;
+          double period = 0;
+          if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX ;
+          }
+          if( (endIdx < 0) || (endIdx > INDEX_MAX) || (endIdx < startIdx)) {
+             return RetCode.OUT_OF_RANGE_END_INDEX ;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 14;
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          outBegIdx.value = 0;
+          outNBElement.value = 0;
+          lookbackTotal = mcgdLookback(optInTimePeriod);
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             return RetCode.SUCCESS ;
+          }
+          period = (double)optInTimePeriod;
+          /* Keep the denominator free of pow(): a transcendental would break the
+           * four languages' bit-identity.
+           *
+           * A step whose value is not finite (a zero price, a zero line meeting a
+           * zero price, or a price so small against the line that the step
+           * overflows) holds the previous value, since every later bar reads it.
+           */
+          today = startIdx - lookbackTotal;
+          prevMD = inReal[today];
+          today += 1;
+          i = lookbackTotal;
+          while( i != 0 ) {
+             tempReal = inReal[today];
+             ratio = tempReal / prevMD;
+             tempMD = prevMD + (tempReal - prevMD) / (period * (ratio * ratio * (ratio * ratio)));
+             if( (Double.isFinite(tempMD)) ) {
+                prevMD = tempMD;
+             }
+             today += 1;
+             i -= 1;
+          }
+          outIdx = 1;
+          outReal[0] = prevMD;
+          nbMCGD = endIdx - startIdx + 1;
+          while( --nbMCGD != 0 ) {
+             tempReal = inReal[today];
+             ratio = tempReal / prevMD;
+             tempMD = prevMD + (tempReal - prevMD) / (period * (ratio * ratio * (ratio * ratio)));
+             if( (Double.isFinite(tempMD)) ) {
+                prevMD = tempMD;
+             }
+             outReal[outIdx++] = prevMD;
+             today += 1;
+          }
+          outBegIdx.value = startIdx;
+          outNBElement.value = outIdx;
+          return RetCode.SUCCESS ;
+       }
+       RetCode mcgdImpl( int startIdx,
+                         int endIdx,
+                         float inReal[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
+       {
+          int i = 0;
+          int outIdx = 0;
+          int today = 0;
+          int lookbackTotal = 0;
+          int nbMCGD = 0;
+          double prevMD = 0;
+          double tempMD = 0;
+          double tempReal = 0;
+          double ratio = 0;
+          double period = 0;
+          if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX ;
+          }
+          if( (endIdx < 0) || (endIdx > INDEX_MAX) || (endIdx < startIdx)) {
+             return RetCode.OUT_OF_RANGE_END_INDEX ;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 14;
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          outBegIdx.value = 0;
+          outNBElement.value = 0;
+          lookbackTotal = mcgdLookback(optInTimePeriod);
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             return RetCode.SUCCESS ;
+          }
+          period = (double)optInTimePeriod;
+          today = startIdx - lookbackTotal;
+          prevMD = (double)inReal[today];
+          today += 1;
+          i = lookbackTotal;
+          while( i != 0 ) {
+             tempReal = (double)inReal[today];
+             ratio = tempReal / prevMD;
+             tempMD = prevMD + (tempReal - prevMD) / (period * (ratio * ratio * (ratio * ratio)));
+             if( (Double.isFinite(tempMD)) ) {
+                prevMD = tempMD;
+             }
+             today += 1;
+             i -= 1;
+          }
+          outIdx = 1;
+          outReal[0] = prevMD;
+          nbMCGD = endIdx - startIdx + 1;
+          while( --nbMCGD != 0 ) {
+             tempReal = (double)inReal[today];
+             ratio = tempReal / prevMD;
+             tempMD = prevMD + (tempReal - prevMD) / (period * (ratio * ratio * (ratio * ratio)));
+             if( (Double.isFinite(tempMD)) ) {
+                prevMD = tempMD;
+             }
+             outReal[outIdx++] = prevMD;
+             today += 1;
+          }
+          outBegIdx.value = startIdx;
+          outNBElement.value = outIdx;
+          return RetCode.SUCCESS ;
+       }
+       /**
+        * McGinley Dynamic (John R. McGinley, Jr.): a moving average whose speed
+        * adjusts to the market. Each bar closes a fraction
+        * {@code 1 / (N * (x/MD)^4)} of the gap to the price: less than
+        * {@code RMA}'s {@code 1/N} while the price is above the line, more while it
+        * is below, so the line tracks falling prices faster than rising ones.
+        * McGinley suggests a period of about 60% of the simple moving average being
+        * emulated: a Dynamic of 12 to follow a 20-bar average.
+        * <p>Formula and more info at <a
+        * href="https://ta-lib.org/functions/mcgd">ta-lib.org/functions/mcgd</a>.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>Where the price is 0, or so small against the line that the step overflows, the step is undefined and the line keeps its previous value. A line at 0 stays at 0.</li>
+        * <li>Being recursive, an output depends on how much history precedes it. Close to the price the seed's influence decays by a factor of {@code 1 - 1/N} per bar, as in {@code RMA}; the unstable period is how much of the warm-up to discard.</li>
+        * <li>The line is scale-equivariant but meant for positive prices: a series crossing zero sends it off to meaningless values, and a single bar far enough below the line can take the line to 0 or below it.</li>
+        * <li>Some implementations seed with the simple average of the first N bars. They agree with this one only once the seed's influence has decayed.</li>
+        * <li>Some implementations write the step's denominator as {@code 0.6 * P * (x / MD)^4}. That is this function at a period of {@code 0.6 * P}, when that is an integer.</li>
+        * </ul>
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are; nothing
+        * outside that range is touched, and the library never pads with NaN. A
+        * valid range that ends before {@link Core#mcgdLookback} is a <b>success
+        * with no values</b> ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inReal Data on which to compute the average.
+        * @param optInTimePeriod The N of the step's denominator (default 14; range
+        *        2..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param outReal McGinley Dynamic line. Must hold at least
+        *        {@code endIdx - max(startIdx, mcgdLookback(...)) + 1} values, the count
+        *        the call produces (none when that is not positive).
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#INDEX_MAX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. An output this function documents as declinable is the one
+        *        exception: {@code null} is how you decline it. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
+        *
+        * @see Core#rma
+        * @see Core#ema
+        * @see Core#kama
+        * @see Core#sma
+        */
+       public OutRange mcgd( int startIdx,
+                             int endIdx,
+                             double inReal[],
+                             int optInTimePeriod,
+                             double outReal[] )
+       {
+          requireIndexRange("MCGD", startIdx, endIdx);
+          int guardStart = clampedStart("MCGD", startIdx, mcgdLookback(optInTimePeriod));
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("MCGD", "inReal", inReal, guardInLen);
+          requireLength("MCGD", "outReal", outReal, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = mcgdImpl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+          if( retCode != RetCode.SUCCESS ) {
+             throw failure("MCGD", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+       /**
+        * McGinley Dynamic (John R. McGinley, Jr.): a moving average whose speed
+        * adjusts to the market. Each bar closes a fraction
+        * {@code 1 / (N * (x/MD)^4)} of the gap to the price: less than
+        * {@code RMA}'s {@code 1/N} while the price is above the line, more while it
+        * is below, so the line tracks falling prices faster than rising ones.
+        * McGinley suggests a period of about 60% of the simple moving average being
+        * emulated: a Dynamic of 12 to follow a 20-bar average.
+        * <p>Formula and more info at <a
+        * href="https://ta-lib.org/functions/mcgd">ta-lib.org/functions/mcgd</a>.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>Where the price is 0, or so small against the line that the step overflows, the step is undefined and the line keeps its previous value. A line at 0 stays at 0.</li>
+        * <li>Being recursive, an output depends on how much history precedes it. Close to the price the seed's influence decays by a factor of {@code 1 - 1/N} per bar, as in {@code RMA}; the unstable period is how much of the warm-up to discard.</li>
+        * <li>The line is scale-equivariant but meant for positive prices: a series crossing zero sends it off to meaningless values, and a single bar far enough below the line can take the line to 0 or below it.</li>
+        * <li>Some implementations seed with the simple average of the first N bars. They agree with this one only once the seed's influence has decayed.</li>
+        * <li>Some implementations write the step's denominator as {@code 0.6 * P * (x / MD)^4}. That is this function at a period of {@code 0.6 * P}, when that is an integer.</li>
+        * </ul>
+        * <p>This is the {@code float[]} overload. The arithmetic is performed in
+        * {@code double} before being written to the {@code double[]} output, so a
+        * result beyond {@code float} range is still representable.
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are; nothing
+        * outside that range is touched, and the library never pads with NaN. A
+        * valid range that ends before {@link Core#mcgdLookback} is a <b>success
+        * with no values</b> ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inReal Data on which to compute the average.
+        * @param optInTimePeriod The N of the step's denominator (default 14; range
+        *        2..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param outReal McGinley Dynamic line. Must hold at least
+        *        {@code endIdx - max(startIdx, mcgdLookback(...)) + 1} values, the count
+        *        the call produces (none when that is not positive).
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#INDEX_MAX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. An output this function documents as declinable is the one
+        *        exception: {@code null} is how you decline it. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
+        *
+        * @see Core#rma
+        * @see Core#ema
+        * @see Core#kama
+        * @see Core#sma
+        */
+       public OutRange mcgd( int startIdx,
+                             int endIdx,
+                             float inReal[],
+                             int optInTimePeriod,
+                             double outReal[] )
+       {
+          requireIndexRange("MCGD", startIdx, endIdx);
+          int guardStart = clampedStart("MCGD", startIdx, mcgdLookback(optInTimePeriod));
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("MCGD", "inReal", inReal, guardInLen);
+          requireLength("MCGD", "outReal", outReal, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = mcgdImpl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+          if( retCode != RetCode.SUCCESS ) {
+             throw failure("MCGD", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+    /**** Streaming API *****/
+
+       /**
+        * A live MCGD stream (unrelated to {@code java.util.stream}): one value per
+        * closed bar, bit-identical to {@link Core#mcgd} over the same series.
+        * Open with {@link Core#mcgdOpen}; there is no close — the handle is
+        * ordinary heap state, unreferenced handles are simply garbage-collected.
+        * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
+        * {@code value} and {@code clone} must not race with an {@code update} on
+        * the same handle. With no concurrent {@code update}, {@code peek}/
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
+        * <p>Not serializable by design: to checkpoint, retain the history and
+        * re-open — the result is bit-identical by contract.
+        */
+       public static final class McgdStream {
+          private Core core;
+          private int optInTimePeriod;
+          private double prevMD;
+          private double period;
+          private double cur_outReal;
+          private int outRangeBegIdx;
+          private int outRangeCount;
+
+          private McgdStream( Core core ) { this.core = core; }
+
+          /**
+           * The bars this stream has an output for, in the input series'
+           * coordinates: {@code [begIdx, begIdx + count)}.
+           * <p>It is what {@link Core#mcgd} reports over the same bars: the
+           * opener sets it to {@code (lookback, historyLen - lookback)}, every
+           * accepted {@code update} adds one to the count — a rejected one
+           * changes nothing, and neither does {@code peek} — and
+           * {@code clone()} carries it verbatim. A plain
+           * {@code open} hands back only the last value, a subset of this range,
+           * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#INDEX_MAX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
+           */
+          public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
+
+          /**
+           * Count one bar this stream was not fed: {@link #outRange()} advances
+           * by one and nothing else moves — {@link #value()} keeps answering the previous
+           * output, which is this bar's output too.
+           * <p>For a bar the caller leaves out: one an {@code update} rejected
+           * and that will not be re-fed, or a session with no print. Without it
+           * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#INDEX_MAX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
+           */
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
+                throw failure("MCGD advance", RetCode.OUT_OF_RANGE_END_INDEX);
+             this.outRangeCount++;
+          }
+
+          private McgdStream( McgdStream other ) {
+             this.core = other.core;
+             this.optInTimePeriod = other.optInTimePeriod;
+             this.prevMD = other.prevMD;
+             this.period = other.period;
+             this.cur_outReal = other.cur_outReal;
+             this.outRangeBegIdx = other.outRangeBegIdx;
+             this.outRangeCount = other.outRangeCount;
+          }
+
+          /**
+           * Commit one closed bar, returning the new current value.
+           * <p>Throws {@link IllegalArgumentException} if any bar value is not
+           * finite (NaN or an infinity). That check runs before anything is
+           * written, so nothing moves — {@link #outRange()} included — and
+           * {@link #value()} still answers the previous value. Re-feed the bar when a
+           * corrected value arrives, or call {@link #advance()} to count it and
+           * carry on; two handles on one feed drift a bar apart if neither
+           * happens.
+           * This is the one place the streaming tier is stricter than
+           * the batch API, which computes on whatever it is given: a handle
+           * retains its state, so a single non-finite bar would poison every
+           * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#INDEX_MAX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
+           */
+          public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
+                throw failure("MCGD update", RetCode.OUT_OF_RANGE_END_INDEX);
+             if( !Double.isFinite(inReal) )
+                throw nonFiniteBar("MCGD update", "inReal");
+             core.mcgdStepImpl(this, inReal);
+             this.outRangeCount++;
+             return this.cur_outReal;
+          }
+
+          /**
+           * Evaluate a forming bar without committing — bit-identical to what the
+           * next {@code update} with the same bar would return — the same
+           * transition, with every store it would make carried in a local instead.
+           * Never writes this handle, so peeks may run concurrently with each other.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
+           */
+          public double peek( double inReal ) {
+             if( !Double.isFinite(inReal) )
+                throw nonFiniteBar("MCGD peek", "inReal");
+             McgdStream sp = this;
+             double tempMD = 0.0;
+             double tempReal = 0.0;
+             double ratio = 0.0;
+             double cur_outReal = 0.0;
+             double prevMD = sp.prevMD;
+             tempReal = inReal;
+             ratio = tempReal / prevMD;
+             tempMD = prevMD + (tempReal - prevMD) / (sp.period * (ratio * ratio * (ratio * ratio)));
+             if( (Double.isFinite(tempMD)) ) {
+                prevMD = tempMD;
+             }
+             cur_outReal = prevMD;
+             return cur_outReal;
+          }
+
+          /**
+           * The value at the last bar this stream counted — the bar
+           * {@link #outRange()} ends on. The last history bar right after open,
+           * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
+           */
+          public double value() {
+             return this.cur_outReal;
+          }
+
+          /**
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
+           */
+          @Override
+          public McgdStream clone() {
+             return new McgdStream(this);
+          }
+       }
+       private void mcgdStepImpl( McgdStream sp, double inReal )
+       {
+          double tempMD = 0.0;
+          double tempReal = 0.0;
+          double ratio = 0.0;
+          tempReal = inReal;
+          ratio = tempReal / sp.prevMD;
+          tempMD = sp.prevMD + (tempReal - sp.prevMD) / (sp.period * (ratio * ratio * (ratio * ratio)));
+          if( (Double.isFinite(tempMD)) ) {
+             sp.prevMD = tempMD;
+          }
+          sp.cur_outReal = sp.prevMD;
+       }
+       private RetCode mcgdOpenImpl( McgdStream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+       {
+          int i = 0;
+          int outIdx = 0;
+          int today = 0;
+          int lookbackTotal = 0;
+          int nbMCGD = 0;
+          double prevMD = 0;
+          double tempMD = 0;
+          double tempReal = 0;
+          double ratio = 0;
+          double period = 0;
+          int historyLen = inReal.length;
+          int endIdx = historyLen - 1;
+          if( historyLen < 1 ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX;
+          }
+          if( historyLen > INDEX_MAX + 1 ) {
+             return RetCode.OUT_OF_RANGE_END_INDEX;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 14;
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.INSUFFICIENT_HISTORY;
+          }
+          outBegIdx.value = 0;
+          outNBElement.value = 0;
+          lookbackTotal = mcgdLookback(optInTimePeriod);
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             return RetCode.INSUFFICIENT_HISTORY ;
+          }
+          period = (double)optInTimePeriod;
+          /* Keep the denominator free of pow(): a transcendental would break the
+           * four languages' bit-identity.
+           *
+           * A step whose value is not finite (a zero price, a zero line meeting a
+           * zero price, or a price so small against the line that the step
+           * overflows) holds the previous value, since every later bar reads it.
+           */
+          today = startIdx - lookbackTotal;
+          prevMD = inReal[today];
+          today += 1;
+          i = lookbackTotal;
+          while( i != 0 ) {
+             tempReal = inReal[today];
+             ratio = tempReal / prevMD;
+             tempMD = prevMD + (tempReal - prevMD) / (period * (ratio * ratio * (ratio * ratio)));
+             if( (Double.isFinite(tempMD)) ) {
+                prevMD = tempMD;
+             }
+             today += 1;
+             i -= 1;
+          }
+          outIdx = 1;
+          outReal[0 * outStride] = prevMD;
+          nbMCGD = endIdx - startIdx + 1;
+          while( --nbMCGD != 0 ) {
+             tempReal = inReal[today];
+             ratio = tempReal / prevMD;
+             tempMD = prevMD + (tempReal - prevMD) / (period * (ratio * ratio * (ratio * ratio)));
+             if( (Double.isFinite(tempMD)) ) {
+                prevMD = tempMD;
+             }
+             outReal[outIdx++ * outStride] = prevMD;
+             today += 1;
+          }
+          outBegIdx.value = startIdx;
+          outNBElement.value = outIdx;
+          /* Capture the live batch state into the handle. */
+          sp.optInTimePeriod = optInTimePeriod;
+          sp.prevMD = prevMD;
+          sp.period = period;
+          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
+          return RetCode.SUCCESS;
+       }
+       /* mcgdOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+       McgdStream mcgdOpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+       {
+          McgdStream sp = new McgdStream(this);
+          RetCode retCode = mcgdOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.SUCCESS ) {
+             return sp;
+          }
+          if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
+             throw insufficientHistory("MCGD openAndFill", inReal.length, startIdx, mcgdLookback(optInTimePeriod));
+          }
+          throw streamFailure("MCGD openAndFill", retCode);
+       }
+       /* Internal startIdx-anchored open behind mcgdOpen (composition seam). */
+       McgdStream mcgdOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
+       {
+          McgdStream sp = new McgdStream(this);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          double[] sink_outReal = new double[1];
+          RetCode retCode = mcgdOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.SUCCESS ) {
+             return sp;
+          }
+          if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
+             throw insufficientHistory("MCGD open", inReal.length, startIdx, mcgdLookback(optInTimePeriod));
+          }
+          throw streamFailure("MCGD open", retCode);
+       }
+       /**
+        * Open a live MCGD stream over the warm-up history; the handle's
+        * {@code value()} starts at the last history bar's value — bit-identical
+        * to {@link Core#mcgd} at that bar.
+        * <p>The history must hold at least {@code mcgdLookback(...) + 1} bars
+        * (unstable-period aware), or {@link InsufficientHistoryException} is
+        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+        * as in the batch API). An EMPTY history throws
+        * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+        * names no bar — and a null argument {@link IllegalArgumentException},
+        * both ahead of everything above.
+        */
+       public McgdStream mcgdOpen( double inReal[], int optInTimePeriod )
+       {
+          requireArgument("MCGD open", "inReal", inReal);
+          requireHistory("MCGD open", inReal.length);
+          return mcgdOpenInternal(inReal, 0, optInTimePeriod);
+       }
+       /**
+        * {@link Core#mcgdOpen} that also fills the output array(s) bit-identically
+        * to {@link Core#mcgd} over the whole history in the same single pass
+        * (no separate batch call needed for the warm-up plot). Output arrays must
+        * not alias the inputs or each other, and must hold
+        * {@code historyLen - lookback} values — both checked before anything is
+        * written, so an undersized array is an {@link IllegalArgumentException}
+        * naming it rather than a fault from inside the fill.
+        * <p>The range written is on the returned handle:
+        * {@link McgdStream#outRange()}.
+        */
+       public McgdStream mcgdOpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
+       {
+          requireArgument("MCGD openAndFill", "inReal", inReal);
+          requireHistory("MCGD openAndFill", inReal.length);
+          int guardOutLen = openFillCount("MCGD openAndFill", inReal.length, mcgdLookback(optInTimePeriod));
+          requireLength("MCGD openAndFill", "outReal", outReal, guardOutLen);
+          if( (Object)outReal == (Object)inReal ) {
+             throw streamFailure("MCGD openAndFill", RetCode.BAD_PARAM);
+          }
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          return mcgdOpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
+       }
+    /* List of contributors:
+     *
+     *  Initial  Name/description
+     *  -------------------------------------------------------------------
      *  KL       Kevin Lin
      *  MF       Mario Fortier
      *  CC       Claude Code (AI assistant)
@@ -198210,7 +198864,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "35ef4be6fec1dd54";
+    static final String SPLICED_GENCODE_DIGEST = "158e13aee8cdd4b0";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];
@@ -198946,6 +199600,10 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",30.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
             new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("MCGD", new AbsFunc("MCGD", "Overlap Studies", "McGinley Dynamic", 184549376,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",14.0, 0,0,0,0,0,0, 2,100000,2,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("MEDIAN", new AbsFunc("MEDIAN", "Statistic Functions", "Rolling Median", 50331648,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Number of bars in the window",30.0, 0,0,0,0,0,0, 2,10000,4,200,1, null) },
@@ -199481,6 +200139,7 @@ public class TaCodegenServe {
         "TA_MAVP",
         "TA_MAX",
         "TA_MAXINDEX",
+        "TA_MCGD",
         "TA_MEDIAN",
         "TA_MEDPRICE",
         "TA_MFI",
@@ -199701,77 +200360,78 @@ public class TaCodegenServe {
             case 140: return handle_MAVP(json);
             case 141: return handle_MAX(json);
             case 142: return handle_MAXINDEX(json);
-            case 143: return handle_MEDIAN(json);
-            case 144: return handle_MEDPRICE(json);
-            case 145: return handle_MFI(json);
-            case 146: return handle_MIDPOINT(json);
-            case 147: return handle_MIDPRICE(json);
-            case 148: return handle_MIN(json);
-            case 149: return handle_MININDEX(json);
-            case 150: return handle_MINMAX(json);
-            case 151: return handle_MINMAXINDEX(json);
-            case 152: return handle_MINUS_DI(json);
-            case 153: return handle_MINUS_DM(json);
-            case 154: return handle_MOM(json);
-            case 155: return handle_MULT(json);
-            case 156: return handle_NATR(json);
-            case 157: return handle_NVI(json);
-            case 158: return handle_OBV(json);
-            case 159: return handle_PERCENTB(json);
-            case 160: return handle_PERCENTILE(json);
-            case 161: return handle_PERCENTRANK(json);
-            case 162: return handle_PLUS_DI(json);
-            case 163: return handle_PLUS_DM(json);
-            case 164: return handle_PPO(json);
-            case 165: return handle_PVI(json);
-            case 166: return handle_PVO(json);
-            case 167: return handle_PVT(json);
-            case 168: return handle_QSTICK(json);
-            case 169: return handle_RMA(json);
-            case 170: return handle_ROC(json);
-            case 171: return handle_ROCP(json);
-            case 172: return handle_ROCR(json);
-            case 173: return handle_ROCR100(json);
-            case 174: return handle_RSI(json);
-            case 175: return handle_RVI(json);
-            case 176: return handle_RVIR(json);
-            case 177: return handle_RVOL(json);
-            case 178: return handle_SAR(json);
-            case 179: return handle_SAREXT(json);
-            case 180: return handle_SI(json);
-            case 181: return handle_SIN(json);
-            case 182: return handle_SINH(json);
-            case 183: return handle_SMA(json);
-            case 184: return handle_SMI(json);
-            case 185: return handle_SQRT(json);
-            case 186: return handle_STDDEV(json);
-            case 187: return handle_STOCH(json);
-            case 188: return handle_STOCHF(json);
-            case 189: return handle_STOCHRSI(json);
-            case 190: return handle_SUB(json);
-            case 191: return handle_SUM(json);
-            case 192: return handle_SUPERTREND(json);
-            case 193: return handle_T3(json);
-            case 194: return handle_TAN(json);
-            case 195: return handle_TANH(json);
-            case 196: return handle_TEMA(json);
-            case 197: return handle_TRANGE(json);
-            case 198: return handle_TRIMA(json);
-            case 199: return handle_TRIX(json);
-            case 200: return handle_TSF(json);
-            case 201: return handle_TSI(json);
-            case 202: return handle_TYPPRICE(json);
-            case 203: return handle_ULTOSC(json);
-            case 204: return handle_VAR(json);
-            case 205: return handle_VHF(json);
-            case 206: return handle_VORTEX(json);
-            case 207: return handle_VWAP(json);
-            case 208: return handle_VWMA(json);
-            case 209: return handle_WAD(json);
-            case 210: return handle_WCLPRICE(json);
-            case 211: return handle_WILLR(json);
-            case 212: return handle_WMA(json);
-            case 213: return handle_ZLEMA(json);
+            case 143: return handle_MCGD(json);
+            case 144: return handle_MEDIAN(json);
+            case 145: return handle_MEDPRICE(json);
+            case 146: return handle_MFI(json);
+            case 147: return handle_MIDPOINT(json);
+            case 148: return handle_MIDPRICE(json);
+            case 149: return handle_MIN(json);
+            case 150: return handle_MININDEX(json);
+            case 151: return handle_MINMAX(json);
+            case 152: return handle_MINMAXINDEX(json);
+            case 153: return handle_MINUS_DI(json);
+            case 154: return handle_MINUS_DM(json);
+            case 155: return handle_MOM(json);
+            case 156: return handle_MULT(json);
+            case 157: return handle_NATR(json);
+            case 158: return handle_NVI(json);
+            case 159: return handle_OBV(json);
+            case 160: return handle_PERCENTB(json);
+            case 161: return handle_PERCENTILE(json);
+            case 162: return handle_PERCENTRANK(json);
+            case 163: return handle_PLUS_DI(json);
+            case 164: return handle_PLUS_DM(json);
+            case 165: return handle_PPO(json);
+            case 166: return handle_PVI(json);
+            case 167: return handle_PVO(json);
+            case 168: return handle_PVT(json);
+            case 169: return handle_QSTICK(json);
+            case 170: return handle_RMA(json);
+            case 171: return handle_ROC(json);
+            case 172: return handle_ROCP(json);
+            case 173: return handle_ROCR(json);
+            case 174: return handle_ROCR100(json);
+            case 175: return handle_RSI(json);
+            case 176: return handle_RVI(json);
+            case 177: return handle_RVIR(json);
+            case 178: return handle_RVOL(json);
+            case 179: return handle_SAR(json);
+            case 180: return handle_SAREXT(json);
+            case 181: return handle_SI(json);
+            case 182: return handle_SIN(json);
+            case 183: return handle_SINH(json);
+            case 184: return handle_SMA(json);
+            case 185: return handle_SMI(json);
+            case 186: return handle_SQRT(json);
+            case 187: return handle_STDDEV(json);
+            case 188: return handle_STOCH(json);
+            case 189: return handle_STOCHF(json);
+            case 190: return handle_STOCHRSI(json);
+            case 191: return handle_SUB(json);
+            case 192: return handle_SUM(json);
+            case 193: return handle_SUPERTREND(json);
+            case 194: return handle_T3(json);
+            case 195: return handle_TAN(json);
+            case 196: return handle_TANH(json);
+            case 197: return handle_TEMA(json);
+            case 198: return handle_TRANGE(json);
+            case 199: return handle_TRIMA(json);
+            case 200: return handle_TRIX(json);
+            case 201: return handle_TSF(json);
+            case 202: return handle_TSI(json);
+            case 203: return handle_TYPPRICE(json);
+            case 204: return handle_ULTOSC(json);
+            case 205: return handle_VAR(json);
+            case 206: return handle_VHF(json);
+            case 207: return handle_VORTEX(json);
+            case 208: return handle_VWAP(json);
+            case 209: return handle_VWMA(json);
+            case 210: return handle_WAD(json);
+            case 211: return handle_WCLPRICE(json);
+            case 212: return handle_WILLR(json);
+            case 213: return handle_WMA(json);
+            case 214: return handle_ZLEMA(json);
             default: return null;
         }
     }
@@ -222692,6 +223352,154 @@ public class TaCodegenServe {
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         rideMaxindex(core, json, endIdx, inReal, optInTimePeriod, sb);
+        sb.append("}");
+        return sb.toString();
+    }
+
+    static String handle_MCGD(String json) {
+        int startIdx = jsonInt(json, "startIdx");
+        int endIdx = jsonInt(json, "endIdx");
+        int use_preloaded = jsonInt(json, "use_preloaded");
+        int bench_iters = jsonInt(json, "iters");
+        if (bench_iters < 1) bench_iters = 1;
+        double[] inReal;
+        if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
+            System.arraycopy(refClose, 0, inReal, 0, refN);
+        } else {
+            inReal = jsonDoubleArray(json, "inReal");
+        }
+        boolean _optRejected = false;
+        int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+        core.unstablePeriod[28] = jsonInt(json, "unstablePeriod");
+        // The output buffers are sized to the count the call actually PRODUCES --
+        // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
+        // never below one. Not to the width of the requested range: that is the bound the
+        // managed backends check and the Rust asserts state, and at the range width it was
+        // slack by exactly the lookback, so no call could ever approach it.
+        // The pad is there because a bound is a MINIMUM, never an equality. A caller
+        // re-using a pre-allocated buffer passes a larger one, and that is not an error --
+        // the reported OutRange is what says which part was written. So the harness sends
+        // both: the startIdx axis sends no pad (the bound is reachable) while the
+        // full-range value comparison sends one (slack is legal). Sizing every call one way
+        // would silently drop the other property.
+        // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
+        // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
+        // for a range shorter than the lookback, where the output bound switches off and
+        // the spec says any length will do, including none. It does not: two EMPTY output
+        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
+        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
+        // accepted by C and Java -- a four-way divergence on a call the specification says
+        // all four accept. Sizing to zero here would reach it on every multi-output
+        // function, which is a semantic question, not a harness one. Recorded as
+        // error-handling-spec, open item 11.
+        // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
+        // sizes and cannot make the check, so an exact buffer would test nothing there.
+        int _lb = core.mcgdLookback(optInTimePeriod);
+        int _cs = startIdx > _lb ? startIdx : _lb;
+        int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
+        double[] outArr0 = new double[_outLen];
+        MInteger outBegIdx = new MInteger();
+        MInteger outNBElement = new MInteger();
+        RetCode rc = RetCode.SUCCESS;
+        int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        long startNs = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+        if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                rc = core.mcgdImpl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        } else {
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _pr = core.mcgd(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.SUCCESS;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        }
+        }
+        else if (_optRejected) { rc = RetCode.BAD_PARAM; }
+        else { try {
+            if (bench_mode == 1) {
+                core.mcgdOpen(_warm_inReal, optInTimePeriod);
+            } else {
+                Core.McgdStream _wh = core.mcgdOpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
+            }
+            rc = RetCode.SUCCESS;
+        } catch (RuntimeException _e) { rc = _e instanceof TALibFailure ? ((TALibFailure)_e).retCode() : RetCode.BAD_PARAM; } }
+        }
+        long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _fr = core.mcgd(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.SUCCESS;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+            usedFloat = 1;
+        }
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            StringBuilder hb = new StringBuilder();
+            hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            rideMcgd(core, json, endIdx, inReal, optInTimePeriod, hb);
+            hb.append("}");
+            return hb.toString();
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"retCode\":").append(rc.toInt());
+        sb.append(",\"outBegIdx\":").append(outBegIdx.value);
+        sb.append(",\"outNBElement\":").append(outNBElement.value);
+        sb.append(",\"out_len\":").append(_outLen);
+        sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
+        sb.append(",\"timing_ns\":").append(elapsedNs);
+        rideMcgd(core, json, endIdx, inReal, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -257436,6 +258244,170 @@ public class TaCodegenServe {
         return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
+    static String sv_MCGD(String json) {
+        int svShape = jsonInt(json, "gen_shape");
+        int svSeed = jsonInt(json, "gen_seed");
+        int svN = jsonInt(json, "gen_n");
+        if (svN < 2) svN = 2;
+        if (svN > 256) svN = 256;
+        int svK = jsonInt(json, "unstablePeriod");
+        int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 14;
+        double[] fz_o = new double[svN];
+        double[] fz_h = new double[svN];
+        double[] fz_l = new double[svN];
+        double[] fz_c = new double[svN];
+        double[] fz_v = new double[svN];
+        double[] fz_oi = new double[svN];
+        FuzzData.fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
+        double[] b0 = new double[svN];
+        long legs = 0;
+        boolean allOk = true;
+        boolean peekAll = true;
+        long peekReps = 0;
+        long peekRejects = 0;
+        boolean peekRepAll = true;
+        int fillChecked = 0;
+        boolean fillOk = true;
+        MInteger beg = new MInteger();
+        MInteger nb = new MInteger();
+        String diag = "";
+        int rangeChecked = 0;
+        boolean rangeOk = true;
+        long rangeLegs = 0;
+        int rangeSites = 0;
+        long[] zsign = { 0 };
+        int rounds = 1;
+        for (int rd = 0; rd < rounds; rd++) {
+            Core c2 = new Core();
+            c2.unstablePeriod[28] = svK;
+            RetCode rc;
+            try { rc = c2.mcgdImpl(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
+            int lb = c2.mcgdLookback(optInTimePeriod);
+            if (rc != RetCode.SUCCESS || nb.value == 0) {
+                boolean openRejects;
+                try { c2.mcgdOpen(fz_c, optInTimePeriod); openRejects = false; } catch (IllegalArgumentException _e) { openRejects = true; }
+                return "{\"retCode\":" + rc.toInt() + ",\"legs\":0,\"nb\":" + nb.value + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
+            }
+            fillChecked = 1;
+            try {
+                double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                Core.McgdStream _fh = c2.mcgdOpenAndFill(fz_c, optInTimePeriod, f0);
+                OutRange _fr = _fh.outRange();
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
+                else {
+                    for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
+                }
+                try { c2.mcgdOpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
+            } catch (IllegalArgumentException _e) { fillOk = false; }
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
+            java.util.Arrays.sort(pcs);
+            int prevP = -1;
+            for (int pi = 0; pi < pcs.length; pi++) {
+                int p = pcs[pi];
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
+                prevP = p;
+                Core.McgdStream st;
+                try { st = c2.mcgdOpen(java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
+                legs++;
+                if (svXtierNe(st.value(), b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                for (int t = p; t < svN; t++) {
+                    boolean pkTook = true;
+                    double pk = 0;
+                    try { pk = st.peek(fz_c[t]); } catch (IllegalArgumentException _e) { pkTook = false; peekRejects++; }
+                    if (t % 7 == 0) {
+                        boolean rpTook = pkTook;
+                        try { st.peek(fz_c[t - 1]); } catch (IllegalArgumentException _e) { peekRejects++; }
+                        double rp = 0;
+                        try { rp = st.peek(fz_c[t]); } catch (IllegalArgumentException _e) { rpTook = false; }
+                        if (rpTook) {
+                            peekReps++;
+                            if (svBne(rp, pk)) peekRepAll = false;
+                        } else { peekRejects++; }
+                    }
+                    double up = st.update(fz_c[t]);
+                    if (pkTook && svBne(pk, up)) peekAll = false;
+                    try { st.peek(fz_c[t - 1]); } catch (IllegalArgumentException _e) { peekRejects++; }
+                    if (svBne(st.value(), up)) allOk = false;
+                    if (svXtierNe(up, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up)) + "\""; }
+                }
+                if (allOk) {
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
+                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
+                    rangeLegs++; rangeSites |= 16;
+                    st.advance();
+                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value + 1) rangeOk = false;
+                }
+            }
+            {
+                int p0 = lb + 1;
+                if (p0 <= svN - 1) {
+                    try {
+                        Core.McgdStream sA = c2.mcgdOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
+                        int mid = (p0 + svN) / 2;
+                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        Core.McgdStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        for (int t = mid; t < svN; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        if (allOk) {
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 8;
+                            if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                        }
+                    } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
+                }
+            }
+            if (lb >= 1 && lb < svN) {
+                try { c2.mcgdOpen(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
+                catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.mcgdOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
+            }
+            try {
+                Core.McgdStream sD = c2.mcgdOpen(fz_c, Integer.MIN_VALUE);
+                Core.McgdStream sE = c2.mcgdOpen(fz_c, 14);
+                if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+            } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.mcgdImpl(Sidx, svN - 1, fz_c, optInTimePeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rcS = ((TALibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.SUCCESS && nbS.value > 0) {
+                        try {
+                            Core.McgdStream stA = c2.mcgdOpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
+        }
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign[0] + diag + "}";
+    }
+
     static String sv_MEDIAN(String json) {
         int svShape = jsonInt(json, "gen_shape");
         int svSeed = jsonInt(json, "gen_seed");
@@ -269388,6 +270360,7 @@ public class TaCodegenServe {
         case "TA_MAVP": return sv_MAVP(json);
         case "TA_MAX": return sv_MAX(json);
         case "TA_MAXINDEX": return sv_MAXINDEX(json);
+        case "TA_MCGD": return sv_MCGD(json);
         case "TA_MEDIAN": return sv_MEDIAN(json);
         case "TA_MEDPRICE": return sv_MEDPRICE(json);
         case "TA_MFI": return sv_MFI(json);
@@ -283999,6 +284972,103 @@ public class TaCodegenServe {
                     for (int k = 0; k < nb; k++) {
                         boolean cmp = true;
                         if (cmp && fib0[k] != rib0[k]) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rib0[k]); r.stream = Double.doubleToRawLongBits(fib0[k]); }
+                        if (cmp) r.fillBars++;
+                        if (!cmp) { r.ok = false; r.leg = 2; r.bar = beg + k; break; }
+                    }
+                }
+            } catch (RuntimeException _e) { r.ok = false; r.leg = 2; }
+        }
+
+        if (r.ok) {
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
+            rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
+        }
+    }
+
+    static void rideMcgd(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
+        if (!rideGate(json)) return;
+        RideResult r = new RideResult();
+        rideBodyMcgd(core, json, endIdx, inReal, optInTimePeriod, r);
+        r.emit(sb);
+    }
+
+    @SuppressWarnings("unused")
+    static void rideBodyMcgd(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
+        try { r.lb = core.mcgdLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
+        int lb = r.lb;
+        int navail = endIdx + 1;
+        if (inReal.length < navail) navail = inReal.length;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
+        if (m > navail) m = navail;
+        r.m = m;
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
+        if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
+
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_MCGD");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
+            r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
+        }
+
+        double[] rb0 = new double[m];
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
+        try { OutRange _rr = core.mcgd(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.mcgdOpen(java.util.Arrays.copyOf(inReal, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.mcgdOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
+        if (nb == 0) { r.skip = 5; return; }
+        if (beg != lb) { r.skip = 6; return; }
+
+        try {
+            boolean cmp;
+            Core.McgdStream st = core.mcgdOpen(java.util.Arrays.copyOf(inReal, lb + 1), optInTimePeriod);
+            double uv = st.value();
+            cmp = true;
+            if (cmp && svXtierNe(rb0[lb - beg], uv, r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[lb - beg]); r.stream = Double.doubleToRawLongBits(uv); }
+            if (cmp) r.openBars++;
+            if (!cmp) { r.ok = false; r.leg = 1; r.bar = lb; }
+            for (int t = lb + 1; r.ok && t < m; t++) {
+                double uv2 = st.update(inReal[t]);
+                uv = uv2;
+                cmp = true;
+                if (cmp && svXtierNe(rb0[t - beg], uv, r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[t - beg]); r.stream = Double.doubleToRawLongBits(uv); }
+                if (cmp) r.openBars++;
+                if (!cmp) { r.ok = false; r.leg = 1; r.bar = t; }
+            }
+        } catch (RuntimeException _e) { r.ok = false; r.leg = 1; }
+
+        if (r.ok) {
+            double[] fb0 = new double[m];
+            try {
+                Core.McgdStream st2 = core.mcgdOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, fb0);
+                if (st2.outRange().begIdx() != beg || st2.outRange().count() != nb) { r.ok = false; r.leg = 2; }
+                if (r.ok) {
+                    for (int k = 0; k < nb; k++) {
+                        boolean cmp = true;
+                        if (cmp && svXtierNe(rb0[k], fb0[k], r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[k]); r.stream = Double.doubleToRawLongBits(fb0[k]); }
                         if (cmp) r.fillBars++;
                         if (!cmp) { r.ok = false; r.leg = 2; r.bar = beg + k; break; }
                     }

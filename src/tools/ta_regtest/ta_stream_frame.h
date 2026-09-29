@@ -5859,6 +5859,42 @@ static TA_RetCode TA_MAXINDEX_SFrameClose( void *stream )
    return TA_MAXINDEX_Close( (TA_MAXINDEX_Stream *)stream );
 }
 
+static TA_RetCode TA_MCGD_SFrameOpen( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_MCGD_Open(
+               (TA_MCGD_Stream **)stream,
+               in[0] /* inReal */,
+               historyLen,
+               (int)optIn[0] /* optInTimePeriod */,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_MCGD_SFrameFill( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_MCGD_OpenAndFill(
+               (TA_MCGD_Stream **)stream,
+               in[0] /* inReal */,
+               historyLen,
+               (int)optIn[0] /* optInTimePeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_MCGD_SFrameClose( void *stream )
+{
+   return TA_MCGD_Close( (TA_MCGD_Stream *)stream );
+}
+
 static TA_RetCode TA_MEDIAN_SFrameOpen( void **stream,
                   const double *const in[], int historyLen,
                   const double optIn[],
@@ -8894,6 +8930,8 @@ static const TA_StreamEntry TA_StreamTable[] = {
      1, TA_VIn_MAX, 1, TA_VOpt_MAX, 1, TA_VOutIsInt_MAX },
    { "MAXINDEX", TA_MAXINDEX_SFrameOpen, TA_MAXINDEX_SFrameFill, TA_MAXINDEX_SFrameClose,
      1, TA_VIn_MAXINDEX, 1, TA_VOpt_MAXINDEX, 1, TA_VOutIsInt_MAXINDEX },
+   { "MCGD", TA_MCGD_SFrameOpen, TA_MCGD_SFrameFill, TA_MCGD_SFrameClose,
+     1, TA_VIn_MCGD, 1, TA_VOpt_MCGD, 1, TA_VOutIsInt_MCGD },
    { "MEDIAN", TA_MEDIAN_SFrameOpen, TA_MEDIAN_SFrameFill, TA_MEDIAN_SFrameClose,
      1, TA_VIn_MEDIAN, 1, TA_VOpt_MEDIAN, 1, TA_VOutIsInt_MEDIAN },
    { "MEDPRICE", TA_MEDPRICE_SFrameOpen, TA_MEDPRICE_SFrameFill, TA_MEDPRICE_SFrameClose,
@@ -9038,6 +9076,6 @@ static const TA_StreamEntry TA_StreamTable[] = {
      1, TA_VIn_ZLEMA, 1, TA_VOpt_ZLEMA, 1, TA_VOutIsInt_ZLEMA },
 };
 
-#define TA_STREAM_TABLE_SIZE 214
+#define TA_STREAM_TABLE_SIZE 215
 
 #endif /* TA_STREAM_FRAME_H */

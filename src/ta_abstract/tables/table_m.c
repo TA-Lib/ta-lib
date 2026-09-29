@@ -545,6 +545,54 @@ DEF_FUNCTION( MAXINDEX,
              );
 /* MAXINDEX END */
 
+/* MCGD BEGIN */
+static const TA_IntegerRange TA_DEF_MCGD_TimePeriod =
+{
+   2,
+   100000,
+   2,
+   200,
+   1
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_MCGD_TimePeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInTimePeriod",
+   0,
+
+   "Time Period",
+   (const void *)&TA_DEF_MCGD_TimePeriod,
+   14,
+   "Time period",
+
+   NULL
+};
+
+static const TA_InputParameterInfo    *TA_MCGD_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Real,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_MCGD_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_MCGD_OptInputs[] =
+{ &TA_DEF_UI_D_MCGD_TimePeriod,
+  NULL
+};
+
+DEF_FUNCTION( MCGD,
+              TA_GroupId_OverlapStudies,
+              "McGinley Dynamic",
+              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM
+             );
+/* MCGD END */
+
 /* MEDIAN BEGIN */
 static const TA_IntegerRange TA_DEF_MEDIAN_TimePeriod =
 {
@@ -920,6 +968,7 @@ const TA_FuncDef *TA_DEF_TableM[] =
    ADD_TO_TABLE(MAVP),
    ADD_TO_TABLE(MAX),
    ADD_TO_TABLE(MAXINDEX),
+   ADD_TO_TABLE(MCGD),
    ADD_TO_TABLE(MEDIAN),
    ADD_TO_TABLE(MEDPRICE),
    ADD_TO_TABLE(MFI),

@@ -90,7 +90,7 @@ fn classification_matches_the_measured_library() {
         .filter(|f| f.flags.iter().any(|x| x == "unstable_period"))
         .map(|f| f.name.as_str())
         .collect();
-    assert_eq!(declared.len(), 24, "the measured set of self-declaring functions is 24");
+    assert_eq!(declared.len(), 25, "the measured set of self-declaring functions is 25");
     for f in &funcs {
         assert_eq!(
             st[&f.name].intrinsic,

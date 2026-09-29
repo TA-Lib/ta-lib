@@ -3268,6 +3268,26 @@ unsigned int TA_MAXINDEX_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_MAXINDEX_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
 }
+TA_RetCode TA_MCGD_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+{
+   return TA_MCGD(
+               startIdx,
+               endIdx,
+               params->in[0].data.inReal, /* inReal */
+               params->optIn[0].data.optInInteger, /* optInTimePeriod*/
+               outBegIdx, 
+               outNBElement, 
+               params->out[0].data.outReal /*  outReal */
+               );
+}
+unsigned int TA_MCGD_FramePPLB( const TA_ParamHolderPriv *params )
+{
+   return TA_MCGD_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
+}
 TA_RetCode TA_MEDIAN_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

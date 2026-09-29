@@ -22,6 +22,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   - FRAMA: Fractal Adaptive Moving Average, Ehlers' adaptive EMA driven by the window's fractal dimension (#464)
   - KST: Know Sure Thing (#472)
   - KURTOSIS: Rolling Excess Kurtosis (#433)
+  - MCGD: McGinley Dynamic, a moving average whose step adapts to the price-to-line ratio (#471)
   - MEDIAN: Rolling Median (#432)
   - PERCENTB: Bollinger Bands %B, where the input sits relative to the bands (#449)
   - RVIR: Relative Volatility Index, 1995 refined form (#416)

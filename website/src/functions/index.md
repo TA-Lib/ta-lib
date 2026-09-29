@@ -117,6 +117,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 - [MA](/functions/ma.md) — Moving average
 - [MAMA](/functions/mama.md) — MESA Adaptive Moving Average
 - [MAVP](/functions/mavp.md) — Moving average with variable period
+- [MCGD](/functions/mcgd.md) — McGinley Dynamic
 - [MIDPOINT](/functions/midpoint.md) — MidPoint over period
 - [MIDPRICE](/functions/midprice.md) — Midpoint Price over period
 - [RMA](/functions/rma.md) — Wilder's Smoothed Moving Average

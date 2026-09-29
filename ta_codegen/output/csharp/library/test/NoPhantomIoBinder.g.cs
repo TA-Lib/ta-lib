@@ -977,6 +977,12 @@ internal static class NoPhantomIoBinder
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
+        ["MCGD"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.McgdImpl(
+                startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
+            return new CallOutcome(rc, b, n);
+        },
         ["MEDIAN"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.MedianImpl(
@@ -2266,6 +2272,12 @@ internal static class NoPhantomIoBinder
                 startIdx, endIdx, Narrow(c.Series(0)), c.IntOpt(0), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
+        ["MCGD"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.McgdImpl(
+                startIdx, endIdx, Narrow(c.Series(0)), c.IntOpt(0), out int b, out int n, c.RealOut(0));
+            return new CallOutcome(rc, b, n);
+        },
         ["MEDIAN"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.MedianImpl(
@@ -2840,6 +2852,7 @@ internal static class NoPhantomIoBinder
         ["MAVP"] = static (core, c) => core.MavpOpen(c.Series(0), c.Series(1), c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2)),
         ["MAX"] = static (core, c) => core.MaxOpen(c.Series(0), c.IntOpt(0)),
         ["MAXINDEX"] = static (core, c) => core.MaxindexOpen(c.Series(0), c.IntOpt(0)),
+        ["MCGD"] = static (core, c) => core.McgdOpen(c.Series(0), c.IntOpt(0)),
         ["MEDIAN"] = static (core, c) => core.MedianOpen(c.Series(0), c.IntOpt(0)),
         ["MEDPRICE"] = static (core, c) => core.MedpriceOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low)),
         ["MFI"] = static (core, c) => core.MfiOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.Price(0, PriceComponents.Volume), c.IntOpt(0)),

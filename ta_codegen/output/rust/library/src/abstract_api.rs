@@ -328,6 +328,8 @@ pub enum FuncId {
     MAX,
     /// Index of highest value over a specified period — [`Core::maxindex`](crate::Core::maxindex).
     MAXINDEX,
+    /// McGinley Dynamic — [`Core::mcgd`](crate::Core::mcgd).
+    MCGD,
     /// Rolling Median — [`Core::median`](crate::Core::median).
     MEDIAN,
     /// Median Price — [`Core::medprice`](crate::Core::medprice).
@@ -474,7 +476,7 @@ pub enum FuncId {
 
 impl FuncId {
     /// Number of functions in the registry.
-    pub const COUNT: usize = 214;
+    pub const COUNT: usize = 215;
     /// Metadata for this function (O(1) index into the const table).
     #[inline] pub fn info(self) -> &'static FuncInfo { &FUNC_TABLE[self as usize] }
     /// Upper-case TA name, e.g. "RSI".
@@ -801,7 +803,7 @@ impl FuncInfo {
 
 /// Backing storage for [`FUNCS`], indexed by [`FuncId`]. Link-time const, in
 /// `.rodata`. Private, so its length is nobody's business but this module's.
-static FUNC_TABLE: [FuncInfo; 214] = [
+static FUNC_TABLE: [FuncInfo; 215] = [
     FuncInfo {
         id: FuncId::AC,
         name: "AC",
@@ -2376,6 +2378,17 @@ static FUNC_TABLE: [FuncInfo; 214] = [
         unst_id: None,
     },
     FuncInfo {
+        id: FuncId::MCGD,
+        name: "MCGD",
+        group: Group::OverlapStudies,
+        hint: "McGinley Dynamic",
+        flags: FuncFlags(0x0b000000),
+        inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 14, suggested: (2, 200, 1) } }, ],
+        outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        unst_id: Some(FuncUnstId::MCGD),
+    },
+    FuncInfo {
         id: FuncId::MEDIAN,
         name: "MEDIAN",
         group: Group::StatisticFunctions,
@@ -3317,6 +3330,7 @@ fn get_func_handle_exact(name: &str) -> Option<FuncId> {
         "MAVP" => FuncId::MAVP,
         "MAX" => FuncId::MAX,
         "MAXINDEX" => FuncId::MAXINDEX,
+        "MCGD" => FuncId::MCGD,
         "MEDIAN" => FuncId::MEDIAN,
         "MEDPRICE" => FuncId::MEDPRICE,
         "MFI" => FuncId::MFI,
@@ -3788,6 +3802,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::MAVP => self.core.mavp_lookback(self.int_opt[0], self.int_opt[1], MAType::try_from(self.int_opt[2])?),
             FuncId::MAX => self.core.max_lookback(self.int_opt[0]),
             FuncId::MAXINDEX => self.core.maxindex_lookback(self.int_opt[0]),
+            FuncId::MCGD => self.core.mcgd_lookback(self.int_opt[0]),
             FuncId::MEDIAN => self.core.median_lookback(self.int_opt[0]),
             FuncId::MEDPRICE => self.core.medprice_lookback(),
             FuncId::MFI => self.core.mfi_lookback(self.int_opt[0]),
@@ -5640,6 +5655,16 @@ impl<'a> ParamHolder<'a> {
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 let res = self.core.maxindex(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.int_out[0] = Some(o0);
+                match res {
+                    Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
+                    Err(e) => e,
+                }
+            }
+            FuncId::MCGD => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let res = self.core.mcgd(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
+                self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
                     Err(e) => e,

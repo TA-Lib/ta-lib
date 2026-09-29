@@ -535,6 +535,9 @@ typedef enum
   /* (#464) FRAMA legs that ran while comparing nothing. */
   TA_FRAMA_VACUOUS                   = 1688,
 
+  /* (#471) MCGD legs that ran while comparing nothing. */
+  TA_MCGD_VACUOUS                    = 1689,
+
   /* One code for every suite that routes a fixed vector through server_verify
    * (#427), because it reports one failure and the message names the leg.
    * server_verify answers TA_TEST_PASS when it cannot build the request, so a

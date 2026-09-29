@@ -256,6 +256,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
             MakeMavp(),
             MakeMax(),
             MakeMaxindex(),
+            MakeMcgd(),
             MakeMedian(),
             MakeMedprice(),
             MakeMfi(),
@@ -3499,6 +3500,29 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         invoke: static (core, c, startIdx, endIdx) =>
             core.Maxindex(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.IntOut(0)));
+
+    private static FuncInfo MakeMcgd() => new(
+        name: "MCGD",
+        group: FunctionGroup.OverlapStudies,
+        hint: "McGinley Dynamic",
+        flags: FuncFlags.Overlap | FuncFlags.Stream | FuncFlags.UnstablePeriod,
+        unstableId: FuncUnstId.MCGD,
+        inputs:
+        [
+            new InputInfo(InputKind.Real, "inReal", PriceComponents.None, []),
+        ],
+        optInputs:
+        [
+            new OptInputInfo("optInTimePeriod", "Time Period", "Time period", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 14, 2, 200, 1)),
+        ],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+        ],
+        lookback: static (core, c) => core.McgdLookback(c.IntOpt(0)),
+        invoke: static (core, c, startIdx, endIdx) =>
+            core.Mcgd(
+                startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0)));
 
     private static FuncInfo MakeMedian() => new(
         name: "MEDIAN",

@@ -263,6 +263,7 @@ public final class Functions {
       put(m, f_MAVP());
       put(m, f_MAX());
       put(m, f_MAXINDEX());
+      put(m, f_MCGD());
       put(m, f_MEDIAN());
       put(m, f_MEDPRICE());
       put(m, f_MFI());
@@ -2700,6 +2701,24 @@ public final class Functions {
          ),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
+         ));
+   }
+
+   private static FuncInfo f_MCGD() {
+      return new FuncInfo(
+         "MCGD", "Overlap Studies", "McGinley Dynamic", 0x0B000000,
+         List.of(
+            new InputInfo(InputType.REAL, "inReal", 0x00000000)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInTimePeriod", 0x00000000,
+               "Time Period", "Time period", 14.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               2, 100000, 2, 200, 1, null)
+         ),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
          ));
    }
 

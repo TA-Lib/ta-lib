@@ -12921,6 +12921,63 @@ fn legs_MAXINDEX(r: &mut Report) {
     r.legs_done("MAXINDEX", 1);
 }
 
+const V_MCGD: &[(&str, i32)] = &[
+    ("defaults", i32::MIN),
+    ("minimums", 2i32),
+];
+
+fn sub_MCGD(r: &mut Report) {
+    let core = Core::new();
+    for &(label, optInTimePeriod) in V_MCGD {
+        let Ok(lb) = core.mcgd_lookback(optInTimePeriod) else { continue; };
+        r.control("MCGD", label, run(|| {
+            let inReal: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.mcgd_impl(0, lb, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+        if lb < 1 { r.no_quiet_range("MCGD", label); continue; }
+        r.quiet("MCGD", label, lb, run(|| {
+            let inReal: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.mcgd_impl(0, lb - 1, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+}
+
+fn legs_MCGD(r: &mut Report) {
+    let core = Core::new();
+    let optInTimePeriod = i32::MIN;
+    let Ok(lb) = core.mcgd_lookback(optInTimePeriod) else { r.no_legs("MCGD"); return; };
+    let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("MCGD", run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.mcgd_impl(startIdx, endIdx, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    {
+        let inReal: Vec<f64> = Vec::with_capacity(1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("MCGD", "inReal", 0, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.mcgd_impl(startIdx, endIdx, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    r.legs_done("MCGD", 1);
+}
+
 const V_MEDIAN: &[(&str, i32)] = &[
     ("defaults", i32::MIN),
     ("minimums", 2i32),
@@ -18182,6 +18239,7 @@ const PROBES: &[(&str, Probe, Probe)] = &[
     ("MAVP", sub_MAVP, legs_MAVP),
     ("MAX", sub_MAX, legs_MAX),
     ("MAXINDEX", sub_MAXINDEX, legs_MAXINDEX),
+    ("MCGD", sub_MCGD, legs_MCGD),
     ("MEDIAN", sub_MEDIAN, legs_MEDIAN),
     ("MEDPRICE", sub_MEDPRICE, legs_MEDPRICE),
     ("MFI", sub_MFI, legs_MFI),
@@ -18291,7 +18349,7 @@ fn no_phantom_io() {
     // The corpus is the generator's, not a list kept by hand: a probe that
     // stopped being emitted is a shrinking sweep, which is the one way this
     // file can fail open.
-    assert_eq!(PROBES.len(), 214, "probe count");
+    assert_eq!(PROBES.len(), 215, "probe count");
     assert_eq!(
         PROBES.len(),
         crate::abstract_api::funcs().count(),
