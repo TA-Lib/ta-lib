@@ -1,0 +1,681 @@
+== 0. Validation of the harness's recursion and rule S
+  #471's 12 goldens (60-digit, 1200-bar synthetic series): max rel 2.73e-16 (card tolerance 1e-14)
+  primary worked example N=7, [10 x 7, 14]: 10.148747545665497; 170570/16807 = 10.148747545665497
+  oracle gdata N=2   not dumped
+  oracle gdata N=3   not dumped
+  oracle gdata N=4   not dumped
+  oracle gdata N=5   outBegIdx 4  : 9996 values, first bit-equal True, all bit-equal 6465, max rel 4.85e-16
+  oracle gdata N=10  outBegIdx 9  : 9991 values, first bit-equal True, all bit-equal 5027, max rel 3.59e-15
+  oracle gdata N=14  outBegIdx 13 : 9987 values, first bit-equal False, all bit-equal 4441, max rel 7.69e-16
+  oracle gdata N=20  outBegIdx 19 : 9981 values, first bit-equal False, all bit-equal 3979, max rel 1.99e-15
+  oracle gdata N=30  not dumped
+  oracle gdata N=50  outBegIdx 49 : 9951 values, first bit-equal False, all bit-equal 1862, max rel 1.25e-14
+  oracle gdata N=200 outBegIdx 199: 9801 values, first bit-equal True, all bit-equal 1201, max rel 2.46e-15
+  oracle ibm   N=2   not dumped
+  oracle ibm   N=3   not dumped
+  oracle ibm   N=4   not dumped
+  oracle ibm   N=5   outBegIdx 4  : 6737 values, first bit-equal True, all bit-equal 4435, max rel 4.23e-16
+  oracle ibm   N=10  outBegIdx 9  : 6732 values, first bit-equal False, all bit-equal 3573, max rel 4.39e-16
+  oracle ibm   N=14  outBegIdx 13 : 6728 values, first bit-equal False, all bit-equal 3101, max rel 5.98e-16
+  oracle ibm   N=20  outBegIdx 19 : 6722 values, first bit-equal True, all bit-equal 2711, max rel 6.23e-16
+  oracle ibm   N=30  not dumped
+  oracle ibm   N=50  outBegIdx 49 : 6692 values, first bit-equal True, all bit-equal 1623, max rel 8.37e-16
+  oracle ibm   N=200 outBegIdx 199: 6542 values, first bit-equal False, all bit-equal 632, max rel 2.81e-15
+
+== Rules
+  S   SMA of x[s..s+N-1] at s+N-1 (#471's provisional rule)
+  T   x[s] at s, published at once
+  T'  x[s] at s, published from s+N-1
+  L   x[s+N-1] at s+N-1 (the zero-lag seed)
+  E   (1-1/N)^k-weighted mean of x[s..s+N-1] at s+N-1 (the RMA kernel, truncated)
+  W   SMA of x[s..s+2N-2] at s+2N-2 (centre of mass N-1 bars back, RMA's)
+  gData splices (one-bar rise > 25%) at bars [2073, 2577, 5006, 7125, 8644, 9903]; segments of [2073, 504, 2429, 2119, 1519, 1259, 97] bars
+
+== A. Linearised: near price/line = 1 the step is RMA's, gain 1/N.  Each seed, and y*,
+   is then a unit-sum linear filter of x; error sd per unit innovation sd, and the
+   lag (bars) the rule leaves on a linear trend.  W is taken at its own first output.
+  N     | S  wn / rw / trend lag       | T'  wn / rw / trend lag      | L  wn / rw / trend lag       | W  wn / rw / trend lag      
+  2     |  0.289 /  0.289 /   +0.50        |  0.289 /  0.289 /   +0.50        |  0.577 /  0.577 /   +1.00        |  0.289 /  0.236 /   +0.00       
+  3     |  0.253 /  0.413 /   +1.00        |  0.325 /  0.398 /   +0.89        |  0.730 /  0.894 /   +2.00        |  0.230 /  0.290 /   +0.00       
+  4     |  0.226 /  0.512 /   +1.50        |  0.338 /  0.478 /   +1.27        |  0.802 /  1.134 /   +3.00        |  0.195 /  0.337 /   +0.00       
+  5     |  0.205 /  0.597 /   +2.00        |  0.345 /  0.546 /   +1.64        |  0.843 /  1.333 /   +4.00        |  0.173 /  0.380 /   +0.00       
+  10    |  0.150 /  0.915 /   +4.50        |  0.358 /  0.800 /   +3.49        |  0.923 /  2.065 /   +9.00        |  0.119 /  0.547 /   +0.00       
+  14    |  0.127 /  1.107 /   +6.50        |  0.361 /  0.955 /   +4.96        |  0.946 /  2.502 /  +13.00        |  0.100 /  0.651 /   +0.00       
+  20    |  0.107 /  1.345 /   +9.50        |  0.363 /  1.148 /   +7.17        |  0.962 /  3.042 /  +19.00        |  0.083 /  0.782 /   -0.00       
+  30    |  0.088 /  1.668 /  +14.50        |  0.365 /  1.413 /  +10.85        |  0.975 /  3.775 /  +29.00        |  0.068 /  0.962 /   +0.00       
+  50    |  0.068 /  2.176 /  +24.50        |  0.366 /  1.830 /  +18.21        |  0.985 /  4.925 /  +49.00        |  0.052 /  1.245 /   -0.00       
+  200   |  0.034 /  4.401 /  +99.50        |  0.367 /  3.674 /  +73.39        |  0.996 /  9.962 / +199.00        |  0.026 /  2.500 /   -0.00       
+
+== B. Empirical: every start offset s, error vs the converged line y* at the same bar
+
+##### IBM: 6741 bars, mean log drift 1.31e-04 per bar
+
+=== IBM  N=2: 6239 offsets; reference not converged on 0 bars (excluded); common bar s+2
+  relative error (y - y*)/y*
+      first  | rms       mean       p95       max       n      | rms@cmn   mean@cmn   | |e| grew over the next N bars
+  S   s+1    | 8.975e-03 +1.567e-03 9.914e-03 4.768e-01 6239   | 4.456e-03 +8.308e-04 | 2 of 6238 (max x3.41)
+  T   s+0    | 1.071e-02 +1.615e-03 1.829e-02 2.639e-01 6239   | 3.736e-03 +5.593e-04 | 2 of 6239 (max x3.51)
+  T'  s+1    | 6.193e-03 +9.829e-04 9.584e-03 1.853e-01 6239   | 3.736e-03 +5.593e-04 | 2 of 6238 (max x3.41)
+  L   s+1    | 1.071e-02 +1.617e-03 1.829e-02 2.639e-01 6239   | 6.193e-03 +9.839e-04 | 2 of 6238 (max x3.51)
+  E   s+1    | 8.733e-03 +1.584e-03 1.073e-02 4.059e-01 6239   | 4.919e-03 +9.142e-04 | 2 of 6238 (max x3.45)
+  W   s+2    | 9.877e-03 +1.537e-03 8.721e-03 5.427e-01 6239   | 9.877e-03 +1.537e-03 | 2 of 6237 (max x3.58)
+  bars after the first output until |error| stays below, p50 / p95 over 4739 offsets (cN: N offsets still above after 1500 bars)
+      | < 0.001            | < 1e-06            | < 1e-12           
+  S   |     2 / 4            |    11 / 14           |    31 / 35          
+  T   |     3 / 5            |    12 / 15           |    32 / 35          
+  T'  |     2 / 4            |    11 / 14           |    31 / 34          
+  L   |     3 / 5            |    12 / 15           |    32 / 35          
+  E   |     2 / 4            |    12 / 14           |    31 / 35          
+  W   |     1 / 4            |    11 / 14           |    31 / 34          
+
+=== IBM  N=3: 6237 offsets; reference not converged on 0 bars (excluded); common bar s+4
+  relative error (y - y*)/y*
+      first  | rms       mean       p95       max       n      | rms@cmn   mean@cmn   | |e| grew over the next N bars
+  S   s+2    | 8.749e-03 +1.994e-03 1.357e-02 2.539e-01 6237   | 4.020e-03 +9.523e-04 | 0 of 6236 (max x0.84)
+  T   s+0    | 1.481e-02 +2.131e-03 2.860e-02 2.119e-01 6237   | 3.536e-03 +5.959e-04 | 0 of 6237 (max x0.81)
+  T'  s+2    | 7.243e-03 +1.212e-03 1.294e-02 1.326e-01 6237   | 3.536e-03 +5.959e-04 | 0 of 6236 (max x0.85)
+  L   s+2    | 1.481e-02 +2.128e-03 2.860e-02 2.119e-01 6237   | 7.243e-03 +1.210e-03 | 0 of 6236 (max x0.81)
+  E   s+2    | 9.302e-03 +2.027e-03 1.521e-02 2.068e-01 6237   | 4.563e-03 +1.055e-03 | 0 of 6236 (max x0.83)
+  W   s+4    | 8.366e-03 +1.913e-03 1.115e-02 3.177e-01 6237   | 8.366e-03 +1.913e-03 | 0 of 6234 (max x0.96)
+  bars after the first output until |error| stays below, p50 / p95 over 4737 offsets (cN: N offsets still above after 1500 bars)
+      | < 0.001            | < 1e-06            | < 1e-12           
+  S   |     3 / 7            |    20 / 25           |    54 / 60          
+  T   |     5 / 9            |    22 / 27           |    56 / 62          
+  T'  |     3 / 7            |    20 / 25           |    54 / 60          
+  L   |     5 / 9            |    22 / 27           |    56 / 62          
+  E   |     4 / 7            |    21 / 25           |    54 / 60          
+  W   |     3 / 6            |    19 / 24           |    53 / 59          
+
+=== IBM  N=4: 6235 offsets; reference not converged on 0 bars (excluded); common bar s+6
+  relative error (y - y*)/y*
+      first  | rms       mean       p95       max       n      | rms@cmn   mean@cmn   | |e| grew over the next N bars
+  S   s+3    | 1.015e-02 +2.506e-03 1.671e-02 1.733e-01 6235   | 4.662e-03 +1.152e-03 | 0 of 6234 (max x0.83)
+  T   s+0    | 1.875e-02 +2.734e-03 3.601e-02 2.570e-01 6235   | 4.047e-03 +6.973e-04 | 0 of 6235 (max x0.79)
+  T'  s+3    | 8.673e-03 +1.507e-03 1.535e-02 1.446e-01 6235   | 4.047e-03 +6.973e-04 | 0 of 6234 (max x0.83)
+  L   s+3    | 1.875e-02 +2.728e-03 3.601e-02 2.570e-01 6235   | 8.673e-03 +1.504e-03 | 0 of 6234 (max x0.79)
+  E   s+3    | 1.105e-02 +2.554e-03 1.884e-02 1.848e-01 6235   | 5.269e-03 +1.272e-03 | 0 of 6234 (max x0.82)
+  W   s+6    | 8.958e-03 +2.378e-03 1.361e-02 2.287e-01 6235   | 8.958e-03 +2.378e-03 | 0 of 6231 (max x0.87)
+  bars after the first output until |error| stays below, p50 / p95 over 4735 offsets (cN: N offsets still above after 1500 bars)
+      | < 0.001            | < 1e-06            | < 1e-12           
+  S   |     5 / 11           |    29 / 36           |    77 / 85          
+  T   |     8 / 13           |    32 / 38           |    80 / 88          
+  T'  |     5 / 10           |    29 / 35           |    77 / 85          
+  L   |     8 / 13           |    32 / 38           |    80 / 88          
+  E   |     6 / 11           |    30 / 36           |    78 / 86          
+  W   |     4 / 9            |    28 / 34           |    76 / 84          
+
+=== IBM  N=5: 6233 offsets; reference not converged on 0 bars (excluded); common bar s+8
+  relative error (y - y*)/y*
+      first  | rms       mean       p95       max       n      | rms@cmn   mean@cmn   | |e| grew over the next N bars
+  S   s+4    | 1.156e-02 +3.029e-03 1.946e-02 1.769e-01 6233   | 5.233e-03 +1.365e-03 | 0 of 6232 (max x0.82)
+  T   s+0    | 2.202e-02 +3.344e-03 4.178e-02 2.927e-01 6233   | 4.497e-03 +8.125e-04 | 0 of 6233 (max x0.78)
+  T'  s+4    | 9.846e-03 +1.805e-03 1.734e-02 1.524e-01 6233   | 4.497e-03 +8.125e-04 | 0 of 6232 (max x0.85)
+  L   s+4    | 2.202e-02 +3.343e-03 4.178e-02 2.927e-01 6233   | 9.845e-03 +1.803e-03 | 0 of 6232 (max x0.78)
+  E   s+4    | 1.266e-02 +3.091e-03 2.155e-02 1.867e-01 6233   | 5.887e-03 +1.501e-03 | 0 of 6232 (max x0.81)
+  W   s+8    | 9.847e-03 +2.855e-03 1.575e-02 1.945e-01 6233   | 9.847e-03 +2.855e-03 | 0 of 6228 (max x0.88)
+  bars after the first output until |error| stays below, p50 / p95 over 4733 offsets (cN: N offsets still above after 1500 bars)
+      | < 0.001            | < 1e-06            | < 1e-12           
+  S   |     7 / 14           |    38 / 46           |   100 / 111         
+  T   |    11 / 18           |    42 / 50           |   104 / 115         
+  T'  |     7 / 14           |    38 / 46           |   100 / 111         
+  L   |    11 / 18           |    42 / 50           |   104 / 115         
+  E   |     8 / 15           |    39 / 47           |   101 / 112         
+  W   |     6 / 12           |    36 / 45           |    98 / 110         
+
+=== IBM  N=10: 6223 offsets; reference not converged on 0 bars (excluded); common bar s+18
+  relative error (y - y*)/y*
+      first  | rms       mean       p95       max       n      | rms@cmn   mean@cmn   | |e| grew over the next N bars
+  S   s+9    | 1.691e-02 +5.580e-03 3.188e-02 1.562e-01 6223   | 7.332e-03 +2.398e-03 | 0 of 6222 (max x0.81)
+  T   s+0    | 3.351e-02 +6.347e-03 6.695e-02 3.636e-01 6223   | 6.266e-03 +1.358e-03 | 0 of 6223 (max x0.79)
+  T'  s+9    | 1.411e-02 +3.250e-03 2.759e-02 1.371e-01 6223   | 6.266e-03 +1.358e-03 | 0 of 6222 (max x0.84)
+  L   s+9    | 3.344e-02 +6.293e-03 6.677e-02 3.636e-01 6223   | 1.407e-02 +3.221e-03 | 0 of 6222 (max x0.79)
+  E   s+9    | 1.844e-02 +5.697e-03 3.493e-02 1.784e-01 6223   | 8.151e-03 +2.616e-03 | 0 of 6222 (max x0.81)
+  W   s+18   | 1.401e-02 +5.180e-03 2.425e-02 1.475e-01 6223   | 1.401e-02 +5.180e-03 | 0 of 6213 (max x0.81)
+  bars after the first output until |error| stays below, p50 / p95 over 4723 offsets (cN: N offsets still above after 1500 bars)
+      | < 0.001            | < 1e-06            | < 1e-12           
+  S   |    19 / 34           |    85 / 107          |   216 / 244         
+  T   |    27 / 42           |    93 / 115          |   223 / 252         
+  T'  |    18 / 33           |    84 / 106          |   214 / 243         
+  L   |    27 / 42           |    93 / 115          |   223 / 252         
+  E   |    20 / 36           |    86 / 108          |   217 / 245         
+  W   |    15 / 30           |    81 / 102          |   212 / 239         
+
+=== IBM  N=14: 6215 offsets; reference not converged on 0 bars (excluded); common bar s+26
+  relative error (y - y*)/y*
+      first  | rms       mean       p95       max       n      | rms@cmn   mean@cmn   | |e| grew over the next N bars
+  S   s+13   | 2.004e-02 +7.569e-03 3.930e-02 1.370e-01 6215   | 8.701e-03 +3.188e-03 | 0 of 6214 (max x0.83)
+  T   s+0    | 3.987e-02 +8.834e-03 8.081e-02 3.775e-01 6215   | 7.459e-03 +1.783e-03 | 0 of 6215 (max x0.77)
+  T'  s+13   | 1.658e-02 +4.401e-03 3.304e-02 1.209e-01 6215   | 7.459e-03 +1.783e-03 | 0 of 6214 (max x0.85)
+  L   s+13   | 3.987e-02 +8.533e-03 8.081e-02 3.775e-01 6215   | 1.655e-02 +4.265e-03 | 0 of 6214 (max x0.77)
+  E   s+13   | 2.175e-02 +7.717e-03 4.313e-02 1.470e-01 6215   | 9.590e-03 +3.460e-03 | 0 of 6214 (max x0.82)
+  W   s+26   | 1.691e-02 +6.952e-03 3.066e-02 1.615e-01 6215   | 1.691e-02 +6.952e-03 | 0 of 6201 (max x0.78)
+  bars after the first output until |error| stays below, p50 / p95 over 4715 offsets (cN: N offsets still above after 1500 bars)
+      | < 0.001            | < 1e-06            | < 1e-12           
+  S   |    30 / 54           |   123 / 155          |   309 / 354         
+  T   |    41 / 65           |   134 / 167          |   321 / 365         
+  T'  |    28 / 52           |   121 / 154          |   308 / 352         
+  L   |    41 / 64           |   134 / 167          |   321 / 365         
+  E   |    32 / 55           |   125 / 157          |   311 / 356         
+  W   |    24 / 46           |   118 / 151          |   304 / 345         
+
+=== IBM  N=20: 6203 offsets; reference not converged on 92 bars (excluded); common bar s+38
+  relative error (y - y*)/y*
+      first  | rms       mean       p95       max       n      | rms@cmn   mean@cmn   | |e| grew over the next N bars
+  S   s+19   | 2.358e-02 +1.019e-02 4.826e-02 1.273e-01 6111   | 1.005e-02 +4.234e-03 | 0 of 6110 (max x0.81)
+  T   s+0    | 4.676e-02 +1.182e-02 9.485e-02 3.805e-01 6111   | 8.632e-03 +2.279e-03 | 0 of 6111 (max x0.80)
+  T'  s+19   | 1.953e-02 +5.803e-03 3.901e-02 1.302e-01 6111   | 8.632e-03 +2.279e-03 | 0 of 6110 (max x0.88)
+  L   s+19   | 4.724e-02 +1.194e-02 9.637e-02 3.805e-01 6111   | 1.963e-02 +5.773e-03 | 0 of 6110 (max x0.80)
+  E   s+19   | 2.555e-02 +1.047e-02 5.236e-02 1.370e-01 6111   | 1.113e-02 +4.609e-03 | 0 of 6110 (max x0.81)
+  W   s+38   | 2.016e-02 +9.070e-03 3.714e-02 1.800e-01 6111   | 2.016e-02 +9.070e-03 | 0 of 6091 (max x0.77)
+  bars after the first output until |error| stays below, p50 / p95 over 4611 offsets (cN: N offsets still above after 1500 bars)
+      | < 0.001            | < 1e-06            | < 1e-12           
+  S   |    48 / 86           |   183 / 240          |   454 / 527         
+  T   |    64 / 102          |   199 / 255          |   470 / 546         
+  T'  |    45 / 83           |   180 / 236          |   451 / 527         
+  L   |    64 / 102          |   199 / 255          |   470 / 546         
+  E   |    50 / 88           |   186 / 243          |   457 / 530         
+  W   |    39 / 76           |   175 / 228          |   446 / 518         
+
+=== IBM  N=30: 6183 offsets; reference not converged on 265 bars (excluded); common bar s+58
+  relative error (y - y*)/y*
+      first  | rms       mean       p95       max       n      | rms@cmn   mean@cmn   | |e| grew over the next N bars
+  S   s+29   | 2.787e-02 +1.433e-02 5.847e-02 1.042e-01 5918   | 1.189e-02 +5.983e-03 | 0 of 5917 (max x0.69)
+  T   s+0    | 5.448e-02 +1.789e-02 1.076e-01 2.424e-01 5918   | 9.993e-03 +3.448e-03 | 0 of 5918 (max x0.70)
+  T'  s+29   | 2.285e-02 +8.449e-03 4.792e-02 1.182e-01 5918   | 9.993e-03 +3.448e-03 | 0 of 5917 (max x0.69)
+  L   s+29   | 5.474e-02 +1.793e-02 1.080e-01 3.713e-01 5918   | 2.256e-02 +8.305e-03 | 0 of 5917 (max x0.70)
+  E   s+29   | 3.002e-02 +1.489e-02 6.219e-02 1.114e-01 5918   | 1.302e-02 +6.494e-03 | 0 of 5917 (max x0.69)
+  W   s+58   | 2.315e-02 +1.185e-02 4.546e-02 1.482e-01 5918   | 2.315e-02 +1.185e-02 | 0 of 5888 (max x0.73)
+  bars after the first output until |error| stays below, p50 / p95 over 4418 offsets (cN: N offsets still above after 1500 bars)
+      | < 0.001            | < 1e-06            | < 1e-12           
+  S   |    80 / 144          |   283 / 386          |   696 / 849         
+  T   |   103 / 168          |   306 / 406          |   720 / 860         
+  T'  |    74 / 139          |   277 / 377          |   691 / 831         
+  L   |   103 / 167          |   306 / 406          |   720 / 860         
+  E   |    84 / 149          |   287 / 390          |   700 / 845         
+  W   |    68 / 125          |   269 / 358          |   690 / 829         
+
+=== IBM  N=50: 6143 offsets; reference not converged on 841 bars (excluded); common bar s+98
+  relative error (y - y*)/y*
+      first  | rms       mean       p95       max       n      | rms@cmn   mean@cmn   | |e| grew over the next N bars
+  S   s+49   | 4.108e-02 +2.374e-02 8.895e-02 1.418e-01 5302   | 1.927e-02 +1.059e-02 | 0 of 5301 (max x0.75)
+  T   s+0    | 7.390e-02 +2.951e-02 1.455e-01 2.648e-01 5302   | 1.584e-02 +6.397e-03 | 0 of 5302 (max x0.71)
+  T'  s+49   | 3.288e-02 +1.435e-02 6.829e-02 1.465e-01 5302   | 1.584e-02 +6.397e-03 | 0 of 5301 (max x0.80)
+  L   s+49   | 7.431e-02 +3.005e-02 1.455e-01 3.467e-01 5302   | 3.297e-02 +1.439e-02 | 0 of 5301 (max x0.71)
+  E   s+49   | 4.380e-02 +2.465e-02 9.468e-02 1.489e-01 5302   | 2.084e-02 +1.140e-02 | 0 of 5301 (max x0.74)
+  W   s+98   | 3.255e-02 +1.926e-02 6.275e-02 1.980e-01 5302   | 3.255e-02 +1.926e-02 | 0 of 5252 (max x0.80)
+  bars after the first output until |error| stays below, p50 / p95 over 3802 offsets (cN: N offsets still above after 1500 bars)
+      | < 0.001            | < 1e-06            | < 1e-12           
+  S   |   145 / 292          |   516 / 772          |  1182 / 1501  c294  
+  T   |   188 / 328          |   552 / 804          |  1223 / 1501  c544  
+  T'  |   139 / 279          |   503 / 755          |  1174 / 1501  c252  
+  L   |   188 / 328          |   552 / 804          |  1224 / 1501  c541  
+  E   |   149 / 297          |   523 / 774          |  1184 / 1501  c313  
+  W   |   137 / 245          |   489 / 744          |  1167 / 1501  c263  
+
+=== IBM  N=200: 5843 offsets; reference not converged on 6241 bars (excluded); common bar s+398
+  no offset has a converged reference
+
+##### gData segments: 10000 bars, mean log drift -2.24e-04 per bar
+
+=== gData segments  N=2: 6891 offsets; reference not converged on 0 bars (excluded); common bar s+2
+  relative error (y - y*)/y*
+      first  | rms       mean       p95       max       n      | rms@cmn   mean@cmn   | |e| grew over the next N bars
+  S   s+1    | 5.860e-03 +1.478e-03 1.067e-02 8.612e-02 6891   | 3.152e-03 +7.741e-04 | 0 of 6885 (max x0.70)
+  T   s+0    | 1.016e-02 +1.503e-03 1.953e-02 1.365e-01 6891   | 2.943e-03 +4.961e-04 | 0 of 6891 (max x0.71)
+  T'  s+1    | 5.460e-03 +9.063e-04 9.922e-03 8.549e-02 6891   | 2.943e-03 +4.961e-04 | 0 of 6885 (max x0.71)
+  L   s+1    | 1.017e-02 +1.499e-03 1.950e-02 1.365e-01 6891   | 5.461e-03 +9.062e-04 | 0 of 6885 (max x0.71)
+  E   s+1    | 6.438e-03 +1.485e-03 1.148e-02 8.690e-02 6891   | 3.573e-03 +8.501e-04 | 0 of 6885 (max x0.71)
+  W   s+2    | 5.218e-03 +1.485e-03 9.434e-03 7.599e-02 6891   | 5.218e-03 +1.485e-03 | 0 of 6879 (max x0.71)
+  bars after the first output until |error| stays below, p50 / p95 over 615 offsets (cN: N offsets still above after 1500 bars)
+      | < 0.001            | < 1e-06            | < 1e-12           
+  S   |     2 / 4            |    11 / 14           |    30 / 34          
+  T   |     3 / 5            |    12 / 15           |    31 / 35          
+  T'  |     2 / 4            |    11 / 14           |    30 / 34          
+  L   |     3 / 5            |    12 / 15           |    31 / 35          
+  E   |     2 / 4            |    11 / 14           |    30 / 34          
+  W   |     2 / 4            |    11 / 14           |    30 / 34          
+
+=== gData segments  N=3: 6879 offsets; reference not converged on 0 bars (excluded); common bar s+4
+  relative error (y - y*)/y*
+      first  | rms       mean       p95       max       n      | rms@cmn   mean@cmn   | |e| grew over the next N bars
+  S   s+2    | 8.048e-03 +1.986e-03 1.498e-02 9.133e-02 6879   | 3.988e-03 +9.890e-04 | 0 of 6874 (max x0.69)
+  T   s+0    | 1.552e-02 +2.065e-03 3.044e-02 1.612e-01 6879   | 3.637e-03 +6.092e-04 | 0 of 6879 (max x0.69)
+  T'  s+2    | 7.403e-03 +1.194e-03 1.390e-02 9.189e-02 6879   | 3.637e-03 +6.092e-04 | 0 of 6874 (max x0.69)
+  L   s+2    | 1.552e-02 +2.056e-03 3.044e-02 1.612e-01 6879   | 7.404e-03 +1.187e-03 | 0 of 6874 (max x0.69)
+  E   s+2    | 9.055e-03 +2.003e-03 1.664e-02 9.723e-02 6879   | 4.531e-03 +1.077e-03 | 0 of 6874 (max x0.68)
+  W   s+4    | 6.189e-03 +1.980e-03 1.160e-02 6.293e-02 6879   | 6.189e-03 +1.980e-03 | 0 of 6864 (max x0.72)
+  bars after the first output until |error| stays below, p50 / p95 over 609 offsets (cN: N offsets still above after 1500 bars)
+      | < 0.001            | < 1e-06            | < 1e-12           
+  S   |     3 / 7            |    19 / 24           |    52 / 58          
+  T   |     5 / 8            |    21 / 26           |    54 / 61          
+  T'  |     3 / 6            |    19 / 24           |    52 / 59          
+  L   |     5 / 8            |    21 / 26           |    54 / 61          
+  E   |     4 / 7            |    20 / 24           |    53 / 59          
+  W   |     3 / 6            |    19 / 23           |    52 / 58          
+
+=== gData segments  N=4: 6869 offsets; reference not converged on 0 bars (excluded); common bar s+6
+  relative error (y - y*)/y*
+      first  | rms       mean       p95       max       n      | rms@cmn   mean@cmn   | |e| grew over the next N bars
+  S   s+3    | 1.005e-02 +2.544e-03 1.899e-02 9.990e-02 6869   | 4.883e-03 +1.249e-03 | 0 of 6864 (max x0.71)
+  T   s+0    | 1.974e-02 +2.689e-03 3.902e-02 1.786e-01 6869   | 4.341e-03 +7.649e-04 | 0 of 6869 (max x0.70)
+  T'  s+3    | 9.032e-03 +1.536e-03 1.727e-02 1.018e-01 6869   | 4.341e-03 +7.649e-04 | 0 of 6864 (max x0.73)
+  L   s+3    | 1.975e-02 +2.664e-03 3.902e-02 1.786e-01 6869   | 9.039e-03 +1.524e-03 | 0 of 6864 (max x0.70)
+  E   s+3    | 1.130e-02 +2.568e-03 2.105e-02 1.012e-01 6869   | 5.503e-03 +1.354e-03 | 0 of 6864 (max x0.71)
+  W   s+6    | 7.211e-03 +2.520e-03 1.387e-02 7.140e-02 6869   | 7.211e-03 +2.520e-03 | 0 of 6849 (max x0.74)
+  bars after the first output until |error| stays below, p50 / p95 over 603 offsets (cN: N offsets still above after 1500 bars)
+      | < 0.001            | < 1e-06            | < 1e-12           
+  S   |     5 / 10           |    28 / 34           |    74 / 84          
+  T   |     8 / 13           |    31 / 37           |    77 / 87          
+  T'  |     5 / 10           |    28 / 34           |    74 / 84          
+  L   |     8 / 13           |    31 / 37           |    77 / 87          
+  E   |     6 / 10           |    28 / 34           |    75 / 84          
+  W   |     5 / 9            |    27 / 32           |    74 / 83          
+
+=== gData segments  N=5: 6859 offsets; reference not converged on 0 bars (excluded); common bar s+8
+  relative error (y - y*)/y*
+      first  | rms       mean       p95       max       n      | rms@cmn   mean@cmn   | |e| grew over the next N bars
+  S   s+4    | 1.191e-02 +3.119e-03 2.292e-02 1.137e-01 6859   | 5.717e-03 +1.521e-03 | 0 of 6854 (max x0.76)
+  T   s+0    | 2.338e-02 +3.316e-03 4.622e-02 1.928e-01 6859   | 4.984e-03 +9.279e-04 | 0 of 6859 (max x0.72)
+  T'  s+4    | 1.054e-02 +1.895e-03 2.016e-02 1.144e-01 6859   | 4.984e-03 +9.279e-04 | 0 of 6854 (max x0.79)
+  L   s+4    | 2.340e-02 +3.305e-03 4.665e-02 1.928e-01 6859   | 1.055e-02 +1.888e-03 | 0 of 6854 (max x0.72)
+  E   s+4    | 1.335e-02 +3.154e-03 2.551e-02 1.184e-01 6859   | 6.424e-03 +1.646e-03 | 0 of 6854 (max x0.75)
+  W   s+8    | 8.295e-03 +3.080e-03 1.633e-02 9.200e-02 6859   | 8.295e-03 +3.080e-03 | 0 of 6834 (max x0.76)
+  bars after the first output until |error| stays below, p50 / p95 over 597 offsets (cN: N offsets still above after 1500 bars)
+      | < 0.001            | < 1e-06            | < 1e-12           
+  S   |     7 / 13           |    36 / 44           |    96 / 108         
+  T   |    11 / 17           |    40 / 47           |   100 / 112         
+  T'  |     7 / 13           |    36 / 43           |    96 / 108         
+  L   |    11 / 17           |    40 / 47           |   100 / 112         
+  E   |     8 / 14           |    37 / 44           |    97 / 109         
+  W   |     6 / 11           |    35 / 43           |    96 / 109         
+
+=== gData segments  N=10: 6809 offsets; reference not converged on 0 bars (excluded); common bar s+18
+  relative error (y - y*)/y*
+      first  | rms       mean       p95       max       n      | rms@cmn   mean@cmn   | |e| grew over the next N bars
+  S   s+9    | 1.987e-02 +6.086e-03 4.184e-02 1.637e-01 6809   | 9.469e-03 +2.928e-03 | 0 of 6804 (max x0.85)
+  T   s+0    | 3.752e-02 +6.555e-03 7.811e-02 2.348e-01 6809   | 7.937e-03 +1.765e-03 | 0 of 6809 (max x0.81)
+  T'  s+9    | 1.686e-02 +3.754e-03 3.439e-02 1.515e-01 6809   | 7.937e-03 +1.765e-03 | 0 of 6804 (max x0.86)
+  L   s+9    | 3.753e-02 +6.565e-03 7.811e-02 2.348e-01 6809   | 1.686e-02 +3.757e-03 | 0 of 6804 (max x0.81)
+  E   s+9    | 2.190e-02 +6.160e-03 4.573e-02 1.751e-01 6809   | 1.048e-02 +3.155e-03 | 0 of 6804 (max x0.84)
+  W   s+18   | 1.359e-02 +5.993e-03 2.751e-02 1.117e-01 6809   | 1.359e-02 +5.993e-03 | 0 of 6759 (max x0.88)
+  bars after the first output until |error| stays below, p50 / p95 over 567 offsets (cN: N offsets still above after 1500 bars)
+      | < 0.001            | < 1e-06            | < 1e-12           
+  S   |    18 / 30           |    79 / 97           |   203 / 227         
+  T   |    26 / 38           |    86 / 107          |   211 / 234         
+  T'  |    17 / 29           |    77 / 98           |   202 / 225         
+  L   |    26 / 38           |    87 / 109          |   211 / 242         
+  E   |    20 / 30           |    81 / 100          |   205 / 231         
+  W   |    16 / 28           |    77 / 99           |   202 / 235         
+
+=== gData segments  N=14: 6769 offsets; reference not converged on 0 bars (excluded); common bar s+26
+  relative error (y - y*)/y*
+      first  | rms       mean       p95       max       n      | rms@cmn   mean@cmn   | |e| grew over the next N bars
+  S   s+13   | 2.547e-02 +8.535e-03 5.566e-02 1.747e-01 6769   | 1.239e-02 +4.075e-03 | 0 of 6764 (max x0.86)
+  T   s+0    | 4.655e-02 +9.213e-03 9.980e-02 2.653e-01 6769   | 1.026e-02 +2.423e-03 | 0 of 6769 (max x0.84)
+  T'  s+13   | 2.133e-02 +5.280e-03 4.429e-02 1.579e-01 6769   | 1.026e-02 +2.423e-03 | 0 of 6764 (max x0.88)
+  L   s+13   | 4.657e-02 +9.253e-03 9.980e-02 2.653e-01 6769   | 2.133e-02 +5.295e-03 | 0 of 6764 (max x0.84)
+  E   s+13   | 2.781e-02 +8.636e-03 6.121e-02 1.833e-01 6769   | 1.361e-02 +4.388e-03 | 0 of 6764 (max x0.86)
+  W   s+26   | 1.770e-02 +8.418e-03 3.788e-02 1.274e-01 6769   | 1.770e-02 +8.418e-03 | 0 of 6699 (max x0.89)
+  bars after the first output until |error| stays below, p50 / p95 over 543 offsets (cN: N offsets still above after 1500 bars)
+      | < 0.001            | < 1e-06            | < 1e-12           
+  S   |    25 / 41           |   111 / 139          |   293 / 379         
+  T   |    38 / 54           |   123 / 149          |   304 / 391         
+  T'  |    25 / 41           |   110 / 136          |   291 / 378         
+  L   |    39 / 55           |   125 / 158          |   306 / 394         
+  E   |    29 / 41           |   114 / 143          |   295 / 382         
+  W   |    26 / 41           |   111 / 148          |   293 / 382         
+
+=== gData segments  N=20: 6709 offsets; reference not converged on 131 bars (excluded); common bar s+38
+  relative error (y - y*)/y*
+      first  | rms       mean       p95       max       n      | rms@cmn   mean@cmn   | |e| grew over the next N bars
+  S   s+19   | 3.423e-02 +1.232e-02 7.975e-02 1.945e-01 6578   | 1.784e-02 +6.018e-03 | 0 of 6573 (max x0.86)
+  T   s+0    | 5.921e-02 +1.295e-02 1.283e-01 2.897e-01 6578   | 1.503e-02 +3.640e-03 | 0 of 6578 (max x0.82)
+  T'  s+19   | 2.858e-02 +7.616e-03 6.124e-02 1.819e-01 6578   | 1.503e-02 +3.640e-03 | 0 of 6573 (max x0.88)
+  L   s+19   | 5.937e-02 +1.343e-02 1.283e-01 2.897e-01 6578   | 2.861e-02 +7.769e-03 | 0 of 6573 (max x0.82)
+  E   s+19   | 3.694e-02 +1.248e-02 8.615e-02 2.042e-01 6578   | 1.929e-02 +6.441e-03 | 0 of 6573 (max x0.85)
+  W   s+38   | 2.416e-02 +1.224e-02 5.235e-02 1.386e-01 6578   | 2.416e-02 +1.224e-02 | 0 of 6478 (max x0.86)
+  bars after the first output until |error| stays below, p50 / p95 over 472 offsets (cN: N offsets still above after 1500 bars)
+      | < 0.001            | < 1e-06            | < 1e-12           
+  S   |    39 / 57           |   154 / 186          |   437 / 561         
+  T   |    55 / 78           |   172 / 204          |   443 / 580         
+  T'  |    36 / 59           |   153 / 185          |   424 / 561         
+  L   |    56 / 82           |   175 / 208          |   465 / 584         
+  E   |    40 / 59           |   158 / 192          |   438 / 565         
+  W   |    40 / 65           |   155 / 203          |   448 / 588         
+
+=== gData segments  N=30: 6609 offsets; reference not converged on 1177 bars (excluded); common bar s+58
+  relative error (y - y*)/y*
+      first  | rms       mean       p95       max       n      | rms@cmn   mean@cmn   | |e| grew over the next N bars
+  S   s+29   | 5.308e-02 +2.205e-02 1.152e-01 2.915e-01 5432   | 3.168e-02 +1.148e-02 | 0 of 5427 (max x0.92)
+  T   s+0    | 8.327e-02 +2.370e-02 1.779e-01 4.130e-01 5432   | 2.730e-02 +7.387e-03 | 0 of 5432 (max x0.87)
+  T'  s+29   | 4.478e-02 +1.386e-02 9.405e-02 2.738e-01 5432   | 2.730e-02 +7.387e-03 | 0 of 5427 (max x0.95)
+  L   s+29   | 8.400e-02 +2.528e-02 1.779e-01 4.130e-01 5432   | 4.501e-02 +1.449e-02 | 0 of 5427 (max x0.87)
+  E   s+29   | 5.632e-02 +2.253e-02 1.237e-01 3.056e-01 5432   | 3.350e-02 +1.217e-02 | 0 of 5427 (max x0.91)
+  W   s+58   | 3.891e-02 +2.082e-02 8.225e-02 2.134e-01 5432   | 3.891e-02 +2.082e-02 | 0 of 5282 (max x0.98)
+  bars after the first output until |error| stays below, p50 / p95 over 222 offsets (cN: N offsets still above after 1500 bars)
+      | < 0.001            | < 1e-06            | < 1e-12           
+  S   |    53 / 86           |   228 / 415          |   860 / 892         
+  T   |    80 / 120          |   256 / 440          |   892 / 927         
+  T'  |    51 / 91           |   227 / 411          |   863 / 898         
+  L   |    82 / 120          |   290 / 464          |   901 / 932         
+  E   |    60 / 88           |   240 / 415          |   865 / 893         
+  W   |    62 / 125          |   246 / 504          |   863 / 938         
+
+=== gData segments  N=50: 6409 offsets; reference not converged on 3194 bars (excluded); common bar s+98
+  relative error (y - y*)/y*
+      first  | rms       mean       p95       max       n      | rms@cmn   mean@cmn   | |e| grew over the next N bars
+  S   s+49   | 1.026e-01 +5.387e-02 2.525e-01 4.567e-01 3313   | 6.700e-02 +3.077e-02 | 15 of 3309 (max x1.02)
+  T   s+0    | 1.416e-01 +6.188e-02 3.277e-01 6.242e-01 3313   | 5.673e-02 +2.118e-02 | 0 of 3313 (max x0.95)
+  T'  s+49   | 8.762e-02 +3.667e-02 2.160e-01 4.382e-01 3313   | 5.673e-02 +2.118e-02 | 67 of 3309 (max x1.10)
+  L   s+49   | 1.430e-01 +6.947e-02 3.277e-01 6.242e-01 3313   | 8.856e-02 +4.021e-02 | 0 of 3309 (max x0.95)
+  E   s+49   | 1.073e-01 +5.631e-02 2.612e-01 4.757e-01 3313   | 7.040e-02 +3.269e-02 | 4 of 3309 (max x1.00)
+  W   s+98   | 7.642e-02 +4.342e-02 1.789e-01 3.527e-01 3313   | 7.642e-02 +4.342e-02 | 66 of 3113 (max x1.08)
+
+=== gData segments  N=200: 4909 offsets; reference not converged on 6899 bars (excluded); common bar s+398
+  no offset has a converged reference
+
+##### gData whole (stress): 10000 bars, mean log drift 1.70e-04 per bar
+
+=== gData whole (stress)  N=2: 9498 offsets; reference not converged on 0 bars (excluded); common bar s+2
+  relative error (y - y*)/y*
+      first  | rms       mean       p95       max       n      | rms@cmn   mean@cmn   | |e| grew over the next N bars
+  S   s+1    | 1.807e-01 +1.766e-02 1.177e-02 2.924e+00 9498   | 1.775e-01 +1.643e-02 | 9 of 9497 (max x1.14)
+  T   s+0    | 1.834e-01 +1.790e-02 2.104e-02 2.950e+00 9498   | 1.765e-01 +1.582e-02 | 6 of 9498 (max x1.13)
+  T'  s+1    | 1.798e-01 +1.677e-02 1.084e-02 2.924e+00 9498   | 1.765e-01 +1.582e-02 | 9 of 9497 (max x1.13)
+  L   s+1    | 1.834e-01 +1.790e-02 2.104e-02 2.950e+00 9498   | 1.798e-01 +1.677e-02 | 6 of 9497 (max x1.13)
+  E   s+1    | 1.814e-01 +1.774e-02 1.295e-02 2.927e+00 9498   | 1.783e-01 +1.660e-02 | 10 of 9497 (max x1.14)
+  W   s+2    | 1.784e-01 +1.745e-02 1.077e-02 2.914e+00 9498   | 1.784e-01 +1.745e-02 | 13 of 9496 (max x1.14)
+  bars after the first output until |error| stays below, p50 / p95 over 7998 offsets (cN: N offsets still above after 1500 bars)
+      | < 0.001            | < 1e-06            | < 1e-12           
+  S   |     2 / 4            |    12 / 15           |    31 / 37          
+  T   |     3 / 5            |    13 / 16           |    32 / 38          
+  T'  |     2 / 4            |    12 / 15           |    31 / 37          
+  L   |     3 / 5            |    13 / 16           |    32 / 38          
+  E   |     2 / 5            |    12 / 15           |    31 / 37          
+  W   |     2 / 4            |    11 / 15           |    31 / 36          
+
+=== gData whole (stress)  N=3: 9496 offsets; reference not converged on 0 bars (excluded); common bar s+4
+  relative error (y - y*)/y*
+      first  | rms       mean       p95       max       n      | rms@cmn   mean@cmn   | |e| grew over the next N bars
+  S   s+2    | 2.186e-01 +2.550e-02 1.818e-02 2.931e+00 9496   | 2.134e-01 +2.348e-02 | 14 of 9495 (max x1.14)
+  T   s+0    | 2.229e-01 +2.600e-02 3.438e-02 2.958e+00 9496   | 2.116e-01 +2.246e-02 | 5 of 9496 (max x1.13)
+  T'  s+2    | 2.170e-01 +2.411e-02 1.624e-02 2.931e+00 9496   | 2.116e-01 +2.246e-02 | 13 of 9495 (max x1.14)
+  L   s+2    | 2.229e-01 +2.599e-02 3.438e-02 2.958e+00 9496   | 2.170e-01 +2.411e-02 | 5 of 9495 (max x1.13)
+  E   s+2    | 2.194e-01 +2.563e-02 1.979e-02 2.936e+00 9496   | 2.143e-01 +2.371e-02 | 11 of 9495 (max x1.14)
+  W   s+4    | 2.148e-01 +2.508e-02 1.449e-02 2.909e+00 9496   | 2.148e-01 +2.508e-02 | 20 of 9493 (max x1.15)
+  bars after the first output until |error| stays below, p50 / p95 over 7996 offsets (cN: N offsets still above after 1500 bars)
+      | < 0.001            | < 1e-06            | < 1e-12           
+  S   |     4 / 9            |    20 / 28           |    54 / 65          
+  T   |     6 / 10           |    22 / 29           |    56 / 67          
+  T'  |     4 / 8            |    20 / 27           |    54 / 65          
+  L   |     6 / 10           |    22 / 29           |    56 / 67          
+  E   |     4 / 9            |    21 / 28           |    54 / 65          
+  W   |     3 / 8            |    20 / 27           |    53 / 64          
+
+=== gData whole (stress)  N=4: 9494 offsets; reference not converged on 0 bars (excluded); common bar s+6
+  relative error (y - y*)/y*
+      first  | rms       mean       p95       max       n      | rms@cmn   mean@cmn   | |e| grew over the next N bars
+  S   s+3    | 2.500e-01 +3.266e-02 2.408e-02 2.942e+00 9494   | 2.433e-01 +2.986e-02 | 17 of 9493 (max x1.15)
+  T   s+0    | 2.555e-01 +3.339e-02 4.541e-02 2.975e+00 9494   | 2.408e-01 +2.843e-02 | 6 of 9494 (max x1.14)
+  T'  s+3    | 2.478e-01 +3.078e-02 2.090e-02 2.939e+00 9494   | 2.408e-01 +2.843e-02 | 19 of 9493 (max x1.14)
+  L   s+3    | 2.555e-01 +3.339e-02 4.541e-02 2.975e+00 9494   | 2.478e-01 +3.078e-02 | 6 of 9493 (max x1.14)
+  E   s+3    | 2.510e-01 +3.283e-02 2.638e-02 2.947e+00 9494   | 2.443e-01 +3.015e-02 | 15 of 9493 (max x1.15)
+  W   s+6    | 2.453e-01 +3.205e-02 1.852e-02 2.916e+00 9494   | 2.453e-01 +3.205e-02 | 28 of 9490 (max x1.15)
+  bars after the first output until |error| stays below, p50 / p95 over 7994 offsets (cN: N offsets still above after 1500 bars)
+      | < 0.001            | < 1e-06            | < 1e-12           
+  S   |     6 / 13           |    30 / 41           |    77 / 96          
+  T   |     9 / 16           |    32 / 44           |    80 / 98          
+  T'  |     6 / 13           |    29 / 41           |    77 / 95          
+  L   |     9 / 16           |    32 / 44           |    80 / 98          
+  E   |     6 / 14           |    30 / 42           |    78 / 96          
+  W   |     5 / 12           |    28 / 40           |    76 / 95          
+
+=== gData whole (stress)  N=5: 9492 offsets; reference not converged on 0 bars (excluded); common bar s+8
+  relative error (y - y*)/y*
+      first  | rms       mean       p95       max       n      | rms@cmn   mean@cmn   | |e| grew over the next N bars
+  S   s+4    | 2.746e-01 +3.889e-02 3.070e-02 2.956e+00 9492   | 2.665e-01 +3.531e-02 | 25 of 9491 (max x1.15)
+  T   s+0    | 2.810e-01 +3.985e-02 5.657e-02 2.993e+00 9492   | 2.633e-01 +3.345e-02 | 7 of 9492 (max x1.14)
+  T'  s+4    | 2.719e-01 +3.651e-02 2.604e-02 2.957e+00 9492   | 2.633e-01 +3.345e-02 | 27 of 9491 (max x1.14)
+  L   s+4    | 2.810e-01 +3.985e-02 5.657e-02 2.993e+00 9492   | 2.719e-01 +3.651e-02 | 7 of 9491 (max x1.14)
+  E   s+4    | 2.756e-01 +3.909e-02 3.402e-02 2.961e+00 9492   | 2.676e-01 +3.566e-02 | 20 of 9491 (max x1.15)
+  W   s+8    | 2.691e-01 +3.809e-02 2.361e-02 2.930e+00 9492   | 2.691e-01 +3.809e-02 | 38 of 9487 (max x1.15)
+  bars after the first output until |error| stays below, p50 / p95 over 7992 offsets (cN: N offsets still above after 1500 bars)
+      | < 0.001            | < 1e-06            | < 1e-12           
+  S   |     8 / 20           |    39 / 57           |   100 / 128         
+  T   |    12 / 23           |    43 / 60           |   104 / 132         
+  T'  |     8 / 19           |    39 / 56           |   100 / 128         
+  L   |    12 / 23           |    43 / 60           |   104 / 132         
+  E   |     9 / 20           |    40 / 57           |   101 / 129         
+  W   |     7 / 17           |    37 / 54           |    98 / 126         
+
+=== gData whole (stress)  N=10: 9482 offsets; reference not converged on 0 bars (excluded); common bar s+18
+  relative error (y - y*)/y*
+      first  | rms       mean       p95       max       n      | rms@cmn   mean@cmn   | |e| grew over the next N bars
+  S   s+9    | 3.678e-01 +6.977e-02 9.337e-02 3.057e+00 9482   | 3.539e-01 +6.224e-02 | 49 of 9481 (max x1.15)
+  T   s+0    | 3.779e-01 +7.187e-02 1.411e-01 3.164e+00 9482   | 3.481e-01 +5.833e-02 | 16 of 9482 (max x1.14)
+  T'  s+9    | 3.627e-01 +6.489e-02 7.450e-02 3.049e+00 9482   | 3.481e-01 +5.833e-02 | 60 of 9481 (max x1.14)
+  L   s+9    | 3.779e-01 +7.188e-02 1.411e-01 3.164e+00 9482   | 3.627e-01 +6.490e-02 | 16 of 9481 (max x1.14)
+  E   s+9    | 3.692e-01 +7.015e-02 9.999e-02 3.068e+00 9482   | 3.555e-01 +6.290e-02 | 45 of 9481 (max x1.15)
+  W   s+18   | 3.591e-01 +6.806e-02 7.079e-02 3.025e+00 9482   | 3.591e-01 +6.806e-02 | 68 of 9472 (max x1.15)
+  bars after the first output until |error| stays below, p50 / p95 over 7982 offsets (cN: N offsets still above after 1500 bars)
+      | < 0.001            | < 1e-06            | < 1e-12           
+  S   |    21 / 70           |    87 / 150          |   218 / 404         
+  T   |    29 / 75           |    94 / 158          |   226 / 411         
+  T'  |    20 / 66           |    85 / 149          |   217 / 402         
+  L   |    29 / 75           |    94 / 158          |   226 / 411         
+  E   |    23 / 70           |    88 / 151          |   220 / 408         
+  W   |    18 / 67           |    83 / 146          |   215 / 399         
+
+=== gData whole (stress)  N=14: 9474 offsets; reference not converged on 0 bars (excluded); common bar s+26
+  relative error (y - y*)/y*
+      first  | rms       mean       p95       max       n      | rms@cmn   mean@cmn   | |e| grew over the next N bars
+  S   s+13   | 4.208e-01 +9.170e-02 3.097e-01 3.123e+00 9474   | 4.028e-01 +8.109e-02 | 67 of 9473 (max x1.15)
+  T   s+0    | 4.331e-01 +9.461e-02 3.394e-01 3.244e+00 9474   | 3.953e-01 +7.558e-02 | 27 of 9474 (max x1.14)
+  T'  s+13   | 4.140e-01 +8.479e-02 1.987e-01 3.128e+00 9474   | 3.953e-01 +7.558e-02 | 96 of 9473 (max x1.14)
+  L   s+13   | 4.331e-01 +9.472e-02 3.394e-01 3.244e+00 9474   | 4.140e-01 +8.485e-02 | 27 of 9473 (max x1.14)
+  E   s+13   | 4.223e-01 +9.223e-02 3.255e-01 3.132e+00 9474   | 4.048e-01 +8.197e-02 | 65 of 9473 (max x1.15)
+  W   s+26   | 4.101e-01 +8.935e-02 2.936e-01 3.094e+00 9474   | 4.101e-01 +8.935e-02 | 110 of 9460 (max x1.15)
+  bars after the first output until |error| stays below, p50 / p95 over 7974 offsets (cN: N offsets still above after 1500 bars)
+      | < 0.001            | < 1e-06            | < 1e-12           
+  S   |    33 / 150          |   127 / 366          |   320 / 691         
+  T   |    44 / 161          |   138 / 377          |   330 / 705         
+  T'  |    31 / 148          |   125 / 364          |   317 / 692         
+  L   |    44 / 161          |   138 / 377          |   330 / 705         
+  E   |    35 / 153          |   128 / 368          |   321 / 693         
+  W   |    29 / 133          |   122 / 354          |   315 / 696         
+
+=== gData whole (stress)  N=20: 9462 offsets; reference not converged on 47 bars (excluded); common bar s+38
+  relative error (y - y*)/y*
+      first  | rms       mean       p95       max       n      | rms@cmn   mean@cmn   | |e| grew over the next N bars
+  S   s+19   | 4.903e-01 +1.269e-01 8.291e-01 3.213e+00 9415   | 4.670e-01 +1.119e-01 | 110 of 9414 (max x1.15)
+  T   s+0    | 5.057e-01 +1.307e-01 9.193e-01 3.328e+00 9415   | 4.571e-01 +1.041e-01 | 50 of 9415 (max x1.14)
+  T'  s+19   | 4.812e-01 +1.168e-01 7.324e-01 3.234e+00 9415   | 4.571e-01 +1.041e-01 | 164 of 9414 (max x1.14)
+  L   s+19   | 5.059e-01 +1.314e-01 9.193e-01 3.328e+00 9415   | 4.813e-01 +1.172e-01 | 50 of 9414 (max x1.14)
+  E   s+19   | 4.922e-01 +1.276e-01 8.517e-01 3.219e+00 9415   | 4.694e-01 +1.131e-01 | 95 of 9414 (max x1.15)
+  W   s+38   | 4.769e-01 +1.236e-01 7.918e-01 3.180e+00 9415   | 4.769e-01 +1.236e-01 | 142 of 9395 (max x1.15)
+  bars after the first output until |error| stays below, p50 / p95 over 7915 offsets (cN: N offsets still above after 1500 bars)
+      | < 0.001            | < 1e-06            | < 1e-12           
+  S   |    52 / 387          |   190 / 676          |   477 / 1060        
+  T   |    68 / 400          |   205 / 688          |   492 / 1077        
+  T'  |    49 / 381          |   186 / 669          |   473 / 1058        
+  L   |    68 / 400          |   205 / 688          |   493 / 1077        
+  E   |    55 / 390          |   192 / 679          |   479 / 1059        
+  W   |    48 / 372          |   184 / 673          |   472 / 1048        
+
+=== gData whole (stress)  N=30: 9442 offsets; reference not converged on 313 bars (excluded); common bar s+58
+  relative error (y - y*)/y*
+      first  | rms       mean       p95       max       n      | rms@cmn   mean@cmn   | |e| grew over the next N bars
+  S   s+29   | 6.097e-01 +1.967e-01 1.774e+00 3.323e+00 9129   | 5.786e-01 +1.748e-01 | 169 of 9128 (max x1.15)
+  T   s+0    | 6.292e-01 +2.020e-01 1.798e+00 3.434e+00 9129   | 5.653e-01 +1.629e-01 | 98 of 9129 (max x1.14)
+  T'  s+29   | 5.970e-01 +1.812e-01 1.711e+00 3.350e+00 9129   | 5.653e-01 +1.629e-01 | 228 of 9128 (max x1.14)
+  L   s+29   | 6.298e-01 +2.036e-01 1.798e+00 3.434e+00 9129   | 5.975e-01 +1.824e-01 | 98 of 9128 (max x1.14)
+  E   s+29   | 6.121e-01 +1.978e-01 1.778e+00 3.332e+00 9129   | 5.819e-01 +1.765e-01 | 161 of 9128 (max x1.15)
+  W   s+58   | 5.926e-01 +1.924e-01 1.713e+00 3.267e+00 9129   | 5.926e-01 +1.924e-01 | 209 of 9099 (max x1.15)
+  bars after the first output until |error| stays below, p50 / p95 over 7629 offsets (cN: N offsets still above after 1500 bars)
+      | < 0.001            | < 1e-06            | < 1e-12           
+  S   |    90 / 783          |   311 / 1150         |   767 / 1501  c1036 
+  T   |   115 / 814          |   336 / 1164         |   788 / 1501  c1057 
+  T'  |    86 / 785          |   307 / 1135         |   760 / 1501  c1025 
+  L   |   116 / 814          |   337 / 1164         |   790 / 1501  c1057 
+  E   |    94 / 788          |   314 / 1157         |   771 / 1501  c1048 
+  W   |    82 / 763          |   306 / 1133         |   756 / 1501  c1042 
+
+=== gData whole (stress)  N=50: 9402 offsets; reference not converged on 736 bars (excluded); common bar s+98
+  relative error (y - y*)/y*
+      first  | rms       mean       p95       max       n      | rms@cmn   mean@cmn   | |e| grew over the next N bars
+  S   s+49   | 7.931e-01 +3.097e-01 2.316e+00 3.468e+00 8666   | 7.486e-01 +2.729e-01 | 259 of 8665 (max x1.15)
+  T   s+0    | 8.170e-01 +3.177e-01 2.352e+00 3.600e+00 8666   | 7.281e-01 +2.518e-01 | 179 of 8666 (max x1.11)
+  T'  s+49   | 7.732e-01 +2.831e-01 2.301e+00 3.464e+00 8666   | 7.281e-01 +2.518e-01 | 408 of 8665 (max x1.14)
+  L   s+49   | 8.188e-01 +3.215e-01 2.352e+00 3.600e+00 8666   | 7.744e-01 +2.862e-01 | 180 of 8665 (max x1.14)
+  E   s+49   | 7.960e-01 +3.116e-01 2.321e+00 3.480e+00 8666   | 7.529e-01 +2.759e-01 | 239 of 8665 (max x1.15)
+  W   s+98   | 7.716e-01 +3.029e-01 2.279e+00 3.392e+00 8666   | 7.716e-01 +3.029e-01 | 329 of 8616 (max x1.15)
+  bars after the first output until |error| stays below, p50 / p95 over 7166 offsets (cN: N offsets still above after 1500 bars)
+      | < 0.001            | < 1e-06            | < 1e-12           
+  S   |   194 / 1501  c511   |   591 / 1501  c1185  |  1353 / 1501  c2894 
+  T   |   235 / 1501  c547   |   625 / 1501  c1223  |  1392 / 1501  c3113 
+  T'  |   186 / 1501  c495   |   576 / 1501  c1175  |  1344 / 1501  c2833 
+  L   |   235 / 1501  c547   |   625 / 1501  c1223  |  1393 / 1501  c3118 
+  E   |   197 / 1501  c522   |   597 / 1501  c1192  |  1362 / 1501  c2926 
+  W   |   187 / 1501  c515   |   576 / 1501  c1188  |  1357 / 1501  c2979 
+
+=== gData whole (stress)  N=200: 9102 offsets; reference not converged on 5812 bars (excluded); common bar s+398
+  relative error (y - y*)/y*
+      first  | rms       mean       p95       max       n      | rms@cmn   mean@cmn   | |e| grew over the next N bars
+  S   s+199  | 2.848e+00 +2.480e+00 4.463e+00 4.756e+00 3290   | 2.670e+00 +2.333e+00 | 1095 of 3289 (max x1.14)
+  T   s+0    | 2.853e+00 +2.392e+00 4.562e+00 5.323e+00 3290   | 2.523e+00 +2.140e+00 | 837 of 3290 (max x1.15)
+  T'  s+199  | 2.675e+00 +2.255e+00 4.277e+00 4.777e+00 3290   | 2.523e+00 +2.140e+00 | 1297 of 3289 (max x1.15)
+  L   s+199  | 2.963e+00 +2.598e+00 4.562e+00 5.323e+00 3290   | 2.796e+00 +2.457e+00 | 967 of 3289 (max x1.15)
+  E   s+199  | 2.862e+00 +2.499e+00 4.493e+00 4.717e+00 3290   | 2.693e+00 +2.359e+00 | 1069 of 3289 (max x1.14)
+  W   s+398  | 2.866e+00 +2.574e+00 4.217e+00 4.423e+00 3290   | 2.866e+00 +2.574e+00 | 1272 of 3090 (max x1.15)
+  bars after the first output until |error| stays below, p50 / p95 over 1790 offsets (cN: N offsets still above after 1500 bars)
+      | < 0.001            | < 1e-06            | < 1e-12           
+  S   |  1501 / 1501  c1778  |  1501 / 1501  c1790  |  1501 / 1501  c1790 
+  T   |  1501 / 1501  c1779  |  1501 / 1501  c1790  |  1501 / 1501  c1790 
+  T'  |  1501 / 1501  c1780  |  1501 / 1501  c1790  |  1501 / 1501  c1790 
+  L   |  1501 / 1501  c1779  |  1501 / 1501  c1790  |  1501 / 1501  c1790 
+  E   |  1501 / 1501  c1782  |  1501 / 1501  c1790  |  1501 / 1501  c1790 
+  W   |  1501 / 1501  c1785  |  1501 / 1501  c1790  |  1501 / 1501  c1790 
+
+== C. Where the mean error comes from, IBM, bars 600 on (S's converged line as y*)
+   A plain average of prices sits above the converged line by about 4*E[u^2],
+   u = price/line - 1: the 4th power makes a bar below the line pull harder than
+   one above it pushes.  Only a seed that runs through the recursion carries it.
+  N     | SMA_N vs y*    SMA_2N-1 vs y* 4*E[u^2]    
+  2     | +1.570e-03     +1.535e-03     +4.598e-04  
+  3     | +1.993e-03     +1.907e-03     +8.756e-04  
+  4     | +2.502e-03     +2.367e-03     +1.403e-03  
+  5     | +3.023e-03     +2.839e-03     +1.934e-03  
+  10    | +5.554e-03     +5.125e-03     +4.448e-03  
+  14    | +7.454e-03     +6.837e-03     +6.305e-03  
+  20    | +1.017e-02     +9.207e-03     +8.931e-03  
+  30    | +1.454e-02     +1.287e-02     +1.319e-02  
+  50    | +2.334e-02     +2.065e-02     +2.262e-02  
+
+== D. Hybrid seeds H(m): SMA of the first m bars, then the recursion to s+N-1
+   (H1 = T', HN = S).  rms relative error at s+N-1.
+  IBM             N=2    H1 6.193e-03  H2 8.975e-03
+  IBM             N=3    H1 7.242e-03  H2 7.665e-03  H3 8.748e-03
+  IBM             N=4    H1 8.672e-03  H2 9.114e-03  H3 9.498e-03  H4 1.014e-02
+  IBM             N=5    H1 9.845e-03  H2 1.028e-02  H3 1.070e-02  H5 1.156e-02
+  IBM             N=10   H1 1.411e-02  H2 1.441e-02  H3 1.477e-02  H5 1.546e-02  H7 1.603e-02  H10 1.692e-02
+  IBM             N=14   H1 1.663e-02  H2 1.687e-02  H3 1.717e-02  H7 1.833e-02  H10 1.902e-02  H14 2.003e-02
+  IBM             N=20   H1 1.962e-02  H2 1.979e-02  H3 2.002e-02  H5 2.049e-02  H10 2.159e-02  H15 2.251e-02  H20 2.363e-02
+  IBM             N=30   H1 2.381e-02  H2 2.395e-02  H3 2.413e-02  H7 2.494e-02  H15 2.650e-02  H22 2.765e-02  H30 2.928e-02
+  IBM             N=50   H1 3.278e-02  H2 3.290e-02  H3 3.305e-02  H12 3.457e-02  H25 3.667e-02  H37 3.852e-02  H50 4.106e-02
+  gData segments  N=2    H1 5.460e-03  H2 5.873e-03
+  gData segments  N=3    H1 7.401e-03  H2 7.774e-03  H3 8.058e-03
+  gData segments  N=4    H1 9.033e-03  H2 9.457e-03  H3 9.809e-03  H4 1.005e-02
+  gData segments  N=5    H1 1.054e-02  H2 1.097e-02  H3 1.138e-02  H5 1.191e-02
+  gData segments  N=10   H1 1.683e-02  H2 1.721e-02  H3 1.765e-02  H5 1.847e-02  H7 1.913e-02  H10 1.983e-02
+  gData segments  N=14   H1 2.126e-02  H2 2.161e-02  H3 2.200e-02  H7 2.352e-02  H10 2.445e-02  H14 2.539e-02
+  gData segments  N=20   H1 2.836e-02  H2 2.867e-02  H3 2.902e-02  H5 2.974e-02  H10 3.141e-02  H15 3.280e-02  H20 3.395e-02
+  gData segments  N=30   H1 4.398e-02  H2 4.425e-02  H3 4.457e-02  H7 4.587e-02  H15 4.831e-02  H22 5.014e-02  H30 5.207e-02
+  gData segments  N=50   H1 8.428e-02  H2 8.457e-02  H3 8.489e-02  H12 8.783e-02  H25 9.181e-02  H37 9.516e-02  H50 9.876e-02
+
+== F. Where an S-seeded implementation meets T': bars after the first output
+   until |T' - S| / |S| stays below 1e-14, p50 / p95 / max over every start offset
+  IBM             N=2       34 /    39 /    46 bars  (2739 offsets)
+  IBM             N=3       63 /    70 /    78 bars  (2738 offsets)
+  IBM             N=4       90 /   100 /   112 bars  (2737 offsets)
+  IBM             N=5      118 /   130 /   148 bars  (2736 offsets)
+  IBM             N=10     256 /   288 /   319 bars  (2731 offsets)
+  IBM             N=14     372 /   415 /   448 bars  (2727 offsets)
+  IBM             N=20     544 /   622 /   689 bars  (2721 offsets)
+  IBM             N=30     858 /   982 /  1087 bars  (2711 offsets)
+  IBM             N=50    1530 /  1747 /  1812 bars  (2691 offsets)
+  #471 1200-bar synthetic, N=2    from bar 0: T' within 1e-14 of S from bar 37
+  #471 1200-bar synthetic, N=10   from bar 0: T' within 1e-14 of S from bar 303
+  #471 1200-bar synthetic, N=14   from bar 0: T' within 1e-14 of S from bar 454
+  #471 1200-bar synthetic, N=50   from bar 0: T' within 1e-14 of S on no bar (max rel 4.0e-09 at the last)
+  #471 1200-bar synthetic, N=200  from bar 0: T' within 1e-14 of S on no bar (max rel 8.8e-02 at the last)
+
+== G. T' against S at later bars: rms(T') / rms(S) at k bars after the first output,
+   S's rms in brackets; over every offset with 1000 bars to follow
+  IBM             N=2   first k where T' is worse: k=53, S rms 8.4e-18; max ratio 0.93 at k=1 (S rms 3e-03)
+      k=0 0.92 (5e-03)  k=2 0.93 (1e-03)  k=4 0.92 (5e-04)  k=6 0.90 (2e-04)  k=8 0.87 (5e-05)  k=12 0.89 (5e-06)  k=16 0.86 (6e-07)  k=24 0.88 (2e-09)  k=32 0.88 (2e-11)
+  IBM             N=3   first k where T' is worse: k=39, S rms 4.1e-09; max ratio 1.04 at k=52 (S rms 2e-11)
+      k=0 0.93 (7e-03)  k=3 0.93 (2e-03)  k=6 0.92 (9e-04)  k=9 0.91 (3e-04)  k=12 0.90 (1e-04)  k=18 0.94 (1e-05)  k=24 0.95 (1e-06)  k=36 0.96 (2e-08)  k=48 1.01 (9e-11)
+  IBM             N=4   first k where T' is worse: k=45, S rms 6.1e-08; max ratio 1.01 at k=76 (S rms 8e-12)
+      k=0 0.92 (8e-03)  k=4 0.91 (3e-03)  k=8 0.91 (1e-03)  k=12 0.89 (5e-04)  k=16 0.90 (2e-04)  k=24 0.94 (2e-05)  k=32 0.90 (3e-06)  k=48 1.00 (2e-08)  k=64 0.93 (3e-10)
+  IBM             N=5   first k where T' is worse: k=50, S rms 3.6e-07; max ratio 1.00 at k=99 (S rms 7e-12)
+      k=0 0.90 (1e-02)  k=5 0.90 (4e-03)  k=10 0.89 (2e-03)  k=15 0.90 (6e-04)  k=20 0.92 (2e-04)  k=30 0.90 (4e-05)  k=40 0.98 (4e-06)  k=60 0.91 (5e-08)  k=80 0.98 (4e-10)
+  IBM             N=10  first k where T' is worse: k=38, S rms 4.9e-04; max ratio 1.10 at k=217 (S rms 8e-12)
+      k=0 0.88 (1e-02)  k=10 0.89 (6e-03)  k=20 0.91 (3e-03)  k=30 0.95 (1e-03)  k=40 1.01 (4e-04)  k=60 1.03 (5e-05)  k=80 0.99 (6e-06)  k=120 1.00 (1e-07)  k=160 1.02 (3e-09)
+  IBM             N=14  first k where T' is worse: k=39, S rms 1.5e-03; max ratio 1.17 at k=342 (S rms 1e-12)
+      k=0 0.87 (2e-02)  k=14 0.89 (7e-03)  k=28 0.94 (3e-03)  k=42 1.01 (1e-03)  k=56 1.05 (5e-04)  k=84 1.02 (6e-05)  k=112 1.02 (1e-05)  k=168 1.05 (2e-07)  k=224 1.05 (5e-09)
+  IBM             N=20  first k where T' is worse: k=49, S rms 2.4e-03; max ratio 1.22 at k=335 (S rms 4e-09)
+      k=0 0.86 (2e-02)  k=20 0.90 (9e-03)  k=40 0.97 (4e-03)  k=60 1.05 (1e-03)  k=80 1.03 (6e-04)  k=120 1.03 (1e-04)  k=160 1.06 (2e-05)  k=240 1.10 (4e-07)  k=320 1.19 (9e-09)
+  IBM             N=30  first k where T' is worse: k=111, S rms 1.1e-03; max ratio 1.21 at k=840 (S rms 1e-12)
+      k=0 0.84 (3e-02)  k=30 0.91 (1e-02)  k=60 0.97 (4e-03)  k=90 0.98 (2e-03)  k=120 1.02 (9e-04)  k=180 1.02 (2e-04)  k=240 1.10 (3e-05)  k=360 1.10 (7e-07)  k=480 0.94 (3e-08)
+  IBM             N=50  first k where T' is worse: k=238, S rms 9.0e-04; max ratio 1.25 at k=934 (S rms 2e-08)
+      k=0 0.83 (3e-02)  k=50 0.86 (2e-02)  k=100 0.87 (7e-03)  k=150 0.89 (3e-03)  k=200 0.93 (2e-03)  k=300 1.03 (3e-04)  k=400 0.91 (8e-05)  k=600 1.04 (5e-06)  k=800 1.21 (2e-07)
+  gData segments  N=2   first k where T' is worse: k=55, S rms 1.2e-17; max ratio 1.00 at k=14 (S rms 1e-06)
+      k=0 0.93 (5e-03)  k=2 0.92 (2e-03)  k=4 0.91 (6e-04)  k=6 0.89 (2e-04)  k=8 0.89 (7e-05)  k=12 0.95 (5e-06)  k=16 0.94 (3e-07)  k=24 0.96 (2e-09)  k=32 0.96 (9e-12)
+  gData segments  N=3   first k where T' is worse: none; max ratio 0.97 at k=33 (S rms 4e-08)
+      k=0 0.92 (8e-03)  k=3 0.90 (3e-03)  k=6 0.87 (1e-03)  k=9 0.83 (4e-04)  k=12 0.86 (1e-04)  k=18 0.90 (1e-05)  k=24 0.90 (1e-06)  k=36 0.94 (1e-08)  k=48 0.86 (3e-10)
+  gData segments  N=4   first k where T' is worse: k=129, S rms 6.5e-17; max ratio 0.93 at k=89 (S rms 3e-12)
+      k=0 0.90 (1e-02)  k=4 0.87 (4e-03)  k=8 0.82 (2e-03)  k=12 0.81 (5e-04)  k=16 0.86 (2e-04)  k=24 0.86 (2e-05)  k=32 0.90 (3e-06)  k=48 0.84 (8e-08)  k=64 0.82 (2e-09)
+  gData segments  N=5   first k where T' is worse: k=133, S rms 8.2e-14; max ratio 0.89 at k=88 (S rms 1e-09)
+      k=0 0.88 (1e-02)  k=5 0.85 (5e-03)  k=10 0.80 (2e-03)  k=15 0.83 (7e-04)  k=20 0.83 (3e-04)  k=30 0.84 (4e-05)  k=40 0.87 (6e-06)  k=60 0.81 (3e-07)  k=80 0.86 (5e-09)
+  gData segments  N=10  first k where T' is worse: k=380, S rms 1.5e-17; max ratio 0.89 at k=174 (S rms 6e-09)
+      k=0 0.84 (2e-02)  k=10 0.81 (9e-03)  k=20 0.80 (4e-03)  k=30 0.82 (2e-03)  k=40 0.84 (1e-03)  k=60 0.79 (3e-04)  k=80 0.79 (7e-05)  k=120 0.75 (2e-06)  k=160 0.85 (3e-08)
+  gData segments  N=14  first k where T' is worse: k=560, S rms 8.4e-18; max ratio 0.90 at k=325 (S rms 7e-11)
+      k=0 0.83 (3e-02)  k=14 0.83 (1e-02)  k=28 0.84 (7e-03)  k=42 0.84 (4e-03)  k=56 0.82 (3e-03)  k=84 0.80 (7e-04)  k=112 0.72 (2e-04)  k=168 0.85 (2e-06)  k=224 0.82 (7e-08)
+  gData segments  N=20  first k where T' is worse: k=644, S rms 6.9e-14; max ratio 0.91 at k=322 (S rms 2e-07)
+      k=0 0.85 (4e-02)  k=20 0.86 (2e-02)  k=40 0.86 (1e-02)  k=60 0.83 (9e-03)  k=80 0.82 (6e-03)  k=120 0.74 (1e-03)  k=160 0.81 (2e-04)  k=240 0.82 (6e-06)  k=320 0.91 (2e-07)
+  gData segments  N=30  first k where T' is worse: k=641, S rms 6.8e-09; max ratio 1.01 at k=815 (S rms 2e-11)
+      k=0 0.87 (7e-02)  k=30 0.88 (5e-02)  k=60 0.85 (3e-02)  k=90 0.82 (2e-02)  k=120 0.77 (1e-02)  k=180 0.81 (2e-03)  k=240 0.84 (4e-04)  k=360 0.85 (2e-05)  k=480 0.88 (7e-07)
+  gData segments  N=50  first k where T' is worse: k=620, S rms 7.8e-05; max ratio 1.06 at k=790 (S rms 3e-06)
+      k=0 0.88 (2e-01)  k=50 0.86 (1e-01)  k=100 0.83 (9e-02)  k=150 0.81 (5e-02)  k=200 0.80 (3e-02)  k=300 0.79 (8e-03)  k=400 0.84 (2e-03)  k=600 0.97 (1e-04)  k=800 1.05 (2e-06)
+
+== E. Summary: rms relative error at the first output; T' vs S by offset block
+  common = bar s+2N-2; offsets = share of single offsets where |e_T'| < |e_S|
+  corpus                 N     | S         T'        W         | T' vs S      | S@common  T'@common | T' better in    | offsets
+  IBM                    2     | 8.975e-03 6.193e-03 9.877e-03 |  31.0% lower  | 4.456e-03 3.736e-03 | 10 of 10 blocks | 57%
+  IBM                    3     | 8.749e-03 7.243e-03 8.366e-03 |  17.2% lower  | 4.020e-03 3.536e-03 | 10 of 10 blocks | 55%
+  IBM                    4     | 1.015e-02 8.673e-03 8.958e-03 |  14.5% lower  | 4.662e-03 4.047e-03 | 10 of 10 blocks | 56%
+  IBM                    5     | 1.156e-02 9.846e-03 9.847e-03 |  14.9% lower  | 5.233e-03 4.497e-03 | 10 of 10 blocks | 57%
+  IBM                    10    | 1.691e-02 1.411e-02 1.401e-02 |  16.6% lower  | 7.332e-03 6.266e-03 | 10 of 10 blocks | 59%
+  IBM                    14    | 2.004e-02 1.658e-02 1.691e-02 |  17.2% lower  | 8.701e-03 7.459e-03 | 10 of 10 blocks | 60%
+  IBM                    20    | 2.358e-02 1.953e-02 2.016e-02 |  17.2% lower  | 1.005e-02 8.632e-03 | 10 of 10 blocks | 61%
+  IBM                    30    | 2.787e-02 2.285e-02 2.315e-02 |  18.0% lower  | 1.189e-02 9.993e-03 | 10 of 10 blocks | 61%
+  IBM                    50    | 4.108e-02 3.288e-02 3.255e-02 |  19.9% lower  | 1.927e-02 1.584e-02 | 10 of 10 blocks | 63%
+  gData segments         2     | 5.860e-03 5.460e-03 5.218e-03 |   6.8% lower  | 3.152e-03 2.943e-03 | 10 of 10 blocks | 54%
+  gData segments         3     | 8.048e-03 7.403e-03 6.189e-03 |   8.0% lower  | 3.988e-03 3.637e-03 | 10 of 10 blocks | 55%
+  gData segments         4     | 1.005e-02 9.032e-03 7.211e-03 |  10.1% lower  | 4.883e-03 4.341e-03 | 10 of 10 blocks | 56%
+  gData segments         5     | 1.191e-02 1.054e-02 8.295e-03 |  11.5% lower  | 5.717e-03 4.984e-03 | 10 of 10 blocks | 57%
+  gData segments         10    | 1.987e-02 1.686e-02 1.359e-02 |  15.1% lower  | 9.469e-03 7.937e-03 | 10 of 10 blocks | 59%
+  gData segments         14    | 2.547e-02 2.133e-02 1.770e-02 |  16.3% lower  | 1.239e-02 1.026e-02 | 10 of 10 blocks | 60%
+  gData segments         20    | 3.423e-02 2.858e-02 2.416e-02 |  16.5% lower  | 1.784e-02 1.503e-02 | 10 of 10 blocks | 61%
+  gData segments         30    | 5.308e-02 4.478e-02 3.891e-02 |  15.6% lower  | 3.168e-02 2.730e-02 | 10 of 10 blocks | 62%
+  gData segments         50    | 1.026e-01 8.762e-02 7.642e-02 |  14.6% lower  | 6.700e-02 5.673e-02 | 10 of 10 blocks | 65%
+  gData whole (stress)   2     | 1.807e-01 1.798e-01 1.784e-01 |   0.5% lower  | 1.775e-01 1.765e-01 | 10 of 10 blocks | 54%
+  gData whole (stress)   3     | 2.186e-01 2.170e-01 2.148e-01 |   0.7% lower  | 2.134e-01 2.116e-01 | 10 of 10 blocks | 55%
+  gData whole (stress)   4     | 2.500e-01 2.478e-01 2.453e-01 |   0.9% lower  | 2.433e-01 2.408e-01 | 10 of 10 blocks | 57%
+  gData whole (stress)   5     | 2.746e-01 2.719e-01 2.691e-01 |   1.0% lower  | 2.665e-01 2.633e-01 | 10 of 10 blocks | 57%
+  gData whole (stress)   10    | 3.678e-01 3.627e-01 3.591e-01 |   1.4% lower  | 3.539e-01 3.481e-01 | 10 of 10 blocks | 59%
+  gData whole (stress)   14    | 4.208e-01 4.140e-01 4.101e-01 |   1.6% lower  | 4.028e-01 3.953e-01 | 10 of 10 blocks | 60%
+  gData whole (stress)   20    | 4.903e-01 4.812e-01 4.769e-01 |   1.9% lower  | 4.670e-01 4.571e-01 | 10 of 10 blocks | 61%
+  gData whole (stress)   30    | 6.097e-01 5.970e-01 5.926e-01 |   2.1% lower  | 5.786e-01 5.653e-01 | 10 of 10 blocks | 61%
+  gData whole (stress)   50    | 7.931e-01 7.732e-01 7.716e-01 |   2.5% lower  | 7.486e-01 7.281e-01 | 10 of 10 blocks | 63%
+  gData whole (stress)   200   | 2.848e+00 2.675e+00 2.866e+00 |   6.1% lower  | 2.670e+00 2.523e+00 |  9 of 10 blocks | 69%
