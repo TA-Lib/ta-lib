@@ -1939,13 +1939,13 @@ public final class Functions {
          List.of(
             new OptInputInfo(
                OptInputType.INTEGER_RANGE, "optInTimePeriod", 0x00000000,
-               "Time Period", "Number of periods for the smoothing average (1 = unsmoothed)", 14.0,
+               "Time Period", "Bars in the SMA of the one-bar values (1 = unsmoothed)", 14.0,
                0.0, 0.0, 0, 0.0, 0.0, 0.0,
-               1, 100000, 4, 200, 1, null),
+               1, 100000, 1, 200, 1, null),
             new OptInputInfo(
                OptInputType.REAL_RANGE, "optInVolumeDivisor", 0x00000000,
-               "Volume Divisor", "Volume scale divisor", 10000.0,
-               1.0, 3e37, 0, 1.0, 100000000.0, 1000.0,
+               "Volume Divisor", "Volume is divided by this before forming the box ratio", 10000.0,
+               1.0, 3e37, 0, 0.0, 0.0, 0.0,
                0, 0, 0, 0, 0, null)
          ),
          List.of(

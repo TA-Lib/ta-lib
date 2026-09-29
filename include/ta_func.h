@@ -9153,10 +9153,10 @@ TA_LIB_API TA_RetCode TA_EMA_Clone( const TA_EMA_Stream *stream, TA_EMA_Stream *
  * Optional Parameters
  * -------------------
  * optInTimePeriod:(From 1 to 100000)
- *    Number of periods for the smoothing average (1 = unsmoothed)
+ *    Bars in the SMA of the one-bar values (1 = unsmoothed)
  * 
  * optInVolumeDivisor:(From 1 to 30000000000000000000000000000000000000)
- *    Volume scale divisor
+ *    Volume is divided by this before forming the box ratio
  * 
  * 
  */

@@ -1962,7 +1962,7 @@ static FUNC_TABLE: [FuncInfo; 213] = [
         hint: "Arms Ease of Movement",
         flags: FuncFlags(0x02000000),
         inputs: &[InputInfo { param_name: "inPriceHLV", kind: InputType::Price, flags: InputFlags(0x00000016) }, ],
-        opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Number of periods for the smoothing average (1 = unsmoothed)", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 14, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInVolumeDivisor", display_name: "Volume Divisor", hint: "Volume scale divisor", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 1.0, max: 3e37, precision: 0, default: 10000.0, suggested: (1.0, 100000000.0, 1000.0) } }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Bars in the SMA of the one-bar values (1 = unsmoothed)", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 14, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInVolumeDivisor", display_name: "Volume Divisor", hint: "Volume is divided by this before forming the box ratio", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 1.0, max: 3e37, precision: 0, default: 10000.0, suggested: (0.0, 0.0, 0.0) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
         unst_id: None,
     },

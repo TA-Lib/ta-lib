@@ -53,6 +53,7 @@ ta_regtest_SOURCES = ta_regtest.c \
 	ta_test_func/test_composite1.c \
 	ta_test_func/test_composite2.c \
 	ta_test_func/test_marketfi.c \
+	ta_test_func/test_emv.c \
 	ta_test_func/test_vwap.c \
 	ta_test_func/test_cmf.c \
 	ta_test_func/test_kc.c \
@@ -69,7 +70,6 @@ ta_regtest_SOURCES = ta_regtest.c \
 	ta_test_func/test_vhf.c \
 	ta_test_func/test_rvi.c \
 	ta_test_func/test_rvir.c \
-	ta_test_func/test_emv.c \
 	ta_test_func/test_frama.c \
 	ta_test_func/test_fractal.c \
 	ta_test_func/test_ha.c \

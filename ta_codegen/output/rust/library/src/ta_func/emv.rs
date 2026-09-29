@@ -44,6 +44,7 @@
  *
  *  Initial  Name/description
  *  -------------------------------------------------------------------
+ *  KL       Kevin Lin (@kevinlincg)
  *  MF       Mario Fortier
  *  CC       Claude Code (AI assistant)
  *
@@ -51,7 +52,7 @@
  *
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  092926 MF,CC  Creation (#465).
+ *  092826 KL,CC  First version (#465).
  */
 
 // Import types from parent module
@@ -69,9 +70,10 @@ impl Core {
     ///
     /// # Arguments
     ///
-    /// * `optInTimePeriod` — Number of periods for the smoothing average; 1 leaves the raw series
-    ///   (default 14, range 1..=100000)
-    /// * `optInVolumeDivisor` — Volume scale divisor (default 10000, minimum 1)
+    /// * `optInTimePeriod` — Number of one-bar values in the simple moving average (default 14,
+    ///   range 1..=100000)
+    /// * `optInVolumeDivisor` — Volume is divided by this before it forms the box ratio (default
+    ///   10000, minimum 1)
     ///
     /// # Errors
     ///
@@ -91,14 +93,7 @@ impl Core {
         } else if !((optInVolumeDivisor >= 1e0) && (optInVolumeDivisor <= Self::REAL_MAX)) {
             return Err(RetCode::BadParam);
         }
-        // One bar is consumed forming the first midpoint change, then the SMA's own
-        // warm-up on top:
-        //    1 + sma_lookback(optInTimePeriod) = 1 + (optInTimePeriod - 1)
-        // which is efi_lookback's derivation with a finite window in place of the
-        // EMA, so there is no unstable period to add.
-        //
-        // The divisor scales the output and cannot move the first valid bar.
-        return Ok((optInTimePeriod) as usize);
+        return Ok((1 + self.sma_lookback(optInTimePeriod)?) as usize);
     }
     /// C-shaped body behind [`Core::emv`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
@@ -139,34 +134,30 @@ impl Core {
         assert!(_assertStart > endIdx || endIdx < inVolume.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
         let mut startIdx = startIdx;
+        let mut periodTotal: f64 = 0.0_f64;
         let mut prevMid: f64 = 0.0_f64;
         let mut mid: f64 = 0.0_f64;
         let mut range: f64 = 0.0_f64;
         let mut boxRatio: f64 = 0.0_f64;
         let mut raw: f64 = 0.0_f64;
-        let mut sumRaw: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
         let mut lookbackTotal: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut i: usize = 0_usize;
-        let mut today: usize = 0_usize;
-        let mut local_rawRing: [f64; 50] = [0.0_f64; 50];
-        let mut heap_rawRing: Vec<f64> = Vec::new();
-        let mut rawRing: &mut [f64] = &mut [];
-        let mut rawRing_Idx: usize = 0;
-        // The window of raw values is carried here rather than recomputed from the
-        // inputs at the trailing index: once a bar has been consumed it is never
-        // read again, which is what makes outReal safe to alias any input
-        // (cmf.c:32-38).
-        (*outBegIdx) = 0;
-        (*outNBElement) = 0;
+        let mut local_rawBuffer: [f64; 50] = [0.0_f64; 50];
+        let mut heap_rawBuffer: Vec<f64> = Vec::new();
+        let mut rawBuffer: &mut [f64] = &mut [];
+        let mut rawBuffer_Idx: usize = 0;
+        // The one-bar values are kept in a ring rather than recomputed at the
+        // trailing index: outReal may alias an input, and those bars may already
+        // hold outputs.
         lookbackTotal = self.emv_lookback(optInTimePeriod, optInVolumeDivisor).unwrap_or(usize::MAX);
-        // Move up the start index if there is not enough initial data.
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
-        // Make sure there is still something to evaluate.
         if startIdx > endIdx {
+            (*outBegIdx) = 0;
+            (*outNBElement) = 0;
             return RetCode::Success;
         }
         let inHigh = &inHigh[..=endIdx];
@@ -174,93 +165,82 @@ impl Core {
         let inVolume = &inVolume[..=endIdx];
         if optInTimePeriod < 1 { return RetCode::InternalError; }
         if (optInTimePeriod) as usize <= 50usize {
-            rawRing = &mut local_rawRing[..(optInTimePeriod) as usize];
+            rawBuffer = &mut local_rawBuffer[..(optInTimePeriod) as usize];
         } else {
-            heap_rawRing = vec![0.0_f64; (optInTimePeriod) as usize];
-            rawRing = &mut heap_rawRing;
+            heap_rawBuffer = vec![0.0_f64; (optInTimePeriod) as usize];
+            rawBuffer = &mut heap_rawBuffer;
         }
-        rawRing_Idx = 0;
-        // The running sum is seeded with the window's first optInTimePeriod-1 raw
-        // values and each output bar then adds its own before dividing, which is
-        // sma.c:57-81's order applied to the raw series rather than to an input
-        // array. At optInTimePeriod 1 the seed loop does not run and the body
-        // reduces to 0 + raw, then raw - raw, so the output is the raw kernel bit
-        // for bit.
-        today = startIdx - lookbackTotal + 1;
-        prevMid = (inHigh[today - 1] + inLow[today - 1]) / 2.0;
-        sumRaw = 0.0;
-        i = (optInTimePeriod - 1) as usize;
-        while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-            mid = (inHigh[today] + inLow[today]) / 2.0;
-            range = inHigh[today] - inLow[today];
-            // A bar with no volume, or no range, has no boxRatio to divide by. The tests
-            // are exact rather than TA_IS_ZERO's band: a near-zero range is a real
-            // boxRatio, and the result has to be a plain 0.0 with no sign, as in
-            // marketfi.c and roc.c:85-88.
-            //
-            // The boxRatio itself is tested, not just its operands. optInVolumeDivisor
-            // goes up to TA_REAL_MAX, so the scaling can reach zero from a volume
-            // that is not zero: at inVolume 5e-324 and a divisor of 2 -- both inside
-            // their declared ranges -- inVolume/optInVolumeDivisor rounds to 0.0 and
-            // the quotient below would be infinite. Testing the operands alone let
-            // that through.
-            if inVolume[today] != 0.0 && range != 0.0 {
-                boxRatio = inVolume[today] / ((optInVolumeDivisor) as f64) / range;
+        rawBuffer_Idx = 0;
+        // Keep the operand order and sma.c's add / snapshot / subtract order: the
+        // composite gate rebuilds this from MEDPRICE, MOM, SUB, DIV and SMA and
+        // compares bitwise.
+        //
+        // The zero guards are exact != 0.0 tests, never TA_IS_ZERO: the output
+        // scale follows the volume and the divisor, so no absolute band fits. A
+        // nonzero range with a box ratio that underflows to 0 takes the guard too.
+        i = startIdx - lookbackTotal;
+        prevMid = (inHigh[i] + inLow[i]) / 2.0;
+        i = i + 1;
+        periodTotal = 0.0;
+        while i < startIdx {
+            mid = (inHigh[i] + inLow[i]) / 2.0;
+            range = inHigh[i] - inLow[i];
+            raw = 0.0;
+            if range != 0.0 {
+                boxRatio = inVolume[i] / ((optInVolumeDivisor) as f64) / range;
                 if boxRatio != 0.0 {
                     raw = (mid - prevMid) / boxRatio;
                 } else {
-                    raw = 0.0;
+                    cold_arm();
                 }
             } else {
-                raw = 0.0;
+                cold_arm();
             }
-            // The midpoint moves on even for a guarded bar: the next bar's change is
-            // measured from the bar immediately before it, never from the last bar
-            // that happened to produce a value.
             prevMid = mid;
-            rawRing[rawRing_Idx] = raw;
-            sumRaw += raw;
-            rawRing_Idx += 1;
-            if rawRing_Idx >= rawRing.len() { rawRing_Idx = 0; }
-            today = today + 1;
+            i = i + 1;
+            rawBuffer[rawBuffer_Idx] = raw;
+            periodTotal += raw;
+            rawBuffer_Idx += 1;
+            if rawBuffer_Idx >= rawBuffer.len() { rawBuffer_Idx = 0; }
         }
         outIdx = 0;
-        while today <= endIdx {
-            mid = (inHigh[today] + inLow[today]) / 2.0;
-            range = inHigh[today] - inLow[today];
-            if inVolume[today] != 0.0 && range != 0.0 {
-                boxRatio = inVolume[today] / ((optInVolumeDivisor) as f64) / range;
+        while i <= endIdx {
+            mid = (inHigh[i] + inLow[i]) / 2.0;
+            range = inHigh[i] - inLow[i];
+            raw = 0.0;
+            if range != 0.0 {
+                boxRatio = inVolume[i] / ((optInVolumeDivisor) as f64) / range;
                 if boxRatio != 0.0 {
                     raw = (mid - prevMid) / boxRatio;
                 } else {
-                    raw = 0.0;
+                    cold_arm();
                 }
             } else {
-                raw = 0.0;
+                cold_arm();
             }
             prevMid = mid;
-            // Today's raw value enters the window at its own slot, and the bar
-            // leaving the window is read only after the ring has advanced onto it.
-            // Every input read for this bar is done above, so the store into
-            // outReal is safe when the caller aliases it over an input.
-            rawRing[rawRing_Idx] = raw;
-            sumRaw += raw;
-            tempReal = sumRaw;
-            rawRing_Idx += 1;
-            if rawRing_Idx >= rawRing.len() { rawRing_Idx = 0; }
-            sumRaw -= rawRing[rawRing_Idx];
+            i = i + 1;
+            rawBuffer[rawBuffer_Idx] = raw;
+            periodTotal += raw;
+            tempReal = periodTotal;
+            rawBuffer_Idx += 1;
+            if rawBuffer_Idx >= rawBuffer.len() { rawBuffer_Idx = 0; }
+            periodTotal -= rawBuffer[rawBuffer_Idx];
             outReal[outIdx] = tempReal / (optInTimePeriod as f64);
             outIdx = outIdx + 1;
-            today = today + 1;
         }
-        (*outNBElement) = outIdx;
         (*outBegIdx) = startIdx;
+        (*outNBElement) = outIdx;
         return RetCode::Success;
     }
-    /// Richard W. Arms, Jr.'s Ease of Movement: the bar-to-bar move of the high-low midpoint
-    /// divided by a box ratio of volume to range, smoothed by a simple moving average. It is
-    /// positive when the midpoint rises, and large when that move came on light volume relative to
-    /// the bar's range.
+    /// Ease of Movement: the bar-to-bar move of the high-low midpoint divided by a box ratio of
+    /// volume to range, averaged over a trailing window. It is the numeric form of Richard W. Arms,
+    /// Jr.'s Equivolume box. The box ratio is positive whenever the bar traded and has a range, so
+    /// the sign follows the midpoint move. A large positive value means price rose easily, on light
+    /// volume relative to its range; a large negative value means it fell easily. Values near zero
+    /// mean volume was heavy for the distance travelled, or price hardly moved. The output scales
+    /// with the instrument's volume and with the volume divisor, so its level is comparable only
+    /// within one instrument at one divisor. Traders mostly watch its sign and its zero crossings.
     ///
     /// Formula and more info at [ta-lib.org/functions/emv](https://ta-lib.org/functions/emv).
     ///
@@ -271,10 +251,11 @@ impl Core {
     /// * `inHigh` — High price of each bar.
     /// * `inLow` — Low price of each bar.
     /// * `inVolume` — Volume of each bar.
-    /// * `optInTimePeriod` — Number of periods for the smoothing average; 1 leaves the raw series
-    ///   (default 14, range 1..=100000)
-    /// * `optInVolumeDivisor` — Volume scale divisor (default 10000, minimum 1)
-    /// * `outReal` — Ease of Movement.
+    /// * `optInTimePeriod` — Number of one-bar values in the simple moving average (default 14,
+    ///   range 1..=100000)
+    /// * `optInVolumeDivisor` — Volume is divided by this before it forms the box ratio (default
+    ///   10000, minimum 1)
+    /// * `outReal` — Ease of Movement, averaged over the window.
     ///
     /// Integer parameters accept [`Core::INTEGER_DEFAULT`], and real parameters
     /// [`Core::REAL_DEFAULT`], to select their default value.
@@ -319,13 +300,24 @@ impl Core {
     ///
     /// # See also
     ///
-    /// \- MARKETFI — the same high, low and volume bundle, as a per-bar ratio with no smoothing -
-    /// EFI — the same "one bar for the difference, then the average's own lookback" shape
+    /// [`MEDPRICE`](Core::medprice) · [`MARKETFI`](Core::marketfi) · [`EFI`](Core::efi) ·
+    /// [`SMA`](Core::sma) · [`EMA`](Core::ema)
     ///
     /// # References
     ///
-    /// * Steven B. Achelis, Technical Analysis from A to Z, p. 132
+    /// * Richard W. Arms, Jr., *Volume Cycles in the Stock Market: Market Timing Through Equivolume
+    ///   Charting*, Dow Jones-Irwin, 1983.
+    /// * Steven B. Achelis, *Technical Analysis from A to Z*, 2nd edition, McGraw-Hill, 2000, "Ease
+    ///   of Movement".
+    /// * W. A. Thorp, [Arms' Ease of Movement: Adding Volume to the
+    ///   Equation](https://www.aaii.com/journal/article/arms-ease-of-movement-adding-volume-to-the-equation),
+    ///   *AAII Journal*, October 2001.
+    /// * StockCharts ChartSchool, [Ease of Movement
+    ///   (EMV)](https://chartschool.stockcharts.com/table-of-contents/technical-indicators-and-overlays/technical-indicators/ease-of-movement-emv).
     #[doc(alias = "TA_EMV")]
+    #[doc(alias = "EaseofMovement")]
+    #[doc(alias = "EOM")]
+    #[doc(alias = "ArmsEaseofMovement")]
     pub fn emv(
         &self,
         startIdx: usize,
@@ -400,12 +392,12 @@ pub struct EmvStream {
 struct EmvStreamState {
     optInTimePeriod: i32,
     optInVolumeDivisor: f64,
+    periodTotal: f64,
     prevMid: f64,
-    sumRaw: f64,
-    rawRing_Idx: usize,
-    maxIdx_rawRing: usize,
-    cbSize_rawRing: usize,
-    cb_rawRing: Vec<f64>,
+    rawBuffer_Idx: usize,
+    maxIdx_rawBuffer: usize,
+    cbSize_rawBuffer: usize,
+    cb_rawBuffer: Vec<f64>,
     cur_outReal: f64,
 }
 
@@ -423,29 +415,26 @@ impl Core {
         let mut tempReal: f64 = 0.0_f64;
         mid = (inHigh + inLow) / 2.0;
         range = inHigh - inLow;
-        if inVolume != 0.0 && range != 0.0 {
+        raw = 0.0;
+        if range != 0.0 {
             boxRatio = inVolume / ((sp.optInVolumeDivisor) as f64) / range;
             if boxRatio != 0.0 {
                 raw = (mid - sp.prevMid) / boxRatio;
             } else {
-                raw = 0.0;
+                cold_arm();
             }
         } else {
-            raw = 0.0;
+            cold_arm();
         }
         sp.prevMid = mid;
-        // Today's raw value enters the window at its own slot, and the bar
-        // leaving the window is read only after the ring has advanced onto it.
-        // Every input read for this bar is done above, so the store into
-        // outReal is safe when the caller aliases it over an input.
-        sp.cb_rawRing[sp.rawRing_Idx] = raw;
-        sp.sumRaw += raw;
-        tempReal = sp.sumRaw;
-        sp.rawRing_Idx = sp.rawRing_Idx + 1;
-        if sp.rawRing_Idx > sp.maxIdx_rawRing {
-            sp.rawRing_Idx = 0;
+        sp.cb_rawBuffer[sp.rawBuffer_Idx] = raw;
+        sp.periodTotal += raw;
+        tempReal = sp.periodTotal;
+        sp.rawBuffer_Idx = sp.rawBuffer_Idx + 1;
+        if sp.rawBuffer_Idx > sp.maxIdx_rawBuffer {
+            sp.rawBuffer_Idx = 0;
         }
-        sp.sumRaw -= sp.cb_rawRing[sp.rawRing_Idx];
+        sp.periodTotal -= sp.cb_rawBuffer[sp.rawBuffer_Idx];
         (*outReal) = tempReal / (sp.optInTimePeriod as f64);
         sp.cur_outReal = (*outReal);
     }
@@ -484,130 +473,111 @@ impl Core {
         }
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
+        let mut periodTotal: f64 = 0.0_f64;
         let mut prevMid: f64 = 0.0_f64;
         let mut mid: f64 = 0.0_f64;
         let mut range: f64 = 0.0_f64;
         let mut boxRatio: f64 = 0.0_f64;
         let mut raw: f64 = 0.0_f64;
-        let mut sumRaw: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
         let mut lookbackTotal: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut i: usize = 0_usize;
-        let mut today: usize = 0_usize;
-        let mut rawRing: Vec<f64> = Vec::new();
-        let mut rawRing_Idx: usize = 0;
-        let mut maxIdx_rawRing: usize = 49;
-        // The window of raw values is carried here rather than recomputed from the
-        // inputs at the trailing index: once a bar has been consumed it is never
-        // read again, which is what makes outReal safe to alias any input
-        // (cmf.c:32-38).
-        (*outBegIdx) = 0;
-        (*outNBElement) = 0;
+        let mut rawBuffer: Vec<f64> = Vec::new();
+        let mut rawBuffer_Idx: usize = 0;
+        let mut maxIdx_rawBuffer: usize = 49;
+        // The one-bar values are kept in a ring rather than recomputed at the
+        // trailing index: outReal may alias an input, and those bars may already
+        // hold outputs.
         lookbackTotal = self.emv_lookback(optInTimePeriod, optInVolumeDivisor)?;
-        // Move up the start index if there is not enough initial data.
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
-        // Make sure there is still something to evaluate.
         if startIdx > endIdx {
+            (*outBegIdx) = 0;
+            (*outNBElement) = 0;
             return Err(RetCode::InsufficientHistory);
         }
         if optInTimePeriod < 1 { return Err(RetCode::InternalError); }
-        rawRing = vec![0.0_f64; (optInTimePeriod) as usize];
-        maxIdx_rawRing = ((optInTimePeriod) as usize) - 1;
-        rawRing_Idx = 0;
-        // The running sum is seeded with the window's first optInTimePeriod-1 raw
-        // values and each output bar then adds its own before dividing, which is
-        // sma.c:57-81's order applied to the raw series rather than to an input
-        // array. At optInTimePeriod 1 the seed loop does not run and the body
-        // reduces to 0 + raw, then raw - raw, so the output is the raw kernel bit
-        // for bit.
-        today = startIdx - lookbackTotal + 1;
-        prevMid = (inHigh[today - 1] + inLow[today - 1]) / 2.0;
-        sumRaw = 0.0;
-        i = (optInTimePeriod - 1) as usize;
-        while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-            mid = (inHigh[today] + inLow[today]) / 2.0;
-            range = inHigh[today] - inLow[today];
-            // A bar with no volume, or no range, has no boxRatio to divide by. The tests
-            // are exact rather than TA_IS_ZERO's band: a near-zero range is a real
-            // boxRatio, and the result has to be a plain 0.0 with no sign, as in
-            // marketfi.c and roc.c:85-88.
-            //
-            // The boxRatio itself is tested, not just its operands. optInVolumeDivisor
-            // goes up to TA_REAL_MAX, so the scaling can reach zero from a volume
-            // that is not zero: at inVolume 5e-324 and a divisor of 2 -- both inside
-            // their declared ranges -- inVolume/optInVolumeDivisor rounds to 0.0 and
-            // the quotient below would be infinite. Testing the operands alone let
-            // that through.
-            if inVolume[today] != 0.0 && range != 0.0 {
-                boxRatio = inVolume[today] / ((optInVolumeDivisor) as f64) / range;
+        rawBuffer = vec![0.0_f64; (optInTimePeriod) as usize];
+        maxIdx_rawBuffer = ((optInTimePeriod) as usize) - 1;
+        rawBuffer_Idx = 0;
+        // Keep the operand order and sma.c's add / snapshot / subtract order: the
+        // composite gate rebuilds this from MEDPRICE, MOM, SUB, DIV and SMA and
+        // compares bitwise.
+        //
+        // The zero guards are exact != 0.0 tests, never TA_IS_ZERO: the output
+        // scale follows the volume and the divisor, so no absolute band fits. A
+        // nonzero range with a box ratio that underflows to 0 takes the guard too.
+        i = startIdx - lookbackTotal;
+        prevMid = (inHigh[i] + inLow[i]) / 2.0;
+        i = i + 1;
+        periodTotal = 0.0;
+        while i < startIdx {
+            mid = (inHigh[i] + inLow[i]) / 2.0;
+            range = inHigh[i] - inLow[i];
+            raw = 0.0;
+            if range != 0.0 {
+                boxRatio = inVolume[i] / ((optInVolumeDivisor) as f64) / range;
                 if boxRatio != 0.0 {
                     raw = (mid - prevMid) / boxRatio;
                 } else {
-                    raw = 0.0;
+                    cold_arm();
                 }
             } else {
-                raw = 0.0;
+                cold_arm();
             }
-            // The midpoint moves on even for a guarded bar: the next bar's change is
-            // measured from the bar immediately before it, never from the last bar
-            // that happened to produce a value.
             prevMid = mid;
-            rawRing[rawRing_Idx] = raw;
-            sumRaw += raw;
-            rawRing_Idx += 1;
-            if rawRing_Idx > maxIdx_rawRing { rawRing_Idx = 0; }
-            today = today + 1;
+            i = i + 1;
+            rawBuffer[rawBuffer_Idx] = raw;
+            periodTotal += raw;
+            rawBuffer_Idx += 1;
+            if rawBuffer_Idx > maxIdx_rawBuffer { rawBuffer_Idx = 0; }
         }
         outIdx = 0;
-        while today <= endIdx {
-            mid = (inHigh[today] + inLow[today]) / 2.0;
-            range = inHigh[today] - inLow[today];
-            if inVolume[today] != 0.0 && range != 0.0 {
-                boxRatio = inVolume[today] / ((optInVolumeDivisor) as f64) / range;
+        while i <= endIdx {
+            mid = (inHigh[i] + inLow[i]) / 2.0;
+            range = inHigh[i] - inLow[i];
+            raw = 0.0;
+            if range != 0.0 {
+                boxRatio = inVolume[i] / ((optInVolumeDivisor) as f64) / range;
                 if boxRatio != 0.0 {
                     raw = (mid - prevMid) / boxRatio;
                 } else {
-                    raw = 0.0;
+                    cold_arm();
                 }
             } else {
-                raw = 0.0;
+                cold_arm();
             }
             prevMid = mid;
-            // Today's raw value enters the window at its own slot, and the bar
-            // leaving the window is read only after the ring has advanced onto it.
-            // Every input read for this bar is done above, so the store into
-            // outReal is safe when the caller aliases it over an input.
-            rawRing[rawRing_Idx] = raw;
-            sumRaw += raw;
-            tempReal = sumRaw;
-            rawRing_Idx += 1;
-            if rawRing_Idx > maxIdx_rawRing { rawRing_Idx = 0; }
-            sumRaw -= rawRing[rawRing_Idx];
+            i = i + 1;
+            rawBuffer[rawBuffer_Idx] = raw;
+            periodTotal += raw;
+            tempReal = periodTotal;
+            rawBuffer_Idx += 1;
+            if rawBuffer_Idx > maxIdx_rawBuffer { rawBuffer_Idx = 0; }
+            periodTotal -= rawBuffer[rawBuffer_Idx];
             outReal[(outIdx * outStride) as usize] = tempReal / (optInTimePeriod as f64);
             outIdx = outIdx + 1;
-            today = today + 1;
         }
-        (*outNBElement) = outIdx;
         (*outBegIdx) = startIdx;
+        (*outNBElement) = outIdx;
 
         // Capture the live batch state into the handle.
-        let cbSize_rawRing: usize = maxIdx_rawRing + 1;
-        if cbSize_rawRing > historyLen + 1 {
+        let cbSize_rawBuffer: usize = maxIdx_rawBuffer + 1;
+        if cbSize_rawBuffer > historyLen + 1 {
             return Err(RetCode::InternalError);
         }
         let state = EmvStreamState {
             optInTimePeriod,
             optInVolumeDivisor,
+            periodTotal,
             prevMid,
-            sumRaw,
-            rawRing_Idx,
-            maxIdx_rawRing,
+            rawBuffer_Idx,
+            maxIdx_rawBuffer,
             cur_outReal: outReal[(*outNBElement - 1) * outStride],
-            cbSize_rawRing: cbSize_rawRing,
-            cb_rawRing: rawRing,
+            cbSize_rawBuffer: cbSize_rawBuffer,
+            cb_rawBuffer: rawBuffer,
         };
         Ok(EmvStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
@@ -790,37 +760,34 @@ impl EmvStream {
             let mut boxRatio: f64 = 0.0_f64;
             let mut raw: f64 = 0.0_f64;
             let mut tempReal: f64 = 0.0_f64;
+            let mut periodTotal = sp.periodTotal;
             let mut prevMid = sp.prevMid;
-            let mut rawRing_Idx = sp.rawRing_Idx;
-            let mut sumRaw = sp.sumRaw;
+            let mut rawBuffer_Idx = sp.rawBuffer_Idx;
             let mut pkSlot0: usize = usize::MAX;
             let mut pkVal0: f64 = 0.0_f64;
             mid = (inHigh + inLow) / 2.0;
             range = inHigh - inLow;
-            if inVolume != 0.0 && range != 0.0 {
+            raw = 0.0;
+            if range != 0.0 {
                 boxRatio = inVolume / ((sp.optInVolumeDivisor) as f64) / range;
                 if boxRatio != 0.0 {
                     raw = (mid - prevMid) / boxRatio;
                 } else {
-                    raw = 0.0;
+                    cold_arm();
                 }
             } else {
-                raw = 0.0;
+                cold_arm();
             }
             prevMid = mid;
-            // Today's raw value enters the window at its own slot, and the bar
-            // leaving the window is read only after the ring has advanced onto it.
-            // Every input read for this bar is done above, so the store into
-            // outReal is safe when the caller aliases it over an input.
-            pkSlot0 = rawRing_Idx as usize;
+            pkSlot0 = rawBuffer_Idx as usize;
             pkVal0 = raw;
-            sumRaw += raw;
-            tempReal = sumRaw;
-            rawRing_Idx = rawRing_Idx + 1;
-            if rawRing_Idx > sp.maxIdx_rawRing {
-                rawRing_Idx = 0;
+            periodTotal += raw;
+            tempReal = periodTotal;
+            rawBuffer_Idx = rawBuffer_Idx + 1;
+            if rawBuffer_Idx > sp.maxIdx_rawBuffer {
+                rawBuffer_Idx = 0;
             }
-            sumRaw -= (if (rawRing_Idx as usize) != pkSlot0 { sp.cb_rawRing[rawRing_Idx] } else { pkVal0 });
+            periodTotal -= (if (rawBuffer_Idx as usize) != pkSlot0 { sp.cb_rawBuffer[rawBuffer_Idx] } else { pkVal0 });
             (*outReal) = tempReal / (sp.optInTimePeriod as f64);
         }
         Ok(outReal)

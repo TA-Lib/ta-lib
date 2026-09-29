@@ -2,6 +2,7 @@
  *
  *  Initial  Name/description
  *  -------------------------------------------------------------------
+ *  KL       Kevin Lin (@kevinlincg)
  *  MF       Mario Fortier
  *  CC       Claude Code (AI assistant)
  *
@@ -9,21 +10,13 @@
  *
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  092926 MF,CC  Creation (#465).
+ *  092826 KL,CC  First version (#465).
  */
 
 int emv_lookback(int optInTimePeriod, double optInVolumeDivisor)
 {
-   /* One bar is consumed forming the first midpoint change, then the SMA's own
-    * warm-up on top:
-    *    1 + sma_lookback(optInTimePeriod) = 1 + (optInTimePeriod - 1)
-    * which is efi_lookback's derivation with a finite window in place of the
-    * EMA, so there is no unstable period to add.
-    *
-    * The divisor scales the output and cannot move the first valid bar.
-    */
    (void)optInVolumeDivisor;
-   return optInTimePeriod;
+   return 1 + sma_lookback(optInTimePeriod);
 }
 
 TA_RetCode emv(int startIdx, int endIdx,
@@ -35,119 +28,89 @@ TA_RetCode emv(int startIdx, int endIdx,
    int *outBegIdx, int *outNBElement,
    double outReal[])
 {
-   double prevMid, mid, range, boxRatio, raw, sumRaw, tempReal;
-   int lookbackTotal, outIdx, i, today;
+   double periodTotal, prevMid, mid, range, boxRatio, raw, tempReal;
+   int lookbackTotal, outIdx, i;
 
-   /* The window of raw values is carried here rather than recomputed from the
-    * inputs at the trailing index: once a bar has been consumed it is never
-    * read again, which is what makes outReal safe to alias any input
-    * (cmf.c:32-38).
+   /* The one-bar values are kept in a ring rather than recomputed at the
+    * trailing index: outReal may alias an input, and those bars may already
+    * hold outputs.
     */
-   CIRCBUF_PROLOG(rawRing,double,50);
-
-   *outBegIdx = 0;
-   *outNBElement = 0;
+   CIRCBUF_PROLOG(rawBuffer,double,50);
 
    lookbackTotal = emv_lookback( optInTimePeriod, optInVolumeDivisor );
 
-   /* Move up the start index if there is not enough initial data. */
    if( startIdx < lookbackTotal )
       startIdx = lookbackTotal;
 
-   /* Make sure there is still something to evaluate. */
    if( startIdx > endIdx )
-      return TA_SUCCESS;
-
-   CIRCBUF_INIT( rawRing, double, optInTimePeriod );
-
-   /* The running sum is seeded with the window's first optInTimePeriod-1 raw
-    * values and each output bar then adds its own before dividing, which is
-    * sma.c:57-81's order applied to the raw series rather than to an input
-    * array. At optInTimePeriod 1 the seed loop does not run and the body
-    * reduces to 0 + raw, then raw - raw, so the output is the raw kernel bit
-    * for bit.
-    */
-   today = startIdx - lookbackTotal + 1;
-   prevMid = (inHigh[today-1] + inLow[today-1]) / 2.0;
-   sumRaw = 0.0;
-   i = optInTimePeriod - 1;
-   while( i-- > 0 )
    {
-      mid = (inHigh[today] + inLow[today]) / 2.0;
-      range = inHigh[today] - inLow[today];
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_SUCCESS;
+   }
 
-      /* A bar with no volume, or no range, has no boxRatio to divide by. The tests
-       * are exact rather than TA_IS_ZERO's band: a near-zero range is a real
-       * boxRatio, and the result has to be a plain 0.0 with no sign, as in
-       * marketfi.c and roc.c:85-88.
-       *
-       * The boxRatio itself is tested, not just its operands. optInVolumeDivisor
-       * goes up to TA_REAL_MAX, so the scaling can reach zero from a volume
-       * that is not zero: at inVolume 5e-324 and a divisor of 2 -- both inside
-       * their declared ranges -- inVolume/optInVolumeDivisor rounds to 0.0 and
-       * the quotient below would be infinite. Testing the operands alone let
-       * that through.
-       */
-      if( inVolume[today] != 0.0 && range != 0.0 )
+   CIRCBUF_INIT( rawBuffer, double, optInTimePeriod );
+
+   /* Keep the operand order and sma.c's add / snapshot / subtract order: the
+    * composite gate rebuilds this from MEDPRICE, MOM, SUB, DIV and SMA and
+    * compares bitwise.
+    *
+    * The zero guards are exact != 0.0 tests, never TA_IS_ZERO: the output
+    * scale follows the volume and the divisor, so no absolute band fits. A
+    * nonzero range with a box ratio that underflows to 0 takes the guard too.
+    */
+   i = startIdx - lookbackTotal;
+   prevMid = (inHigh[i]+inLow[i])/2.0;
+   i = i + 1;
+   periodTotal = 0.0;
+   while( i < startIdx )
+   {
+      mid   = (inHigh[i]+inLow[i])/2.0;
+      range = inHigh[i]-inLow[i];
+      raw   = 0.0;
+      if( range != 0.0 )
       {
-         boxRatio = (inVolume[today] / optInVolumeDivisor) / range;
+         boxRatio = (inVolume[i]/optInVolumeDivisor)/range;
          if( boxRatio != 0.0 )
-            raw = (mid - prevMid) / boxRatio;
-         else
-            raw = 0.0;
+            raw = (mid-prevMid)/boxRatio;
       }
-      else
-         raw = 0.0;
-
-      /* The midpoint moves on even for a guarded bar: the next bar's change is
-       * measured from the bar immediately before it, never from the last bar
-       * that happened to produce a value.
-       */
       prevMid = mid;
+      i = i + 1;
 
-      rawRing[rawRing_Idx] = raw;
-      sumRaw += raw;
-      CIRCBUF_NEXT(rawRing);
-      today = today + 1;
+      rawBuffer[rawBuffer_Idx] = raw;
+      periodTotal += raw;
+      CIRCBUF_NEXT(rawBuffer);
    }
 
    outIdx = 0;
-   while( today <= endIdx )
+   while( i <= endIdx )
    {
-      mid = (inHigh[today] + inLow[today]) / 2.0;
-      range = inHigh[today] - inLow[today];
-      if( inVolume[today] != 0.0 && range != 0.0 )
+      mid   = (inHigh[i]+inLow[i])/2.0;
+      range = inHigh[i]-inLow[i];
+      raw   = 0.0;
+      if( range != 0.0 )
       {
-         boxRatio = (inVolume[today] / optInVolumeDivisor) / range;
+         boxRatio = (inVolume[i]/optInVolumeDivisor)/range;
          if( boxRatio != 0.0 )
-            raw = (mid - prevMid) / boxRatio;
-         else
-            raw = 0.0;
+            raw = (mid-prevMid)/boxRatio;
       }
-      else
-         raw = 0.0;
       prevMid = mid;
+      i = i + 1;
 
-      /* Today's raw value enters the window at its own slot, and the bar
-       * leaving the window is read only after the ring has advanced onto it.
-       * Every input read for this bar is done above, so the store into
-       * outReal is safe when the caller aliases it over an input.
-       */
-      rawRing[rawRing_Idx] = raw;
-      sumRaw += raw;
-      tempReal = sumRaw;
-      CIRCBUF_NEXT(rawRing);
-      sumRaw -= rawRing[rawRing_Idx];
+      rawBuffer[rawBuffer_Idx] = raw;
+      periodTotal += raw;
+      tempReal = periodTotal;
+      CIRCBUF_NEXT(rawBuffer);
+      periodTotal -= rawBuffer[rawBuffer_Idx];
 
       outReal[outIdx] = tempReal / (double)optInTimePeriod;
       outIdx = outIdx + 1;
-      today = today + 1;
    }
 
-   CIRCBUF_DESTROY(rawRing);
+   CIRCBUF_DESTROY(rawBuffer);
 
-   *outNBElement = outIdx;
    *outBegIdx    = startIdx;
+   *outNBElement = outIdx;
 
    return TA_SUCCESS;
 }

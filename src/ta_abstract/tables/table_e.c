@@ -103,15 +103,6 @@ DEF_FUNCTION( EMA,
 /* EMA END */
 
 /* EMV BEGIN */
-static const TA_IntegerRange TA_DEF_EMV_TimePeriod =
-{
-   1,
-   100000,
-   4,
-   200,
-   1
-};
-
 static const TA_OptInputParameterInfo TA_DEF_UI_D_EMV_TimePeriod =
 {
    TA_OptInput_IntegerRange,
@@ -119,9 +110,9 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_EMV_TimePeriod =
    0,
 
    "Time Period",
-   (const void *)&TA_DEF_EMV_TimePeriod,
+   (const void *)&TA_DEF_TimePeriod_Positive,
    14,
-   "Number of periods for the smoothing average (1 = unsmoothed)",
+   "Bars in the SMA of the one-bar values (1 = unsmoothed)",
 
    NULL
 };
@@ -131,9 +122,9 @@ static const TA_RealRange TA_DEF_EMV_VolumeDivisor =
    1.0,
    TA_REAL_MAX,
    0,
-   1.0,
-   100000000.0,
-   1000.0
+   0.0,
+   0.0,
+   0.0
 };
 
 static const TA_OptInputParameterInfo TA_DEF_UI_D_EMV_VolumeDivisor =
@@ -145,7 +136,7 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_EMV_VolumeDivisor =
    "Volume Divisor",
    (const void *)&TA_DEF_EMV_VolumeDivisor,
    10000.0,
-   "Volume scale divisor",
+   "Volume is divided by this before forming the box ratio",
 
    NULL
 };

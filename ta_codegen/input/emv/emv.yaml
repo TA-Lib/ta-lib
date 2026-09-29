@@ -10,18 +10,17 @@ optional_inputs:
   - name: optInTimePeriod
     type: integer
     display_name: Time Period
-    hint: Number of periods for the smoothing average (1 = unsmoothed)
+    hint: Bars in the SMA of the one-bar values (1 = unsmoothed)
     range: [1, 100000]
     default: 14
-    suggested: [4, 200, 1]
+    suggested: [1, 200, 1]
   - name: optInVolumeDivisor
     type: real
     display_name: Volume Divisor
-    hint: Volume scale divisor
+    hint: Volume is divided by this before forming the box ratio
     range: [1, TA_REAL_MAX]
     default: 10000
     precision: 0
-    suggested: [1, 100000000, 1000]
 outputs:
   - name: outReal
     type: real

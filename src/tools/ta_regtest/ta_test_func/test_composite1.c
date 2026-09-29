@@ -192,7 +192,6 @@ static ErrorNumber test_hma_single_element( const TA_History *history );
 static ErrorNumber test_hma_param_reject( const TA_History *history );
 static ErrorNumber test_hma_large_period( void );
 static ErrorNumber test_efi_differential( const TA_History *history );
-static ErrorNumber test_emv_composite( const TA_History *history );
 static ErrorNumber test_efi_oracle( const TA_History *history );
 static ErrorNumber test_efi_degenerate( void );
 static ErrorNumber test_efi_inplace( const TA_History *history );
@@ -269,10 +268,6 @@ ErrorNumber test_func_composite1( TA_History *history )
       return retValue;
 
    retValue = test_cmf_differential( history );
-   if( retValue != TA_TEST_PASS )
-      return retValue;
-
-   retValue = test_emv_composite( history );
    if( retValue != TA_TEST_PASS )
       return retValue;
 
@@ -4526,136 +4521,6 @@ static ErrorNumber test_ac_reference_anchoring( const TA_History *history )
       printf( "AC anchoring Fail: no cell separates the anchored reference from "
               "the unanchored one (%d cell(s) compared), so the differential leg "
               "would pass with a mis-anchored reference\n", nbCells );
-      return TA_TESTUTIL_TFRR_BAD_CALCULATION;
-   }
-
-   return TA_TEST_PASS;
-}
-
-/* #465: EMV is the midpoint change divided by a box ratio of volume to range,
- * smoothed by an SMA. Every one of those pieces ships, so the whole indicator
- * can be rebuilt from them and compared BIT for bit -- which is what pins the
- * operand order, the HLV bundle's component order, the SMA's anchor at bar n,
- * and the lookback, all at once.
- *
- * The rebuild carries no degenerate-bar guard, and it does not need one: this
- * history has no flat bar and its smallest volume is 2,658,400, so the guard in
- * emv.c never fires here. The guarded bars are a separate leg.
- */
-#define EMV_CAP 400
-#define EMV_COMPOSITE_CMP 12972
-
-static const int   emvPeriodGrid[] = { 1, 2, 14, 50, 251 };
-static const int   emvStartGrid[]  = { 0, 1, 14, 15, 100 };
-static const double emvDivGrid[]   = { 1.0, 10000.0, 1.0e8 };
-
-static int g_emvCompositeCmp;
-
-static ErrorNumber test_emv_composite( const TA_History *history )
-{
-   static TA_Real mid[EMV_CAP], num[EMV_CAP], vD[EMV_CAP], range[EMV_CAP];
-   static TA_Real box[EMV_CAP], raw[EMV_CAP], ref[EMV_CAP], got[EMV_CAP];
-   static TA_Real dConst[EMV_CAP];
-   TA_RetCode rc;
-   TA_Integer b, n, begGot, nbGot, begRef, nbRef;
-   int nbBars, i, p, sIdx, d;
-
-   nbBars = (int)history->nbBars;
-   if( nbBars > EMV_CAP )
-   {
-      printf( "EMV composite Fail: %d bars exceeds EMV_CAP %d\n", nbBars, EMV_CAP );
-      return TA_TESTUTIL_TFRR_BAD_PARAM;
-   }
-
-   g_emvCompositeCmp = 0;
-
-   for( d = 0; d < (int)(sizeof(emvDivGrid)/sizeof(emvDivGrid[0])); d++ )
-   {
-      for( i = 0; i < nbBars; i++ )
-         dConst[i] = emvDivGrid[d];
-
-      /* mid, then its one-bar change. MOM index k is bar k+1, so everything
-       * paired with it below is read from index 1 onward. */
-      rc = TA_MEDPRICE( 0, nbBars-1, history->high, history->low, &b, &n, mid );
-      if( rc == TA_SUCCESS )
-         rc = TA_MOM( 0, n-1, mid, 1, &b, &n, num );
-      /* volume/D, high-low, then the box ratio and the raw value, in the
-       * operand order emv.c uses. */
-      if( rc == TA_SUCCESS )
-         rc = TA_DIV( 0, nbBars-2, &history->volume[1], dConst, &b, &n, vD );
-      if( rc == TA_SUCCESS )
-         rc = TA_SUB( 0, nbBars-2, &history->high[1], &history->low[1], &b, &n, range );
-      if( rc == TA_SUCCESS )
-         rc = TA_DIV( 0, nbBars-2, vD, range, &b, &n, box );
-      if( rc == TA_SUCCESS )
-         rc = TA_DIV( 0, nbBars-2, num, box, &b, &n, raw );
-      if( rc != TA_SUCCESS )
-      {
-         printf( "EMV composite Fail [D %g]: rebuild rc=%d\n", emvDivGrid[d], (int)rc );
-         return TA_TESTUTIL_TFRR_BAD_RETCODE;
-      }
-
-      for( p = 0; p < (int)(sizeof(emvPeriodGrid)/sizeof(emvPeriodGrid[0])); p++ )
-      {
-         int period = emvPeriodGrid[p];
-
-         for( sIdx = 0; sIdx < (int)(sizeof(emvStartGrid)/sizeof(emvStartGrid[0])); sIdx++ )
-         {
-            int startIdx = emvStartGrid[sIdx];
-            /* Bar startIdx is raw index startIdx-1; bar 0 has no raw value, so
-             * the rebuild starts at raw index 0 either way. */
-            int startRaw = startIdx > 0 ? startIdx - 1 : 0;
-
-            rc = TA_EMV( startIdx, nbBars-1, history->high, history->low,
-                         history->volume, period, emvDivGrid[d],
-                         &begGot, &nbGot, got );
-            if( rc != TA_SUCCESS )
-            {
-               printf( "EMV composite Fail [D %g n %d start %d]: TA_EMV rc=%d\n",
-                       emvDivGrid[d], period, startIdx, (int)rc );
-               return TA_TESTUTIL_TFRR_BAD_RETCODE;
-            }
-
-            rc = TA_SMA( startRaw, nbBars-2, raw, period, &begRef, &nbRef, ref );
-            if( rc != TA_SUCCESS )
-            {
-               printf( "EMV composite Fail [D %g n %d start %d]: TA_SMA rc=%d\n",
-                       emvDivGrid[d], period, startIdx, (int)rc );
-               return TA_TESTUTIL_TFRR_BAD_RETCODE;
-            }
-
-            /* begGot is a bar index, begRef a raw index: they must differ by
-             * exactly the one bar the first midpoint change consumes. */
-            if( begGot != begRef + 1 || nbGot != nbRef )
-            {
-               printf( "EMV composite Fail [D %g n %d start %d]: range "
-                       "EMV(%d,%d) compose(%d,%d) -- expected beg %d\n",
-                       emvDivGrid[d], period, startIdx,
-                       (int)begGot, (int)nbGot, (int)begRef, (int)nbRef,
-                       (int)begRef + 1 );
-               return TA_TESTUTIL_TFRR_BAD_BEGIDX;
-            }
-
-            for( i = 0; i < nbGot; i++ )
-            {
-               g_emvCompositeCmp++;
-               if( memcmp( &got[i], &ref[i], sizeof(double) ) != 0 )
-               {
-                  printf( "EMV composite Fail [D %g n %d start %d] at out[%d]: "
-                          "fused %.17g != compose %.17g (must be BIT-exact)\n",
-                          emvDivGrid[d], period, startIdx, i, got[i], ref[i] );
-                  return TA_TESTUTIL_TFRR_BAD_CALCULATION;
-               }
-            }
-         }
-      }
-   }
-
-   /* Literal: a leg that compared nothing prints nothing either. */
-   if( g_emvCompositeCmp != EMV_COMPOSITE_CMP )
-   {
-      printf( "EMV composite Fail: compared %d times, not the %d this file was "
-              "written with\n", g_emvCompositeCmp, EMV_COMPOSITE_CMP );
       return TA_TESTUTIL_TFRR_BAD_CALCULATION;
    }
 

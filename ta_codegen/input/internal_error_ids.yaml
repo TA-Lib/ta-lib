@@ -171,8 +171,8 @@ sites:
   DPO.ringcap.dispIdx: 409
   DPO.ringcap.trailingIdx: 410
   EFI.dualmode: 318
-  EMV.cbsize.rawRing: 441
-  EMV.circbuf.rawRing: 440
+  EMV.cbsize.rawBuffer: 441
+  EMV.circbuf.rawBuffer: 440
   ER.ringcap.trailingIdx: 426
   ERI.dualmode: 425
   FOSC.extrema: 406

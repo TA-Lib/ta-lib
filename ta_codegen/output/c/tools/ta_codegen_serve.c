@@ -3786,13 +3786,13 @@ static int sv_steq_TA_EMV( const struct TA_EMV_Stream *a, const struct TA_EMV_St
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( sv_xtier_ne(a->optInVolumeDivisor, b->optInVolumeDivisor, z) ) { *w = "optInVolumeDivisor"; return 1; }
+   if( sv_xtier_ne(a->periodTotal, b->periodTotal, z) ) { *w = "periodTotal"; return 1; }
    if( sv_xtier_ne(a->prevMid, b->prevMid, z) ) { *w = "prevMid"; return 1; }
-   if( sv_xtier_ne(a->sumRaw, b->sumRaw, z) ) { *w = "sumRaw"; return 1; }
-   if( a->rawRing_Idx != b->rawRing_Idx ) { *w = "rawRing_Idx"; return 1; }
-   if( a->maxIdx_rawRing != b->maxIdx_rawRing ) { *w = "maxIdx_rawRing"; return 1; }
-   if( a->cbSize_rawRing != b->cbSize_rawRing ) { *w = "cbSize_rawRing"; return 1; }
-   if( (a->cb_rawRing == NULL) != (b->cb_rawRing == NULL) ) { *w = "cb_rawRing"; return 1; }
-   if( a->cb_rawRing ) for( k = 0; k < a->cbSize_rawRing; k++ ) if( sv_xtier_ne(a->cb_rawRing[k], b->cb_rawRing[k], z) ) { *w = "cb_rawRing"; return 1; }
+   if( a->rawBuffer_Idx != b->rawBuffer_Idx ) { *w = "rawBuffer_Idx"; return 1; }
+   if( a->maxIdx_rawBuffer != b->maxIdx_rawBuffer ) { *w = "maxIdx_rawBuffer"; return 1; }
+   if( a->cbSize_rawBuffer != b->cbSize_rawBuffer ) { *w = "cbSize_rawBuffer"; return 1; }
+   if( (a->cb_rawBuffer == NULL) != (b->cb_rawBuffer == NULL) ) { *w = "cb_rawBuffer"; return 1; }
+   if( a->cb_rawBuffer ) for( k = 0; k < a->cbSize_rawBuffer; k++ ) if( sv_xtier_ne(a->cb_rawBuffer[k], b->cb_rawBuffer[k], z) ) { *w = "cb_rawBuffer"; return 1; }
    return 0;
 }
 

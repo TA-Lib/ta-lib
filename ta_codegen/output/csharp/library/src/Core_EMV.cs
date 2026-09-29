@@ -46,6 +46,7 @@ public partial class Core
     *
     *  Initial  Name/description
     *  -------------------------------------------------------------------
+    *  KL       Kevin Lin (@kevinlincg)
     *  MF       Mario Fortier
     *  CC       Claude Code (AI assistant)
     *
@@ -53,7 +54,7 @@ public partial class Core
     *
     *  MMDDYY BY     Description
     *  -------------------------------------------------------------------
-    *  092926 MF,CC  Creation (#465).
+    *  092826 KL,CC  First version (#465).
     */
    /// <summary>
    /// Number of leading input bars <c>Emv</c> consumes before it can produce its
@@ -64,10 +65,10 @@ public partial class Core
    /// series is requested. Feed at least <c>lookback + 1</c> bars to get any
    /// output.
    /// </remarks>
-   /// <param name="optInTimePeriod">Number of periods for the smoothing average; 1 leaves the raw series
-   /// (default 14; range 1..100000; <c>int.MinValue</c> selects the default).</param>
-   /// <param name="optInVolumeDivisor">Volume scale divisor (default 10000; minimum 1;
-   /// <see cref="Core.RealDefault"/> selects the default).</param>
+   /// <param name="optInTimePeriod">Number of one-bar values in the simple moving average (default 14; range
+   /// 1..100000; <c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInVolumeDivisor">Volume is divided by this before it forms the box ratio (default 10000;
+   /// minimum 1; <see cref="Core.RealDefault"/> selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
    public int EmvLookback( int optInTimePeriod, double optInVolumeDivisor )
    {
@@ -81,15 +82,7 @@ public partial class Core
       } else if( !(optInVolumeDivisor >= 1e0 && optInVolumeDivisor <= RealMax) ) {
          return -1;
       }
-      /* One bar is consumed forming the first midpoint change, then the SMA's own
-       * warm-up on top:
-       *    1 + sma_lookback(optInTimePeriod) = 1 + (optInTimePeriod - 1)
-       * which is efi_lookback's derivation with a finite window in place of the
-       * EMA, so there is no unstable period to add.
-       *
-       * The divisor scales the output and cannot move the first valid bar.
-       */
-      return optInTimePeriod ;
+      return 1 + SmaLookback(optInTimePeriod) ;
 
    }
    internal RetCode EmvImpl( int startIdx,
@@ -105,20 +98,19 @@ public partial class Core
    {
       outBegIdx = 0;
       outNBElement = 0;
+      double periodTotal = 0;
       double prevMid = 0;
       double mid = 0;
       double range = 0;
       double boxRatio = 0;
       double raw = 0;
-      double sumRaw = 0;
       double tempReal = 0;
       int lookbackTotal = 0;
       int outIdx = 0;
       int i = 0;
-      int today = 0;
-      double[] rawRing;
-      int rawRing_Idx = 0;
-      int maxIdx_rawRing = (50)-1;
+      double[] rawBuffer;
+      int rawBuffer_Idx = 0;
+      int maxIdx_rawBuffer = (50)-1;
       if( (startIdx < 0) || (startIdx > IndexMax) ) {
          return RetCode.OutOfRangeStartIndex ;
       }
@@ -138,105 +130,76 @@ public partial class Core
       if( (outReal.Overlaps(inHigh) && outReal != inHigh) || (outReal.Overlaps(inLow) && outReal != inLow) || (outReal.Overlaps(inVolume) && outReal != inVolume) ) {
          return RetCode.BadParam ;
       }
-      /* The window of raw values is carried here rather than recomputed from the
-       * inputs at the trailing index: once a bar has been consumed it is never
-       * read again, which is what makes outReal safe to alias any input
-       * (cmf.c:32-38).
+      /* The one-bar values are kept in a ring rather than recomputed at the
+       * trailing index: outReal may alias an input, and those bars may already
+       * hold outputs.
        */
-      outBegIdx = 0;
-      outNBElement = 0;
       lookbackTotal = EmvLookback(optInTimePeriod, optInVolumeDivisor);
-      /* Move up the start index if there is not enough initial data. */
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
-      /* Make sure there is still something to evaluate. */
       if( startIdx > endIdx ) {
+         outBegIdx = 0;
+         outNBElement = 0;
          return RetCode.Success ;
       }
       if( optInTimePeriod < 1 ) return RetCode.InternalError;
-      rawRing = new double[optInTimePeriod];
-      maxIdx_rawRing = (optInTimePeriod)-1;
-      rawRing_Idx = 0;
-      /* The running sum is seeded with the window's first optInTimePeriod-1 raw
-       * values and each output bar then adds its own before dividing, which is
-       * sma.c:57-81's order applied to the raw series rather than to an input
-       * array. At optInTimePeriod 1 the seed loop does not run and the body
-       * reduces to 0 + raw, then raw - raw, so the output is the raw kernel bit
-       * for bit.
+      rawBuffer = new double[optInTimePeriod];
+      maxIdx_rawBuffer = (optInTimePeriod)-1;
+      rawBuffer_Idx = 0;
+      /* Keep the operand order and sma.c's add / snapshot / subtract order: the
+       * composite gate rebuilds this from MEDPRICE, MOM, SUB, DIV and SMA and
+       * compares bitwise.
+       *
+       * The zero guards are exact != 0.0 tests, never TA_IS_ZERO: the output
+       * scale follows the volume and the divisor, so no absolute band fits. A
+       * nonzero range with a box ratio that underflows to 0 takes the guard too.
        */
-      today = startIdx - lookbackTotal + 1;
-      prevMid = (inHigh[today - 1] + inLow[today - 1]) / 2.0;
-      sumRaw = 0.0;
-      i = optInTimePeriod - 1;
-      while( i-- > 0 ) {
-         mid = (inHigh[today] + inLow[today]) / 2.0;
-         range = inHigh[today] - inLow[today];
-         /* A bar with no volume, or no range, has no boxRatio to divide by. The tests
-          * are exact rather than TA_IS_ZERO's band: a near-zero range is a real
-          * boxRatio, and the result has to be a plain 0.0 with no sign, as in
-          * marketfi.c and roc.c:85-88.
-          *
-          * The boxRatio itself is tested, not just its operands. optInVolumeDivisor
-          * goes up to TA_REAL_MAX, so the scaling can reach zero from a volume
-          * that is not zero: at inVolume 5e-324 and a divisor of 2 -- both inside
-          * their declared ranges -- inVolume/optInVolumeDivisor rounds to 0.0 and
-          * the quotient below would be infinite. Testing the operands alone let
-          * that through.
-          */
-         if( inVolume[today] != 0.0 && range != 0.0 ) {
-            boxRatio = inVolume[today] / optInVolumeDivisor / range;
+      i = startIdx - lookbackTotal;
+      prevMid = (inHigh[i] + inLow[i]) / 2.0;
+      i = i + 1;
+      periodTotal = 0.0;
+      while( i < startIdx ) {
+         mid = (inHigh[i] + inLow[i]) / 2.0;
+         range = inHigh[i] - inLow[i];
+         raw = 0.0;
+         if( range != 0.0 ) {
+            boxRatio = inVolume[i] / optInVolumeDivisor / range;
             if( boxRatio != 0.0 ) {
                raw = (mid - prevMid) / boxRatio;
-            } else {
-               raw = 0.0;
             }
-         } else {
-            raw = 0.0;
          }
-         /* The midpoint moves on even for a guarded bar: the next bar's change is
-          * measured from the bar immediately before it, never from the last bar
-          * that happened to produce a value.
-          */
          prevMid = mid;
-         rawRing[rawRing_Idx] = raw;
-         sumRaw += raw;
-         rawRing_Idx++;
-         if( rawRing_Idx > maxIdx_rawRing ) { rawRing_Idx = 0; }
-         today = today + 1;
+         i = i + 1;
+         rawBuffer[rawBuffer_Idx] = raw;
+         periodTotal += raw;
+         rawBuffer_Idx++;
+         if( rawBuffer_Idx > maxIdx_rawBuffer ) { rawBuffer_Idx = 0; }
       }
       outIdx = 0;
-      while( today <= endIdx ) {
-         mid = (inHigh[today] + inLow[today]) / 2.0;
-         range = inHigh[today] - inLow[today];
-         if( inVolume[today] != 0.0 && range != 0.0 ) {
-            boxRatio = inVolume[today] / optInVolumeDivisor / range;
+      while( i <= endIdx ) {
+         mid = (inHigh[i] + inLow[i]) / 2.0;
+         range = inHigh[i] - inLow[i];
+         raw = 0.0;
+         if( range != 0.0 ) {
+            boxRatio = inVolume[i] / optInVolumeDivisor / range;
             if( boxRatio != 0.0 ) {
                raw = (mid - prevMid) / boxRatio;
-            } else {
-               raw = 0.0;
             }
-         } else {
-            raw = 0.0;
          }
          prevMid = mid;
-         /* Today's raw value enters the window at its own slot, and the bar
-          * leaving the window is read only after the ring has advanced onto it.
-          * Every input read for this bar is done above, so the store into
-          * outReal is safe when the caller aliases it over an input.
-          */
-         rawRing[rawRing_Idx] = raw;
-         sumRaw += raw;
-         tempReal = sumRaw;
-         rawRing_Idx++;
-         if( rawRing_Idx > maxIdx_rawRing ) { rawRing_Idx = 0; }
-         sumRaw -= rawRing[rawRing_Idx];
+         i = i + 1;
+         rawBuffer[rawBuffer_Idx] = raw;
+         periodTotal += raw;
+         tempReal = periodTotal;
+         rawBuffer_Idx++;
+         if( rawBuffer_Idx > maxIdx_rawBuffer ) { rawBuffer_Idx = 0; }
+         periodTotal -= rawBuffer[rawBuffer_Idx];
          outReal[outIdx] = tempReal / (double)optInTimePeriod;
          outIdx = outIdx + 1;
-         today = today + 1;
       }
-      outNBElement = outIdx;
       outBegIdx = startIdx;
+      outNBElement = outIdx;
       return RetCode.Success ;
    }
    internal RetCode EmvImpl( int startIdx,
@@ -252,20 +215,19 @@ public partial class Core
    {
       outBegIdx = 0;
       outNBElement = 0;
+      double periodTotal = 0;
       double prevMid = 0;
       double mid = 0;
       double range = 0;
       double boxRatio = 0;
       double raw = 0;
-      double sumRaw = 0;
       double tempReal = 0;
       int lookbackTotal = 0;
       int outIdx = 0;
       int i = 0;
-      int today = 0;
-      double[] rawRing;
-      int rawRing_Idx = 0;
-      int maxIdx_rawRing = (50)-1;
+      double[] rawBuffer;
+      int rawBuffer_Idx = 0;
+      int maxIdx_rawBuffer = (50)-1;
       if( (startIdx < 0) || (startIdx > IndexMax) ) {
          return RetCode.OutOfRangeStartIndex ;
       }
@@ -285,77 +247,78 @@ public partial class Core
       if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outReal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outReal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outReal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inVolume)) ) {
          return RetCode.BadParam ;
       }
-      outBegIdx = 0;
-      outNBElement = 0;
       lookbackTotal = EmvLookback(optInTimePeriod, optInVolumeDivisor);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
       if( startIdx > endIdx ) {
+         outBegIdx = 0;
+         outNBElement = 0;
          return RetCode.Success ;
       }
       if( optInTimePeriod < 1 ) return RetCode.InternalError;
-      rawRing = new double[optInTimePeriod];
-      maxIdx_rawRing = (optInTimePeriod)-1;
-      rawRing_Idx = 0;
-      today = startIdx - lookbackTotal + 1;
-      prevMid = ((double)inHigh[today - 1] + (double)inLow[today - 1]) / 2.0;
-      sumRaw = 0.0;
-      i = optInTimePeriod - 1;
-      while( i-- > 0 ) {
-         mid = ((double)inHigh[today] + (double)inLow[today]) / 2.0;
-         range = (double)inHigh[today] - (double)inLow[today];
-         if( (double)inVolume[today] != 0.0 && range != 0.0 ) {
-            boxRatio = (double)inVolume[today] / optInVolumeDivisor / range;
+      rawBuffer = new double[optInTimePeriod];
+      maxIdx_rawBuffer = (optInTimePeriod)-1;
+      rawBuffer_Idx = 0;
+      i = startIdx - lookbackTotal;
+      prevMid = ((double)inHigh[i] + (double)inLow[i]) / 2.0;
+      i = i + 1;
+      periodTotal = 0.0;
+      while( i < startIdx ) {
+         mid = ((double)inHigh[i] + (double)inLow[i]) / 2.0;
+         range = (double)inHigh[i] - (double)inLow[i];
+         raw = 0.0;
+         if( range != 0.0 ) {
+            boxRatio = (double)inVolume[i] / optInVolumeDivisor / range;
             if( boxRatio != 0.0 ) {
                raw = (mid - prevMid) / boxRatio;
-            } else {
-               raw = 0.0;
             }
-         } else {
-            raw = 0.0;
          }
          prevMid = mid;
-         rawRing[rawRing_Idx] = raw;
-         sumRaw += raw;
-         rawRing_Idx++;
-         if( rawRing_Idx > maxIdx_rawRing ) { rawRing_Idx = 0; }
-         today = today + 1;
+         i = i + 1;
+         rawBuffer[rawBuffer_Idx] = raw;
+         periodTotal += raw;
+         rawBuffer_Idx++;
+         if( rawBuffer_Idx > maxIdx_rawBuffer ) { rawBuffer_Idx = 0; }
       }
       outIdx = 0;
-      while( today <= endIdx ) {
-         mid = ((double)inHigh[today] + (double)inLow[today]) / 2.0;
-         range = (double)inHigh[today] - (double)inLow[today];
-         if( (double)inVolume[today] != 0.0 && range != 0.0 ) {
-            boxRatio = (double)inVolume[today] / optInVolumeDivisor / range;
+      while( i <= endIdx ) {
+         mid = ((double)inHigh[i] + (double)inLow[i]) / 2.0;
+         range = (double)inHigh[i] - (double)inLow[i];
+         raw = 0.0;
+         if( range != 0.0 ) {
+            boxRatio = (double)inVolume[i] / optInVolumeDivisor / range;
             if( boxRatio != 0.0 ) {
                raw = (mid - prevMid) / boxRatio;
-            } else {
-               raw = 0.0;
             }
-         } else {
-            raw = 0.0;
          }
          prevMid = mid;
-         rawRing[rawRing_Idx] = raw;
-         sumRaw += raw;
-         tempReal = sumRaw;
-         rawRing_Idx++;
-         if( rawRing_Idx > maxIdx_rawRing ) { rawRing_Idx = 0; }
-         sumRaw -= rawRing[rawRing_Idx];
+         i = i + 1;
+         rawBuffer[rawBuffer_Idx] = raw;
+         periodTotal += raw;
+         tempReal = periodTotal;
+         rawBuffer_Idx++;
+         if( rawBuffer_Idx > maxIdx_rawBuffer ) { rawBuffer_Idx = 0; }
+         periodTotal -= rawBuffer[rawBuffer_Idx];
          outReal[outIdx] = tempReal / (double)optInTimePeriod;
          outIdx = outIdx + 1;
-         today = today + 1;
       }
-      outNBElement = outIdx;
       outBegIdx = startIdx;
+      outNBElement = outIdx;
       return RetCode.Success ;
    }
    /// <summary>
-   /// Richard W. Arms, Jr.'s Ease of Movement: the bar-to-bar move of the
-   /// high-low midpoint divided by a box ratio of volume to range, smoothed by a
-   /// simple moving average. It is positive when the midpoint rises, and large
-   /// when that move came on light volume relative to the bar's range.
+   /// Ease of Movement: the bar-to-bar move of the high-low midpoint divided by
+   /// a box ratio of volume to range, averaged over a trailing window. It is the
+   /// numeric form of Richard W. Arms, Jr.'s Equivolume box. The box ratio is
+   /// positive whenever the bar traded and has a range, so the sign follows the
+   /// midpoint move. A large positive value means price rose easily, on light
+   /// volume relative to its range; a large negative value means it fell easily.
+   /// Values near zero mean volume was heavy for the distance travelled, or
+   /// price hardly moved. The output scales with the instrument's volume and
+   /// with the volume divisor, so its level is comparable only within one
+   /// instrument at one divisor. Traders mostly watch its sign and its zero
+   /// crossings.
    /// </summary>
    /// <remarks>
    /// <para>
@@ -363,9 +326,9 @@ public partial class Core
    /// <see href="https://ta-lib.org/functions/emv">ta-lib.org/functions/emv</see>.
    /// </para>
    /// <list type="bullet">
-   /// <item><description>The divisor is a pure output scale: in exact arithmetic EMV is proportional to it, so it selects the units the values are read in rather than a different indicator. 10,000 is the constant Achelis's worked table was computed with; StockCharts and some libraries print 100,000,000 instead.</description></item>
-   /// <item><description>The range is in points. Achelis's entry describes it in eighths, which at a divisor D is the same series as points at 8D.</description></item>
-   /// <item><description>lookback = optInTimePeriod: one bar forms the first midpoint change, then the average's own warm-up of optInTimePeriod-1 on top. The divisor does not enter it.</description></item>
+   /// <item><description>The range is in price points. Achelis's text gives it in eighths of a point, the pre-decimal US quote unit; that reading is reached by multiplying the divisor by 8.</description></item>
+   /// <item><description>The divisor is a pure output scale: doubling it doubles every value. Pick one that suits the instrument's volume.</description></item>
+   /// <item><description>A period of 1 returns the unsmoothed one-bar values. Smoothing is a simple moving average; for an exponential one, apply <c>EMA</c> to this function's output at a period of 1.</description></item>
    /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
@@ -385,13 +348,13 @@ public partial class Core
    /// <param name="inHigh">High price of each bar.</param>
    /// <param name="inLow">Low price of each bar.</param>
    /// <param name="inVolume">Volume of each bar.</param>
-   /// <param name="optInTimePeriod">Number of periods for the smoothing average; 1 leaves the raw series
-   /// (default 14; range 1..100000; <c>int.MinValue</c> selects the default).</param>
-   /// <param name="optInVolumeDivisor">Volume scale divisor (default 10000; minimum 1;
-   /// <see cref="Core.RealDefault"/> selects the default).</param>
-   /// <param name="outReal">Ease of Movement. Must hold at least <c>endIdx - max(startIdx,
-   /// EmvLookback(...)) + 1</c> values, the count the call produces (none when
-   /// that is not positive).</param>
+   /// <param name="optInTimePeriod">Number of one-bar values in the simple moving average (default 14; range
+   /// 1..100000; <c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInVolumeDivisor">Volume is divided by this before it forms the box ratio (default 10000;
+   /// minimum 1; <see cref="Core.RealDefault"/> selects the default).</param>
+   /// <param name="outReal">Ease of Movement, averaged over the window. Must hold at least <c>endIdx -
+   /// max(startIdx, EmvLookback(...)) + 1</c> values, the count the call
+   /// produces (none when that is not positive).</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
    /// <c>Count</c> how many were written.</returns>
    /// <exception cref="System.ArgumentOutOfRangeException"><c>startIdx</c> or <c>endIdx</c> is negative or above
@@ -414,6 +377,11 @@ public partial class Core
    /// Computing wholly in place (an output that IS an input) is allowed.</description></item>
    /// </list>
    /// </exception>
+   /// <seealso cref="Core.Medprice(int, int, ReadOnlySpan{double}, ReadOnlySpan{double}, Span{double})"/>
+   /// <seealso cref="Core.Marketfi(int, int, ReadOnlySpan{double}, ReadOnlySpan{double}, ReadOnlySpan{double}, Span{double})"/>
+   /// <seealso cref="Core.Efi(int, int, ReadOnlySpan{double}, ReadOnlySpan{double}, int, Span{double})"/>
+   /// <seealso cref="Core.Sma(int, int, ReadOnlySpan{double}, int, Span{double})"/>
+   /// <seealso cref="Core.Ema(int, int, ReadOnlySpan{double}, int, Span{double})"/>
    public OutRange Emv( int startIdx,
                         int endIdx,
                         ReadOnlySpan<double> inHigh,
@@ -437,10 +405,17 @@ public partial class Core
       return new OutRange(outBegIdx, outNBElement);
    }
    /// <summary>
-   /// Richard W. Arms, Jr.'s Ease of Movement: the bar-to-bar move of the
-   /// high-low midpoint divided by a box ratio of volume to range, smoothed by a
-   /// simple moving average. It is positive when the midpoint rises, and large
-   /// when that move came on light volume relative to the bar's range.
+   /// Ease of Movement: the bar-to-bar move of the high-low midpoint divided by
+   /// a box ratio of volume to range, averaged over a trailing window. It is the
+   /// numeric form of Richard W. Arms, Jr.'s Equivolume box. The box ratio is
+   /// positive whenever the bar traded and has a range, so the sign follows the
+   /// midpoint move. A large positive value means price rose easily, on light
+   /// volume relative to its range; a large negative value means it fell easily.
+   /// Values near zero mean volume was heavy for the distance travelled, or
+   /// price hardly moved. The output scales with the instrument's volume and
+   /// with the volume divisor, so its level is comparable only within one
+   /// instrument at one divisor. Traders mostly watch its sign and its zero
+   /// crossings.
    /// </summary>
    /// <remarks>
    /// <para>
@@ -448,9 +423,9 @@ public partial class Core
    /// <see href="https://ta-lib.org/functions/emv">ta-lib.org/functions/emv</see>.
    /// </para>
    /// <list type="bullet">
-   /// <item><description>The divisor is a pure output scale: in exact arithmetic EMV is proportional to it, so it selects the units the values are read in rather than a different indicator. 10,000 is the constant Achelis's worked table was computed with; StockCharts and some libraries print 100,000,000 instead.</description></item>
-   /// <item><description>The range is in points. Achelis's entry describes it in eighths, which at a divisor D is the same series as points at 8D.</description></item>
-   /// <item><description>lookback = optInTimePeriod: one bar forms the first midpoint change, then the average's own warm-up of optInTimePeriod-1 on top. The divisor does not enter it.</description></item>
+   /// <item><description>The range is in price points. Achelis's text gives it in eighths of a point, the pre-decimal US quote unit; that reading is reached by multiplying the divisor by 8.</description></item>
+   /// <item><description>The divisor is a pure output scale: doubling it doubles every value. Pick one that suits the instrument's volume.</description></item>
+   /// <item><description>A period of 1 returns the unsmoothed one-bar values. Smoothing is a simple moving average; for an exponential one, apply <c>EMA</c> to this function's output at a period of 1.</description></item>
    /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
@@ -476,13 +451,13 @@ public partial class Core
    /// <param name="inHigh">High price of each bar.</param>
    /// <param name="inLow">Low price of each bar.</param>
    /// <param name="inVolume">Volume of each bar.</param>
-   /// <param name="optInTimePeriod">Number of periods for the smoothing average; 1 leaves the raw series
-   /// (default 14; range 1..100000; <c>int.MinValue</c> selects the default).</param>
-   /// <param name="optInVolumeDivisor">Volume scale divisor (default 10000; minimum 1;
-   /// <see cref="Core.RealDefault"/> selects the default).</param>
-   /// <param name="outReal">Ease of Movement. Must hold at least <c>endIdx - max(startIdx,
-   /// EmvLookback(...)) + 1</c> values, the count the call produces (none when
-   /// that is not positive).</param>
+   /// <param name="optInTimePeriod">Number of one-bar values in the simple moving average (default 14; range
+   /// 1..100000; <c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInVolumeDivisor">Volume is divided by this before it forms the box ratio (default 10000;
+   /// minimum 1; <see cref="Core.RealDefault"/> selects the default).</param>
+   /// <param name="outReal">Ease of Movement, averaged over the window. Must hold at least <c>endIdx -
+   /// max(startIdx, EmvLookback(...)) + 1</c> values, the count the call
+   /// produces (none when that is not positive).</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
    /// <c>Count</c> how many were written.</returns>
    /// <exception cref="System.ArgumentOutOfRangeException"><c>startIdx</c> or <c>endIdx</c> is negative or above
@@ -507,6 +482,11 @@ public partial class Core
    /// overlap of their byte ranges is rejected.</description></item>
    /// </list>
    /// </exception>
+   /// <seealso cref="Core.Medprice(int, int, ReadOnlySpan{double}, ReadOnlySpan{double}, Span{double})"/>
+   /// <seealso cref="Core.Marketfi(int, int, ReadOnlySpan{double}, ReadOnlySpan{double}, ReadOnlySpan{double}, Span{double})"/>
+   /// <seealso cref="Core.Efi(int, int, ReadOnlySpan{double}, ReadOnlySpan{double}, int, Span{double})"/>
+   /// <seealso cref="Core.Sma(int, int, ReadOnlySpan{double}, int, Span{double})"/>
+   /// <seealso cref="Core.Ema(int, int, ReadOnlySpan{double}, int, Span{double})"/>
    public OutRange Emv( int startIdx,
                         int endIdx,
                         ReadOnlySpan<float> inHigh,
@@ -552,12 +532,12 @@ public partial class Core
       internal Core core;
       internal int optInTimePeriod;
       internal double optInVolumeDivisor;
+      internal double periodTotal;
       internal double prevMid;
-      internal double sumRaw;
-      internal int rawRing_Idx;
-      internal int maxIdx_rawRing;
-      internal int cbSize_rawRing;
-      internal double[] cb_rawRing = [];
+      internal int rawBuffer_Idx;
+      internal int maxIdx_rawBuffer;
+      internal int cbSize_rawBuffer;
+      internal double[] cb_rawBuffer = [];
       internal double cur_outReal;
       internal int outRangeBegIdx;
       internal int outRangeCount;
@@ -602,13 +582,13 @@ public partial class Core
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.optInVolumeDivisor = other.optInVolumeDivisor;
+         this.periodTotal = other.periodTotal;
          this.prevMid = other.prevMid;
-         this.sumRaw = other.sumRaw;
-         this.rawRing_Idx = other.rawRing_Idx;
-         this.maxIdx_rawRing = other.maxIdx_rawRing;
-         this.cbSize_rawRing = other.cbSize_rawRing;
-         this.cb_rawRing = new double[other.cb_rawRing.Length];
-         Array.Copy( other.cb_rawRing, this.cb_rawRing, other.cb_rawRing.Length );
+         this.rawBuffer_Idx = other.rawBuffer_Idx;
+         this.maxIdx_rawBuffer = other.maxIdx_rawBuffer;
+         this.cbSize_rawBuffer = other.cbSize_rawBuffer;
+         this.cb_rawBuffer = new double[other.cb_rawBuffer.Length];
+         Array.Copy( other.cb_rawBuffer, this.cb_rawBuffer, other.cb_rawBuffer.Length );
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
@@ -669,38 +649,30 @@ public partial class Core
          double raw = 0.0;
          double tempReal = 0.0;
          double cur_outReal = 0.0;
+         double periodTotal = sp.periodTotal;
          double prevMid = sp.prevMid;
-         int rawRing_Idx = sp.rawRing_Idx;
-         double sumRaw = sp.sumRaw;
+         int rawBuffer_Idx = sp.rawBuffer_Idx;
          int pkSlot0 = -1;
          double pkVal0 = 0.0;
          mid = (inHigh + inLow) / 2.0;
          range = inHigh - inLow;
-         if( inVolume != 0.0 && range != 0.0 ) {
+         raw = 0.0;
+         if( range != 0.0 ) {
             boxRatio = inVolume / sp.optInVolumeDivisor / range;
             if( boxRatio != 0.0 ) {
                raw = (mid - prevMid) / boxRatio;
-            } else {
-               raw = 0.0;
             }
-         } else {
-            raw = 0.0;
          }
          prevMid = mid;
-         /* Today's raw value enters the window at its own slot, and the bar
-          * leaving the window is read only after the ring has advanced onto it.
-          * Every input read for this bar is done above, so the store into
-          * outReal is safe when the caller aliases it over an input.
-          */
-         pkSlot0 = rawRing_Idx;
+         pkSlot0 = rawBuffer_Idx;
          pkVal0 = raw;
-         sumRaw += raw;
-         tempReal = sumRaw;
-         rawRing_Idx = rawRing_Idx + 1;
-         if( rawRing_Idx > sp.maxIdx_rawRing ) {
-            rawRing_Idx = 0;
+         periodTotal += raw;
+         tempReal = periodTotal;
+         rawBuffer_Idx = rawBuffer_Idx + 1;
+         if( rawBuffer_Idx > sp.maxIdx_rawBuffer ) {
+            rawBuffer_Idx = 0;
          }
-         sumRaw -= (rawRing_Idx != pkSlot0) ? sp.cb_rawRing[rawRing_Idx] : pkVal0;
+         periodTotal -= (rawBuffer_Idx != pkSlot0) ? sp.cb_rawBuffer[rawBuffer_Idx] : pkVal0;
          cur_outReal = tempReal / (double)sp.optInTimePeriod;
          return cur_outReal;
       }
@@ -731,30 +703,22 @@ public partial class Core
       double tempReal = 0.0;
       mid = (inHigh + inLow) / 2.0;
       range = inHigh - inLow;
-      if( inVolume != 0.0 && range != 0.0 ) {
+      raw = 0.0;
+      if( range != 0.0 ) {
          boxRatio = inVolume / sp.optInVolumeDivisor / range;
          if( boxRatio != 0.0 ) {
             raw = (mid - sp.prevMid) / boxRatio;
-         } else {
-            raw = 0.0;
          }
-      } else {
-         raw = 0.0;
       }
       sp.prevMid = mid;
-      /* Today's raw value enters the window at its own slot, and the bar
-       * leaving the window is read only after the ring has advanced onto it.
-       * Every input read for this bar is done above, so the store into
-       * outReal is safe when the caller aliases it over an input.
-       */
-      sp.cb_rawRing[sp.rawRing_Idx] = raw;
-      sp.sumRaw += raw;
-      tempReal = sp.sumRaw;
-      sp.rawRing_Idx = sp.rawRing_Idx + 1;
-      if( sp.rawRing_Idx > sp.maxIdx_rawRing ) {
-         sp.rawRing_Idx = 0;
+      sp.cb_rawBuffer[sp.rawBuffer_Idx] = raw;
+      sp.periodTotal += raw;
+      tempReal = sp.periodTotal;
+      sp.rawBuffer_Idx = sp.rawBuffer_Idx + 1;
+      if( sp.rawBuffer_Idx > sp.maxIdx_rawBuffer ) {
+         sp.rawBuffer_Idx = 0;
       }
-      sp.sumRaw -= sp.cb_rawRing[sp.rawRing_Idx];
+      sp.periodTotal -= sp.cb_rawBuffer[sp.rawBuffer_Idx];
       sp.cur_outReal = tempReal / (double)sp.optInTimePeriod;
    }
 
@@ -762,20 +726,19 @@ public partial class Core
    {
       outBegIdx = 0;
       outNBElement = 0;
+      double periodTotal = 0;
       double prevMid = 0;
       double mid = 0;
       double range = 0;
       double boxRatio = 0;
       double raw = 0;
-      double sumRaw = 0;
       double tempReal = 0;
       int lookbackTotal = 0;
       int outIdx = 0;
       int i = 0;
-      int today = 0;
-      double[] rawRing = [];
-      int rawRing_Idx = 0;
-      int maxIdx_rawRing = (50)-1;
+      double[] rawBuffer = [];
+      int rawBuffer_Idx = 0;
+      int maxIdx_rawBuffer = (50)-1;
       int historyLen = inHigh.Length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
@@ -802,118 +765,89 @@ public partial class Core
          outNBElement = 0;
          return RetCode.InsufficientHistory;
       }
-      /* The window of raw values is carried here rather than recomputed from the
-       * inputs at the trailing index: once a bar has been consumed it is never
-       * read again, which is what makes outReal safe to alias any input
-       * (cmf.c:32-38).
+      /* The one-bar values are kept in a ring rather than recomputed at the
+       * trailing index: outReal may alias an input, and those bars may already
+       * hold outputs.
        */
-      outBegIdx = 0;
-      outNBElement = 0;
       lookbackTotal = EmvLookback(optInTimePeriod, optInVolumeDivisor);
-      /* Move up the start index if there is not enough initial data. */
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
-      /* Make sure there is still something to evaluate. */
       if( startIdx > endIdx ) {
+         outBegIdx = 0;
+         outNBElement = 0;
          return RetCode.InsufficientHistory ;
       }
       if( optInTimePeriod < 1 ) return RetCode.InternalError;
-      rawRing = new double[optInTimePeriod];
-      maxIdx_rawRing = (optInTimePeriod)-1;
-      rawRing_Idx = 0;
-      /* The running sum is seeded with the window's first optInTimePeriod-1 raw
-       * values and each output bar then adds its own before dividing, which is
-       * sma.c:57-81's order applied to the raw series rather than to an input
-       * array. At optInTimePeriod 1 the seed loop does not run and the body
-       * reduces to 0 + raw, then raw - raw, so the output is the raw kernel bit
-       * for bit.
+      rawBuffer = new double[optInTimePeriod];
+      maxIdx_rawBuffer = (optInTimePeriod)-1;
+      rawBuffer_Idx = 0;
+      /* Keep the operand order and sma.c's add / snapshot / subtract order: the
+       * composite gate rebuilds this from MEDPRICE, MOM, SUB, DIV and SMA and
+       * compares bitwise.
+       *
+       * The zero guards are exact != 0.0 tests, never TA_IS_ZERO: the output
+       * scale follows the volume and the divisor, so no absolute band fits. A
+       * nonzero range with a box ratio that underflows to 0 takes the guard too.
        */
-      today = startIdx - lookbackTotal + 1;
-      prevMid = (inHigh[today - 1] + inLow[today - 1]) / 2.0;
-      sumRaw = 0.0;
-      i = optInTimePeriod - 1;
-      while( i-- > 0 ) {
-         mid = (inHigh[today] + inLow[today]) / 2.0;
-         range = inHigh[today] - inLow[today];
-         /* A bar with no volume, or no range, has no boxRatio to divide by. The tests
-          * are exact rather than TA_IS_ZERO's band: a near-zero range is a real
-          * boxRatio, and the result has to be a plain 0.0 with no sign, as in
-          * marketfi.c and roc.c:85-88.
-          *
-          * The boxRatio itself is tested, not just its operands. optInVolumeDivisor
-          * goes up to TA_REAL_MAX, so the scaling can reach zero from a volume
-          * that is not zero: at inVolume 5e-324 and a divisor of 2 -- both inside
-          * their declared ranges -- inVolume/optInVolumeDivisor rounds to 0.0 and
-          * the quotient below would be infinite. Testing the operands alone let
-          * that through.
-          */
-         if( inVolume[today] != 0.0 && range != 0.0 ) {
-            boxRatio = inVolume[today] / optInVolumeDivisor / range;
+      i = startIdx - lookbackTotal;
+      prevMid = (inHigh[i] + inLow[i]) / 2.0;
+      i = i + 1;
+      periodTotal = 0.0;
+      while( i < startIdx ) {
+         mid = (inHigh[i] + inLow[i]) / 2.0;
+         range = inHigh[i] - inLow[i];
+         raw = 0.0;
+         if( range != 0.0 ) {
+            boxRatio = inVolume[i] / optInVolumeDivisor / range;
             if( boxRatio != 0.0 ) {
                raw = (mid - prevMid) / boxRatio;
-            } else {
-               raw = 0.0;
             }
-         } else {
-            raw = 0.0;
          }
-         /* The midpoint moves on even for a guarded bar: the next bar's change is
-          * measured from the bar immediately before it, never from the last bar
-          * that happened to produce a value.
-          */
          prevMid = mid;
-         rawRing[rawRing_Idx] = raw;
-         sumRaw += raw;
-         rawRing_Idx++;
-         if( rawRing_Idx > maxIdx_rawRing ) { rawRing_Idx = 0; }
-         today = today + 1;
+         i = i + 1;
+         rawBuffer[rawBuffer_Idx] = raw;
+         periodTotal += raw;
+         rawBuffer_Idx++;
+         if( rawBuffer_Idx > maxIdx_rawBuffer ) { rawBuffer_Idx = 0; }
       }
       outIdx = 0;
-      while( today <= endIdx ) {
-         mid = (inHigh[today] + inLow[today]) / 2.0;
-         range = inHigh[today] - inLow[today];
-         if( inVolume[today] != 0.0 && range != 0.0 ) {
-            boxRatio = inVolume[today] / optInVolumeDivisor / range;
+      while( i <= endIdx ) {
+         mid = (inHigh[i] + inLow[i]) / 2.0;
+         range = inHigh[i] - inLow[i];
+         raw = 0.0;
+         if( range != 0.0 ) {
+            boxRatio = inVolume[i] / optInVolumeDivisor / range;
             if( boxRatio != 0.0 ) {
                raw = (mid - prevMid) / boxRatio;
-            } else {
-               raw = 0.0;
             }
-         } else {
-            raw = 0.0;
          }
          prevMid = mid;
-         /* Today's raw value enters the window at its own slot, and the bar
-          * leaving the window is read only after the ring has advanced onto it.
-          * Every input read for this bar is done above, so the store into
-          * outReal is safe when the caller aliases it over an input.
-          */
-         rawRing[rawRing_Idx] = raw;
-         sumRaw += raw;
-         tempReal = sumRaw;
-         rawRing_Idx++;
-         if( rawRing_Idx > maxIdx_rawRing ) { rawRing_Idx = 0; }
-         sumRaw -= rawRing[rawRing_Idx];
+         i = i + 1;
+         rawBuffer[rawBuffer_Idx] = raw;
+         periodTotal += raw;
+         tempReal = periodTotal;
+         rawBuffer_Idx++;
+         if( rawBuffer_Idx > maxIdx_rawBuffer ) { rawBuffer_Idx = 0; }
+         periodTotal -= rawBuffer[rawBuffer_Idx];
          outReal[outIdx * outStride] = tempReal / (double)optInTimePeriod;
          outIdx = outIdx + 1;
-         today = today + 1;
       }
-      outNBElement = outIdx;
       outBegIdx = startIdx;
+      outNBElement = outIdx;
       /* Capture the live batch state into the handle. */
-      int capCb_rawRing = maxIdx_rawRing + 1;
-      if( capCb_rawRing > historyLen + 1 ) {
+      int capCb_rawBuffer = maxIdx_rawBuffer + 1;
+      if( capCb_rawBuffer > historyLen + 1 ) {
          return RetCode.InternalError;
       }
       sp.optInTimePeriod = optInTimePeriod;
       sp.optInVolumeDivisor = optInVolumeDivisor;
+      sp.periodTotal = periodTotal;
       sp.prevMid = prevMid;
-      sp.sumRaw = sumRaw;
-      sp.rawRing_Idx = rawRing_Idx;
-      sp.maxIdx_rawRing = maxIdx_rawRing;
-      sp.cbSize_rawRing = capCb_rawRing;
-      sp.cb_rawRing = rawRing;
+      sp.rawBuffer_Idx = rawBuffer_Idx;
+      sp.maxIdx_rawBuffer = maxIdx_rawBuffer;
+      sp.cbSize_rawBuffer = capCb_rawBuffer;
+      sp.cb_rawBuffer = rawBuffer;
       sp.cur_outReal = outReal[(outNBElement - 1) * outStride];
       return RetCode.Success;
    }
@@ -1005,8 +939,8 @@ public partial class Core
    /// range (<c>int.MinValue</c> selects the default).</param>
    /// <param name="optInVolumeDivisor">As in the batch call; see <see cref="EmvLookback"/> for its default and
    /// range (<see cref="Core.RealDefault"/> selects the default).</param>
-   /// <param name="outReal">Ease of Movement. Must hold at least <c>historyLen - EmvLookback(...)</c>
-   /// values.</param>
+   /// <param name="outReal">Ease of Movement, averaged over the window. Must hold at least
+   /// <c>historyLen - EmvLookback(...)</c> values.</param>
    /// <returns>The open stream handle, with its fill range set.</returns>
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>EmvLookback(...) + 1</c> bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series

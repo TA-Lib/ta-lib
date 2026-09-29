@@ -46,6 +46,7 @@
  *
  *  Initial  Name/description
  *  -------------------------------------------------------------------
+ *  KL       Kevin Lin (@kevinlincg)
  *  MF       Mario Fortier
  *  CC       Claude Code (AI assistant)
  *
@@ -53,7 +54,7 @@
  *
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  092926 MF,CC  Creation (#465).
+ *  092826 KL,CC  First version (#465).
  */
 
 TA_LIB_API int TA_EMV_Lookback( int optInTimePeriod, double optInVolumeDivisor )
@@ -66,15 +67,7 @@ TA_LIB_API int TA_EMV_Lookback( int optInTimePeriod, double optInVolumeDivisor )
       optInVolumeDivisor = 10000;
    else if( !(optInVolumeDivisor >= 1e0 && optInVolumeDivisor <= TA_REAL_MAX) )
       return -1;
-   /* One bar is consumed forming the first midpoint change, then the SMA's own
-    * warm-up on top:
-    *    1 + sma_lookback(optInTimePeriod) = 1 + (optInTimePeriod - 1)
-    * which is efi_lookback's derivation with a finite window in place of the
-    * EMA, so there is no unstable period to add.
-    *
-    * The divisor scales the output and cannot move the first valid bar.
-    */
-   return optInTimePeriod;
+   return 1 + TA_SMA_Lookback(optInTimePeriod);
 }
 
 TA_LIB_API TA_RetCode TA_EMV( int    startIdx,
@@ -88,21 +81,20 @@ TA_LIB_API TA_RetCode TA_EMV( int    startIdx,
                               int          *outNBElement,
                               double        outReal[] )
 {
+   double periodTotal;
    double prevMid;
    double mid;
    double range;
    double boxRatio;
    double raw;
-   double sumRaw;
    double tempReal;
    int lookbackTotal;
    int outIdx;
    int i;
-   int today;
-   double local_rawRing[50];
-   double *rawRing = &local_rawRing[0];
-   int rawRing_Idx;
-   int maxIdx_rawRing;
+   double local_rawBuffer[50];
+   double *rawBuffer = &local_rawBuffer[0];
+   int rawBuffer_Idx;
+   int maxIdx_rawBuffer;
 
    if( (startIdx < 0) || (startIdx > TA_INDEX_MAX) )
       return TA_OUT_OF_RANGE_START_INDEX;
@@ -128,129 +120,96 @@ TA_LIB_API TA_RetCode TA_EMV( int    startIdx,
    if( !outReal )
       return TA_BAD_PARAM;
 
-   /* The window of raw values is carried here rather than recomputed from the
-    * inputs at the trailing index: once a bar has been consumed it is never
-    * read again, which is what makes outReal safe to alias any input
-    * (cmf.c:32-38).
+   /* The one-bar values are kept in a ring rather than recomputed at the
+    * trailing index: outReal may alias an input, and those bars may already
+    * hold outputs.
     */
-   *outBegIdx= 0;
-   *outNBElement= 0;
    lookbackTotal = TA_EMV_Lookback(optInTimePeriod,optInVolumeDivisor);
-   /* Move up the start index if there is not enough initial data. */
    if( startIdx < lookbackTotal )
    {
       startIdx = lookbackTotal;
    }
-   /* Make sure there is still something to evaluate. */
    if( startIdx > endIdx )
    {
+      *outBegIdx= 0;
+      *outNBElement= 0;
       return TA_SUCCESS;
    }
    if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(440);
-   if( (int)optInTimePeriod > (int)(sizeof(local_rawRing)/sizeof(double)) )
+   if( (int)optInTimePeriod > (int)(sizeof(local_rawBuffer)/sizeof(double)) )
    {
-      rawRing = TA_Malloc( sizeof(double)*optInTimePeriod );
-      if( !rawRing )
+      rawBuffer = TA_Malloc( sizeof(double)*optInTimePeriod );
+      if( !rawBuffer )
       {
          return TA_ALLOC_ERR;
       }
    }
    else
    {
-      rawRing = &local_rawRing[0];
+      rawBuffer = &local_rawBuffer[0];
    }
-   maxIdx_rawRing = (optInTimePeriod-1);
-   rawRing_Idx = 0;
-   /* The running sum is seeded with the window's first optInTimePeriod-1 raw
-    * values and each output bar then adds its own before dividing, which is
-    * sma.c:57-81's order applied to the raw series rather than to an input
-    * array. At optInTimePeriod 1 the seed loop does not run and the body
-    * reduces to 0 + raw, then raw - raw, so the output is the raw kernel bit
-    * for bit.
+   maxIdx_rawBuffer = (optInTimePeriod-1);
+   rawBuffer_Idx = 0;
+   /* Keep the operand order and sma.c's add / snapshot / subtract order: the
+    * composite gate rebuilds this from MEDPRICE, MOM, SUB, DIV and SMA and
+    * compares bitwise.
+    *
+    * The zero guards are exact != 0.0 tests, never TA_IS_ZERO: the output
+    * scale follows the volume and the divisor, so no absolute band fits. A
+    * nonzero range with a box ratio that underflows to 0 takes the guard too.
     */
-   today = startIdx - lookbackTotal + 1;
-   prevMid = (inHigh[today - 1] + inLow[today - 1]) / 2.0;
-   sumRaw = 0.0;
-   i = optInTimePeriod - 1;
-   while( i-- > 0 )
+   i = startIdx - lookbackTotal;
+   prevMid = (inHigh[i] + inLow[i]) / 2.0;
+   i = i + 1;
+   periodTotal = 0.0;
+   while( i < startIdx )
    {
-      mid = (inHigh[today] + inLow[today]) / 2.0;
-      range = inHigh[today] - inLow[today];
-      /* A bar with no volume, or no range, has no boxRatio to divide by. The tests
-       * are exact rather than TA_IS_ZERO's band: a near-zero range is a real
-       * boxRatio, and the result has to be a plain 0.0 with no sign, as in
-       * marketfi.c and roc.c:85-88.
-       *
-       * The boxRatio itself is tested, not just its operands. optInVolumeDivisor
-       * goes up to TA_REAL_MAX, so the scaling can reach zero from a volume
-       * that is not zero: at inVolume 5e-324 and a divisor of 2 -- both inside
-       * their declared ranges -- inVolume/optInVolumeDivisor rounds to 0.0 and
-       * the quotient below would be infinite. Testing the operands alone let
-       * that through.
-       */
-      if( inVolume[today] != 0.0 && range != 0.0 )
+      mid = (inHigh[i] + inLow[i]) / 2.0;
+      range = inHigh[i] - inLow[i];
+      raw = 0.0;
+      if( range != 0.0 )
       {
-         boxRatio = inVolume[today] / optInVolumeDivisor / range;
+         boxRatio = inVolume[i] / optInVolumeDivisor / range;
          if( boxRatio != 0.0 )
          {
             raw = (mid - prevMid) / boxRatio;
-         } else 
-         {
-            raw = 0.0;
          }
-      } else 
-      {
-         raw = 0.0;
       }
-      /* The midpoint moves on even for a guarded bar: the next bar's change is
-       * measured from the bar immediately before it, never from the last bar
-       * that happened to produce a value.
-       */
       prevMid = mid;
-      rawRing[rawRing_Idx] = raw;
-      sumRaw += raw;
-      rawRing_Idx++;
-      if( rawRing_Idx > maxIdx_rawRing ) rawRing_Idx = 0;
-      today = today + 1;
+      i = i + 1;
+      rawBuffer[rawBuffer_Idx] = raw;
+      periodTotal += raw;
+      rawBuffer_Idx++;
+      if( rawBuffer_Idx > maxIdx_rawBuffer ) rawBuffer_Idx = 0;
    }
    outIdx = 0;
-   while( today <= endIdx )
+   while( i <= endIdx )
    {
-      mid = (inHigh[today] + inLow[today]) / 2.0;
-      range = inHigh[today] - inLow[today];
-      if( inVolume[today] != 0.0 && range != 0.0 )
+      mid = (inHigh[i] + inLow[i]) / 2.0;
+      range = inHigh[i] - inLow[i];
+      raw = 0.0;
+      if( range != 0.0 )
       {
-         boxRatio = inVolume[today] / optInVolumeDivisor / range;
+         boxRatio = inVolume[i] / optInVolumeDivisor / range;
          if( boxRatio != 0.0 )
          {
             raw = (mid - prevMid) / boxRatio;
-         } else 
-         {
-            raw = 0.0;
          }
-      } else 
-      {
-         raw = 0.0;
       }
       prevMid = mid;
-      /* Today's raw value enters the window at its own slot, and the bar
-       * leaving the window is read only after the ring has advanced onto it.
-       * Every input read for this bar is done above, so the store into
-       * outReal is safe when the caller aliases it over an input.
-       */
-      rawRing[rawRing_Idx] = raw;
-      sumRaw += raw;
-      tempReal = sumRaw;
-      rawRing_Idx++;
-      if( rawRing_Idx > maxIdx_rawRing ) rawRing_Idx = 0;
-      sumRaw -= rawRing[rawRing_Idx];
+      i = i + 1;
+      rawBuffer[rawBuffer_Idx] = raw;
+      periodTotal += raw;
+      tempReal = periodTotal;
+      rawBuffer_Idx++;
+      if( rawBuffer_Idx > maxIdx_rawBuffer ) rawBuffer_Idx = 0;
+      periodTotal -= rawBuffer[rawBuffer_Idx];
       outReal[outIdx] = tempReal / (double)optInTimePeriod;
       outIdx = outIdx + 1;
-      today = today + 1;
    }
-   if( rawRing != &local_rawRing[0] ) { TA_Free( rawRing ); rawRing = &local_rawRing[0]; }
-   *outNBElement= outIdx;
+   if( rawBuffer != &local_rawBuffer[0] ) { TA_Free( rawBuffer ); rawBuffer = &local_rawBuffer[0]; }
    *outBegIdx= startIdx;
+   *outNBElement= outIdx;
    return TA_SUCCESS;
 }
 
@@ -265,21 +224,20 @@ TA_RetCode TA_S_EMV( int    startIdx,
                      int          *outNBElement,
                      double        outReal[] )
 {
+   double periodTotal;
    double prevMid;
    double mid;
    double range;
    double boxRatio;
    double raw;
-   double sumRaw;
    double tempReal;
    int lookbackTotal;
    int outIdx;
    int i;
-   int today;
-   double local_rawRing[50];
-   double *rawRing = &local_rawRing[0];
-   int rawRing_Idx;
-   int maxIdx_rawRing;
+   double local_rawBuffer[50];
+   double *rawBuffer = &local_rawBuffer[0];
+   int rawBuffer_Idx;
+   int maxIdx_rawBuffer;
 
    if( (startIdx < 0) || (startIdx > TA_INDEX_MAX) )
       return TA_OUT_OF_RANGE_START_INDEX;
@@ -305,8 +263,6 @@ TA_RetCode TA_S_EMV( int    startIdx,
    if( !outReal )
       return TA_BAD_PARAM;
 
-   *outBegIdx= 0;
-   *outNBElement= 0;
    lookbackTotal = TA_EMV_Lookback(optInTimePeriod,optInVolumeDivisor);
    if( startIdx < lookbackTotal )
    {
@@ -314,85 +270,77 @@ TA_RetCode TA_S_EMV( int    startIdx,
    }
    if( startIdx > endIdx )
    {
+      *outBegIdx= 0;
+      *outNBElement= 0;
       return TA_SUCCESS;
    }
    if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(440);
-   if( (int)optInTimePeriod > (int)(sizeof(local_rawRing)/sizeof(double)) )
+   if( (int)optInTimePeriod > (int)(sizeof(local_rawBuffer)/sizeof(double)) )
    {
-      rawRing = TA_Malloc( sizeof(double)*optInTimePeriod );
-      if( !rawRing )
+      rawBuffer = TA_Malloc( sizeof(double)*optInTimePeriod );
+      if( !rawBuffer )
       {
          return TA_ALLOC_ERR;
       }
    }
    else
    {
-      rawRing = &local_rawRing[0];
+      rawBuffer = &local_rawBuffer[0];
    }
-   maxIdx_rawRing = (optInTimePeriod-1);
-   rawRing_Idx = 0;
-   today = startIdx - lookbackTotal + 1;
-   prevMid = ((double)inHigh[today - 1] + (double)inLow[today - 1]) / 2.0;
-   sumRaw = 0.0;
-   i = optInTimePeriod - 1;
-   while( i-- > 0 )
+   maxIdx_rawBuffer = (optInTimePeriod-1);
+   rawBuffer_Idx = 0;
+   i = startIdx - lookbackTotal;
+   prevMid = ((double)inHigh[i] + (double)inLow[i]) / 2.0;
+   i = i + 1;
+   periodTotal = 0.0;
+   while( i < startIdx )
    {
-      mid = ((double)inHigh[today] + (double)inLow[today]) / 2.0;
-      range = (double)inHigh[today] - (double)inLow[today];
-      if( (double)inVolume[today] != 0.0 && range != 0.0 )
+      mid = ((double)inHigh[i] + (double)inLow[i]) / 2.0;
+      range = (double)inHigh[i] - (double)inLow[i];
+      raw = 0.0;
+      if( range != 0.0 )
       {
-         boxRatio = (double)inVolume[today] / optInVolumeDivisor / range;
+         boxRatio = (double)inVolume[i] / optInVolumeDivisor / range;
          if( boxRatio != 0.0 )
          {
             raw = (mid - prevMid) / boxRatio;
-         } else 
-         {
-            raw = 0.0;
          }
-      } else 
-      {
-         raw = 0.0;
       }
       prevMid = mid;
-      rawRing[rawRing_Idx] = raw;
-      sumRaw += raw;
-      rawRing_Idx++;
-      if( rawRing_Idx > maxIdx_rawRing ) rawRing_Idx = 0;
-      today = today + 1;
+      i = i + 1;
+      rawBuffer[rawBuffer_Idx] = raw;
+      periodTotal += raw;
+      rawBuffer_Idx++;
+      if( rawBuffer_Idx > maxIdx_rawBuffer ) rawBuffer_Idx = 0;
    }
    outIdx = 0;
-   while( today <= endIdx )
+   while( i <= endIdx )
    {
-      mid = ((double)inHigh[today] + (double)inLow[today]) / 2.0;
-      range = (double)inHigh[today] - (double)inLow[today];
-      if( (double)inVolume[today] != 0.0 && range != 0.0 )
+      mid = ((double)inHigh[i] + (double)inLow[i]) / 2.0;
+      range = (double)inHigh[i] - (double)inLow[i];
+      raw = 0.0;
+      if( range != 0.0 )
       {
-         boxRatio = (double)inVolume[today] / optInVolumeDivisor / range;
+         boxRatio = (double)inVolume[i] / optInVolumeDivisor / range;
          if( boxRatio != 0.0 )
          {
             raw = (mid - prevMid) / boxRatio;
-         } else 
-         {
-            raw = 0.0;
          }
-      } else 
-      {
-         raw = 0.0;
       }
       prevMid = mid;
-      rawRing[rawRing_Idx] = raw;
-      sumRaw += raw;
-      tempReal = sumRaw;
-      rawRing_Idx++;
-      if( rawRing_Idx > maxIdx_rawRing ) rawRing_Idx = 0;
-      sumRaw -= rawRing[rawRing_Idx];
+      i = i + 1;
+      rawBuffer[rawBuffer_Idx] = raw;
+      periodTotal += raw;
+      tempReal = periodTotal;
+      rawBuffer_Idx++;
+      if( rawBuffer_Idx > maxIdx_rawBuffer ) rawBuffer_Idx = 0;
+      periodTotal -= rawBuffer[rawBuffer_Idx];
       outReal[outIdx] = tempReal / (double)optInTimePeriod;
       outIdx = outIdx + 1;
-      today = today + 1;
    }
-   if( rawRing != &local_rawRing[0] ) { TA_Free( rawRing ); rawRing = &local_rawRing[0]; }
-   *outNBElement= outIdx;
+   if( rawBuffer != &local_rawBuffer[0] ) { TA_Free( rawBuffer ); rawBuffer = &local_rawBuffer[0]; }
    *outBegIdx= startIdx;
+   *outNBElement= outIdx;
    return TA_SUCCESS;
 }
 
@@ -407,19 +355,19 @@ struct TA_EMV_Stream {
    int optInTimePeriod;
    double optInVolumeDivisor;
    double pad_0;
+   double periodTotal;
    double prevMid;
-   double sumRaw;
-   int rawRing_Idx;
-   int maxIdx_rawRing;
-   int cbSize_rawRing;
-   double *cb_rawRing;
+   int rawBuffer_Idx;
+   int maxIdx_rawBuffer;
+   int cbSize_rawBuffer;
+   double *cb_rawBuffer;
 };
 
 /* Private function, not in public API. */
 static void TA_EMV_ReleaseImpl( struct TA_EMV_Stream *sp )
 {
    if( !sp ) return;
-   if( sp->cb_rawRing ) TA_Free( sp->cb_rawRing );
+   if( sp->cb_rawBuffer ) TA_Free( sp->cb_rawBuffer );
    TA_Free( sp );
 }
 
@@ -434,35 +382,25 @@ static void TA_EMV_StepImpl( struct TA_EMV_Stream *sp, double inHigh, double inL
 
    mid = (inHigh + inLow) / 2.0;
    range = inHigh - inLow;
-   if( inVolume != 0.0 && range != 0.0 )
+   raw = 0.0;
+   if( range != 0.0 )
    {
       boxRatio = inVolume / sp->optInVolumeDivisor / range;
       if( boxRatio != 0.0 )
       {
          raw = (mid - sp->prevMid) / boxRatio;
-      } else 
-      {
-         raw = 0.0;
       }
-   } else 
-   {
-      raw = 0.0;
    }
    sp->prevMid = mid;
-   /* Today's raw value enters the window at its own slot, and the bar
-    * leaving the window is read only after the ring has advanced onto it.
-    * Every input read for this bar is done above, so the store into
-    * outReal is safe when the caller aliases it over an input.
-    */
-   sp->cb_rawRing[sp->rawRing_Idx] = raw;
-   sp->sumRaw += raw;
-   tempReal = sp->sumRaw;
-   sp->rawRing_Idx = sp->rawRing_Idx + 1;
-   if( sp->rawRing_Idx > sp->maxIdx_rawRing )
+   sp->cb_rawBuffer[sp->rawBuffer_Idx] = raw;
+   sp->periodTotal += raw;
+   tempReal = sp->periodTotal;
+   sp->rawBuffer_Idx = sp->rawBuffer_Idx + 1;
+   if( sp->rawBuffer_Idx > sp->maxIdx_rawBuffer )
    {
-      sp->rawRing_Idx = 0;
+      sp->rawBuffer_Idx = 0;
    }
-   sp->sumRaw -= sp->cb_rawRing[sp->rawRing_Idx];
+   sp->periodTotal -= sp->cb_rawBuffer[sp->rawBuffer_Idx];
    *outReal= tempReal / (double)sp->optInTimePeriod;
    sp->cur_outReal = *outReal;
 }
@@ -470,10 +408,10 @@ static void TA_EMV_StepImpl( struct TA_EMV_Stream *sp, double inHigh, double inL
 static TA_RetCode TA_EMV_OpenImpl( struct TA_EMV_Stream **stream, const double inHigh[], const double inLow[], const double inVolume[], int startIdx, int historyLen, int optInTimePeriod, double optInVolumeDivisor, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
 {
    struct TA_EMV_Stream *sp;
-   double local_rawRing[50];
-   double *rawRing;
-   int rawRing_Idx;
-   int maxIdx_rawRing;
+   double local_rawBuffer[50];
+   double *rawBuffer;
+   int rawBuffer_Idx;
+   int maxIdx_rawBuffer;
    int endIdx;
 
    if( !stream ) return TA_BAD_PARAM;
@@ -499,156 +437,122 @@ static TA_RetCode TA_EMV_OpenImpl( struct TA_EMV_Stream **stream, const double i
    endIdx = historyLen - 1;
 
    {
+      double periodTotal = 0.0;
       double prevMid = 0.0;
       double mid;
       double range;
       double boxRatio;
       double raw;
-      double sumRaw = 0.0;
       double tempReal;
       int lookbackTotal;
       int outIdx;
       int i;
-      int today;
-      /* The window of raw values is carried here rather than recomputed from the
-       * inputs at the trailing index: once a bar has been consumed it is never
-       * read again, which is what makes outReal safe to alias any input
-       * (cmf.c:32-38).
+      /* The one-bar values are kept in a ring rather than recomputed at the
+       * trailing index: outReal may alias an input, and those bars may already
+       * hold outputs.
        */
-      *outBegIdx= 0;
-      *outNBElement= 0;
       lookbackTotal = TA_EMV_Lookback(optInTimePeriod,optInVolumeDivisor);
-      /* Move up the start index if there is not enough initial data. */
       if( startIdx < lookbackTotal )
       {
          startIdx = lookbackTotal;
       }
-      /* Make sure there is still something to evaluate. */
       if( startIdx > endIdx )
       {
+         *outBegIdx= 0;
+         *outNBElement= 0;
          return TA_INSUFFICIENT_HISTORY;
       }
       if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(440);
-      if( (int)optInTimePeriod > (int)(sizeof(local_rawRing)/sizeof(double)) )
+      if( (int)optInTimePeriod > (int)(sizeof(local_rawBuffer)/sizeof(double)) )
       {
-         rawRing = TA_Malloc( sizeof(double)*optInTimePeriod );
-         if( !rawRing )
+         rawBuffer = TA_Malloc( sizeof(double)*optInTimePeriod );
+         if( !rawBuffer )
          {
             return TA_ALLOC_ERR;
          }
       }
       else
       {
-         rawRing = &local_rawRing[0];
+         rawBuffer = &local_rawBuffer[0];
       }
-      maxIdx_rawRing = (optInTimePeriod-1);
-      rawRing_Idx = 0;
-      /* The running sum is seeded with the window's first optInTimePeriod-1 raw
-       * values and each output bar then adds its own before dividing, which is
-       * sma.c:57-81's order applied to the raw series rather than to an input
-       * array. At optInTimePeriod 1 the seed loop does not run and the body
-       * reduces to 0 + raw, then raw - raw, so the output is the raw kernel bit
-       * for bit.
+      maxIdx_rawBuffer = (optInTimePeriod-1);
+      rawBuffer_Idx = 0;
+      /* Keep the operand order and sma.c's add / snapshot / subtract order: the
+       * composite gate rebuilds this from MEDPRICE, MOM, SUB, DIV and SMA and
+       * compares bitwise.
+       *
+       * The zero guards are exact != 0.0 tests, never TA_IS_ZERO: the output
+       * scale follows the volume and the divisor, so no absolute band fits. A
+       * nonzero range with a box ratio that underflows to 0 takes the guard too.
        */
-      today = startIdx - lookbackTotal + 1;
-      prevMid = (inHigh[today - 1] + inLow[today - 1]) / 2.0;
-      sumRaw = 0.0;
-      i = optInTimePeriod - 1;
-      while( i-- > 0 )
+      i = startIdx - lookbackTotal;
+      prevMid = (inHigh[i] + inLow[i]) / 2.0;
+      i = i + 1;
+      periodTotal = 0.0;
+      while( i < startIdx )
       {
-         mid = (inHigh[today] + inLow[today]) / 2.0;
-         range = inHigh[today] - inLow[today];
-         /* A bar with no volume, or no range, has no boxRatio to divide by. The tests
-          * are exact rather than TA_IS_ZERO's band: a near-zero range is a real
-          * boxRatio, and the result has to be a plain 0.0 with no sign, as in
-          * marketfi.c and roc.c:85-88.
-          *
-          * The boxRatio itself is tested, not just its operands. optInVolumeDivisor
-          * goes up to TA_REAL_MAX, so the scaling can reach zero from a volume
-          * that is not zero: at inVolume 5e-324 and a divisor of 2 -- both inside
-          * their declared ranges -- inVolume/optInVolumeDivisor rounds to 0.0 and
-          * the quotient below would be infinite. Testing the operands alone let
-          * that through.
-          */
-         if( inVolume[today] != 0.0 && range != 0.0 )
+         mid = (inHigh[i] + inLow[i]) / 2.0;
+         range = inHigh[i] - inLow[i];
+         raw = 0.0;
+         if( range != 0.0 )
          {
-            boxRatio = inVolume[today] / optInVolumeDivisor / range;
+            boxRatio = inVolume[i] / optInVolumeDivisor / range;
             if( boxRatio != 0.0 )
             {
                raw = (mid - prevMid) / boxRatio;
-            } else 
-            {
-               raw = 0.0;
             }
-         } else 
-         {
-            raw = 0.0;
          }
-         /* The midpoint moves on even for a guarded bar: the next bar's change is
-          * measured from the bar immediately before it, never from the last bar
-          * that happened to produce a value.
-          */
          prevMid = mid;
-         rawRing[rawRing_Idx] = raw;
-         sumRaw += raw;
-         rawRing_Idx++;
-         if( rawRing_Idx > maxIdx_rawRing ) rawRing_Idx = 0;
-         today = today + 1;
+         i = i + 1;
+         rawBuffer[rawBuffer_Idx] = raw;
+         periodTotal += raw;
+         rawBuffer_Idx++;
+         if( rawBuffer_Idx > maxIdx_rawBuffer ) rawBuffer_Idx = 0;
       }
       outIdx = 0;
-      while( today <= endIdx )
+      while( i <= endIdx )
       {
-         mid = (inHigh[today] + inLow[today]) / 2.0;
-         range = inHigh[today] - inLow[today];
-         if( inVolume[today] != 0.0 && range != 0.0 )
+         mid = (inHigh[i] + inLow[i]) / 2.0;
+         range = inHigh[i] - inLow[i];
+         raw = 0.0;
+         if( range != 0.0 )
          {
-            boxRatio = inVolume[today] / optInVolumeDivisor / range;
+            boxRatio = inVolume[i] / optInVolumeDivisor / range;
             if( boxRatio != 0.0 )
             {
                raw = (mid - prevMid) / boxRatio;
-            } else 
-            {
-               raw = 0.0;
             }
-         } else 
-         {
-            raw = 0.0;
          }
          prevMid = mid;
-         /* Today's raw value enters the window at its own slot, and the bar
-          * leaving the window is read only after the ring has advanced onto it.
-          * Every input read for this bar is done above, so the store into
-          * outReal is safe when the caller aliases it over an input.
-          */
-         rawRing[rawRing_Idx] = raw;
-         sumRaw += raw;
-         tempReal = sumRaw;
-         rawRing_Idx++;
-         if( rawRing_Idx > maxIdx_rawRing ) rawRing_Idx = 0;
-         sumRaw -= rawRing[rawRing_Idx];
+         i = i + 1;
+         rawBuffer[rawBuffer_Idx] = raw;
+         periodTotal += raw;
+         tempReal = periodTotal;
+         rawBuffer_Idx++;
+         if( rawBuffer_Idx > maxIdx_rawBuffer ) rawBuffer_Idx = 0;
+         periodTotal -= rawBuffer[rawBuffer_Idx];
          outReal[outIdx * outStride] = tempReal / (double)optInTimePeriod;
          outIdx = outIdx + 1;
-         today = today + 1;
       }
-      *outNBElement= outIdx;
       *outBegIdx= startIdx;
+      *outNBElement= outIdx;
 
       /* Capture the live batch state into the handle. */
       sp = (struct TA_EMV_Stream *)TA_Malloc( sizeof(*sp) );
-      if( !sp ) { if( rawRing != &local_rawRing[0] ) { TA_Free( rawRing ); } return TA_ALLOC_ERR; }
+      if( !sp ) { if( rawBuffer != &local_rawBuffer[0] ) { TA_Free( rawBuffer ); } return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );
       sp->optInTimePeriod = optInTimePeriod;
       sp->optInVolumeDivisor = optInVolumeDivisor;
+      sp->periodTotal = periodTotal;
       sp->prevMid = prevMid;
-      sp->sumRaw = sumRaw;
-      sp->rawRing_Idx = rawRing_Idx;
-      sp->maxIdx_rawRing = maxIdx_rawRing;
-      sp->cbSize_rawRing = maxIdx_rawRing + 1;
-      if( sp->cbSize_rawRing < 1 || sp->cbSize_rawRing > historyLen + 1 ) { if( rawRing != &local_rawRing[0] ) { TA_Free( rawRing ); } TA_EMV_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(441); }
-      sp->cb_rawRing = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_rawRing );
-      if( !sp->cb_rawRing ) { if( rawRing != &local_rawRing[0] ) { TA_Free( rawRing ); } TA_EMV_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
-      memcpy( sp->cb_rawRing, rawRing, sizeof(double) * (size_t)sp->cbSize_rawRing );
-      if( rawRing != &local_rawRing[0] ) { TA_Free( rawRing ); } 
+      sp->rawBuffer_Idx = rawBuffer_Idx;
+      sp->maxIdx_rawBuffer = maxIdx_rawBuffer;
+      sp->cbSize_rawBuffer = maxIdx_rawBuffer + 1;
+      if( sp->cbSize_rawBuffer < 1 || sp->cbSize_rawBuffer > historyLen + 1 ) { if( rawBuffer != &local_rawBuffer[0] ) { TA_Free( rawBuffer ); } TA_EMV_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(441); }
+      sp->cb_rawBuffer = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_rawBuffer );
+      if( !sp->cb_rawBuffer ) { if( rawBuffer != &local_rawBuffer[0] ) { TA_Free( rawBuffer ); } TA_EMV_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
+      memcpy( sp->cb_rawBuffer, rawBuffer, sizeof(double) * (size_t)sp->cbSize_rawBuffer );
+      if( rawBuffer != &local_rawBuffer[0] ) { TA_Free( rawBuffer ); } 
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
       sp->cur_outReal = outReal[(*outNBElement - 1) * outStride];
@@ -719,51 +623,41 @@ TA_LIB_API TA_RetCode TA_EMV_Peek( const TA_EMV_Stream *stream, double inHigh, d
    double boxRatio;
    double raw;
    double tempReal;
+   double periodTotal;
    double prevMid;
-   int rawRing_Idx;
-   double sumRaw;
-   double *cb_rawRing;
+   int rawBuffer_Idx;
+   double *cb_rawBuffer;
    int pkSlot0 = -1;
    double pkVal0 = 0.0;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inVolume ) ) return TA_BAD_PARAM;
+   periodTotal = sp->periodTotal;
    prevMid = sp->prevMid;
-   rawRing_Idx = sp->rawRing_Idx;
-   sumRaw = sp->sumRaw;
-   cb_rawRing = sp->cb_rawRing;
+   rawBuffer_Idx = sp->rawBuffer_Idx;
+   cb_rawBuffer = sp->cb_rawBuffer;
    mid = (inHigh + inLow) / 2.0;
    range = inHigh - inLow;
-   if( inVolume != 0.0 && range != 0.0 )
+   raw = 0.0;
+   if( range != 0.0 )
    {
       boxRatio = inVolume / sp->optInVolumeDivisor / range;
       if( boxRatio != 0.0 )
       {
          raw = (mid - prevMid) / boxRatio;
-      } else 
-      {
-         raw = 0.0;
       }
-   } else 
-   {
-      raw = 0.0;
    }
    prevMid = mid;
-   /* Today's raw value enters the window at its own slot, and the bar
-    * leaving the window is read only after the ring has advanced onto it.
-    * Every input read for this bar is done above, so the store into
-    * outReal is safe when the caller aliases it over an input.
-    */
-   pkSlot0 = rawRing_Idx;
+   pkSlot0 = rawBuffer_Idx;
    pkVal0 = raw;
-   sumRaw += raw;
-   tempReal = sumRaw;
-   rawRing_Idx = rawRing_Idx + 1;
-   if( rawRing_Idx > sp->maxIdx_rawRing )
+   periodTotal += raw;
+   tempReal = periodTotal;
+   rawBuffer_Idx = rawBuffer_Idx + 1;
+   if( rawBuffer_Idx > sp->maxIdx_rawBuffer )
    {
-      rawRing_Idx = 0;
+      rawBuffer_Idx = 0;
    }
-   sumRaw -= (rawRing_Idx != pkSlot0) ? cb_rawRing[rawRing_Idx] : pkVal0;
+   periodTotal -= (rawBuffer_Idx != pkSlot0) ? cb_rawBuffer[rawBuffer_Idx] : pkVal0;
    *outReal= tempReal / (double)sp->optInTimePeriod;
    return TA_SUCCESS;
 }
@@ -808,12 +702,12 @@ TA_LIB_API TA_RetCode TA_EMV_Clone( const TA_EMV_Stream *stream, TA_EMV_Stream *
    sp = (struct TA_EMV_Stream *)TA_Malloc( sizeof(*sp) );
    if( !sp ) return TA_ALLOC_ERR;
    *sp = *stream;
-   sp->cb_rawRing = NULL;
-   if( stream->cb_rawRing )
-   { size_t copyN = (size_t)(sp->cbSize_rawRing);
-     sp->cb_rawRing = (double *)TA_Malloc( sizeof(double) * copyN );
-     if( !sp->cb_rawRing ) { TA_EMV_Close( sp ); return TA_ALLOC_ERR; }
-     memcpy( sp->cb_rawRing, stream->cb_rawRing, sizeof(double) * copyN ); }
+   sp->cb_rawBuffer = NULL;
+   if( stream->cb_rawBuffer )
+   { size_t copyN = (size_t)(sp->cbSize_rawBuffer);
+     sp->cb_rawBuffer = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->cb_rawBuffer ) { TA_EMV_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->cb_rawBuffer, stream->cb_rawBuffer, sizeof(double) * copyN ); }
    *clone = sp;
    return TA_SUCCESS;
 }

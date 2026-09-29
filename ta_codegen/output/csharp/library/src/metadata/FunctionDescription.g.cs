@@ -4638,12 +4638,12 @@ public static class FunctionDescription
 		<OptionalInputArguments>
 			<OptionalInputArgument>
 				<Name>Time Period</Name>
-				<ShortDescription>Number of periods for the smoothing average (1 = unsmoothed)</ShortDescription>
+				<ShortDescription>Bars in the SMA of the one-bar values (1 = unsmoothed)</ShortDescription>
 				<Type>Integer</Type>
 				<Range>
 					<Minimum>1</Minimum>
 					<Maximum>100000</Maximum>
-					<SuggestedStart>4</SuggestedStart>
+					<SuggestedStart>1</SuggestedStart>
 					<SuggestedEnd>200</SuggestedEnd>
 					<SuggestedIncrement>1</SuggestedIncrement>
 				</Range>
@@ -4651,15 +4651,15 @@ public static class FunctionDescription
 			</OptionalInputArgument>
 			<OptionalInputArgument>
 				<Name>Volume Divisor</Name>
-				<ShortDescription>Volume scale divisor</ShortDescription>
+				<ShortDescription>Volume is divided by this before forming the box ratio</ShortDescription>
 				<Type>Double</Type>
 				<Range>
 					<Minimum>1.000000e+0</Minimum>
 					<Maximum>3.000000e+37</Maximum>
 					<Precision>0</Precision>
-					<SuggestedStart>1.000000e+0</SuggestedStart>
-					<SuggestedEnd>1.000000e+8</SuggestedEnd>
-					<SuggestedIncrement>1.000000e+3</SuggestedIncrement>
+					<SuggestedStart>0.000000e+0</SuggestedStart>
+					<SuggestedEnd>0.000000e+0</SuggestedEnd>
+					<SuggestedIncrement>0.000000e+0</SuggestedIncrement>
 				</Range>
 				<DefaultValue>1.000000e+4</DefaultValue>
 			</OptionalInputArgument>

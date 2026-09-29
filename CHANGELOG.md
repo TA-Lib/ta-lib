@@ -18,6 +18,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   - CG: Center of Gravity Oscillator, Ehlers' balance point of the window (#450)
   - CRSI: Connors RSI (#431)
   - CTI: Correlation Trend Indicator (#430)
+  - EMV: Arms Ease of Movement, the midpoint move per unit of volume-to-range, SMA-smoothed (#465)
   - FRAMA: Fractal Adaptive Moving Average, Ehlers' adaptive EMA driven by the window's fractal dimension (#464)
   - KURTOSIS: Rolling Excess Kurtosis (#433)
   - MEDIAN: Rolling Median (#432)

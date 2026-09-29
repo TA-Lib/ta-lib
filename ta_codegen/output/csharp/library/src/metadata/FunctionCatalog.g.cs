@@ -2625,8 +2625,8 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         optInputs:
         [
-            new OptInputInfo("optInTimePeriod", "Time Period", "Number of periods for the smoothing average (1 = unsmoothed)", OptInputFlags.None, new OptInputDomain.IntegerRange(1, 100000, 14, 4, 200, 1)),
-            new OptInputInfo("optInVolumeDivisor", "Volume Divisor", "Volume scale divisor", OptInputFlags.None, new OptInputDomain.RealRange(1.0, 3e37, 0, 10000.0, 1.0, 100000000.0, 1000.0)),
+            new OptInputInfo("optInTimePeriod", "Time Period", "Bars in the SMA of the one-bar values (1 = unsmoothed)", OptInputFlags.None, new OptInputDomain.IntegerRange(1, 100000, 14, 1, 200, 1)),
+            new OptInputInfo("optInVolumeDivisor", "Volume Divisor", "Volume is divided by this before forming the box ratio", OptInputFlags.None, new OptInputDomain.RealRange(1.0, 3e37, 0, 10000.0, 0.0, 0.0, 0.0)),
         ],
         outputs:
         [
