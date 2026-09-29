@@ -4613,6 +4613,69 @@ public static class FunctionDescription
 	</FinancialFunction>
 
 
+	<!-- EMV -->
+	<FinancialFunction>
+		<Abbreviation>EMV</Abbreviation>
+		<ShortDescription>Arms Ease of Movement</ShortDescription>
+		<GroupId>Volume Indicators</GroupId>
+		<Flags>
+			<Flag>Streaming</Flag>
+		</Flags>
+		<RequiredInputArguments>
+			<RequiredInputArgument>
+				<Type>High</Type>
+				<Name>High</Name>
+			</RequiredInputArgument>
+			<RequiredInputArgument>
+				<Type>Low</Type>
+				<Name>Low</Name>
+			</RequiredInputArgument>
+			<RequiredInputArgument>
+				<Type>Volume</Type>
+				<Name>Volume</Name>
+			</RequiredInputArgument>
+		</RequiredInputArguments>
+		<OptionalInputArguments>
+			<OptionalInputArgument>
+				<Name>Time Period</Name>
+				<ShortDescription>Number of periods for the smoothing average (1 = unsmoothed)</ShortDescription>
+				<Type>Integer</Type>
+				<Range>
+					<Minimum>1</Minimum>
+					<Maximum>100000</Maximum>
+					<SuggestedStart>4</SuggestedStart>
+					<SuggestedEnd>200</SuggestedEnd>
+					<SuggestedIncrement>1</SuggestedIncrement>
+				</Range>
+				<DefaultValue>14</DefaultValue>
+			</OptionalInputArgument>
+			<OptionalInputArgument>
+				<Name>Volume Divisor</Name>
+				<ShortDescription>Volume scale divisor</ShortDescription>
+				<Type>Double</Type>
+				<Range>
+					<Minimum>1.000000e+0</Minimum>
+					<Maximum>3.000000e+37</Maximum>
+					<Precision>0</Precision>
+					<SuggestedStart>1.000000e+0</SuggestedStart>
+					<SuggestedEnd>1.000000e+8</SuggestedEnd>
+					<SuggestedIncrement>1.000000e+3</SuggestedIncrement>
+				</Range>
+				<DefaultValue>1.000000e+4</DefaultValue>
+			</OptionalInputArgument>
+		</OptionalInputArguments>
+		<OutputArguments>
+			<OutputArgument>
+				<Type>Double Array</Type>
+				<Name>outReal</Name>
+				<Flags>
+					<Flag>Line</Flag>
+				</Flags>
+			</OutputArgument>
+		</OutputArguments>
+	</FinancialFunction>
+
+
 	<!-- ER -->
 	<FinancialFunction>
 		<Abbreviation>ER</Abbreviation>

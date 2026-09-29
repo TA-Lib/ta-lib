@@ -89724,6 +89724,916 @@ class Core {
      *
      *  Initial  Name/description
      *  -------------------------------------------------------------------
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
+     *
+     * Change history:
+     *
+     *  MMDDYY BY     Description
+     *  -------------------------------------------------------------------
+     *  092926 MF,CC  Creation (#465).
+     */
+
+       /**
+        * Number of leading input bars {@link Core#emv} consumes before it can
+        * produce its first value.
+        * <p>Equivalently, the index of the first bar with a value when the whole
+        * series is requested. Feed at least {@code lookback + 1} bars to get any
+        * output.
+        *
+        * @param optInTimePeriod Number of periods for the smoothing average; 1
+        *        leaves the raw series (default 14; range 1..100000;
+        *        {@code Integer.MIN_VALUE} selects the default).
+        * @param optInVolumeDivisor Volume scale divisor (default 10000; minimum 1;
+        *        {@link Core#REAL_DEFAULT} selects the default).
+        * @return The lookback, or {@code -1} if a parameter is out of range.
+        */
+       public int emvLookback( int optInTimePeriod, double optInVolumeDivisor )
+       {
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 14;
+          } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
+             return -1;
+          }
+          if( optInVolumeDivisor == REAL_DEFAULT ) {
+             optInVolumeDivisor = 1e4;
+          } else if( !(optInVolumeDivisor >= 1e0 && optInVolumeDivisor <= REAL_MAX) ) {
+             return -1;
+          }
+          /* One bar is consumed forming the first midpoint change, then the SMA's own
+           * warm-up on top:
+           *    1 + sma_lookback(optInTimePeriod) = 1 + (optInTimePeriod - 1)
+           * which is efi_lookback's derivation with a finite window in place of the
+           * EMA, so there is no unstable period to add.
+           *
+           * The divisor scales the output and cannot move the first valid bar.
+           */
+          return optInTimePeriod ;
+
+       }
+       RetCode emvImpl( int startIdx,
+                        int endIdx,
+                        double inHigh[],
+                        double inLow[],
+                        double inVolume[],
+                        int optInTimePeriod,
+                        double optInVolumeDivisor,
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
+       {
+          double prevMid = 0;
+          double mid = 0;
+          double range = 0;
+          double boxRatio = 0;
+          double raw = 0;
+          double sumRaw = 0;
+          double tempReal = 0;
+          int lookbackTotal = 0;
+          int outIdx = 0;
+          int i = 0;
+          int today = 0;
+          double[] rawRing;
+          int rawRing_Idx = 0;
+          int maxIdx_rawRing = (50)-1;
+          if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX ;
+          }
+          if( (endIdx < 0) || (endIdx > INDEX_MAX) || (endIdx < startIdx)) {
+             return RetCode.OUT_OF_RANGE_END_INDEX ;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 14;
+          } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInVolumeDivisor == REAL_DEFAULT ) {
+             optInVolumeDivisor = 1e4;
+          } else if( !(optInVolumeDivisor >= 1e0 && optInVolumeDivisor <= REAL_MAX) ) {
+             return RetCode.BAD_PARAM;
+          }
+          /* The window of raw values is carried here rather than recomputed from the
+           * inputs at the trailing index: once a bar has been consumed it is never
+           * read again, which is what makes outReal safe to alias any input
+           * (cmf.c:32-38).
+           */
+          outBegIdx.value = 0;
+          outNBElement.value = 0;
+          lookbackTotal = emvLookback(optInTimePeriod, optInVolumeDivisor);
+          /* Move up the start index if there is not enough initial data. */
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          /* Make sure there is still something to evaluate. */
+          if( startIdx > endIdx ) {
+             return RetCode.SUCCESS ;
+          }
+          if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
+          rawRing = new double[optInTimePeriod];
+          maxIdx_rawRing = (optInTimePeriod)-1;
+          rawRing_Idx = 0;
+          /* The running sum is seeded with the window's first optInTimePeriod-1 raw
+           * values and each output bar then adds its own before dividing, which is
+           * sma.c:57-81's order applied to the raw series rather than to an input
+           * array. At optInTimePeriod 1 the seed loop does not run and the body
+           * reduces to 0 + raw, then raw - raw, so the output is the raw kernel bit
+           * for bit.
+           */
+          today = startIdx - lookbackTotal + 1;
+          prevMid = (inHigh[today - 1] + inLow[today - 1]) / 2.0;
+          sumRaw = 0.0;
+          i = optInTimePeriod - 1;
+          while( i-- > 0 ) {
+             mid = (inHigh[today] + inLow[today]) / 2.0;
+             range = inHigh[today] - inLow[today];
+             /* A bar with no volume, or no range, has no boxRatio to divide by. The tests
+              * are exact rather than TA_IS_ZERO's band: a near-zero range is a real
+              * boxRatio, and the result has to be a plain 0.0 with no sign, as in
+              * marketfi.c and roc.c:85-88.
+              *
+              * The boxRatio itself is tested, not just its operands. optInVolumeDivisor
+              * goes up to TA_REAL_MAX, so the scaling can reach zero from a volume
+              * that is not zero: at inVolume 5e-324 and a divisor of 2 -- both inside
+              * their declared ranges -- inVolume/optInVolumeDivisor rounds to 0.0 and
+              * the quotient below would be infinite. Testing the operands alone let
+              * that through.
+              */
+             if( inVolume[today] != 0.0 && range != 0.0 ) {
+                boxRatio = inVolume[today] / optInVolumeDivisor / range;
+                if( boxRatio != 0.0 ) {
+                   raw = (mid - prevMid) / boxRatio;
+                } else {
+                   raw = 0.0;
+                }
+             } else {
+                raw = 0.0;
+             }
+             /* The midpoint moves on even for a guarded bar: the next bar's change is
+              * measured from the bar immediately before it, never from the last bar
+              * that happened to produce a value.
+              */
+             prevMid = mid;
+             rawRing[rawRing_Idx] = raw;
+             sumRaw += raw;
+             rawRing_Idx++;
+             if( rawRing_Idx > maxIdx_rawRing ) { rawRing_Idx = 0; }
+             today = today + 1;
+          }
+          outIdx = 0;
+          while( today <= endIdx ) {
+             mid = (inHigh[today] + inLow[today]) / 2.0;
+             range = inHigh[today] - inLow[today];
+             if( inVolume[today] != 0.0 && range != 0.0 ) {
+                boxRatio = inVolume[today] / optInVolumeDivisor / range;
+                if( boxRatio != 0.0 ) {
+                   raw = (mid - prevMid) / boxRatio;
+                } else {
+                   raw = 0.0;
+                }
+             } else {
+                raw = 0.0;
+             }
+             prevMid = mid;
+             /* Today's raw value enters the window at its own slot, and the bar
+              * leaving the window is read only after the ring has advanced onto it.
+              * Every input read for this bar is done above, so the store into
+              * outReal is safe when the caller aliases it over an input.
+              */
+             rawRing[rawRing_Idx] = raw;
+             sumRaw += raw;
+             tempReal = sumRaw;
+             rawRing_Idx++;
+             if( rawRing_Idx > maxIdx_rawRing ) { rawRing_Idx = 0; }
+             sumRaw -= rawRing[rawRing_Idx];
+             outReal[outIdx] = tempReal / (double)optInTimePeriod;
+             outIdx = outIdx + 1;
+             today = today + 1;
+          }
+          outNBElement.value = outIdx;
+          outBegIdx.value = startIdx;
+          return RetCode.SUCCESS ;
+       }
+       RetCode emvImpl( int startIdx,
+                        int endIdx,
+                        float inHigh[],
+                        float inLow[],
+                        float inVolume[],
+                        int optInTimePeriod,
+                        double optInVolumeDivisor,
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
+       {
+          double prevMid = 0;
+          double mid = 0;
+          double range = 0;
+          double boxRatio = 0;
+          double raw = 0;
+          double sumRaw = 0;
+          double tempReal = 0;
+          int lookbackTotal = 0;
+          int outIdx = 0;
+          int i = 0;
+          int today = 0;
+          double[] rawRing;
+          int rawRing_Idx = 0;
+          int maxIdx_rawRing = (50)-1;
+          if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX ;
+          }
+          if( (endIdx < 0) || (endIdx > INDEX_MAX) || (endIdx < startIdx)) {
+             return RetCode.OUT_OF_RANGE_END_INDEX ;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 14;
+          } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInVolumeDivisor == REAL_DEFAULT ) {
+             optInVolumeDivisor = 1e4;
+          } else if( !(optInVolumeDivisor >= 1e0 && optInVolumeDivisor <= REAL_MAX) ) {
+             return RetCode.BAD_PARAM;
+          }
+          outBegIdx.value = 0;
+          outNBElement.value = 0;
+          lookbackTotal = emvLookback(optInTimePeriod, optInVolumeDivisor);
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             return RetCode.SUCCESS ;
+          }
+          if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
+          rawRing = new double[optInTimePeriod];
+          maxIdx_rawRing = (optInTimePeriod)-1;
+          rawRing_Idx = 0;
+          today = startIdx - lookbackTotal + 1;
+          prevMid = ((double)inHigh[today - 1] + (double)inLow[today - 1]) / 2.0;
+          sumRaw = 0.0;
+          i = optInTimePeriod - 1;
+          while( i-- > 0 ) {
+             mid = ((double)inHigh[today] + (double)inLow[today]) / 2.0;
+             range = (double)inHigh[today] - (double)inLow[today];
+             if( (double)inVolume[today] != 0.0 && range != 0.0 ) {
+                boxRatio = (double)inVolume[today] / optInVolumeDivisor / range;
+                if( boxRatio != 0.0 ) {
+                   raw = (mid - prevMid) / boxRatio;
+                } else {
+                   raw = 0.0;
+                }
+             } else {
+                raw = 0.0;
+             }
+             prevMid = mid;
+             rawRing[rawRing_Idx] = raw;
+             sumRaw += raw;
+             rawRing_Idx++;
+             if( rawRing_Idx > maxIdx_rawRing ) { rawRing_Idx = 0; }
+             today = today + 1;
+          }
+          outIdx = 0;
+          while( today <= endIdx ) {
+             mid = ((double)inHigh[today] + (double)inLow[today]) / 2.0;
+             range = (double)inHigh[today] - (double)inLow[today];
+             if( (double)inVolume[today] != 0.0 && range != 0.0 ) {
+                boxRatio = (double)inVolume[today] / optInVolumeDivisor / range;
+                if( boxRatio != 0.0 ) {
+                   raw = (mid - prevMid) / boxRatio;
+                } else {
+                   raw = 0.0;
+                }
+             } else {
+                raw = 0.0;
+             }
+             prevMid = mid;
+             rawRing[rawRing_Idx] = raw;
+             sumRaw += raw;
+             tempReal = sumRaw;
+             rawRing_Idx++;
+             if( rawRing_Idx > maxIdx_rawRing ) { rawRing_Idx = 0; }
+             sumRaw -= rawRing[rawRing_Idx];
+             outReal[outIdx] = tempReal / (double)optInTimePeriod;
+             outIdx = outIdx + 1;
+             today = today + 1;
+          }
+          outNBElement.value = outIdx;
+          outBegIdx.value = startIdx;
+          return RetCode.SUCCESS ;
+       }
+       /**
+        * Richard W. Arms, Jr.'s Ease of Movement: the bar-to-bar move of the
+        * high-low midpoint divided by a box ratio of volume to range, smoothed by a
+        * simple moving average. It is positive when the midpoint rises, and large
+        * when that move came on light volume relative to the bar's range.
+        * <p>Formula and more info at <a
+        * href="https://ta-lib.org/functions/emv">ta-lib.org/functions/emv</a>.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>The divisor is a pure output scale: in exact arithmetic EMV is proportional to it, so it selects the units the values are read in rather than a different indicator. 10,000 is the constant Achelis's worked table was computed with; StockCharts and some libraries print 100,000,000 instead.</li>
+        * <li>The range is in points. Achelis's entry describes it in eighths, which at a divisor D is the same series as points at 8D.</li>
+        * <li>lookback = optInTimePeriod: one bar forms the first midpoint change, then the average's own warm-up of optInTimePeriod-1 on top. The divisor does not enter it.</li>
+        * </ul>
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are; nothing
+        * outside that range is touched, and the library never pads with NaN. A
+        * valid range that ends before {@link Core#emvLookback} is a <b>success with
+        * no values</b> ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inHigh High price of each bar.
+        * @param inLow Low price of each bar.
+        * @param inVolume Volume of each bar.
+        * @param optInTimePeriod Number of periods for the smoothing average; 1
+        *        leaves the raw series (default 14; range 1..100000;
+        *        {@code Integer.MIN_VALUE} selects the default).
+        * @param optInVolumeDivisor Volume scale divisor (default 10000; minimum 1;
+        *        {@link Core#REAL_DEFAULT} selects the default).
+        * @param outReal Ease of Movement. Must hold at least
+        *        {@code endIdx - max(startIdx, emvLookback(...)) + 1} values, the count the
+        *        call produces (none when that is not positive).
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#INDEX_MAX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. An output this function documents as declinable is the one
+        *        exception: {@code null} is how you decline it. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
+        */
+       public OutRange emv( int startIdx,
+                            int endIdx,
+                            double inHigh[],
+                            double inLow[],
+                            double inVolume[],
+                            int optInTimePeriod,
+                            double optInVolumeDivisor,
+                            double outReal[] )
+       {
+          requireIndexRange("EMV", startIdx, endIdx);
+          int guardStart = clampedStart("EMV", startIdx, emvLookback(optInTimePeriod, optInVolumeDivisor));
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("EMV", "inHigh", inHigh, guardInLen);
+          requireLength("EMV", "inLow", inLow, guardInLen);
+          requireLength("EMV", "inVolume", inVolume, guardInLen);
+          requireLength("EMV", "outReal", outReal, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = emvImpl(startIdx, endIdx, inHigh, inLow, inVolume, optInTimePeriod, optInVolumeDivisor, outBegIdx, outNBElement, outReal);
+          if( retCode != RetCode.SUCCESS ) {
+             throw failure("EMV", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+       /**
+        * Richard W. Arms, Jr.'s Ease of Movement: the bar-to-bar move of the
+        * high-low midpoint divided by a box ratio of volume to range, smoothed by a
+        * simple moving average. It is positive when the midpoint rises, and large
+        * when that move came on light volume relative to the bar's range.
+        * <p>Formula and more info at <a
+        * href="https://ta-lib.org/functions/emv">ta-lib.org/functions/emv</a>.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>The divisor is a pure output scale: in exact arithmetic EMV is proportional to it, so it selects the units the values are read in rather than a different indicator. 10,000 is the constant Achelis's worked table was computed with; StockCharts and some libraries print 100,000,000 instead.</li>
+        * <li>The range is in points. Achelis's entry describes it in eighths, which at a divisor D is the same series as points at 8D.</li>
+        * <li>lookback = optInTimePeriod: one bar forms the first midpoint change, then the average's own warm-up of optInTimePeriod-1 on top. The divisor does not enter it.</li>
+        * </ul>
+        * <p>This is the {@code float[]} overload. The arithmetic is performed in
+        * {@code double} before being written to the {@code double[]} output, so a
+        * result beyond {@code float} range is still representable.
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are; nothing
+        * outside that range is touched, and the library never pads with NaN. A
+        * valid range that ends before {@link Core#emvLookback} is a <b>success with
+        * no values</b> ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inHigh High price of each bar.
+        * @param inLow Low price of each bar.
+        * @param inVolume Volume of each bar.
+        * @param optInTimePeriod Number of periods for the smoothing average; 1
+        *        leaves the raw series (default 14; range 1..100000;
+        *        {@code Integer.MIN_VALUE} selects the default).
+        * @param optInVolumeDivisor Volume scale divisor (default 10000; minimum 1;
+        *        {@link Core#REAL_DEFAULT} selects the default).
+        * @param outReal Ease of Movement. Must hold at least
+        *        {@code endIdx - max(startIdx, emvLookback(...)) + 1} values, the count the
+        *        call produces (none when that is not positive).
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#INDEX_MAX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. An output this function documents as declinable is the one
+        *        exception: {@code null} is how you decline it. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
+        */
+       public OutRange emv( int startIdx,
+                            int endIdx,
+                            float inHigh[],
+                            float inLow[],
+                            float inVolume[],
+                            int optInTimePeriod,
+                            double optInVolumeDivisor,
+                            double outReal[] )
+       {
+          requireIndexRange("EMV", startIdx, endIdx);
+          int guardStart = clampedStart("EMV", startIdx, emvLookback(optInTimePeriod, optInVolumeDivisor));
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("EMV", "inHigh", inHigh, guardInLen);
+          requireLength("EMV", "inLow", inLow, guardInLen);
+          requireLength("EMV", "inVolume", inVolume, guardInLen);
+          requireLength("EMV", "outReal", outReal, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = emvImpl(startIdx, endIdx, inHigh, inLow, inVolume, optInTimePeriod, optInVolumeDivisor, outBegIdx, outNBElement, outReal);
+          if( retCode != RetCode.SUCCESS ) {
+             throw failure("EMV", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+    /**** Streaming API *****/
+
+       /**
+        * A live EMV stream (unrelated to {@code java.util.stream}): one value per
+        * closed bar, bit-identical to {@link Core#emv} over the same series.
+        * Open with {@link Core#emvOpen}; there is no close — the handle is
+        * ordinary heap state, unreferenced handles are simply garbage-collected.
+        * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
+        * {@code value} and {@code clone} must not race with an {@code update} on
+        * the same handle. With no concurrent {@code update}, {@code peek}/
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
+        * <p>Not serializable by design: to checkpoint, retain the history and
+        * re-open — the result is bit-identical by contract.
+        */
+       public static final class EmvStream {
+          private Core core;
+          private int optInTimePeriod;
+          private double optInVolumeDivisor;
+          private double prevMid;
+          private double sumRaw;
+          private int rawRing_Idx;
+          private int maxIdx_rawRing;
+          private int cbSize_rawRing;
+          private double[] cb_rawRing;
+          private double cur_outReal;
+          private int outRangeBegIdx;
+          private int outRangeCount;
+
+          private EmvStream( Core core ) { this.core = core; }
+
+          /**
+           * The bars this stream has an output for, in the input series'
+           * coordinates: {@code [begIdx, begIdx + count)}.
+           * <p>It is what {@link Core#emv} reports over the same bars: the
+           * opener sets it to {@code (lookback, historyLen - lookback)}, every
+           * accepted {@code update} adds one to the count — a rejected one
+           * changes nothing, and neither does {@code peek} — and
+           * {@code clone()} carries it verbatim. A plain
+           * {@code open} hands back only the last value, a subset of this range,
+           * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#INDEX_MAX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
+           */
+          public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
+
+          /**
+           * Count one bar this stream was not fed: {@link #outRange()} advances
+           * by one and nothing else moves — {@link #value()} keeps answering the previous
+           * output, which is this bar's output too.
+           * <p>For a bar the caller leaves out: one an {@code update} rejected
+           * and that will not be re-fed, or a session with no print. Without it
+           * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#INDEX_MAX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
+           */
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
+                throw failure("EMV advance", RetCode.OUT_OF_RANGE_END_INDEX);
+             this.outRangeCount++;
+          }
+
+          private EmvStream( EmvStream other ) {
+             this.core = other.core;
+             this.optInTimePeriod = other.optInTimePeriod;
+             this.optInVolumeDivisor = other.optInVolumeDivisor;
+             this.prevMid = other.prevMid;
+             this.sumRaw = other.sumRaw;
+             this.rawRing_Idx = other.rawRing_Idx;
+             this.maxIdx_rawRing = other.maxIdx_rawRing;
+             this.cbSize_rawRing = other.cbSize_rawRing;
+             this.cb_rawRing = other.cb_rawRing.clone();
+             this.cur_outReal = other.cur_outReal;
+             this.outRangeBegIdx = other.outRangeBegIdx;
+             this.outRangeCount = other.outRangeCount;
+          }
+
+          /**
+           * Commit one closed bar, returning the new current value.
+           * <p>Throws {@link IllegalArgumentException} if any bar value is not
+           * finite (NaN or an infinity). That check runs before anything is
+           * written, so nothing moves — {@link #outRange()} included — and
+           * {@link #value()} still answers the previous value. Re-feed the bar when a
+           * corrected value arrives, or call {@link #advance()} to count it and
+           * carry on; two handles on one feed drift a bar apart if neither
+           * happens.
+           * This is the one place the streaming tier is stricter than
+           * the batch API, which computes on whatever it is given: a handle
+           * retains its state, so a single non-finite bar would poison every
+           * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#INDEX_MAX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
+           */
+          public double update( double inHigh, double inLow, double inVolume ) {
+             if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
+                throw failure("EMV update", RetCode.OUT_OF_RANGE_END_INDEX);
+             if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inVolume) )
+                throw nonFiniteBar("EMV update", !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inVolume");
+             core.emvStepImpl(this, inHigh, inLow, inVolume);
+             this.outRangeCount++;
+             return this.cur_outReal;
+          }
+
+          /**
+           * Evaluate a forming bar without committing — bit-identical to what the
+           * next {@code update} with the same bar would return — the same
+           * transition, with every store it would make carried in a local instead.
+           * Never writes this handle, so peeks may run concurrently with each other.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
+           */
+          public double peek( double inHigh, double inLow, double inVolume ) {
+             if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inVolume) )
+                throw nonFiniteBar("EMV peek", !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inVolume");
+             EmvStream sp = this;
+             double mid = 0.0;
+             double range = 0.0;
+             double boxRatio = 0.0;
+             double raw = 0.0;
+             double tempReal = 0.0;
+             double cur_outReal = 0.0;
+             double prevMid = sp.prevMid;
+             int rawRing_Idx = sp.rawRing_Idx;
+             double sumRaw = sp.sumRaw;
+             int pkSlot0 = -1;
+             double pkVal0 = 0.0;
+             mid = (inHigh + inLow) / 2.0;
+             range = inHigh - inLow;
+             if( inVolume != 0.0 && range != 0.0 ) {
+                boxRatio = inVolume / sp.optInVolumeDivisor / range;
+                if( boxRatio != 0.0 ) {
+                   raw = (mid - prevMid) / boxRatio;
+                } else {
+                   raw = 0.0;
+                }
+             } else {
+                raw = 0.0;
+             }
+             prevMid = mid;
+             /* Today's raw value enters the window at its own slot, and the bar
+              * leaving the window is read only after the ring has advanced onto it.
+              * Every input read for this bar is done above, so the store into
+              * outReal is safe when the caller aliases it over an input.
+              */
+             pkSlot0 = rawRing_Idx;
+             pkVal0 = raw;
+             sumRaw += raw;
+             tempReal = sumRaw;
+             rawRing_Idx = rawRing_Idx + 1;
+             if( rawRing_Idx > sp.maxIdx_rawRing ) {
+                rawRing_Idx = 0;
+             }
+             sumRaw -= (rawRing_Idx != pkSlot0) ? sp.cb_rawRing[rawRing_Idx] : pkVal0;
+             cur_outReal = tempReal / (double)sp.optInTimePeriod;
+             return cur_outReal;
+          }
+
+          /**
+           * The value at the last bar this stream counted — the bar
+           * {@link #outRange()} ends on. The last history bar right after open,
+           * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
+           */
+          public double value() {
+             return this.cur_outReal;
+          }
+
+          /**
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
+           */
+          @Override
+          public EmvStream clone() {
+             return new EmvStream(this);
+          }
+       }
+       private void emvStepImpl( EmvStream sp, double inHigh, double inLow, double inVolume )
+       {
+          double mid = 0.0;
+          double range = 0.0;
+          double boxRatio = 0.0;
+          double raw = 0.0;
+          double tempReal = 0.0;
+          mid = (inHigh + inLow) / 2.0;
+          range = inHigh - inLow;
+          if( inVolume != 0.0 && range != 0.0 ) {
+             boxRatio = inVolume / sp.optInVolumeDivisor / range;
+             if( boxRatio != 0.0 ) {
+                raw = (mid - sp.prevMid) / boxRatio;
+             } else {
+                raw = 0.0;
+             }
+          } else {
+             raw = 0.0;
+          }
+          sp.prevMid = mid;
+          /* Today's raw value enters the window at its own slot, and the bar
+           * leaving the window is read only after the ring has advanced onto it.
+           * Every input read for this bar is done above, so the store into
+           * outReal is safe when the caller aliases it over an input.
+           */
+          sp.cb_rawRing[sp.rawRing_Idx] = raw;
+          sp.sumRaw += raw;
+          tempReal = sp.sumRaw;
+          sp.rawRing_Idx = sp.rawRing_Idx + 1;
+          if( sp.rawRing_Idx > sp.maxIdx_rawRing ) {
+             sp.rawRing_Idx = 0;
+          }
+          sp.sumRaw -= sp.cb_rawRing[sp.rawRing_Idx];
+          sp.cur_outReal = tempReal / (double)sp.optInTimePeriod;
+       }
+       private RetCode emvOpenImpl( EmvStream sp, double inHigh[], double inLow[], double inVolume[], int startIdx, int optInTimePeriod, double optInVolumeDivisor, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+       {
+          double prevMid = 0;
+          double mid = 0;
+          double range = 0;
+          double boxRatio = 0;
+          double raw = 0;
+          double sumRaw = 0;
+          double tempReal = 0;
+          int lookbackTotal = 0;
+          int outIdx = 0;
+          int i = 0;
+          int today = 0;
+          double[] rawRing;
+          int rawRing_Idx = 0;
+          int maxIdx_rawRing = (50)-1;
+          int historyLen = inHigh.length;
+          int endIdx = historyLen - 1;
+          if( historyLen < 1 ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX;
+          }
+          if( historyLen > INDEX_MAX + 1 ) {
+             return RetCode.OUT_OF_RANGE_END_INDEX;
+          }
+          if( inLow.length != inHigh.length || inVolume.length != inHigh.length ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 14;
+          } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInVolumeDivisor == REAL_DEFAULT ) {
+             optInVolumeDivisor = 1e4;
+          } else if( !(optInVolumeDivisor >= 1e0 && optInVolumeDivisor <= REAL_MAX) ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.INSUFFICIENT_HISTORY;
+          }
+          /* The window of raw values is carried here rather than recomputed from the
+           * inputs at the trailing index: once a bar has been consumed it is never
+           * read again, which is what makes outReal safe to alias any input
+           * (cmf.c:32-38).
+           */
+          outBegIdx.value = 0;
+          outNBElement.value = 0;
+          lookbackTotal = emvLookback(optInTimePeriod, optInVolumeDivisor);
+          /* Move up the start index if there is not enough initial data. */
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          /* Make sure there is still something to evaluate. */
+          if( startIdx > endIdx ) {
+             return RetCode.INSUFFICIENT_HISTORY ;
+          }
+          if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
+          rawRing = new double[optInTimePeriod];
+          maxIdx_rawRing = (optInTimePeriod)-1;
+          rawRing_Idx = 0;
+          /* The running sum is seeded with the window's first optInTimePeriod-1 raw
+           * values and each output bar then adds its own before dividing, which is
+           * sma.c:57-81's order applied to the raw series rather than to an input
+           * array. At optInTimePeriod 1 the seed loop does not run and the body
+           * reduces to 0 + raw, then raw - raw, so the output is the raw kernel bit
+           * for bit.
+           */
+          today = startIdx - lookbackTotal + 1;
+          prevMid = (inHigh[today - 1] + inLow[today - 1]) / 2.0;
+          sumRaw = 0.0;
+          i = optInTimePeriod - 1;
+          while( i-- > 0 ) {
+             mid = (inHigh[today] + inLow[today]) / 2.0;
+             range = inHigh[today] - inLow[today];
+             /* A bar with no volume, or no range, has no boxRatio to divide by. The tests
+              * are exact rather than TA_IS_ZERO's band: a near-zero range is a real
+              * boxRatio, and the result has to be a plain 0.0 with no sign, as in
+              * marketfi.c and roc.c:85-88.
+              *
+              * The boxRatio itself is tested, not just its operands. optInVolumeDivisor
+              * goes up to TA_REAL_MAX, so the scaling can reach zero from a volume
+              * that is not zero: at inVolume 5e-324 and a divisor of 2 -- both inside
+              * their declared ranges -- inVolume/optInVolumeDivisor rounds to 0.0 and
+              * the quotient below would be infinite. Testing the operands alone let
+              * that through.
+              */
+             if( inVolume[today] != 0.0 && range != 0.0 ) {
+                boxRatio = inVolume[today] / optInVolumeDivisor / range;
+                if( boxRatio != 0.0 ) {
+                   raw = (mid - prevMid) / boxRatio;
+                } else {
+                   raw = 0.0;
+                }
+             } else {
+                raw = 0.0;
+             }
+             /* The midpoint moves on even for a guarded bar: the next bar's change is
+              * measured from the bar immediately before it, never from the last bar
+              * that happened to produce a value.
+              */
+             prevMid = mid;
+             rawRing[rawRing_Idx] = raw;
+             sumRaw += raw;
+             rawRing_Idx++;
+             if( rawRing_Idx > maxIdx_rawRing ) { rawRing_Idx = 0; }
+             today = today + 1;
+          }
+          outIdx = 0;
+          while( today <= endIdx ) {
+             mid = (inHigh[today] + inLow[today]) / 2.0;
+             range = inHigh[today] - inLow[today];
+             if( inVolume[today] != 0.0 && range != 0.0 ) {
+                boxRatio = inVolume[today] / optInVolumeDivisor / range;
+                if( boxRatio != 0.0 ) {
+                   raw = (mid - prevMid) / boxRatio;
+                } else {
+                   raw = 0.0;
+                }
+             } else {
+                raw = 0.0;
+             }
+             prevMid = mid;
+             /* Today's raw value enters the window at its own slot, and the bar
+              * leaving the window is read only after the ring has advanced onto it.
+              * Every input read for this bar is done above, so the store into
+              * outReal is safe when the caller aliases it over an input.
+              */
+             rawRing[rawRing_Idx] = raw;
+             sumRaw += raw;
+             tempReal = sumRaw;
+             rawRing_Idx++;
+             if( rawRing_Idx > maxIdx_rawRing ) { rawRing_Idx = 0; }
+             sumRaw -= rawRing[rawRing_Idx];
+             outReal[outIdx * outStride] = tempReal / (double)optInTimePeriod;
+             outIdx = outIdx + 1;
+             today = today + 1;
+          }
+          outNBElement.value = outIdx;
+          outBegIdx.value = startIdx;
+          /* Capture the live batch state into the handle. */
+          int capCb_rawRing = maxIdx_rawRing + 1;
+          if( capCb_rawRing > historyLen + 1 ) {
+             return RetCode.INTERNAL_ERROR;
+          }
+          sp.optInTimePeriod = optInTimePeriod;
+          sp.optInVolumeDivisor = optInVolumeDivisor;
+          sp.prevMid = prevMid;
+          sp.sumRaw = sumRaw;
+          sp.rawRing_Idx = rawRing_Idx;
+          sp.maxIdx_rawRing = maxIdx_rawRing;
+          sp.cbSize_rawRing = capCb_rawRing;
+          sp.cb_rawRing = rawRing;
+          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
+          return RetCode.SUCCESS;
+       }
+       /* emvOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+       EmvStream emvOpenAndFillInternal( double inHigh[], double inLow[], double inVolume[], int startIdx, int optInTimePeriod, double optInVolumeDivisor, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+       {
+          EmvStream sp = new EmvStream(this);
+          RetCode retCode = emvOpenImpl(sp, inHigh, inLow, inVolume, startIdx, optInTimePeriod, optInVolumeDivisor, outBegIdx, outNBElement, outReal, 1);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.SUCCESS ) {
+             return sp;
+          }
+          if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
+             throw insufficientHistory("EMV openAndFill", inHigh.length, startIdx, emvLookback(optInTimePeriod, optInVolumeDivisor));
+          }
+          throw streamFailure("EMV openAndFill", retCode);
+       }
+       /* Internal startIdx-anchored open behind emvOpen (composition seam). */
+       EmvStream emvOpenInternal( double inHigh[], double inLow[], double inVolume[], int startIdx, int optInTimePeriod, double optInVolumeDivisor )
+       {
+          EmvStream sp = new EmvStream(this);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          double[] sink_outReal = new double[1];
+          RetCode retCode = emvOpenImpl(sp, inHigh, inLow, inVolume, startIdx, optInTimePeriod, optInVolumeDivisor, outBegIdx, outNBElement, sink_outReal, 0);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.SUCCESS ) {
+             return sp;
+          }
+          if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
+             throw insufficientHistory("EMV open", inHigh.length, startIdx, emvLookback(optInTimePeriod, optInVolumeDivisor));
+          }
+          throw streamFailure("EMV open", retCode);
+       }
+       /**
+        * Open a live EMV stream over the warm-up history; the handle's
+        * {@code value()} starts at the last history bar's value — bit-identical
+        * to {@link Core#emv} at that bar.
+        * <p>The history must hold at least {@code emvLookback(...) + 1} bars
+        * (unstable-period aware), or {@link InsufficientHistoryException} is
+        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * ({@link Integer#MIN_VALUE} and {@link Core#REAL_DEFAULT} select a
+        * parameter's documented default, as in the batch API). An EMPTY history throws
+        * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+        * names no bar — and a null argument {@link IllegalArgumentException},
+        * both ahead of everything above.
+        */
+       public EmvStream emvOpen( double inHigh[], double inLow[], double inVolume[], int optInTimePeriod, double optInVolumeDivisor )
+       {
+          requireArgument("EMV open", "inHigh", inHigh);
+          requireHistory("EMV open", inHigh.length);
+          requireArgument("EMV open", "inLow", inLow);
+          requireArgument("EMV open", "inVolume", inVolume);
+          requireHistoryLength("EMV open", "inLow", inLow.length, inHigh.length);
+          requireHistoryLength("EMV open", "inVolume", inVolume.length, inHigh.length);
+          return emvOpenInternal(inHigh, inLow, inVolume, 0, optInTimePeriod, optInVolumeDivisor);
+       }
+       /**
+        * {@link Core#emvOpen} that also fills the output array(s) bit-identically
+        * to {@link Core#emv} over the whole history in the same single pass
+        * (no separate batch call needed for the warm-up plot). Output arrays must
+        * not alias the inputs or each other, and must hold
+        * {@code historyLen - lookback} values — both checked before anything is
+        * written, so an undersized array is an {@link IllegalArgumentException}
+        * naming it rather than a fault from inside the fill.
+        * <p>The range written is on the returned handle:
+        * {@link EmvStream#outRange()}.
+        */
+       public EmvStream emvOpenAndFill( double inHigh[], double inLow[], double inVolume[], int optInTimePeriod, double optInVolumeDivisor, double outReal[] )
+       {
+          requireArgument("EMV openAndFill", "inHigh", inHigh);
+          requireHistory("EMV openAndFill", inHigh.length);
+          requireArgument("EMV openAndFill", "inLow", inLow);
+          requireArgument("EMV openAndFill", "inVolume", inVolume);
+          int guardOutLen = openFillCount("EMV openAndFill", inHigh.length, emvLookback(optInTimePeriod, optInVolumeDivisor));
+          requireHistoryLength("EMV openAndFill", "inLow", inLow.length, inHigh.length);
+          requireHistoryLength("EMV openAndFill", "inVolume", inVolume.length, inHigh.length);
+          requireLength("EMV openAndFill", "outReal", outReal, guardOutLen);
+          if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inVolume ) {
+             throw streamFailure("EMV openAndFill", RetCode.BAD_PARAM);
+          }
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          return emvOpenAndFillInternal(inHigh, inLow, inVolume, 0, optInTimePeriod, optInVolumeDivisor, outBegIdx, outNBElement, outReal);
+       }
+    /* List of contributors:
+     *
+     *  Initial  Name/description
+     *  -------------------------------------------------------------------
      *  KL       Kevin Lin
      *
      * Change history:
@@ -195909,7 +196819,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "8b065854af781289";
+    static final String SPLICED_GENCODE_DIGEST = "7a897f6d722e90dc";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];
@@ -196492,6 +197402,10 @@ public class TaCodegenServe {
         ABSTRACT.put("EMA", new AbsFunc("EMA", "Overlap Studies", "Exponential Moving Average", 184549377,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("EMV", new AbsFunc("EMV", "Volume Indicators", "Arms Ease of Movement", 33554432,
+            new AbsIn[]{ new AbsIn(0,"inPriceHLV",22) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Number of periods for the smoothing average (1 = unsmoothed)",14.0, 0,0,0,0,0,0, 1,100000,4,200,1, null), new AbsOpt(0,"optInVolumeDivisor",0,"Volume Divisor","Volume scale divisor",10000.0, 1.0,3e37,0,1.0,100000000.0,1000.0, 0,0,0,0,0, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("ER", new AbsFunc("ER", "Momentum Indicators", "Kaufman Efficiency Ratio", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
@@ -197134,6 +198048,7 @@ public class TaCodegenServe {
         "TA_DX",
         "TA_EFI",
         "TA_EMA",
+        "TA_EMV",
         "TA_ER",
         "TA_ERI",
         "TA_EXP",
@@ -197352,113 +198267,114 @@ public class TaCodegenServe {
             case 102: return handle_DX(json);
             case 103: return handle_EFI(json);
             case 104: return handle_EMA(json);
-            case 105: return handle_ER(json);
-            case 106: return handle_ERI(json);
-            case 107: return handle_EXP(json);
-            case 108: return handle_FLOOR(json);
-            case 109: return handle_FOSC(json);
-            case 110: return handle_FRACTAL(json);
-            case 111: return handle_FRAMA(json);
-            case 112: return handle_HA(json);
-            case 113: return handle_HMA(json);
-            case 114: return handle_HT_DCPERIOD(json);
-            case 115: return handle_HT_DCPHASE(json);
-            case 116: return handle_HT_PHASOR(json);
-            case 117: return handle_HT_SINE(json);
-            case 118: return handle_HT_TRENDLINE(json);
-            case 119: return handle_HT_TRENDMODE(json);
-            case 120: return handle_IMI(json);
-            case 121: return handle_KAMA(json);
-            case 122: return handle_KC(json);
-            case 123: return handle_KDJ(json);
-            case 124: return handle_KURTOSIS(json);
-            case 125: return handle_LINEARREG(json);
-            case 126: return handle_LINEARREG_ANGLE(json);
-            case 127: return handle_LINEARREG_INTERCEPT(json);
-            case 128: return handle_LINEARREG_SLOPE(json);
-            case 129: return handle_LN(json);
-            case 130: return handle_LOG10(json);
-            case 131: return handle_MA(json);
-            case 132: return handle_MACD(json);
-            case 133: return handle_MACDEXT(json);
-            case 134: return handle_MACDFIX(json);
-            case 135: return handle_MAMA(json);
-            case 136: return handle_MARKETFI(json);
-            case 137: return handle_MASSI(json);
-            case 138: return handle_MAVP(json);
-            case 139: return handle_MAX(json);
-            case 140: return handle_MAXINDEX(json);
-            case 141: return handle_MEDIAN(json);
-            case 142: return handle_MEDPRICE(json);
-            case 143: return handle_MFI(json);
-            case 144: return handle_MIDPOINT(json);
-            case 145: return handle_MIDPRICE(json);
-            case 146: return handle_MIN(json);
-            case 147: return handle_MININDEX(json);
-            case 148: return handle_MINMAX(json);
-            case 149: return handle_MINMAXINDEX(json);
-            case 150: return handle_MINUS_DI(json);
-            case 151: return handle_MINUS_DM(json);
-            case 152: return handle_MOM(json);
-            case 153: return handle_MULT(json);
-            case 154: return handle_NATR(json);
-            case 155: return handle_NVI(json);
-            case 156: return handle_OBV(json);
-            case 157: return handle_PERCENTB(json);
-            case 158: return handle_PERCENTILE(json);
-            case 159: return handle_PERCENTRANK(json);
-            case 160: return handle_PLUS_DI(json);
-            case 161: return handle_PLUS_DM(json);
-            case 162: return handle_PPO(json);
-            case 163: return handle_PVI(json);
-            case 164: return handle_PVO(json);
-            case 165: return handle_PVT(json);
-            case 166: return handle_QSTICK(json);
-            case 167: return handle_RMA(json);
-            case 168: return handle_ROC(json);
-            case 169: return handle_ROCP(json);
-            case 170: return handle_ROCR(json);
-            case 171: return handle_ROCR100(json);
-            case 172: return handle_RSI(json);
-            case 173: return handle_RVI(json);
-            case 174: return handle_RVIR(json);
-            case 175: return handle_RVOL(json);
-            case 176: return handle_SAR(json);
-            case 177: return handle_SAREXT(json);
-            case 178: return handle_SI(json);
-            case 179: return handle_SIN(json);
-            case 180: return handle_SINH(json);
-            case 181: return handle_SMA(json);
-            case 182: return handle_SMI(json);
-            case 183: return handle_SQRT(json);
-            case 184: return handle_STDDEV(json);
-            case 185: return handle_STOCH(json);
-            case 186: return handle_STOCHF(json);
-            case 187: return handle_STOCHRSI(json);
-            case 188: return handle_SUB(json);
-            case 189: return handle_SUM(json);
-            case 190: return handle_SUPERTREND(json);
-            case 191: return handle_T3(json);
-            case 192: return handle_TAN(json);
-            case 193: return handle_TANH(json);
-            case 194: return handle_TEMA(json);
-            case 195: return handle_TRANGE(json);
-            case 196: return handle_TRIMA(json);
-            case 197: return handle_TRIX(json);
-            case 198: return handle_TSF(json);
-            case 199: return handle_TSI(json);
-            case 200: return handle_TYPPRICE(json);
-            case 201: return handle_ULTOSC(json);
-            case 202: return handle_VAR(json);
-            case 203: return handle_VHF(json);
-            case 204: return handle_VORTEX(json);
-            case 205: return handle_VWAP(json);
-            case 206: return handle_VWMA(json);
-            case 207: return handle_WAD(json);
-            case 208: return handle_WCLPRICE(json);
-            case 209: return handle_WILLR(json);
-            case 210: return handle_WMA(json);
-            case 211: return handle_ZLEMA(json);
+            case 105: return handle_EMV(json);
+            case 106: return handle_ER(json);
+            case 107: return handle_ERI(json);
+            case 108: return handle_EXP(json);
+            case 109: return handle_FLOOR(json);
+            case 110: return handle_FOSC(json);
+            case 111: return handle_FRACTAL(json);
+            case 112: return handle_FRAMA(json);
+            case 113: return handle_HA(json);
+            case 114: return handle_HMA(json);
+            case 115: return handle_HT_DCPERIOD(json);
+            case 116: return handle_HT_DCPHASE(json);
+            case 117: return handle_HT_PHASOR(json);
+            case 118: return handle_HT_SINE(json);
+            case 119: return handle_HT_TRENDLINE(json);
+            case 120: return handle_HT_TRENDMODE(json);
+            case 121: return handle_IMI(json);
+            case 122: return handle_KAMA(json);
+            case 123: return handle_KC(json);
+            case 124: return handle_KDJ(json);
+            case 125: return handle_KURTOSIS(json);
+            case 126: return handle_LINEARREG(json);
+            case 127: return handle_LINEARREG_ANGLE(json);
+            case 128: return handle_LINEARREG_INTERCEPT(json);
+            case 129: return handle_LINEARREG_SLOPE(json);
+            case 130: return handle_LN(json);
+            case 131: return handle_LOG10(json);
+            case 132: return handle_MA(json);
+            case 133: return handle_MACD(json);
+            case 134: return handle_MACDEXT(json);
+            case 135: return handle_MACDFIX(json);
+            case 136: return handle_MAMA(json);
+            case 137: return handle_MARKETFI(json);
+            case 138: return handle_MASSI(json);
+            case 139: return handle_MAVP(json);
+            case 140: return handle_MAX(json);
+            case 141: return handle_MAXINDEX(json);
+            case 142: return handle_MEDIAN(json);
+            case 143: return handle_MEDPRICE(json);
+            case 144: return handle_MFI(json);
+            case 145: return handle_MIDPOINT(json);
+            case 146: return handle_MIDPRICE(json);
+            case 147: return handle_MIN(json);
+            case 148: return handle_MININDEX(json);
+            case 149: return handle_MINMAX(json);
+            case 150: return handle_MINMAXINDEX(json);
+            case 151: return handle_MINUS_DI(json);
+            case 152: return handle_MINUS_DM(json);
+            case 153: return handle_MOM(json);
+            case 154: return handle_MULT(json);
+            case 155: return handle_NATR(json);
+            case 156: return handle_NVI(json);
+            case 157: return handle_OBV(json);
+            case 158: return handle_PERCENTB(json);
+            case 159: return handle_PERCENTILE(json);
+            case 160: return handle_PERCENTRANK(json);
+            case 161: return handle_PLUS_DI(json);
+            case 162: return handle_PLUS_DM(json);
+            case 163: return handle_PPO(json);
+            case 164: return handle_PVI(json);
+            case 165: return handle_PVO(json);
+            case 166: return handle_PVT(json);
+            case 167: return handle_QSTICK(json);
+            case 168: return handle_RMA(json);
+            case 169: return handle_ROC(json);
+            case 170: return handle_ROCP(json);
+            case 171: return handle_ROCR(json);
+            case 172: return handle_ROCR100(json);
+            case 173: return handle_RSI(json);
+            case 174: return handle_RVI(json);
+            case 175: return handle_RVIR(json);
+            case 176: return handle_RVOL(json);
+            case 177: return handle_SAR(json);
+            case 178: return handle_SAREXT(json);
+            case 179: return handle_SI(json);
+            case 180: return handle_SIN(json);
+            case 181: return handle_SINH(json);
+            case 182: return handle_SMA(json);
+            case 183: return handle_SMI(json);
+            case 184: return handle_SQRT(json);
+            case 185: return handle_STDDEV(json);
+            case 186: return handle_STOCH(json);
+            case 187: return handle_STOCHF(json);
+            case 188: return handle_STOCHRSI(json);
+            case 189: return handle_SUB(json);
+            case 190: return handle_SUM(json);
+            case 191: return handle_SUPERTREND(json);
+            case 192: return handle_T3(json);
+            case 193: return handle_TAN(json);
+            case 194: return handle_TANH(json);
+            case 195: return handle_TEMA(json);
+            case 196: return handle_TRANGE(json);
+            case 197: return handle_TRIMA(json);
+            case 198: return handle_TRIX(json);
+            case 199: return handle_TSF(json);
+            case 200: return handle_TSI(json);
+            case 201: return handle_TYPPRICE(json);
+            case 202: return handle_ULTOSC(json);
+            case 203: return handle_VAR(json);
+            case 204: return handle_VHF(json);
+            case 205: return handle_VORTEX(json);
+            case 206: return handle_VWAP(json);
+            case 207: return handle_VWMA(json);
+            case 208: return handle_WAD(json);
+            case 209: return handle_WCLPRICE(json);
+            case 210: return handle_WILLR(json);
+            case 211: return handle_WMA(json);
+            case 212: return handle_ZLEMA(json);
             default: return null;
         }
     }
@@ -214570,6 +215486,168 @@ public class TaCodegenServe {
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         rideEma(core, json, endIdx, inReal, optInTimePeriod, sb);
+        sb.append("}");
+        return sb.toString();
+    }
+
+    static String handle_EMV(String json) {
+        int startIdx = jsonInt(json, "startIdx");
+        int endIdx = jsonInt(json, "endIdx");
+        int use_preloaded = jsonInt(json, "use_preloaded");
+        int bench_iters = jsonInt(json, "iters");
+        if (bench_iters < 1) bench_iters = 1;
+        double[] inHigh;
+        double[] inLow;
+        double[] inVolume;
+        if (use_preloaded != 0 && refN > 0) {
+            inHigh = new double[MAX_ARRAY_SIZE];
+            System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
+            System.arraycopy(refLow, 0, inLow, 0, refN);
+            inVolume = new double[MAX_ARRAY_SIZE];
+            System.arraycopy(refVolume, 0, inVolume, 0, refN);
+        } else {
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inVolume = jsonDoubleArray(json, "inVolume");
+        }
+        boolean _optRejected = false;
+        int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+        double optInVolumeDivisor = jsonDouble(json, "optInVolumeDivisor");
+        // The output buffers are sized to the count the call actually PRODUCES --
+        // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
+        // never below one. Not to the width of the requested range: that is the bound the
+        // managed backends check and the Rust asserts state, and at the range width it was
+        // slack by exactly the lookback, so no call could ever approach it.
+        // The pad is there because a bound is a MINIMUM, never an equality. A caller
+        // re-using a pre-allocated buffer passes a larger one, and that is not an error --
+        // the reported OutRange is what says which part was written. So the harness sends
+        // both: the startIdx axis sends no pad (the bound is reachable) while the
+        // full-range value comparison sends one (slack is legal). Sizing every call one way
+        // would silently drop the other property.
+        // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
+        // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
+        // for a range shorter than the lookback, where the output bound switches off and
+        // the spec says any length will do, including none. It does not: two EMPTY output
+        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
+        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
+        // accepted by C and Java -- a four-way divergence on a call the specification says
+        // all four accept. Sizing to zero here would reach it on every multi-output
+        // function, which is a semantic question, not a harness one. Recorded as
+        // error-handling-spec, open item 11.
+        // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
+        // sizes and cannot make the check, so an exact buffer would test nothing there.
+        int _lb = core.emvLookback(optInTimePeriod, optInVolumeDivisor);
+        int _cs = startIdx > _lb ? startIdx : _lb;
+        int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
+        double[] outArr0 = new double[_outLen];
+        MInteger outBegIdx = new MInteger();
+        MInteger outNBElement = new MInteger();
+        RetCode rc = RetCode.SUCCESS;
+        int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inVolume = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inVolume, 0, endIdx + 1);
+        long startNs = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+        if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                rc = core.emvImpl(startIdx, endIdx, inHigh, inLow, inVolume, optInTimePeriod, optInVolumeDivisor, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        } else {
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _pr = core.emv(startIdx, endIdx, inHigh, inLow, inVolume, optInTimePeriod, optInVolumeDivisor, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.SUCCESS;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        }
+        }
+        else if (_optRejected) { rc = RetCode.BAD_PARAM; }
+        else { try {
+            if (bench_mode == 1) {
+                core.emvOpen(_warm_inHigh, _warm_inLow, _warm_inVolume, optInTimePeriod, optInVolumeDivisor);
+            } else {
+                Core.EmvStream _wh = core.emvOpenAndFill(_warm_inHigh, _warm_inLow, _warm_inVolume, optInTimePeriod, optInVolumeDivisor, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
+            }
+            rc = RetCode.SUCCESS;
+        } catch (RuntimeException _e) { rc = _e instanceof TALibFailure ? ((TALibFailure)_e).retCode() : RetCode.BAD_PARAM; } }
+        }
+        long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inVolume = new float[inVolume.length];
+            for (int _fi = 0; _fi < inVolume.length; _fi++) f_inVolume[_fi] = (float)inVolume[_fi];
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _fr = core.emv(startIdx, endIdx, f_inHigh, f_inLow, f_inVolume, optInTimePeriod, optInVolumeDivisor, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.SUCCESS;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+            usedFloat = 1;
+        }
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            StringBuilder hb = new StringBuilder();
+            hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            rideEmv(core, json, endIdx, inHigh, inLow, inVolume, optInTimePeriod, optInVolumeDivisor, hb);
+            hb.append("}");
+            return hb.toString();
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"retCode\":").append(rc.toInt());
+        sb.append(",\"outBegIdx\":").append(outBegIdx.value);
+        sb.append(",\"outNBElement\":").append(outNBElement.value);
+        sb.append(",\"out_len\":").append(_outLen);
+        sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
+        sb.append(",\"timing_ns\":").append(elapsedNs);
+        rideEmv(core, json, endIdx, inHigh, inLow, inVolume, optInTimePeriod, optInVolumeDivisor, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -248166,6 +249244,170 @@ public class TaCodegenServe {
         return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
+    static String sv_EMV(String json) {
+        int svShape = jsonInt(json, "gen_shape");
+        int svSeed = jsonInt(json, "gen_seed");
+        int svN = jsonInt(json, "gen_n");
+        if (svN < 2) svN = 2;
+        if (svN > 256) svN = 256;
+        int svK = jsonInt(json, "unstablePeriod");
+        int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 14;
+        double optInVolumeDivisor = json.contains("\"optInVolumeDivisor\"") ? jsonDouble(json, "optInVolumeDivisor") : 1e4;
+        double[] fz_o = new double[svN];
+        double[] fz_h = new double[svN];
+        double[] fz_l = new double[svN];
+        double[] fz_c = new double[svN];
+        double[] fz_v = new double[svN];
+        double[] fz_oi = new double[svN];
+        FuzzData.fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
+        double[] b0 = new double[svN];
+        long legs = 0;
+        boolean allOk = true;
+        boolean peekAll = true;
+        long peekReps = 0;
+        long peekRejects = 0;
+        boolean peekRepAll = true;
+        int fillChecked = 0;
+        boolean fillOk = true;
+        MInteger beg = new MInteger();
+        MInteger nb = new MInteger();
+        String diag = "";
+        int rangeChecked = 0;
+        boolean rangeOk = true;
+        long rangeLegs = 0;
+        int rangeSites = 0;
+        long[] zsign = { 0 };
+        int rounds = 1;
+        for (int rd = 0; rd < rounds; rd++) {
+            Core c2 = new Core();
+            RetCode rc;
+            try { rc = c2.emvImpl(0, svN - 1, fz_h, fz_l, fz_v, optInTimePeriod, optInVolumeDivisor, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
+            int lb = c2.emvLookback(optInTimePeriod, optInVolumeDivisor);
+            if (rc != RetCode.SUCCESS || nb.value == 0) {
+                boolean openRejects;
+                try { c2.emvOpen(fz_h, fz_l, fz_v, optInTimePeriod, optInVolumeDivisor); openRejects = false; } catch (IllegalArgumentException _e) { openRejects = true; }
+                return "{\"retCode\":" + rc.toInt() + ",\"legs\":0,\"nb\":" + nb.value + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
+            }
+            fillChecked = 1;
+            try {
+                double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                Core.EmvStream _fh = c2.emvOpenAndFill(fz_h, fz_l, fz_v, optInTimePeriod, optInVolumeDivisor, f0);
+                OutRange _fr = _fh.outRange();
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
+                else {
+                    for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
+                }
+                try { c2.emvOpenAndFill(fz_h, fz_l, fz_v, optInTimePeriod, optInVolumeDivisor, fz_h); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
+            } catch (IllegalArgumentException _e) { fillOk = false; }
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
+            java.util.Arrays.sort(pcs);
+            int prevP = -1;
+            for (int pi = 0; pi < pcs.length; pi++) {
+                int p = pcs[pi];
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
+                prevP = p;
+                Core.EmvStream st;
+                try { st = c2.emvOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_v, p), optInTimePeriod, optInVolumeDivisor); }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
+                legs++;
+                if (svXtierNe(st.value(), b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                for (int t = p; t < svN; t++) {
+                    boolean pkTook = true;
+                    double pk = 0;
+                    try { pk = st.peek(fz_h[t], fz_l[t], fz_v[t]); } catch (IllegalArgumentException _e) { pkTook = false; peekRejects++; }
+                    if (t % 7 == 0) {
+                        boolean rpTook = pkTook;
+                        try { st.peek(fz_h[t - 1], fz_l[t - 1], fz_v[t - 1]); } catch (IllegalArgumentException _e) { peekRejects++; }
+                        double rp = 0;
+                        try { rp = st.peek(fz_h[t], fz_l[t], fz_v[t]); } catch (IllegalArgumentException _e) { rpTook = false; }
+                        if (rpTook) {
+                            peekReps++;
+                            if (svBne(rp, pk)) peekRepAll = false;
+                        } else { peekRejects++; }
+                    }
+                    double up = st.update(fz_h[t], fz_l[t], fz_v[t]);
+                    if (pkTook && svBne(pk, up)) peekAll = false;
+                    try { st.peek(fz_h[t - 1], fz_l[t - 1], fz_v[t - 1]); } catch (IllegalArgumentException _e) { peekRejects++; }
+                    if (svBne(st.value(), up)) allOk = false;
+                    if (svXtierNe(up, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up)) + "\""; }
+                }
+                if (allOk) {
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
+                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
+                    rangeLegs++; rangeSites |= 16;
+                    st.advance();
+                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value + 1) rangeOk = false;
+                }
+            }
+            {
+                int p0 = lb + 1;
+                if (p0 <= svN - 1) {
+                    try {
+                        Core.EmvStream sA = c2.emvOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_v, p0), optInTimePeriod, optInVolumeDivisor);
+                        int mid = (p0 + svN) / 2;
+                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_v[t]);
+                        Core.EmvStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_h[t], fz_l[t], fz_v[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        for (int t = mid; t < svN; t++) {
+                            double uA = sA.update(fz_h[t], fz_l[t], fz_v[t]);
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        if (allOk) {
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 8;
+                            if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                        }
+                    } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
+                }
+            }
+            if (lb >= 1 && lb < svN) {
+                try { c2.emvOpen(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_v, lb), optInTimePeriod, optInVolumeDivisor); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
+                catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.emvOpenAndFill(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_v, lb), optInTimePeriod, optInVolumeDivisor, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
+            }
+            try {
+                Core.EmvStream sD = c2.emvOpen(fz_h, fz_l, fz_v, Integer.MIN_VALUE, optInVolumeDivisor);
+                Core.EmvStream sE = c2.emvOpen(fz_h, fz_l, fz_v, 14, optInVolumeDivisor);
+                if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+            } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.emvImpl(Sidx, svN - 1, fz_h, fz_l, fz_v, optInTimePeriod, optInVolumeDivisor, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rcS = ((TALibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.SUCCESS && nbS.value > 0) {
+                        try {
+                            Core.EmvStream stA = c2.emvOpenInternal(java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_v, svN), Sidx, optInTimePeriod, optInVolumeDivisor);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
+        }
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign[0] + diag + "}";
+    }
+
     static String sv_ER(String json) {
         int svShape = jsonInt(json, "gen_shape");
         int svSeed = jsonInt(json, "gen_seed");
@@ -266356,6 +267598,7 @@ public class TaCodegenServe {
         case "TA_DX": return sv_DX(json);
         case "TA_EFI": return sv_EFI(json);
         case "TA_EMA": return sv_EMA(json);
+        case "TA_EMV": return sv_EMV(json);
         case "TA_ER": return sv_ER(json);
         case "TA_ERI": return sv_ERI(json);
         case "TA_EXP": return sv_EXP(json);
@@ -277158,6 +278401,108 @@ public class TaCodegenServe {
             double[] fb0 = new double[m];
             try {
                 Core.EmaStream st2 = core.emaOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, fb0);
+                if (st2.outRange().begIdx() != beg || st2.outRange().count() != nb) { r.ok = false; r.leg = 2; }
+                if (r.ok) {
+                    for (int k = 0; k < nb; k++) {
+                        boolean cmp = true;
+                        if (cmp && svXtierNe(rb0[k], fb0[k], r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[k]); r.stream = Double.doubleToRawLongBits(fb0[k]); }
+                        if (cmp) r.fillBars++;
+                        if (!cmp) { r.ok = false; r.leg = 2; r.bar = beg + k; break; }
+                    }
+                }
+            } catch (RuntimeException _e) { r.ok = false; r.leg = 2; }
+        }
+
+        if (r.ok) {
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
+            rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
+        }
+    }
+
+    static void rideEmv(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inVolume, int optInTimePeriod, double optInVolumeDivisor, StringBuilder sb) {
+        if (!rideGate(json)) return;
+        RideResult r = new RideResult();
+        rideBodyEmv(core, json, endIdx, inHigh, inLow, inVolume, optInTimePeriod, optInVolumeDivisor, r);
+        r.emit(sb);
+    }
+
+    @SuppressWarnings("unused")
+    static void rideBodyEmv(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inVolume, int optInTimePeriod, double optInVolumeDivisor, RideResult r) {
+        try { r.lb = core.emvLookback(optInTimePeriod, optInVolumeDivisor); } catch (RuntimeException _e) { r.lb = -1; }
+        int lb = r.lb;
+        int navail = endIdx + 1;
+        if (inHigh.length < navail) navail = inHigh.length;
+        if (inLow.length < navail) navail = inLow.length;
+        if (inVolume.length < navail) navail = inVolume.length;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
+        if (m > navail) m = navail;
+        r.m = m;
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
+        if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inVolume, m) || false) { r.skip = 4; return; }
+
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_EMV");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMix(hash, Double.doubleToRawLongBits(optInVolumeDivisor));
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inVolume, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
+            r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
+        }
+
+        double[] rb0 = new double[m];
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
+        try { OutRange _rr = core.emv(0, m - 1, java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inVolume, m), optInTimePeriod, optInVolumeDivisor, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.emvOpen(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inVolume, m), optInTimePeriod, optInVolumeDivisor); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.emvOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inVolume, m), optInTimePeriod, optInVolumeDivisor, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
+        if (nb == 0) { r.skip = 5; return; }
+        if (beg != lb) { r.skip = 6; return; }
+
+        try {
+            boolean cmp;
+            Core.EmvStream st = core.emvOpen(java.util.Arrays.copyOf(inHigh, lb + 1), java.util.Arrays.copyOf(inLow, lb + 1), java.util.Arrays.copyOf(inVolume, lb + 1), optInTimePeriod, optInVolumeDivisor);
+            double uv = st.value();
+            cmp = true;
+            if (cmp && svXtierNe(rb0[lb - beg], uv, r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[lb - beg]); r.stream = Double.doubleToRawLongBits(uv); }
+            if (cmp) r.openBars++;
+            if (!cmp) { r.ok = false; r.leg = 1; r.bar = lb; }
+            for (int t = lb + 1; r.ok && t < m; t++) {
+                double uv2 = st.update(inHigh[t], inLow[t], inVolume[t]);
+                uv = uv2;
+                cmp = true;
+                if (cmp && svXtierNe(rb0[t - beg], uv, r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[t - beg]); r.stream = Double.doubleToRawLongBits(uv); }
+                if (cmp) r.openBars++;
+                if (!cmp) { r.ok = false; r.leg = 1; r.bar = t; }
+            }
+        } catch (RuntimeException _e) { r.ok = false; r.leg = 1; }
+
+        if (r.ok) {
+            double[] fb0 = new double[m];
+            try {
+                Core.EmvStream st2 = core.emvOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inVolume, m), optInTimePeriod, optInVolumeDivisor, fb0);
                 if (st2.outRange().begIdx() != beg || st2.outRange().count() != nb) { r.ok = false; r.leg = 2; }
                 if (r.ok) {
                     for (int k = 0; k < nb; k++) {

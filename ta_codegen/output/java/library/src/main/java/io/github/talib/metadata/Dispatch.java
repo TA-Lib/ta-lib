@@ -371,6 +371,9 @@ final class Dispatch {
          case "EMA":
             return core.ema(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
+         case "EMV":
+            return core.emv(
+               startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 4), h.intOpt(0), h.realOpt(1), h.realOutput(0));
          case "ER":
             return core.er(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
@@ -913,6 +916,8 @@ final class Dispatch {
             return core.efiLookback(h.intOpt(0));
          case "EMA":
             return core.emaLookback(h.intOpt(0));
+         case "EMV":
+            return core.emvLookback(h.intOpt(0), h.realOpt(1));
          case "ER":
             return core.erLookback(h.intOpt(0));
          case "ERI":

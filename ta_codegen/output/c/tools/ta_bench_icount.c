@@ -5506,6 +5506,57 @@ static void icount_EMA(int iters) {
     g_sink += acc + outNBElement;
 }
 
+static void icount_EMV(int iters) {
+    const char *nm = "EMV";
+    int outBegIdx = 0, outNBElement = 0;
+    double acc = 0.0;
+    TA_RetCode rc;
+    TA_EMV_Stream *st = NULL;
+    TA_EMV_Stream *stf = NULL;
+    double v0 = 0.0;
+
+    ICOUNT_ZERO();
+    rc = TA_EMV(0, g_nPoints - 1, g_high, g_low, g_volume, 14, 10000.000000000000000, &outBegIdx, &outNBElement, g_outBuf0);
+    ICOUNT_DUMP("EMV/batch");
+    icount_row(nm, "batch", 1, rc);
+    acc += g_outBuf0[0];
+
+    ICOUNT_ZERO();
+    rc = TA_EMV_OpenAndFill(&stf, g_high, g_low, g_volume, g_nPoints, 14, 10000.000000000000000, &outBegIdx, &outNBElement, g_outBuf0);
+    ICOUNT_DUMP("EMV/openfill");
+    icount_row(nm, "openfill", 1, rc);
+    acc += g_outBuf0[0];
+    if( stf ) TA_EMV_Close(stf);
+
+    ICOUNT_ZERO();
+    rc = TA_EMV_Open(&st, g_high, g_low, g_volume, g_nPoints, 14, 10000.000000000000000, &v0);
+    ICOUNT_DUMP("EMV/open");
+    icount_row(nm, "open", 1, rc);
+
+    if( rc == TA_SUCCESS && st ) {
+        TA_RetCode src = TA_SUCCESS;
+        ICOUNT_ZERO();
+        for( int it = 0; it < iters; it++ ) {
+            src = TA_EMV_Update(st, g_high[it & ICOUNT_MASK], g_low[it & ICOUNT_MASK], g_volume[it & ICOUNT_MASK], &v0);
+            acc += v0;
+        }
+        ICOUNT_DUMP("EMV/update");
+        icount_row(nm, "update", 1, src);
+        ICOUNT_ZERO();
+        for( int it = 0; it < iters; it++ ) {
+            src = TA_EMV_Peek(st, g_high[it & ICOUNT_MASK], g_low[it & ICOUNT_MASK], g_volume[it & ICOUNT_MASK], &v0);
+            acc += v0;
+        }
+        ICOUNT_DUMP("EMV/peek");
+        icount_row(nm, "peek", 1, src);
+    } else {
+        icount_row(nm, "update", 0, rc);
+        icount_row(nm, "peek", 0, rc);
+    }
+    if( st ) TA_EMV_Close(st);
+    g_sink += acc + outNBElement;
+}
+
 static void icount_ER(int iters) {
     const char *nm = "ER";
     int outBegIdx = 0, outNBElement = 0;
@@ -11199,6 +11250,7 @@ static void icount_all(const char *filter, int iters) {
     if( func_matches(filter, "DX") ) { icount_DX(iters); fflush(stdout); }
     if( func_matches(filter, "EFI") ) { icount_EFI(iters); fflush(stdout); }
     if( func_matches(filter, "EMA") ) { icount_EMA(iters); fflush(stdout); }
+    if( func_matches(filter, "EMV") ) { icount_EMV(iters); fflush(stdout); }
     if( func_matches(filter, "ER") ) { icount_ER(iters); fflush(stdout); }
     if( func_matches(filter, "ERI") ) { icount_ERI(iters); fflush(stdout); }
     if( func_matches(filter, "EXP") ) { icount_EXP(iters); fflush(stdout); }

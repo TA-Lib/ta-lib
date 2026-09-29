@@ -362,12 +362,13 @@
 //! * [`RVIR`](Core::rvir) — Relative Volatility Index, refined high/low form
 //! * [`TRANGE`](Core::trange) — True Range
 //!
-//! ## Volume Indicators (12)
+//! ## Volume Indicators (13)
 //!
 //! * [`AD`](Core::ad) — Chaikin A/D Line
 //! * [`ADOSC`](Core::adosc) — Chaikin A/D Oscillator
 //! * [`CMF`](Core::cmf) — Chaikin Money Flow
 //! * [`EFI`](Core::efi) — Elder's Force Index
+//! * [`EMV`](Core::emv) — Arms Ease of Movement
 //! * [`MARKETFI`](Core::marketfi) — Market Facilitation Index
 //! * [`NVI`](Core::nvi) — Negative Volume Index
 //! * [`OBV`](Core::obv) — On Balance Volume

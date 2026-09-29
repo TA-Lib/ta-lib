@@ -4,7 +4,7 @@ format 9
 soname libta-lib.so.1
 version-info 3:0:2
 headers ta_abstract.h ta_common.h ta_defs.h ta_func.h ta_libc.h
-function-count 2583
+function-count 2595
 platform pointer=8 long=8 int=4 enum=4
 type TA_FuncInfo sizeof=48 name:const_char_*=0 group:const_char_*=8 hint:const_char_*=16 flags:TA_FuncFlags=24 nbInput:unsigned_int=28 nbOptInput:unsigned_int=32 nbOutput:unsigned_int=36 handle:const_TA_FuncHandle_*=40
 type TA_InputParameterInfo sizeof=24 type:TA_InputParameterType=0 paramName:const_char_*=8 flags:TA_InputFlags=16
@@ -1225,6 +1225,16 @@ function TA_RetCode TA_EMA_OutRange(const TA_EMA_Stream *, int *, int *)
 function TA_RetCode TA_EMA_Peek(const TA_EMA_Stream *, double, double *)
 function TA_RetCode TA_EMA_Update(TA_EMA_Stream *, double, double *)
 function TA_RetCode TA_EMA_Value(const TA_EMA_Stream *, double *)
+function TA_RetCode TA_EMV(int, int, const double *, const double *, const double *, int, double, int *, int *, double *)
+function TA_RetCode TA_EMV_Advance(TA_EMV_Stream *)
+function TA_RetCode TA_EMV_Clone(const TA_EMV_Stream *, TA_EMV_Stream **)
+function TA_RetCode TA_EMV_Close(TA_EMV_Stream *)
+function TA_RetCode TA_EMV_Open(TA_EMV_Stream **, const double *, const double *, const double *, int, int, double, double *)
+function TA_RetCode TA_EMV_OpenAndFill(TA_EMV_Stream **, const double *, const double *, const double *, int, int, double, int *, int *, double *)
+function TA_RetCode TA_EMV_OutRange(const TA_EMV_Stream *, int *, int *)
+function TA_RetCode TA_EMV_Peek(const TA_EMV_Stream *, double, double, double, double *)
+function TA_RetCode TA_EMV_Update(TA_EMV_Stream *, double, double, double, double *)
+function TA_RetCode TA_EMV_Value(const TA_EMV_Stream *, double *)
 function TA_RetCode TA_ER(int, int, const double *, int, int *, int *, double *)
 function TA_RetCode TA_ERI(int, int, const double *, const double *, const double *, int, int *, int *, double *, double *)
 function TA_RetCode TA_ERI_Advance(TA_ERI_Stream *)
@@ -2205,6 +2215,7 @@ function TA_RetCode TA_S_DPO(int, int, const float *, int, int *, int *, double 
 function TA_RetCode TA_S_DX(int, int, const float *, const float *, const float *, int, int *, int *, double *)
 function TA_RetCode TA_S_EFI(int, int, const float *, const float *, int, int *, int *, double *)
 function TA_RetCode TA_S_EMA(int, int, const float *, int, int *, int *, double *)
+function TA_RetCode TA_S_EMV(int, int, const float *, const float *, const float *, int, double, int *, int *, double *)
 function TA_RetCode TA_S_ER(int, int, const float *, int, int *, int *, double *)
 function TA_RetCode TA_S_ERI(int, int, const float *, const float *, const float *, int, int *, int *, double *, double *)
 function TA_RetCode TA_S_EXP(int, int, const float *, int *, int *, double *)
@@ -2647,6 +2658,7 @@ function int TA_DPO_Lookback(int)
 function int TA_DX_Lookback(int)
 function int TA_EFI_Lookback(int)
 function int TA_EMA_Lookback(int)
+function int TA_EMV_Lookback(int, double)
 function int TA_ERI_Lookback(int)
 function int TA_ER_Lookback(int)
 function int TA_EXP_Lookback(void)

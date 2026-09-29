@@ -225,6 +225,7 @@ public final class Functions {
       put(m, f_DX());
       put(m, f_EFI());
       put(m, f_EMA());
+      put(m, f_EMV());
       put(m, f_ER());
       put(m, f_ERI());
       put(m, f_EXP());
@@ -1923,6 +1924,29 @@ public final class Functions {
                "Time Period", "Time period", 30.0,
                0.0, 0.0, 0, 0.0, 0.0, 0.0,
                1, 100000, 1, 200, 1, null)
+         ),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
+         ));
+   }
+
+   private static FuncInfo f_EMV() {
+      return new FuncInfo(
+         "EMV", "Volume Indicators", "Arms Ease of Movement", 0x02000000,
+         List.of(
+            new InputInfo(InputType.PRICE, "inPriceHLV", 0x00000016)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInTimePeriod", 0x00000000,
+               "Time Period", "Number of periods for the smoothing average (1 = unsmoothed)", 14.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               1, 100000, 4, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.REAL_RANGE, "optInVolumeDivisor", 0x00000000,
+               "Volume Divisor", "Volume scale divisor", 10000.0,
+               1.0, 3e37, 0, 1.0, 100000000.0, 1000.0,
+               0, 0, 0, 0, 0, null)
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)

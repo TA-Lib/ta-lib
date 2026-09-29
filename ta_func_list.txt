@@ -103,6 +103,7 @@ DPO                 Detrended Price Oscillator
 DX                  Directional Movement Index
 EFI                 Elder's Force Index
 EMA                 Exponential Moving Average
+EMV                 Arms Ease of Movement
 ER                  Kaufman Efficiency Ratio
 ERI                 Elder Ray Index (Bull Power / Bear Power)
 EXP                 Vector Arithmetic Exp

@@ -18,7 +18,7 @@
 # Written by `ta_codegen generate`. Do not renumber by hand -- the number is
 # the only thing a bug report carries, and it has to mean the same guard in the
 # next release as it did in the last.
-next: 440
+next: 442
 sites:
   AC.cbsize.oscBuffer: 184
   AC.circbuf.oscBuffer: 181
@@ -171,6 +171,8 @@ sites:
   DPO.ringcap.dispIdx: 409
   DPO.ringcap.trailingIdx: 410
   EFI.dualmode: 318
+  EMV.cbsize.rawRing: 441
+  EMV.circbuf.rawRing: 440
   ER.ringcap.trailingIdx: 426
   ERI.dualmode: 425
   FOSC.extrema: 406

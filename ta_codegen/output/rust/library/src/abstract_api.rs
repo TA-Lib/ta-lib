@@ -252,6 +252,8 @@ pub enum FuncId {
     EFI,
     /// Exponential Moving Average — [`Core::ema`](crate::Core::ema).
     EMA,
+    /// Arms Ease of Movement — [`Core::emv`](crate::Core::emv).
+    EMV,
     /// Kaufman Efficiency Ratio — [`Core::er`](crate::Core::er).
     ER,
     /// Elder Ray Index (Bull Power / Bear Power) — [`Core::eri`](crate::Core::eri).
@@ -470,7 +472,7 @@ pub enum FuncId {
 
 impl FuncId {
     /// Number of functions in the registry.
-    pub const COUNT: usize = 212;
+    pub const COUNT: usize = 213;
     /// Metadata for this function (O(1) index into the const table).
     #[inline] pub fn info(self) -> &'static FuncInfo { &FUNC_TABLE[self as usize] }
     /// Upper-case TA name, e.g. "RSI".
@@ -797,7 +799,7 @@ impl FuncInfo {
 
 /// Backing storage for [`FUNCS`], indexed by [`FuncId`]. Link-time const, in
 /// `.rodata`. Private, so its length is nobody's business but this module's.
-static FUNC_TABLE: [FuncInfo; 212] = [
+static FUNC_TABLE: [FuncInfo; 213] = [
     FuncInfo {
         id: FuncId::AC,
         name: "AC",
@@ -1952,6 +1954,17 @@ static FUNC_TABLE: [FuncInfo; 212] = [
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 30, suggested: (1, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
         unst_id: Some(FuncUnstId::EMA),
+    },
+    FuncInfo {
+        id: FuncId::EMV,
+        name: "EMV",
+        group: Group::VolumeIndicators,
+        hint: "Arms Ease of Movement",
+        flags: FuncFlags(0x02000000),
+        inputs: &[InputInfo { param_name: "inPriceHLV", kind: InputType::Price, flags: InputFlags(0x00000016) }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Number of periods for the smoothing average (1 = unsmoothed)", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 14, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInVolumeDivisor", display_name: "Volume Divisor", hint: "Volume scale divisor", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 1.0, max: 3e37, precision: 0, default: 10000.0, suggested: (1.0, 100000000.0, 1000.0) } }, ],
+        outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        unst_id: None,
     },
     FuncInfo {
         id: FuncId::ER,
@@ -3253,6 +3266,7 @@ fn get_func_handle_exact(name: &str) -> Option<FuncId> {
         "DX" => FuncId::DX,
         "EFI" => FuncId::EFI,
         "EMA" => FuncId::EMA,
+        "EMV" => FuncId::EMV,
         "ER" => FuncId::ER,
         "ERI" => FuncId::ERI,
         "EXP" => FuncId::EXP,
@@ -3722,6 +3736,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::DX => self.core.dx_lookback(self.int_opt[0]),
             FuncId::EFI => self.core.efi_lookback(self.int_opt[0]),
             FuncId::EMA => self.core.ema_lookback(self.int_opt[0]),
+            FuncId::EMV => self.core.emv_lookback(self.int_opt[0], self.real_opt[1]),
             FuncId::ER => self.core.er_lookback(self.int_opt[0]),
             FuncId::ERI => self.core.eri_lookback(self.int_opt[0]),
             FuncId::EXP => self.core.exp_lookback(),
@@ -5154,6 +5169,18 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 let res = self.core.ema(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
+                self.real_out[0] = Some(o0);
+                match res {
+                    Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
+                    Err(e) => e,
+                }
+            }
+            FuncId::EMV => {
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_4 = self.price[0][4].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let res = self.core.emv(start_idx, end_idx, i0_1, i0_2, i0_4, self.int_opt[0], self.real_opt[1], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
