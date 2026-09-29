@@ -129,6 +129,7 @@ public final class Functions {
       put(m, f_ADR());
       put(m, f_ADX());
       put(m, f_ADXR());
+      put(m, f_ALMA());
       put(m, f_AO());
       put(m, f_APO());
       put(m, f_AROON());
@@ -502,6 +503,34 @@ public final class Functions {
                "Time Period", "Time period", 14.0,
                0.0, 0.0, 0, 0.0, 0.0, 0.0,
                2, 100000, 4, 200, 1, null)
+         ),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
+         ));
+   }
+
+   private static FuncInfo f_ALMA() {
+      return new FuncInfo(
+         "ALMA", "Overlap Studies", "Arnaud Legoux Moving Average", 0x03000001,
+         List.of(
+            new InputInfo(InputType.REAL, "inReal", 0x00000000)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInTimePeriod", 0x00000000,
+               "Time Period", "Time period", 9.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               1, 100000, 1, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.REAL_RANGE, "optInSigma", 0x00000000,
+               "Sigma", "Gaussian width divisor", 6.0,
+               0.01, 3e37, 2, 1.0, 20.0, 0.5,
+               0, 0, 0, 0, 0, null),
+            new OptInputInfo(
+               OptInputType.REAL_RANGE, "optInOffset", 0x00000000,
+               "Offset", "Position of the peak weight", 0.85,
+               0.0, 1.0, 2, 0.0, 1.0, 0.05,
+               0, 0, 0, 0, 0, null)
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)

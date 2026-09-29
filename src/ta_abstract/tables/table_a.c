@@ -345,6 +345,95 @@ DEF_FUNCTION( ADXR,
              );
 /* ADXR END */
 
+/* ALMA BEGIN */
+static const TA_OptInputParameterInfo TA_DEF_UI_D_ALMA_TimePeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInTimePeriod",
+   0,
+
+   "Time Period",
+   (const void *)&TA_DEF_TimePeriod_Positive,
+   9,
+   "Time period",
+
+   NULL
+};
+
+static const TA_RealRange TA_DEF_ALMA_Sigma =
+{
+   0.01,
+   TA_REAL_MAX,
+   2,
+   1.0,
+   20.0,
+   0.5
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_ALMA_Sigma =
+{
+   TA_OptInput_RealRange,
+   "optInSigma",
+   0,
+
+   "Sigma",
+   (const void *)&TA_DEF_ALMA_Sigma,
+   6.0,
+   "Gaussian width divisor",
+
+   NULL
+};
+
+static const TA_RealRange TA_DEF_ALMA_Offset =
+{
+   0.0,
+   1.0,
+   2,
+   0.0,
+   1.0,
+   0.05
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_ALMA_Offset =
+{
+   TA_OptInput_RealRange,
+   "optInOffset",
+   0,
+
+   "Offset",
+   (const void *)&TA_DEF_ALMA_Offset,
+   0.85,
+   "Position of the peak weight",
+
+   NULL
+};
+
+static const TA_InputParameterInfo    *TA_ALMA_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Real,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_ALMA_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_ALMA_OptInputs[] =
+{ &TA_DEF_UI_D_ALMA_TimePeriod,
+  &TA_DEF_UI_D_ALMA_Sigma,
+  &TA_DEF_UI_D_ALMA_Offset,
+  NULL
+};
+
+DEF_FUNCTION( ALMA,
+              TA_GroupId_OverlapStudies,
+              "Arnaud Legoux Moving Average",
+              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM | TA_FUNC_FLG_PERIOD1_IDENTITY
+             );
+/* ALMA END */
+
 /* AO BEGIN */
 static const TA_OptInputParameterInfo TA_DEF_UI_D_AO_FastPeriod =
 {
@@ -683,6 +772,7 @@ const TA_FuncDef *TA_DEF_TableA[] =
    ADD_TO_TABLE(ADR),
    ADD_TO_TABLE(ADX),
    ADD_TO_TABLE(ADXR),
+   ADD_TO_TABLE(ALMA),
    ADD_TO_TABLE(AO),
    ADD_TO_TABLE(APO),
    ADD_TO_TABLE(AROON),

@@ -1160,6 +1160,65 @@ fn legs_ADXR(r: &mut Report) {
     r.legs_done("ADXR", 3);
 }
 
+const V_ALMA: &[(&str, i32, f64, f64)] = &[
+    ("defaults", i32::MIN, Core::REAL_DEFAULT, Core::REAL_DEFAULT),
+    ("minimums", 1i32, 0.01f64, 0.0f64),
+];
+
+fn sub_ALMA(r: &mut Report) {
+    let core = Core::new();
+    for &(label, optInTimePeriod, optInSigma, optInOffset) in V_ALMA {
+        let Ok(lb) = core.alma_lookback(optInTimePeriod, optInSigma, optInOffset) else { continue; };
+        r.control("ALMA", label, run(|| {
+            let inReal: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.alma_impl(0, lb, &inReal, optInTimePeriod, optInSigma, optInOffset, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+        if lb < 1 { r.no_quiet_range("ALMA", label); continue; }
+        r.quiet("ALMA", label, lb, run(|| {
+            let inReal: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.alma_impl(0, lb - 1, &inReal, optInTimePeriod, optInSigma, optInOffset, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+}
+
+fn legs_ALMA(r: &mut Report) {
+    let core = Core::new();
+    let optInTimePeriod = i32::MIN;
+    let optInSigma = Core::REAL_DEFAULT;
+    let optInOffset = Core::REAL_DEFAULT;
+    let Ok(lb) = core.alma_lookback(optInTimePeriod, optInSigma, optInOffset) else { r.no_legs("ALMA"); return; };
+    let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("ALMA", run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.alma_impl(startIdx, endIdx, &inReal, optInTimePeriod, optInSigma, optInOffset, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    {
+        let inReal: Vec<f64> = Vec::with_capacity(1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("ALMA", "inReal", 0, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.alma_impl(startIdx, endIdx, &inReal, optInTimePeriod, optInSigma, optInOffset, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    r.legs_done("ALMA", 1);
+}
+
 const V_AO: &[(&str, i32, i32)] = &[
     ("defaults", i32::MIN, i32::MIN),
     ("minimums", 2i32, 2i32),
@@ -18462,6 +18521,7 @@ const PROBES: &[(&str, Probe, Probe)] = &[
     ("ADR", sub_ADR, legs_ADR),
     ("ADX", sub_ADX, legs_ADX),
     ("ADXR", sub_ADXR, legs_ADXR),
+    ("ALMA", sub_ALMA, legs_ALMA),
     ("AO", sub_AO, legs_AO),
     ("APO", sub_APO, legs_APO),
     ("AROON", sub_AROON, legs_AROON),
@@ -18710,7 +18770,7 @@ fn no_phantom_io() {
     // The corpus is the generator's, not a list kept by hand: a probe that
     // stopped being emitted is a shrinking sweep, which is the one way this
     // file can fail open.
-    assert_eq!(PROBES.len(), 219, "probe count");
+    assert_eq!(PROBES.len(), 220, "probe count");
     assert_eq!(
         PROBES.len(),
         crate::abstract_api::funcs().count(),

@@ -12,6 +12,7 @@ libta_func_la_SOURCES = ta_utility.c \
 	ta_ADR.c \
 	ta_ADX.c \
 	ta_ADXR.c \
+	ta_ALMA.c \
 	ta_AO.c \
 	ta_APO.c \
 	ta_AROON.c \

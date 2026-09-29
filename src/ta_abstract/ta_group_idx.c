@@ -49,6 +49,7 @@ extern const TA_FuncDef TA_DEF_ADOSC;
 extern const TA_FuncDef TA_DEF_ADR;
 extern const TA_FuncDef TA_DEF_ADX;
 extern const TA_FuncDef TA_DEF_ADXR;
+extern const TA_FuncDef TA_DEF_ALMA;
 extern const TA_FuncDef TA_DEF_AO;
 extern const TA_FuncDef TA_DEF_APO;
 extern const TA_FuncDef TA_DEF_AROON;
@@ -297,6 +298,7 @@ NULL };
 
 const TA_FuncDef *TA_PerGroupFunc_2[] = {
 &TA_DEF_ACCBANDS,
+&TA_DEF_ALMA,
 &TA_DEF_BBANDS,
 &TA_DEF_DEMA,
 &TA_DEF_DONCHIAN,

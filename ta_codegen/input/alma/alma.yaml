@@ -1,0 +1,35 @@
+name: ALMA
+group: Overlap Studies
+hint: Arnaud Legoux Moving Average
+flags: [overlap, stream, period1_identity]
+inputs:
+  - name: inReal
+    type: real
+optional_inputs:
+  - name: optInTimePeriod
+    type: integer
+    display_name: Time Period
+    hint: Time period
+    range: [1, 100000]
+    default: 9
+    suggested: [1, 200, 1]
+  - name: optInSigma
+    type: real
+    display_name: Sigma
+    hint: Gaussian width divisor
+    range: [0.01, TA_REAL_MAX]
+    default: 6
+    precision: 2
+    suggested: [1, 20, 0.5]
+  - name: optInOffset
+    type: real
+    display_name: Offset
+    hint: Position of the peak weight
+    range: [0, 1]
+    default: 0.85
+    precision: 2
+    suggested: [0, 1, 0.05]
+outputs:
+  - name: outReal
+    type: real
+    flags: [line]

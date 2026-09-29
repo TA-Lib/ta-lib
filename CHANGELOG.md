@@ -13,6 +13,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 - `find_package(ta-lib CONFIG)` now works against a CMake install and provides the `ta-lib::ta-lib`
   target. An autotools install still provides `ta-lib.pc` only. (#422)
 - New TA Functions:
+  - ALMA: Arnaud Legoux Moving Average, a Gaussian-weighted window with an adjustable peak (#475)
   - ASI: Wilder Accumulative Swing Index, the running total of SI (#451)
   - BBW: Bollinger BandWidth, the band spread as a percentage of the middle band (#447)
   - CG: Center of Gravity Oscillator, Ehlers' balance point of the window (#450)

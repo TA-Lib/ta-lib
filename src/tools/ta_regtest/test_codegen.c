@@ -1913,7 +1913,7 @@ static TA_RangeStability stability_class(const TA_FuncInfo *funcInfo)
         /* comparison-selected window extrema (cached min/max, no FP accumulation) */
         "MIN", "MAX", "MINMAX", "MIDPOINT", "MIDPRICE", "WILLR", "AROON", "AROONOSC",
         /* fresh per-bar rescan (window re-summed in bar-absolute order each output) */
-        "AVGDEV",
+        "AVGDEV", "ALMA",
         /* running sums held exactly, so no rounding is carried across bars */
         "CG",
         /* fresh per-bar rescan, integer count -- no FP total carried across bars */
@@ -6586,7 +6586,7 @@ void codegen_hash_report(const char *who, TA_RetCode goldRc, int goldBeg,
  * sqrt/ceil/floor users (IEEE correctly-rounded) — stays bit-identical across
  * languages. Source-derived from a grep of ta_codegen/input. ---- */
 static const char *const CODEGEN_TRANSCENDENTAL[] = {
-    "ACOS", "ASIN", "ATAN", "CHOP", "CHOPTR", "COS", "COSH", "EXP", "FRAMA",
+    "ACOS", "ALMA", "ASIN", "ATAN", "CHOP", "CHOPTR", "COS", "COSH", "EXP", "FRAMA",
     "HT_DCPERIOD", "HT_DCPHASE", "HT_PHASOR", "HT_SINE", "HT_TRENDLINE",
     "HT_TRENDMODE", "LINEARREG_ANGLE", "LN", "LOG10", "MAMA",
     "SIN", "SINH", "TAN", "TANH",

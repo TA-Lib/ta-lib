@@ -35,6 +35,7 @@
 #include "ta_ADR.c"
 #include "ta_ADX.c"
 #include "ta_ADXR.c"
+#include "ta_ALMA.c"
 #include "ta_AO.c"
 #include "ta_APO.c"
 #include "ta_AROON.c"
@@ -490,6 +491,22 @@ static void bench_all(const char *filter, int iters) {
             g_sink += g_outBuf0[0];
         }
         printf("ADXR %lld\n", best / iters);
+        fflush(stdout);
+    }
+    if( func_matches(filter, "ALMA") ) {
+        long long best = 0;
+        for( int pass = 0; pass < 3; pass++ ) {
+            int outBegIdx, outNBElement;
+            long long t0 = get_nanotime();
+            for( int it = 0; it < iters; it++ ) {
+                TA_ALMA(0, g_nPoints - 1, g_close, 9, 6.000000000000000, 0.850000000000000, &outBegIdx, &outNBElement, g_outBuf0);
+            }
+            long long elapsed = get_nanotime() - t0;
+            if( !best || elapsed < best ) best = elapsed;
+            g_sink += outNBElement;
+            g_sink += g_outBuf0[0];
+        }
+        printf("ALMA %lld\n", best / iters);
         fflush(stdout);
     }
     if( func_matches(filter, "AO") ) {

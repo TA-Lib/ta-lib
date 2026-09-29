@@ -4,7 +4,7 @@ format 9
 soname libta-lib.so.1
 version-info 3:0:2
 headers ta_abstract.h ta_common.h ta_defs.h ta_func.h ta_libc.h
-function-count 2667
+function-count 2679
 platform pointer=8 long=8 int=4 enum=4
 type TA_FuncInfo sizeof=48 name:const_char_*=0 group:const_char_*=8 hint:const_char_*=16 flags:TA_FuncFlags=24 nbInput:unsigned_int=28 nbOptInput:unsigned_int=32 nbOutput:unsigned_int=36 handle:const_TA_FuncHandle_*=40
 type TA_InputParameterInfo sizeof=24 type:TA_InputParameterType=0 paramName:const_char_*=8 flags:TA_InputFlags=16
@@ -267,6 +267,16 @@ function TA_RetCode TA_AD_OutRange(const TA_AD_Stream *, int *, int *)
 function TA_RetCode TA_AD_Peek(const TA_AD_Stream *, double, double, double, double, double *)
 function TA_RetCode TA_AD_Update(TA_AD_Stream *, double, double, double, double, double *)
 function TA_RetCode TA_AD_Value(const TA_AD_Stream *, double *)
+function TA_RetCode TA_ALMA(int, int, const double *, int, double, double, int *, int *, double *)
+function TA_RetCode TA_ALMA_Advance(TA_ALMA_Stream *)
+function TA_RetCode TA_ALMA_Clone(const TA_ALMA_Stream *, TA_ALMA_Stream **)
+function TA_RetCode TA_ALMA_Close(TA_ALMA_Stream *)
+function TA_RetCode TA_ALMA_Open(TA_ALMA_Stream **, const double *, int, int, double, double, double *)
+function TA_RetCode TA_ALMA_OpenAndFill(TA_ALMA_Stream **, const double *, int, int, double, double, int *, int *, double *)
+function TA_RetCode TA_ALMA_OutRange(const TA_ALMA_Stream *, int *, int *)
+function TA_RetCode TA_ALMA_Peek(const TA_ALMA_Stream *, double, double *)
+function TA_RetCode TA_ALMA_Update(TA_ALMA_Stream *, double, double *)
+function TA_RetCode TA_ALMA_Value(const TA_ALMA_Stream *, double *)
 function TA_RetCode TA_AO(int, int, const double *, const double *, int, int, int *, int *, double *)
 function TA_RetCode TA_AO_Advance(TA_AO_Stream *)
 function TA_RetCode TA_AO_Clone(const TA_AO_Stream *, TA_AO_Stream **)
@@ -2172,6 +2182,7 @@ function TA_RetCode TA_S_ADOSC(int, int, const float *, const float *, const flo
 function TA_RetCode TA_S_ADR(int, int, const float *, const float *, int, int *, int *, double *)
 function TA_RetCode TA_S_ADX(int, int, const float *, const float *, const float *, int, int *, int *, double *)
 function TA_RetCode TA_S_ADXR(int, int, const float *, const float *, const float *, int, int *, int *, double *)
+function TA_RetCode TA_S_ALMA(int, int, const float *, int, double, double, int *, int *, double *)
 function TA_RetCode TA_S_AO(int, int, const float *, const float *, int, int, int *, int *, double *)
 function TA_RetCode TA_S_APO(int, int, const float *, int, int, TA_MAType, int *, int *, double *)
 function TA_RetCode TA_S_AROON(int, int, const float *, const float *, int, int *, int *, double *, double *)
@@ -2631,6 +2642,7 @@ function int TA_ADR_Lookback(int)
 function int TA_ADXR_Lookback(int)
 function int TA_ADX_Lookback(int)
 function int TA_AD_Lookback(void)
+function int TA_ALMA_Lookback(int, double, double)
 function int TA_AO_Lookback(int, int)
 function int TA_APO_Lookback(int, int, TA_MAType)
 function int TA_AROONOSC_Lookback(int)

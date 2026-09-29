@@ -585,6 +585,57 @@ static void icount_ADXR(int iters) {
     g_sink += acc + outNBElement;
 }
 
+static void icount_ALMA(int iters) {
+    const char *nm = "ALMA";
+    int outBegIdx = 0, outNBElement = 0;
+    double acc = 0.0;
+    TA_RetCode rc;
+    TA_ALMA_Stream *st = NULL;
+    TA_ALMA_Stream *stf = NULL;
+    double v0 = 0.0;
+
+    ICOUNT_ZERO();
+    rc = TA_ALMA(0, g_nPoints - 1, g_close, 9, 6.000000000000000, 0.850000000000000, &outBegIdx, &outNBElement, g_outBuf0);
+    ICOUNT_DUMP("ALMA/batch");
+    icount_row(nm, "batch", 1, rc);
+    acc += g_outBuf0[0];
+
+    ICOUNT_ZERO();
+    rc = TA_ALMA_OpenAndFill(&stf, g_close, g_nPoints, 9, 6.000000000000000, 0.850000000000000, &outBegIdx, &outNBElement, g_outBuf0);
+    ICOUNT_DUMP("ALMA/openfill");
+    icount_row(nm, "openfill", 1, rc);
+    acc += g_outBuf0[0];
+    if( stf ) TA_ALMA_Close(stf);
+
+    ICOUNT_ZERO();
+    rc = TA_ALMA_Open(&st, g_close, g_nPoints, 9, 6.000000000000000, 0.850000000000000, &v0);
+    ICOUNT_DUMP("ALMA/open");
+    icount_row(nm, "open", 1, rc);
+
+    if( rc == TA_SUCCESS && st ) {
+        TA_RetCode src = TA_SUCCESS;
+        ICOUNT_ZERO();
+        for( int it = 0; it < iters; it++ ) {
+            src = TA_ALMA_Update(st, g_close[it & ICOUNT_MASK], &v0);
+            acc += v0;
+        }
+        ICOUNT_DUMP("ALMA/update");
+        icount_row(nm, "update", 1, src);
+        ICOUNT_ZERO();
+        for( int it = 0; it < iters; it++ ) {
+            src = TA_ALMA_Peek(st, g_close[it & ICOUNT_MASK], &v0);
+            acc += v0;
+        }
+        ICOUNT_DUMP("ALMA/peek");
+        icount_row(nm, "peek", 1, src);
+    } else {
+        icount_row(nm, "update", 0, rc);
+        icount_row(nm, "peek", 0, rc);
+    }
+    if( st ) TA_ALMA_Close(st);
+    g_sink += acc + outNBElement;
+}
+
 static void icount_AO(int iters) {
     const char *nm = "AO";
     int outBegIdx = 0, outNBElement = 0;
@@ -11465,6 +11516,7 @@ static void icount_all(const char *filter, int iters) {
     if( func_matches(filter, "ADR") ) { icount_ADR(iters); fflush(stdout); }
     if( func_matches(filter, "ADX") ) { icount_ADX(iters); fflush(stdout); }
     if( func_matches(filter, "ADXR") ) { icount_ADXR(iters); fflush(stdout); }
+    if( func_matches(filter, "ALMA") ) { icount_ALMA(iters); fflush(stdout); }
     if( func_matches(filter, "AO") ) { icount_AO(iters); fflush(stdout); }
     if( func_matches(filter, "APO") ) { icount_APO(iters); fflush(stdout); }
     if( func_matches(filter, "AROON") ) { icount_AROON(iters); fflush(stdout); }

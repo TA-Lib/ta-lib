@@ -111,6 +111,11 @@ const ANNOTATED: &[(&str, &str, &str, &str)] = &[
     ("HT_SINE", "smoothPeriod", "period clamped to [6,50] before the combination", ""),
     ("HT_TRENDMODE", "smoothPeriod", "period clamped to [6,50] before the combination", ""),
 
+    // Every term is an exp(), and the one at j == m is exp(-0.0) == 1.0 exactly, so
+    // norm >= 1. That needs the squared width to stay non-zero: sigma's upper bound
+    // TA_REAL_MAX keeps it above 1e-75, and it only underflows past sigma ~1e162.
+    ("ALMA", "norm", "the j == m term is exp(-0.0) == 1.0 and every other term is >= 0", ""),
+
 
     // Unguarded BY DECISION, not by oversight. `vwma.c` divides by the rolling
     // volume sum with no test, and `vwma.yaml` declares `nan_inf_output` to say so --

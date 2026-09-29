@@ -942,6 +942,7 @@ static ErrorNumber testTAFunction_ALL( void )
    DO_TEST( test_func_frama,     "FRAMA" );
    DO_TEST( test_func_mcgd,      "MCGD" );
    DO_TEST( test_func_vidya,     "VIDYA" );
+   DO_TEST( test_func_alma,      "ALMA" );
    DO_TEST( test_func_fractal,   "FRACTAL" );
    DO_TEST( test_func_ha,        "HA" );
    DO_TEST( test_func_tsi,       "TSI" );

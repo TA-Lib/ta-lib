@@ -60,6 +60,8 @@ pub enum FuncId {
     ADX,
     /// Average Directional Movement Index Rating — [`Core::adxr`](crate::Core::adxr).
     ADXR,
+    /// Arnaud Legoux Moving Average — [`Core::alma`](crate::Core::alma).
+    ALMA,
     /// Awesome Oscillator — [`Core::ao`](crate::Core::ao).
     AO,
     /// Absolute Price Oscillator — [`Core::apo`](crate::Core::apo).
@@ -484,7 +486,7 @@ pub enum FuncId {
 
 impl FuncId {
     /// Number of functions in the registry.
-    pub const COUNT: usize = 219;
+    pub const COUNT: usize = 220;
     /// Metadata for this function (O(1) index into the const table).
     #[inline] pub fn info(self) -> &'static FuncInfo { &FUNC_TABLE[self as usize] }
     /// Upper-case TA name, e.g. "RSI".
@@ -811,7 +813,7 @@ impl FuncInfo {
 
 /// Backing storage for [`FUNCS`], indexed by [`FuncId`]. Link-time const, in
 /// `.rodata`. Private, so its length is nobody's business but this module's.
-static FUNC_TABLE: [FuncInfo; 219] = [
+static FUNC_TABLE: [FuncInfo; 220] = [
     FuncInfo {
         id: FuncId::AC,
         name: "AC",
@@ -908,6 +910,17 @@ static FUNC_TABLE: [FuncInfo; 219] = [
         flags: FuncFlags(0x02000000),
         inputs: &[InputInfo { param_name: "inPriceHLC", kind: InputType::Price, flags: InputFlags(0x0000000e) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 14, suggested: (4, 200, 1) } }, ],
+        outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        unst_id: None,
+    },
+    FuncInfo {
+        id: FuncId::ALMA,
+        name: "ALMA",
+        group: Group::OverlapStudies,
+        hint: "Arnaud Legoux Moving Average",
+        flags: FuncFlags(0x03000001),
+        inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 9, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInSigma", display_name: "Sigma", hint: "Gaussian width divisor", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 0.01, max: 3e37, precision: 2, default: 6.0, suggested: (1.0, 20.0, 0.5) } }, OptInputInfo { param_name: "optInOffset", display_name: "Offset", hint: "Position of the peak weight", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 0.0, max: 1.0, precision: 2, default: 0.85, suggested: (0.0, 1.0, 0.05) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
         unst_id: None,
     },
@@ -3248,6 +3261,7 @@ fn get_func_handle_exact(name: &str) -> Option<FuncId> {
         "ADR" => FuncId::ADR,
         "ADX" => FuncId::ADX,
         "ADXR" => FuncId::ADXR,
+        "ALMA" => FuncId::ALMA,
         "AO" => FuncId::AO,
         "APO" => FuncId::APO,
         "AROON" => FuncId::AROON,
@@ -3724,6 +3738,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::ADR => self.core.adr_lookback(self.int_opt[0]),
             FuncId::ADX => self.core.adx_lookback(self.int_opt[0]),
             FuncId::ADXR => self.core.adxr_lookback(self.int_opt[0]),
+            FuncId::ALMA => self.core.alma_lookback(self.int_opt[0], self.real_opt[1], self.real_opt[2]),
             FuncId::AO => self.core.ao_lookback(self.int_opt[0], self.int_opt[1]),
             FuncId::APO => self.core.apo_lookback(self.int_opt[0], self.int_opt[1], MAType::try_from(self.int_opt[2])?),
             FuncId::AROON => self.core.aroon_lookback(self.int_opt[0]),
@@ -4073,6 +4088,16 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 let res = self.core.adxr(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut *o0);
+                self.real_out[0] = Some(o0);
+                match res {
+                    Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
+                    Err(e) => e,
+                }
+            }
+            FuncId::ALMA => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let res = self.core.alma(start_idx, end_idx, i0, self.int_opt[0], self.real_opt[1], self.real_opt[2], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }

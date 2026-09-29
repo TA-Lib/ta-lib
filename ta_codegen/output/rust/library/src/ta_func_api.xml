@@ -442,6 +442,77 @@
 	</FinancialFunction>
 
 
+	<!-- ALMA -->
+	<FinancialFunction>
+		<Abbreviation>ALMA</Abbreviation>
+		<ShortDescription>Arnaud Legoux Moving Average</ShortDescription>
+		<GroupId>Overlap Studies</GroupId>
+		<Flags>
+			<Flag>Overlap</Flag>
+			<Flag>Streaming</Flag>
+			<Flag>Period 1 Identity</Flag>
+		</Flags>
+		<RequiredInputArguments>
+			<RequiredInputArgument>
+				<Type>Double Array</Type>
+				<Name>inReal</Name>
+			</RequiredInputArgument>
+		</RequiredInputArguments>
+		<OptionalInputArguments>
+			<OptionalInputArgument>
+				<Name>Time Period</Name>
+				<ShortDescription>Time period</ShortDescription>
+				<Type>Integer</Type>
+				<Range>
+					<Minimum>1</Minimum>
+					<Maximum>100000</Maximum>
+					<SuggestedStart>1</SuggestedStart>
+					<SuggestedEnd>200</SuggestedEnd>
+					<SuggestedIncrement>1</SuggestedIncrement>
+				</Range>
+				<DefaultValue>9</DefaultValue>
+			</OptionalInputArgument>
+			<OptionalInputArgument>
+				<Name>Sigma</Name>
+				<ShortDescription>Gaussian width divisor</ShortDescription>
+				<Type>Double</Type>
+				<Range>
+					<Minimum>1.000000e-2</Minimum>
+					<Maximum>3.000000e+37</Maximum>
+					<Precision>2</Precision>
+					<SuggestedStart>1.000000e+0</SuggestedStart>
+					<SuggestedEnd>2.000000e+1</SuggestedEnd>
+					<SuggestedIncrement>5.000000e-1</SuggestedIncrement>
+				</Range>
+				<DefaultValue>6.000000e+0</DefaultValue>
+			</OptionalInputArgument>
+			<OptionalInputArgument>
+				<Name>Offset</Name>
+				<ShortDescription>Position of the peak weight</ShortDescription>
+				<Type>Double</Type>
+				<Range>
+					<Minimum>0.000000e+0</Minimum>
+					<Maximum>1.000000e+0</Maximum>
+					<Precision>2</Precision>
+					<SuggestedStart>0.000000e+0</SuggestedStart>
+					<SuggestedEnd>1.000000e+0</SuggestedEnd>
+					<SuggestedIncrement>5.000000e-2</SuggestedIncrement>
+				</Range>
+				<DefaultValue>8.500000e-1</DefaultValue>
+			</OptionalInputArgument>
+		</OptionalInputArguments>
+		<OutputArguments>
+			<OutputArgument>
+				<Type>Double Array</Type>
+				<Name>outReal</Name>
+				<Flags>
+					<Flag>Line</Flag>
+				</Flags>
+			</OutputArgument>
+		</OutputArguments>
+	</FinancialFunction>
+
+
 	<!-- AO -->
 	<FinancialFunction>
 		<Abbreviation>AO</Abbreviation>

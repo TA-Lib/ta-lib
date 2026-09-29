@@ -123,6 +123,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
             MakeAdr(),
             MakeAdx(),
             MakeAdxr(),
+            MakeAlma(),
             MakeAo(),
             MakeApo(),
             MakeAroon(),
@@ -578,6 +579,31 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         invoke: static (core, c, startIdx, endIdx) =>
             core.Adxr(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.RealOut(0)));
+
+    private static FuncInfo MakeAlma() => new(
+        name: "ALMA",
+        group: FunctionGroup.OverlapStudies,
+        hint: "Arnaud Legoux Moving Average",
+        flags: FuncFlags.Overlap | FuncFlags.Stream | FuncFlags.Period1Identity,
+        unstableId: null,
+        inputs:
+        [
+            new InputInfo(InputKind.Real, "inReal", PriceComponents.None, []),
+        ],
+        optInputs:
+        [
+            new OptInputInfo("optInTimePeriod", "Time Period", "Time period", OptInputFlags.None, new OptInputDomain.IntegerRange(1, 100000, 9, 1, 200, 1)),
+            new OptInputInfo("optInSigma", "Sigma", "Gaussian width divisor", OptInputFlags.None, new OptInputDomain.RealRange(0.01, 3e37, 2, 6.0, 1.0, 20.0, 0.5)),
+            new OptInputInfo("optInOffset", "Offset", "Position of the peak weight", OptInputFlags.None, new OptInputDomain.RealRange(0.0, 1.0, 2, 0.85, 0.0, 1.0, 0.05)),
+        ],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+        ],
+        lookback: static (core, c) => core.AlmaLookback(c.IntOpt(0), c.RealOpt(1), c.RealOpt(2)),
+        invoke: static (core, c, startIdx, endIdx) =>
+            core.Alma(
+                startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOpt(1), c.RealOpt(2), c.RealOut(0)));
 
     private static FuncInfo MakeAo() => new(
         name: "AO",

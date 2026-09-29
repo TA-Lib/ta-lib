@@ -7,6 +7,7 @@ ADOSC               Chaikin A/D Oscillator
 ADR                 Average Day Range
 ADX                 Average Directional Movement Index
 ADXR                Average Directional Movement Index Rating
+ALMA                Arnaud Legoux Moving Average
 AO                  Awesome Oscillator
 APO                 Absolute Price Oscillator
 AROON               Aroon

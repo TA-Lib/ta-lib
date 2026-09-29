@@ -128,6 +128,15 @@ TA_RetCode TA_ADXR_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_ADXR_FramePPLB( const TA_ParamHolderPriv *params )
 ;
 
+TA_RetCode TA_ALMA_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+;
+unsigned int TA_ALMA_FramePPLB( const TA_ParamHolderPriv *params )
+;
+
 TA_RetCode TA_AO_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

@@ -882,6 +882,104 @@ TA_LIB_API TA_RetCode TA_ADXR_Advance( TA_ADXR_Stream *stream );
 TA_LIB_API TA_RetCode TA_ADXR_Clone( const TA_ADXR_Stream *stream, TA_ADXR_Stream **clone );
 
 /*
+ * TA_ALMA - Arnaud Legoux Moving Average
+ * 
+ * Input  = double
+ * Output = double
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod:(From 1 to 100000)
+ *    Time period
+ * 
+ * optInSigma:(From 0.01 to 30000000000000000000000000000000000000)
+ *    Gaussian width divisor
+ * 
+ * optInOffset:(From 0 to 1)
+ *    Position of the peak weight
+ * 
+ * 
+ */
+TA_LIB_API TA_RetCode TA_ALMA( int    startIdx,
+                               int    endIdx,
+                                          const double inReal[],
+                                          int           optInTimePeriod, /* From 1 to 100000 */
+                                          double        optInSigma, /* From 0.01 to 30000000000000000000000000000000000000 */
+                                          double        optInOffset, /* From 0 to 1 */
+                                          int          *outBegIdx,
+                                          int          *outNBElement,
+                                          double        outReal[] );
+
+TA_LIB_API TA_RetCode TA_S_ALMA( int    startIdx,
+                                 int    endIdx,
+                                            const float  inReal[],
+                                            int           optInTimePeriod, /* From 1 to 100000 */
+                                            double        optInSigma, /* From 0.01 to 30000000000000000000000000000000000000 */
+                                            double        optInOffset, /* From 0 to 1 */
+                                            int          *outBegIdx,
+                                            int          *outNBElement,
+                                            double        outReal[] );
+
+TA_LIB_API int TA_ALMA_Lookback( int           optInTimePeriod, /* From 1 to 100000 */
+                                          double        optInSigma, /* From 0.01 to 30000000000000000000000000000000000000 */
+                                          double        optInOffset );  /* From 0 to 1 */
+
+
+
+/*
+ * Streaming API for TA_ALMA: incremental per-bar evaluation.
+ */
+typedef struct TA_ALMA_Stream TA_ALMA_Stream;
+
+TA_LIB_API TA_RetCode TA_ALMA_Open( TA_ALMA_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double optInSigma, double optInOffset, double *outReal );
+
+TA_LIB_API TA_RetCode TA_ALMA_Update( TA_ALMA_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_ALMA_Peek( const TA_ALMA_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_ALMA_Close( TA_ALMA_Stream *stream );
+
+/*
+ * OpenAndFill: like Open, but a single pass ALSO fills the caller's arrays
+ * with the whole warm-up history. The fill is bit-identical to
+ * TA_ALMA( 0, historyLen-1, ... ).
+ */
+TA_LIB_API TA_RetCode TA_ALMA_OpenAndFill( TA_ALMA_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double optInSigma, double optInOffset, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
+ * Value: the value(s) at the last bar the stream counted (the bar
+ * TA_ALMA_OutRange ends on), without recomputing. Seeded by Open, refreshed by
+ * every accepted Update, left alone by Peek.
+ */
+TA_LIB_API TA_RetCode TA_ALMA_Value( const TA_ALMA_Stream *stream, double *outReal );
+
+/*
+ * OutRange: the bars this stream has an output for, in the input series'
+ * coordinates. That is [*outBegIdx, *outBegIdx + *outNBElement), the range
+ * TA_ALMA reports over the same bars. Open seeds it; every accepted Update and every
+ * TA_ALMA_Advance adds one; a rejected Update and a Peek change nothing. The
+ * last bar it can reach is TA_INDEX_MAX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
+ */
+TA_LIB_API TA_RetCode TA_ALMA_OutRange( const TA_ALMA_Stream *stream, int *outBegIdx, int *outNBElement );
+
+/*
+ * Advance: count one bar this stream was not fed (one an Update rejected and
+ * that will not be re-fed, or a session with no print). The range moves by one
+ * and nothing else does, so TA_ALMA_Value keeps answering the previous output,
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_INDEX_MAX.
+ */
+TA_LIB_API TA_RetCode TA_ALMA_Advance( TA_ALMA_Stream *stream );
+
+/*
+ * Clone: fork the stream. The fork is an independent stream at the same bar,
+ * owning its own copy of everything the original owns. Both must be closed.
+ * The fork carries the value and the range verbatim.
+ */
+TA_LIB_API TA_RetCode TA_ALMA_Clone( const TA_ALMA_Stream *stream, TA_ALMA_Stream **clone );
+
+/*
  * TA_AO - Awesome Oscillator
  * 
  * Input  = High, Low

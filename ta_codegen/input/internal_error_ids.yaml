@@ -18,7 +18,7 @@
 # Written by `ta_codegen generate`. Do not renumber by hand -- the number is
 # the only thing a bug report carries, and it has to mean the same guard in the
 # next release as it did in the last.
-next: 459
+next: 462
 sites:
   AC.cbsize.oscBuffer: 184
   AC.circbuf.oscBuffer: 181
@@ -26,6 +26,9 @@ sites:
   AC.ringcap.trailingSlowIdx: 183
   ACCBANDS.ringcap.trailingIdx: 185
   ADR.ringcap.trailingIdx: 407
+  ALMA.cbsize.weights: 461
+  ALMA.circbuf.weights: 459
+  ALMA.wincap.j: 460
   AO.ringcap.trailingFastIdx: 186
   AO.ringcap.trailingSlowIdx: 187
   AROON.extrema: 188

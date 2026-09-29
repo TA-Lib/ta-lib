@@ -7483,6 +7483,900 @@ class Core {
           MInteger outNBElement = new MInteger();
           return adxrOpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
        }
+    /* Arnaud Legoux Moving Average, created by Arnaud Legoux and Dimitris
+     * Kouzis-Loukas: "ALMA; In search for the perfect Moving Average", 2009,
+     * https://web.archive.org/web/20110904091012/www.arnaudlegoux.com/wp-content/uploads/2011/03/ALMA-Arnaud-Legoux-Moving-Average.pdf
+     *
+     * List of contributors:
+     *
+     *  Initial  Name/description
+     *  -------------------------------------------------------------------
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
+     *
+     * Change history:
+     *
+     *  MMDDYY BY     Description
+     *  -------------------------------------------------------------------
+     *  092926 MF,CC  First version (issue #475).
+     */
+
+    /* Using alma_ALT1 for TA_ALT={BATCH,ALL_LANGUAGES} */
+
+       /**
+        * Number of leading input bars {@link Core#alma} consumes before it can
+        * produce its first value.
+        * <p>Equivalently, the index of the first bar with a value when the whole
+        * series is requested. Feed at least {@code lookback + 1} bars to get any
+        * output.
+        *
+        * @param optInTimePeriod Number of bars in the window (default 9; range
+        *        1..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInSigma Divides the period to give the Gaussian's width in bars
+        *        (default 6; minimum 0.01; {@link Core#REAL_DEFAULT} selects the default).
+        * @param optInOffset Position of the peak weight, 0 at the oldest bar and 1
+        *        at the newest (default 0.85; range 0..1; {@link Core#REAL_DEFAULT} selects
+        *        the default).
+        * @return The lookback, or {@code -1} if a parameter is out of range.
+        */
+       public int almaLookback( int optInTimePeriod, double optInSigma, double optInOffset )
+       {
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 9;
+          } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
+             return -1;
+          }
+          if( optInSigma == REAL_DEFAULT ) {
+             optInSigma = 6e0;
+          } else if( !(optInSigma >= 1e-2 && optInSigma <= REAL_MAX) ) {
+             return -1;
+          }
+          if( optInOffset == REAL_DEFAULT ) {
+             optInOffset = 8.5e-1;
+          } else if( !(optInOffset >= 0e0 && optInOffset <= 1e0) ) {
+             return -1;
+          }
+          return optInTimePeriod - 1 ;
+
+       }
+       RetCode almaImpl( int startIdx,
+                         int endIdx,
+                         double inReal[],
+                         int optInTimePeriod,
+                         double optInSigma,
+                         double optInOffset,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
+       {
+          double sum = 0;
+          double s = 0;
+          double twoSSq = 0;
+          double d = 0;
+          double norm = 0;
+          double wj = 0;
+          double s0 = 0;
+          double s1 = 0;
+          double s2 = 0;
+          double s3 = 0;
+          int lookbackTotal = 0;
+          int outIdx = 0;
+          int i = 0;
+          int j = 0;
+          int w = 0;
+          int m = 0;
+          int b = 0;
+          double[] weights;
+          int weights_Idx = 0;
+          int maxIdx_weights = (30)-1;
+          if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX ;
+          }
+          if( (endIdx < 0) || (endIdx > INDEX_MAX) || (endIdx < startIdx)) {
+             return RetCode.OUT_OF_RANGE_END_INDEX ;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 9;
+          } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInSigma == REAL_DEFAULT ) {
+             optInSigma = 6e0;
+          } else if( !(optInSigma >= 1e-2 && optInSigma <= REAL_MAX) ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInOffset == REAL_DEFAULT ) {
+             optInOffset = 8.5e-1;
+          } else if( !(optInOffset >= 0e0 && optInOffset <= 1e0) ) {
+             return RetCode.BAD_PARAM;
+          }
+          /* Filled once and read as a plain array. */
+          lookbackTotal = optInTimePeriod - 1;
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.SUCCESS ;
+          }
+          /* A dot product seeded with 0.0 would turn a -0.0 input into +0.0. */
+          if( optInTimePeriod == 1 ) {
+             outBegIdx.value = startIdx;
+             outNBElement.value = endIdx - startIdx + 1;
+             i = startIdx;
+             for( outIdx = 0; outIdx < (int)outNBElement.value; outIdx += 1 ) {
+                outReal[outIdx] = inReal[i++];
+             }
+             return RetCode.SUCCESS ;
+          }
+          if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
+          weights = new double[optInTimePeriod];
+          maxIdx_weights = (optInTimePeriod)-1;
+          weights_Idx = 0;
+          /* The expression order is the spec: it is what makes the output bitwise
+           * equal to Tulip's beta/alma.c. Keep the floor in binary64 and (j-m) squared
+           * in double (an int square overflows at large periods).
+           */
+          m = (int)Math.floor(optInOffset * (double)lookbackTotal);
+          s = (double)optInTimePeriod / optInSigma;
+          twoSSq = 2.0 * s * s;
+          norm = 0.0;
+          for( j = 0; j < optInTimePeriod; j += 1 ) {
+             d = (double)(j - m);
+             weights[j] = Math.exp(-(d * d) / twoSSq);
+             norm += weights[j];
+          }
+          for( j = 0; j < optInTimePeriod; j += 1 ) {
+             weights[j] = weights[j] / norm;
+          }
+          /* 4 bars per pass, each with its own accumulator summed in the same
+           * order as the base: the same bits, with 4 independent add chains in
+           * flight instead of one. Every window of a pass is read before any of its
+           * outputs is written, and the next pass reads past them, so outReal may
+           * alias inReal.
+           */
+          outIdx = 0;
+          i = startIdx;
+          while( i + 3 <= endIdx ) {
+             s0 = 0.0;
+             s1 = 0.0;
+             s2 = 0.0;
+             s3 = 0.0;
+             b = i - lookbackTotal;
+             for( j = 0; j < optInTimePeriod; j += 1 ) {
+                wj = weights[j];
+                s0 += wj * inReal[b];
+                s1 += wj * inReal[b + 1];
+                s2 += wj * inReal[b + 2];
+                s3 += wj * inReal[b + 3];
+                b += 1;
+             }
+             outReal[outIdx] = s0;
+             outReal[outIdx + 1] = s1;
+             outReal[outIdx + 2] = s2;
+             outReal[outIdx + 3] = s3;
+             outIdx += 4;
+             i += 4;
+          }
+          while( i <= endIdx ) {
+             sum = 0.0;
+             w = 0;
+             for( j = i - lookbackTotal; j <= i; j += 1 ) {
+                sum += weights[w] * inReal[j];
+                w += 1;
+             }
+             outReal[outIdx] = sum;
+             outIdx += 1;
+             i += 1;
+          }
+          outNBElement.value = outIdx;
+          outBegIdx.value = startIdx;
+          return RetCode.SUCCESS ;
+       }
+       RetCode almaImpl( int startIdx,
+                         int endIdx,
+                         float inReal[],
+                         int optInTimePeriod,
+                         double optInSigma,
+                         double optInOffset,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
+       {
+          double sum = 0;
+          double s = 0;
+          double twoSSq = 0;
+          double d = 0;
+          double norm = 0;
+          double wj = 0;
+          double s0 = 0;
+          double s1 = 0;
+          double s2 = 0;
+          double s3 = 0;
+          int lookbackTotal = 0;
+          int outIdx = 0;
+          int i = 0;
+          int j = 0;
+          int w = 0;
+          int m = 0;
+          int b = 0;
+          double[] weights;
+          int weights_Idx = 0;
+          int maxIdx_weights = (30)-1;
+          if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX ;
+          }
+          if( (endIdx < 0) || (endIdx > INDEX_MAX) || (endIdx < startIdx)) {
+             return RetCode.OUT_OF_RANGE_END_INDEX ;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 9;
+          } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInSigma == REAL_DEFAULT ) {
+             optInSigma = 6e0;
+          } else if( !(optInSigma >= 1e-2 && optInSigma <= REAL_MAX) ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInOffset == REAL_DEFAULT ) {
+             optInOffset = 8.5e-1;
+          } else if( !(optInOffset >= 0e0 && optInOffset <= 1e0) ) {
+             return RetCode.BAD_PARAM;
+          }
+          lookbackTotal = optInTimePeriod - 1;
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.SUCCESS ;
+          }
+          if( optInTimePeriod == 1 ) {
+             outBegIdx.value = startIdx;
+             outNBElement.value = endIdx - startIdx + 1;
+             i = startIdx;
+             for( outIdx = 0; outIdx < (int)outNBElement.value; outIdx += 1 ) {
+                outReal[outIdx] = (double)inReal[i++];
+             }
+             return RetCode.SUCCESS ;
+          }
+          if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
+          weights = new double[optInTimePeriod];
+          maxIdx_weights = (optInTimePeriod)-1;
+          weights_Idx = 0;
+          m = (int)Math.floor(optInOffset * (double)lookbackTotal);
+          s = (double)optInTimePeriod / optInSigma;
+          twoSSq = 2.0 * s * s;
+          norm = 0.0;
+          for( j = 0; j < optInTimePeriod; j += 1 ) {
+             d = (double)(j - m);
+             weights[j] = Math.exp(-(d * d) / twoSSq);
+             norm += weights[j];
+          }
+          for( j = 0; j < optInTimePeriod; j += 1 ) {
+             weights[j] = weights[j] / norm;
+          }
+          outIdx = 0;
+          i = startIdx;
+          while( i + 3 <= endIdx ) {
+             s0 = 0.0;
+             s1 = 0.0;
+             s2 = 0.0;
+             s3 = 0.0;
+             b = i - lookbackTotal;
+             for( j = 0; j < optInTimePeriod; j += 1 ) {
+                wj = weights[j];
+                s0 += wj * (double)inReal[b];
+                s1 += wj * (double)inReal[b + 1];
+                s2 += wj * (double)inReal[b + 2];
+                s3 += wj * (double)inReal[b + 3];
+                b += 1;
+             }
+             outReal[outIdx] = s0;
+             outReal[outIdx + 1] = s1;
+             outReal[outIdx + 2] = s2;
+             outReal[outIdx + 3] = s3;
+             outIdx += 4;
+             i += 4;
+          }
+          while( i <= endIdx ) {
+             sum = 0.0;
+             w = 0;
+             for( j = i - lookbackTotal; j <= i; j += 1 ) {
+                sum += weights[w] * (double)inReal[j];
+                w += 1;
+             }
+             outReal[outIdx] = sum;
+             outIdx += 1;
+             i += 1;
+          }
+          outNBElement.value = outIdx;
+          outBegIdx.value = startIdx;
+          return RetCode.SUCCESS ;
+       }
+       /**
+        * Arnaud Legoux Moving Average: the last N inputs weighted by a Gaussian
+        * whose peak sits a fraction {@code offset} of the way from the oldest to
+        * the newest bar. Moving the offset toward 1 puts the peak on recent bars
+        * and cuts the lag; moving it toward 0 puts the peak on old bars and lags
+        * most. Smoothing is greatest with the peak mid-window, near 0.5. Sigma sets
+        * the width: the Gaussian's standard deviation is {@code N / sigma} bars, so
+        * a larger sigma concentrates the weight around the peak and smooths less.
+        * The weights are non-negative and sum to one, so the line stays within the
+        * range of its window, up to rounding. At the default shape and a period of
+        * 5 or more, it lags about half as much as an {@code SMA} of the same period
+        * and passes about twice its noise.
+        * <p>Formula and more info at <a
+        * href="https://ta-lib.org/functions/alma">ta-lib.org/functions/alma</a>.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>The peak is floored to a whole bar, as in the authors' code. At periods below about 5 this puts it on an older bar: at period 2 the line is almost entirely the previous bar.</li>
+        * <li>The published paper's summary formula uses a different parameterisation; this is the form of the authors' own implementation.</li>
+        * </ul>
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are; nothing
+        * outside that range is touched, and the library never pads with NaN. A
+        * valid range that ends before {@link Core#almaLookback} is a <b>success
+        * with no values</b> ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inReal Data on which to compute the average.
+        * @param optInTimePeriod Number of bars in the window (default 9; range
+        *        1..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInSigma Divides the period to give the Gaussian's width in bars
+        *        (default 6; minimum 0.01; {@link Core#REAL_DEFAULT} selects the default).
+        * @param optInOffset Position of the peak weight, 0 at the oldest bar and 1
+        *        at the newest (default 0.85; range 0..1; {@link Core#REAL_DEFAULT} selects
+        *        the default).
+        * @param outReal Arnaud Legoux Moving Average line. Must hold at least
+        *        {@code endIdx - max(startIdx, almaLookback(...)) + 1} values, the count
+        *        the call produces (none when that is not positive).
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#INDEX_MAX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. An output this function documents as declinable is the one
+        *        exception: {@code null} is how you decline it. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
+        *
+        * @see Core#wma
+        * @see Core#sma
+        * @see Core#trima
+        * @see Core#hma
+        */
+       public OutRange alma( int startIdx,
+                             int endIdx,
+                             double inReal[],
+                             int optInTimePeriod,
+                             double optInSigma,
+                             double optInOffset,
+                             double outReal[] )
+       {
+          requireIndexRange("ALMA", startIdx, endIdx);
+          int guardStart = clampedStart("ALMA", startIdx, almaLookback(optInTimePeriod, optInSigma, optInOffset));
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("ALMA", "inReal", inReal, guardInLen);
+          requireLength("ALMA", "outReal", outReal, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = almaImpl(startIdx, endIdx, inReal, optInTimePeriod, optInSigma, optInOffset, outBegIdx, outNBElement, outReal);
+          if( retCode != RetCode.SUCCESS ) {
+             throw failure("ALMA", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+       /**
+        * Arnaud Legoux Moving Average: the last N inputs weighted by a Gaussian
+        * whose peak sits a fraction {@code offset} of the way from the oldest to
+        * the newest bar. Moving the offset toward 1 puts the peak on recent bars
+        * and cuts the lag; moving it toward 0 puts the peak on old bars and lags
+        * most. Smoothing is greatest with the peak mid-window, near 0.5. Sigma sets
+        * the width: the Gaussian's standard deviation is {@code N / sigma} bars, so
+        * a larger sigma concentrates the weight around the peak and smooths less.
+        * The weights are non-negative and sum to one, so the line stays within the
+        * range of its window, up to rounding. At the default shape and a period of
+        * 5 or more, it lags about half as much as an {@code SMA} of the same period
+        * and passes about twice its noise.
+        * <p>Formula and more info at <a
+        * href="https://ta-lib.org/functions/alma">ta-lib.org/functions/alma</a>.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>The peak is floored to a whole bar, as in the authors' code. At periods below about 5 this puts it on an older bar: at period 2 the line is almost entirely the previous bar.</li>
+        * <li>The published paper's summary formula uses a different parameterisation; this is the form of the authors' own implementation.</li>
+        * </ul>
+        * <p>This is the {@code float[]} overload. The arithmetic is performed in
+        * {@code double} before being written to the {@code double[]} output, so a
+        * result beyond {@code float} range is still representable.
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are; nothing
+        * outside that range is touched, and the library never pads with NaN. A
+        * valid range that ends before {@link Core#almaLookback} is a <b>success
+        * with no values</b> ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inReal Data on which to compute the average.
+        * @param optInTimePeriod Number of bars in the window (default 9; range
+        *        1..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInSigma Divides the period to give the Gaussian's width in bars
+        *        (default 6; minimum 0.01; {@link Core#REAL_DEFAULT} selects the default).
+        * @param optInOffset Position of the peak weight, 0 at the oldest bar and 1
+        *        at the newest (default 0.85; range 0..1; {@link Core#REAL_DEFAULT} selects
+        *        the default).
+        * @param outReal Arnaud Legoux Moving Average line. Must hold at least
+        *        {@code endIdx - max(startIdx, almaLookback(...)) + 1} values, the count
+        *        the call produces (none when that is not positive).
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#INDEX_MAX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. An output this function documents as declinable is the one
+        *        exception: {@code null} is how you decline it. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
+        *
+        * @see Core#wma
+        * @see Core#sma
+        * @see Core#trima
+        * @see Core#hma
+        */
+       public OutRange alma( int startIdx,
+                             int endIdx,
+                             float inReal[],
+                             int optInTimePeriod,
+                             double optInSigma,
+                             double optInOffset,
+                             double outReal[] )
+       {
+          requireIndexRange("ALMA", startIdx, endIdx);
+          int guardStart = clampedStart("ALMA", startIdx, almaLookback(optInTimePeriod, optInSigma, optInOffset));
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("ALMA", "inReal", inReal, guardInLen);
+          requireLength("ALMA", "outReal", outReal, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = almaImpl(startIdx, endIdx, inReal, optInTimePeriod, optInSigma, optInOffset, outBegIdx, outNBElement, outReal);
+          if( retCode != RetCode.SUCCESS ) {
+             throw failure("ALMA", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+    /**** Streaming API *****/
+
+       /**
+        * A live ALMA stream (unrelated to {@code java.util.stream}): one value per
+        * closed bar, bit-identical to {@link Core#alma} over the same series.
+        * Open with {@link Core#almaOpen}; there is no close — the handle is
+        * ordinary heap state, unreferenced handles are simply garbage-collected.
+        * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
+        * {@code value} and {@code clone} must not race with an {@code update} on
+        * the same handle. With no concurrent {@code update}, {@code peek}/
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
+        * <p>Not serializable by design: to checkpoint, retain the history and
+        * re-open — the result is bit-identical by contract.
+        */
+       public static final class AlmaStream {
+          private Core core;
+          private int optInTimePeriod;
+          private double optInSigma;
+          private double optInOffset;
+          private int lookbackTotal;
+          private int weights_Idx;
+          private int maxIdx_weights;
+          private int winPos_j;
+          private int winCap_j;
+          private double[] win_j_inReal;
+          private int cbSize_weights;
+          private double[] cb_weights;
+          private double cur_outReal;
+          private int outRangeBegIdx;
+          private int outRangeCount;
+
+          private AlmaStream( Core core ) { this.core = core; }
+
+          /**
+           * The bars this stream has an output for, in the input series'
+           * coordinates: {@code [begIdx, begIdx + count)}.
+           * <p>It is what {@link Core#alma} reports over the same bars: the
+           * opener sets it to {@code (lookback, historyLen - lookback)}, every
+           * accepted {@code update} adds one to the count — a rejected one
+           * changes nothing, and neither does {@code peek} — and
+           * {@code clone()} carries it verbatim. A plain
+           * {@code open} hands back only the last value, a subset of this range,
+           * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#INDEX_MAX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
+           */
+          public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
+
+          /**
+           * Count one bar this stream was not fed: {@link #outRange()} advances
+           * by one and nothing else moves — {@link #value()} keeps answering the previous
+           * output, which is this bar's output too.
+           * <p>For a bar the caller leaves out: one an {@code update} rejected
+           * and that will not be re-fed, or a session with no print. Without it
+           * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#INDEX_MAX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
+           */
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
+                throw failure("ALMA advance", RetCode.OUT_OF_RANGE_END_INDEX);
+             this.outRangeCount++;
+          }
+
+          private AlmaStream( AlmaStream other ) {
+             this.core = other.core;
+             this.optInTimePeriod = other.optInTimePeriod;
+             this.optInSigma = other.optInSigma;
+             this.optInOffset = other.optInOffset;
+             this.lookbackTotal = other.lookbackTotal;
+             this.weights_Idx = other.weights_Idx;
+             this.maxIdx_weights = other.maxIdx_weights;
+             this.winPos_j = other.winPos_j;
+             this.winCap_j = other.winCap_j;
+             this.win_j_inReal = other.win_j_inReal.clone();
+             this.cbSize_weights = other.cbSize_weights;
+             this.cb_weights = other.cb_weights.clone();
+             this.cur_outReal = other.cur_outReal;
+             this.outRangeBegIdx = other.outRangeBegIdx;
+             this.outRangeCount = other.outRangeCount;
+          }
+
+          /**
+           * Commit one closed bar, returning the new current value.
+           * <p>Throws {@link IllegalArgumentException} if any bar value is not
+           * finite (NaN or an infinity). That check runs before anything is
+           * written, so nothing moves — {@link #outRange()} included — and
+           * {@link #value()} still answers the previous value. Re-feed the bar when a
+           * corrected value arrives, or call {@link #advance()} to count it and
+           * carry on; two handles on one feed drift a bar apart if neither
+           * happens.
+           * This is the one place the streaming tier is stricter than
+           * the batch API, which computes on whatever it is given: a handle
+           * retains its state, so a single non-finite bar would poison every
+           * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#INDEX_MAX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
+           */
+          public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
+                throw failure("ALMA update", RetCode.OUT_OF_RANGE_END_INDEX);
+             if( !Double.isFinite(inReal) )
+                throw nonFiniteBar("ALMA update", "inReal");
+             core.almaStepImpl(this, inReal);
+             this.outRangeCount++;
+             return this.cur_outReal;
+          }
+
+          /**
+           * Evaluate a forming bar without committing — bit-identical to what the
+           * next {@code update} with the same bar would return — the same
+           * transition, with every store it would make carried in a local instead.
+           * Never writes this handle, so peeks may run concurrently with each other.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
+           */
+          public double peek( double inReal ) {
+             if( !Double.isFinite(inReal) )
+                throw nonFiniteBar("ALMA peek", "inReal");
+             AlmaStream sp = this;
+             double sum = 0.0;
+             int j = 0;
+             int w = 0;
+             double cur_outReal = 0.0;
+             int pkSlot0 = -1;
+             double pkVal0 = 0.0;
+             if( sp.optInTimePeriod == 1 ) {
+                cur_outReal = inReal;
+                return cur_outReal ;
+             }
+             pkSlot0 = sp.winPos_j;
+             pkVal0 = inReal;
+             sum = 0.0;
+             w = 0;
+             for( j = sp.lookbackTotal; j >= 0; j -= 1 ) {
+                sum += sp.cb_weights[w] * ((((sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j) != pkSlot0) ? sp.win_j_inReal[(sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j] : pkVal0);
+                w += 1;
+             }
+             cur_outReal = sum;
+             return cur_outReal;
+          }
+
+          /**
+           * The value at the last bar this stream counted — the bar
+           * {@link #outRange()} ends on. The last history bar right after open,
+           * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
+           */
+          public double value() {
+             return this.cur_outReal;
+          }
+
+          /**
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
+           */
+          @Override
+          public AlmaStream clone() {
+             return new AlmaStream(this);
+          }
+       }
+       private void almaStepImpl( AlmaStream sp, double inReal )
+       {
+          double sum = 0.0;
+          int j = 0;
+          int w = 0;
+          if( sp.optInTimePeriod == 1 ) {
+             sp.cur_outReal = inReal;
+             return ;
+          }
+          sp.win_j_inReal[sp.winPos_j] = inReal;
+          sum = 0.0;
+          w = 0;
+          for( j = sp.lookbackTotal; j >= 0; j -= 1 ) {
+             sum += sp.cb_weights[w] * sp.win_j_inReal[(sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j];
+             w += 1;
+          }
+          sp.cur_outReal = sum;
+          sp.winPos_j = sp.winPos_j + 1;
+          if( sp.winPos_j >= sp.winCap_j ) {
+             sp.winPos_j = 0;
+          }
+       }
+       private RetCode almaOpenImpl( AlmaStream sp, double inReal[], int startIdx, int optInTimePeriod, double optInSigma, double optInOffset, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+       {
+          double sum = 0;
+          double s = 0;
+          double twoSSq = 0;
+          double d = 0;
+          double norm = 0;
+          int lookbackTotal = 0;
+          int outIdx = 0;
+          int i = 0;
+          int j = 0;
+          int w = 0;
+          int m = 0;
+          double[] weights;
+          int weights_Idx = 0;
+          int maxIdx_weights = (30)-1;
+          int historyLen = inReal.length;
+          int endIdx = historyLen - 1;
+          if( historyLen < 1 ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX;
+          }
+          if( historyLen > INDEX_MAX + 1 ) {
+             return RetCode.OUT_OF_RANGE_END_INDEX;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 9;
+          } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInSigma == REAL_DEFAULT ) {
+             optInSigma = 6e0;
+          } else if( !(optInSigma >= 1e-2 && optInSigma <= REAL_MAX) ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInOffset == REAL_DEFAULT ) {
+             optInOffset = 8.5e-1;
+          } else if( !(optInOffset >= 0e0 && optInOffset <= 1e0) ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.INSUFFICIENT_HISTORY;
+          }
+          if( optInTimePeriod == 1 ) {
+             int fillLb = almaLookback(optInTimePeriod, optInSigma, optInOffset);
+             if( startIdx > fillLb ) fillLb = startIdx;
+             if( historyLen < fillLb + 1 ) {
+                return RetCode.INSUFFICIENT_HISTORY;
+             }
+             sp.optInTimePeriod = optInTimePeriod;
+             sp.optInSigma = optInSigma;
+             sp.optInOffset = optInOffset;
+             sp.lookbackTotal = 0;
+             sp.weights_Idx = 0;
+             sp.maxIdx_weights = 0;
+             sp.winPos_j = 0;
+             sp.winCap_j = 1;
+             sp.win_j_inReal = new double[1];
+             sp.cbSize_weights = 0;
+             sp.cb_weights = new double[1];
+             outBegIdx.value = fillLb;
+             outNBElement.value = historyLen - fillLb;
+             if( outStride == 0 ) {
+                outReal[0] = inReal[historyLen - 1];
+             } else {
+                for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
+                   outReal[fillIdx] = inReal[fillLb + fillIdx];
+                }
+             }
+             sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
+             return RetCode.SUCCESS;
+          }
+          /* Filled once and read as a plain array. */
+          lookbackTotal = optInTimePeriod - 1;
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.INSUFFICIENT_HISTORY ;
+          }
+          if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
+          weights = new double[optInTimePeriod];
+          maxIdx_weights = (optInTimePeriod)-1;
+          weights_Idx = 0;
+          /* The expression order is the spec: it is what makes the output bitwise
+           * equal to Tulip's beta/alma.c. Keep the floor in binary64 and (j-m) squared
+           * in double (an int square overflows at large periods).
+           */
+          m = (int)Math.floor(optInOffset * (double)lookbackTotal);
+          s = (double)optInTimePeriod / optInSigma;
+          twoSSq = 2.0 * s * s;
+          norm = 0.0;
+          for( j = 0; j < optInTimePeriod; j += 1 ) {
+             d = (double)(j - m);
+             weights[j] = Math.exp(-(d * d) / twoSSq);
+             norm += weights[j];
+          }
+          for( j = 0; j < optInTimePeriod; j += 1 ) {
+             weights[j] = weights[j] / norm;
+          }
+          /* Weight 0 is the oldest bar. Each output is written after its window is
+           * read, and the next window starts past it, so outReal may alias inReal.
+           */
+          outIdx = 0;
+          i = startIdx;
+          while( i <= endIdx ) {
+             sum = 0.0;
+             w = 0;
+             for( j = i - lookbackTotal; j <= i; j += 1 ) {
+                sum += weights[w] * inReal[j];
+                w += 1;
+             }
+             outReal[outIdx * outStride] = sum;
+             outIdx += 1;
+             i += 1;
+          }
+          outNBElement.value = outIdx;
+          outBegIdx.value = startIdx;
+          /* Capture the live batch state into the handle. */
+          int cap_j = (int)(lookbackTotal + 1);
+          if( cap_j < 1 || cap_j > historyLen ) {
+             return RetCode.INTERNAL_ERROR;
+          }
+          double[] capWin_j_inReal = new double[cap_j];
+          System.arraycopy(inReal, historyLen - cap_j, capWin_j_inReal, 0, cap_j);
+          int capCb_weights = maxIdx_weights + 1;
+          if( capCb_weights > historyLen + 1 ) {
+             return RetCode.INTERNAL_ERROR;
+          }
+          sp.optInTimePeriod = optInTimePeriod;
+          sp.optInSigma = optInSigma;
+          sp.optInOffset = optInOffset;
+          sp.lookbackTotal = lookbackTotal;
+          sp.weights_Idx = weights_Idx;
+          sp.maxIdx_weights = maxIdx_weights;
+          sp.winPos_j = 0;
+          sp.winCap_j = cap_j;
+          sp.win_j_inReal = capWin_j_inReal;
+          sp.cbSize_weights = capCb_weights;
+          sp.cb_weights = weights;
+          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
+          return RetCode.SUCCESS;
+       }
+       /* almaOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+       AlmaStream almaOpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, double optInSigma, double optInOffset, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+       {
+          AlmaStream sp = new AlmaStream(this);
+          RetCode retCode = almaOpenImpl(sp, inReal, startIdx, optInTimePeriod, optInSigma, optInOffset, outBegIdx, outNBElement, outReal, 1);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.SUCCESS ) {
+             return sp;
+          }
+          if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
+             throw insufficientHistory("ALMA openAndFill", inReal.length, startIdx, almaLookback(optInTimePeriod, optInSigma, optInOffset));
+          }
+          throw streamFailure("ALMA openAndFill", retCode);
+       }
+       /* Internal startIdx-anchored open behind almaOpen (composition seam). */
+       AlmaStream almaOpenInternal( double inReal[], int startIdx, int optInTimePeriod, double optInSigma, double optInOffset )
+       {
+          AlmaStream sp = new AlmaStream(this);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          double[] sink_outReal = new double[1];
+          RetCode retCode = almaOpenImpl(sp, inReal, startIdx, optInTimePeriod, optInSigma, optInOffset, outBegIdx, outNBElement, sink_outReal, 0);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.SUCCESS ) {
+             return sp;
+          }
+          if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
+             throw insufficientHistory("ALMA open", inReal.length, startIdx, almaLookback(optInTimePeriod, optInSigma, optInOffset));
+          }
+          throw streamFailure("ALMA open", retCode);
+       }
+       /**
+        * Open a live ALMA stream over the warm-up history; the handle's
+        * {@code value()} starts at the last history bar's value — bit-identical
+        * to {@link Core#alma} at that bar.
+        * <p>The history must hold at least {@code almaLookback(...) + 1} bars
+        * (unstable-period aware), or {@link InsufficientHistoryException} is
+        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * ({@link Integer#MIN_VALUE} and {@link Core#REAL_DEFAULT} select a
+        * parameter's documented default, as in the batch API). An EMPTY history throws
+        * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+        * names no bar — and a null argument {@link IllegalArgumentException},
+        * both ahead of everything above.
+        */
+       public AlmaStream almaOpen( double inReal[], int optInTimePeriod, double optInSigma, double optInOffset )
+       {
+          requireArgument("ALMA open", "inReal", inReal);
+          requireHistory("ALMA open", inReal.length);
+          return almaOpenInternal(inReal, 0, optInTimePeriod, optInSigma, optInOffset);
+       }
+       /**
+        * {@link Core#almaOpen} that also fills the output array(s) bit-identically
+        * to {@link Core#alma} over the whole history in the same single pass
+        * (no separate batch call needed for the warm-up plot). Output arrays must
+        * not alias the inputs or each other, and must hold
+        * {@code historyLen - lookback} values — both checked before anything is
+        * written, so an undersized array is an {@link IllegalArgumentException}
+        * naming it rather than a fault from inside the fill.
+        * <p>The range written is on the returned handle:
+        * {@link AlmaStream#outRange()}.
+        */
+       public AlmaStream almaOpenAndFill( double inReal[], int optInTimePeriod, double optInSigma, double optInOffset, double outReal[] )
+       {
+          requireArgument("ALMA openAndFill", "inReal", inReal);
+          requireHistory("ALMA openAndFill", inReal.length);
+          int guardOutLen = openFillCount("ALMA openAndFill", inReal.length, almaLookback(optInTimePeriod, optInSigma, optInOffset));
+          requireLength("ALMA openAndFill", "outReal", outReal, guardOutLen);
+          if( (Object)outReal == (Object)inReal ) {
+             throw streamFailure("ALMA openAndFill", RetCode.BAD_PARAM);
+          }
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          return almaOpenAndFillInternal(inReal, 0, optInTimePeriod, optInSigma, optInOffset, outBegIdx, outNBElement, outReal);
+       }
     /* List of contributors:
      *
      *  Initial  Name/description
@@ -202367,7 +203261,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "c82451a71acd1be6";
+    static final String SPLICED_GENCODE_DIGEST = "ab34e506780187ca";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];
@@ -202566,6 +203460,10 @@ public class TaCodegenServe {
         ABSTRACT.put("ADXR", new AbsFunc("ADXR", "Momentum Indicators", "Average Directional Movement Index Rating", 33554432,
             new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("ALMA", new AbsFunc("ALMA", "Overlap Studies", "Arnaud Legoux Moving Average", 50331649,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",9.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(0,"optInSigma",0,"Sigma","Gaussian width divisor",6.0, 0.01,3e37,2,1.0,20.0,0.5, 0,0,0,0,0, null), new AbsOpt(0,"optInOffset",0,"Offset","Position of the peak weight",0.85, 0.0,1.0,2,0.0,1.0,0.05, 0,0,0,0,0, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("AO", new AbsFunc("AO", "Momentum Indicators", "Awesome Oscillator", 33554432,
             new AbsIn[]{ new AbsIn(0,"inPriceHL",6) },
@@ -203524,6 +204422,7 @@ public class TaCodegenServe {
         "TA_ADR",
         "TA_ADX",
         "TA_ADXR",
+        "TA_ALMA",
         "TA_AO",
         "TA_APO",
         "TA_AROON",
@@ -203749,216 +204648,217 @@ public class TaCodegenServe {
             case 6: return handle_ADR(json);
             case 7: return handle_ADX(json);
             case 8: return handle_ADXR(json);
-            case 9: return handle_AO(json);
-            case 10: return handle_APO(json);
-            case 11: return handle_AROON(json);
-            case 12: return handle_AROONOSC(json);
-            case 13: return handle_ASI(json);
-            case 14: return handle_ASIN(json);
-            case 15: return handle_ATAN(json);
-            case 16: return handle_ATR(json);
-            case 17: return handle_AVGDEV(json);
-            case 18: return handle_AVGPRICE(json);
-            case 19: return handle_BBANDS(json);
-            case 20: return handle_BBW(json);
-            case 21: return handle_BETA(json);
-            case 22: return handle_BOP(json);
-            case 23: return handle_CCI(json);
-            case 24: return handle_CDL2CROWS(json);
-            case 25: return handle_CDL3BLACKCROWS(json);
-            case 26: return handle_CDL3INSIDE(json);
-            case 27: return handle_CDL3LINESTRIKE(json);
-            case 28: return handle_CDL3OUTSIDE(json);
-            case 29: return handle_CDL3STARSINSOUTH(json);
-            case 30: return handle_CDL3WHITESOLDIERS(json);
-            case 31: return handle_CDLABANDONEDBABY(json);
-            case 32: return handle_CDLADVANCEBLOCK(json);
-            case 33: return handle_CDLBELTHOLD(json);
-            case 34: return handle_CDLBREAKAWAY(json);
-            case 35: return handle_CDLCLOSINGMARUBOZU(json);
-            case 36: return handle_CDLCONCEALBABYSWALL(json);
-            case 37: return handle_CDLCOUNTERATTACK(json);
-            case 38: return handle_CDLDARKCLOUDCOVER(json);
-            case 39: return handle_CDLDOJI(json);
-            case 40: return handle_CDLDOJISTAR(json);
-            case 41: return handle_CDLDRAGONFLYDOJI(json);
-            case 42: return handle_CDLENGULFING(json);
-            case 43: return handle_CDLEVENINGDOJISTAR(json);
-            case 44: return handle_CDLEVENINGSTAR(json);
-            case 45: return handle_CDLGAPSIDESIDEWHITE(json);
-            case 46: return handle_CDLGRAVESTONEDOJI(json);
-            case 47: return handle_CDLHAMMER(json);
-            case 48: return handle_CDLHANGINGMAN(json);
-            case 49: return handle_CDLHARAMI(json);
-            case 50: return handle_CDLHARAMICROSS(json);
-            case 51: return handle_CDLHIGHWAVE(json);
-            case 52: return handle_CDLHIKKAKE(json);
-            case 53: return handle_CDLHIKKAKEMOD(json);
-            case 54: return handle_CDLHOMINGPIGEON(json);
-            case 55: return handle_CDLIDENTICAL3CROWS(json);
-            case 56: return handle_CDLINNECK(json);
-            case 57: return handle_CDLINVERTEDHAMMER(json);
-            case 58: return handle_CDLKICKING(json);
-            case 59: return handle_CDLKICKINGBYLENGTH(json);
-            case 60: return handle_CDLLADDERBOTTOM(json);
-            case 61: return handle_CDLLONGLEGGEDDOJI(json);
-            case 62: return handle_CDLLONGLINE(json);
-            case 63: return handle_CDLMARUBOZU(json);
-            case 64: return handle_CDLMATCHINGLOW(json);
-            case 65: return handle_CDLMATHOLD(json);
-            case 66: return handle_CDLMORNINGDOJISTAR(json);
-            case 67: return handle_CDLMORNINGSTAR(json);
-            case 68: return handle_CDLONNECK(json);
-            case 69: return handle_CDLPIERCING(json);
-            case 70: return handle_CDLRICKSHAWMAN(json);
-            case 71: return handle_CDLRISEFALL3METHODS(json);
-            case 72: return handle_CDLSEPARATINGLINES(json);
-            case 73: return handle_CDLSHOOTINGSTAR(json);
-            case 74: return handle_CDLSHORTLINE(json);
-            case 75: return handle_CDLSPINNINGTOP(json);
-            case 76: return handle_CDLSTALLEDPATTERN(json);
-            case 77: return handle_CDLSTICKSANDWICH(json);
-            case 78: return handle_CDLTAKURI(json);
-            case 79: return handle_CDLTASUKIGAP(json);
-            case 80: return handle_CDLTHRUSTING(json);
-            case 81: return handle_CDLTRISTAR(json);
-            case 82: return handle_CDLUNIQUE3RIVER(json);
-            case 83: return handle_CDLUPSIDEGAP2CROWS(json);
-            case 84: return handle_CDLXSIDEGAP3METHODS(json);
-            case 85: return handle_CEIL(json);
-            case 86: return handle_CG(json);
-            case 87: return handle_CHOP(json);
-            case 88: return handle_CHOPTR(json);
-            case 89: return handle_CMF(json);
-            case 90: return handle_CMO(json);
-            case 91: return handle_CMOU(json);
-            case 92: return handle_COPPOCK(json);
-            case 93: return handle_CORREL(json);
-            case 94: return handle_COS(json);
-            case 95: return handle_COSH(json);
-            case 96: return handle_CRSI(json);
-            case 97: return handle_CTI(json);
-            case 98: return handle_CUMSUM(json);
-            case 99: return handle_CVI(json);
-            case 100: return handle_DEMA(json);
-            case 101: return handle_DIV(json);
-            case 102: return handle_DONCHIAN(json);
-            case 103: return handle_DPO(json);
-            case 104: return handle_DX(json);
-            case 105: return handle_EFI(json);
-            case 106: return handle_EMA(json);
-            case 107: return handle_EMV(json);
-            case 108: return handle_ER(json);
-            case 109: return handle_ERI(json);
-            case 110: return handle_EXP(json);
-            case 111: return handle_FLOOR(json);
-            case 112: return handle_FOSC(json);
-            case 113: return handle_FRACTAL(json);
-            case 114: return handle_FRAMA(json);
-            case 115: return handle_HA(json);
-            case 116: return handle_HMA(json);
-            case 117: return handle_HT_DCPERIOD(json);
-            case 118: return handle_HT_DCPHASE(json);
-            case 119: return handle_HT_PHASOR(json);
-            case 120: return handle_HT_SINE(json);
-            case 121: return handle_HT_TRENDLINE(json);
-            case 122: return handle_HT_TRENDMODE(json);
-            case 123: return handle_IBS(json);
-            case 124: return handle_IMI(json);
-            case 125: return handle_KAMA(json);
-            case 126: return handle_KC(json);
-            case 127: return handle_KDJ(json);
-            case 128: return handle_KST(json);
-            case 129: return handle_KURTOSIS(json);
-            case 130: return handle_LINEARREG(json);
-            case 131: return handle_LINEARREG_ANGLE(json);
-            case 132: return handle_LINEARREG_INTERCEPT(json);
-            case 133: return handle_LINEARREG_SLOPE(json);
-            case 134: return handle_LN(json);
-            case 135: return handle_LOG10(json);
-            case 136: return handle_MA(json);
-            case 137: return handle_MACD(json);
-            case 138: return handle_MACDEXT(json);
-            case 139: return handle_MACDFIX(json);
-            case 140: return handle_MAMA(json);
-            case 141: return handle_MARKETFI(json);
-            case 142: return handle_MASSI(json);
-            case 143: return handle_MAVP(json);
-            case 144: return handle_MAX(json);
-            case 145: return handle_MAXINDEX(json);
-            case 146: return handle_MCGD(json);
-            case 147: return handle_MEDIAN(json);
-            case 148: return handle_MEDPRICE(json);
-            case 149: return handle_MFI(json);
-            case 150: return handle_MIDPOINT(json);
-            case 151: return handle_MIDPRICE(json);
-            case 152: return handle_MIN(json);
-            case 153: return handle_MININDEX(json);
-            case 154: return handle_MINMAX(json);
-            case 155: return handle_MINMAXINDEX(json);
-            case 156: return handle_MINUS_DI(json);
-            case 157: return handle_MINUS_DM(json);
-            case 158: return handle_MOM(json);
-            case 159: return handle_MULT(json);
-            case 160: return handle_NATR(json);
-            case 161: return handle_NVI(json);
-            case 162: return handle_OBV(json);
-            case 163: return handle_PERCENTB(json);
-            case 164: return handle_PERCENTILE(json);
-            case 165: return handle_PERCENTRANK(json);
-            case 166: return handle_PLUS_DI(json);
-            case 167: return handle_PLUS_DM(json);
-            case 168: return handle_PPO(json);
-            case 169: return handle_PVI(json);
-            case 170: return handle_PVO(json);
-            case 171: return handle_PVT(json);
-            case 172: return handle_QSTICK(json);
-            case 173: return handle_RMA(json);
-            case 174: return handle_ROC(json);
-            case 175: return handle_ROCP(json);
-            case 176: return handle_ROCR(json);
-            case 177: return handle_ROCR100(json);
-            case 178: return handle_RSI(json);
-            case 179: return handle_RVI(json);
-            case 180: return handle_RVIR(json);
-            case 181: return handle_RVOL(json);
-            case 182: return handle_SAR(json);
-            case 183: return handle_SAREXT(json);
-            case 184: return handle_SI(json);
-            case 185: return handle_SIN(json);
-            case 186: return handle_SINH(json);
-            case 187: return handle_SMA(json);
-            case 188: return handle_SMI(json);
-            case 189: return handle_SQRT(json);
-            case 190: return handle_STDDEV(json);
-            case 191: return handle_STOCH(json);
-            case 192: return handle_STOCHF(json);
-            case 193: return handle_STOCHRSI(json);
-            case 194: return handle_SUB(json);
-            case 195: return handle_SUM(json);
-            case 196: return handle_SUPERTREND(json);
-            case 197: return handle_T3(json);
-            case 198: return handle_TAN(json);
-            case 199: return handle_TANH(json);
-            case 200: return handle_TEMA(json);
-            case 201: return handle_TRANGE(json);
-            case 202: return handle_TRIMA(json);
-            case 203: return handle_TRIX(json);
-            case 204: return handle_TSF(json);
-            case 205: return handle_TSI(json);
-            case 206: return handle_TYPPRICE(json);
-            case 207: return handle_ULTOSC(json);
-            case 208: return handle_VAR(json);
-            case 209: return handle_VHF(json);
-            case 210: return handle_VIDYA(json);
-            case 211: return handle_VORTEX(json);
-            case 212: return handle_VWAP(json);
-            case 213: return handle_VWMA(json);
-            case 214: return handle_WAD(json);
-            case 215: return handle_WCLPRICE(json);
-            case 216: return handle_WILLR(json);
-            case 217: return handle_WMA(json);
-            case 218: return handle_ZLEMA(json);
+            case 9: return handle_ALMA(json);
+            case 10: return handle_AO(json);
+            case 11: return handle_APO(json);
+            case 12: return handle_AROON(json);
+            case 13: return handle_AROONOSC(json);
+            case 14: return handle_ASI(json);
+            case 15: return handle_ASIN(json);
+            case 16: return handle_ATAN(json);
+            case 17: return handle_ATR(json);
+            case 18: return handle_AVGDEV(json);
+            case 19: return handle_AVGPRICE(json);
+            case 20: return handle_BBANDS(json);
+            case 21: return handle_BBW(json);
+            case 22: return handle_BETA(json);
+            case 23: return handle_BOP(json);
+            case 24: return handle_CCI(json);
+            case 25: return handle_CDL2CROWS(json);
+            case 26: return handle_CDL3BLACKCROWS(json);
+            case 27: return handle_CDL3INSIDE(json);
+            case 28: return handle_CDL3LINESTRIKE(json);
+            case 29: return handle_CDL3OUTSIDE(json);
+            case 30: return handle_CDL3STARSINSOUTH(json);
+            case 31: return handle_CDL3WHITESOLDIERS(json);
+            case 32: return handle_CDLABANDONEDBABY(json);
+            case 33: return handle_CDLADVANCEBLOCK(json);
+            case 34: return handle_CDLBELTHOLD(json);
+            case 35: return handle_CDLBREAKAWAY(json);
+            case 36: return handle_CDLCLOSINGMARUBOZU(json);
+            case 37: return handle_CDLCONCEALBABYSWALL(json);
+            case 38: return handle_CDLCOUNTERATTACK(json);
+            case 39: return handle_CDLDARKCLOUDCOVER(json);
+            case 40: return handle_CDLDOJI(json);
+            case 41: return handle_CDLDOJISTAR(json);
+            case 42: return handle_CDLDRAGONFLYDOJI(json);
+            case 43: return handle_CDLENGULFING(json);
+            case 44: return handle_CDLEVENINGDOJISTAR(json);
+            case 45: return handle_CDLEVENINGSTAR(json);
+            case 46: return handle_CDLGAPSIDESIDEWHITE(json);
+            case 47: return handle_CDLGRAVESTONEDOJI(json);
+            case 48: return handle_CDLHAMMER(json);
+            case 49: return handle_CDLHANGINGMAN(json);
+            case 50: return handle_CDLHARAMI(json);
+            case 51: return handle_CDLHARAMICROSS(json);
+            case 52: return handle_CDLHIGHWAVE(json);
+            case 53: return handle_CDLHIKKAKE(json);
+            case 54: return handle_CDLHIKKAKEMOD(json);
+            case 55: return handle_CDLHOMINGPIGEON(json);
+            case 56: return handle_CDLIDENTICAL3CROWS(json);
+            case 57: return handle_CDLINNECK(json);
+            case 58: return handle_CDLINVERTEDHAMMER(json);
+            case 59: return handle_CDLKICKING(json);
+            case 60: return handle_CDLKICKINGBYLENGTH(json);
+            case 61: return handle_CDLLADDERBOTTOM(json);
+            case 62: return handle_CDLLONGLEGGEDDOJI(json);
+            case 63: return handle_CDLLONGLINE(json);
+            case 64: return handle_CDLMARUBOZU(json);
+            case 65: return handle_CDLMATCHINGLOW(json);
+            case 66: return handle_CDLMATHOLD(json);
+            case 67: return handle_CDLMORNINGDOJISTAR(json);
+            case 68: return handle_CDLMORNINGSTAR(json);
+            case 69: return handle_CDLONNECK(json);
+            case 70: return handle_CDLPIERCING(json);
+            case 71: return handle_CDLRICKSHAWMAN(json);
+            case 72: return handle_CDLRISEFALL3METHODS(json);
+            case 73: return handle_CDLSEPARATINGLINES(json);
+            case 74: return handle_CDLSHOOTINGSTAR(json);
+            case 75: return handle_CDLSHORTLINE(json);
+            case 76: return handle_CDLSPINNINGTOP(json);
+            case 77: return handle_CDLSTALLEDPATTERN(json);
+            case 78: return handle_CDLSTICKSANDWICH(json);
+            case 79: return handle_CDLTAKURI(json);
+            case 80: return handle_CDLTASUKIGAP(json);
+            case 81: return handle_CDLTHRUSTING(json);
+            case 82: return handle_CDLTRISTAR(json);
+            case 83: return handle_CDLUNIQUE3RIVER(json);
+            case 84: return handle_CDLUPSIDEGAP2CROWS(json);
+            case 85: return handle_CDLXSIDEGAP3METHODS(json);
+            case 86: return handle_CEIL(json);
+            case 87: return handle_CG(json);
+            case 88: return handle_CHOP(json);
+            case 89: return handle_CHOPTR(json);
+            case 90: return handle_CMF(json);
+            case 91: return handle_CMO(json);
+            case 92: return handle_CMOU(json);
+            case 93: return handle_COPPOCK(json);
+            case 94: return handle_CORREL(json);
+            case 95: return handle_COS(json);
+            case 96: return handle_COSH(json);
+            case 97: return handle_CRSI(json);
+            case 98: return handle_CTI(json);
+            case 99: return handle_CUMSUM(json);
+            case 100: return handle_CVI(json);
+            case 101: return handle_DEMA(json);
+            case 102: return handle_DIV(json);
+            case 103: return handle_DONCHIAN(json);
+            case 104: return handle_DPO(json);
+            case 105: return handle_DX(json);
+            case 106: return handle_EFI(json);
+            case 107: return handle_EMA(json);
+            case 108: return handle_EMV(json);
+            case 109: return handle_ER(json);
+            case 110: return handle_ERI(json);
+            case 111: return handle_EXP(json);
+            case 112: return handle_FLOOR(json);
+            case 113: return handle_FOSC(json);
+            case 114: return handle_FRACTAL(json);
+            case 115: return handle_FRAMA(json);
+            case 116: return handle_HA(json);
+            case 117: return handle_HMA(json);
+            case 118: return handle_HT_DCPERIOD(json);
+            case 119: return handle_HT_DCPHASE(json);
+            case 120: return handle_HT_PHASOR(json);
+            case 121: return handle_HT_SINE(json);
+            case 122: return handle_HT_TRENDLINE(json);
+            case 123: return handle_HT_TRENDMODE(json);
+            case 124: return handle_IBS(json);
+            case 125: return handle_IMI(json);
+            case 126: return handle_KAMA(json);
+            case 127: return handle_KC(json);
+            case 128: return handle_KDJ(json);
+            case 129: return handle_KST(json);
+            case 130: return handle_KURTOSIS(json);
+            case 131: return handle_LINEARREG(json);
+            case 132: return handle_LINEARREG_ANGLE(json);
+            case 133: return handle_LINEARREG_INTERCEPT(json);
+            case 134: return handle_LINEARREG_SLOPE(json);
+            case 135: return handle_LN(json);
+            case 136: return handle_LOG10(json);
+            case 137: return handle_MA(json);
+            case 138: return handle_MACD(json);
+            case 139: return handle_MACDEXT(json);
+            case 140: return handle_MACDFIX(json);
+            case 141: return handle_MAMA(json);
+            case 142: return handle_MARKETFI(json);
+            case 143: return handle_MASSI(json);
+            case 144: return handle_MAVP(json);
+            case 145: return handle_MAX(json);
+            case 146: return handle_MAXINDEX(json);
+            case 147: return handle_MCGD(json);
+            case 148: return handle_MEDIAN(json);
+            case 149: return handle_MEDPRICE(json);
+            case 150: return handle_MFI(json);
+            case 151: return handle_MIDPOINT(json);
+            case 152: return handle_MIDPRICE(json);
+            case 153: return handle_MIN(json);
+            case 154: return handle_MININDEX(json);
+            case 155: return handle_MINMAX(json);
+            case 156: return handle_MINMAXINDEX(json);
+            case 157: return handle_MINUS_DI(json);
+            case 158: return handle_MINUS_DM(json);
+            case 159: return handle_MOM(json);
+            case 160: return handle_MULT(json);
+            case 161: return handle_NATR(json);
+            case 162: return handle_NVI(json);
+            case 163: return handle_OBV(json);
+            case 164: return handle_PERCENTB(json);
+            case 165: return handle_PERCENTILE(json);
+            case 166: return handle_PERCENTRANK(json);
+            case 167: return handle_PLUS_DI(json);
+            case 168: return handle_PLUS_DM(json);
+            case 169: return handle_PPO(json);
+            case 170: return handle_PVI(json);
+            case 171: return handle_PVO(json);
+            case 172: return handle_PVT(json);
+            case 173: return handle_QSTICK(json);
+            case 174: return handle_RMA(json);
+            case 175: return handle_ROC(json);
+            case 176: return handle_ROCP(json);
+            case 177: return handle_ROCR(json);
+            case 178: return handle_ROCR100(json);
+            case 179: return handle_RSI(json);
+            case 180: return handle_RVI(json);
+            case 181: return handle_RVIR(json);
+            case 182: return handle_RVOL(json);
+            case 183: return handle_SAR(json);
+            case 184: return handle_SAREXT(json);
+            case 185: return handle_SI(json);
+            case 186: return handle_SIN(json);
+            case 187: return handle_SINH(json);
+            case 188: return handle_SMA(json);
+            case 189: return handle_SMI(json);
+            case 190: return handle_SQRT(json);
+            case 191: return handle_STDDEV(json);
+            case 192: return handle_STOCH(json);
+            case 193: return handle_STOCHF(json);
+            case 194: return handle_STOCHRSI(json);
+            case 195: return handle_SUB(json);
+            case 196: return handle_SUM(json);
+            case 197: return handle_SUPERTREND(json);
+            case 198: return handle_T3(json);
+            case 199: return handle_TAN(json);
+            case 200: return handle_TANH(json);
+            case 201: return handle_TEMA(json);
+            case 202: return handle_TRANGE(json);
+            case 203: return handle_TRIMA(json);
+            case 204: return handle_TRIX(json);
+            case 205: return handle_TSF(json);
+            case 206: return handle_TSI(json);
+            case 207: return handle_TYPPRICE(json);
+            case 208: return handle_ULTOSC(json);
+            case 209: return handle_VAR(json);
+            case 210: return handle_VHF(json);
+            case 211: return handle_VIDYA(json);
+            case 212: return handle_VORTEX(json);
+            case 213: return handle_VWAP(json);
+            case 214: return handle_VWMA(json);
+            case 215: return handle_WAD(json);
+            case 216: return handle_WCLPRICE(json);
+            case 217: return handle_WILLR(json);
+            case 218: return handle_WMA(json);
+            case 219: return handle_ZLEMA(json);
             default: return null;
         }
     }
@@ -205512,6 +206412,155 @@ public class TaCodegenServe {
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         rideAdxr(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, sb);
+        sb.append("}");
+        return sb.toString();
+    }
+
+    static String handle_ALMA(String json) {
+        int startIdx = jsonInt(json, "startIdx");
+        int endIdx = jsonInt(json, "endIdx");
+        int use_preloaded = jsonInt(json, "use_preloaded");
+        int bench_iters = jsonInt(json, "iters");
+        if (bench_iters < 1) bench_iters = 1;
+        double[] inReal;
+        if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
+            System.arraycopy(refClose, 0, inReal, 0, refN);
+        } else {
+            inReal = jsonDoubleArray(json, "inReal");
+        }
+        boolean _optRejected = false;
+        int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+        double optInSigma = jsonDouble(json, "optInSigma");
+        double optInOffset = jsonDouble(json, "optInOffset");
+        // The output buffers are sized to the count the call actually PRODUCES --
+        // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
+        // never below one. Not to the width of the requested range: that is the bound the
+        // managed backends check and the Rust asserts state, and at the range width it was
+        // slack by exactly the lookback, so no call could ever approach it.
+        // The pad is there because a bound is a MINIMUM, never an equality. A caller
+        // re-using a pre-allocated buffer passes a larger one, and that is not an error --
+        // the reported OutRange is what says which part was written. So the harness sends
+        // both: the startIdx axis sends no pad (the bound is reachable) while the
+        // full-range value comparison sends one (slack is legal). Sizing every call one way
+        // would silently drop the other property.
+        // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
+        // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
+        // for a range shorter than the lookback, where the output bound switches off and
+        // the spec says any length will do, including none. It does not: two EMPTY output
+        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
+        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
+        // accepted by C and Java -- a four-way divergence on a call the specification says
+        // all four accept. Sizing to zero here would reach it on every multi-output
+        // function, which is a semantic question, not a harness one. Recorded as
+        // error-handling-spec, open item 11.
+        // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
+        // sizes and cannot make the check, so an exact buffer would test nothing there.
+        int _lb = core.almaLookback(optInTimePeriod, optInSigma, optInOffset);
+        int _cs = startIdx > _lb ? startIdx : _lb;
+        int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
+        double[] outArr0 = new double[_outLen];
+        MInteger outBegIdx = new MInteger();
+        MInteger outNBElement = new MInteger();
+        RetCode rc = RetCode.SUCCESS;
+        int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        long startNs = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+        if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                rc = core.almaImpl(startIdx, endIdx, inReal, optInTimePeriod, optInSigma, optInOffset, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        } else {
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _pr = core.alma(startIdx, endIdx, inReal, optInTimePeriod, optInSigma, optInOffset, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.SUCCESS;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        }
+        }
+        else if (_optRejected) { rc = RetCode.BAD_PARAM; }
+        else { try {
+            if (bench_mode == 1) {
+                core.almaOpen(_warm_inReal, optInTimePeriod, optInSigma, optInOffset);
+            } else {
+                Core.AlmaStream _wh = core.almaOpenAndFill(_warm_inReal, optInTimePeriod, optInSigma, optInOffset, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
+            }
+            rc = RetCode.SUCCESS;
+        } catch (RuntimeException _e) { rc = _e instanceof TALibFailure ? ((TALibFailure)_e).retCode() : RetCode.BAD_PARAM; } }
+        }
+        long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _fr = core.alma(startIdx, endIdx, f_inReal, optInTimePeriod, optInSigma, optInOffset, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.SUCCESS;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+            usedFloat = 1;
+        }
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            StringBuilder hb = new StringBuilder();
+            hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            rideAlma(core, json, endIdx, inReal, optInTimePeriod, optInSigma, optInOffset, hb);
+            hb.append("}");
+            return hb.toString();
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"retCode\":").append(rc.toInt());
+        sb.append(",\"outBegIdx\":").append(outBegIdx.value);
+        sb.append(",\"outNBElement\":").append(outNBElement.value);
+        sb.append(",\"out_len\":").append(_outLen);
+        sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
+        sb.append(",\"timing_ns\":").append(elapsedNs);
+        rideAlma(core, json, endIdx, inReal, optInTimePeriod, optInSigma, optInOffset, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -240176,6 +241225,171 @@ public class TaCodegenServe {
                     if (rcS == RetCode.SUCCESS && nbS.value > 0) {
                         try {
                             Core.AdxrStream stA = c2.adxrOpenInternal(java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
+        }
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign[0] + diag + "}";
+    }
+
+    static String sv_ALMA(String json) {
+        int svShape = jsonInt(json, "gen_shape");
+        int svSeed = jsonInt(json, "gen_seed");
+        int svN = jsonInt(json, "gen_n");
+        if (svN < 2) svN = 2;
+        if (svN > 256) svN = 256;
+        int svK = jsonInt(json, "unstablePeriod");
+        int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 9;
+        double optInSigma = json.contains("\"optInSigma\"") ? jsonDouble(json, "optInSigma") : 6e0;
+        double optInOffset = json.contains("\"optInOffset\"") ? jsonDouble(json, "optInOffset") : 8.5e-1;
+        double[] fz_o = new double[svN];
+        double[] fz_h = new double[svN];
+        double[] fz_l = new double[svN];
+        double[] fz_c = new double[svN];
+        double[] fz_v = new double[svN];
+        double[] fz_oi = new double[svN];
+        FuzzData.fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
+        double[] b0 = new double[svN];
+        long legs = 0;
+        boolean allOk = true;
+        boolean peekAll = true;
+        long peekReps = 0;
+        long peekRejects = 0;
+        boolean peekRepAll = true;
+        int fillChecked = 0;
+        boolean fillOk = true;
+        MInteger beg = new MInteger();
+        MInteger nb = new MInteger();
+        String diag = "";
+        int rangeChecked = 0;
+        boolean rangeOk = true;
+        long rangeLegs = 0;
+        int rangeSites = 0;
+        long[] zsign = { 0 };
+        int rounds = 1;
+        for (int rd = 0; rd < rounds; rd++) {
+            Core c2 = new Core();
+            RetCode rc;
+            try { rc = c2.almaImpl(0, svN - 1, fz_c, optInTimePeriod, optInSigma, optInOffset, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
+            int lb = c2.almaLookback(optInTimePeriod, optInSigma, optInOffset);
+            if (rc != RetCode.SUCCESS || nb.value == 0) {
+                boolean openRejects;
+                try { c2.almaOpen(fz_c, optInTimePeriod, optInSigma, optInOffset); openRejects = false; } catch (IllegalArgumentException _e) { openRejects = true; }
+                return "{\"retCode\":" + rc.toInt() + ",\"legs\":0,\"nb\":" + nb.value + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
+            }
+            fillChecked = 1;
+            try {
+                double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                Core.AlmaStream _fh = c2.almaOpenAndFill(fz_c, optInTimePeriod, optInSigma, optInOffset, f0);
+                OutRange _fr = _fh.outRange();
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
+                else {
+                    for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
+                }
+                try { c2.almaOpenAndFill(fz_c, optInTimePeriod, optInSigma, optInOffset, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
+            } catch (IllegalArgumentException _e) { fillOk = false; }
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
+            java.util.Arrays.sort(pcs);
+            int prevP = -1;
+            for (int pi = 0; pi < pcs.length; pi++) {
+                int p = pcs[pi];
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
+                prevP = p;
+                Core.AlmaStream st;
+                try { st = c2.almaOpen(java.util.Arrays.copyOf(fz_c, p), optInTimePeriod, optInSigma, optInOffset); }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
+                legs++;
+                if (svXtierNe(st.value(), b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                for (int t = p; t < svN; t++) {
+                    boolean pkTook = true;
+                    double pk = 0;
+                    try { pk = st.peek(fz_c[t]); } catch (IllegalArgumentException _e) { pkTook = false; peekRejects++; }
+                    if (t % 7 == 0) {
+                        boolean rpTook = pkTook;
+                        try { st.peek(fz_c[t - 1]); } catch (IllegalArgumentException _e) { peekRejects++; }
+                        double rp = 0;
+                        try { rp = st.peek(fz_c[t]); } catch (IllegalArgumentException _e) { rpTook = false; }
+                        if (rpTook) {
+                            peekReps++;
+                            if (svBne(rp, pk)) peekRepAll = false;
+                        } else { peekRejects++; }
+                    }
+                    double up = st.update(fz_c[t]);
+                    if (pkTook && svBne(pk, up)) peekAll = false;
+                    try { st.peek(fz_c[t - 1]); } catch (IllegalArgumentException _e) { peekRejects++; }
+                    if (svBne(st.value(), up)) allOk = false;
+                    if (svXtierNe(up, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up)) + "\""; }
+                }
+                if (allOk) {
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
+                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
+                    rangeLegs++; rangeSites |= 16;
+                    st.advance();
+                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value + 1) rangeOk = false;
+                }
+            }
+            {
+                int p0 = lb + 1;
+                if (p0 <= svN - 1) {
+                    try {
+                        Core.AlmaStream sA = c2.almaOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInSigma, optInOffset);
+                        int mid = (p0 + svN) / 2;
+                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        Core.AlmaStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        for (int t = mid; t < svN; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        if (allOk) {
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 8;
+                            if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                        }
+                    } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
+                }
+            }
+            if (lb >= 1 && lb < svN) {
+                try { c2.almaOpen(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, optInSigma, optInOffset); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
+                catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.almaOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, optInSigma, optInOffset, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
+            }
+            try {
+                Core.AlmaStream sD = c2.almaOpen(fz_c, Integer.MIN_VALUE, optInSigma, optInOffset);
+                Core.AlmaStream sE = c2.almaOpen(fz_c, 9, optInSigma, optInOffset);
+                if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+            } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.almaImpl(Sidx, svN - 1, fz_c, optInTimePeriod, optInSigma, optInOffset, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rcS = ((TALibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.SUCCESS && nbS.value > 0) {
+                        try {
+                            Core.AlmaStream stA = c2.almaOpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod, optInSigma, optInOffset);
                             rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                             if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
                         } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
@@ -275045,6 +276259,7 @@ public class TaCodegenServe {
         case "TA_ADR": return sv_ADR(json);
         case "TA_ADX": return sv_ADX(json);
         case "TA_ADXR": return sv_ADXR(json);
+        case "TA_ALMA": return sv_ALMA(json);
         case "TA_AO": return sv_AO(json);
         case "TA_APO": return sv_APO(json);
         case "TA_AROON": return sv_AROON(json);
@@ -276240,6 +277455,105 @@ public class TaCodegenServe {
             double[] fb0 = new double[m];
             try {
                 Core.AdxrStream st2 = core.adxrOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod, fb0);
+                if (st2.outRange().begIdx() != beg || st2.outRange().count() != nb) { r.ok = false; r.leg = 2; }
+                if (r.ok) {
+                    for (int k = 0; k < nb; k++) {
+                        boolean cmp = true;
+                        if (cmp && svXtierNe(rb0[k], fb0[k], r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[k]); r.stream = Double.doubleToRawLongBits(fb0[k]); }
+                        if (cmp) r.fillBars++;
+                        if (!cmp) { r.ok = false; r.leg = 2; r.bar = beg + k; break; }
+                    }
+                }
+            } catch (RuntimeException _e) { r.ok = false; r.leg = 2; }
+        }
+
+        if (r.ok) {
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
+            rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
+        }
+    }
+
+    static void rideAlma(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, double optInSigma, double optInOffset, StringBuilder sb) {
+        if (!rideGate(json)) return;
+        RideResult r = new RideResult();
+        rideBodyAlma(core, json, endIdx, inReal, optInTimePeriod, optInSigma, optInOffset, r);
+        r.emit(sb);
+    }
+
+    @SuppressWarnings("unused")
+    static void rideBodyAlma(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, double optInSigma, double optInOffset, RideResult r) {
+        try { r.lb = core.almaLookback(optInTimePeriod, optInSigma, optInOffset); } catch (RuntimeException _e) { r.lb = -1; }
+        int lb = r.lb;
+        int navail = endIdx + 1;
+        if (inReal.length < navail) navail = inReal.length;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
+        if (m > navail) m = navail;
+        r.m = m;
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
+        if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
+
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_ALMA");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMix(hash, Double.doubleToRawLongBits(optInSigma));
+        hash = rideMix(hash, Double.doubleToRawLongBits(optInOffset));
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
+            r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
+        }
+
+        double[] rb0 = new double[m];
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
+        try { OutRange _rr = core.alma(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInTimePeriod, optInSigma, optInOffset, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.almaOpen(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, optInSigma, optInOffset); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.almaOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, optInSigma, optInOffset, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
+        if (nb == 0) { r.skip = 5; return; }
+        if (beg != lb) { r.skip = 6; return; }
+
+        try {
+            boolean cmp;
+            Core.AlmaStream st = core.almaOpen(java.util.Arrays.copyOf(inReal, lb + 1), optInTimePeriod, optInSigma, optInOffset);
+            double uv = st.value();
+            cmp = true;
+            if (cmp && svXtierNe(rb0[lb - beg], uv, r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[lb - beg]); r.stream = Double.doubleToRawLongBits(uv); }
+            if (cmp) r.openBars++;
+            if (!cmp) { r.ok = false; r.leg = 1; r.bar = lb; }
+            for (int t = lb + 1; r.ok && t < m; t++) {
+                double uv2 = st.update(inReal[t]);
+                uv = uv2;
+                cmp = true;
+                if (cmp && svXtierNe(rb0[t - beg], uv, r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[t - beg]); r.stream = Double.doubleToRawLongBits(uv); }
+                if (cmp) r.openBars++;
+                if (!cmp) { r.ok = false; r.leg = 1; r.bar = t; }
+            }
+        } catch (RuntimeException _e) { r.ok = false; r.leg = 1; }
+
+        if (r.ok) {
+            double[] fb0 = new double[m];
+            try {
+                Core.AlmaStream st2 = core.almaOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, optInSigma, optInOffset, fb0);
                 if (st2.outRange().begIdx() != beg || st2.outRange().count() != nb) { r.ok = false; r.leg = 2; }
                 if (r.ok) {
                     for (int k = 0; k < nb; k++) {

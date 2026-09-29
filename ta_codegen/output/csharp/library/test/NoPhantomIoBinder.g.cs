@@ -173,6 +173,12 @@ internal static class NoPhantomIoBinder
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
+        ["ALMA"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.AlmaImpl(
+                startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOpt(1), c.RealOpt(2), out int b, out int n, c.RealOut(0));
+            return new CallOutcome(rc, b, n);
+        },
         ["AO"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.AoImpl(
@@ -1492,6 +1498,12 @@ internal static class NoPhantomIoBinder
                 startIdx, endIdx, Narrow(c.Price(0, PriceComponents.High)), Narrow(c.Price(0, PriceComponents.Low)), Narrow(c.Price(0, PriceComponents.Close)), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
+        ["ALMA"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.AlmaImpl(
+                startIdx, endIdx, Narrow(c.Series(0)), c.IntOpt(0), c.RealOpt(1), c.RealOpt(2), out int b, out int n, c.RealOut(0));
+            return new CallOutcome(rc, b, n);
+        },
         ["AO"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.AoImpl(
@@ -2766,6 +2778,7 @@ internal static class NoPhantomIoBinder
         ["ADR"] = static (core, c) => core.AdrOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0)),
         ["ADX"] = static (core, c) => core.AdxOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0)),
         ["ADXR"] = static (core, c) => core.AdxrOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0)),
+        ["ALMA"] = static (core, c) => core.AlmaOpen(c.Series(0), c.IntOpt(0), c.RealOpt(1), c.RealOpt(2)),
         ["AO"] = static (core, c) => core.AoOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), c.IntOpt(1)),
         ["APO"] = static (core, c) => core.ApoOpen(c.Series(0), c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2)),
         ["AROON"] = static (core, c) => core.AroonOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0)),
