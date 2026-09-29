@@ -748,10 +748,10 @@ static TA_RetCode TA_AC_OpenImpl( struct TA_AC_Stream **stream, const double inH
       sp->oscBuffer_Idx = oscBuffer_Idx;
       sp->maxIdx_oscBuffer = maxIdx_oscBuffer;
       sp->ringCap_trailingFastIdx = (int)(i - trailingFastIdx);
-      if( sp->ringCap_trailingFastIdx < 1 || sp->ringCap_trailingFastIdx > historyLen ) { TA_AC_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(182); }
+      if( sp->ringCap_trailingFastIdx < 1 || sp->ringCap_trailingFastIdx > historyLen ) { if( oscBuffer != &local_oscBuffer[0] ) { TA_Free( oscBuffer ); } TA_AC_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(182); }
       { size_t allocN = (size_t)(sp->ringCap_trailingFastIdx > 0 ? sp->ringCap_trailingFastIdx : 1);
         sp->ring_trailingFastIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_trailingFastIdx_derived ) { TA_AC_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_trailingFastIdx_derived ) { if( oscBuffer != &local_oscBuffer[0] ) { TA_Free( oscBuffer ); } TA_AC_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         { int fillJ;
           for( fillJ = historyLen - sp->ringCap_trailingFastIdx; fillJ < historyLen; fillJ++ )
              sp->ring_trailingFastIdx_derived[fillJ - (historyLen - sp->ringCap_trailingFastIdx)] = (inHigh[fillJ] + inLow[fillJ]) / 2.0;
@@ -759,10 +759,10 @@ static TA_RetCode TA_AC_OpenImpl( struct TA_AC_Stream **stream, const double inH
       }
       sp->ringPos_trailingFastIdx = 0;
       sp->ringCap_trailingSlowIdx = (int)(i - trailingSlowIdx);
-      if( sp->ringCap_trailingSlowIdx < 1 || sp->ringCap_trailingSlowIdx > historyLen ) { TA_AC_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(183); }
+      if( sp->ringCap_trailingSlowIdx < 1 || sp->ringCap_trailingSlowIdx > historyLen ) { if( oscBuffer != &local_oscBuffer[0] ) { TA_Free( oscBuffer ); } TA_AC_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(183); }
       { size_t allocN = (size_t)(sp->ringCap_trailingSlowIdx > 0 ? sp->ringCap_trailingSlowIdx : 1);
         sp->ring_trailingSlowIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_trailingSlowIdx_derived ) { TA_AC_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_trailingSlowIdx_derived ) { if( oscBuffer != &local_oscBuffer[0] ) { TA_Free( oscBuffer ); } TA_AC_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         { int fillJ;
           for( fillJ = historyLen - sp->ringCap_trailingSlowIdx; fillJ < historyLen; fillJ++ )
              sp->ring_trailingSlowIdx_derived[fillJ - (historyLen - sp->ringCap_trailingSlowIdx)] = (inHigh[fillJ] + inLow[fillJ]) / 2.0;

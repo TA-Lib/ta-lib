@@ -883,18 +883,18 @@ static TA_RetCode TA_COPPOCK_OpenImpl( struct TA_COPPOCK_Stream **stream, const 
       sp->sRing_Idx = sRing_Idx;
       sp->maxIdx_sRing = maxIdx_sRing;
       sp->ringCap_roc1Idx = (int)(inIdx - roc1Idx);
-      if( sp->ringCap_roc1Idx < 1 || sp->ringCap_roc1Idx > historyLen ) { TA_COPPOCK_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(421); }
+      if( sp->ringCap_roc1Idx < 1 || sp->ringCap_roc1Idx > historyLen ) { if( sRing != &local_sRing[0] ) { TA_Free( sRing ); } TA_COPPOCK_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(421); }
       { size_t allocN = (size_t)(sp->ringCap_roc1Idx > 0 ? sp->ringCap_roc1Idx : 1);
         sp->ring_roc1Idx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_roc1Idx_inReal ) { TA_COPPOCK_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_roc1Idx_inReal ) { if( sRing != &local_sRing[0] ) { TA_Free( sRing ); } TA_COPPOCK_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         memcpy( sp->ring_roc1Idx_inReal, inReal + (historyLen - sp->ringCap_roc1Idx), sizeof(double) * (size_t)sp->ringCap_roc1Idx );
       }
       sp->ringPos_roc1Idx = 0;
       sp->ringCap_roc2Idx = (int)(inIdx - roc2Idx);
-      if( sp->ringCap_roc2Idx < 1 || sp->ringCap_roc2Idx > historyLen ) { TA_COPPOCK_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(422); }
+      if( sp->ringCap_roc2Idx < 1 || sp->ringCap_roc2Idx > historyLen ) { if( sRing != &local_sRing[0] ) { TA_Free( sRing ); } TA_COPPOCK_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(422); }
       { size_t allocN = (size_t)(sp->ringCap_roc2Idx > 0 ? sp->ringCap_roc2Idx : 1);
         sp->ring_roc2Idx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_roc2Idx_inReal ) { TA_COPPOCK_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_roc2Idx_inReal ) { if( sRing != &local_sRing[0] ) { TA_Free( sRing ); } TA_COPPOCK_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         memcpy( sp->ring_roc2Idx_inReal, inReal + (historyLen - sp->ringCap_roc2Idx), sizeof(double) * (size_t)sp->ringCap_roc2Idx );
       }
       sp->ringPos_roc2Idx = 0;

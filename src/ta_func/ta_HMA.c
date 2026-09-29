@@ -1617,31 +1617,31 @@ static TA_RetCode TA_HMA_OpenImpl( struct TA_HMA_Stream **stream, const double i
       sp->dRing_Idx = dRing_Idx;
       sp->maxIdx_dRing = maxIdx_dRing;
       sp->ringCap_trailingIdxFull = (int)(today - trailingIdxFull);
-      if( sp->ringCap_trailingIdxFull < 1 || sp->ringCap_trailingIdxFull > historyLen ) { TA_HMA_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(321); }
+      if( sp->ringCap_trailingIdxFull < 1 || sp->ringCap_trailingIdxFull > historyLen ) { if( dRing != &local_dRing[0] ) { TA_Free( dRing ); } TA_HMA_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(321); }
       { size_t allocN = (size_t)(sp->ringCap_trailingIdxFull > 0 ? sp->ringCap_trailingIdxFull : 1);
         sp->ring_trailingIdxFull_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_trailingIdxFull_inReal ) { TA_HMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_trailingIdxFull_inReal ) { if( dRing != &local_dRing[0] ) { TA_Free( dRing ); } TA_HMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         memcpy( sp->ring_trailingIdxFull_inReal, inReal + (historyLen - sp->ringCap_trailingIdxFull), sizeof(double) * (size_t)sp->ringCap_trailingIdxFull );
       }
       sp->ringPos_trailingIdxFull = 0;
       sp->ringCap_trailingIdxHalf = (int)(today - trailingIdxHalf);
-      if( sp->ringCap_trailingIdxHalf < 1 || sp->ringCap_trailingIdxHalf > historyLen ) { TA_HMA_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(322); }
+      if( sp->ringCap_trailingIdxHalf < 1 || sp->ringCap_trailingIdxHalf > historyLen ) { if( dRing != &local_dRing[0] ) { TA_Free( dRing ); } TA_HMA_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(322); }
       { size_t allocN = (size_t)(sp->ringCap_trailingIdxHalf > 0 ? sp->ringCap_trailingIdxHalf : 1);
         sp->ring_trailingIdxHalf_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_trailingIdxHalf_inReal ) { TA_HMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_trailingIdxHalf_inReal ) { if( dRing != &local_dRing[0] ) { TA_Free( dRing ); } TA_HMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         memcpy( sp->ring_trailingIdxHalf_inReal, inReal + (historyLen - sp->ringCap_trailingIdxHalf), sizeof(double) * (size_t)sp->ringCap_trailingIdxHalf );
       }
       sp->ringPos_trailingIdxHalf = 0;
       sp->winCap_jFull = (int)(lookbackFull + 1);
-      if( sp->winCap_jFull < 1 || sp->winCap_jFull > historyLen ) { TA_HMA_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(320); }
+      if( sp->winCap_jFull < 1 || sp->winCap_jFull > historyLen ) { if( dRing != &local_dRing[0] ) { TA_Free( dRing ); } TA_HMA_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(320); }
       sp->win_jFull_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_jFull );
-      if( !sp->win_jFull_inReal ) { TA_HMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
+      if( !sp->win_jFull_inReal ) { if( dRing != &local_dRing[0] ) { TA_Free( dRing ); } TA_HMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->win_jFull_inReal, inReal + (historyLen - sp->winCap_jFull), sizeof(double) * (size_t)sp->winCap_jFull );
       sp->winPos_jFull = 0;
       sp->winCap_jHalf = (int)(lookbackHalf + 1);
-      if( sp->winCap_jHalf < 1 || sp->winCap_jHalf > historyLen ) { TA_HMA_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(323); }
+      if( sp->winCap_jHalf < 1 || sp->winCap_jHalf > historyLen ) { if( dRing != &local_dRing[0] ) { TA_Free( dRing ); } TA_HMA_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(323); }
       sp->win_jHalf_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_jHalf );
-      if( !sp->win_jHalf_inReal ) { TA_HMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
+      if( !sp->win_jHalf_inReal ) { if( dRing != &local_dRing[0] ) { TA_Free( dRing ); } TA_HMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->win_jHalf_inReal, inReal + (historyLen - sp->winCap_jHalf), sizeof(double) * (size_t)sp->winCap_jHalf );
       sp->winPos_jHalf = 0;
       sp->cbSize_dRing = maxIdx_dRing + 1;

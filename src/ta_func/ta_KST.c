@@ -1457,34 +1457,34 @@ static TA_RetCode TA_KST_OpenImpl( struct TA_KST_Stream **stream, const double i
       sp->maxIdx_ring4 = maxIdx_ring4;
       sp->maxIdx_sigRing = maxIdx_sigRing;
       sp->ringCap_den1 = (int)(inIdx - den1);
-      if( sp->ringCap_den1 < 0 || sp->ringCap_den1 > historyLen ) { TA_KST_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(447); }
+      if( sp->ringCap_den1 < 0 || sp->ringCap_den1 > historyLen ) { if( ring1 != &local_ring1[0] ) { TA_Free( ring1 ); } if( ring2 != &local_ring2[0] ) { TA_Free( ring2 ); } if( ring3 != &local_ring3[0] ) { TA_Free( ring3 ); } if( ring4 != &local_ring4[0] ) { TA_Free( ring4 ); } if( sigRing != &local_sigRing[0] ) { TA_Free( sigRing ); } TA_KST_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(447); }
       { size_t allocN = (size_t)(sp->ringCap_den1 > 0 ? sp->ringCap_den1 : 1);
         sp->ring_den1_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_den1_inReal ) { TA_KST_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_den1_inReal ) { if( ring1 != &local_ring1[0] ) { TA_Free( ring1 ); } if( ring2 != &local_ring2[0] ) { TA_Free( ring2 ); } if( ring3 != &local_ring3[0] ) { TA_Free( ring3 ); } if( ring4 != &local_ring4[0] ) { TA_Free( ring4 ); } if( sigRing != &local_sigRing[0] ) { TA_Free( sigRing ); } TA_KST_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         memcpy( sp->ring_den1_inReal, inReal + (historyLen - sp->ringCap_den1), sizeof(double) * (size_t)sp->ringCap_den1 );
       }
       sp->ringPos_den1 = 0;
       sp->ringCap_den2 = (int)(inIdx - den2);
-      if( sp->ringCap_den2 < 0 || sp->ringCap_den2 > historyLen ) { TA_KST_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(448); }
+      if( sp->ringCap_den2 < 0 || sp->ringCap_den2 > historyLen ) { if( ring1 != &local_ring1[0] ) { TA_Free( ring1 ); } if( ring2 != &local_ring2[0] ) { TA_Free( ring2 ); } if( ring3 != &local_ring3[0] ) { TA_Free( ring3 ); } if( ring4 != &local_ring4[0] ) { TA_Free( ring4 ); } if( sigRing != &local_sigRing[0] ) { TA_Free( sigRing ); } TA_KST_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(448); }
       { size_t allocN = (size_t)(sp->ringCap_den2 > 0 ? sp->ringCap_den2 : 1);
         sp->ring_den2_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_den2_inReal ) { TA_KST_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_den2_inReal ) { if( ring1 != &local_ring1[0] ) { TA_Free( ring1 ); } if( ring2 != &local_ring2[0] ) { TA_Free( ring2 ); } if( ring3 != &local_ring3[0] ) { TA_Free( ring3 ); } if( ring4 != &local_ring4[0] ) { TA_Free( ring4 ); } if( sigRing != &local_sigRing[0] ) { TA_Free( sigRing ); } TA_KST_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         memcpy( sp->ring_den2_inReal, inReal + (historyLen - sp->ringCap_den2), sizeof(double) * (size_t)sp->ringCap_den2 );
       }
       sp->ringPos_den2 = 0;
       sp->ringCap_den3 = (int)(inIdx - den3);
-      if( sp->ringCap_den3 < 0 || sp->ringCap_den3 > historyLen ) { TA_KST_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(449); }
+      if( sp->ringCap_den3 < 0 || sp->ringCap_den3 > historyLen ) { if( ring1 != &local_ring1[0] ) { TA_Free( ring1 ); } if( ring2 != &local_ring2[0] ) { TA_Free( ring2 ); } if( ring3 != &local_ring3[0] ) { TA_Free( ring3 ); } if( ring4 != &local_ring4[0] ) { TA_Free( ring4 ); } if( sigRing != &local_sigRing[0] ) { TA_Free( sigRing ); } TA_KST_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(449); }
       { size_t allocN = (size_t)(sp->ringCap_den3 > 0 ? sp->ringCap_den3 : 1);
         sp->ring_den3_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_den3_inReal ) { TA_KST_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_den3_inReal ) { if( ring1 != &local_ring1[0] ) { TA_Free( ring1 ); } if( ring2 != &local_ring2[0] ) { TA_Free( ring2 ); } if( ring3 != &local_ring3[0] ) { TA_Free( ring3 ); } if( ring4 != &local_ring4[0] ) { TA_Free( ring4 ); } if( sigRing != &local_sigRing[0] ) { TA_Free( sigRing ); } TA_KST_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         memcpy( sp->ring_den3_inReal, inReal + (historyLen - sp->ringCap_den3), sizeof(double) * (size_t)sp->ringCap_den3 );
       }
       sp->ringPos_den3 = 0;
       sp->ringCap_den4 = (int)(inIdx - den4);
-      if( sp->ringCap_den4 < 0 || sp->ringCap_den4 > historyLen ) { TA_KST_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(450); }
+      if( sp->ringCap_den4 < 0 || sp->ringCap_den4 > historyLen ) { if( ring1 != &local_ring1[0] ) { TA_Free( ring1 ); } if( ring2 != &local_ring2[0] ) { TA_Free( ring2 ); } if( ring3 != &local_ring3[0] ) { TA_Free( ring3 ); } if( ring4 != &local_ring4[0] ) { TA_Free( ring4 ); } if( sigRing != &local_sigRing[0] ) { TA_Free( sigRing ); } TA_KST_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(450); }
       { size_t allocN = (size_t)(sp->ringCap_den4 > 0 ? sp->ringCap_den4 : 1);
         sp->ring_den4_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_den4_inReal ) { TA_KST_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_den4_inReal ) { if( ring1 != &local_ring1[0] ) { TA_Free( ring1 ); } if( ring2 != &local_ring2[0] ) { TA_Free( ring2 ); } if( ring3 != &local_ring3[0] ) { TA_Free( ring3 ); } if( ring4 != &local_ring4[0] ) { TA_Free( ring4 ); } if( sigRing != &local_sigRing[0] ) { TA_Free( sigRing ); } TA_KST_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         memcpy( sp->ring_den4_inReal, inReal + (historyLen - sp->ringCap_den4), sizeof(double) * (size_t)sp->ringCap_den4 );
       }
       sp->ringPos_den4 = 0;
