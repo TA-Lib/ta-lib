@@ -263,6 +263,172 @@ DEF_FUNCTION( KDJ,
              );
 /* KDJ END */
 
+/* KST BEGIN */
+static const TA_OptInputParameterInfo TA_DEF_UI_D_KST_ROC1Period =
+{
+   TA_OptInput_IntegerRange,
+   "optInROC1Period",
+   0,
+
+   "ROC-1 Period",
+   (const void *)&TA_DEF_TimePeriod_Positive,
+   10,
+   "Rate-of-change period of leg 1",
+
+   NULL
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_KST_ROC2Period =
+{
+   TA_OptInput_IntegerRange,
+   "optInROC2Period",
+   0,
+
+   "ROC-2 Period",
+   (const void *)&TA_DEF_TimePeriod_Positive,
+   15,
+   "Rate-of-change period of leg 2",
+
+   NULL
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_KST_ROC3Period =
+{
+   TA_OptInput_IntegerRange,
+   "optInROC3Period",
+   0,
+
+   "ROC-3 Period",
+   (const void *)&TA_DEF_TimePeriod_Positive,
+   20,
+   "Rate-of-change period of leg 3",
+
+   NULL
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_KST_ROC4Period =
+{
+   TA_OptInput_IntegerRange,
+   "optInROC4Period",
+   0,
+
+   "ROC-4 Period",
+   (const void *)&TA_DEF_TimePeriod_Positive,
+   30,
+   "Rate-of-change period of leg 4",
+
+   NULL
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_KST_SMA1Period =
+{
+   TA_OptInput_IntegerRange,
+   "optInSMA1Period",
+   0,
+
+   "SMA-1 Period",
+   (const void *)&TA_DEF_TimePeriod_Positive,
+   10,
+   "Smoothing period of leg 1",
+
+   NULL
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_KST_SMA2Period =
+{
+   TA_OptInput_IntegerRange,
+   "optInSMA2Period",
+   0,
+
+   "SMA-2 Period",
+   (const void *)&TA_DEF_TimePeriod_Positive,
+   10,
+   "Smoothing period of leg 2",
+
+   NULL
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_KST_SMA3Period =
+{
+   TA_OptInput_IntegerRange,
+   "optInSMA3Period",
+   0,
+
+   "SMA-3 Period",
+   (const void *)&TA_DEF_TimePeriod_Positive,
+   10,
+   "Smoothing period of leg 3",
+
+   NULL
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_KST_SMA4Period =
+{
+   TA_OptInput_IntegerRange,
+   "optInSMA4Period",
+   0,
+
+   "SMA-4 Period",
+   (const void *)&TA_DEF_TimePeriod_Positive,
+   15,
+   "Smoothing period of leg 4",
+
+   NULL
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_KST_SignalPeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInSignalPeriod",
+   0,
+
+   "Signal Period",
+   (const void *)&TA_DEF_TimePeriod_Positive,
+   9,
+   "Smoothing period of the signal line",
+
+   NULL
+};
+
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_KST_outKST =
+                               { TA_Output_Real, "outKST", TA_OUT_LINE };
+
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_KST_outKSTSignal =
+                               { TA_Output_Real, "outKSTSignal", TA_OUT_DASH_LINE };
+
+static const TA_InputParameterInfo    *TA_KST_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Real,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_KST_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real_KST_outKST,
+  &TA_DEF_UI_Output_Real_KST_outKSTSignal,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_KST_OptInputs[] =
+{ &TA_DEF_UI_D_KST_ROC1Period,
+  &TA_DEF_UI_D_KST_ROC2Period,
+  &TA_DEF_UI_D_KST_ROC3Period,
+  &TA_DEF_UI_D_KST_ROC4Period,
+  &TA_DEF_UI_D_KST_SMA1Period,
+  &TA_DEF_UI_D_KST_SMA2Period,
+  &TA_DEF_UI_D_KST_SMA3Period,
+  &TA_DEF_UI_D_KST_SMA4Period,
+  &TA_DEF_UI_D_KST_SignalPeriod,
+  NULL
+};
+
+DEF_FUNCTION( KST,
+              TA_GroupId_MomentumIndicators,
+              "Know Sure Thing (Pring)",
+              TA_FUNC_FLG_STREAM
+             );
+/* KST END */
+
 /* KURTOSIS BEGIN */
 static const TA_IntegerRange TA_DEF_KURTOSIS_TimePeriod =
 {
@@ -320,6 +486,7 @@ const TA_FuncDef *TA_DEF_TableK[] =
    ADD_TO_TABLE(KAMA),
    ADD_TO_TABLE(KC),
    ADD_TO_TABLE(KDJ),
+   ADD_TO_TABLE(KST),
    ADD_TO_TABLE(KURTOSIS),
    NULL
 };

@@ -11647,6 +11647,75 @@ fn legs_KDJ(r: &mut Report) {
     r.legs_done("KDJ", 3);
 }
 
+const V_KST: &[(&str, i32, i32, i32, i32, i32, i32, i32, i32, i32)] = &[
+    ("defaults", i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN),
+    ("minimums", 1i32, 1i32, 1i32, 1i32, 1i32, 1i32, 1i32, 1i32, 1i32),
+];
+
+fn sub_KST(r: &mut Report) {
+    let core = Core::new();
+    for &(label, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod) in V_KST {
+        let Ok(lb) = core.kst_lookback(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod) else { continue; };
+        r.control("KST", label, run(|| {
+            let inReal: Vec<f64> = Vec::with_capacity(1);
+            let mut outKST: Vec<f64> = Vec::with_capacity(1);
+            let mut outKSTSignal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.kst_impl(0, lb, &inReal, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, &mut _b, &mut _n, &mut outKST, &mut outKSTSignal);
+            (rc, _n)
+        }));
+        if lb < 1 { r.no_quiet_range("KST", label); continue; }
+        r.quiet("KST", label, lb, run(|| {
+            let inReal: Vec<f64> = Vec::with_capacity(1);
+            let mut outKST: Vec<f64> = Vec::with_capacity(1);
+            let mut outKSTSignal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.kst_impl(0, lb - 1, &inReal, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, &mut _b, &mut _n, &mut outKST, &mut outKSTSignal);
+            (rc, _n)
+        }));
+    }
+}
+
+fn legs_KST(r: &mut Report) {
+    let core = Core::new();
+    let optInROC1Period = i32::MIN;
+    let optInROC2Period = i32::MIN;
+    let optInROC3Period = i32::MIN;
+    let optInROC4Period = i32::MIN;
+    let optInSMA1Period = i32::MIN;
+    let optInSMA2Period = i32::MIN;
+    let optInSMA3Period = i32::MIN;
+    let optInSMA4Period = i32::MIN;
+    let optInSignalPeriod = i32::MIN;
+    let Ok(lb) = core.kst_lookback(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod) else { r.no_legs("KST"); return; };
+    let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outKST: Vec<f64> = vec![Default::default(); 5];
+        let mut outKSTSignal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("KST", run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.kst_impl(startIdx, endIdx, &inReal, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, &mut _b, &mut _n, &mut outKST, &mut outKSTSignal);
+            (rc, _n)
+        }));
+    }
+    {
+        let inReal: Vec<f64> = Vec::with_capacity(1);
+        let mut outKST: Vec<f64> = vec![Default::default(); 5];
+        let mut outKSTSignal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("KST", "inReal", 0, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.kst_impl(startIdx, endIdx, &inReal, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, &mut _b, &mut _n, &mut outKST, &mut outKSTSignal);
+            (rc, _n)
+        }));
+    }
+    r.legs_done("KST", 1);
+}
+
 const V_KURTOSIS: &[(&str, i32)] = &[
     ("defaults", i32::MIN),
     ("minimums", 4i32),
@@ -18095,6 +18164,7 @@ const PROBES: &[(&str, Probe, Probe)] = &[
     ("KAMA", sub_KAMA, legs_KAMA),
     ("KC", sub_KC, legs_KC),
     ("KDJ", sub_KDJ, legs_KDJ),
+    ("KST", sub_KST, legs_KST),
     ("KURTOSIS", sub_KURTOSIS, legs_KURTOSIS),
     ("LINEARREG", sub_LINEARREG, legs_LINEARREG),
     ("LINEARREG_ANGLE", sub_LINEARREG_ANGLE, legs_LINEARREG_ANGLE),
@@ -18221,7 +18291,7 @@ fn no_phantom_io() {
     // The corpus is the generator's, not a list kept by hand: a probe that
     // stopped being emitted is a shrinking sweep, which is the one way this
     // file can fail open.
-    assert_eq!(PROBES.len(), 213, "probe count");
+    assert_eq!(PROBES.len(), 214, "probe count");
     assert_eq!(
         PROBES.len(),
         crate::abstract_api::funcs().count(),

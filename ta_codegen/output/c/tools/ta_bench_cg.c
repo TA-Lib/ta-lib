@@ -151,6 +151,7 @@
 #include "ta_KAMA.c"
 #include "ta_KC.c"
 #include "ta_KDJ.c"
+#include "ta_KST.c"
 #include "ta_KURTOSIS.c"
 #include "ta_LINEARREG.c"
 #include "ta_LINEARREG_ANGLE.c"
@@ -2356,6 +2357,23 @@ static void bench_all(const char *filter, int iters) {
             g_sink += g_outBuf2[0];
         }
         printf("KDJ %lld\n", best / iters);
+        fflush(stdout);
+    }
+    if( func_matches(filter, "KST") ) {
+        long long best = 0;
+        for( int pass = 0; pass < 3; pass++ ) {
+            int outBegIdx, outNBElement;
+            long long t0 = get_nanotime();
+            for( int it = 0; it < iters; it++ ) {
+                TA_KST(0, g_nPoints - 1, g_close, 10, 15, 20, 30, 10, 10, 10, 15, 9, &outBegIdx, &outNBElement, g_outBuf0, g_outBuf1);
+            }
+            long long elapsed = get_nanotime() - t0;
+            if( !best || elapsed < best ) best = elapsed;
+            g_sink += outNBElement;
+            g_sink += g_outBuf0[0];
+            g_sink += g_outBuf1[0];
+        }
+        printf("KST %lld\n", best / iters);
         fflush(stdout);
     }
     if( func_matches(filter, "KURTOSIS") ) {

@@ -238,6 +238,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
             MakeKama(),
             MakeKc(),
             MakeKdj(),
+            MakeKst(),
             MakeKurtosis(),
             MakeLinearreg(),
             MakeLinearregAngle(),
@@ -3064,6 +3065,38 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         invoke: static (core, c, startIdx, endIdx) =>
             core.Kdj(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2), c.IntOpt(3), (MAType)c.IntOpt(4), c.RealOut(0), c.RealOut(1), c.RealOut(2)));
+
+    private static FuncInfo MakeKst() => new(
+        name: "KST",
+        group: FunctionGroup.MomentumIndicators,
+        hint: "Know Sure Thing (Pring)",
+        flags: FuncFlags.Stream,
+        unstableId: null,
+        inputs:
+        [
+            new InputInfo(InputKind.Real, "inReal", PriceComponents.None, []),
+        ],
+        optInputs:
+        [
+            new OptInputInfo("optInROC1Period", "ROC-1 Period", "Rate-of-change period of leg 1", OptInputFlags.None, new OptInputDomain.IntegerRange(1, 100000, 10, 1, 200, 1)),
+            new OptInputInfo("optInROC2Period", "ROC-2 Period", "Rate-of-change period of leg 2", OptInputFlags.None, new OptInputDomain.IntegerRange(1, 100000, 15, 1, 200, 1)),
+            new OptInputInfo("optInROC3Period", "ROC-3 Period", "Rate-of-change period of leg 3", OptInputFlags.None, new OptInputDomain.IntegerRange(1, 100000, 20, 1, 200, 1)),
+            new OptInputInfo("optInROC4Period", "ROC-4 Period", "Rate-of-change period of leg 4", OptInputFlags.None, new OptInputDomain.IntegerRange(1, 100000, 30, 1, 200, 1)),
+            new OptInputInfo("optInSMA1Period", "SMA-1 Period", "Smoothing period of leg 1", OptInputFlags.None, new OptInputDomain.IntegerRange(1, 100000, 10, 1, 200, 1)),
+            new OptInputInfo("optInSMA2Period", "SMA-2 Period", "Smoothing period of leg 2", OptInputFlags.None, new OptInputDomain.IntegerRange(1, 100000, 10, 1, 200, 1)),
+            new OptInputInfo("optInSMA3Period", "SMA-3 Period", "Smoothing period of leg 3", OptInputFlags.None, new OptInputDomain.IntegerRange(1, 100000, 10, 1, 200, 1)),
+            new OptInputInfo("optInSMA4Period", "SMA-4 Period", "Smoothing period of leg 4", OptInputFlags.None, new OptInputDomain.IntegerRange(1, 100000, 15, 1, 200, 1)),
+            new OptInputInfo("optInSignalPeriod", "Signal Period", "Smoothing period of the signal line", OptInputFlags.None, new OptInputDomain.IntegerRange(1, 100000, 9, 1, 200, 1)),
+        ],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outKST", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outKSTSignal", OutputFlags.DashLine),
+        ],
+        lookback: static (core, c) => core.KstLookback(c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), c.IntOpt(3), c.IntOpt(4), c.IntOpt(5), c.IntOpt(6), c.IntOpt(7), c.IntOpt(8)),
+        invoke: static (core, c, startIdx, endIdx) =>
+            core.Kst(
+                startIdx, endIdx, c.Series(0), c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), c.IntOpt(3), c.IntOpt(4), c.IntOpt(5), c.IntOpt(6), c.IntOpt(7), c.IntOpt(8), c.RealOut(0), c.RealOut(1)));
 
     private static FuncInfo MakeKurtosis() => new(
         name: "KURTOSIS",

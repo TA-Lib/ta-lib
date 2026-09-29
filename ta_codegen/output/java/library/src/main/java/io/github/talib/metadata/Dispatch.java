@@ -431,6 +431,9 @@ final class Dispatch {
          case "KDJ":
             return core.kdj(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOpt(0), h.intOpt(1), h.maTypeOpt(2), h.intOpt(3), h.maTypeOpt(4), h.realOutput(0), h.realOutput(1), h.realOutput(2));
+         case "KST":
+            return core.kst(
+               startIdx, endIdx, h.realInput(0), h.intOpt(0), h.intOpt(1), h.intOpt(2), h.intOpt(3), h.intOpt(4), h.intOpt(5), h.intOpt(6), h.intOpt(7), h.intOpt(8), h.realOutput(0), h.realOutput(1));
          case "KURTOSIS":
             return core.kurtosis(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
@@ -956,6 +959,8 @@ final class Dispatch {
             return core.kcLookback(h.intOpt(0), h.intOpt(1), h.realOpt(2));
          case "KDJ":
             return core.kdjLookback(h.intOpt(0), h.intOpt(1), h.maTypeOpt(2), h.intOpt(3), h.maTypeOpt(4));
+         case "KST":
+            return core.kstLookback(h.intOpt(0), h.intOpt(1), h.intOpt(2), h.intOpt(3), h.intOpt(4), h.intOpt(5), h.intOpt(6), h.intOpt(7), h.intOpt(8));
          case "KURTOSIS":
             return core.kurtosisLookback(h.intOpt(0));
          case "LINEARREG":

@@ -72,6 +72,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 - [FRACTAL](/functions/fractal.md) — Williams Fractal
 - [IMI](/functions/imi.md) — Intraday Momentum Index
 - [KDJ](/functions/kdj.md) — KDJ Stochastic
+- [KST](/functions/kst.md) — Know Sure Thing (Pring)
 - [MACD](/functions/macd.md) — Moving Average Convergence/Divergence
 - [MACDEXT](/functions/macdext.md) — MACD with controllable MA type
 - [MACDFIX](/functions/macdfix.md) — Moving Average Convergence/Divergence Fix 12/26

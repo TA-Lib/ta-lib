@@ -10890,6 +10890,142 @@ TA_LIB_API TA_RetCode TA_KDJ_Advance( TA_KDJ_Stream *stream );
 TA_LIB_API TA_RetCode TA_KDJ_Clone( const TA_KDJ_Stream *stream, TA_KDJ_Stream **clone );
 
 /*
+ * TA_KST - Know Sure Thing (Pring)
+ * 
+ * Input  = double
+ * Output = double, double
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInROC1Period:(From 1 to 100000)
+ *    Rate-of-change period of leg 1
+ * 
+ * optInROC2Period:(From 1 to 100000)
+ *    Rate-of-change period of leg 2
+ * 
+ * optInROC3Period:(From 1 to 100000)
+ *    Rate-of-change period of leg 3
+ * 
+ * optInROC4Period:(From 1 to 100000)
+ *    Rate-of-change period of leg 4
+ * 
+ * optInSMA1Period:(From 1 to 100000)
+ *    Smoothing period of leg 1
+ * 
+ * optInSMA2Period:(From 1 to 100000)
+ *    Smoothing period of leg 2
+ * 
+ * optInSMA3Period:(From 1 to 100000)
+ *    Smoothing period of leg 3
+ * 
+ * optInSMA4Period:(From 1 to 100000)
+ *    Smoothing period of leg 4
+ * 
+ * optInSignalPeriod:(From 1 to 100000)
+ *    Smoothing period of the signal line
+ * 
+ * 
+ */
+TA_LIB_API TA_RetCode TA_KST( int    startIdx,
+                              int    endIdx,
+                                         const double inReal[],
+                                         int           optInROC1Period, /* From 1 to 100000 */
+                                         int           optInROC2Period, /* From 1 to 100000 */
+                                         int           optInROC3Period, /* From 1 to 100000 */
+                                         int           optInROC4Period, /* From 1 to 100000 */
+                                         int           optInSMA1Period, /* From 1 to 100000 */
+                                         int           optInSMA2Period, /* From 1 to 100000 */
+                                         int           optInSMA3Period, /* From 1 to 100000 */
+                                         int           optInSMA4Period, /* From 1 to 100000 */
+                                         int           optInSignalPeriod, /* From 1 to 100000 */
+                                         int          *outBegIdx,
+                                         int          *outNBElement,
+                                         double        outKST[],
+                                         double        outKSTSignal[] );
+
+TA_LIB_API TA_RetCode TA_S_KST( int    startIdx,
+                                int    endIdx,
+                                           const float  inReal[],
+                                           int           optInROC1Period, /* From 1 to 100000 */
+                                           int           optInROC2Period, /* From 1 to 100000 */
+                                           int           optInROC3Period, /* From 1 to 100000 */
+                                           int           optInROC4Period, /* From 1 to 100000 */
+                                           int           optInSMA1Period, /* From 1 to 100000 */
+                                           int           optInSMA2Period, /* From 1 to 100000 */
+                                           int           optInSMA3Period, /* From 1 to 100000 */
+                                           int           optInSMA4Period, /* From 1 to 100000 */
+                                           int           optInSignalPeriod, /* From 1 to 100000 */
+                                           int          *outBegIdx,
+                                           int          *outNBElement,
+                                           double        outKST[],
+                                           double        outKSTSignal[] );
+
+TA_LIB_API int TA_KST_Lookback( int           optInROC1Period, /* From 1 to 100000 */
+                                         int           optInROC2Period, /* From 1 to 100000 */
+                                         int           optInROC3Period, /* From 1 to 100000 */
+                                         int           optInROC4Period, /* From 1 to 100000 */
+                                         int           optInSMA1Period, /* From 1 to 100000 */
+                                         int           optInSMA2Period, /* From 1 to 100000 */
+                                         int           optInSMA3Period, /* From 1 to 100000 */
+                                         int           optInSMA4Period, /* From 1 to 100000 */
+                                         int           optInSignalPeriod );  /* From 1 to 100000 */
+
+
+
+/*
+ * Streaming API for TA_KST: incremental per-bar evaluation.
+ */
+typedef struct TA_KST_Stream TA_KST_Stream;
+
+TA_LIB_API TA_RetCode TA_KST_Open( TA_KST_Stream **stream, const double inReal[], int historyLen, int optInROC1Period, int optInROC2Period, int optInROC3Period, int optInROC4Period, int optInSMA1Period, int optInSMA2Period, int optInSMA3Period, int optInSMA4Period, int optInSignalPeriod, double *outKST, double *outKSTSignal );
+
+TA_LIB_API TA_RetCode TA_KST_Update( TA_KST_Stream *stream, double inReal, double *outKST, double *outKSTSignal );
+
+TA_LIB_API TA_RetCode TA_KST_Peek( const TA_KST_Stream *stream, double inReal, double *outKST, double *outKSTSignal );
+
+TA_LIB_API TA_RetCode TA_KST_Close( TA_KST_Stream *stream );
+
+/*
+ * OpenAndFill: like Open, but a single pass ALSO fills the caller's arrays
+ * with the whole warm-up history. The fill is bit-identical to
+ * TA_KST( 0, historyLen-1, ... ).
+ */
+TA_LIB_API TA_RetCode TA_KST_OpenAndFill( TA_KST_Stream **stream, const double inReal[], int historyLen, int optInROC1Period, int optInROC2Period, int optInROC3Period, int optInROC4Period, int optInSMA1Period, int optInSMA2Period, int optInSMA3Period, int optInSMA4Period, int optInSignalPeriod, int *outBegIdx, int *outNBElement, double outKST[], double outKSTSignal[] );
+
+/*
+ * Value: the value(s) at the last bar the stream counted (the bar
+ * TA_KST_OutRange ends on), without recomputing. Seeded by Open, refreshed by
+ * every accepted Update, left alone by Peek.
+ */
+TA_LIB_API TA_RetCode TA_KST_Value( const TA_KST_Stream *stream, double *outKST, double *outKSTSignal );
+
+/*
+ * OutRange: the bars this stream has an output for, in the input series'
+ * coordinates. That is [*outBegIdx, *outBegIdx + *outNBElement), the range
+ * TA_KST reports over the same bars. Open seeds it; every accepted Update and every
+ * TA_KST_Advance adds one; a rejected Update and a Peek change nothing. The
+ * last bar it can reach is TA_INDEX_MAX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
+ */
+TA_LIB_API TA_RetCode TA_KST_OutRange( const TA_KST_Stream *stream, int *outBegIdx, int *outNBElement );
+
+/*
+ * Advance: count one bar this stream was not fed (one an Update rejected and
+ * that will not be re-fed, or a session with no print). The range moves by one
+ * and nothing else does, so TA_KST_Value keeps answering the previous output,
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_INDEX_MAX.
+ */
+TA_LIB_API TA_RetCode TA_KST_Advance( TA_KST_Stream *stream );
+
+/*
+ * Clone: fork the stream. The fork is an independent stream at the same bar,
+ * owning its own copy of everything the original owns. Both must be closed.
+ * The fork carries the value and the range verbatim.
+ */
+TA_LIB_API TA_RetCode TA_KST_Clone( const TA_KST_Stream *stream, TA_KST_Stream **clone );
+
+/*
  * TA_KURTOSIS - Rolling Excess Kurtosis
  * 
  * Input  = double

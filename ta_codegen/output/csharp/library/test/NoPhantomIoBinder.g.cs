@@ -869,6 +869,12 @@ internal static class NoPhantomIoBinder
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2), c.IntOpt(3), (MAType)c.IntOpt(4), out int b, out int n, c.RealOut(0), c.RealOut(1), c.RealOut(2));
             return new CallOutcome(rc, b, n);
         },
+        ["KST"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.KstImpl(
+                startIdx, endIdx, c.Series(0), c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), c.IntOpt(3), c.IntOpt(4), c.IntOpt(5), c.IntOpt(6), c.IntOpt(7), c.IntOpt(8), out int b, out int n, c.RealOut(0), c.RealOut(1));
+            return new CallOutcome(rc, b, n);
+        },
         ["KURTOSIS"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.KurtosisImpl(
@@ -2152,6 +2158,12 @@ internal static class NoPhantomIoBinder
                 startIdx, endIdx, Narrow(c.Price(0, PriceComponents.High)), Narrow(c.Price(0, PriceComponents.Low)), Narrow(c.Price(0, PriceComponents.Close)), c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2), c.IntOpt(3), (MAType)c.IntOpt(4), out int b, out int n, c.RealOut(0), c.RealOut(1), c.RealOut(2));
             return new CallOutcome(rc, b, n);
         },
+        ["KST"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.KstImpl(
+                startIdx, endIdx, Narrow(c.Series(0)), c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), c.IntOpt(3), c.IntOpt(4), c.IntOpt(5), c.IntOpt(6), c.IntOpt(7), c.IntOpt(8), out int b, out int n, c.RealOut(0), c.RealOut(1));
+            return new CallOutcome(rc, b, n);
+        },
         ["KURTOSIS"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.KurtosisImpl(
@@ -2810,6 +2822,7 @@ internal static class NoPhantomIoBinder
         ["KAMA"] = static (core, c) => core.KamaOpen(c.Series(0), c.IntOpt(0)),
         ["KC"] = static (core, c) => core.KcOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.IntOpt(1), c.RealOpt(2)),
         ["KDJ"] = static (core, c) => core.KdjOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2), c.IntOpt(3), (MAType)c.IntOpt(4)),
+        ["KST"] = static (core, c) => core.KstOpen(c.Series(0), c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), c.IntOpt(3), c.IntOpt(4), c.IntOpt(5), c.IntOpt(6), c.IntOpt(7), c.IntOpt(8)),
         ["KURTOSIS"] = static (core, c) => core.KurtosisOpen(c.Series(0), c.IntOpt(0)),
         ["LINEARREG"] = static (core, c) => core.LinearregOpen(c.Series(0), c.IntOpt(0)),
         ["LINEARREG_ANGLE"] = static (core, c) => core.LinearregAngleOpen(c.Series(0), c.IntOpt(0)),

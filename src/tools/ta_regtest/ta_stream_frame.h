@@ -5147,6 +5147,60 @@ static TA_RetCode TA_KDJ_SFrameClose( void *stream )
    return TA_KDJ_Close( (TA_KDJ_Stream *)stream );
 }
 
+static TA_RetCode TA_KST_SFrameOpen( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_KST_Open(
+               (TA_KST_Stream **)stream,
+               in[0] /* inReal */,
+               historyLen,
+               (int)optIn[0] /* optInROC1Period */,
+               (int)optIn[1] /* optInROC2Period */,
+               (int)optIn[2] /* optInROC3Period */,
+               (int)optIn[3] /* optInROC4Period */,
+               (int)optIn[4] /* optInSMA1Period */,
+               (int)optIn[5] /* optInSMA2Period */,
+               (int)optIn[6] /* optInSMA3Period */,
+               (int)optIn[7] /* optInSMA4Period */,
+               (int)optIn[8] /* optInSignalPeriod */,
+               outReal[0] /* outKST */,
+               outReal[1] /* outKSTSignal */
+               );
+}
+static TA_RetCode TA_KST_SFrameFill( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_KST_OpenAndFill(
+               (TA_KST_Stream **)stream,
+               in[0] /* inReal */,
+               historyLen,
+               (int)optIn[0] /* optInROC1Period */,
+               (int)optIn[1] /* optInROC2Period */,
+               (int)optIn[2] /* optInROC3Period */,
+               (int)optIn[3] /* optInROC4Period */,
+               (int)optIn[4] /* optInSMA1Period */,
+               (int)optIn[5] /* optInSMA2Period */,
+               (int)optIn[6] /* optInSMA3Period */,
+               (int)optIn[7] /* optInSMA4Period */,
+               (int)optIn[8] /* optInSignalPeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outKST */,
+               outReal[1] /* outKSTSignal */
+               );
+}
+static TA_RetCode TA_KST_SFrameClose( void *stream )
+{
+   return TA_KST_Close( (TA_KST_Stream *)stream );
+}
+
 static TA_RetCode TA_KURTOSIS_SFrameOpen( void **stream,
                   const double *const in[], int historyLen,
                   const double optIn[],
@@ -8804,6 +8858,8 @@ static const TA_StreamEntry TA_StreamTable[] = {
      3, TA_VIn_KC, 3, TA_VOpt_KC, 3, TA_VOutIsInt_KC },
    { "KDJ", TA_KDJ_SFrameOpen, TA_KDJ_SFrameFill, TA_KDJ_SFrameClose,
      3, TA_VIn_KDJ, 5, TA_VOpt_KDJ, 3, TA_VOutIsInt_KDJ },
+   { "KST", TA_KST_SFrameOpen, TA_KST_SFrameFill, TA_KST_SFrameClose,
+     1, TA_VIn_KST, 9, TA_VOpt_KST, 2, TA_VOutIsInt_KST },
    { "KURTOSIS", TA_KURTOSIS_SFrameOpen, TA_KURTOSIS_SFrameFill, TA_KURTOSIS_SFrameClose,
      1, TA_VIn_KURTOSIS, 1, TA_VOpt_KURTOSIS, 1, TA_VOutIsInt_KURTOSIS },
    { "LINEARREG", TA_LINEARREG_SFrameOpen, TA_LINEARREG_SFrameFill, TA_LINEARREG_SFrameClose,
@@ -8982,6 +9038,6 @@ static const TA_StreamEntry TA_StreamTable[] = {
      1, TA_VIn_ZLEMA, 1, TA_VOpt_ZLEMA, 1, TA_VOutIsInt_ZLEMA },
 };
 
-#define TA_STREAM_TABLE_SIZE 213
+#define TA_STREAM_TABLE_SIZE 214
 
 #endif /* TA_STREAM_FRAME_H */

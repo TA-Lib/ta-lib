@@ -106,7 +106,7 @@
 
 #define OC_MAX_IN     8      /* Widest flattened input list (4 today). */
 #define OC_MAX_OUT    8      /* Widest output list (4 today). */
-#define OC_MAX_OPT    8
+#define OC_MAX_OPT    16
 
 /* Leg A's parameter passes: the defaults, then the minimum integer/enum ones. */
 #define OC_NB_PASS    2

@@ -245,6 +245,7 @@ public final class Functions {
       put(m, f_KAMA());
       put(m, f_KC());
       put(m, f_KDJ());
+      put(m, f_KST());
       put(m, f_KURTOSIS());
       put(m, f_LINEARREG());
       put(m, f_LINEARREG_ANGLE());
@@ -2284,6 +2285,65 @@ public final class Functions {
             new OutputInfo(OutputType.REAL, "outK", 0x00000001),
             new OutputInfo(OutputType.REAL, "outD", 0x00000001),
             new OutputInfo(OutputType.REAL, "outJ", 0x00000001)
+         ));
+   }
+
+   private static FuncInfo f_KST() {
+      return new FuncInfo(
+         "KST", "Momentum Indicators", "Know Sure Thing (Pring)", 0x02000000,
+         List.of(
+            new InputInfo(InputType.REAL, "inReal", 0x00000000)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInROC1Period", 0x00000000,
+               "ROC-1 Period", "Rate-of-change period of leg 1", 10.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               1, 100000, 1, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInROC2Period", 0x00000000,
+               "ROC-2 Period", "Rate-of-change period of leg 2", 15.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               1, 100000, 1, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInROC3Period", 0x00000000,
+               "ROC-3 Period", "Rate-of-change period of leg 3", 20.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               1, 100000, 1, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInROC4Period", 0x00000000,
+               "ROC-4 Period", "Rate-of-change period of leg 4", 30.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               1, 100000, 1, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInSMA1Period", 0x00000000,
+               "SMA-1 Period", "Smoothing period of leg 1", 10.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               1, 100000, 1, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInSMA2Period", 0x00000000,
+               "SMA-2 Period", "Smoothing period of leg 2", 10.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               1, 100000, 1, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInSMA3Period", 0x00000000,
+               "SMA-3 Period", "Smoothing period of leg 3", 10.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               1, 100000, 1, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInSMA4Period", 0x00000000,
+               "SMA-4 Period", "Smoothing period of leg 4", 15.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               1, 100000, 1, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInSignalPeriod", 0x00000000,
+               "Signal Period", "Smoothing period of the signal line", 9.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               1, 100000, 1, 200, 1, null)
+         ),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outKST", 0x00000001),
+            new OutputInfo(OutputType.REAL, "outKSTSignal", 0x00000004)
          ));
    }
 

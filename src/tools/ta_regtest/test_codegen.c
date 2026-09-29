@@ -2691,9 +2691,7 @@ static int float_leg_set_sentinels(CodegenRangeTestParam *p)
      * optional parameter, so a function wider than the array would send it off
      * the end. The parameter sweep holds the same invariant by refusing such a
      * function up front; here it cannot be a silent skip — that would drop the
-     * function's sentinel coverage without saying so. Widest shipped function is
-     * SAREXT at 8, so this is a guard against a future definition, not a live
-     * case. */
+     * function's sentinel coverage without saying so. */
     if( p->funcInfo->nbOptInput > SWEEP_MAX_OPT )
     {
         printf("CODEGEN FLOAT SENTINEL OVERFLOW [TA_%s]: %u optional parameters "
@@ -5252,12 +5250,10 @@ static void write_markdown_report(const char *filepath, const char *languageFilt
                              * counted into *overflow so it fails the run LOUDLY —
                              * without this the MAType sweep would truncate
                              * silently (it never reaches the FUZZ_MAX_VEC guard). */
-#define FUZZ_MAX_VEC  80    /* parameter vectors per function. MACDEXT is widest:
-                             * 3 period ranges (<= 8 candidates + 2 reject + 1
-                             * sentinel each) + 3 MAType lists (M-1 values + 1
-                             * sentinel each, #162) + the defaults vector <= 3*M+34
-                             * in the MAType-list length M. M=14 today => 76 worst
-                             * case, and still within STREAM_MAX_VEC.
+#define FUZZ_MAX_VEC  128   /* parameter vectors per function: each integer range
+                             * takes <= 8 candidates + 2 reject + 1 sentinel, each
+                             * MAType list M-1 values + 1 sentinel (#162), plus the
+                             * defaults vector. Keep it within STREAM_MAX_VEC.
                              * fuzz_build_vectors reports any overflow (this cap or
                              * the cand cap) and the caller fails the run loudly. */
 #define FUZZ_LARGE_OFFSET 50

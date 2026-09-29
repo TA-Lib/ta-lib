@@ -5487,6 +5487,158 @@
 	</FinancialFunction>
 
 
+	<!-- KST -->
+	<FinancialFunction>
+		<Abbreviation>KST</Abbreviation>
+		<ShortDescription>Know Sure Thing (Pring)</ShortDescription>
+		<GroupId>Momentum Indicators</GroupId>
+		<Flags>
+			<Flag>Streaming</Flag>
+		</Flags>
+		<RequiredInputArguments>
+			<RequiredInputArgument>
+				<Type>Double Array</Type>
+				<Name>inReal</Name>
+			</RequiredInputArgument>
+		</RequiredInputArguments>
+		<OptionalInputArguments>
+			<OptionalInputArgument>
+				<Name>ROC-1 Period</Name>
+				<ShortDescription>Rate-of-change period of leg 1</ShortDescription>
+				<Type>Integer</Type>
+				<Range>
+					<Minimum>1</Minimum>
+					<Maximum>100000</Maximum>
+					<SuggestedStart>1</SuggestedStart>
+					<SuggestedEnd>200</SuggestedEnd>
+					<SuggestedIncrement>1</SuggestedIncrement>
+				</Range>
+				<DefaultValue>10</DefaultValue>
+			</OptionalInputArgument>
+			<OptionalInputArgument>
+				<Name>ROC-2 Period</Name>
+				<ShortDescription>Rate-of-change period of leg 2</ShortDescription>
+				<Type>Integer</Type>
+				<Range>
+					<Minimum>1</Minimum>
+					<Maximum>100000</Maximum>
+					<SuggestedStart>1</SuggestedStart>
+					<SuggestedEnd>200</SuggestedEnd>
+					<SuggestedIncrement>1</SuggestedIncrement>
+				</Range>
+				<DefaultValue>15</DefaultValue>
+			</OptionalInputArgument>
+			<OptionalInputArgument>
+				<Name>ROC-3 Period</Name>
+				<ShortDescription>Rate-of-change period of leg 3</ShortDescription>
+				<Type>Integer</Type>
+				<Range>
+					<Minimum>1</Minimum>
+					<Maximum>100000</Maximum>
+					<SuggestedStart>1</SuggestedStart>
+					<SuggestedEnd>200</SuggestedEnd>
+					<SuggestedIncrement>1</SuggestedIncrement>
+				</Range>
+				<DefaultValue>20</DefaultValue>
+			</OptionalInputArgument>
+			<OptionalInputArgument>
+				<Name>ROC-4 Period</Name>
+				<ShortDescription>Rate-of-change period of leg 4</ShortDescription>
+				<Type>Integer</Type>
+				<Range>
+					<Minimum>1</Minimum>
+					<Maximum>100000</Maximum>
+					<SuggestedStart>1</SuggestedStart>
+					<SuggestedEnd>200</SuggestedEnd>
+					<SuggestedIncrement>1</SuggestedIncrement>
+				</Range>
+				<DefaultValue>30</DefaultValue>
+			</OptionalInputArgument>
+			<OptionalInputArgument>
+				<Name>SMA-1 Period</Name>
+				<ShortDescription>Smoothing period of leg 1</ShortDescription>
+				<Type>Integer</Type>
+				<Range>
+					<Minimum>1</Minimum>
+					<Maximum>100000</Maximum>
+					<SuggestedStart>1</SuggestedStart>
+					<SuggestedEnd>200</SuggestedEnd>
+					<SuggestedIncrement>1</SuggestedIncrement>
+				</Range>
+				<DefaultValue>10</DefaultValue>
+			</OptionalInputArgument>
+			<OptionalInputArgument>
+				<Name>SMA-2 Period</Name>
+				<ShortDescription>Smoothing period of leg 2</ShortDescription>
+				<Type>Integer</Type>
+				<Range>
+					<Minimum>1</Minimum>
+					<Maximum>100000</Maximum>
+					<SuggestedStart>1</SuggestedStart>
+					<SuggestedEnd>200</SuggestedEnd>
+					<SuggestedIncrement>1</SuggestedIncrement>
+				</Range>
+				<DefaultValue>10</DefaultValue>
+			</OptionalInputArgument>
+			<OptionalInputArgument>
+				<Name>SMA-3 Period</Name>
+				<ShortDescription>Smoothing period of leg 3</ShortDescription>
+				<Type>Integer</Type>
+				<Range>
+					<Minimum>1</Minimum>
+					<Maximum>100000</Maximum>
+					<SuggestedStart>1</SuggestedStart>
+					<SuggestedEnd>200</SuggestedEnd>
+					<SuggestedIncrement>1</SuggestedIncrement>
+				</Range>
+				<DefaultValue>10</DefaultValue>
+			</OptionalInputArgument>
+			<OptionalInputArgument>
+				<Name>SMA-4 Period</Name>
+				<ShortDescription>Smoothing period of leg 4</ShortDescription>
+				<Type>Integer</Type>
+				<Range>
+					<Minimum>1</Minimum>
+					<Maximum>100000</Maximum>
+					<SuggestedStart>1</SuggestedStart>
+					<SuggestedEnd>200</SuggestedEnd>
+					<SuggestedIncrement>1</SuggestedIncrement>
+				</Range>
+				<DefaultValue>15</DefaultValue>
+			</OptionalInputArgument>
+			<OptionalInputArgument>
+				<Name>Signal Period</Name>
+				<ShortDescription>Smoothing period of the signal line</ShortDescription>
+				<Type>Integer</Type>
+				<Range>
+					<Minimum>1</Minimum>
+					<Maximum>100000</Maximum>
+					<SuggestedStart>1</SuggestedStart>
+					<SuggestedEnd>200</SuggestedEnd>
+					<SuggestedIncrement>1</SuggestedIncrement>
+				</Range>
+				<DefaultValue>9</DefaultValue>
+			</OptionalInputArgument>
+		</OptionalInputArguments>
+		<OutputArguments>
+			<OutputArgument>
+				<Type>Double Array</Type>
+				<Name>outKST</Name>
+				<Flags>
+					<Flag>Line</Flag>
+				</Flags>
+			</OutputArgument>
+			<OutputArgument>
+				<Type>Double Array</Type>
+				<Name>outKSTSignal</Name>
+				<Flags>
+					<Flag>Dashed Line</Flag>
+				</Flags>
+			</OutputArgument>
+		</OutputArguments>
+	</FinancialFunction>
+
+
 	<!-- KURTOSIS -->
 	<FinancialFunction>
 		<Abbreviation>KURTOSIS</Abbreviation>

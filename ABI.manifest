@@ -4,7 +4,7 @@ format 9
 soname libta-lib.so.1
 version-info 3:0:2
 headers ta_abstract.h ta_common.h ta_defs.h ta_func.h ta_libc.h
-function-count 2595
+function-count 2607
 platform pointer=8 long=8 int=4 enum=4
 type TA_FuncInfo sizeof=48 name:const_char_*=0 group:const_char_*=8 hint:const_char_*=16 flags:TA_FuncFlags=24 nbInput:unsigned_int=28 nbOptInput:unsigned_int=32 nbOutput:unsigned_int=36 handle:const_TA_FuncHandle_*=40
 type TA_InputParameterInfo sizeof=24 type:TA_InputParameterType=0 paramName:const_char_*=8 flags:TA_InputFlags=16
@@ -1437,6 +1437,16 @@ function TA_RetCode TA_KDJ_OutRange(const TA_KDJ_Stream *, int *, int *)
 function TA_RetCode TA_KDJ_Peek(const TA_KDJ_Stream *, double, double, double, double *, double *, double *)
 function TA_RetCode TA_KDJ_Update(TA_KDJ_Stream *, double, double, double, double *, double *, double *)
 function TA_RetCode TA_KDJ_Value(const TA_KDJ_Stream *, double *, double *, double *)
+function TA_RetCode TA_KST(int, int, const double *, int, int, int, int, int, int, int, int, int, int *, int *, double *, double *)
+function TA_RetCode TA_KST_Advance(TA_KST_Stream *)
+function TA_RetCode TA_KST_Clone(const TA_KST_Stream *, TA_KST_Stream **)
+function TA_RetCode TA_KST_Close(TA_KST_Stream *)
+function TA_RetCode TA_KST_Open(TA_KST_Stream **, const double *, int, int, int, int, int, int, int, int, int, int, double *, double *)
+function TA_RetCode TA_KST_OpenAndFill(TA_KST_Stream **, const double *, int, int, int, int, int, int, int, int, int, int, int *, int *, double *, double *)
+function TA_RetCode TA_KST_OutRange(const TA_KST_Stream *, int *, int *)
+function TA_RetCode TA_KST_Peek(const TA_KST_Stream *, double, double *, double *)
+function TA_RetCode TA_KST_Update(TA_KST_Stream *, double, double *, double *)
+function TA_RetCode TA_KST_Value(const TA_KST_Stream *, double *, double *)
 function TA_RetCode TA_KURTOSIS(int, int, const double *, int, int *, int *, double *)
 function TA_RetCode TA_KURTOSIS_Advance(TA_KURTOSIS_Stream *)
 function TA_RetCode TA_KURTOSIS_Clone(const TA_KURTOSIS_Stream *, TA_KURTOSIS_Stream **)
@@ -2235,6 +2245,7 @@ function TA_RetCode TA_S_IMI(int, int, const float *, const float *, int, int *,
 function TA_RetCode TA_S_KAMA(int, int, const float *, int, int *, int *, double *)
 function TA_RetCode TA_S_KC(int, int, const float *, const float *, const float *, int, int, double, int *, int *, double *, double *, double *)
 function TA_RetCode TA_S_KDJ(int, int, const float *, const float *, const float *, int, int, TA_MAType, int, TA_MAType, int *, int *, double *, double *, double *)
+function TA_RetCode TA_S_KST(int, int, const float *, int, int, int, int, int, int, int, int, int, int *, int *, double *, double *)
 function TA_RetCode TA_S_KURTOSIS(int, int, const float *, int, int *, int *, double *)
 function TA_RetCode TA_S_LINEARREG(int, int, const float *, int, int *, int *, double *)
 function TA_RetCode TA_S_LINEARREG_ANGLE(int, int, const float *, int, int *, int *, double *)
@@ -2678,6 +2689,7 @@ function int TA_IMI_Lookback(int)
 function int TA_KAMA_Lookback(int)
 function int TA_KC_Lookback(int, int, double)
 function int TA_KDJ_Lookback(int, int, TA_MAType, int, TA_MAType)
+function int TA_KST_Lookback(int, int, int, int, int, int, int, int, int)
 function int TA_KURTOSIS_Lookback(int)
 function int TA_LINEARREG_ANGLE_Lookback(int)
 function int TA_LINEARREG_INTERCEPT_Lookback(int)

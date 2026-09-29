@@ -1,0 +1,78 @@
+name: KST
+group: Momentum Indicators
+hint: Know Sure Thing (Pring)
+flags: [stream]
+inputs:
+  - name: inReal
+    type: real
+optional_inputs:
+  - name: optInROC1Period
+    type: integer
+    display_name: ROC-1 Period
+    hint: Rate-of-change period of leg 1
+    range: [1, 100000]
+    default: 10
+    suggested: [1, 200, 1]
+  - name: optInROC2Period
+    type: integer
+    display_name: ROC-2 Period
+    hint: Rate-of-change period of leg 2
+    range: [1, 100000]
+    default: 15
+    suggested: [1, 200, 1]
+  - name: optInROC3Period
+    type: integer
+    display_name: ROC-3 Period
+    hint: Rate-of-change period of leg 3
+    range: [1, 100000]
+    default: 20
+    suggested: [1, 200, 1]
+  - name: optInROC4Period
+    type: integer
+    display_name: ROC-4 Period
+    hint: Rate-of-change period of leg 4
+    range: [1, 100000]
+    default: 30
+    suggested: [1, 200, 1]
+  - name: optInSMA1Period
+    type: integer
+    display_name: SMA-1 Period
+    hint: Smoothing period of leg 1
+    range: [1, 100000]
+    default: 10
+    suggested: [1, 200, 1]
+  - name: optInSMA2Period
+    type: integer
+    display_name: SMA-2 Period
+    hint: Smoothing period of leg 2
+    range: [1, 100000]
+    default: 10
+    suggested: [1, 200, 1]
+  - name: optInSMA3Period
+    type: integer
+    display_name: SMA-3 Period
+    hint: Smoothing period of leg 3
+    range: [1, 100000]
+    default: 10
+    suggested: [1, 200, 1]
+  - name: optInSMA4Period
+    type: integer
+    display_name: SMA-4 Period
+    hint: Smoothing period of leg 4
+    range: [1, 100000]
+    default: 15
+    suggested: [1, 200, 1]
+  - name: optInSignalPeriod
+    type: integer
+    display_name: Signal Period
+    hint: Smoothing period of the signal line
+    range: [1, 100000]
+    default: 9
+    suggested: [1, 200, 1]
+outputs:
+  - name: outKST
+    type: real
+    flags: [line]
+  - name: outKSTSignal
+    type: real
+    flags: [dash_line]

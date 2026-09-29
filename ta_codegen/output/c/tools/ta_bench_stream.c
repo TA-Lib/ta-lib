@@ -188,6 +188,7 @@ static void bench_tracked_free(void *p) {
 #include "ta_KAMA.c"
 #include "ta_KC.c"
 #include "ta_KDJ.c"
+#include "ta_KST.c"
 #include "ta_KURTOSIS.c"
 #include "ta_LINEARREG.c"
 #include "ta_LINEARREG_ANGLE.c"
@@ -8873,6 +8874,84 @@ static void bench_stream_all(const char *filter, int iters) {
             g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_KDJ_Close(st); }
             bench_stream_row("KDJ", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
+        }
+        fflush(stdout);
+    }
+    if( func_matches(filter, "KST") ) {
+        long long best_b = 0, best_u = -1, best_p = -1;
+        int begIdx = 0, nb = 0;
+        size_t handle_bytes = 0;
+        double acc = 0.0;
+        const int optInROC1Period = bench_opaque_int(10);
+        const int optInROC2Period = bench_opaque_int(15);
+        const int optInROC3Period = bench_opaque_int(20);
+        const int optInROC4Period = bench_opaque_int(30);
+        const int optInSMA1Period = bench_opaque_int(10);
+        const int optInSMA2Period = bench_opaque_int(10);
+        const int optInSMA3Period = bench_opaque_int(10);
+        const int optInSMA4Period = bench_opaque_int(15);
+        const int optInSignalPeriod = bench_opaque_int(9);
+        int lb = TA_KST_Lookback(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod);
+        bench_rt_reserve((long long)lb + iters);
+        for( int pass = 0; pass < 3; pass++ ) {
+            int t = lb < 0 ? 0 : lb;
+            long long t0 = get_nanotime();
+            for( int it = 0; it < iters; it++ ) {
+                g_rt_close[t] = g_close[it & BENCH_MASK];
+                TA_KST(t, t, g_rt_close, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, &begIdx, &nb, g_outBuf0, g_outBuf1);
+                acc += g_outBuf0[0];
+                acc += g_outBuf1[0];
+                t++;
+            }
+            long long el = get_nanotime() - t0;
+            if( !best_b || el < best_b ) best_b = el;
+        }
+        TA_KST_Stream *st = NULL;
+            double v0 = 0.0;
+            double v1 = 0.0;
+        g_trk_reset(); g_ta_track = 1;
+        TA_RetCode orc = TA_KST_Open(&st, g_close, g_nPoints, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, &v0, &v1);
+        g_ta_track = 0; handle_bytes = g_ta_live_bytes;
+        if( orc == TA_SUCCESS && st ) {
+            int blk = (iters >= 64) ? 32 : 1;
+            int nblk = iters / blk; int npk = nblk * blk; if( npk < 1 ) npk = 1;
+            for( int pass = 0; pass < 3; pass++ ) {
+                long long t0 = get_nanotime();
+                for( int it = 0; it < iters; it++ ) {
+                    TA_KST_Update(st, g_close[it & BENCH_MASK], &v0, &v1);
+                    acc += v0;
+                    acc += v1;
+                }
+                long long tu = get_nanotime() - t0;
+                if( best_u < 0 || tu < best_u ) best_u = tu;
+            }
+            for( int pass = 0; pass < 3; pass++ ) {
+                long long tp = 0;
+                for( int b = 0; b < nblk; b++ ) {
+                    long long t0 = get_nanotime();
+                    for( int j = 0; j < blk; j++ ) {
+                        int it = b * blk + j;
+                        TA_KST_Peek(st, g_close[it & BENCH_MASK], &v0, &v1);
+                        acc += v0;
+                        acc += v1;
+                    }
+                    tp += get_nanotime() - t0;
+                    for( int j = 0; j < blk; j++ ) {
+                        int it = b * blk + j;
+                        TA_KST_Update(st, g_close[it & BENCH_MASK], &v0, &v1);
+                        acc += v0;
+                        acc += v1;
+                    }
+                }
+                if( best_p < 0 || tp < best_p ) best_p = tp;
+            }
+            g_sink += acc + nb;
+            TA_KST_Close(st);
+            bench_stream_row("KST", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+        } else {
+            g_sink += acc + nb;
+            if( st ) { g_ta_track = 0; TA_KST_Close(st); }
+            bench_stream_row("KST", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -23540,6 +23619,87 @@ static void bench_stream_all_ctx(const char *filter, int iters) {
             g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_KDJ_Close(st); }
             bench_stream_row("KDJ", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
+        }
+        fflush(stdout);
+    }
+    if( func_matches(filter, "KST") ) {
+        long long best_b = 0, best_u = -1, best_p = -1;
+        int begIdx = 0, nb = 0;
+        size_t handle_bytes = 0;
+        double acc = 0.0;
+        const int optInROC1Period = bench_opaque_int(10);
+        const int optInROC2Period = bench_opaque_int(15);
+        const int optInROC3Period = bench_opaque_int(20);
+        const int optInROC4Period = bench_opaque_int(30);
+        const int optInSMA1Period = bench_opaque_int(10);
+        const int optInSMA2Period = bench_opaque_int(10);
+        const int optInSMA3Period = bench_opaque_int(10);
+        const int optInSMA4Period = bench_opaque_int(15);
+        const int optInSignalPeriod = bench_opaque_int(9);
+        int lb = TA_KST_Lookback(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod);
+        bench_rt_reserve((long long)lb + iters);
+        for( int pass = 0; pass < 3; pass++ ) {
+            int t = lb < 0 ? 0 : lb;
+            long long t0 = get_nanotime();
+            for( int it = 0; it < iters; it++ ) {
+                g_rt_close[t] = g_close[it & BENCH_MASK];
+                TA_KST(t, t, g_rt_close, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, &begIdx, &nb, g_outBuf0, g_outBuf1);
+                acc += g_outBuf0[0];
+                acc += g_outBuf1[0];
+                bench_context();
+                t++;
+            }
+            long long el = get_nanotime() - t0;
+            if( !best_b || el < best_b ) best_b = el;
+        }
+        TA_KST_Stream *st = NULL;
+            double v0 = 0.0;
+            double v1 = 0.0;
+        g_trk_reset(); g_ta_track = 1;
+        TA_RetCode orc = TA_KST_Open(&st, g_close, g_nPoints, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, &v0, &v1);
+        g_ta_track = 0; handle_bytes = g_ta_live_bytes;
+        if( orc == TA_SUCCESS && st ) {
+            int blk = (iters >= 64) ? 32 : 1;
+            int nblk = iters / blk; int npk = nblk * blk; if( npk < 1 ) npk = 1;
+            for( int pass = 0; pass < 3; pass++ ) {
+                long long t0 = get_nanotime();
+                for( int it = 0; it < iters; it++ ) {
+                    TA_KST_Update(st, g_close[it & BENCH_MASK], &v0, &v1);
+                    acc += v0;
+                    acc += v1;
+                    bench_context();
+                }
+                long long tu = get_nanotime() - t0;
+                if( best_u < 0 || tu < best_u ) best_u = tu;
+            }
+            for( int pass = 0; pass < 3; pass++ ) {
+                long long tp = 0;
+                for( int b = 0; b < nblk; b++ ) {
+                    long long t0 = get_nanotime();
+                    for( int j = 0; j < blk; j++ ) {
+                        int it = b * blk + j;
+                        TA_KST_Peek(st, g_close[it & BENCH_MASK], &v0, &v1);
+                        acc += v0;
+                        acc += v1;
+                        bench_context();
+                    }
+                    tp += get_nanotime() - t0;
+                    for( int j = 0; j < blk; j++ ) {
+                        int it = b * blk + j;
+                        TA_KST_Update(st, g_close[it & BENCH_MASK], &v0, &v1);
+                        acc += v0;
+                        acc += v1;
+                    }
+                }
+                if( best_p < 0 || tp < best_p ) best_p = tp;
+            }
+            g_sink += acc + nb;
+            TA_KST_Close(st);
+            bench_stream_row("KST", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+        } else {
+            g_sink += acc + nb;
+            if( st ) { g_ta_track = 0; TA_KST_Close(st); }
+            bench_stream_row("KST", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }

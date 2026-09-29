@@ -292,6 +292,8 @@ pub enum FuncId {
     KC,
     /// KDJ Stochastic — [`Core::kdj`](crate::Core::kdj).
     KDJ,
+    /// Know Sure Thing (Pring) — [`Core::kst`](crate::Core::kst).
+    KST,
     /// Rolling Excess Kurtosis — [`Core::kurtosis`](crate::Core::kurtosis).
     KURTOSIS,
     /// Linear Regression — [`Core::linearreg`](crate::Core::linearreg).
@@ -472,7 +474,7 @@ pub enum FuncId {
 
 impl FuncId {
     /// Number of functions in the registry.
-    pub const COUNT: usize = 213;
+    pub const COUNT: usize = 214;
     /// Metadata for this function (O(1) index into the const table).
     #[inline] pub fn info(self) -> &'static FuncInfo { &FUNC_TABLE[self as usize] }
     /// Upper-case TA name, e.g. "RSI".
@@ -799,7 +801,7 @@ impl FuncInfo {
 
 /// Backing storage for [`FUNCS`], indexed by [`FuncId`]. Link-time const, in
 /// `.rodata`. Private, so its length is nobody's business but this module's.
-static FUNC_TABLE: [FuncInfo; 213] = [
+static FUNC_TABLE: [FuncInfo; 214] = [
     FuncInfo {
         id: FuncId::AC,
         name: "AC",
@@ -2176,6 +2178,17 @@ static FUNC_TABLE: [FuncInfo; 213] = [
         unst_id: None,
     },
     FuncInfo {
+        id: FuncId::KST,
+        name: "KST",
+        group: Group::MomentumIndicators,
+        hint: "Know Sure Thing (Pring)",
+        flags: FuncFlags(0x02000000),
+        inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInROC1Period", display_name: "ROC-1 Period", hint: "Rate-of-change period of leg 1", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 10, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInROC2Period", display_name: "ROC-2 Period", hint: "Rate-of-change period of leg 2", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 15, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInROC3Period", display_name: "ROC-3 Period", hint: "Rate-of-change period of leg 3", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 20, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInROC4Period", display_name: "ROC-4 Period", hint: "Rate-of-change period of leg 4", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 30, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInSMA1Period", display_name: "SMA-1 Period", hint: "Smoothing period of leg 1", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 10, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInSMA2Period", display_name: "SMA-2 Period", hint: "Smoothing period of leg 2", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 10, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInSMA3Period", display_name: "SMA-3 Period", hint: "Smoothing period of leg 3", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 10, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInSMA4Period", display_name: "SMA-4 Period", hint: "Smoothing period of leg 4", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 15, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInSignalPeriod", display_name: "Signal Period", hint: "Smoothing period of the signal line", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 9, suggested: (1, 200, 1) } }, ],
+        outputs: &[OutputInfo { param_name: "outKST", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outKSTSignal", kind: OutputType::Real, flags: OutputFlags(0x00000004) }, ],
+        unst_id: None,
+    },
+    FuncInfo {
         id: FuncId::KURTOSIS,
         name: "KURTOSIS",
         group: Group::StatisticFunctions,
@@ -3286,6 +3299,7 @@ fn get_func_handle_exact(name: &str) -> Option<FuncId> {
         "KAMA" => FuncId::KAMA,
         "KC" => FuncId::KC,
         "KDJ" => FuncId::KDJ,
+        "KST" => FuncId::KST,
         "KURTOSIS" => FuncId::KURTOSIS,
         "LINEARREG" => FuncId::LINEARREG,
         "LINEARREG_ANGLE" => FuncId::LINEARREG_ANGLE,
@@ -3420,7 +3434,7 @@ pub fn for_each_func<F: FnMut(&'static FuncInfo)>(mut f: F) { for fi in FUNCS.it
 /// Widest input arity in the corpus — the holder's slots are sized from it.
 pub const MAX_INPUTS: usize = 2;
 /// Widest optional-parameter arity in the corpus.
-pub const MAX_OPT_INPUTS: usize = 8;
+pub const MAX_OPT_INPUTS: usize = 9;
 /// Widest output arity in the corpus.
 pub const MAX_OUTPUTS: usize = 4;
 
@@ -3756,6 +3770,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::KAMA => self.core.kama_lookback(self.int_opt[0]),
             FuncId::KC => self.core.kc_lookback(self.int_opt[0], self.int_opt[1], self.real_opt[2]),
             FuncId::KDJ => self.core.kdj_lookback(self.int_opt[0], self.int_opt[1], MAType::try_from(self.int_opt[2])?, self.int_opt[3], MAType::try_from(self.int_opt[4])?),
+            FuncId::KST => self.core.kst_lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2], self.int_opt[3], self.int_opt[4], self.int_opt[5], self.int_opt[6], self.int_opt[7], self.int_opt[8]),
             FuncId::KURTOSIS => self.core.kurtosis_lookback(self.int_opt[0]),
             FuncId::LINEARREG => self.core.linearreg_lookback(self.int_opt[0]),
             FuncId::LINEARREG_ANGLE => self.core.linearreg_angle_lookback(self.int_opt[0]),
@@ -5415,6 +5430,19 @@ impl<'a> ParamHolder<'a> {
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
                 self.real_out[2] = Some(o2);
+                match res {
+                    Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
+                    Err(e) => e,
+                }
+            }
+            FuncId::KST => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::BadParam); }
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
+                let res = self.core.kst(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], self.int_opt[2], self.int_opt[3], self.int_opt[4], self.int_opt[5], self.int_opt[6], self.int_opt[7], self.int_opt[8], &mut *o0, &mut *o1);
+                self.real_out[0] = Some(o0);
+                self.real_out[1] = Some(o1);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
                     Err(e) => e,

@@ -124,10 +124,9 @@
 /* Buffers for the abstract-driven sweep (max 3 outputs per function). */
 #define PB_MAX_OUTPUT 3
 /* Server-verify scratch bounds: a Price input expands to at most OHLCV+OI (6)
- * pointers, and MACDEXT carries the most optional params (6). Sized with slack;
- * pbBuildServerInputs guards the input bound, the opt loop the param bound. */
+ * pointers. A function past either bound fails the sweep, never skips it. */
 #define PB_MAX_INPUT  8
-#define PB_MAX_OPT    8
+#define PB_MAX_OPT    16
 /* MA's shipped optInMAType choice list -- ta_codegen generates it from
  * enums.yaml, the same human-maintained file the enumerators come from, so it
  * is how that source of truth reaches a C test. A loop bounded by an enumerator
@@ -2255,7 +2254,15 @@ static void pbSweepRunCase( PBSweepCtx *ctx,
     * always a bug. Runs for every swept case, matching the in-process check
     * above -- including PB_EXPECT_REJECT, which server_verify() never reaches
     * (its early call-tier rejection returns before server_verify would fire). */
-   if( server_verify_active() && funcInfo->nbOptInput <= PB_MAX_OPT )
+   if( server_verify_active() && funcInfo->nbOptInput > PB_MAX_OPT )
+   {
+      printf( "\nFail: %s: %u optional params exceed PB_MAX_OPT %d\n",
+              label, funcInfo->nbOptInput, PB_MAX_OPT );
+      pbFail( ctx );
+      TA_ParamHolderFree( paramHolder );
+      return;
+   }
+   if( server_verify_active() )
    {
       const TA_Real *svInputs[PB_MAX_INPUT];
       double         svOpt[PB_MAX_OPT];
@@ -2349,7 +2356,7 @@ static void pbSweepRunCase( PBSweepCtx *ctx,
        * nbBars (compute_large_int clamps to nbBars-5), so it never sends such a
        * period. Each server must likewise return TA_SUCCESS with a zero-length
        * output at the same outBegIdx. */
-      if( server_verify_active() && funcInfo->nbOptInput <= PB_MAX_OPT )
+      if( server_verify_active() )
       {
          const TA_Real     *svInputs[PB_MAX_INPUT];
          const TA_Real     *svOutReal[PB_MAX_OUTPUT + 1];

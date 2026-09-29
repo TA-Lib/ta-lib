@@ -18,7 +18,7 @@
 # Written by `ta_codegen generate`. Do not renumber by hand -- the number is
 # the only thing a bug report carries, and it has to mean the same guard in the
 # next release as it did in the last.
-next: 442
+next: 456
 sites:
   AC.cbsize.oscBuffer: 184
   AC.circbuf.oscBuffer: 181
@@ -199,6 +199,20 @@ sites:
   HT_TRENDMODE.wincap.j: 335
   IMI.wincap.i: 337
   KAMA.ringcap.trailingIdx: 338
+  KST.cbsize.ring1: 451
+  KST.cbsize.ring2: 452
+  KST.cbsize.ring3: 453
+  KST.cbsize.ring4: 454
+  KST.cbsize.sigRing: 455
+  KST.circbuf.ring1: 442
+  KST.circbuf.ring2: 443
+  KST.circbuf.ring3: 444
+  KST.circbuf.ring4: 445
+  KST.circbuf.sigRing: 446
+  KST.ringcap.den1: 447
+  KST.ringcap.den2: 448
+  KST.ringcap.den3: 449
+  KST.ringcap.den4: 450
   KURTOSIS.extrema: 430
   LINEARREG.extrema: 339
   LINEARREG_ANGLE.extrema: 340

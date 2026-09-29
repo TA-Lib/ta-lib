@@ -123,6 +123,7 @@ IMI                 Intraday Momentum Index
 KAMA                Kaufman Adaptive Moving Average
 KC                  Keltner Channels
 KDJ                 KDJ Stochastic
+KST                 Know Sure Thing (Pring)
 KURTOSIS            Rolling Excess Kurtosis
 LINEARREG           Linear Regression
 LINEARREG_ANGLE     Linear Regression Angle

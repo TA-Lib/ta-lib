@@ -54,6 +54,7 @@ ta_regtest_SOURCES = ta_regtest.c \
 	ta_test_func/test_composite2.c \
 	ta_test_func/test_marketfi.c \
 	ta_test_func/test_emv.c \
+	ta_test_func/test_kst.c \
 	ta_test_func/test_vwap.c \
 	ta_test_func/test_cmf.c \
 	ta_test_func/test_kc.c \

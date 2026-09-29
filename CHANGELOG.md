@@ -20,6 +20,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   - CTI: Correlation Trend Indicator (#430)
   - EMV: Arms Ease of Movement, the midpoint move per unit of volume-to-range, SMA-smoothed (#465)
   - FRAMA: Fractal Adaptive Moving Average, Ehlers' adaptive EMA driven by the window's fractal dimension (#464)
+  - KST: Know Sure Thing (#472)
   - KURTOSIS: Rolling Excess Kurtosis (#433)
   - MEDIAN: Rolling Median (#432)
   - PERCENTB: Bollinger Bands %B, where the input sits relative to the bands (#449)

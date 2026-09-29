@@ -6581,6 +6581,62 @@ static void icount_KDJ(int iters) {
     g_sink += acc + outNBElement;
 }
 
+static void icount_KST(int iters) {
+    const char *nm = "KST";
+    int outBegIdx = 0, outNBElement = 0;
+    double acc = 0.0;
+    TA_RetCode rc;
+    TA_KST_Stream *st = NULL;
+    TA_KST_Stream *stf = NULL;
+    double v0 = 0.0;
+    double v1 = 0.0;
+
+    ICOUNT_ZERO();
+    rc = TA_KST(0, g_nPoints - 1, g_close, 10, 15, 20, 30, 10, 10, 10, 15, 9, &outBegIdx, &outNBElement, g_outBuf0, g_outBuf1);
+    ICOUNT_DUMP("KST/batch");
+    icount_row(nm, "batch", 1, rc);
+    acc += g_outBuf0[0];
+    acc += g_outBuf1[0];
+
+    ICOUNT_ZERO();
+    rc = TA_KST_OpenAndFill(&stf, g_close, g_nPoints, 10, 15, 20, 30, 10, 10, 10, 15, 9, &outBegIdx, &outNBElement, g_outBuf0, g_outBuf1);
+    ICOUNT_DUMP("KST/openfill");
+    icount_row(nm, "openfill", 1, rc);
+    acc += g_outBuf0[0];
+    acc += g_outBuf1[0];
+    if( stf ) TA_KST_Close(stf);
+
+    ICOUNT_ZERO();
+    rc = TA_KST_Open(&st, g_close, g_nPoints, 10, 15, 20, 30, 10, 10, 10, 15, 9, &v0, &v1);
+    ICOUNT_DUMP("KST/open");
+    icount_row(nm, "open", 1, rc);
+
+    if( rc == TA_SUCCESS && st ) {
+        TA_RetCode src = TA_SUCCESS;
+        ICOUNT_ZERO();
+        for( int it = 0; it < iters; it++ ) {
+            src = TA_KST_Update(st, g_close[it & ICOUNT_MASK], &v0, &v1);
+            acc += v0;
+            acc += v1;
+        }
+        ICOUNT_DUMP("KST/update");
+        icount_row(nm, "update", 1, src);
+        ICOUNT_ZERO();
+        for( int it = 0; it < iters; it++ ) {
+            src = TA_KST_Peek(st, g_close[it & ICOUNT_MASK], &v0, &v1);
+            acc += v0;
+            acc += v1;
+        }
+        ICOUNT_DUMP("KST/peek");
+        icount_row(nm, "peek", 1, src);
+    } else {
+        icount_row(nm, "update", 0, rc);
+        icount_row(nm, "peek", 0, rc);
+    }
+    if( st ) TA_KST_Close(st);
+    g_sink += acc + outNBElement;
+}
+
 static void icount_KURTOSIS(int iters) {
     const char *nm = "KURTOSIS";
     int outBegIdx = 0, outNBElement = 0;
@@ -11270,6 +11326,7 @@ static void icount_all(const char *filter, int iters) {
     if( func_matches(filter, "KAMA") ) { icount_KAMA(iters); fflush(stdout); }
     if( func_matches(filter, "KC") ) { icount_KC(iters); fflush(stdout); }
     if( func_matches(filter, "KDJ") ) { icount_KDJ(iters); fflush(stdout); }
+    if( func_matches(filter, "KST") ) { icount_KST(iters); fflush(stdout); }
     if( func_matches(filter, "KURTOSIS") ) { icount_KURTOSIS(iters); fflush(stdout); }
     if( func_matches(filter, "LINEARREG") ) { icount_LINEARREG(iters); fflush(stdout); }
     if( func_matches(filter, "LINEARREG_ANGLE") ) { icount_LINEARREG_ANGLE(iters); fflush(stdout); }
