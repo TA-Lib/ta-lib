@@ -194,7 +194,7 @@ TA_LIB_API TA_RetCode TA_STC( int    startIdx,
     * suffix extremum from slot j+1. The extrema are exact, so the output must
     * stay bit-identical to a full rescan of each window.
     */
-   if( optInCyclePeriod < 1 ) return TA_INTERNAL_ERROR(462);
+   if( optInCyclePeriod < 1 ) return TA_INTERNAL_ERROR(470);
    if( (int)optInCyclePeriod > (int)(sizeof(local_lineRing)/sizeof(double)) )
    {
       lineRing = TA_Malloc( sizeof(double)*optInCyclePeriod );
@@ -209,7 +209,7 @@ TA_LIB_API TA_RetCode TA_STC( int    startIdx,
    }
    maxIdx_lineRing = (optInCyclePeriod-1);
    lineRing_Idx = 0;
-   if( optInCyclePeriod < 1 ) return TA_INTERNAL_ERROR(463);
+   if( optInCyclePeriod < 1 ) return TA_INTERNAL_ERROR(471);
    if( (int)optInCyclePeriod > (int)(sizeof(local_lineSufHi)/sizeof(double)) )
    {
       lineSufHi = TA_Malloc( sizeof(double)*optInCyclePeriod );
@@ -223,7 +223,7 @@ TA_LIB_API TA_RetCode TA_STC( int    startIdx,
    {
       lineSufHi = &local_lineSufHi[0];
    }
-   if( optInCyclePeriod < 1 ) return TA_INTERNAL_ERROR(464);
+   if( optInCyclePeriod < 1 ) return TA_INTERNAL_ERROR(472);
    if( (int)optInCyclePeriod > (int)(sizeof(local_lineSufLo)/sizeof(double)) )
    {
       lineSufLo = TA_Malloc( sizeof(double)*optInCyclePeriod );
@@ -238,7 +238,7 @@ TA_LIB_API TA_RetCode TA_STC( int    startIdx,
    {
       lineSufLo = &local_lineSufLo[0];
    }
-   if( optInCyclePeriod < 1 ) return TA_INTERNAL_ERROR(465);
+   if( optInCyclePeriod < 1 ) return TA_INTERNAL_ERROR(473);
    if( (int)optInCyclePeriod > (int)(sizeof(local_pfRing)/sizeof(double)) )
    {
       pfRing = TA_Malloc( sizeof(double)*optInCyclePeriod );
@@ -256,7 +256,7 @@ TA_LIB_API TA_RetCode TA_STC( int    startIdx,
    }
    maxIdx_pfRing = (optInCyclePeriod-1);
    pfRing_Idx = 0;
-   if( optInCyclePeriod < 1 ) return TA_INTERNAL_ERROR(466);
+   if( optInCyclePeriod < 1 ) return TA_INTERNAL_ERROR(474);
    if( (int)optInCyclePeriod > (int)(sizeof(local_pfSufHi)/sizeof(double)) )
    {
       pfSufHi = TA_Malloc( sizeof(double)*optInCyclePeriod );
@@ -273,7 +273,7 @@ TA_LIB_API TA_RetCode TA_STC( int    startIdx,
    {
       pfSufHi = &local_pfSufHi[0];
    }
-   if( optInCyclePeriod < 1 ) return TA_INTERNAL_ERROR(467);
+   if( optInCyclePeriod < 1 ) return TA_INTERNAL_ERROR(475);
    if( (int)optInCyclePeriod > (int)(sizeof(local_pfSufLo)/sizeof(double)) )
    {
       pfSufLo = TA_Malloc( sizeof(double)*optInCyclePeriod );
@@ -740,7 +740,7 @@ TA_RetCode TA_S_STC( int    startIdx,
    *outBegIdx= startIdx;
    fastK = 2.0 / (double)(optInFastPeriod + 1);
    slowK = 2.0 / (double)(optInSlowPeriod + 1);
-   if( optInCyclePeriod < 1 ) return TA_INTERNAL_ERROR(462);
+   if( optInCyclePeriod < 1 ) return TA_INTERNAL_ERROR(470);
    if( (int)optInCyclePeriod > (int)(sizeof(local_lineRing)/sizeof(double)) )
    {
       lineRing = TA_Malloc( sizeof(double)*optInCyclePeriod );
@@ -755,7 +755,7 @@ TA_RetCode TA_S_STC( int    startIdx,
    }
    maxIdx_lineRing = (optInCyclePeriod-1);
    lineRing_Idx = 0;
-   if( optInCyclePeriod < 1 ) return TA_INTERNAL_ERROR(463);
+   if( optInCyclePeriod < 1 ) return TA_INTERNAL_ERROR(471);
    if( (int)optInCyclePeriod > (int)(sizeof(local_lineSufHi)/sizeof(double)) )
    {
       lineSufHi = TA_Malloc( sizeof(double)*optInCyclePeriod );
@@ -769,7 +769,7 @@ TA_RetCode TA_S_STC( int    startIdx,
    {
       lineSufHi = &local_lineSufHi[0];
    }
-   if( optInCyclePeriod < 1 ) return TA_INTERNAL_ERROR(464);
+   if( optInCyclePeriod < 1 ) return TA_INTERNAL_ERROR(472);
    if( (int)optInCyclePeriod > (int)(sizeof(local_lineSufLo)/sizeof(double)) )
    {
       lineSufLo = TA_Malloc( sizeof(double)*optInCyclePeriod );
@@ -784,7 +784,7 @@ TA_RetCode TA_S_STC( int    startIdx,
    {
       lineSufLo = &local_lineSufLo[0];
    }
-   if( optInCyclePeriod < 1 ) return TA_INTERNAL_ERROR(465);
+   if( optInCyclePeriod < 1 ) return TA_INTERNAL_ERROR(473);
    if( (int)optInCyclePeriod > (int)(sizeof(local_pfRing)/sizeof(double)) )
    {
       pfRing = TA_Malloc( sizeof(double)*optInCyclePeriod );
@@ -802,7 +802,7 @@ TA_RetCode TA_S_STC( int    startIdx,
    }
    maxIdx_pfRing = (optInCyclePeriod-1);
    pfRing_Idx = 0;
-   if( optInCyclePeriod < 1 ) return TA_INTERNAL_ERROR(466);
+   if( optInCyclePeriod < 1 ) return TA_INTERNAL_ERROR(474);
    if( (int)optInCyclePeriod > (int)(sizeof(local_pfSufHi)/sizeof(double)) )
    {
       pfSufHi = TA_Malloc( sizeof(double)*optInCyclePeriod );
@@ -819,7 +819,7 @@ TA_RetCode TA_S_STC( int    startIdx,
    {
       pfSufHi = &local_pfSufHi[0];
    }
-   if( optInCyclePeriod < 1 ) return TA_INTERNAL_ERROR(467);
+   if( optInCyclePeriod < 1 ) return TA_INTERNAL_ERROR(475);
    if( (int)optInCyclePeriod > (int)(sizeof(local_pfSufLo)/sizeof(double)) )
    {
       pfSufLo = TA_Malloc( sizeof(double)*optInCyclePeriod );
@@ -1499,7 +1499,7 @@ static TA_RetCode TA_STC_OpenImpl( struct TA_STC_Stream **stream, const double i
        * suffix extremum from slot j+1. The extrema are exact, so the output must
        * stay bit-identical to a full rescan of each window.
        */
-      if( optInCyclePeriod < 1 ) return TA_INTERNAL_ERROR(462);
+      if( optInCyclePeriod < 1 ) return TA_INTERNAL_ERROR(470);
       if( (int)optInCyclePeriod > (int)(sizeof(local_lineRing)/sizeof(double)) )
       {
          lineRing = TA_Malloc( sizeof(double)*optInCyclePeriod );
@@ -1514,7 +1514,7 @@ static TA_RetCode TA_STC_OpenImpl( struct TA_STC_Stream **stream, const double i
       }
       maxIdx_lineRing = (optInCyclePeriod-1);
       lineRing_Idx = 0;
-      if( optInCyclePeriod < 1 ) return TA_INTERNAL_ERROR(463);
+      if( optInCyclePeriod < 1 ) return TA_INTERNAL_ERROR(471);
       if( (int)optInCyclePeriod > (int)(sizeof(local_lineSufHi)/sizeof(double)) )
       {
          lineSufHi = TA_Malloc( sizeof(double)*optInCyclePeriod );
@@ -1530,7 +1530,7 @@ static TA_RetCode TA_STC_OpenImpl( struct TA_STC_Stream **stream, const double i
       }
       maxIdx_lineSufHi = (optInCyclePeriod-1);
       lineSufHi_Idx = 0;
-      if( optInCyclePeriod < 1 ) return TA_INTERNAL_ERROR(464);
+      if( optInCyclePeriod < 1 ) return TA_INTERNAL_ERROR(472);
       if( (int)optInCyclePeriod > (int)(sizeof(local_lineSufLo)/sizeof(double)) )
       {
          lineSufLo = TA_Malloc( sizeof(double)*optInCyclePeriod );
@@ -1547,7 +1547,7 @@ static TA_RetCode TA_STC_OpenImpl( struct TA_STC_Stream **stream, const double i
       }
       maxIdx_lineSufLo = (optInCyclePeriod-1);
       lineSufLo_Idx = 0;
-      if( optInCyclePeriod < 1 ) return TA_INTERNAL_ERROR(465);
+      if( optInCyclePeriod < 1 ) return TA_INTERNAL_ERROR(473);
       if( (int)optInCyclePeriod > (int)(sizeof(local_pfRing)/sizeof(double)) )
       {
          pfRing = TA_Malloc( sizeof(double)*optInCyclePeriod );
@@ -1565,7 +1565,7 @@ static TA_RetCode TA_STC_OpenImpl( struct TA_STC_Stream **stream, const double i
       }
       maxIdx_pfRing = (optInCyclePeriod-1);
       pfRing_Idx = 0;
-      if( optInCyclePeriod < 1 ) return TA_INTERNAL_ERROR(466);
+      if( optInCyclePeriod < 1 ) return TA_INTERNAL_ERROR(474);
       if( (int)optInCyclePeriod > (int)(sizeof(local_pfSufHi)/sizeof(double)) )
       {
          pfSufHi = TA_Malloc( sizeof(double)*optInCyclePeriod );
@@ -1584,7 +1584,7 @@ static TA_RetCode TA_STC_OpenImpl( struct TA_STC_Stream **stream, const double i
       }
       maxIdx_pfSufHi = (optInCyclePeriod-1);
       pfSufHi_Idx = 0;
-      if( optInCyclePeriod < 1 ) return TA_INTERNAL_ERROR(467);
+      if( optInCyclePeriod < 1 ) return TA_INTERNAL_ERROR(475);
       if( (int)optInCyclePeriod > (int)(sizeof(local_pfSufLo)/sizeof(double)) )
       {
          pfSufLo = TA_Malloc( sizeof(double)*optInCyclePeriod );
@@ -1978,32 +1978,32 @@ static TA_RetCode TA_STC_OpenImpl( struct TA_STC_Stream **stream, const double i
       sp->pfSufLo_Idx = pfSufLo_Idx;
       sp->maxIdx_pfSufLo = maxIdx_pfSufLo;
       sp->cbSize_lineRing = maxIdx_lineRing + 1;
-      if( sp->cbSize_lineRing < 1 || sp->cbSize_lineRing > historyLen + 1 ) { if( lineRing != &local_lineRing[0] ) { TA_Free( lineRing ); } if( lineSufHi != &local_lineSufHi[0] ) { TA_Free( lineSufHi ); } if( lineSufLo != &local_lineSufLo[0] ) { TA_Free( lineSufLo ); } if( pfRing != &local_pfRing[0] ) { TA_Free( pfRing ); } if( pfSufHi != &local_pfSufHi[0] ) { TA_Free( pfSufHi ); } if( pfSufLo != &local_pfSufLo[0] ) { TA_Free( pfSufLo ); } TA_STC_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(468); }
+      if( sp->cbSize_lineRing < 1 || sp->cbSize_lineRing > historyLen + 1 ) { if( lineRing != &local_lineRing[0] ) { TA_Free( lineRing ); } if( lineSufHi != &local_lineSufHi[0] ) { TA_Free( lineSufHi ); } if( lineSufLo != &local_lineSufLo[0] ) { TA_Free( lineSufLo ); } if( pfRing != &local_pfRing[0] ) { TA_Free( pfRing ); } if( pfSufHi != &local_pfSufHi[0] ) { TA_Free( pfSufHi ); } if( pfSufLo != &local_pfSufLo[0] ) { TA_Free( pfSufLo ); } TA_STC_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(476); }
       sp->cb_lineRing = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_lineRing );
       if( !sp->cb_lineRing ) { if( lineRing != &local_lineRing[0] ) { TA_Free( lineRing ); } if( lineSufHi != &local_lineSufHi[0] ) { TA_Free( lineSufHi ); } if( lineSufLo != &local_lineSufLo[0] ) { TA_Free( lineSufLo ); } if( pfRing != &local_pfRing[0] ) { TA_Free( pfRing ); } if( pfSufHi != &local_pfSufHi[0] ) { TA_Free( pfSufHi ); } if( pfSufLo != &local_pfSufLo[0] ) { TA_Free( pfSufLo ); } TA_STC_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->cb_lineRing, lineRing, sizeof(double) * (size_t)sp->cbSize_lineRing );
       sp->cbSize_lineSufHi = maxIdx_lineSufHi + 1;
-      if( sp->cbSize_lineSufHi < 1 || sp->cbSize_lineSufHi > historyLen + 1 ) { if( lineRing != &local_lineRing[0] ) { TA_Free( lineRing ); } if( lineSufHi != &local_lineSufHi[0] ) { TA_Free( lineSufHi ); } if( lineSufLo != &local_lineSufLo[0] ) { TA_Free( lineSufLo ); } if( pfRing != &local_pfRing[0] ) { TA_Free( pfRing ); } if( pfSufHi != &local_pfSufHi[0] ) { TA_Free( pfSufHi ); } if( pfSufLo != &local_pfSufLo[0] ) { TA_Free( pfSufLo ); } TA_STC_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(469); }
+      if( sp->cbSize_lineSufHi < 1 || sp->cbSize_lineSufHi > historyLen + 1 ) { if( lineRing != &local_lineRing[0] ) { TA_Free( lineRing ); } if( lineSufHi != &local_lineSufHi[0] ) { TA_Free( lineSufHi ); } if( lineSufLo != &local_lineSufLo[0] ) { TA_Free( lineSufLo ); } if( pfRing != &local_pfRing[0] ) { TA_Free( pfRing ); } if( pfSufHi != &local_pfSufHi[0] ) { TA_Free( pfSufHi ); } if( pfSufLo != &local_pfSufLo[0] ) { TA_Free( pfSufLo ); } TA_STC_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(477); }
       sp->cb_lineSufHi = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_lineSufHi );
       if( !sp->cb_lineSufHi ) { if( lineRing != &local_lineRing[0] ) { TA_Free( lineRing ); } if( lineSufHi != &local_lineSufHi[0] ) { TA_Free( lineSufHi ); } if( lineSufLo != &local_lineSufLo[0] ) { TA_Free( lineSufLo ); } if( pfRing != &local_pfRing[0] ) { TA_Free( pfRing ); } if( pfSufHi != &local_pfSufHi[0] ) { TA_Free( pfSufHi ); } if( pfSufLo != &local_pfSufLo[0] ) { TA_Free( pfSufLo ); } TA_STC_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->cb_lineSufHi, lineSufHi, sizeof(double) * (size_t)sp->cbSize_lineSufHi );
       sp->cbSize_lineSufLo = maxIdx_lineSufLo + 1;
-      if( sp->cbSize_lineSufLo < 1 || sp->cbSize_lineSufLo > historyLen + 1 ) { if( lineRing != &local_lineRing[0] ) { TA_Free( lineRing ); } if( lineSufHi != &local_lineSufHi[0] ) { TA_Free( lineSufHi ); } if( lineSufLo != &local_lineSufLo[0] ) { TA_Free( lineSufLo ); } if( pfRing != &local_pfRing[0] ) { TA_Free( pfRing ); } if( pfSufHi != &local_pfSufHi[0] ) { TA_Free( pfSufHi ); } if( pfSufLo != &local_pfSufLo[0] ) { TA_Free( pfSufLo ); } TA_STC_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(470); }
+      if( sp->cbSize_lineSufLo < 1 || sp->cbSize_lineSufLo > historyLen + 1 ) { if( lineRing != &local_lineRing[0] ) { TA_Free( lineRing ); } if( lineSufHi != &local_lineSufHi[0] ) { TA_Free( lineSufHi ); } if( lineSufLo != &local_lineSufLo[0] ) { TA_Free( lineSufLo ); } if( pfRing != &local_pfRing[0] ) { TA_Free( pfRing ); } if( pfSufHi != &local_pfSufHi[0] ) { TA_Free( pfSufHi ); } if( pfSufLo != &local_pfSufLo[0] ) { TA_Free( pfSufLo ); } TA_STC_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(478); }
       sp->cb_lineSufLo = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_lineSufLo );
       if( !sp->cb_lineSufLo ) { if( lineRing != &local_lineRing[0] ) { TA_Free( lineRing ); } if( lineSufHi != &local_lineSufHi[0] ) { TA_Free( lineSufHi ); } if( lineSufLo != &local_lineSufLo[0] ) { TA_Free( lineSufLo ); } if( pfRing != &local_pfRing[0] ) { TA_Free( pfRing ); } if( pfSufHi != &local_pfSufHi[0] ) { TA_Free( pfSufHi ); } if( pfSufLo != &local_pfSufLo[0] ) { TA_Free( pfSufLo ); } TA_STC_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->cb_lineSufLo, lineSufLo, sizeof(double) * (size_t)sp->cbSize_lineSufLo );
       sp->cbSize_pfRing = maxIdx_pfRing + 1;
-      if( sp->cbSize_pfRing < 1 || sp->cbSize_pfRing > historyLen + 1 ) { if( lineRing != &local_lineRing[0] ) { TA_Free( lineRing ); } if( lineSufHi != &local_lineSufHi[0] ) { TA_Free( lineSufHi ); } if( lineSufLo != &local_lineSufLo[0] ) { TA_Free( lineSufLo ); } if( pfRing != &local_pfRing[0] ) { TA_Free( pfRing ); } if( pfSufHi != &local_pfSufHi[0] ) { TA_Free( pfSufHi ); } if( pfSufLo != &local_pfSufLo[0] ) { TA_Free( pfSufLo ); } TA_STC_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(471); }
+      if( sp->cbSize_pfRing < 1 || sp->cbSize_pfRing > historyLen + 1 ) { if( lineRing != &local_lineRing[0] ) { TA_Free( lineRing ); } if( lineSufHi != &local_lineSufHi[0] ) { TA_Free( lineSufHi ); } if( lineSufLo != &local_lineSufLo[0] ) { TA_Free( lineSufLo ); } if( pfRing != &local_pfRing[0] ) { TA_Free( pfRing ); } if( pfSufHi != &local_pfSufHi[0] ) { TA_Free( pfSufHi ); } if( pfSufLo != &local_pfSufLo[0] ) { TA_Free( pfSufLo ); } TA_STC_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(479); }
       sp->cb_pfRing = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_pfRing );
       if( !sp->cb_pfRing ) { if( lineRing != &local_lineRing[0] ) { TA_Free( lineRing ); } if( lineSufHi != &local_lineSufHi[0] ) { TA_Free( lineSufHi ); } if( lineSufLo != &local_lineSufLo[0] ) { TA_Free( lineSufLo ); } if( pfRing != &local_pfRing[0] ) { TA_Free( pfRing ); } if( pfSufHi != &local_pfSufHi[0] ) { TA_Free( pfSufHi ); } if( pfSufLo != &local_pfSufLo[0] ) { TA_Free( pfSufLo ); } TA_STC_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->cb_pfRing, pfRing, sizeof(double) * (size_t)sp->cbSize_pfRing );
       sp->cbSize_pfSufHi = maxIdx_pfSufHi + 1;
-      if( sp->cbSize_pfSufHi < 1 || sp->cbSize_pfSufHi > historyLen + 1 ) { if( lineRing != &local_lineRing[0] ) { TA_Free( lineRing ); } if( lineSufHi != &local_lineSufHi[0] ) { TA_Free( lineSufHi ); } if( lineSufLo != &local_lineSufLo[0] ) { TA_Free( lineSufLo ); } if( pfRing != &local_pfRing[0] ) { TA_Free( pfRing ); } if( pfSufHi != &local_pfSufHi[0] ) { TA_Free( pfSufHi ); } if( pfSufLo != &local_pfSufLo[0] ) { TA_Free( pfSufLo ); } TA_STC_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(472); }
+      if( sp->cbSize_pfSufHi < 1 || sp->cbSize_pfSufHi > historyLen + 1 ) { if( lineRing != &local_lineRing[0] ) { TA_Free( lineRing ); } if( lineSufHi != &local_lineSufHi[0] ) { TA_Free( lineSufHi ); } if( lineSufLo != &local_lineSufLo[0] ) { TA_Free( lineSufLo ); } if( pfRing != &local_pfRing[0] ) { TA_Free( pfRing ); } if( pfSufHi != &local_pfSufHi[0] ) { TA_Free( pfSufHi ); } if( pfSufLo != &local_pfSufLo[0] ) { TA_Free( pfSufLo ); } TA_STC_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(480); }
       sp->cb_pfSufHi = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_pfSufHi );
       if( !sp->cb_pfSufHi ) { if( lineRing != &local_lineRing[0] ) { TA_Free( lineRing ); } if( lineSufHi != &local_lineSufHi[0] ) { TA_Free( lineSufHi ); } if( lineSufLo != &local_lineSufLo[0] ) { TA_Free( lineSufLo ); } if( pfRing != &local_pfRing[0] ) { TA_Free( pfRing ); } if( pfSufHi != &local_pfSufHi[0] ) { TA_Free( pfSufHi ); } if( pfSufLo != &local_pfSufLo[0] ) { TA_Free( pfSufLo ); } TA_STC_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->cb_pfSufHi, pfSufHi, sizeof(double) * (size_t)sp->cbSize_pfSufHi );
       sp->cbSize_pfSufLo = maxIdx_pfSufLo + 1;
-      if( sp->cbSize_pfSufLo < 1 || sp->cbSize_pfSufLo > historyLen + 1 ) { if( lineRing != &local_lineRing[0] ) { TA_Free( lineRing ); } if( lineSufHi != &local_lineSufHi[0] ) { TA_Free( lineSufHi ); } if( lineSufLo != &local_lineSufLo[0] ) { TA_Free( lineSufLo ); } if( pfRing != &local_pfRing[0] ) { TA_Free( pfRing ); } if( pfSufHi != &local_pfSufHi[0] ) { TA_Free( pfSufHi ); } if( pfSufLo != &local_pfSufLo[0] ) { TA_Free( pfSufLo ); } TA_STC_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(473); }
+      if( sp->cbSize_pfSufLo < 1 || sp->cbSize_pfSufLo > historyLen + 1 ) { if( lineRing != &local_lineRing[0] ) { TA_Free( lineRing ); } if( lineSufHi != &local_lineSufHi[0] ) { TA_Free( lineSufHi ); } if( lineSufLo != &local_lineSufLo[0] ) { TA_Free( lineSufLo ); } if( pfRing != &local_pfRing[0] ) { TA_Free( pfRing ); } if( pfSufHi != &local_pfSufHi[0] ) { TA_Free( pfSufHi ); } if( pfSufLo != &local_pfSufLo[0] ) { TA_Free( pfSufLo ); } TA_STC_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(481); }
       sp->cb_pfSufLo = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_pfSufLo );
       if( !sp->cb_pfSufLo ) { if( lineRing != &local_lineRing[0] ) { TA_Free( lineRing ); } if( lineSufHi != &local_lineSufHi[0] ) { TA_Free( lineSufHi ); } if( lineSufLo != &local_lineSufLo[0] ) { TA_Free( lineSufLo ); } if( pfRing != &local_pfRing[0] ) { TA_Free( pfRing ); } if( pfSufHi != &local_pfSufHi[0] ) { TA_Free( pfSufHi ); } if( pfSufLo != &local_pfSufLo[0] ) { TA_Free( pfSufLo ); } TA_STC_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->cb_pfSufLo, pfSufLo, sizeof(double) * (size_t)sp->cbSize_pfSufLo );

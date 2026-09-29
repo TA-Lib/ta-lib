@@ -9231,6 +9231,103 @@ fn legs_CHOPTR(r: &mut Report) {
     r.legs_done("CHOPTR", 3);
 }
 
+const V_CKSP: &[(&str, i32, f64, i32)] = &[
+    ("defaults", i32::MIN, Core::REAL_DEFAULT, i32::MIN),
+    ("minimums", 2i32, 0.0f64, 1i32),
+];
+
+fn sub_CKSP(r: &mut Report) {
+    let core = Core::new();
+    for &(label, optInTimePeriod, optInMultiplier, optInStopPeriod) in V_CKSP {
+        let Ok(lb) = core.cksp_lookback(optInTimePeriod, optInMultiplier, optInStopPeriod) else { continue; };
+        r.control("CKSP", label, run(|| {
+            let inHigh: Vec<f64> = Vec::with_capacity(1);
+            let inLow: Vec<f64> = Vec::with_capacity(1);
+            let inClose: Vec<f64> = Vec::with_capacity(1);
+            let mut outHighStop: Vec<f64> = Vec::with_capacity(1);
+            let mut outLowStop: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.cksp_impl(0, lb, &inHigh, &inLow, &inClose, optInTimePeriod, optInMultiplier, optInStopPeriod, &mut _b, &mut _n, &mut outHighStop, &mut outLowStop);
+            (rc, _n)
+        }));
+        if lb < 1 { r.no_quiet_range("CKSP", label); continue; }
+        r.quiet("CKSP", label, lb, run(|| {
+            let inHigh: Vec<f64> = Vec::with_capacity(1);
+            let inLow: Vec<f64> = Vec::with_capacity(1);
+            let inClose: Vec<f64> = Vec::with_capacity(1);
+            let mut outHighStop: Vec<f64> = Vec::with_capacity(1);
+            let mut outLowStop: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.cksp_impl(0, lb - 1, &inHigh, &inLow, &inClose, optInTimePeriod, optInMultiplier, optInStopPeriod, &mut _b, &mut _n, &mut outHighStop, &mut outLowStop);
+            (rc, _n)
+        }));
+    }
+}
+
+fn legs_CKSP(r: &mut Report) {
+    let core = Core::new();
+    let optInTimePeriod = i32::MIN;
+    let optInMultiplier = Core::REAL_DEFAULT;
+    let optInStopPeriod = i32::MIN;
+    let Ok(lb) = core.cksp_lookback(optInTimePeriod, optInMultiplier, optInStopPeriod) else { r.no_legs("CKSP"); return; };
+    let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outHighStop: Vec<f64> = vec![Default::default(); 5];
+        let mut outLowStop: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("CKSP", run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.cksp_impl(startIdx, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, optInMultiplier, optInStopPeriod, &mut _b, &mut _n, &mut outHighStop, &mut outLowStop);
+            (rc, _n)
+        }));
+    }
+    {
+        let inHigh: Vec<f64> = Vec::with_capacity(1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outHighStop: Vec<f64> = vec![Default::default(); 5];
+        let mut outLowStop: Vec<f64> = vec![Default::default(); 5];
+        r.leg("CKSP", "inHigh", 0, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.cksp_impl(startIdx, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, optInMultiplier, optInStopPeriod, &mut _b, &mut _n, &mut outHighStop, &mut outLowStop);
+            (rc, _n)
+        }));
+    }
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = Vec::with_capacity(1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outHighStop: Vec<f64> = vec![Default::default(); 5];
+        let mut outLowStop: Vec<f64> = vec![Default::default(); 5];
+        r.leg("CKSP", "inLow", 1, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.cksp_impl(startIdx, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, optInMultiplier, optInStopPeriod, &mut _b, &mut _n, &mut outHighStop, &mut outLowStop);
+            (rc, _n)
+        }));
+    }
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = Vec::with_capacity(1);
+        let mut outHighStop: Vec<f64> = vec![Default::default(); 5];
+        let mut outLowStop: Vec<f64> = vec![Default::default(); 5];
+        r.leg("CKSP", "inClose", 2, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.cksp_impl(startIdx, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, optInMultiplier, optInStopPeriod, &mut _b, &mut _n, &mut outHighStop, &mut outLowStop);
+            (rc, _n)
+        }));
+    }
+    r.legs_done("CKSP", 3);
+}
+
 const V_CMF: &[(&str, i32)] = &[
     ("defaults", i32::MIN),
     ("minimums", 2i32),
@@ -18695,6 +18792,7 @@ const PROBES: &[(&str, Probe, Probe)] = &[
     ("CG", sub_CG, legs_CG),
     ("CHOP", sub_CHOP, legs_CHOP),
     ("CHOPTR", sub_CHOPTR, legs_CHOPTR),
+    ("CKSP", sub_CKSP, legs_CKSP),
     ("CMF", sub_CMF, legs_CMF),
     ("CMO", sub_CMO, legs_CMO),
     ("CMOU", sub_CMOU, legs_CMOU),
@@ -18864,7 +18962,7 @@ fn no_phantom_io() {
     // The corpus is the generator's, not a list kept by hand: a probe that
     // stopped being emitted is a shrinking sweep, which is the one way this
     // file can fail open.
-    assert_eq!(PROBES.len(), 221, "probe count");
+    assert_eq!(PROBES.len(), 222, "probe count");
     assert_eq!(
         PROBES.len(),
         crate::abstract_api::funcs().count(),

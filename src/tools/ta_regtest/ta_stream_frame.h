@@ -3799,6 +3799,52 @@ static TA_RetCode TA_CHOPTR_SFrameClose( void *stream )
    return TA_CHOPTR_Close( (TA_CHOPTR_Stream *)stream );
 }
 
+static TA_RetCode TA_CKSP_SFrameOpen( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_CKSP_Open(
+               (TA_CKSP_Stream **)stream,
+               in[0] /* inHigh */,
+               in[1] /* inLow */,
+               in[2] /* inClose */,
+               historyLen,
+               (int)optIn[0] /* optInTimePeriod */,
+               optIn[1] /* optInMultiplier */,
+               (int)optIn[2] /* optInStopPeriod */,
+               outReal[0] /* outHighStop */,
+               outReal[1] /* outLowStop */
+               );
+}
+static TA_RetCode TA_CKSP_SFrameFill( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_CKSP_OpenAndFill(
+               (TA_CKSP_Stream **)stream,
+               in[0] /* inHigh */,
+               in[1] /* inLow */,
+               in[2] /* inClose */,
+               historyLen,
+               (int)optIn[0] /* optInTimePeriod */,
+               optIn[1] /* optInMultiplier */,
+               (int)optIn[2] /* optInStopPeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outHighStop */,
+               outReal[1] /* outLowStop */
+               );
+}
+static TA_RetCode TA_CKSP_SFrameClose( void *stream )
+{
+   return TA_CKSP_Close( (TA_CKSP_Stream *)stream );
+}
+
 static TA_RetCode TA_CMF_SFrameOpen( void **stream,
                   const double *const in[], int historyLen,
                   const double optIn[],
@@ -9062,6 +9108,8 @@ static const TA_StreamEntry TA_StreamTable[] = {
      3, TA_VIn_CHOP, 1, TA_VOpt_CHOP, 1, TA_VOutIsInt_CHOP },
    { "CHOPTR", TA_CHOPTR_SFrameOpen, TA_CHOPTR_SFrameFill, TA_CHOPTR_SFrameClose,
      3, TA_VIn_CHOPTR, 1, TA_VOpt_CHOPTR, 1, TA_VOutIsInt_CHOPTR },
+   { "CKSP", TA_CKSP_SFrameOpen, TA_CKSP_SFrameFill, TA_CKSP_SFrameClose,
+     3, TA_VIn_CKSP, 3, TA_VOpt_CKSP, 2, TA_VOutIsInt_CKSP },
    { "CMF", TA_CMF_SFrameOpen, TA_CMF_SFrameFill, TA_CMF_SFrameClose,
      4, TA_VIn_CMF, 1, TA_VOpt_CMF, 1, TA_VOutIsInt_CMF },
    { "CMO", TA_CMO_SFrameOpen, TA_CMO_SFrameFill, TA_CMO_SFrameClose,
@@ -9326,6 +9374,6 @@ static const TA_StreamEntry TA_StreamTable[] = {
      1, TA_VIn_ZLEMA, 1, TA_VOpt_ZLEMA, 1, TA_VOutIsInt_ZLEMA },
 };
 
-#define TA_STREAM_TABLE_SIZE 221
+#define TA_STREAM_TABLE_SIZE 222
 
 #endif /* TA_STREAM_FRAME_H */

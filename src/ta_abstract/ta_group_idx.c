@@ -130,6 +130,7 @@ extern const TA_FuncDef TA_DEF_CEIL;
 extern const TA_FuncDef TA_DEF_CG;
 extern const TA_FuncDef TA_DEF_CHOP;
 extern const TA_FuncDef TA_DEF_CHOPTR;
+extern const TA_FuncDef TA_DEF_CKSP;
 extern const TA_FuncDef TA_DEF_CMF;
 extern const TA_FuncDef TA_DEF_CMO;
 extern const TA_FuncDef TA_DEF_CMOU;
@@ -301,6 +302,7 @@ const TA_FuncDef *TA_PerGroupFunc_2[] = {
 &TA_DEF_ACCBANDS,
 &TA_DEF_ALMA,
 &TA_DEF_BBANDS,
+&TA_DEF_CKSP,
 &TA_DEF_DEMA,
 &TA_DEF_DONCHIAN,
 &TA_DEF_EMA,

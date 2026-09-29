@@ -4,7 +4,7 @@ format 9
 soname libta-lib.so.1
 version-info 3:0:2
 headers ta_abstract.h ta_common.h ta_defs.h ta_func.h ta_libc.h
-function-count 2691
+function-count 2703
 platform pointer=8 long=8 int=4 enum=4
 type TA_FuncInfo sizeof=48 name:const_char_*=0 group:const_char_*=8 hint:const_char_*=16 flags:TA_FuncFlags=24 nbInput:unsigned_int=28 nbOptInput:unsigned_int=32 nbOutput:unsigned_int=36 handle:const_TA_FuncHandle_*=40
 type TA_InputParameterInfo sizeof=24 type:TA_InputParameterType=0 paramName:const_char_*=8 flags:TA_InputFlags=16
@@ -1079,6 +1079,16 @@ function TA_RetCode TA_CHOP_OutRange(const TA_CHOP_Stream *, int *, int *)
 function TA_RetCode TA_CHOP_Peek(const TA_CHOP_Stream *, double, double, double, double *)
 function TA_RetCode TA_CHOP_Update(TA_CHOP_Stream *, double, double, double, double *)
 function TA_RetCode TA_CHOP_Value(const TA_CHOP_Stream *, double *)
+function TA_RetCode TA_CKSP(int, int, const double *, const double *, const double *, int, double, int, int *, int *, double *, double *)
+function TA_RetCode TA_CKSP_Advance(TA_CKSP_Stream *)
+function TA_RetCode TA_CKSP_Clone(const TA_CKSP_Stream *, TA_CKSP_Stream **)
+function TA_RetCode TA_CKSP_Close(TA_CKSP_Stream *)
+function TA_RetCode TA_CKSP_Open(TA_CKSP_Stream **, const double *, const double *, const double *, int, int, double, int, double *, double *)
+function TA_RetCode TA_CKSP_OpenAndFill(TA_CKSP_Stream **, const double *, const double *, const double *, int, int, double, int, int *, int *, double *, double *)
+function TA_RetCode TA_CKSP_OutRange(const TA_CKSP_Stream *, int *, int *)
+function TA_RetCode TA_CKSP_Peek(const TA_CKSP_Stream *, double, double, double, double *, double *)
+function TA_RetCode TA_CKSP_Update(TA_CKSP_Stream *, double, double, double, double *, double *)
+function TA_RetCode TA_CKSP_Value(const TA_CKSP_Stream *, double *, double *)
 function TA_RetCode TA_CMF(int, int, const double *, const double *, const double *, const double *, int, int *, int *, double *)
 function TA_RetCode TA_CMF_Advance(TA_CMF_Stream *)
 function TA_RetCode TA_CMF_Clone(const TA_CMF_Stream *, TA_CMF_Stream **)
@@ -2275,6 +2285,7 @@ function TA_RetCode TA_S_CEIL(int, int, const float *, int *, int *, double *)
 function TA_RetCode TA_S_CG(int, int, const float *, int, int *, int *, double *)
 function TA_RetCode TA_S_CHOP(int, int, const float *, const float *, const float *, int, int *, int *, double *)
 function TA_RetCode TA_S_CHOPTR(int, int, const float *, const float *, const float *, int, int *, int *, double *)
+function TA_RetCode TA_S_CKSP(int, int, const float *, const float *, const float *, int, double, int, int *, int *, double *, double *)
 function TA_RetCode TA_S_CMF(int, int, const float *, const float *, const float *, const float *, int, int *, int *, double *)
 function TA_RetCode TA_S_CMO(int, int, const float *, int, int *, int *, double *)
 function TA_RetCode TA_S_CMOU(int, int, const float *, int, int *, int *, double *)
@@ -2736,6 +2747,7 @@ function int TA_CEIL_Lookback(void)
 function int TA_CG_Lookback(int)
 function int TA_CHOPTR_Lookback(int)
 function int TA_CHOP_Lookback(int)
+function int TA_CKSP_Lookback(int, double, int)
 function int TA_CMF_Lookback(int)
 function int TA_CMOU_Lookback(int)
 function int TA_CMO_Lookback(int)

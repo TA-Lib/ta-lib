@@ -1592,6 +1592,92 @@ DEF_FUNCTION( CHOPTR,
              );
 /* CHOPTR END */
 
+/* CKSP BEGIN */
+static const TA_OptInputParameterInfo TA_DEF_UI_D_CKSP_TimePeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInTimePeriod",
+   0,
+
+   "Time Period",
+   (const void *)&TA_DEF_TimePeriod_Positive_Minimum2,
+   10,
+   "ATR and extreme window",
+
+   NULL
+};
+
+static const TA_RealRange TA_DEF_CKSP_Multiplier =
+{
+   0.0,
+   TA_REAL_MAX,
+   2,
+   0.5,
+   5.0,
+   0.5
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_CKSP_Multiplier =
+{
+   TA_OptInput_RealRange,
+   "optInMultiplier",
+   0,
+
+   "Multiplier",
+   (const void *)&TA_DEF_CKSP_Multiplier,
+   1.0,
+   "ATR multiplier",
+
+   NULL
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_CKSP_StopPeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInStopPeriod",
+   0,
+
+   "Stop Period",
+   (const void *)&TA_DEF_TimePeriod_Positive,
+   9,
+   "Stop window",
+
+   NULL
+};
+
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_CKSP_outHighStop =
+                               { TA_Output_Real, "outHighStop", TA_OUT_LINE };
+
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_CKSP_outLowStop =
+                               { TA_Output_Real, "outLowStop", TA_OUT_LINE };
+
+static const TA_InputParameterInfo    *TA_CKSP_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_HLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_CKSP_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real_CKSP_outHighStop,
+  &TA_DEF_UI_Output_Real_CKSP_outLowStop,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_CKSP_OptInputs[] =
+{ &TA_DEF_UI_D_CKSP_TimePeriod,
+  &TA_DEF_UI_D_CKSP_Multiplier,
+  &TA_DEF_UI_D_CKSP_StopPeriod,
+  NULL
+};
+
+DEF_FUNCTION( CKSP,
+              TA_GroupId_OverlapStudies,
+              "Chande Kroll Stop",
+              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM
+             );
+/* CKSP END */
+
 /* CMF BEGIN */
 static const TA_InputParameterInfo    *TA_CMF_Inputs[]    =
 {
@@ -2110,6 +2196,7 @@ const TA_FuncDef *TA_DEF_TableC[] =
    ADD_TO_TABLE(CG),
    ADD_TO_TABLE(CHOP),
    ADD_TO_TABLE(CHOPTR),
+   ADD_TO_TABLE(CKSP),
    ADD_TO_TABLE(CMF),
    ADD_TO_TABLE(CMO),
    ADD_TO_TABLE(CMOU),

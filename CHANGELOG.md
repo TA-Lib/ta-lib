@@ -19,6 +19,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   - CG: Center of Gravity Oscillator, Ehlers' balance point of the window (#450)
   - CHOP: Choppiness Index (#469)
   - CHOPTR: Choppiness Index - True-Range Variant (#469)
+  - CKSP: Chande Kroll Stop, ATR-offset extremes taken over a second window (#477)
   - CRSI: Connors RSI (#431)
   - CTI: Correlation Trend Indicator (#430)
   - EMV: Arms Ease of Movement, the midpoint move per unit of volume-to-range, SMA-smoothed (#465)

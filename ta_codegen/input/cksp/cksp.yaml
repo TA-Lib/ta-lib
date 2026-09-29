@@ -1,0 +1,38 @@
+name: CKSP
+group: Overlap Studies
+hint: Chande Kroll Stop
+flags: [overlap, stream]
+inputs:
+  - name: inPriceHLC
+    type: price
+    price_components: [high, low, close]
+optional_inputs:
+  - name: optInTimePeriod
+    type: integer
+    display_name: Time Period
+    hint: ATR and extreme window
+    range: [2, 100000]
+    default: 10
+    suggested: [4, 200, 1]
+  - name: optInMultiplier
+    type: real
+    display_name: Multiplier
+    hint: ATR multiplier
+    range: [0, TA_REAL_MAX]
+    default: 1.0
+    precision: 2
+    suggested: [0.5, 5, 0.5]
+  - name: optInStopPeriod
+    type: integer
+    display_name: Stop Period
+    hint: Stop window
+    range: [1, 100000]
+    default: 9
+    suggested: [1, 200, 1]
+outputs:
+  - name: outHighStop
+    type: real
+    flags: [line]
+  - name: outLowStop
+    type: real
+    flags: [line]

@@ -18,7 +18,7 @@
 # Written by `ta_codegen generate`. Do not renumber by hand -- the number is
 # the only thing a bug report carries, and it has to mean the same guard in the
 # next release as it did in the last.
-next: 474
+next: 482
 sites:
   AC.cbsize.oscBuffer: 184
   AC.circbuf.oscBuffer: 181
@@ -161,6 +161,14 @@ sites:
   CG.wincap.j: 437
   CHOP.wincap.i: 456
   CHOPTR.wincap.i: 457
+  CKSP.cbsize.fhRing: 468
+  CKSP.cbsize.flRing: 469
+  CKSP.cbsize.hRing: 466
+  CKSP.cbsize.lRing: 467
+  CKSP.circbuf.fhRing: 464
+  CKSP.circbuf.flRing: 465
+  CKSP.circbuf.hRing: 462
+  CKSP.circbuf.lRing: 463
   CMF.cbsize.mfv: 315
   CMF.circbuf.mfv: 314
   CMOU.ringcap.trailingIdx: 316
@@ -277,18 +285,18 @@ sites:
   RVOL.ringcap.trailingIdx: 408
   SMA.ringcap.trailingIdx: 383
   SMI.extrema: 384
-  STC.cbsize.lineRing: 468
-  STC.cbsize.lineSufHi: 469
-  STC.cbsize.lineSufLo: 470
-  STC.cbsize.pfRing: 471
-  STC.cbsize.pfSufHi: 472
-  STC.cbsize.pfSufLo: 473
-  STC.circbuf.lineRing: 462
-  STC.circbuf.lineSufHi: 463
-  STC.circbuf.lineSufLo: 464
-  STC.circbuf.pfRing: 465
-  STC.circbuf.pfSufHi: 466
-  STC.circbuf.pfSufLo: 467
+  STC.cbsize.lineRing: 476
+  STC.cbsize.lineSufHi: 477
+  STC.cbsize.lineSufLo: 478
+  STC.cbsize.pfRing: 479
+  STC.cbsize.pfSufHi: 480
+  STC.cbsize.pfSufLo: 481
+  STC.circbuf.lineRing: 470
+  STC.circbuf.lineSufHi: 471
+  STC.circbuf.lineSufLo: 472
+  STC.circbuf.pfRing: 473
+  STC.circbuf.pfSufHi: 474
+  STC.circbuf.pfSufLo: 475
   STOCH.extrema: 385
   STOCHF.extrema: 386
   SUM.ringcap.trailingIdx: 387

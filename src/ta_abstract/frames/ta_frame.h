@@ -857,6 +857,15 @@ TA_RetCode TA_CHOPTR_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_CHOPTR_FramePPLB( const TA_ParamHolderPriv *params )
 ;
 
+TA_RetCode TA_CKSP_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+;
+unsigned int TA_CKSP_FramePPLB( const TA_ParamHolderPriv *params )
+;
+
 TA_RetCode TA_CMF_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

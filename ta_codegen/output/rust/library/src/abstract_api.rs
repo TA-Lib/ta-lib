@@ -222,6 +222,8 @@ pub enum FuncId {
     CHOP,
     /// Choppiness Index (True Range Box) — [`Core::choptr`](crate::Core::choptr).
     CHOPTR,
+    /// Chande Kroll Stop — [`Core::cksp`](crate::Core::cksp).
+    CKSP,
     /// Chaikin Money Flow — [`Core::cmf`](crate::Core::cmf).
     CMF,
     /// Chande Momentum Oscillator — [`Core::cmo`](crate::Core::cmo).
@@ -488,7 +490,7 @@ pub enum FuncId {
 
 impl FuncId {
     /// Number of functions in the registry.
-    pub const COUNT: usize = 221;
+    pub const COUNT: usize = 222;
     /// Metadata for this function (O(1) index into the const table).
     #[inline] pub fn info(self) -> &'static FuncInfo { &FUNC_TABLE[self as usize] }
     /// Upper-case TA name, e.g. "RSI".
@@ -815,7 +817,7 @@ impl FuncInfo {
 
 /// Backing storage for [`FUNCS`], indexed by [`FuncId`]. Link-time const, in
 /// `.rodata`. Private, so its length is nobody's business but this module's.
-static FUNC_TABLE: [FuncInfo; 221] = [
+static FUNC_TABLE: [FuncInfo; 222] = [
     FuncInfo {
         id: FuncId::AC,
         name: "AC",
@@ -1804,6 +1806,17 @@ static FUNC_TABLE: [FuncInfo; 221] = [
         inputs: &[InputInfo { param_name: "inPriceHLC", kind: InputType::Price, flags: InputFlags(0x0000000e) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 14, suggested: (4, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        unst_id: None,
+    },
+    FuncInfo {
+        id: FuncId::CKSP,
+        name: "CKSP",
+        group: Group::OverlapStudies,
+        hint: "Chande Kroll Stop",
+        flags: FuncFlags(0x03000000),
+        inputs: &[InputInfo { param_name: "inPriceHLC", kind: InputType::Price, flags: InputFlags(0x0000000e) }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "ATR and extreme window", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 10, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInMultiplier", display_name: "Multiplier", hint: "ATR multiplier", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 0.0, max: 3e37, precision: 2, default: 1.0, suggested: (0.5, 5.0, 0.5) } }, OptInputInfo { param_name: "optInStopPeriod", display_name: "Stop Period", hint: "Stop window", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 9, suggested: (1, 200, 1) } }, ],
+        outputs: &[OutputInfo { param_name: "outHighStop", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outLowStop", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -3355,6 +3368,7 @@ fn get_func_handle_exact(name: &str) -> Option<FuncId> {
         "CG" => FuncId::CG,
         "CHOP" => FuncId::CHOP,
         "CHOPTR" => FuncId::CHOPTR,
+        "CKSP" => FuncId::CKSP,
         "CMF" => FuncId::CMF,
         "CMO" => FuncId::CMO,
         "CMOU" => FuncId::CMOU,
@@ -3833,6 +3847,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::CG => self.core.cg_lookback(self.int_opt[0]),
             FuncId::CHOP => self.core.chop_lookback(self.int_opt[0]),
             FuncId::CHOPTR => self.core.choptr_lookback(self.int_opt[0]),
+            FuncId::CKSP => self.core.cksp_lookback(self.int_opt[0], self.real_opt[1], self.int_opt[2]),
             FuncId::CMF => self.core.cmf_lookback(self.int_opt[0]),
             FuncId::CMO => self.core.cmo_lookback(self.int_opt[0]),
             FuncId::CMOU => self.core.cmou_lookback(self.int_opt[0]),
@@ -5129,6 +5144,21 @@ impl<'a> ParamHolder<'a> {
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 let res = self.core.choptr(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
+                match res {
+                    Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
+                    Err(e) => e,
+                }
+            }
+            FuncId::CKSP => {
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::BadParam); }
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
+                let res = self.core.cksp(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.real_opt[1], self.int_opt[2], &mut *o0, &mut *o1);
+                self.real_out[0] = Some(o0);
+                self.real_out[1] = Some(o1);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
                     Err(e) => e,

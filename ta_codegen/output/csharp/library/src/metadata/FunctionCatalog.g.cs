@@ -205,6 +205,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
             MakeCg(),
             MakeChop(),
             MakeChoptr(),
+            MakeCksp(),
             MakeCmf(),
             MakeCmo(),
             MakeCmou(),
@@ -2282,6 +2283,32 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         invoke: static (core, c, startIdx, endIdx) =>
             core.Choptr(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.RealOut(0)));
+
+    private static FuncInfo MakeCksp() => new(
+        name: "CKSP",
+        group: FunctionGroup.OverlapStudies,
+        hint: "Chande Kroll Stop",
+        flags: FuncFlags.Overlap | FuncFlags.Stream,
+        unstableId: null,
+        inputs:
+        [
+            new InputInfo(InputKind.Price, "inPriceHLC", PriceComponents.High | PriceComponents.Low | PriceComponents.Close, [PriceComponents.High, PriceComponents.Low, PriceComponents.Close]),
+        ],
+        optInputs:
+        [
+            new OptInputInfo("optInTimePeriod", "Time Period", "ATR and extreme window", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 10, 4, 200, 1)),
+            new OptInputInfo("optInMultiplier", "Multiplier", "ATR multiplier", OptInputFlags.None, new OptInputDomain.RealRange(0.0, 3e37, 2, 1.0, 0.5, 5.0, 0.5)),
+            new OptInputInfo("optInStopPeriod", "Stop Period", "Stop window", OptInputFlags.None, new OptInputDomain.IntegerRange(1, 100000, 9, 1, 200, 1)),
+        ],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outHighStop", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outLowStop", OutputFlags.Line),
+        ],
+        lookback: static (core, c) => core.CkspLookback(c.IntOpt(0), c.RealOpt(1), c.IntOpt(2)),
+        invoke: static (core, c, startIdx, endIdx) =>
+            core.Cksp(
+                startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.RealOpt(1), c.IntOpt(2), c.RealOut(0), c.RealOut(1)));
 
     private static FuncInfo MakeCmf() => new(
         name: "CMF",

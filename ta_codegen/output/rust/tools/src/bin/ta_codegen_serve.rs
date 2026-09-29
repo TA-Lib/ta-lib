@@ -1028,6 +1028,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
         "TA_CG" => rpc_cg(core, ref_data, params),
         "TA_CHOP" => rpc_chop(core, ref_data, params),
         "TA_CHOPTR" => rpc_choptr(core, ref_data, params),
+        "TA_CKSP" => rpc_cksp(core, ref_data, params),
         "TA_CMF" => rpc_cmf(core, ref_data, params),
         "TA_CMO" => rpc_cmo(core, ref_data, params),
         "TA_CMOU" => rpc_cmou(core, ref_data, params),
@@ -1251,6 +1252,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 "TA_CG",
                 "TA_CHOP",
                 "TA_CHOPTR",
+                "TA_CKSP",
                 "TA_CMF",
                 "TA_CMO",
                 "TA_CMOU",
@@ -1922,6 +1924,7 @@ fn handle_stream_verify(core: &Core, params: &Value) -> String {
         "TA_CG" => sv_cg(core, params),
         "TA_CHOP" => sv_chop(core, params),
         "TA_CHOPTR" => sv_choptr(core, params),
+        "TA_CKSP" => sv_cksp(core, params),
         "TA_CMF" => sv_cmf(core, params),
         "TA_CMO" => sv_cmo(core, params),
         "TA_CMOU" => sv_cmou(core, params),
@@ -37410,6 +37413,424 @@ pub(super) fn ride_choptr(core: &Core, params: &Value, endIdx: usize, inHigh: &[
 
 }
 use f_choptr::*;
+
+mod f_cksp {
+use super::*;
+
+pub(super) fn rpc_cksp(core: &mut Core, ref_data: &mut RefData, params: &Value) -> String {
+            let startIdx = params["startIdx"].as_u64().unwrap_or(0) as usize;
+            let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
+            let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
+            let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
+            let gen_present = params["gen_present"].as_i64().unwrap_or(0);
+            let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
+            let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
+            let gen_n = params["gen_n"].as_i64().unwrap_or(0) as usize;
+            let full_output = params["full_output"].as_i64().unwrap_or(0);
+            let want_hash = params["want_hash"].as_i64().unwrap_or(0);
+            let mut _json_inHigh: Vec<f64> = Vec::new();
+            let mut _json_inLow: Vec<f64> = Vec::new();
+            let mut _json_inClose: Vec<f64> = Vec::new();
+            let inHigh: &[f64];
+            let inLow: &[f64];
+            let inClose: &[f64];
+            if gen_present != 0 {
+                let mut _fz_o = vec![0.0f64; gen_n];
+                let mut _fz_h = vec![0.0f64; gen_n];
+                let mut _fz_l = vec![0.0f64; gen_n];
+                let mut _fz_c = vec![0.0f64; gen_n];
+                let mut _fz_v = vec![0.0f64; gen_n];
+                let mut _fz_oi = vec![0.0f64; gen_n];
+                fuzz_gen(gen_shape, gen_seed, gen_n as i32, &mut _fz_o, &mut _fz_h, &mut _fz_l, &mut _fz_c, &mut _fz_v, &mut _fz_oi);
+                _json_inHigh = _fz_h.clone();
+                inHigh = &_json_inHigh;
+                _json_inLow = _fz_l.clone();
+                inLow = &_json_inLow;
+                _json_inClose = _fz_c.clone();
+                inClose = &_json_inClose;
+            } else if use_preloaded != 0 && ref_data.n > 0 {
+                inHigh = &ref_data.high[..ref_data.n];
+                inLow = &ref_data.low[..ref_data.n];
+                inClose = &ref_data.close[..ref_data.n];
+            } else {
+                _json_inHigh = parse_f64_array(&params["inHigh"]);
+                inHigh = &_json_inHigh;
+                _json_inLow = parse_f64_array(&params["inLow"]);
+                inLow = &_json_inLow;
+                _json_inClose = parse_f64_array(&params["inClose"]);
+                inClose = &_json_inClose;
+            }
+            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(10) as i32;
+            let optInMultiplier = params["optInMultiplier"].as_f64().unwrap_or(1.0) as f64;
+            let optInStopPeriod = params["optInStopPeriod"].as_i64().unwrap_or(9) as i32;
+            // The output buffers are sized to the count the call actually PRODUCES --
+            // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
+            // never below one. Not to the width of the requested range: that is the bound the
+            // managed backends check and the Rust asserts state, and at the range width it was
+            // slack by exactly the lookback, so no call could ever approach it.
+            // The pad is there because a bound is a MINIMUM, never an equality. A caller
+            // re-using a pre-allocated buffer passes a larger one, and that is not an error --
+            // the reported OutRange is what says which part was written. So the harness sends
+            // both: the startIdx axis sends no pad (the bound is reachable) while the
+            // full-range value comparison sends one (slack is legal). Sizing every call one way
+            // would silently drop the other property.
+            // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
+            // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
+            // for a range shorter than the lookback, where the output bound switches off and
+            // the spec says any length will do, including none. It does not: two EMPTY output
+            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
+            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
+            // accepted by C and Java -- a four-way divergence on a call the specification says
+            // all four accept. Sizing to zero here would reach it on every multi-output
+            // function, which is a semantic question, not a harness one. Recorded as
+            // error-handling-spec, open item 11.
+            // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
+            // sizes and cannot make the check, so an exact buffer would test nothing there.
+            let _lb = core.cksp_lookback(optInTimePeriod, optInMultiplier, optInStopPeriod).unwrap_or(usize::MAX);
+            let _cs = if startIdx > _lb { startIdx } else { _lb };
+            let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
+            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf1: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBegIdx: usize = 0;
+            let mut outNBElement: usize = 0;
+            let mut rc = RetCode::Success;
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
+            let _out = core.cksp(
+                startIdx, endIdx,
+                &inHigh,
+                &inLow,
+                &inClose,
+                optInTimePeriod,
+                optInMultiplier,
+                optInStopPeriod,
+                &mut outBuf0, &mut outBuf1,
+            );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
+            } else {
+            if bench_mode == 1 {
+                rc = match core.cksp_open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInTimePeriod, optInMultiplier, optInStopPeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.cksp_open_and_fill(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInTimePeriod, optInMultiplier, optInStopPeriod, &mut outBuf0, &mut outBuf1) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+            }
+            }
+            }
+            let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            if (gen_present != 0 || want_hash != 0) && full_output == 0 {
+                let mut _oh = fuzz_hash_init();
+                if matches!(rc, RetCode::Success) && outNBElement > 0 {
+                    _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
+                    _oh = fuzz_hash_bytes_f64(_oh, &outBuf1[..outNBElement]);
+                }
+                _oh = fuzz_hash_fin(_oh);
+                let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                ride_cksp(&core, params, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, optInMultiplier, optInStopPeriod, &mut hresp);
+                hresp.push('}');
+                return hresp;
+            }
+            let lookback: i64 = core.cksp_lookback(optInTimePeriod, optInMultiplier, optInStopPeriod).map_or(-1, |v| v as i64);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
+            resp.push_str(",\"outReal1\":"); resp.push_str(&json_f64_array(&outBuf1[..outNBElement]));
+            ride_cksp(&core, params, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, optInMultiplier, optInStopPeriod, &mut resp);
+            resp.push('}');
+            resp
+}
+
+pub(super) fn sv_cksp(core: &Core, params: &Value) -> String {
+    let svShape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
+    let svSeed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
+    let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
+    if svN < 2 { svN = 2; }
+    if svN > 256 { svN = 256; }
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
+    let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(10) as i32;
+    let optInMultiplier = params["optInMultiplier"].as_f64().unwrap_or(1.0);
+    let optInStopPeriod = params["optInStopPeriod"].as_i64().unwrap_or(9) as i32;
+    let mut fz_o = vec![0.0f64; svN];
+    let mut fz_h = vec![0.0f64; svN];
+    let mut fz_l = vec![0.0f64; svN];
+    let mut fz_c = vec![0.0f64; svN];
+    let mut fz_v = vec![0.0f64; svN];
+    let mut fz_oi = vec![0.0f64; svN];
+    fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
+    let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut b1: Vec<f64> = vec![0.0f64; svN];
+    let mut legs = 0i64;
+    let mut all_ok = true;
+    let mut peek_all = true;
+    let mut peek_reps = 0i64;
+    let mut peek_rejects = 0i64;
+    let mut peek_rep_all = true;
+    let mut fill_checked = 0i32;
+    let mut fill_ok = true;
+    let mut beg = 0usize;
+    let mut nb = 0usize;
+    let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
+    let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
+    let mut zsign = 0i64;
+    let rounds = 1;
+    for rd in 0..rounds {
+        let _ = rd;
+        let mut cb = core.to_builder();
+        if let Some(id) = func_unst_id_from_int(2usize) { cb = cb.unstable_period(id, svK); }
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
+        let rc = match c2.cksp(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod, optInMultiplier, optInStopPeriod, &mut b0, &mut b1) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
+        let lb = c2.cksp_lookback(optInTimePeriod, optInMultiplier, optInStopPeriod).unwrap_or(usize::MAX);
+        if rc != RetCode::Success || nb == 0 {
+            let open_rejects = c2.cksp_open(&fz_h, &fz_l, &fz_c, optInTimePeriod, optInMultiplier, optInStopPeriod).is_err();
+            return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
+        }
+        fill_checked = 1;
+        {
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+        let mut f1: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+        match c2.cksp_open_and_fill(&fz_h, &fz_l, &fz_c, optInTimePeriod, optInMultiplier, optInStopPeriod, &mut f0, &mut f1) {
+            Err(_) => { fill_ok = false; }
+            Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1; range_sites |= 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
+                if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
+                else {
+                    for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in 0..nb { if sv_xtier_ne(f1[i], b1[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
+                    for i in nb..svN { if f1[i] != -1.2345678901234e300f64 { fill_ok = false; } }
+                }
+            }
+        }
+        }
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
+        pcs.sort_unstable();
+        pcs.dedup();
+        for &p in &pcs {
+            match c2.cksp_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod, optInMultiplier, optInStopPeriod) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
+                Ok((mut st, v0)) => {
+                    legs += 1;
+                    if sv_xtier_ne(v0.0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
+                    if sv_xtier_ne(v0.1, b1[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"where\":\"open\"", p - 1); } }
+                    for t in p..svN {
+                        let pk_res = st.peek(fz_h[t], fz_l[t], fz_c[t]);
+                        if pk_res.is_err() { peek_rejects += 1; }
+                        if t % 7 == 0 {
+                            if st.peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]).is_err() { peek_rejects += 1; }
+                            match (pk_res, st.peek(fz_h[t], fz_l[t], fz_c[t])) {
+                                (Ok(pk), Ok(rp)) => {
+                                    peek_reps += 1;
+                                    if rp.0.to_bits() != pk.0.to_bits() { peek_rep_all = false; }
+                                    if rp.1.to_bits() != pk.1.to_bits() { peek_rep_all = false; }
+                                }
+                                _ => { peek_rejects += 1; }
+                            }
+                        }
+                        let Ok(up) = st.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
+                        if let Ok(pk) = pk_res {
+                            if pk.0.to_bits() != up.0.to_bits() { peek_all = false; }
+                            if pk.1.to_bits() != up.1.to_bits() { peek_all = false; }
+                        }
+                        if sv_xtier_ne(up.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.0.to_bits()); } }
+                        if sv_xtier_ne(up.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b1[t - beg].to_bits(), up.1.to_bits()); } }
+                    }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1; range_sites |= 2;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                        range_legs += 1; range_sites |= 16;
+                        if st.advance().is_err() { range_ok = false; }
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
+                    }
+                }
+            }
+        }
+        if let Some(&p) = pcs.first() {
+            match c2.cksp_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod, optInMultiplier, optInStopPeriod) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.0.to_bits() != _v0.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                      if va.1.to_bits() != _v0.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_fork.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.0.to_bits() != u_fork.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.1.to_bits() != u_fork.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
+                        if u_src.0.to_bits() != u_fork.0.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src.1.to_bits() != u_fork.1.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.0.to_bits() != u_src.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.1.to_bits() != u_src.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 8;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
+        if lb >= 1 && lb < svN {
+            match c2.cksp_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod, optInMultiplier, optInStopPeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            let mut f1: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.cksp_open_and_fill(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod, optInMultiplier, optInStopPeriod, &mut f0, &mut f1) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
+        }
+    }
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+}
+
+#[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
+pub(super) fn ride_cksp(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInTimePeriod: i32, optInMultiplier: f64, optInStopPeriod: i32, resp: &mut String) {
+    if !ride_gate(params) { return; }
+    let mut r = RideResult::new();
+    let lb_opt = core.cksp_lookback(optInTimePeriod, optInMultiplier, optInStopPeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
+    let mut navail = endIdx + 1;
+    if inHigh.len() < navail { navail = inHigh.len(); }
+    if inLow.len() < navail { navail = inLow.len(); }
+    if inClose.len() < navail { navail = inClose.len(); }
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
+    if m > navail { m = navail; }
+    r.m = m as i32;
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
+    if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
+
+    let mut key = fuzz_hash_init();
+    key = ride_mix_str(key, "TA_CKSP");
+    key = ride_mix_u64(key, m as u64);
+    key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
+    key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
+    key = ride_mix_u64(key, optInTimePeriod as u64);
+    key = ride_mix_u64(key, optInMultiplier.to_bits());
+    key = ride_mix_u64(key, optInStopPeriod as u64);
+    key = ride_mix_f64s(key, &inHigh[..m]);
+    key = ride_mix_f64s(key, &inLow[..m]);
+    key = ride_mix_f64s(key, &inClose[..m]);
+    key = fuzz_hash_fin(key);
+    let slot = (key as usize) % RIDE_SEEN_N;
+    if let Some((ob, fb)) = RIDE_SEEN.with(|t| { let t = t.borrow(); let e = t[slot]; if e.0 == key { Some((e.1, e.2)) } else { None } }) {
+        r.dedup = 1; r.open_bars = ob; r.fill_bars = fb; r.emit(resp); return;
+    }
+
+    let mut rb0 = vec![0.0f64; m];
+    let mut rb1 = vec![0.0f64; m];
+    let (beg, nb) = match core.cksp(0, m - 1, &inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod, optInMultiplier, optInStopPeriod, &mut rb0, &mut rb1) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cksp_open(&inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod, optInMultiplier, optInStopPeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            let mut fb1 = vec![0.0f64; m];
+            r.rc_fill = match core.cksp_open_and_fill(&inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod, optInMultiplier, optInStopPeriod, &mut fb0, &mut fb1) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
+    if nb == 0 { r.skip = 5; r.emit(resp); return; }
+    if beg != lb { r.skip = 6; r.emit(resp); return; }
+
+    match core.cksp_open(&inHigh[..=lb], &inLow[..=lb], &inClose[..=lb], optInTimePeriod, optInMultiplier, optInStopPeriod) {
+        Err(_) => { r.ok = false; r.leg = 1; r.bar = lb as i32; }
+        Ok((mut st, u)) => {
+            let mut cmp = true;
+            if cmp && sv_xtier_ne(rb0[lb - beg], u.0, &mut r.benign) { cmp = false; r.out = 0; r.batch = rb0[lb - beg].to_bits(); r.stream = u.0.to_bits(); }
+            if cmp && sv_xtier_ne(rb1[lb - beg], u.1, &mut r.benign) { cmp = false; r.out = 1; r.batch = rb1[lb - beg].to_bits(); r.stream = u.1.to_bits(); }
+            if cmp { r.open_bars += 1; }
+            if !cmp { r.ok = false; r.leg = 1; r.bar = lb as i32; }
+            for t in (lb + 1)..m {
+                match st.update(inHigh[t], inLow[t], inClose[t]) {
+                    Err(_) => { r.ok = false; r.leg = 1; r.bar = t as i32; break; }
+                    Ok(u) => {
+                        let mut cmp = true;
+                        if cmp && sv_xtier_ne(rb0[t - beg], u.0, &mut r.benign) { cmp = false; r.out = 0; r.batch = rb0[t - beg].to_bits(); r.stream = u.0.to_bits(); }
+                        if cmp && sv_xtier_ne(rb1[t - beg], u.1, &mut r.benign) { cmp = false; r.out = 1; r.batch = rb1[t - beg].to_bits(); r.stream = u.1.to_bits(); }
+                        if cmp { r.open_bars += 1; }
+                        if !cmp { r.ok = false; r.leg = 1; r.bar = t as i32; }
+                    }
+                }
+                if !r.ok { break; }
+            }
+        }
+    }
+
+    if r.ok {
+        let mut fb0 = vec![0.0f64; m];
+        let mut fb1 = vec![0.0f64; m];
+        match core.cksp_open_and_fill(&inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod, optInMultiplier, optInStopPeriod, &mut fb0, &mut fb1) {
+            Err(_) => { r.ok = false; r.leg = 2; }
+            Ok((_st, rng)) => {
+                if rng.beg_idx != beg || rng.count != nb { r.ok = false; r.leg = 2; }
+                if r.ok {
+                    for k in 0..nb {
+                        let mut cmp = true;
+                        if cmp && sv_xtier_ne(rb0[k], fb0[k], &mut r.benign) { cmp = false; r.out = 0; r.batch = rb0[k].to_bits(); r.stream = fb0[k].to_bits(); }
+                        if cmp && sv_xtier_ne(rb1[k], fb1[k], &mut r.benign) { cmp = false; r.out = 1; r.batch = rb1[k].to_bits(); r.stream = fb1[k].to_bits(); }
+                        if cmp { r.fill_bars += 1; }
+                        if !cmp { r.ok = false; r.leg = 2; r.bar = (beg + k) as i32; break; }
+                    }
+                }
+            }
+        }
+    }
+
+    if r.ok {
+        RIDE_SEEN.with(|t| { t.borrow_mut()[slot] = (key, r.open_bars, r.fill_bars); });
+    }
+    r.emit(resp);
+}
+
+}
+use f_cksp::*;
 
 mod f_cmf {
 use super::*;

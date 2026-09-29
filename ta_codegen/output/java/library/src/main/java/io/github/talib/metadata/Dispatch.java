@@ -326,6 +326,9 @@ final class Dispatch {
          case "CHOPTR":
             return core.choptr(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOpt(0), h.realOutput(0));
+         case "CKSP":
+            return core.cksp(
+               startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOpt(0), h.realOpt(1), h.intOpt(2), h.realOutput(0), h.realOutput(1));
          case "CMF":
             return core.cmf(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.price(0, 4), h.intOpt(0), h.realOutput(0));
@@ -910,6 +913,8 @@ final class Dispatch {
             return core.chopLookback(h.intOpt(0));
          case "CHOPTR":
             return core.choptrLookback(h.intOpt(0));
+         case "CKSP":
+            return core.ckspLookback(h.intOpt(0), h.realOpt(1), h.intOpt(2));
          case "CMF":
             return core.cmfLookback(h.intOpt(0));
          case "CMO":

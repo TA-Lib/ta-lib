@@ -3931,6 +3931,57 @@ static const TA_VOptSpec TA_VOpt_CHOPTR[] = {
    { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 14.0 },
 };
 
+static TA_RetCode TA_CKSP_VFrameD( int startIdx, int endIdx,
+                  const double *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_CKSP(
+               startIdx,
+               endIdx,
+               in[0] /* inHigh */,
+               in[1] /* inLow */,
+               in[2] /* inClose */,
+               (int)optIn[0] /* optInTimePeriod */,
+               optIn[1] /* optInMultiplier */,
+               (int)optIn[2] /* optInStopPeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outHighStop */,
+               outReal[1] /* outLowStop */
+               );
+}
+static TA_RetCode TA_CKSP_VFrameS( int startIdx, int endIdx,
+                  const float *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_S_CKSP(
+               startIdx,
+               endIdx,
+               in[0] /* inHigh */,
+               in[1] /* inLow */,
+               in[2] /* inClose */,
+               (int)optIn[0] /* optInTimePeriod */,
+               optIn[1] /* optInMultiplier */,
+               (int)optIn[2] /* optInStopPeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outHighStop */,
+               outReal[1] /* outLowStop */
+               );
+}
+
+static const TA_VInputKind TA_VIn_CKSP[] = { TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CKSP[] = { 0, 0 };
+static const TA_VOptSpec TA_VOpt_CKSP[] = {
+   { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 10.0 },
+   { "optInMultiplier", TA_VOPT_REAL, 0.0, 3.00000000000000022e37, 1.0 },
+   { "optInStopPeriod", TA_VOPT_INT, 1.0, 100000.0, 9.0 },
+};
+
 static TA_RetCode TA_CMF_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -9558,6 +9609,8 @@ static const TA_VariantEntry TA_VariantTable[] = {
      3, TA_VIn_CHOP, 1, TA_VOpt_CHOP, 1, TA_VOutIsInt_CHOP, 0 },
    { "CHOPTR", TA_CHOPTR_VFrameD, TA_CHOPTR_VFrameS,
      3, TA_VIn_CHOPTR, 1, TA_VOpt_CHOPTR, 1, TA_VOutIsInt_CHOPTR, 0 },
+   { "CKSP", TA_CKSP_VFrameD, TA_CKSP_VFrameS,
+     3, TA_VIn_CKSP, 3, TA_VOpt_CKSP, 2, TA_VOutIsInt_CKSP, 0 },
    { "CMF", TA_CMF_VFrameD, TA_CMF_VFrameS,
      4, TA_VIn_CMF, 1, TA_VOpt_CMF, 1, TA_VOutIsInt_CMF, 0 },
    { "CMO", TA_CMO_VFrameD, TA_CMO_VFrameS,
@@ -9822,6 +9875,6 @@ static const TA_VariantEntry TA_VariantTable[] = {
      1, TA_VIn_ZLEMA, 1, TA_VOpt_ZLEMA, 1, TA_VOutIsInt_ZLEMA, 0 },
 };
 
-#define TA_VARIANT_TABLE_SIZE 221
+#define TA_VARIANT_TABLE_SIZE 222
 
 #endif /* TA_VARIANT_FRAME_H */

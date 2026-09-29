@@ -210,6 +210,7 @@ public final class Functions {
       put(m, f_CG());
       put(m, f_CHOP());
       put(m, f_CHOPTR());
+      put(m, f_CKSP());
       put(m, f_CMF());
       put(m, f_CMO());
       put(m, f_CMOU());
@@ -1670,6 +1671,35 @@ public final class Functions {
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
+         ));
+   }
+
+   private static FuncInfo f_CKSP() {
+      return new FuncInfo(
+         "CKSP", "Overlap Studies", "Chande Kroll Stop", 0x03000000,
+         List.of(
+            new InputInfo(InputType.PRICE, "inPriceHLC", 0x0000000E)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInTimePeriod", 0x00000000,
+               "Time Period", "ATR and extreme window", 10.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               2, 100000, 4, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.REAL_RANGE, "optInMultiplier", 0x00000000,
+               "Multiplier", "ATR multiplier", 1.0,
+               0.0, 3e37, 2, 0.5, 5.0, 0.5,
+               0, 0, 0, 0, 0, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInStopPeriod", 0x00000000,
+               "Stop Period", "Stop window", 9.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               1, 100000, 1, 200, 1, null)
+         ),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outHighStop", 0x00000001),
+            new OutputInfo(OutputType.REAL, "outLowStop", 0x00000001)
          ));
    }
 

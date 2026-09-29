@@ -659,6 +659,12 @@ internal static class NoPhantomIoBinder
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
+        ["CKSP"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.CkspImpl(
+                startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.RealOpt(1), c.IntOpt(2), out int b, out int n, c.RealOut(0), c.RealOut(1));
+            return new CallOutcome(rc, b, n);
+        },
         ["CMF"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.CmfImpl(
@@ -1990,6 +1996,12 @@ internal static class NoPhantomIoBinder
                 startIdx, endIdx, Narrow(c.Price(0, PriceComponents.High)), Narrow(c.Price(0, PriceComponents.Low)), Narrow(c.Price(0, PriceComponents.Close)), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
+        ["CKSP"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.CkspImpl(
+                startIdx, endIdx, Narrow(c.Price(0, PriceComponents.High)), Narrow(c.Price(0, PriceComponents.Low)), Narrow(c.Price(0, PriceComponents.Close)), c.IntOpt(0), c.RealOpt(1), c.IntOpt(2), out int b, out int n, c.RealOut(0), c.RealOut(1));
+            return new CallOutcome(rc, b, n);
+        },
         ["CMF"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.CmfImpl(
@@ -2871,6 +2883,7 @@ internal static class NoPhantomIoBinder
         ["CG"] = static (core, c) => core.CgOpen(c.Series(0), c.IntOpt(0)),
         ["CHOP"] = static (core, c) => core.ChopOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0)),
         ["CHOPTR"] = static (core, c) => core.ChoptrOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0)),
+        ["CKSP"] = static (core, c) => core.CkspOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.RealOpt(1), c.IntOpt(2)),
         ["CMF"] = static (core, c) => core.CmfOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.Price(0, PriceComponents.Volume), c.IntOpt(0)),
         ["CMO"] = static (core, c) => core.CmoOpen(c.Series(0), c.IntOpt(0)),
         ["CMOU"] = static (core, c) => core.CmouOpen(c.Series(0), c.IntOpt(0)),

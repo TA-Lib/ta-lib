@@ -88,6 +88,7 @@ CEIL                Vector Ceil
 CG                  Center of Gravity Oscillator
 CHOP                Choppiness Index
 CHOPTR              Choppiness Index (True Range Box)
+CKSP                Chande Kroll Stop
 CMF                 Chaikin Money Flow
 CMO                 Chande Momentum Oscillator
 CMOU                Chande Momentum Oscillator (Unsmoothed)

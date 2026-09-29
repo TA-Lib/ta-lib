@@ -93,6 +93,7 @@ libta_func_la_SOURCES = ta_utility.c \
 	ta_CG.c \
 	ta_CHOP.c \
 	ta_CHOPTR.c \
+	ta_CKSP.c \
 	ta_CMF.c \
 	ta_CMO.c \
 	ta_CMOU.c \

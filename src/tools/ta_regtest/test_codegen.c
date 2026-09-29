@@ -777,6 +777,7 @@ static const UnstableLookup UNSTABLE_MAP[] = {
      * here stream_verify runs every language at K == 0 only -- and the ATR
      * warm-up loop the body carries for exactly that setting is never entered on
      * the streaming path in any of the four. */
+    {"CKSP",         TA_FUNC_UNST_ATR},
     {"SUPERTREND",   TA_FUNC_UNST_ATR},
     /* KDJ declares no unstable flag of its own -- its instability arrives
      * through the MA type its two smoothing hops select, and the default is

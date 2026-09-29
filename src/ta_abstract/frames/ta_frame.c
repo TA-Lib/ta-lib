@@ -2101,6 +2101,33 @@ unsigned int TA_CHOPTR_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_CHOPTR_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
 }
+TA_RetCode TA_CKSP_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+{
+   return TA_CKSP(
+               startIdx,
+               endIdx,
+               params->in[0].data.inPrice.high, /* inHigh */
+               params->in[0].data.inPrice.low, /* inLow */
+               params->in[0].data.inPrice.close, /* inClose */
+               params->optIn[0].data.optInInteger, /* optInTimePeriod*/
+               params->optIn[1].data.optInReal, /* optInMultiplier*/
+               params->optIn[2].data.optInInteger, /* optInStopPeriod*/
+               outBegIdx, 
+               outNBElement, 
+               params->out[0].data.outReal, /*  outHighStop */
+               params->out[1].data.outReal /*  outLowStop */
+               );
+}
+unsigned int TA_CKSP_FramePPLB( const TA_ParamHolderPriv *params )
+{
+   return TA_CKSP_Lookback(params->optIn[0].data.optInInteger, /* optInTimePeriod*/
+                    params->optIn[1].data.optInReal, /* optInMultiplier*/
+                    params->optIn[2].data.optInInteger /* optInStopPeriod*/ );
+}
 TA_RetCode TA_CMF_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

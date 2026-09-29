@@ -7853,6 +7853,110 @@ TA_LIB_API TA_RetCode TA_CHOPTR_Advance( TA_CHOPTR_Stream *stream );
 TA_LIB_API TA_RetCode TA_CHOPTR_Clone( const TA_CHOPTR_Stream *stream, TA_CHOPTR_Stream **clone );
 
 /*
+ * TA_CKSP - Chande Kroll Stop
+ * 
+ * Input  = High, Low, Close
+ * Output = double, double
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod:(From 2 to 100000)
+ *    ATR and extreme window
+ * 
+ * optInMultiplier:(From 0 to 30000000000000000000000000000000000000)
+ *    ATR multiplier
+ * 
+ * optInStopPeriod:(From 1 to 100000)
+ *    Stop window
+ * 
+ * 
+ */
+TA_LIB_API TA_RetCode TA_CKSP( int    startIdx,
+                               int    endIdx,
+                                          const double inHigh[],
+                                          const double inLow[],
+                                          const double inClose[],
+                                          int           optInTimePeriod, /* From 2 to 100000 */
+                                          double        optInMultiplier, /* From 0 to 30000000000000000000000000000000000000 */
+                                          int           optInStopPeriod, /* From 1 to 100000 */
+                                          int          *outBegIdx,
+                                          int          *outNBElement,
+                                          double        outHighStop[],
+                                          double        outLowStop[] );
+
+TA_LIB_API TA_RetCode TA_S_CKSP( int    startIdx,
+                                 int    endIdx,
+                                            const float  inHigh[],
+                                            const float  inLow[],
+                                            const float  inClose[],
+                                            int           optInTimePeriod, /* From 2 to 100000 */
+                                            double        optInMultiplier, /* From 0 to 30000000000000000000000000000000000000 */
+                                            int           optInStopPeriod, /* From 1 to 100000 */
+                                            int          *outBegIdx,
+                                            int          *outNBElement,
+                                            double        outHighStop[],
+                                            double        outLowStop[] );
+
+TA_LIB_API int TA_CKSP_Lookback( int           optInTimePeriod, /* From 2 to 100000 */
+                                          double        optInMultiplier, /* From 0 to 30000000000000000000000000000000000000 */
+                                          int           optInStopPeriod );  /* From 1 to 100000 */
+
+
+
+/*
+ * Streaming API for TA_CKSP: incremental per-bar evaluation.
+ */
+typedef struct TA_CKSP_Stream TA_CKSP_Stream;
+
+TA_LIB_API TA_RetCode TA_CKSP_Open( TA_CKSP_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInTimePeriod, double optInMultiplier, int optInStopPeriod, double *outHighStop, double *outLowStop );
+
+TA_LIB_API TA_RetCode TA_CKSP_Update( TA_CKSP_Stream *stream, double inHigh, double inLow, double inClose, double *outHighStop, double *outLowStop );
+
+TA_LIB_API TA_RetCode TA_CKSP_Peek( const TA_CKSP_Stream *stream, double inHigh, double inLow, double inClose, double *outHighStop, double *outLowStop );
+
+TA_LIB_API TA_RetCode TA_CKSP_Close( TA_CKSP_Stream *stream );
+
+/*
+ * OpenAndFill: like Open, but a single pass ALSO fills the caller's arrays
+ * with the whole warm-up history. The fill is bit-identical to
+ * TA_CKSP( 0, historyLen-1, ... ).
+ */
+TA_LIB_API TA_RetCode TA_CKSP_OpenAndFill( TA_CKSP_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInTimePeriod, double optInMultiplier, int optInStopPeriod, int *outBegIdx, int *outNBElement, double outHighStop[], double outLowStop[] );
+
+/*
+ * Value: the value(s) at the last bar the stream counted (the bar
+ * TA_CKSP_OutRange ends on), without recomputing. Seeded by Open, refreshed by
+ * every accepted Update, left alone by Peek.
+ */
+TA_LIB_API TA_RetCode TA_CKSP_Value( const TA_CKSP_Stream *stream, double *outHighStop, double *outLowStop );
+
+/*
+ * OutRange: the bars this stream has an output for, in the input series'
+ * coordinates. That is [*outBegIdx, *outBegIdx + *outNBElement), the range
+ * TA_CKSP reports over the same bars. Open seeds it; every accepted Update and every
+ * TA_CKSP_Advance adds one; a rejected Update and a Peek change nothing. The
+ * last bar it can reach is TA_INDEX_MAX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
+ */
+TA_LIB_API TA_RetCode TA_CKSP_OutRange( const TA_CKSP_Stream *stream, int *outBegIdx, int *outNBElement );
+
+/*
+ * Advance: count one bar this stream was not fed (one an Update rejected and
+ * that will not be re-fed, or a session with no print). The range moves by one
+ * and nothing else does, so TA_CKSP_Value keeps answering the previous output,
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_INDEX_MAX.
+ */
+TA_LIB_API TA_RetCode TA_CKSP_Advance( TA_CKSP_Stream *stream );
+
+/*
+ * Clone: fork the stream. The fork is an independent stream at the same bar,
+ * owning its own copy of everything the original owns. Both must be closed.
+ * The fork carries the value and the range verbatim.
+ */
+TA_LIB_API TA_RetCode TA_CKSP_Clone( const TA_CKSP_Stream *stream, TA_CKSP_Stream **clone );
+
+/*
  * TA_CMF - Chaikin Money Flow
  * 
  * Input  = High, Low, Close, Volume

@@ -76705,6 +76705,1703 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  MF       Mario Fortier
+     *  KL       Kevin Lin (@kevinlincg)
+     *  CC       Claude Code (AI assistant)
+     *
+     * Change history:
+     *
+     *  MMDDYY BY     Description
+     *  -------------------------------------------------------------------
+     *  093026 KL,CC  Creation (#477).
+     */
+
+       /**
+        * Number of leading input bars {@link Core#cksp} consumes before it can
+        * produce its first value.
+        * <p>Equivalently, the index of the first bar with a value when the whole
+        * series is requested. Feed at least {@code lookback + 1} bars to get any
+        * output.
+        *
+        * @param optInTimePeriod ATR and extreme window (default 10; range
+        *        2..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInMultiplier ATR multiplier (default 1; minimum 0;
+        *        {@link Core#REAL_DEFAULT} selects the default).
+        * @param optInStopPeriod Stop window (default 9; range 1..100000;
+        *        {@code Integer.MIN_VALUE} selects the default).
+        * @return The lookback, or {@code -1} if a parameter is out of range.
+        */
+       public int ckspLookback( int optInTimePeriod, double optInMultiplier, int optInStopPeriod )
+       {
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 10;
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+             return -1;
+          }
+          if( optInMultiplier == REAL_DEFAULT ) {
+             optInMultiplier = 1e0;
+          } else if( !(optInMultiplier >= 0e0 && optInMultiplier <= REAL_MAX) ) {
+             return -1;
+          }
+          if( optInStopPeriod == Integer.MIN_VALUE ) {
+             optInStopPeriod = 9;
+          } else if( optInStopPeriod < 1 || optInStopPeriod > 100000 ) {
+             return -1;
+          }
+          /* Two stages. The first needs the Average True Range at its bar and the
+           * extreme of the p bars ending there; atr_lookback(p) is p + unst, which is
+           * never below max_lookback(p) = p - 1, so it covers both. The second adds
+           * the q - 1 earlier first-stage bars its own window reads.
+           *
+           * The ATR term is written as the callee's lookback and never restated, which
+           * is what makes CKSP inherit TA_FUNC_UNST_ATR rather than own an unstable
+           * period of its own (supertrend.c:16-25).
+           */
+          return atrLookback(optInTimePeriod) + (optInStopPeriod - 1) ;
+
+       }
+       RetCode ckspImpl( int startIdx,
+                         int endIdx,
+                         double inHigh[],
+                         double inLow[],
+                         double inClose[],
+                         int optInTimePeriod,
+                         double optInMultiplier,
+                         int optInStopPeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outHighStop[],
+                         double outLowStop[] )
+       {
+          int i = 0;
+          int jh = 0;
+          int jl = 0;
+          int kh = 0;
+          int kl = 0;
+          int today = 0;
+          int outIdx = 0;
+          int lookbackTotal = 0;
+          int stageOneIdx = 0;
+          double prevATR = 0;
+          double periodTotal = 0;
+          double wAlpha = 0;
+          double wBeta = 0;
+          double val2 = 0;
+          double val3 = 0;
+          double greatest = 0;
+          double tempCY = 0;
+          double tempLT = 0;
+          double tempHT = 0;
+          double hh = 0;
+          double ll = 0;
+          double best = 0;
+          double[] hRing;
+          int hRing_Idx = 0;
+          int maxIdx_hRing = (50)-1;
+          double[] lRing;
+          int lRing_Idx = 0;
+          int maxIdx_lRing = (50)-1;
+          double[] fhRing;
+          int fhRing_Idx = 0;
+          int maxIdx_fhRing = (50)-1;
+          double[] flRing;
+          int flRing_Idx = 0;
+          int maxIdx_flRing = (50)-1;
+          if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX ;
+          }
+          if( (endIdx < 0) || (endIdx > INDEX_MAX) || (endIdx < startIdx)) {
+             return RetCode.OUT_OF_RANGE_END_INDEX ;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 10;
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInMultiplier == REAL_DEFAULT ) {
+             optInMultiplier = 1e0;
+          } else if( !(optInMultiplier >= 0e0 && optInMultiplier <= REAL_MAX) ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInStopPeriod == Integer.MIN_VALUE ) {
+             optInStopPeriod = 9;
+          } else if( optInStopPeriod < 1 || optInStopPeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( outHighStop == outLowStop ) {
+             return RetCode.BAD_PARAM ;
+          }
+          /* Four windows, all carried as rings and all walked oldest-first, the
+           * cci.c:112-117 shape: an index that wrapped would be one more thing the
+           * stream derivation has to prove, and the walk is the same values either
+           * way.
+           */
+          outBegIdx.value = 0;
+          outNBElement.value = 0;
+          lookbackTotal = ckspLookback(optInTimePeriod, optInMultiplier, optInStopPeriod);
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             return RetCode.SUCCESS ;
+          }
+          if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
+          hRing = new double[optInTimePeriod];
+          maxIdx_hRing = (optInTimePeriod)-1;
+          hRing_Idx = 0;
+          if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
+          lRing = new double[optInTimePeriod];
+          maxIdx_lRing = (optInTimePeriod)-1;
+          lRing_Idx = 0;
+          if( optInStopPeriod < 1 ) return RetCode.INTERNAL_ERROR;
+          fhRing = new double[optInStopPeriod];
+          maxIdx_fhRing = (optInStopPeriod)-1;
+          fhRing_Idx = 0;
+          if( optInStopPeriod < 1 ) return RetCode.INTERNAL_ERROR;
+          flRing = new double[optInStopPeriod];
+          maxIdx_flRing = (optInStopPeriod)-1;
+          flRing_Idx = 0;
+          /* The first stage is entered q-1 bars before the first output, because the
+           * second stage's window reaches that far back. Each leg is anchored on its
+           * own bar rather than on the caller's startIdx (the kc.c:73-77 rule): the
+           * Average True Range is seeded as if TA_ATR had been entered here, and the
+           * extremes are the p-windows ending on these same bars.
+           */
+          stageOneIdx = startIdx - (optInStopPeriod - 1);
+          /* The Average True Range, carried inline rather than taken from a call: the
+           * two stages advance together one bar at a time and a whole-range buffer
+           * between them would not stream (supertrend.c:47-50).
+           *
+           * The arithmetic order is the bit-exactness contract with TA_ATR and is not
+           * to be reordered: the range first, then the two previous-close distances in
+           * that order; the seed summed from 0.0 over the first optInTimePeriod True
+           * Ranges and divided once; wBeta rounded first and wAlpha derived from it.
+           */
+          wBeta = (double)(optInTimePeriod - 1) / (double)optInTimePeriod;
+          wAlpha = 1.0 - wBeta;
+          today = stageOneIdx - atrLookback(optInTimePeriod) + 1;
+          periodTotal = 0.0;
+          i = optInTimePeriod;
+          while( i-- > 0 ) {
+             tempLT = inLow[today];
+             tempHT = inHigh[today];
+             tempCY = inClose[today - 1];
+             greatest = tempHT - tempLT;
+             val2 = Math.abs(tempCY - tempHT);
+             if( val2 > greatest ) {
+                greatest = val2;
+             }
+             val3 = Math.abs(tempCY - tempLT);
+             if( val3 > greatest ) {
+                greatest = val3;
+             }
+             periodTotal += greatest;
+             today += 1;
+          }
+          prevATR = periodTotal / optInTimePeriod;
+          /* Skip the Average True Range's unstable period. The count comes from the
+           * lookback rather than from the setting, so the two cannot disagree.
+           */
+          i = atrLookback(optInTimePeriod) - optInTimePeriod;
+          while( i != 0 ) {
+             tempLT = inLow[today];
+             tempHT = inHigh[today];
+             tempCY = inClose[today - 1];
+             greatest = tempHT - tempLT;
+             val2 = Math.abs(tempCY - tempHT);
+             if( val2 > greatest ) {
+                greatest = val2;
+             }
+             val3 = Math.abs(tempCY - tempLT);
+             if( val3 > greatest ) {
+                greatest = val3;
+             }
+             prevATR = Math.fma(wBeta, prevATR, wAlpha * greatest);
+             today += 1;
+             i -= 1;
+          }
+          /* `today` is now stageOneIdx and prevATR is the Average True Range of the
+           * bar before it. Seed the price rings with the p-1 bars the first extreme
+           * window needs behind that bar.
+           */
+          i = stageOneIdx - optInTimePeriod + 1;
+          while( i < stageOneIdx ) {
+             hRing[hRing_Idx] = inHigh[i];
+             lRing[lRing_Idx] = inLow[i];
+             i += 1;
+             hRing_Idx++;
+             if( hRing_Idx > maxIdx_hRing ) { hRing_Idx = 0; }
+             lRing_Idx++;
+             if( lRing_Idx > maxIdx_lRing ) { lRing_Idx = 0; }
+          }
+          /* The prologue leaves prevATR as the Average True Range of stageOneIdx and
+           * `today` one past it, so that bar is finished here rather than in the loop:
+           * entering the loop with it would apply a second Wilder update and shift the
+           * whole series one bar early. supertrend.c takes the same step for the same
+           * reason.
+           */
+          today = stageOneIdx;
+          hRing[hRing_Idx] = inHigh[today];
+          lRing[lRing_Idx] = inLow[today];
+          hh = hRing[hRing_Idx];
+          for( jh = hRing_Idx + 1; jh < optInTimePeriod; jh += 1 ) {
+             best = hRing[jh];
+             if( best > hh ) {
+                hh = best;
+             }
+          }
+          for( jh = 0; jh < hRing_Idx; jh += 1 ) {
+             best = hRing[jh];
+             if( best > hh ) {
+                hh = best;
+             }
+          }
+          ll = lRing[lRing_Idx];
+          for( jl = lRing_Idx + 1; jl < optInTimePeriod; jl += 1 ) {
+             best = lRing[jl];
+             if( best < ll ) {
+                ll = best;
+             }
+          }
+          for( jl = 0; jl < lRing_Idx; jl += 1 ) {
+             best = lRing[jl];
+             if( best < ll ) {
+                ll = best;
+             }
+          }
+          fhRing[fhRing_Idx] = hh - optInMultiplier * prevATR;
+          flRing[flRing_Idx] = ll + optInMultiplier * prevATR;
+          outIdx = 0;
+          if( today >= startIdx ) {
+             outHighStop[outIdx] = fhRing[fhRing_Idx];
+             outLowStop[outIdx] = flRing[flRing_Idx];
+             outIdx = outIdx + 1;
+          }
+          today += 1;
+          hRing_Idx++;
+          if( hRing_Idx > maxIdx_hRing ) { hRing_Idx = 0; }
+          lRing_Idx++;
+          if( lRing_Idx > maxIdx_lRing ) { lRing_Idx = 0; }
+          fhRing_Idx++;
+          if( fhRing_Idx > maxIdx_fhRing ) { fhRing_Idx = 0; }
+          flRing_Idx++;
+          if( flRing_Idx > maxIdx_flRing ) { flRing_Idx = 0; }
+          while( today <= endIdx ) {
+             tempLT = inLow[today];
+             tempHT = inHigh[today];
+             tempCY = inClose[today - 1];
+             greatest = tempHT - tempLT;
+             val2 = Math.abs(tempCY - tempHT);
+             if( val2 > greatest ) {
+                greatest = val2;
+             }
+             val3 = Math.abs(tempCY - tempLT);
+             if( val3 > greatest ) {
+                greatest = val3;
+             }
+             prevATR = Math.fma(wBeta, prevATR, wAlpha * greatest);
+             hRing[hRing_Idx] = tempHT;
+             lRing[lRing_Idx] = tempLT;
+             /* The extremes of the p bars ending here. The newest sits at the ring's
+              * own index, so the oldest is the slot after it and the walk is two
+              * straight runs.
+              */
+             hh = hRing[hRing_Idx];
+             for( jh = hRing_Idx + 1; jh < optInTimePeriod; jh += 1 ) {
+                best = hRing[jh];
+                if( best > hh ) {
+                   hh = best;
+                }
+             }
+             for( jh = 0; jh < hRing_Idx; jh += 1 ) {
+                best = hRing[jh];
+                if( best > hh ) {
+                   hh = best;
+                }
+             }
+             ll = lRing[lRing_Idx];
+             for( jl = lRing_Idx + 1; jl < optInTimePeriod; jl += 1 ) {
+                best = lRing[jl];
+                if( best < ll ) {
+                   ll = best;
+                }
+             }
+             for( jl = 0; jl < lRing_Idx; jl += 1 ) {
+                best = lRing[jl];
+                if( best < ll ) {
+                   ll = best;
+                }
+             }
+             fhRing[fhRing_Idx] = hh - optInMultiplier * prevATR;
+             flRing[flRing_Idx] = ll + optInMultiplier * prevATR;
+             if( today >= startIdx ) {
+                /* The second stage, over the q first-stage bars ending here. At q = 1
+                 * both runs are empty and the value is the bar's own, which is the
+                 * Chandelier Exit form.
+                 */
+                hh = fhRing[fhRing_Idx];
+                for( kh = fhRing_Idx + 1; kh < optInStopPeriod; kh += 1 ) {
+                   best = fhRing[kh];
+                   if( best > hh ) {
+                      hh = best;
+                   }
+                }
+                for( kh = 0; kh < fhRing_Idx; kh += 1 ) {
+                   best = fhRing[kh];
+                   if( best > hh ) {
+                      hh = best;
+                   }
+                }
+                ll = flRing[flRing_Idx];
+                for( kl = flRing_Idx + 1; kl < optInStopPeriod; kl += 1 ) {
+                   best = flRing[kl];
+                   if( best < ll ) {
+                      ll = best;
+                   }
+                }
+                for( kl = 0; kl < flRing_Idx; kl += 1 ) {
+                   best = flRing[kl];
+                   if( best < ll ) {
+                      ll = best;
+                   }
+                }
+                outHighStop[outIdx] = hh;
+                outLowStop[outIdx] = ll;
+                outIdx = outIdx + 1;
+             }
+             today += 1;
+             hRing_Idx++;
+             if( hRing_Idx > maxIdx_hRing ) { hRing_Idx = 0; }
+             lRing_Idx++;
+             if( lRing_Idx > maxIdx_lRing ) { lRing_Idx = 0; }
+             fhRing_Idx++;
+             if( fhRing_Idx > maxIdx_fhRing ) { fhRing_Idx = 0; }
+             flRing_Idx++;
+             if( flRing_Idx > maxIdx_flRing ) { flRing_Idx = 0; }
+          }
+          outNBElement.value = outIdx;
+          outBegIdx.value = startIdx;
+          return RetCode.SUCCESS ;
+       }
+       RetCode ckspImpl( int startIdx,
+                         int endIdx,
+                         float inHigh[],
+                         float inLow[],
+                         float inClose[],
+                         int optInTimePeriod,
+                         double optInMultiplier,
+                         int optInStopPeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outHighStop[],
+                         double outLowStop[] )
+       {
+          int i = 0;
+          int jh = 0;
+          int jl = 0;
+          int kh = 0;
+          int kl = 0;
+          int today = 0;
+          int outIdx = 0;
+          int lookbackTotal = 0;
+          int stageOneIdx = 0;
+          double prevATR = 0;
+          double periodTotal = 0;
+          double wAlpha = 0;
+          double wBeta = 0;
+          double val2 = 0;
+          double val3 = 0;
+          double greatest = 0;
+          double tempCY = 0;
+          double tempLT = 0;
+          double tempHT = 0;
+          double hh = 0;
+          double ll = 0;
+          double best = 0;
+          double[] hRing;
+          int hRing_Idx = 0;
+          int maxIdx_hRing = (50)-1;
+          double[] lRing;
+          int lRing_Idx = 0;
+          int maxIdx_lRing = (50)-1;
+          double[] fhRing;
+          int fhRing_Idx = 0;
+          int maxIdx_fhRing = (50)-1;
+          double[] flRing;
+          int flRing_Idx = 0;
+          int maxIdx_flRing = (50)-1;
+          if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX ;
+          }
+          if( (endIdx < 0) || (endIdx > INDEX_MAX) || (endIdx < startIdx)) {
+             return RetCode.OUT_OF_RANGE_END_INDEX ;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 10;
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInMultiplier == REAL_DEFAULT ) {
+             optInMultiplier = 1e0;
+          } else if( !(optInMultiplier >= 0e0 && optInMultiplier <= REAL_MAX) ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInStopPeriod == Integer.MIN_VALUE ) {
+             optInStopPeriod = 9;
+          } else if( optInStopPeriod < 1 || optInStopPeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( outHighStop == outLowStop ) {
+             return RetCode.BAD_PARAM ;
+          }
+          outBegIdx.value = 0;
+          outNBElement.value = 0;
+          lookbackTotal = ckspLookback(optInTimePeriod, optInMultiplier, optInStopPeriod);
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             return RetCode.SUCCESS ;
+          }
+          if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
+          hRing = new double[optInTimePeriod];
+          maxIdx_hRing = (optInTimePeriod)-1;
+          hRing_Idx = 0;
+          if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
+          lRing = new double[optInTimePeriod];
+          maxIdx_lRing = (optInTimePeriod)-1;
+          lRing_Idx = 0;
+          if( optInStopPeriod < 1 ) return RetCode.INTERNAL_ERROR;
+          fhRing = new double[optInStopPeriod];
+          maxIdx_fhRing = (optInStopPeriod)-1;
+          fhRing_Idx = 0;
+          if( optInStopPeriod < 1 ) return RetCode.INTERNAL_ERROR;
+          flRing = new double[optInStopPeriod];
+          maxIdx_flRing = (optInStopPeriod)-1;
+          flRing_Idx = 0;
+          stageOneIdx = startIdx - (optInStopPeriod - 1);
+          wBeta = (double)(optInTimePeriod - 1) / (double)optInTimePeriod;
+          wAlpha = 1.0 - wBeta;
+          today = stageOneIdx - atrLookback(optInTimePeriod) + 1;
+          periodTotal = 0.0;
+          i = optInTimePeriod;
+          while( i-- > 0 ) {
+             tempLT = (double)inLow[today];
+             tempHT = (double)inHigh[today];
+             tempCY = (double)inClose[today - 1];
+             greatest = tempHT - tempLT;
+             val2 = Math.abs(tempCY - tempHT);
+             if( val2 > greatest ) {
+                greatest = val2;
+             }
+             val3 = Math.abs(tempCY - tempLT);
+             if( val3 > greatest ) {
+                greatest = val3;
+             }
+             periodTotal += greatest;
+             today += 1;
+          }
+          prevATR = periodTotal / optInTimePeriod;
+          i = atrLookback(optInTimePeriod) - optInTimePeriod;
+          while( i != 0 ) {
+             tempLT = (double)inLow[today];
+             tempHT = (double)inHigh[today];
+             tempCY = (double)inClose[today - 1];
+             greatest = tempHT - tempLT;
+             val2 = Math.abs(tempCY - tempHT);
+             if( val2 > greatest ) {
+                greatest = val2;
+             }
+             val3 = Math.abs(tempCY - tempLT);
+             if( val3 > greatest ) {
+                greatest = val3;
+             }
+             prevATR = Math.fma(wBeta, prevATR, wAlpha * greatest);
+             today += 1;
+             i -= 1;
+          }
+          i = stageOneIdx - optInTimePeriod + 1;
+          while( i < stageOneIdx ) {
+             hRing[hRing_Idx] = (double)inHigh[i];
+             lRing[lRing_Idx] = (double)inLow[i];
+             i += 1;
+             hRing_Idx++;
+             if( hRing_Idx > maxIdx_hRing ) { hRing_Idx = 0; }
+             lRing_Idx++;
+             if( lRing_Idx > maxIdx_lRing ) { lRing_Idx = 0; }
+          }
+          today = stageOneIdx;
+          hRing[hRing_Idx] = (double)inHigh[today];
+          lRing[lRing_Idx] = (double)inLow[today];
+          hh = hRing[hRing_Idx];
+          for( jh = hRing_Idx + 1; jh < optInTimePeriod; jh += 1 ) {
+             best = hRing[jh];
+             if( best > hh ) {
+                hh = best;
+             }
+          }
+          for( jh = 0; jh < hRing_Idx; jh += 1 ) {
+             best = hRing[jh];
+             if( best > hh ) {
+                hh = best;
+             }
+          }
+          ll = lRing[lRing_Idx];
+          for( jl = lRing_Idx + 1; jl < optInTimePeriod; jl += 1 ) {
+             best = lRing[jl];
+             if( best < ll ) {
+                ll = best;
+             }
+          }
+          for( jl = 0; jl < lRing_Idx; jl += 1 ) {
+             best = lRing[jl];
+             if( best < ll ) {
+                ll = best;
+             }
+          }
+          fhRing[fhRing_Idx] = hh - optInMultiplier * prevATR;
+          flRing[flRing_Idx] = ll + optInMultiplier * prevATR;
+          outIdx = 0;
+          if( today >= startIdx ) {
+             outHighStop[outIdx] = fhRing[fhRing_Idx];
+             outLowStop[outIdx] = flRing[flRing_Idx];
+             outIdx = outIdx + 1;
+          }
+          today += 1;
+          hRing_Idx++;
+          if( hRing_Idx > maxIdx_hRing ) { hRing_Idx = 0; }
+          lRing_Idx++;
+          if( lRing_Idx > maxIdx_lRing ) { lRing_Idx = 0; }
+          fhRing_Idx++;
+          if( fhRing_Idx > maxIdx_fhRing ) { fhRing_Idx = 0; }
+          flRing_Idx++;
+          if( flRing_Idx > maxIdx_flRing ) { flRing_Idx = 0; }
+          while( today <= endIdx ) {
+             tempLT = (double)inLow[today];
+             tempHT = (double)inHigh[today];
+             tempCY = (double)inClose[today - 1];
+             greatest = tempHT - tempLT;
+             val2 = Math.abs(tempCY - tempHT);
+             if( val2 > greatest ) {
+                greatest = val2;
+             }
+             val3 = Math.abs(tempCY - tempLT);
+             if( val3 > greatest ) {
+                greatest = val3;
+             }
+             prevATR = Math.fma(wBeta, prevATR, wAlpha * greatest);
+             hRing[hRing_Idx] = tempHT;
+             lRing[lRing_Idx] = tempLT;
+             hh = hRing[hRing_Idx];
+             for( jh = hRing_Idx + 1; jh < optInTimePeriod; jh += 1 ) {
+                best = hRing[jh];
+                if( best > hh ) {
+                   hh = best;
+                }
+             }
+             for( jh = 0; jh < hRing_Idx; jh += 1 ) {
+                best = hRing[jh];
+                if( best > hh ) {
+                   hh = best;
+                }
+             }
+             ll = lRing[lRing_Idx];
+             for( jl = lRing_Idx + 1; jl < optInTimePeriod; jl += 1 ) {
+                best = lRing[jl];
+                if( best < ll ) {
+                   ll = best;
+                }
+             }
+             for( jl = 0; jl < lRing_Idx; jl += 1 ) {
+                best = lRing[jl];
+                if( best < ll ) {
+                   ll = best;
+                }
+             }
+             fhRing[fhRing_Idx] = hh - optInMultiplier * prevATR;
+             flRing[flRing_Idx] = ll + optInMultiplier * prevATR;
+             if( today >= startIdx ) {
+                hh = fhRing[fhRing_Idx];
+                for( kh = fhRing_Idx + 1; kh < optInStopPeriod; kh += 1 ) {
+                   best = fhRing[kh];
+                   if( best > hh ) {
+                      hh = best;
+                   }
+                }
+                for( kh = 0; kh < fhRing_Idx; kh += 1 ) {
+                   best = fhRing[kh];
+                   if( best > hh ) {
+                      hh = best;
+                   }
+                }
+                ll = flRing[flRing_Idx];
+                for( kl = flRing_Idx + 1; kl < optInStopPeriod; kl += 1 ) {
+                   best = flRing[kl];
+                   if( best < ll ) {
+                      ll = best;
+                   }
+                }
+                for( kl = 0; kl < flRing_Idx; kl += 1 ) {
+                   best = flRing[kl];
+                   if( best < ll ) {
+                      ll = best;
+                   }
+                }
+                outHighStop[outIdx] = hh;
+                outLowStop[outIdx] = ll;
+                outIdx = outIdx + 1;
+             }
+             today += 1;
+             hRing_Idx++;
+             if( hRing_Idx > maxIdx_hRing ) { hRing_Idx = 0; }
+             lRing_Idx++;
+             if( lRing_Idx > maxIdx_lRing ) { lRing_Idx = 0; }
+             fhRing_Idx++;
+             if( fhRing_Idx > maxIdx_fhRing ) { fhRing_Idx = 0; }
+             flRing_Idx++;
+             if( flRing_Idx > maxIdx_flRing ) { flRing_Idx = 0; }
+          }
+          outNBElement.value = outIdx;
+          outBegIdx.value = startIdx;
+          return RetCode.SUCCESS ;
+       }
+       /**
+        * Chande Kroll Stop places a pair of trailing stops a multiple of the
+        * Average True Range away from the recent extremes, then takes the extreme
+        * of those stops over a second, usually longer, window. The result is a stop
+        * that follows price but only ratchets after the shorter stop has held for a
+        * while. The high stop sits below price and is the level a long position
+        * would give up at; the low stop sits above price and is the short side's.
+        * Neither line is always above the other: when the multiplier is large
+        * enough the two cross, which is the signal that the range has widened past
+        * what the stops can straddle.
+        * <p>Formula and more info at <a
+        * href="https://ta-lib.org/functions/cksp">ta-lib.org/functions/cksp</a>.
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are; nothing
+        * outside that range is touched, and the library never pads with NaN. A
+        * valid range that ends before {@link Core#ckspLookback} is a <b>success
+        * with no values</b> ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inHigh High price of each bar.
+        * @param inLow Low price of each bar.
+        * @param inClose Close price of each bar, read only by the True Range.
+        * @param optInTimePeriod ATR and extreme window (default 10; range
+        *        2..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInMultiplier ATR multiplier (default 1; minimum 0;
+        *        {@link Core#REAL_DEFAULT} selects the default).
+        * @param optInStopPeriod Stop window (default 9; range 1..100000;
+        *        {@code Integer.MIN_VALUE} selects the default).
+        * @param outHighStop Trailing stop below price, the high side. Must hold at
+        *        least {@code endIdx - max(startIdx, ckspLookback(...)) + 1} values, the
+        *        count the call produces (none when that is not positive).
+        * @param outLowStop Trailing stop above price, the low side. Must hold at
+        *        least {@code endIdx - max(startIdx, ckspLookback(...)) + 1} values, the
+        *        count the call produces (none when that is not positive).
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#INDEX_MAX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. An output this function documents as declinable is the one
+        *        exception: {@code null} is how you decline it. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
+        */
+       public OutRange cksp( int startIdx,
+                             int endIdx,
+                             double inHigh[],
+                             double inLow[],
+                             double inClose[],
+                             int optInTimePeriod,
+                             double optInMultiplier,
+                             int optInStopPeriod,
+                             double outHighStop[],
+                             double outLowStop[] )
+       {
+          requireIndexRange("CKSP", startIdx, endIdx);
+          int guardStart = clampedStart("CKSP", startIdx, ckspLookback(optInTimePeriod, optInMultiplier, optInStopPeriod));
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CKSP", "inHigh", inHigh, guardInLen);
+          requireLength("CKSP", "inLow", inLow, guardInLen);
+          requireLength("CKSP", "inClose", inClose, guardInLen);
+          requireLength("CKSP", "outHighStop", outHighStop, guardOutLen);
+          requireLength("CKSP", "outLowStop", outLowStop, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = ckspImpl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInMultiplier, optInStopPeriod, outBegIdx, outNBElement, outHighStop, outLowStop);
+          if( retCode != RetCode.SUCCESS ) {
+             throw failure("CKSP", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+       /**
+        * Chande Kroll Stop places a pair of trailing stops a multiple of the
+        * Average True Range away from the recent extremes, then takes the extreme
+        * of those stops over a second, usually longer, window. The result is a stop
+        * that follows price but only ratchets after the shorter stop has held for a
+        * while. The high stop sits below price and is the level a long position
+        * would give up at; the low stop sits above price and is the short side's.
+        * Neither line is always above the other: when the multiplier is large
+        * enough the two cross, which is the signal that the range has widened past
+        * what the stops can straddle.
+        * <p>Formula and more info at <a
+        * href="https://ta-lib.org/functions/cksp">ta-lib.org/functions/cksp</a>.
+        * <p>This is the {@code float[]} overload. The arithmetic is performed in
+        * {@code double} before being written to the {@code double[]} output, so a
+        * result beyond {@code float} range is still representable.
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are; nothing
+        * outside that range is touched, and the library never pads with NaN. A
+        * valid range that ends before {@link Core#ckspLookback} is a <b>success
+        * with no values</b> ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inHigh High price of each bar.
+        * @param inLow Low price of each bar.
+        * @param inClose Close price of each bar, read only by the True Range.
+        * @param optInTimePeriod ATR and extreme window (default 10; range
+        *        2..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInMultiplier ATR multiplier (default 1; minimum 0;
+        *        {@link Core#REAL_DEFAULT} selects the default).
+        * @param optInStopPeriod Stop window (default 9; range 1..100000;
+        *        {@code Integer.MIN_VALUE} selects the default).
+        * @param outHighStop Trailing stop below price, the high side. Must hold at
+        *        least {@code endIdx - max(startIdx, ckspLookback(...)) + 1} values, the
+        *        count the call produces (none when that is not positive).
+        * @param outLowStop Trailing stop above price, the low side. Must hold at
+        *        least {@code endIdx - max(startIdx, ckspLookback(...)) + 1} values, the
+        *        count the call produces (none when that is not positive).
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#INDEX_MAX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. An output this function documents as declinable is the one
+        *        exception: {@code null} is how you decline it. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
+        */
+       public OutRange cksp( int startIdx,
+                             int endIdx,
+                             float inHigh[],
+                             float inLow[],
+                             float inClose[],
+                             int optInTimePeriod,
+                             double optInMultiplier,
+                             int optInStopPeriod,
+                             double outHighStop[],
+                             double outLowStop[] )
+       {
+          requireIndexRange("CKSP", startIdx, endIdx);
+          int guardStart = clampedStart("CKSP", startIdx, ckspLookback(optInTimePeriod, optInMultiplier, optInStopPeriod));
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CKSP", "inHigh", inHigh, guardInLen);
+          requireLength("CKSP", "inLow", inLow, guardInLen);
+          requireLength("CKSP", "inClose", inClose, guardInLen);
+          requireLength("CKSP", "outHighStop", outHighStop, guardOutLen);
+          requireLength("CKSP", "outLowStop", outLowStop, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = ckspImpl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInMultiplier, optInStopPeriod, outBegIdx, outNBElement, outHighStop, outLowStop);
+          if( retCode != RetCode.SUCCESS ) {
+             throw failure("CKSP", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+    /**** Streaming API *****/
+
+       /**
+        * A live CKSP stream (unrelated to {@code java.util.stream}): one value per
+        * closed bar, bit-identical to {@link Core#cksp} over the same series.
+        * Open with {@link Core#ckspOpen}; there is no close — the handle is
+        * ordinary heap state, unreferenced handles are simply garbage-collected.
+        * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
+        * {@code value} and {@code clone} must not race with an {@code update} on
+        * the same handle. With no concurrent {@code update}, {@code peek}/
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
+        * <p>Not serializable by design: to checkpoint, retain the history and
+        * re-open — the result is bit-identical by contract.
+        */
+       public static final class CkspStream {
+          private Core core;
+          private int optInTimePeriod;
+          private double optInMultiplier;
+          private int optInStopPeriod;
+          private double prevATR;
+          private double wAlpha;
+          private double wBeta;
+          private int hRing_Idx;
+          private int lRing_Idx;
+          private int fhRing_Idx;
+          private int flRing_Idx;
+          private int maxIdx_hRing;
+          private int maxIdx_lRing;
+          private int maxIdx_fhRing;
+          private int maxIdx_flRing;
+          private double lag1_inClose;
+          private int cbSize_hRing;
+          private double[] cb_hRing;
+          private int cbSize_lRing;
+          private double[] cb_lRing;
+          private int cbSize_fhRing;
+          private double[] cb_fhRing;
+          private int cbSize_flRing;
+          private double[] cb_flRing;
+          private double cur_outHighStop;
+          private double cur_outLowStop;
+          private int outRangeBegIdx;
+          private int outRangeCount;
+
+          private CkspStream( Core core ) { this.core = core; }
+
+          /**
+           * The bars this stream has an output for, in the input series'
+           * coordinates: {@code [begIdx, begIdx + count)}.
+           * <p>It is what {@link Core#cksp} reports over the same bars: the
+           * opener sets it to {@code (lookback, historyLen - lookback)}, every
+           * accepted {@code update} adds one to the count — a rejected one
+           * changes nothing, and neither does {@code peek} — and
+           * {@code clone()} carries it verbatim. A plain
+           * {@code open} hands back only the last value, a subset of this range,
+           * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#INDEX_MAX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
+           */
+          public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
+
+          /**
+           * Count one bar this stream was not fed: {@link #outRange()} advances
+           * by one and nothing else moves — {@link #value(CkspOut)} keeps answering the previous
+           * output, which is this bar's output too.
+           * <p>For a bar the caller leaves out: one an {@code update} rejected
+           * and that will not be re-fed, or a session with no print. Without it
+           * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#INDEX_MAX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
+           */
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
+                throw failure("CKSP advance", RetCode.OUT_OF_RANGE_END_INDEX);
+             this.outRangeCount++;
+          }
+
+          private CkspStream( CkspStream other ) {
+             this.core = other.core;
+             this.optInTimePeriod = other.optInTimePeriod;
+             this.optInMultiplier = other.optInMultiplier;
+             this.optInStopPeriod = other.optInStopPeriod;
+             this.prevATR = other.prevATR;
+             this.wAlpha = other.wAlpha;
+             this.wBeta = other.wBeta;
+             this.hRing_Idx = other.hRing_Idx;
+             this.lRing_Idx = other.lRing_Idx;
+             this.fhRing_Idx = other.fhRing_Idx;
+             this.flRing_Idx = other.flRing_Idx;
+             this.maxIdx_hRing = other.maxIdx_hRing;
+             this.maxIdx_lRing = other.maxIdx_lRing;
+             this.maxIdx_fhRing = other.maxIdx_fhRing;
+             this.maxIdx_flRing = other.maxIdx_flRing;
+             this.lag1_inClose = other.lag1_inClose;
+             this.cbSize_hRing = other.cbSize_hRing;
+             this.cb_hRing = other.cb_hRing.clone();
+             this.cbSize_lRing = other.cbSize_lRing;
+             this.cb_lRing = other.cb_lRing.clone();
+             this.cbSize_fhRing = other.cbSize_fhRing;
+             this.cb_fhRing = other.cb_fhRing.clone();
+             this.cbSize_flRing = other.cbSize_flRing;
+             this.cb_flRing = other.cb_flRing.clone();
+             this.cur_outHighStop = other.cur_outHighStop;
+             this.cur_outLowStop = other.cur_outLowStop;
+             this.outRangeBegIdx = other.outRangeBegIdx;
+             this.outRangeCount = other.outRangeCount;
+          }
+
+          /**
+           * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
+           * <p>Throws {@link IllegalArgumentException} if any bar value is not
+           * finite (NaN or an infinity). That check runs before anything is
+           * written, so nothing moves — {@link #outRange()} included — and
+           * {@link #value(CkspOut)} still answers the previous value. Re-feed the bar when a
+           * corrected value arrives, or call {@link #advance()} to count it and
+           * carry on; two handles on one feed drift a bar apart if neither
+           * happens.
+           * This is the one place the streaming tier is stricter than
+           * the batch API, which computes on whatever it is given: a handle
+           * retains its state, so a single non-finite bar would poison every
+           * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#INDEX_MAX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
+           */
+          public void update( double inHigh, double inLow, double inClose, CkspOut out ) {
+             if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
+                throw failure("CKSP update", RetCode.OUT_OF_RANGE_END_INDEX);
+             requireArgument("CKSP update", "out", out);
+             if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
+                throw nonFiniteBar("CKSP update", !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
+             core.ckspStepImpl(this, inHigh, inLow, inClose);
+             this.outRangeCount++;
+             out.highStop = this.cur_outHighStop;
+             out.lowStop = this.cur_outLowStop;
+          }
+
+          /**
+           * Evaluate a forming bar without committing — bit-identical to what the
+           * next {@code update} with the same bar would write — the same
+           * transition, with every store it would make carried in a local instead.
+           * Never writes this handle, so peeks may run concurrently with each other.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
+           */
+          public void peek( double inHigh, double inLow, double inClose, CkspOut out ) {
+             requireArgument("CKSP peek", "out", out);
+             if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
+                throw nonFiniteBar("CKSP peek", !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
+             CkspStream sp = this;
+             int jh = 0;
+             int jl = 0;
+             int kh = 0;
+             int kl = 0;
+             double val2 = 0.0;
+             double val3 = 0.0;
+             double greatest = 0.0;
+             double tempCY = 0.0;
+             double tempLT = 0.0;
+             double tempHT = 0.0;
+             double hh = 0.0;
+             double ll = 0.0;
+             double best = 0.0;
+             double cur_outHighStop = 0.0;
+             double cur_outLowStop = 0.0;
+             double prevATR = sp.prevATR;
+             int pkSlot0 = -1;
+             double pkVal0 = 0.0;
+             int pkSlot1 = -1;
+             double pkVal1 = 0.0;
+             int pkSlot2 = -1;
+             double pkVal2 = 0.0;
+             int pkSlot3 = -1;
+             double pkVal3 = 0.0;
+             tempLT = inLow;
+             tempHT = inHigh;
+             tempCY = sp.lag1_inClose;
+             greatest = tempHT - tempLT;
+             val2 = Math.abs(tempCY - tempHT);
+             if( val2 > greatest ) {
+                greatest = val2;
+             }
+             val3 = Math.abs(tempCY - tempLT);
+             if( val3 > greatest ) {
+                greatest = val3;
+             }
+             prevATR = Math.fma(sp.wBeta, prevATR, sp.wAlpha * greatest);
+             pkSlot0 = sp.hRing_Idx;
+             pkVal0 = tempHT;
+             pkSlot1 = sp.lRing_Idx;
+             pkVal1 = tempLT;
+             /* The extremes of the p bars ending here. The newest sits at the ring's
+              * own index, so the oldest is the slot after it and the walk is two
+              * straight runs.
+              */
+             hh = (sp.hRing_Idx != pkSlot0) ? sp.cb_hRing[sp.hRing_Idx] : pkVal0;
+             for( jh = sp.hRing_Idx + 1; jh < sp.optInTimePeriod; jh += 1 ) {
+                best = sp.cb_hRing[jh];
+                if( best > hh ) {
+                   hh = best;
+                }
+             }
+             for( jh = 0; jh < sp.hRing_Idx; jh += 1 ) {
+                best = sp.cb_hRing[jh];
+                if( best > hh ) {
+                   hh = best;
+                }
+             }
+             ll = (sp.lRing_Idx != pkSlot1) ? sp.cb_lRing[sp.lRing_Idx] : pkVal1;
+             for( jl = sp.lRing_Idx + 1; jl < sp.optInTimePeriod; jl += 1 ) {
+                best = sp.cb_lRing[jl];
+                if( best < ll ) {
+                   ll = best;
+                }
+             }
+             for( jl = 0; jl < sp.lRing_Idx; jl += 1 ) {
+                best = sp.cb_lRing[jl];
+                if( best < ll ) {
+                   ll = best;
+                }
+             }
+             pkSlot2 = sp.fhRing_Idx;
+             pkVal2 = hh - sp.optInMultiplier * prevATR;
+             pkSlot3 = sp.flRing_Idx;
+             pkVal3 = ll + sp.optInMultiplier * prevATR;
+             /* The second stage, over the q first-stage bars ending here. At q = 1
+              * both runs are empty and the value is the bar's own, which is the
+              * Chandelier Exit form.
+              */
+             hh = (sp.fhRing_Idx != pkSlot2) ? sp.cb_fhRing[sp.fhRing_Idx] : pkVal2;
+             for( kh = sp.fhRing_Idx + 1; kh < sp.optInStopPeriod; kh += 1 ) {
+                best = sp.cb_fhRing[kh];
+                if( best > hh ) {
+                   hh = best;
+                }
+             }
+             for( kh = 0; kh < sp.fhRing_Idx; kh += 1 ) {
+                best = sp.cb_fhRing[kh];
+                if( best > hh ) {
+                   hh = best;
+                }
+             }
+             ll = (sp.flRing_Idx != pkSlot3) ? sp.cb_flRing[sp.flRing_Idx] : pkVal3;
+             for( kl = sp.flRing_Idx + 1; kl < sp.optInStopPeriod; kl += 1 ) {
+                best = sp.cb_flRing[kl];
+                if( best < ll ) {
+                   ll = best;
+                }
+             }
+             for( kl = 0; kl < sp.flRing_Idx; kl += 1 ) {
+                best = sp.cb_flRing[kl];
+                if( best < ll ) {
+                   ll = best;
+                }
+             }
+             cur_outHighStop = hh;
+             cur_outLowStop = ll;
+             out.highStop = cur_outHighStop;
+             out.lowStop = cur_outLowStop;
+          }
+
+          /**
+           * The value at the last bar this stream counted — the bar
+           * {@link #outRange()} ends on. The last history bar right after open,
+           * then whatever the latest accepted {@code update} wrote.
+           * A pure field read; {@code peek} does not change it. Overwrites {@code out}.
+           */
+          public void value( CkspOut out ) {
+             requireArgument("CKSP value", "out", out);
+             out.highStop = this.cur_outHighStop;
+             out.lowStop = this.cur_outLowStop;
+          }
+
+          /**
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
+           */
+          @Override
+          public CkspStream clone() {
+             return new CkspStream(this);
+          }
+       }
+
+       /**
+        * The outputs of one CKSP bar, written by the stream into an object the
+        * CALLER owns. Allocate one and reuse it: {@code update}, {@code peek}
+        * and {@code value} overwrite its fields, so the sink itself costs
+        * nothing per bar.
+        *
+        * <p><b>Its contents are only valid until the next call that writes it.</b>
+        * It is a mutable buffer, not a reading: a reference kept past that call,
+        * or one put in a collection, sees the value change underneath it. Copy the
+        * fields out if the reading has to outlive the call.
+        *
+        * <p>Deliberately no {@code equals} or {@code hashCode}: a mutable type
+        * with value equality breaks the {@code HashMap}/{@code HashSet}
+        * invariant the moment a reused instance becomes a key. Compare the fields.
+        */
+       public static final class CkspOut {
+          /** Trailing stop below price, the high side. */
+          public double highStop;
+          /** Trailing stop above price, the low side. */
+          public double lowStop;
+       }
+       private void ckspStepImpl( CkspStream sp, double inHigh, double inLow, double inClose )
+       {
+          int jh = 0;
+          int jl = 0;
+          int kh = 0;
+          int kl = 0;
+          double val2 = 0.0;
+          double val3 = 0.0;
+          double greatest = 0.0;
+          double tempCY = 0.0;
+          double tempLT = 0.0;
+          double tempHT = 0.0;
+          double hh = 0.0;
+          double ll = 0.0;
+          double best = 0.0;
+          tempLT = inLow;
+          tempHT = inHigh;
+          tempCY = sp.lag1_inClose;
+          greatest = tempHT - tempLT;
+          val2 = Math.abs(tempCY - tempHT);
+          if( val2 > greatest ) {
+             greatest = val2;
+          }
+          val3 = Math.abs(tempCY - tempLT);
+          if( val3 > greatest ) {
+             greatest = val3;
+          }
+          sp.prevATR = Math.fma(sp.wBeta, sp.prevATR, sp.wAlpha * greatest);
+          sp.cb_hRing[sp.hRing_Idx] = tempHT;
+          sp.cb_lRing[sp.lRing_Idx] = tempLT;
+          /* The extremes of the p bars ending here. The newest sits at the ring's
+           * own index, so the oldest is the slot after it and the walk is two
+           * straight runs.
+           */
+          hh = sp.cb_hRing[sp.hRing_Idx];
+          for( jh = sp.hRing_Idx + 1; jh < sp.optInTimePeriod; jh += 1 ) {
+             best = sp.cb_hRing[jh];
+             if( best > hh ) {
+                hh = best;
+             }
+          }
+          for( jh = 0; jh < sp.hRing_Idx; jh += 1 ) {
+             best = sp.cb_hRing[jh];
+             if( best > hh ) {
+                hh = best;
+             }
+          }
+          ll = sp.cb_lRing[sp.lRing_Idx];
+          for( jl = sp.lRing_Idx + 1; jl < sp.optInTimePeriod; jl += 1 ) {
+             best = sp.cb_lRing[jl];
+             if( best < ll ) {
+                ll = best;
+             }
+          }
+          for( jl = 0; jl < sp.lRing_Idx; jl += 1 ) {
+             best = sp.cb_lRing[jl];
+             if( best < ll ) {
+                ll = best;
+             }
+          }
+          sp.cb_fhRing[sp.fhRing_Idx] = hh - sp.optInMultiplier * sp.prevATR;
+          sp.cb_flRing[sp.flRing_Idx] = ll + sp.optInMultiplier * sp.prevATR;
+          /* The second stage, over the q first-stage bars ending here. At q = 1
+           * both runs are empty and the value is the bar's own, which is the
+           * Chandelier Exit form.
+           */
+          hh = sp.cb_fhRing[sp.fhRing_Idx];
+          for( kh = sp.fhRing_Idx + 1; kh < sp.optInStopPeriod; kh += 1 ) {
+             best = sp.cb_fhRing[kh];
+             if( best > hh ) {
+                hh = best;
+             }
+          }
+          for( kh = 0; kh < sp.fhRing_Idx; kh += 1 ) {
+             best = sp.cb_fhRing[kh];
+             if( best > hh ) {
+                hh = best;
+             }
+          }
+          ll = sp.cb_flRing[sp.flRing_Idx];
+          for( kl = sp.flRing_Idx + 1; kl < sp.optInStopPeriod; kl += 1 ) {
+             best = sp.cb_flRing[kl];
+             if( best < ll ) {
+                ll = best;
+             }
+          }
+          for( kl = 0; kl < sp.flRing_Idx; kl += 1 ) {
+             best = sp.cb_flRing[kl];
+             if( best < ll ) {
+                ll = best;
+             }
+          }
+          sp.cur_outHighStop = hh;
+          sp.cur_outLowStop = ll;
+          sp.hRing_Idx = sp.hRing_Idx + 1;
+          if( sp.hRing_Idx > sp.maxIdx_hRing ) {
+             sp.hRing_Idx = 0;
+          }
+          sp.lRing_Idx = sp.lRing_Idx + 1;
+          if( sp.lRing_Idx > sp.maxIdx_lRing ) {
+             sp.lRing_Idx = 0;
+          }
+          sp.fhRing_Idx = sp.fhRing_Idx + 1;
+          if( sp.fhRing_Idx > sp.maxIdx_fhRing ) {
+             sp.fhRing_Idx = 0;
+          }
+          sp.flRing_Idx = sp.flRing_Idx + 1;
+          if( sp.flRing_Idx > sp.maxIdx_flRing ) {
+             sp.flRing_Idx = 0;
+          }
+          sp.lag1_inClose = inClose;
+       }
+       private RetCode ckspOpenImpl( CkspStream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, double optInMultiplier, int optInStopPeriod, MInteger outBegIdx, MInteger outNBElement, double outHighStop[], double outLowStop[], int outStride )
+       {
+          int i = 0;
+          int jh = 0;
+          int jl = 0;
+          int kh = 0;
+          int kl = 0;
+          int today = 0;
+          int outIdx = 0;
+          int lookbackTotal = 0;
+          int stageOneIdx = 0;
+          double prevATR = 0;
+          double periodTotal = 0;
+          double wAlpha = 0;
+          double wBeta = 0;
+          double val2 = 0;
+          double val3 = 0;
+          double greatest = 0;
+          double tempCY = 0;
+          double tempLT = 0;
+          double tempHT = 0;
+          double hh = 0;
+          double ll = 0;
+          double best = 0;
+          double[] hRing;
+          int hRing_Idx = 0;
+          int maxIdx_hRing = (50)-1;
+          double[] lRing;
+          int lRing_Idx = 0;
+          int maxIdx_lRing = (50)-1;
+          double[] fhRing;
+          int fhRing_Idx = 0;
+          int maxIdx_fhRing = (50)-1;
+          double[] flRing;
+          int flRing_Idx = 0;
+          int maxIdx_flRing = (50)-1;
+          int historyLen = inHigh.length;
+          int endIdx = historyLen - 1;
+          if( historyLen < 1 ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX;
+          }
+          if( historyLen > INDEX_MAX + 1 ) {
+             return RetCode.OUT_OF_RANGE_END_INDEX;
+          }
+          if( inLow.length != inHigh.length || inClose.length != inHigh.length ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 10;
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInMultiplier == REAL_DEFAULT ) {
+             optInMultiplier = 1e0;
+          } else if( !(optInMultiplier >= 0e0 && optInMultiplier <= REAL_MAX) ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInStopPeriod == Integer.MIN_VALUE ) {
+             optInStopPeriod = 9;
+          } else if( optInStopPeriod < 1 || optInStopPeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.INSUFFICIENT_HISTORY;
+          }
+          /* Four windows, all carried as rings and all walked oldest-first, the
+           * cci.c:112-117 shape: an index that wrapped would be one more thing the
+           * stream derivation has to prove, and the walk is the same values either
+           * way.
+           */
+          outBegIdx.value = 0;
+          outNBElement.value = 0;
+          lookbackTotal = ckspLookback(optInTimePeriod, optInMultiplier, optInStopPeriod);
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             return RetCode.INSUFFICIENT_HISTORY ;
+          }
+          if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
+          hRing = new double[optInTimePeriod];
+          maxIdx_hRing = (optInTimePeriod)-1;
+          hRing_Idx = 0;
+          if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
+          lRing = new double[optInTimePeriod];
+          maxIdx_lRing = (optInTimePeriod)-1;
+          lRing_Idx = 0;
+          if( optInStopPeriod < 1 ) return RetCode.INTERNAL_ERROR;
+          fhRing = new double[optInStopPeriod];
+          maxIdx_fhRing = (optInStopPeriod)-1;
+          fhRing_Idx = 0;
+          if( optInStopPeriod < 1 ) return RetCode.INTERNAL_ERROR;
+          flRing = new double[optInStopPeriod];
+          maxIdx_flRing = (optInStopPeriod)-1;
+          flRing_Idx = 0;
+          /* The first stage is entered q-1 bars before the first output, because the
+           * second stage's window reaches that far back. Each leg is anchored on its
+           * own bar rather than on the caller's startIdx (the kc.c:73-77 rule): the
+           * Average True Range is seeded as if TA_ATR had been entered here, and the
+           * extremes are the p-windows ending on these same bars.
+           */
+          stageOneIdx = startIdx - (optInStopPeriod - 1);
+          /* The Average True Range, carried inline rather than taken from a call: the
+           * two stages advance together one bar at a time and a whole-range buffer
+           * between them would not stream (supertrend.c:47-50).
+           *
+           * The arithmetic order is the bit-exactness contract with TA_ATR and is not
+           * to be reordered: the range first, then the two previous-close distances in
+           * that order; the seed summed from 0.0 over the first optInTimePeriod True
+           * Ranges and divided once; wBeta rounded first and wAlpha derived from it.
+           */
+          wBeta = (double)(optInTimePeriod - 1) / (double)optInTimePeriod;
+          wAlpha = 1.0 - wBeta;
+          today = stageOneIdx - atrLookback(optInTimePeriod) + 1;
+          periodTotal = 0.0;
+          i = optInTimePeriod;
+          while( i-- > 0 ) {
+             tempLT = inLow[today];
+             tempHT = inHigh[today];
+             tempCY = inClose[today - 1];
+             greatest = tempHT - tempLT;
+             val2 = Math.abs(tempCY - tempHT);
+             if( val2 > greatest ) {
+                greatest = val2;
+             }
+             val3 = Math.abs(tempCY - tempLT);
+             if( val3 > greatest ) {
+                greatest = val3;
+             }
+             periodTotal += greatest;
+             today += 1;
+          }
+          prevATR = periodTotal / optInTimePeriod;
+          /* Skip the Average True Range's unstable period. The count comes from the
+           * lookback rather than from the setting, so the two cannot disagree.
+           */
+          i = atrLookback(optInTimePeriod) - optInTimePeriod;
+          while( i != 0 ) {
+             tempLT = inLow[today];
+             tempHT = inHigh[today];
+             tempCY = inClose[today - 1];
+             greatest = tempHT - tempLT;
+             val2 = Math.abs(tempCY - tempHT);
+             if( val2 > greatest ) {
+                greatest = val2;
+             }
+             val3 = Math.abs(tempCY - tempLT);
+             if( val3 > greatest ) {
+                greatest = val3;
+             }
+             prevATR = Math.fma(wBeta, prevATR, wAlpha * greatest);
+             today += 1;
+             i -= 1;
+          }
+          /* `today` is now stageOneIdx and prevATR is the Average True Range of the
+           * bar before it. Seed the price rings with the p-1 bars the first extreme
+           * window needs behind that bar.
+           */
+          i = stageOneIdx - optInTimePeriod + 1;
+          while( i < stageOneIdx ) {
+             hRing[hRing_Idx] = inHigh[i];
+             lRing[lRing_Idx] = inLow[i];
+             i += 1;
+             hRing_Idx++;
+             if( hRing_Idx > maxIdx_hRing ) { hRing_Idx = 0; }
+             lRing_Idx++;
+             if( lRing_Idx > maxIdx_lRing ) { lRing_Idx = 0; }
+          }
+          /* The prologue leaves prevATR as the Average True Range of stageOneIdx and
+           * `today` one past it, so that bar is finished here rather than in the loop:
+           * entering the loop with it would apply a second Wilder update and shift the
+           * whole series one bar early. supertrend.c takes the same step for the same
+           * reason.
+           */
+          today = stageOneIdx;
+          hRing[hRing_Idx] = inHigh[today];
+          lRing[lRing_Idx] = inLow[today];
+          hh = hRing[hRing_Idx];
+          for( jh = hRing_Idx + 1; jh < optInTimePeriod; jh += 1 ) {
+             best = hRing[jh];
+             if( best > hh ) {
+                hh = best;
+             }
+          }
+          for( jh = 0; jh < hRing_Idx; jh += 1 ) {
+             best = hRing[jh];
+             if( best > hh ) {
+                hh = best;
+             }
+          }
+          ll = lRing[lRing_Idx];
+          for( jl = lRing_Idx + 1; jl < optInTimePeriod; jl += 1 ) {
+             best = lRing[jl];
+             if( best < ll ) {
+                ll = best;
+             }
+          }
+          for( jl = 0; jl < lRing_Idx; jl += 1 ) {
+             best = lRing[jl];
+             if( best < ll ) {
+                ll = best;
+             }
+          }
+          fhRing[fhRing_Idx] = hh - optInMultiplier * prevATR;
+          flRing[flRing_Idx] = ll + optInMultiplier * prevATR;
+          outIdx = 0;
+          if( today >= startIdx ) {
+             outHighStop[outIdx * outStride] = fhRing[fhRing_Idx];
+             outLowStop[outIdx * outStride] = flRing[flRing_Idx];
+             outIdx = outIdx + 1;
+          }
+          today += 1;
+          hRing_Idx++;
+          if( hRing_Idx > maxIdx_hRing ) { hRing_Idx = 0; }
+          lRing_Idx++;
+          if( lRing_Idx > maxIdx_lRing ) { lRing_Idx = 0; }
+          fhRing_Idx++;
+          if( fhRing_Idx > maxIdx_fhRing ) { fhRing_Idx = 0; }
+          flRing_Idx++;
+          if( flRing_Idx > maxIdx_flRing ) { flRing_Idx = 0; }
+          while( today <= endIdx ) {
+             tempLT = inLow[today];
+             tempHT = inHigh[today];
+             tempCY = inClose[today - 1];
+             greatest = tempHT - tempLT;
+             val2 = Math.abs(tempCY - tempHT);
+             if( val2 > greatest ) {
+                greatest = val2;
+             }
+             val3 = Math.abs(tempCY - tempLT);
+             if( val3 > greatest ) {
+                greatest = val3;
+             }
+             prevATR = Math.fma(wBeta, prevATR, wAlpha * greatest);
+             hRing[hRing_Idx] = tempHT;
+             lRing[lRing_Idx] = tempLT;
+             /* The extremes of the p bars ending here. The newest sits at the ring's
+              * own index, so the oldest is the slot after it and the walk is two
+              * straight runs.
+              */
+             hh = hRing[hRing_Idx];
+             for( jh = hRing_Idx + 1; jh < optInTimePeriod; jh += 1 ) {
+                best = hRing[jh];
+                if( best > hh ) {
+                   hh = best;
+                }
+             }
+             for( jh = 0; jh < hRing_Idx; jh += 1 ) {
+                best = hRing[jh];
+                if( best > hh ) {
+                   hh = best;
+                }
+             }
+             ll = lRing[lRing_Idx];
+             for( jl = lRing_Idx + 1; jl < optInTimePeriod; jl += 1 ) {
+                best = lRing[jl];
+                if( best < ll ) {
+                   ll = best;
+                }
+             }
+             for( jl = 0; jl < lRing_Idx; jl += 1 ) {
+                best = lRing[jl];
+                if( best < ll ) {
+                   ll = best;
+                }
+             }
+             fhRing[fhRing_Idx] = hh - optInMultiplier * prevATR;
+             flRing[flRing_Idx] = ll + optInMultiplier * prevATR;
+             if( today >= startIdx ) {
+                /* The second stage, over the q first-stage bars ending here. At q = 1
+                 * both runs are empty and the value is the bar's own, which is the
+                 * Chandelier Exit form.
+                 */
+                hh = fhRing[fhRing_Idx];
+                for( kh = fhRing_Idx + 1; kh < optInStopPeriod; kh += 1 ) {
+                   best = fhRing[kh];
+                   if( best > hh ) {
+                      hh = best;
+                   }
+                }
+                for( kh = 0; kh < fhRing_Idx; kh += 1 ) {
+                   best = fhRing[kh];
+                   if( best > hh ) {
+                      hh = best;
+                   }
+                }
+                ll = flRing[flRing_Idx];
+                for( kl = flRing_Idx + 1; kl < optInStopPeriod; kl += 1 ) {
+                   best = flRing[kl];
+                   if( best < ll ) {
+                      ll = best;
+                   }
+                }
+                for( kl = 0; kl < flRing_Idx; kl += 1 ) {
+                   best = flRing[kl];
+                   if( best < ll ) {
+                      ll = best;
+                   }
+                }
+                outHighStop[outIdx * outStride] = hh;
+                outLowStop[outIdx * outStride] = ll;
+                outIdx = outIdx + 1;
+             }
+             today += 1;
+             hRing_Idx++;
+             if( hRing_Idx > maxIdx_hRing ) { hRing_Idx = 0; }
+             lRing_Idx++;
+             if( lRing_Idx > maxIdx_lRing ) { lRing_Idx = 0; }
+             fhRing_Idx++;
+             if( fhRing_Idx > maxIdx_fhRing ) { fhRing_Idx = 0; }
+             flRing_Idx++;
+             if( flRing_Idx > maxIdx_flRing ) { flRing_Idx = 0; }
+          }
+          outNBElement.value = outIdx;
+          outBegIdx.value = startIdx;
+          /* Capture the live batch state into the handle. */
+          int capCb_hRing = maxIdx_hRing + 1;
+          if( capCb_hRing > historyLen + 1 ) {
+             return RetCode.INTERNAL_ERROR;
+          }
+          int capCb_lRing = maxIdx_lRing + 1;
+          if( capCb_lRing > historyLen + 1 ) {
+             return RetCode.INTERNAL_ERROR;
+          }
+          int capCb_fhRing = maxIdx_fhRing + 1;
+          if( capCb_fhRing > historyLen + 1 ) {
+             return RetCode.INTERNAL_ERROR;
+          }
+          int capCb_flRing = maxIdx_flRing + 1;
+          if( capCb_flRing > historyLen + 1 ) {
+             return RetCode.INTERNAL_ERROR;
+          }
+          sp.optInTimePeriod = optInTimePeriod;
+          sp.optInMultiplier = optInMultiplier;
+          sp.optInStopPeriod = optInStopPeriod;
+          sp.prevATR = prevATR;
+          sp.wAlpha = wAlpha;
+          sp.wBeta = wBeta;
+          sp.hRing_Idx = hRing_Idx;
+          sp.lRing_Idx = lRing_Idx;
+          sp.fhRing_Idx = fhRing_Idx;
+          sp.flRing_Idx = flRing_Idx;
+          sp.maxIdx_hRing = maxIdx_hRing;
+          sp.maxIdx_lRing = maxIdx_lRing;
+          sp.maxIdx_fhRing = maxIdx_fhRing;
+          sp.maxIdx_flRing = maxIdx_flRing;
+          sp.lag1_inClose = inClose[historyLen - 1];
+          sp.cbSize_hRing = capCb_hRing;
+          sp.cb_hRing = hRing;
+          sp.cbSize_lRing = capCb_lRing;
+          sp.cb_lRing = lRing;
+          sp.cbSize_fhRing = capCb_fhRing;
+          sp.cb_fhRing = fhRing;
+          sp.cbSize_flRing = capCb_flRing;
+          sp.cb_flRing = flRing;
+          sp.cur_outHighStop = outHighStop[(outNBElement.value - 1) * outStride];
+          sp.cur_outLowStop = outLowStop[(outNBElement.value - 1) * outStride];
+          return RetCode.SUCCESS;
+       }
+       /* ckspOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+       CkspStream ckspOpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, double optInMultiplier, int optInStopPeriod, MInteger outBegIdx, MInteger outNBElement, double outHighStop[], double outLowStop[] )
+       {
+          CkspStream sp = new CkspStream(this);
+          RetCode retCode = ckspOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, optInMultiplier, optInStopPeriod, outBegIdx, outNBElement, outHighStop, outLowStop, 1);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.SUCCESS ) {
+             return sp;
+          }
+          if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
+             throw insufficientHistory("CKSP openAndFill", inHigh.length, startIdx, ckspLookback(optInTimePeriod, optInMultiplier, optInStopPeriod));
+          }
+          throw streamFailure("CKSP openAndFill", retCode);
+       }
+       /* Internal startIdx-anchored open behind ckspOpen (composition seam). */
+       CkspStream ckspOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, double optInMultiplier, int optInStopPeriod )
+       {
+          CkspStream sp = new CkspStream(this);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          double[] sink_outHighStop = new double[1];
+          double[] sink_outLowStop = new double[1];
+          RetCode retCode = ckspOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, optInMultiplier, optInStopPeriod, outBegIdx, outNBElement, sink_outHighStop, sink_outLowStop, 0);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.SUCCESS ) {
+             return sp;
+          }
+          if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
+             throw insufficientHistory("CKSP open", inHigh.length, startIdx, ckspLookback(optInTimePeriod, optInMultiplier, optInStopPeriod));
+          }
+          throw streamFailure("CKSP open", retCode);
+       }
+       /**
+        * Open a live CKSP stream over the warm-up history; the handle's
+        * {@code value()} starts at the last history bar's value — bit-identical
+        * to {@link Core#cksp} at that bar.
+        * <p>The history must hold at least {@code ckspLookback(...) + 1} bars
+        * (unstable-period aware), or {@link InsufficientHistoryException} is
+        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * ({@link Integer#MIN_VALUE} and {@link Core#REAL_DEFAULT} select a
+        * parameter's documented default, as in the batch API). An EMPTY history throws
+        * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+        * names no bar — and a null argument {@link IllegalArgumentException},
+        * both ahead of everything above.
+        */
+       public CkspStream ckspOpen( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double optInMultiplier, int optInStopPeriod )
+       {
+          requireArgument("CKSP open", "inHigh", inHigh);
+          requireHistory("CKSP open", inHigh.length);
+          requireArgument("CKSP open", "inLow", inLow);
+          requireArgument("CKSP open", "inClose", inClose);
+          requireHistoryLength("CKSP open", "inLow", inLow.length, inHigh.length);
+          requireHistoryLength("CKSP open", "inClose", inClose.length, inHigh.length);
+          return ckspOpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod, optInMultiplier, optInStopPeriod);
+       }
+       /**
+        * {@link Core#ckspOpen} that also fills the output array(s) bit-identically
+        * to {@link Core#cksp} over the whole history in the same single pass
+        * (no separate batch call needed for the warm-up plot). Output arrays must
+        * not alias the inputs or each other, and must hold
+        * {@code historyLen - lookback} values — both checked before anything is
+        * written, so an undersized array is an {@link IllegalArgumentException}
+        * naming it rather than a fault from inside the fill.
+        * <p>The range written is on the returned handle:
+        * {@link CkspStream#outRange()}.
+        */
+       public CkspStream ckspOpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double optInMultiplier, int optInStopPeriod, double outHighStop[], double outLowStop[] )
+       {
+          requireArgument("CKSP openAndFill", "inHigh", inHigh);
+          requireHistory("CKSP openAndFill", inHigh.length);
+          requireArgument("CKSP openAndFill", "inLow", inLow);
+          requireArgument("CKSP openAndFill", "inClose", inClose);
+          int guardOutLen = openFillCount("CKSP openAndFill", inHigh.length, ckspLookback(optInTimePeriod, optInMultiplier, optInStopPeriod));
+          requireHistoryLength("CKSP openAndFill", "inLow", inLow.length, inHigh.length);
+          requireHistoryLength("CKSP openAndFill", "inClose", inClose.length, inHigh.length);
+          requireLength("CKSP openAndFill", "outHighStop", outHighStop, guardOutLen);
+          requireLength("CKSP openAndFill", "outLowStop", outLowStop, guardOutLen);
+          if( (Object)outHighStop == (Object)inHigh || (Object)outHighStop == (Object)inLow || (Object)outHighStop == (Object)inClose || (Object)outLowStop == (Object)inHigh || (Object)outLowStop == (Object)inLow || (Object)outLowStop == (Object)inClose || (Object)outHighStop == (Object)outLowStop ) {
+             throw streamFailure("CKSP openAndFill", RetCode.BAD_PARAM);
+          }
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          return ckspOpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, optInMultiplier, optInStopPeriod, outBegIdx, outNBElement, outHighStop, outLowStop);
+       }
+    /* List of contributors:
+     *
+     *  Initial  Name/description
+     *  -------------------------------------------------------------------
+     *  MF       Mario Fortier
      *  CC       Claude Code (AI assistant)
      *
      * Change history:
@@ -205541,7 +207238,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "e974c401e406d910";
+    static final String SPLICED_GENCODE_DIGEST = "0b3533743e5e5544";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];
@@ -206065,6 +207762,10 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("CKSP", new AbsFunc("CKSP", "Overlap Studies", "Chande Kroll Stop", 50331648,
+            new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","ATR and extreme window",10.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(0,"optInMultiplier",0,"Multiplier","ATR multiplier",1.0, 0.0,3e37,2,0.5,5.0,0.5, 0,0,0,0,0, null), new AbsOpt(2,"optInStopPeriod",0,"Stop Period","Stop window",9.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outHighStop",1), new AbsOut(0,"outLowStop",1) }));
         ABSTRACT.put("CMF", new AbsFunc("CMF", "Volume Indicators", "Chaikin Money Flow", 33554432,
             new AbsIn[]{ new AbsIn(0,"inPriceHLCV",30) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",20.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
@@ -206787,6 +208488,7 @@ public class TaCodegenServe {
         "TA_CG",
         "TA_CHOP",
         "TA_CHOPTR",
+        "TA_CKSP",
         "TA_CMF",
         "TA_CMO",
         "TA_CMOU",
@@ -207014,137 +208716,138 @@ public class TaCodegenServe {
             case 87: return handle_CG(json);
             case 88: return handle_CHOP(json);
             case 89: return handle_CHOPTR(json);
-            case 90: return handle_CMF(json);
-            case 91: return handle_CMO(json);
-            case 92: return handle_CMOU(json);
-            case 93: return handle_COPPOCK(json);
-            case 94: return handle_CORREL(json);
-            case 95: return handle_COS(json);
-            case 96: return handle_COSH(json);
-            case 97: return handle_CRSI(json);
-            case 98: return handle_CTI(json);
-            case 99: return handle_CUMSUM(json);
-            case 100: return handle_CVI(json);
-            case 101: return handle_DEMA(json);
-            case 102: return handle_DIV(json);
-            case 103: return handle_DONCHIAN(json);
-            case 104: return handle_DPO(json);
-            case 105: return handle_DX(json);
-            case 106: return handle_EFI(json);
-            case 107: return handle_EMA(json);
-            case 108: return handle_EMV(json);
-            case 109: return handle_ER(json);
-            case 110: return handle_ERI(json);
-            case 111: return handle_EXP(json);
-            case 112: return handle_FLOOR(json);
-            case 113: return handle_FOSC(json);
-            case 114: return handle_FRACTAL(json);
-            case 115: return handle_FRAMA(json);
-            case 116: return handle_HA(json);
-            case 117: return handle_HMA(json);
-            case 118: return handle_HT_DCPERIOD(json);
-            case 119: return handle_HT_DCPHASE(json);
-            case 120: return handle_HT_PHASOR(json);
-            case 121: return handle_HT_SINE(json);
-            case 122: return handle_HT_TRENDLINE(json);
-            case 123: return handle_HT_TRENDMODE(json);
-            case 124: return handle_IBS(json);
-            case 125: return handle_IMI(json);
-            case 126: return handle_KAMA(json);
-            case 127: return handle_KC(json);
-            case 128: return handle_KDJ(json);
-            case 129: return handle_KST(json);
-            case 130: return handle_KURTOSIS(json);
-            case 131: return handle_LINEARREG(json);
-            case 132: return handle_LINEARREG_ANGLE(json);
-            case 133: return handle_LINEARREG_INTERCEPT(json);
-            case 134: return handle_LINEARREG_SLOPE(json);
-            case 135: return handle_LN(json);
-            case 136: return handle_LOG10(json);
-            case 137: return handle_MA(json);
-            case 138: return handle_MACD(json);
-            case 139: return handle_MACDEXT(json);
-            case 140: return handle_MACDFIX(json);
-            case 141: return handle_MAMA(json);
-            case 142: return handle_MARKETFI(json);
-            case 143: return handle_MASSI(json);
-            case 144: return handle_MAVP(json);
-            case 145: return handle_MAX(json);
-            case 146: return handle_MAXINDEX(json);
-            case 147: return handle_MCGD(json);
-            case 148: return handle_MEDIAN(json);
-            case 149: return handle_MEDPRICE(json);
-            case 150: return handle_MFI(json);
-            case 151: return handle_MIDPOINT(json);
-            case 152: return handle_MIDPRICE(json);
-            case 153: return handle_MIN(json);
-            case 154: return handle_MININDEX(json);
-            case 155: return handle_MINMAX(json);
-            case 156: return handle_MINMAXINDEX(json);
-            case 157: return handle_MINUS_DI(json);
-            case 158: return handle_MINUS_DM(json);
-            case 159: return handle_MOM(json);
-            case 160: return handle_MULT(json);
-            case 161: return handle_NATR(json);
-            case 162: return handle_NVI(json);
-            case 163: return handle_OBV(json);
-            case 164: return handle_PERCENTB(json);
-            case 165: return handle_PERCENTILE(json);
-            case 166: return handle_PERCENTRANK(json);
-            case 167: return handle_PLUS_DI(json);
-            case 168: return handle_PLUS_DM(json);
-            case 169: return handle_PPO(json);
-            case 170: return handle_PVI(json);
-            case 171: return handle_PVO(json);
-            case 172: return handle_PVT(json);
-            case 173: return handle_QSTICK(json);
-            case 174: return handle_RMA(json);
-            case 175: return handle_ROC(json);
-            case 176: return handle_ROCP(json);
-            case 177: return handle_ROCR(json);
-            case 178: return handle_ROCR100(json);
-            case 179: return handle_RSI(json);
-            case 180: return handle_RVI(json);
-            case 181: return handle_RVIR(json);
-            case 182: return handle_RVOL(json);
-            case 183: return handle_SAR(json);
-            case 184: return handle_SAREXT(json);
-            case 185: return handle_SI(json);
-            case 186: return handle_SIN(json);
-            case 187: return handle_SINH(json);
-            case 188: return handle_SMA(json);
-            case 189: return handle_SMI(json);
-            case 190: return handle_SQRT(json);
-            case 191: return handle_STC(json);
-            case 192: return handle_STDDEV(json);
-            case 193: return handle_STOCH(json);
-            case 194: return handle_STOCHF(json);
-            case 195: return handle_STOCHRSI(json);
-            case 196: return handle_SUB(json);
-            case 197: return handle_SUM(json);
-            case 198: return handle_SUPERTREND(json);
-            case 199: return handle_T3(json);
-            case 200: return handle_TAN(json);
-            case 201: return handle_TANH(json);
-            case 202: return handle_TEMA(json);
-            case 203: return handle_TRANGE(json);
-            case 204: return handle_TRIMA(json);
-            case 205: return handle_TRIX(json);
-            case 206: return handle_TSF(json);
-            case 207: return handle_TSI(json);
-            case 208: return handle_TYPPRICE(json);
-            case 209: return handle_ULTOSC(json);
-            case 210: return handle_VAR(json);
-            case 211: return handle_VHF(json);
-            case 212: return handle_VIDYA(json);
-            case 213: return handle_VORTEX(json);
-            case 214: return handle_VWAP(json);
-            case 215: return handle_VWMA(json);
-            case 216: return handle_WAD(json);
-            case 217: return handle_WCLPRICE(json);
-            case 218: return handle_WILLR(json);
-            case 219: return handle_WMA(json);
-            case 220: return handle_ZLEMA(json);
+            case 90: return handle_CKSP(json);
+            case 91: return handle_CMF(json);
+            case 92: return handle_CMO(json);
+            case 93: return handle_CMOU(json);
+            case 94: return handle_COPPOCK(json);
+            case 95: return handle_CORREL(json);
+            case 96: return handle_COS(json);
+            case 97: return handle_COSH(json);
+            case 98: return handle_CRSI(json);
+            case 99: return handle_CTI(json);
+            case 100: return handle_CUMSUM(json);
+            case 101: return handle_CVI(json);
+            case 102: return handle_DEMA(json);
+            case 103: return handle_DIV(json);
+            case 104: return handle_DONCHIAN(json);
+            case 105: return handle_DPO(json);
+            case 106: return handle_DX(json);
+            case 107: return handle_EFI(json);
+            case 108: return handle_EMA(json);
+            case 109: return handle_EMV(json);
+            case 110: return handle_ER(json);
+            case 111: return handle_ERI(json);
+            case 112: return handle_EXP(json);
+            case 113: return handle_FLOOR(json);
+            case 114: return handle_FOSC(json);
+            case 115: return handle_FRACTAL(json);
+            case 116: return handle_FRAMA(json);
+            case 117: return handle_HA(json);
+            case 118: return handle_HMA(json);
+            case 119: return handle_HT_DCPERIOD(json);
+            case 120: return handle_HT_DCPHASE(json);
+            case 121: return handle_HT_PHASOR(json);
+            case 122: return handle_HT_SINE(json);
+            case 123: return handle_HT_TRENDLINE(json);
+            case 124: return handle_HT_TRENDMODE(json);
+            case 125: return handle_IBS(json);
+            case 126: return handle_IMI(json);
+            case 127: return handle_KAMA(json);
+            case 128: return handle_KC(json);
+            case 129: return handle_KDJ(json);
+            case 130: return handle_KST(json);
+            case 131: return handle_KURTOSIS(json);
+            case 132: return handle_LINEARREG(json);
+            case 133: return handle_LINEARREG_ANGLE(json);
+            case 134: return handle_LINEARREG_INTERCEPT(json);
+            case 135: return handle_LINEARREG_SLOPE(json);
+            case 136: return handle_LN(json);
+            case 137: return handle_LOG10(json);
+            case 138: return handle_MA(json);
+            case 139: return handle_MACD(json);
+            case 140: return handle_MACDEXT(json);
+            case 141: return handle_MACDFIX(json);
+            case 142: return handle_MAMA(json);
+            case 143: return handle_MARKETFI(json);
+            case 144: return handle_MASSI(json);
+            case 145: return handle_MAVP(json);
+            case 146: return handle_MAX(json);
+            case 147: return handle_MAXINDEX(json);
+            case 148: return handle_MCGD(json);
+            case 149: return handle_MEDIAN(json);
+            case 150: return handle_MEDPRICE(json);
+            case 151: return handle_MFI(json);
+            case 152: return handle_MIDPOINT(json);
+            case 153: return handle_MIDPRICE(json);
+            case 154: return handle_MIN(json);
+            case 155: return handle_MININDEX(json);
+            case 156: return handle_MINMAX(json);
+            case 157: return handle_MINMAXINDEX(json);
+            case 158: return handle_MINUS_DI(json);
+            case 159: return handle_MINUS_DM(json);
+            case 160: return handle_MOM(json);
+            case 161: return handle_MULT(json);
+            case 162: return handle_NATR(json);
+            case 163: return handle_NVI(json);
+            case 164: return handle_OBV(json);
+            case 165: return handle_PERCENTB(json);
+            case 166: return handle_PERCENTILE(json);
+            case 167: return handle_PERCENTRANK(json);
+            case 168: return handle_PLUS_DI(json);
+            case 169: return handle_PLUS_DM(json);
+            case 170: return handle_PPO(json);
+            case 171: return handle_PVI(json);
+            case 172: return handle_PVO(json);
+            case 173: return handle_PVT(json);
+            case 174: return handle_QSTICK(json);
+            case 175: return handle_RMA(json);
+            case 176: return handle_ROC(json);
+            case 177: return handle_ROCP(json);
+            case 178: return handle_ROCR(json);
+            case 179: return handle_ROCR100(json);
+            case 180: return handle_RSI(json);
+            case 181: return handle_RVI(json);
+            case 182: return handle_RVIR(json);
+            case 183: return handle_RVOL(json);
+            case 184: return handle_SAR(json);
+            case 185: return handle_SAREXT(json);
+            case 186: return handle_SI(json);
+            case 187: return handle_SIN(json);
+            case 188: return handle_SINH(json);
+            case 189: return handle_SMA(json);
+            case 190: return handle_SMI(json);
+            case 191: return handle_SQRT(json);
+            case 192: return handle_STC(json);
+            case 193: return handle_STDDEV(json);
+            case 194: return handle_STOCH(json);
+            case 195: return handle_STOCHF(json);
+            case 196: return handle_STOCHRSI(json);
+            case 197: return handle_SUB(json);
+            case 198: return handle_SUM(json);
+            case 199: return handle_SUPERTREND(json);
+            case 200: return handle_T3(json);
+            case 201: return handle_TAN(json);
+            case 202: return handle_TANH(json);
+            case 203: return handle_TEMA(json);
+            case 204: return handle_TRANGE(json);
+            case 205: return handle_TRIMA(json);
+            case 206: return handle_TRIX(json);
+            case 207: return handle_TSF(json);
+            case 208: return handle_TSI(json);
+            case 209: return handle_TYPPRICE(json);
+            case 210: return handle_ULTOSC(json);
+            case 211: return handle_VAR(json);
+            case 212: return handle_VHF(json);
+            case 213: return handle_VIDYA(json);
+            case 214: return handle_VORTEX(json);
+            case 215: return handle_VWAP(json);
+            case 216: return handle_VWMA(json);
+            case 217: return handle_WAD(json);
+            case 218: return handle_WCLPRICE(json);
+            case 219: return handle_WILLR(json);
+            case 220: return handle_WMA(json);
+            case 221: return handle_ZLEMA(json);
             default: return null;
         }
     }
@@ -222001,6 +223704,172 @@ public class TaCodegenServe {
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         rideChoptr(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, sb);
+        sb.append("}");
+        return sb.toString();
+    }
+
+    static String handle_CKSP(String json) {
+        int startIdx = jsonInt(json, "startIdx");
+        int endIdx = jsonInt(json, "endIdx");
+        int use_preloaded = jsonInt(json, "use_preloaded");
+        int bench_iters = jsonInt(json, "iters");
+        if (bench_iters < 1) bench_iters = 1;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
+        if (use_preloaded != 0 && refN > 0) {
+            inHigh = new double[MAX_ARRAY_SIZE];
+            System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
+            System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
+            System.arraycopy(refClose, 0, inClose, 0, refN);
+        } else {
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
+        }
+        boolean _optRejected = false;
+        int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+        double optInMultiplier = jsonDouble(json, "optInMultiplier");
+        int optInStopPeriod = jsonInt(json, "optInStopPeriod");
+        // The output buffers are sized to the count the call actually PRODUCES --
+        // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
+        // never below one. Not to the width of the requested range: that is the bound the
+        // managed backends check and the Rust asserts state, and at the range width it was
+        // slack by exactly the lookback, so no call could ever approach it.
+        // The pad is there because a bound is a MINIMUM, never an equality. A caller
+        // re-using a pre-allocated buffer passes a larger one, and that is not an error --
+        // the reported OutRange is what says which part was written. So the harness sends
+        // both: the startIdx axis sends no pad (the bound is reachable) while the
+        // full-range value comparison sends one (slack is legal). Sizing every call one way
+        // would silently drop the other property.
+        // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
+        // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
+        // for a range shorter than the lookback, where the output bound switches off and
+        // the spec says any length will do, including none. It does not: two EMPTY output
+        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
+        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
+        // accepted by C and Java -- a four-way divergence on a call the specification says
+        // all four accept. Sizing to zero here would reach it on every multi-output
+        // function, which is a semantic question, not a harness one. Recorded as
+        // error-handling-spec, open item 11.
+        // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
+        // sizes and cannot make the check, so an exact buffer would test nothing there.
+        int _lb = core.ckspLookback(optInTimePeriod, optInMultiplier, optInStopPeriod);
+        int _cs = startIdx > _lb ? startIdx : _lb;
+        int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
+        double[] outArr0 = new double[_outLen];
+        double[] outArr1 = new double[_outLen];
+        MInteger outBegIdx = new MInteger();
+        MInteger outNBElement = new MInteger();
+        RetCode rc = RetCode.SUCCESS;
+        int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        long startNs = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+        if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                rc = core.ckspImpl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInMultiplier, optInStopPeriod, outBegIdx, outNBElement, outArr0, outArr1);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        } else {
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _pr = core.cksp(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInMultiplier, optInStopPeriod, outArr0, outArr1);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.SUCCESS;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        }
+        }
+        else if (_optRejected) { rc = RetCode.BAD_PARAM; }
+        else { try {
+            if (bench_mode == 1) {
+                core.ckspOpen(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod, optInMultiplier, optInStopPeriod);
+            } else {
+                Core.CkspStream _wh = core.ckspOpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod, optInMultiplier, optInStopPeriod, outArr0, outArr1);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
+            }
+            rc = RetCode.SUCCESS;
+        } catch (RuntimeException _e) { rc = _e instanceof TALibFailure ? ((TALibFailure)_e).retCode() : RetCode.BAD_PARAM; } }
+        }
+        long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _fr = core.cksp(startIdx, endIdx, f_inHigh, f_inLow, f_inClose, optInTimePeriod, optInMultiplier, optInStopPeriod, outArr0, outArr1);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.SUCCESS;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+            usedFloat = 1;
+        }
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+                _h = svHashF64(_h, outArr1, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            StringBuilder hb = new StringBuilder();
+            hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            rideCksp(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInMultiplier, optInStopPeriod, hb);
+            hb.append("}");
+            return hb.toString();
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"retCode\":").append(rc.toInt());
+        sb.append(",\"outBegIdx\":").append(outBegIdx.value);
+        sb.append(",\"outNBElement\":").append(outNBElement.value);
+        sb.append(",\"out_len\":").append(_outLen);
+        sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"outReal1\":").append(doubleArrayToJson(outArr1, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
+        sb.append(",\"timing_ns\":").append(elapsedNs);
+        rideCksp(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInMultiplier, optInStopPeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -256780,6 +258649,198 @@ public class TaCodegenServe {
         return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
+    static String sv_CKSP(String json) {
+        int svShape = jsonInt(json, "gen_shape");
+        int svSeed = jsonInt(json, "gen_seed");
+        int svN = jsonInt(json, "gen_n");
+        if (svN < 2) svN = 2;
+        if (svN > 256) svN = 256;
+        int svK = jsonInt(json, "unstablePeriod");
+        int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 10;
+        double optInMultiplier = json.contains("\"optInMultiplier\"") ? jsonDouble(json, "optInMultiplier") : 1e0;
+        int optInStopPeriod = json.contains("\"optInStopPeriod\"") ? jsonInt(json, "optInStopPeriod") : 9;
+        double[] fz_o = new double[svN];
+        double[] fz_h = new double[svN];
+        double[] fz_l = new double[svN];
+        double[] fz_c = new double[svN];
+        double[] fz_v = new double[svN];
+        double[] fz_oi = new double[svN];
+        FuzzData.fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
+        double[] b0 = new double[svN];
+        double[] b1 = new double[svN];
+        long legs = 0;
+        boolean allOk = true;
+        boolean peekAll = true;
+        long peekReps = 0;
+        long peekRejects = 0;
+        boolean peekRepAll = true;
+        int fillChecked = 0;
+        boolean fillOk = true;
+        MInteger beg = new MInteger();
+        MInteger nb = new MInteger();
+        String diag = "";
+        int rangeChecked = 0;
+        boolean rangeOk = true;
+        long rangeLegs = 0;
+        int rangeSites = 0;
+        long[] zsign = { 0 };
+        int rounds = 1;
+        for (int rd = 0; rd < rounds; rd++) {
+            Core c2 = new Core();
+            c2.unstablePeriod[2] = svK;
+            RetCode rc;
+            try { rc = c2.ckspImpl(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, optInMultiplier, optInStopPeriod, beg, nb, b0, b1); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
+            int lb = c2.ckspLookback(optInTimePeriod, optInMultiplier, optInStopPeriod);
+            if (rc != RetCode.SUCCESS || nb.value == 0) {
+                boolean openRejects;
+                try { c2.ckspOpen(fz_h, fz_l, fz_c, optInTimePeriod, optInMultiplier, optInStopPeriod); openRejects = false; } catch (IllegalArgumentException _e) { openRejects = true; }
+                return "{\"retCode\":" + rc.toInt() + ",\"legs\":0,\"nb\":" + nb.value + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
+            }
+            fillChecked = 1;
+            try {
+                double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                double[] f1 = new double[svN];
+                java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
+                Core.CkspStream _fh = c2.ckspOpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, optInMultiplier, optInStopPeriod, f0, f1);
+                OutRange _fr = _fh.outRange();
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
+                else {
+                    for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = 0; i < nb.value; i++) if (svXtierNe(f1[i], b1[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f1[i] != (double)-1.2345678901234e300) fillOk = false;
+                }
+                try { c2.ckspOpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, optInMultiplier, optInStopPeriod, fz_h, f1); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
+                try { c2.ckspOpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, optInMultiplier, optInStopPeriod, f0, f0); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases output */ }
+            } catch (IllegalArgumentException _e) { fillOk = false; }
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
+            java.util.Arrays.sort(pcs);
+            int prevP = -1;
+            for (int pi = 0; pi < pcs.length; pi++) {
+                int p = pcs[pi];
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
+                prevP = p;
+                Core.CkspStream st;
+                try { st = c2.ckspOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p), optInTimePeriod, optInMultiplier, optInStopPeriod); }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
+                legs++;
+                Core.CkspOut v0 = new Core.CkspOut(); st.value(v0);
+                if (svXtierNe(v0.highStop, b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                if (svXtierNe(v0.lowStop, b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
+                Core.CkspOut pk = new Core.CkspOut();
+                Core.CkspOut up = new Core.CkspOut();
+                Core.CkspOut vc = new Core.CkspOut();
+                Core.CkspOut rp = new Core.CkspOut();
+                for (int t = p; t < svN; t++) {
+                    boolean pkTook = true;
+                    try { st.peek(fz_h[t], fz_l[t], fz_c[t], pk); } catch (IllegalArgumentException _e) { pkTook = false; peekRejects++; }
+                    if (t % 7 == 0) {
+                        boolean rpTook = pkTook;
+                        try { st.peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1], rp); } catch (IllegalArgumentException _e) { peekRejects++; }
+                        try { st.peek(fz_h[t], fz_l[t], fz_c[t], rp); } catch (IllegalArgumentException _e) { rpTook = false; }
+                        if (rpTook) {
+                            peekReps++;
+                            if (svBne(rp.highStop, pk.highStop)) peekRepAll = false;
+                            if (svBne(rp.lowStop, pk.lowStop)) peekRepAll = false;
+                        } else { peekRejects++; }
+                    }
+                    st.update(fz_h[t], fz_l[t], fz_c[t], up);
+                    if (pkTook && svBne(pk.highStop, up.highStop)) peekAll = false;
+                    if (pkTook && svBne(pk.lowStop, up.lowStop)) peekAll = false;
+                    try { st.peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1], pk); } catch (IllegalArgumentException _e) { peekRejects++; }
+                    st.value(vc);
+                    if (svBne(vc.highStop, up.highStop)) allOk = false;
+                    if (svBne(vc.lowStop, up.lowStop)) allOk = false;
+                    if (svXtierNe(up.highStop, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.highStop)) + "\""; }
+                    if (svXtierNe(up.lowStop, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.lowStop)) + "\""; }
+                }
+                if (allOk) {
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
+                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
+                    rangeLegs++; rangeSites |= 16;
+                    st.advance();
+                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value + 1) rangeOk = false;
+                }
+            }
+            {
+                int p0 = lb + 1;
+                if (p0 <= svN - 1) {
+                    try {
+                        Core.CkspStream sA = c2.ckspOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInMultiplier, optInStopPeriod);
+                        int mid = (p0 + svN) / 2;
+                        Core.CkspOut uA = new Core.CkspOut();
+                        Core.CkspOut uB = new Core.CkspOut();
+                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t], uA);
+                        Core.CkspStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        double[] fk1 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            sB.update(fz_h[t], fz_l[t], fz_c[t], uB);
+                            fk0[t] = uB.highStop;
+                            if (svXtierNe(uB.highStop, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            fk1[t] = uB.lowStop;
+                            if (svXtierNe(uB.lowStop, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        for (int t = mid; t < svN; t++) {
+                            sA.update(fz_h[t], fz_l[t], fz_c[t], uA);
+                            if (svBne(uA.highStop, fk0[t]) || svXtierNe(uA.highStop, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.lowStop, fk1[t]) || svXtierNe(uA.lowStop, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        if (allOk) {
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 8;
+                            if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                        }
+                    } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
+                }
+            }
+            if (lb >= 1 && lb < svN) {
+                try { c2.ckspOpen(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, optInMultiplier, optInStopPeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
+                catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    double[] f1 = new double[svN];
+                    java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
+                    try { c2.ckspOpenAndFill(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, optInMultiplier, optInStopPeriod, f0, f1); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
+            }
+            try {
+                Core.CkspStream sD = c2.ckspOpen(fz_h, fz_l, fz_c, Integer.MIN_VALUE, optInMultiplier, Integer.MIN_VALUE);
+                Core.CkspStream sE = c2.ckspOpen(fz_h, fz_l, fz_c, 10, optInMultiplier, 9);
+                Core.CkspOut vD = new Core.CkspOut(); sD.value(vD);
+                Core.CkspOut vE = new Core.CkspOut(); sE.value(vE);
+                if (svBne(vD.highStop, vE.highStop)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                if (svBne(vD.lowStop, vE.lowStop)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+            } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.ckspImpl(Sidx, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, optInMultiplier, optInStopPeriod, begS, nbS, b0, b1); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rcS = ((TALibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.SUCCESS && nbS.value > 0) {
+                        try {
+                            Core.CkspStream stA = c2.ckspOpenInternal(java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod, optInMultiplier, optInStopPeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
+        }
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign[0] + diag + "}";
+    }
+
     static String sv_CMF(String json) {
         int svShape = jsonInt(json, "gen_shape");
         int svSeed = jsonInt(json, "gen_seed");
@@ -278943,6 +281004,7 @@ public class TaCodegenServe {
         case "TA_CG": return sv_CG(json);
         case "TA_CHOP": return sv_CHOP(json);
         case "TA_CHOPTR": return sv_CHOPTR(json);
+        case "TA_CKSP": return sv_CKSP(json);
         case "TA_CMF": return sv_CMF(json);
         case "TA_CMO": return sv_CMO(json);
         case "TA_CMOU": return sv_CMOU(json);
@@ -288297,6 +290359,114 @@ public class TaCodegenServe {
                     for (int k = 0; k < nb; k++) {
                         boolean cmp = true;
                         if (cmp && svXtierNe(rb0[k], fb0[k], r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[k]); r.stream = Double.doubleToRawLongBits(fb0[k]); }
+                        if (cmp) r.fillBars++;
+                        if (!cmp) { r.ok = false; r.leg = 2; r.bar = beg + k; break; }
+                    }
+                }
+            } catch (RuntimeException _e) { r.ok = false; r.leg = 2; }
+        }
+
+        if (r.ok) {
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
+            rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
+        }
+    }
+
+    static void rideCksp(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, double optInMultiplier, int optInStopPeriod, StringBuilder sb) {
+        if (!rideGate(json)) return;
+        RideResult r = new RideResult();
+        rideBodyCksp(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInMultiplier, optInStopPeriod, r);
+        r.emit(sb);
+    }
+
+    @SuppressWarnings("unused")
+    static void rideBodyCksp(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, double optInMultiplier, int optInStopPeriod, RideResult r) {
+        try { r.lb = core.ckspLookback(optInTimePeriod, optInMultiplier, optInStopPeriod); } catch (RuntimeException _e) { r.lb = -1; }
+        int lb = r.lb;
+        int navail = endIdx + 1;
+        if (inHigh.length < navail) navail = inHigh.length;
+        if (inLow.length < navail) navail = inLow.length;
+        if (inClose.length < navail) navail = inClose.length;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
+        if (m > navail) m = navail;
+        r.m = m;
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
+        if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
+
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CKSP");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMix(hash, Double.doubleToRawLongBits(optInMultiplier));
+        hash = rideMix(hash, optInStopPeriod);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
+            r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
+        }
+
+        double[] rb0 = new double[m];
+        double[] rb1 = new double[m];
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
+        try { OutRange _rr = core.cksp(0, m - 1, java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod, optInMultiplier, optInStopPeriod, rb0, rb1); beg = _rr.begIdx(); nb = _rr.count(); }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.ckspOpen(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod, optInMultiplier, optInStopPeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            double[] fb1 = new double[m];
+            try { core.ckspOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod, optInMultiplier, optInStopPeriod, fb0, fb1); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
+        if (nb == 0) { r.skip = 5; return; }
+        if (beg != lb) { r.skip = 6; return; }
+
+        try {
+            boolean cmp;
+            Core.CkspStream st = core.ckspOpen(java.util.Arrays.copyOf(inHigh, lb + 1), java.util.Arrays.copyOf(inLow, lb + 1), java.util.Arrays.copyOf(inClose, lb + 1), optInTimePeriod, optInMultiplier, optInStopPeriod);
+            Core.CkspOut uo = new Core.CkspOut(); st.value(uo);
+            cmp = true;
+            if (cmp && svXtierNe(rb0[lb - beg], uo.highStop, r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[lb - beg]); r.stream = Double.doubleToRawLongBits(uo.highStop); }
+            if (cmp && svXtierNe(rb1[lb - beg], uo.lowStop, r.benign)) { cmp = false; r.out = 1; r.batch = Double.doubleToRawLongBits(rb1[lb - beg]); r.stream = Double.doubleToRawLongBits(uo.lowStop); }
+            if (cmp) r.openBars++;
+            if (!cmp) { r.ok = false; r.leg = 1; r.bar = lb; }
+            for (int t = lb + 1; r.ok && t < m; t++) {
+                st.update(inHigh[t], inLow[t], inClose[t], uo);
+                cmp = true;
+                if (cmp && svXtierNe(rb0[t - beg], uo.highStop, r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[t - beg]); r.stream = Double.doubleToRawLongBits(uo.highStop); }
+                if (cmp && svXtierNe(rb1[t - beg], uo.lowStop, r.benign)) { cmp = false; r.out = 1; r.batch = Double.doubleToRawLongBits(rb1[t - beg]); r.stream = Double.doubleToRawLongBits(uo.lowStop); }
+                if (cmp) r.openBars++;
+                if (!cmp) { r.ok = false; r.leg = 1; r.bar = t; }
+            }
+        } catch (RuntimeException _e) { r.ok = false; r.leg = 1; }
+
+        if (r.ok) {
+            double[] fb0 = new double[m];
+            double[] fb1 = new double[m];
+            try {
+                Core.CkspStream st2 = core.ckspOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod, optInMultiplier, optInStopPeriod, fb0, fb1);
+                if (st2.outRange().begIdx() != beg || st2.outRange().count() != nb) { r.ok = false; r.leg = 2; }
+                if (r.ok) {
+                    for (int k = 0; k < nb; k++) {
+                        boolean cmp = true;
+                        if (cmp && svXtierNe(rb0[k], fb0[k], r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[k]); r.stream = Double.doubleToRawLongBits(fb0[k]); }
+                        if (cmp && svXtierNe(rb1[k], fb1[k], r.benign)) { cmp = false; r.out = 1; r.batch = Double.doubleToRawLongBits(rb1[k]); r.stream = Double.doubleToRawLongBits(fb1[k]); }
                         if (cmp) r.fillBars++;
                         if (!cmp) { r.ok = false; r.leg = 2; r.bar = beg + k; break; }
                     }

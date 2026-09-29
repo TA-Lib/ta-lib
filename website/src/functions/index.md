@@ -111,6 +111,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 - [ACCBANDS](/functions/accbands.md) — Acceleration Bands
 - [ALMA](/functions/alma.md) — Arnaud Legoux Moving Average
 - [BBANDS](/functions/bbands.md) — Bollinger Bands
+- [CKSP](/functions/cksp.md) — Chande Kroll Stop
 - [DEMA](/functions/dema.md) — Double Exponential Moving Average
 - [DONCHIAN](/functions/donchian.md) — Donchian Channels
 - [EMA](/functions/ema.md) — Exponential Moving Average

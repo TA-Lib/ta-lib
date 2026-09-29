@@ -928,6 +928,7 @@ static ErrorNumber testTAFunction_ALL( void )
    DO_TEST( test_func_kc,        "KC" );
    DO_TEST( test_func_donchian,  "DONCHIAN" );
    DO_TEST( test_func_rma,       "RMA" );
+   DO_TEST( test_func_cksp,      "CKSP" );
    DO_TEST( test_func_supertrend, "SUPERTREND" );
    DO_TEST( test_func_mfi,       "MFI" );
    DO_TEST( test_func_vwap,      "VWAP" );

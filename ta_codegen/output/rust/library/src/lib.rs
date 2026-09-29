@@ -235,11 +235,12 @@
 //! * [`WAD`](Core::wad) — Williams' Accumulation/Distribution
 //! * [`WILLR`](Core::willr) — Williams' %R
 //!
-//! ## Overlap Studies (29)
+//! ## Overlap Studies (30)
 //!
 //! * [`ACCBANDS`](Core::accbands) — Acceleration Bands
 //! * [`ALMA`](Core::alma) — Arnaud Legoux Moving Average
 //! * [`BBANDS`](Core::bbands) — Bollinger Bands
+//! * [`CKSP`](Core::cksp) — Chande Kroll Stop
 //! * [`DEMA`](Core::dema) — Double Exponential Moving Average
 //! * [`DONCHIAN`](Core::donchian) — Donchian Channels
 //! * [`EMA`](Core::ema) — Exponential Moving Average
