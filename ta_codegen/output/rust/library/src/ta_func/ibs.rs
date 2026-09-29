@@ -45,13 +45,15 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
+ *  KL       Kevin Lin (@kevinlincg)
  *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  092926 MF,CC  Creation (#468).
+ *  092926 KL,CC  Creation (#468).
+ *  092926 MF,CC  Store the quotient, then overwrite it, so the loop vectorizes.
  */
 
 // Import types from parent module
@@ -110,31 +112,18 @@ impl Core {
         // bar, 0 at the low and 1 at the high.
         outIdx = 0;
         for i in (startIdx as usize)..(endIdx as usize) + 1 {
-            // The test is exact and spelled `<= 0.0`, which is bop.c:47-48's.
+            // An exact test: the range of one bar carries the quote unit, so any
+            // band would flip every bar of a small enough instrument to 0.5. Spelled
+            // <= so a NaN input keeps the quotient's NaN.
             //
-            // Exact, with no band: a bar's range is the difference of two prices
-            // within a factor of two of each other, so it is computed exactly
-            // (Sterbenz) and is never a cancellation residue there is anything to
-            // absorb. A fixed band is issue #253 again -- at corpus prices scaled by
-            // 2^-50 a 1e-14 band sends 250 of 252 bars to the degenerate value.
-            //
-            // Spelled this way round rather than `range > 0.0 ? ratio : 0.5`: a NaN
-            // input compares false either way, so only this spelling lets it fall
-            // through to the division and come out NaN. The inverted spelling
-            // answers a finite, neutral-looking 0.5 where the input was garbage.
-            //
-            // 0.5 is this indicator's own neutral point, per issue #112's rule --
-            // the bar's midpoint, which is what ad.c:66 already assumes when it
-            // skips a bar with no range. 0.0 would read as "closed at the low",
-            // which is the primary's long trigger.
+            // Store, then overwrite: gcc keeps a guarded or selected quotient
+            // scalar under -ftrapping-math.
             range = inHigh[i] - inLow[i];
+            outReal[outIdx] = (((inClose[i] - inLow[i]) / range) as f64);
             if range <= 0.0 {
                 outReal[outIdx] = 0.5;
-                outIdx += 1;
-            } else {
-                outReal[outIdx] = (((inClose[i] - inLow[i]) / range) as f64);
-                outIdx += 1;
             }
+            outIdx += 1;
         }
         i = (endIdx as usize) + 1;
         (*outNBElement) = outIdx;
@@ -291,28 +280,16 @@ struct IbsStreamState {
 impl Core {
     fn ibs_step_impl(sp: &mut IbsStreamState, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
         let mut range: f64 = 0.0_f64;
-        // The test is exact and spelled `<= 0.0`, which is bop.c:47-48's.
+        // An exact test: the range of one bar carries the quote unit, so any
+        // band would flip every bar of a small enough instrument to 0.5. Spelled
+        // <= so a NaN input keeps the quotient's NaN.
         //
-        // Exact, with no band: a bar's range is the difference of two prices
-        // within a factor of two of each other, so it is computed exactly
-        // (Sterbenz) and is never a cancellation residue there is anything to
-        // absorb. A fixed band is issue #253 again -- at corpus prices scaled by
-        // 2^-50 a 1e-14 band sends 250 of 252 bars to the degenerate value.
-        //
-        // Spelled this way round rather than `range > 0.0 ? ratio : 0.5`: a NaN
-        // input compares false either way, so only this spelling lets it fall
-        // through to the division and come out NaN. The inverted spelling
-        // answers a finite, neutral-looking 0.5 where the input was garbage.
-        //
-        // 0.5 is this indicator's own neutral point, per issue #112's rule --
-        // the bar's midpoint, which is what ad.c:66 already assumes when it
-        // skips a bar with no range. 0.0 would read as "closed at the low",
-        // which is the primary's long trigger.
+        // Store, then overwrite: gcc keeps a guarded or selected quotient
+        // scalar under -ftrapping-math.
         range = inHigh - inLow;
+        (*outReal) = (inClose - inLow) / range;
         if range <= 0.0 {
             (*outReal) = 0.5;
-        } else {
-            (*outReal) = (inClose - inLow) / range;
         }
         sp.cur_outReal = (*outReal);
     }
@@ -348,29 +325,18 @@ impl Core {
         // bar, 0 at the low and 1 at the high.
         outIdx = 0;
         for i in (startIdx as usize)..(endIdx as usize) + 1 {
-            // The test is exact and spelled `<= 0.0`, which is bop.c:47-48's.
+            // An exact test: the range of one bar carries the quote unit, so any
+            // band would flip every bar of a small enough instrument to 0.5. Spelled
+            // <= so a NaN input keeps the quotient's NaN.
             //
-            // Exact, with no band: a bar's range is the difference of two prices
-            // within a factor of two of each other, so it is computed exactly
-            // (Sterbenz) and is never a cancellation residue there is anything to
-            // absorb. A fixed band is issue #253 again -- at corpus prices scaled by
-            // 2^-50 a 1e-14 band sends 250 of 252 bars to the degenerate value.
-            //
-            // Spelled this way round rather than `range > 0.0 ? ratio : 0.5`: a NaN
-            // input compares false either way, so only this spelling lets it fall
-            // through to the division and come out NaN. The inverted spelling
-            // answers a finite, neutral-looking 0.5 where the input was garbage.
-            //
-            // 0.5 is this indicator's own neutral point, per issue #112's rule --
-            // the bar's midpoint, which is what ad.c:66 already assumes when it
-            // skips a bar with no range. 0.0 would read as "closed at the low",
-            // which is the primary's long trigger.
+            // Store, then overwrite: gcc keeps a guarded or selected quotient
+            // scalar under -ftrapping-math.
             range = inHigh[i] - inLow[i];
+            outReal[(outIdx * outStride) as usize] = (((inClose[i] - inLow[i]) / range) as f64);
             if range <= 0.0 {
-                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0.5;
-            } else {
-                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = (((inClose[i] - inLow[i]) / range) as f64);
+                outReal[(outIdx * outStride) as usize] = 0.5;
             }
+            outIdx += 1;
         }
         i = (endIdx as usize) + 1;
         (*outNBElement) = outIdx;
@@ -556,28 +522,16 @@ impl IbsStream {
         {
             let outReal = &mut outReal;
             let mut range: f64 = 0.0_f64;
-            // The test is exact and spelled `<= 0.0`, which is bop.c:47-48's.
+            // An exact test: the range of one bar carries the quote unit, so any
+            // band would flip every bar of a small enough instrument to 0.5. Spelled
+            // <= so a NaN input keeps the quotient's NaN.
             //
-            // Exact, with no band: a bar's range is the difference of two prices
-            // within a factor of two of each other, so it is computed exactly
-            // (Sterbenz) and is never a cancellation residue there is anything to
-            // absorb. A fixed band is issue #253 again -- at corpus prices scaled by
-            // 2^-50 a 1e-14 band sends 250 of 252 bars to the degenerate value.
-            //
-            // Spelled this way round rather than `range > 0.0 ? ratio : 0.5`: a NaN
-            // input compares false either way, so only this spelling lets it fall
-            // through to the division and come out NaN. The inverted spelling
-            // answers a finite, neutral-looking 0.5 where the input was garbage.
-            //
-            // 0.5 is this indicator's own neutral point, per issue #112's rule --
-            // the bar's midpoint, which is what ad.c:66 already assumes when it
-            // skips a bar with no range. 0.0 would read as "closed at the low",
-            // which is the primary's long trigger.
+            // Store, then overwrite: gcc keeps a guarded or selected quotient
+            // scalar under -ftrapping-math.
             range = inHigh - inLow;
+            (*outReal) = (inClose - inLow) / range;
             if range <= 0.0 {
                 (*outReal) = 0.5;
-            } else {
-                (*outReal) = (inClose - inLow) / range;
             }
         }
         Ok(outReal)
