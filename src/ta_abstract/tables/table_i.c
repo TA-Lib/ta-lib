@@ -38,6 +38,29 @@
 #include "ta_abstract.h"
 #include "ta_def_ui.h"
 
+/* IBS BEGIN */
+static const TA_InputParameterInfo    *TA_IBS_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_HLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_IBS_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_IBS_OptInputs[] =
+{ NULL };
+
+DEF_FUNCTION( IBS,
+              TA_GroupId_MomentumIndicators,
+              "Internal Bar Strength",
+              TA_FUNC_FLG_STREAM
+             );
+/* IBS END */
+
 /* IMI BEGIN */
 static const TA_InputParameterInfo    *TA_IMI_Inputs[]    =
 {
@@ -69,6 +92,7 @@ DEF_FUNCTION( IMI,
  ****************************************************************************/
 const TA_FuncDef *TA_DEF_TableI[] =
 {
+   ADD_TO_TABLE(IBS),
    ADD_TO_TABLE(IMI),
    NULL
 };

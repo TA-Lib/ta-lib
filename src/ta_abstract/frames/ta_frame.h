@@ -1154,6 +1154,15 @@ TA_RetCode TA_HT_TRENDMODE_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_HT_TRENDMODE_FramePPLB( const TA_ParamHolderPriv *params )
 ;
 
+TA_RetCode TA_IBS_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+;
+unsigned int TA_IBS_FramePPLB( const TA_ParamHolderPriv *params )
+;
+
 TA_RetCode TA_IMI_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

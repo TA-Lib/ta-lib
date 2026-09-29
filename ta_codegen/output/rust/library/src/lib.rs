@@ -176,7 +176,7 @@
 //! * [`TAN`](Core::tan) — Vector Trigonometric Tan
 //! * [`TANH`](Core::tanh) — Vector Trigonometric Tanh
 //!
-//! ## Momentum Indicators (55)
+//! ## Momentum Indicators (56)
 //!
 //! * [`AC`](Core::ac) — Accelerator/Decelerator Oscillator
 //! * [`ADX`](Core::adx) — Average Directional Movement Index
@@ -202,6 +202,7 @@
 //! * [`ERI`](Core::eri) — Elder Ray Index (Bull Power / Bear Power)
 //! * [`FOSC`](Core::fosc) — Forecast Oscillator
 //! * [`FRACTAL`](Core::fractal) — Williams Fractal
+//! * [`IBS`](Core::ibs) — Internal Bar Strength
 //! * [`IMI`](Core::imi) — Intraday Momentum Index
 //! * [`KDJ`](Core::kdj) — KDJ Stochastic
 //! * [`KST`](Core::kst) — Know Sure Thing (Pring)

@@ -425,6 +425,9 @@ final class Dispatch {
          case "HT_TRENDMODE":
             return core.htTrendmode(
                startIdx, endIdx, h.realInput(0), h.intOutput(0));
+         case "IBS":
+            return core.ibs(
+               startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.realOutput(0));
          case "IMI":
             return core.imi(
                startIdx, endIdx, h.price(0, 0), h.price(0, 3), h.intOpt(0), h.realOutput(0));
@@ -964,6 +967,8 @@ final class Dispatch {
             return core.htTrendlineLookback();
          case "HT_TRENDMODE":
             return core.htTrendmodeLookback();
+         case "IBS":
+            return core.ibsLookback();
          case "IMI":
             return core.imiLookback(h.intOpt(0));
          case "KAMA":

@@ -236,6 +236,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
             MakeHtSine(),
             MakeHtTrendline(),
             MakeHtTrendmode(),
+            MakeIbs(),
             MakeImi(),
             MakeKama(),
             MakeKc(),
@@ -3012,6 +3013,26 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         invoke: static (core, c, startIdx, endIdx) =>
             core.HtTrendmode(
                 startIdx, endIdx, c.Series(0), c.IntOut(0)));
+
+    private static FuncInfo MakeIbs() => new(
+        name: "IBS",
+        group: FunctionGroup.MomentumIndicators,
+        hint: "Internal Bar Strength",
+        flags: FuncFlags.Stream,
+        unstableId: null,
+        inputs:
+        [
+            new InputInfo(InputKind.Price, "inPriceHLC", PriceComponents.High | PriceComponents.Low | PriceComponents.Close, [PriceComponents.High, PriceComponents.Low, PriceComponents.Close]),
+        ],
+        optInputs: [],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+        ],
+        lookback: static (core, c) => core.IbsLookback(),
+        invoke: static (core, c, startIdx, endIdx) =>
+            core.Ibs(
+                startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.RealOut(0)));
 
     private static FuncInfo MakeImi() => new(
         name: "IMI",

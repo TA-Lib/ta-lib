@@ -138,6 +138,7 @@ struct TA_HT_PHASOR_Stream;
 struct TA_HT_SINE_Stream;
 struct TA_HT_TRENDLINE_Stream;
 struct TA_HT_TRENDMODE_Stream;
+struct TA_IBS_Stream;
 struct TA_IMI_Stream;
 struct TA_KAMA_Stream;
 struct TA_KC_Stream;
@@ -355,6 +356,7 @@ TA_RetCode TA_HT_PHASOR_OpenInternal( struct TA_HT_PHASOR_Stream **stream, const
 TA_RetCode TA_HT_SINE_OpenInternal( struct TA_HT_SINE_Stream **stream, const double inReal[], int startIdx, int historyLen, double *outSine, double *outLeadSine );
 TA_RetCode TA_HT_TRENDLINE_OpenInternal( struct TA_HT_TRENDLINE_Stream **stream, const double inReal[], int startIdx, int historyLen, double *outReal );
 TA_RetCode TA_HT_TRENDMODE_OpenInternal( struct TA_HT_TRENDMODE_Stream **stream, const double inReal[], int startIdx, int historyLen, int *outInteger );
+TA_RetCode TA_IBS_OpenInternal( struct TA_IBS_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, double *outReal );
 TA_RetCode TA_IMI_OpenInternal( struct TA_IMI_Stream **stream, const double inOpen[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, double *outReal );
 TA_RetCode TA_KAMA_OpenInternal( struct TA_KAMA_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double *outReal );
 TA_RetCode TA_KC_OpenInternal( struct TA_KC_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, int optInATRPeriod, double optInNbDev, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand );
@@ -574,6 +576,7 @@ TA_RetCode TA_HT_PHASOR_OpenAndFillInternal( struct TA_HT_PHASOR_Stream **stream
 TA_RetCode TA_HT_SINE_OpenAndFillInternal( struct TA_HT_SINE_Stream **stream, const double inReal[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outSine[], double outLeadSine[] );
 TA_RetCode TA_HT_TRENDLINE_OpenAndFillInternal( struct TA_HT_TRENDLINE_Stream **stream, const double inReal[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_HT_TRENDMODE_OpenAndFillInternal( struct TA_HT_TRENDMODE_Stream **stream, const double inReal[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] );
+TA_RetCode TA_IBS_OpenAndFillInternal( struct TA_IBS_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_IMI_OpenAndFillInternal( struct TA_IMI_Stream **stream, const double inOpen[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_KAMA_OpenAndFillInternal( struct TA_KAMA_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_KC_OpenAndFillInternal( struct TA_KC_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, int optInATRPeriod, double optInNbDev, int *outBegIdx, int *outNBElement, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] );

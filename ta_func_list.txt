@@ -121,6 +121,7 @@ HT_PHASOR           Hilbert Transform - Phasor Components
 HT_SINE             Hilbert Transform - SineWave
 HT_TRENDLINE        Hilbert Transform - Instantaneous Trendline
 HT_TRENDMODE        Hilbert Transform - Trend vs Cycle Mode
+IBS                 Internal Bar Strength
 IMI                 Intraday Momentum Index
 KAMA                Kaufman Adaptive Moving Average
 KC                  Keltner Channels

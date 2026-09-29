@@ -163,6 +163,7 @@ extern const TA_FuncDef TA_DEF_HT_PHASOR;
 extern const TA_FuncDef TA_DEF_HT_SINE;
 extern const TA_FuncDef TA_DEF_HT_TRENDLINE;
 extern const TA_FuncDef TA_DEF_HT_TRENDMODE;
+extern const TA_FuncDef TA_DEF_IBS;
 extern const TA_FuncDef TA_DEF_IMI;
 extern const TA_FuncDef TA_DEF_KAMA;
 extern const TA_FuncDef TA_DEF_KC;
@@ -363,6 +364,7 @@ const TA_FuncDef *TA_PerGroupFunc_4[] = {
 &TA_DEF_ERI,
 &TA_DEF_FOSC,
 &TA_DEF_FRACTAL,
+&TA_DEF_IBS,
 &TA_DEF_IMI,
 &TA_DEF_KDJ,
 &TA_DEF_KST,

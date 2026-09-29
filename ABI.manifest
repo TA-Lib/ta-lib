@@ -4,7 +4,7 @@ format 9
 soname libta-lib.so.1
 version-info 3:0:2
 headers ta_abstract.h ta_common.h ta_defs.h ta_func.h ta_libc.h
-function-count 2643
+function-count 2655
 platform pointer=8 long=8 int=4 enum=4
 type TA_FuncInfo sizeof=48 name:const_char_*=0 group:const_char_*=8 hint:const_char_*=16 flags:TA_FuncFlags=24 nbInput:unsigned_int=28 nbOptInput:unsigned_int=32 nbOutput:unsigned_int=36 handle:const_TA_FuncHandle_*=40
 type TA_InputParameterInfo sizeof=24 type:TA_InputParameterType=0 paramName:const_char_*=8 flags:TA_InputFlags=16
@@ -1417,6 +1417,16 @@ function TA_RetCode TA_HT_TRENDMODE_OutRange(const TA_HT_TRENDMODE_Stream *, int
 function TA_RetCode TA_HT_TRENDMODE_Peek(const TA_HT_TRENDMODE_Stream *, double, int *)
 function TA_RetCode TA_HT_TRENDMODE_Update(TA_HT_TRENDMODE_Stream *, double, int *)
 function TA_RetCode TA_HT_TRENDMODE_Value(const TA_HT_TRENDMODE_Stream *, int *)
+function TA_RetCode TA_IBS(int, int, const double *, const double *, const double *, int *, int *, double *)
+function TA_RetCode TA_IBS_Advance(TA_IBS_Stream *)
+function TA_RetCode TA_IBS_Clone(const TA_IBS_Stream *, TA_IBS_Stream **)
+function TA_RetCode TA_IBS_Close(TA_IBS_Stream *)
+function TA_RetCode TA_IBS_Open(TA_IBS_Stream **, const double *, const double *, const double *, int, double *)
+function TA_RetCode TA_IBS_OpenAndFill(TA_IBS_Stream **, const double *, const double *, const double *, int, int *, int *, double *)
+function TA_RetCode TA_IBS_OutRange(const TA_IBS_Stream *, int *, int *)
+function TA_RetCode TA_IBS_Peek(const TA_IBS_Stream *, double, double, double, double *)
+function TA_RetCode TA_IBS_Update(TA_IBS_Stream *, double, double, double, double *)
+function TA_RetCode TA_IBS_Value(const TA_IBS_Stream *, double *)
 function TA_RetCode TA_IMI(int, int, const double *, const double *, int, int *, int *, double *)
 function TA_RetCode TA_IMI_Advance(TA_IMI_Stream *)
 function TA_RetCode TA_IMI_Clone(const TA_IMI_Stream *, TA_IMI_Stream **)
@@ -2274,6 +2284,7 @@ function TA_RetCode TA_S_HT_PHASOR(int, int, const float *, int *, int *, double
 function TA_RetCode TA_S_HT_SINE(int, int, const float *, int *, int *, double *, double *)
 function TA_RetCode TA_S_HT_TRENDLINE(int, int, const float *, int *, int *, double *)
 function TA_RetCode TA_S_HT_TRENDMODE(int, int, const float *, int *, int *, int *)
+function TA_RetCode TA_S_IBS(int, int, const float *, const float *, const float *, int *, int *, double *)
 function TA_RetCode TA_S_IMI(int, int, const float *, const float *, int, int *, int *, double *)
 function TA_RetCode TA_S_KAMA(int, int, const float *, int, int *, int *, double *)
 function TA_RetCode TA_S_KC(int, int, const float *, const float *, const float *, int, int, double, int *, int *, double *, double *, double *)
@@ -2721,6 +2732,7 @@ function int TA_HT_PHASOR_Lookback(void)
 function int TA_HT_SINE_Lookback(void)
 function int TA_HT_TRENDLINE_Lookback(void)
 function int TA_HT_TRENDMODE_Lookback(void)
+function int TA_IBS_Lookback(void)
 function int TA_IMI_Lookback(int)
 function int TA_KAMA_Lookback(int)
 function int TA_KC_Lookback(int, int, double)

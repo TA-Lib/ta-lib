@@ -72,6 +72,7 @@ ta_regtest_SOURCES = ta_regtest.c \
 	ta_test_func/test_vhf.c \
 	ta_test_func/test_rvi.c \
 	ta_test_func/test_rvir.c \
+	ta_test_func/test_ibs.c \
 	ta_test_func/test_frama.c \
 	ta_test_func/test_mcgd.c \
 	ta_test_func/test_fractal.c \

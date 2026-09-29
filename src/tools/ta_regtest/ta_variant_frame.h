@@ -5250,6 +5250,46 @@ static TA_RetCode TA_HT_TRENDMODE_VFrameS( int startIdx, int endIdx,
 static const TA_VInputKind TA_VIn_HT_TRENDMODE[] = { TA_VIN_REAL };
 static const int TA_VOutIsInt_HT_TRENDMODE[] = { 1 };
 
+static TA_RetCode TA_IBS_VFrameD( int startIdx, int endIdx,
+                  const double *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)optIn;
+   (void)outInteger;
+   return TA_IBS(
+               startIdx,
+               endIdx,
+               in[0] /* inHigh */,
+               in[1] /* inLow */,
+               in[2] /* inClose */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_IBS_VFrameS( int startIdx, int endIdx,
+                  const float *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)optIn;
+   (void)outInteger;
+   return TA_S_IBS(
+               startIdx,
+               endIdx,
+               in[0] /* inHigh */,
+               in[1] /* inLow */,
+               in[2] /* inClose */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+
+static const TA_VInputKind TA_VIn_IBS[] = { TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_IBS[] = { 0 };
+
 static TA_RetCode TA_IMI_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -9452,6 +9492,8 @@ static const TA_VariantEntry TA_VariantTable[] = {
      1, TA_VIn_HT_TRENDLINE, 0, NULL, 1, TA_VOutIsInt_HT_TRENDLINE, 0 },
    { "HT_TRENDMODE", TA_HT_TRENDMODE_VFrameD, TA_HT_TRENDMODE_VFrameS,
      1, TA_VIn_HT_TRENDMODE, 0, NULL, 1, TA_VOutIsInt_HT_TRENDMODE, 0 },
+   { "IBS", TA_IBS_VFrameD, TA_IBS_VFrameS,
+     3, TA_VIn_IBS, 0, NULL, 1, TA_VOutIsInt_IBS, 0 },
    { "IMI", TA_IMI_VFrameD, TA_IMI_VFrameS,
      2, TA_VIn_IMI, 1, TA_VOpt_IMI, 1, TA_VOutIsInt_IMI, 0 },
    { "KAMA", TA_KAMA_VFrameD, TA_KAMA_VFrameS,
@@ -9642,6 +9684,6 @@ static const TA_VariantEntry TA_VariantTable[] = {
      1, TA_VIn_ZLEMA, 1, TA_VOpt_ZLEMA, 1, TA_VOutIsInt_ZLEMA, 0 },
 };
 
-#define TA_VARIANT_TABLE_SIZE 217
+#define TA_VARIANT_TABLE_SIZE 218
 
 #endif /* TA_VARIANT_FRAME_H */

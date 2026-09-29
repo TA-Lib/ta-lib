@@ -288,6 +288,8 @@ pub enum FuncId {
     HT_TRENDLINE,
     /// Hilbert Transform - Trend vs Cycle Mode — [`Core::ht_trendmode`](crate::Core::ht_trendmode).
     HT_TRENDMODE,
+    /// Internal Bar Strength — [`Core::ibs`](crate::Core::ibs).
+    IBS,
     /// Intraday Momentum Index — [`Core::imi`](crate::Core::imi).
     IMI,
     /// Kaufman Adaptive Moving Average — [`Core::kama`](crate::Core::kama).
@@ -480,7 +482,7 @@ pub enum FuncId {
 
 impl FuncId {
     /// Number of functions in the registry.
-    pub const COUNT: usize = 217;
+    pub const COUNT: usize = 218;
     /// Metadata for this function (O(1) index into the const table).
     #[inline] pub fn info(self) -> &'static FuncInfo { &FUNC_TABLE[self as usize] }
     /// Upper-case TA name, e.g. "RSI".
@@ -807,7 +809,7 @@ impl FuncInfo {
 
 /// Backing storage for [`FUNCS`], indexed by [`FuncId`]. Link-time const, in
 /// `.rodata`. Private, so its length is nobody's business but this module's.
-static FUNC_TABLE: [FuncInfo; 217] = [
+static FUNC_TABLE: [FuncInfo; 218] = [
     FuncInfo {
         id: FuncId::AC,
         name: "AC",
@@ -2162,6 +2164,17 @@ static FUNC_TABLE: [FuncInfo; 217] = [
         unst_id: Some(FuncUnstId::HT_TRENDMODE),
     },
     FuncInfo {
+        id: FuncId::IBS,
+        name: "IBS",
+        group: Group::MomentumIndicators,
+        hint: "Internal Bar Strength",
+        flags: FuncFlags(0x02000000),
+        inputs: &[InputInfo { param_name: "inPriceHLC", kind: InputType::Price, flags: InputFlags(0x0000000e) }, ],
+        opt_inputs: &[],
+        outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        unst_id: None,
+    },
+    FuncInfo {
         id: FuncId::IMI,
         name: "IMI",
         group: Group::MomentumIndicators,
@@ -3336,6 +3349,7 @@ fn get_func_handle_exact(name: &str) -> Option<FuncId> {
         "HT_SINE" => FuncId::HT_SINE,
         "HT_TRENDLINE" => FuncId::HT_TRENDLINE,
         "HT_TRENDMODE" => FuncId::HT_TRENDMODE,
+        "IBS" => FuncId::IBS,
         "IMI" => FuncId::IMI,
         "KAMA" => FuncId::KAMA,
         "KC" => FuncId::KC,
@@ -3810,6 +3824,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::HT_SINE => self.core.ht_sine_lookback(),
             FuncId::HT_TRENDLINE => self.core.ht_trendline_lookback(),
             FuncId::HT_TRENDMODE => self.core.ht_trendmode_lookback(),
+            FuncId::IBS => self.core.ibs_lookback(),
             FuncId::IMI => self.core.imi_lookback(self.int_opt[0]),
             FuncId::KAMA => self.core.kama_lookback(self.int_opt[0]),
             FuncId::KC => self.core.kc_lookback(self.int_opt[0], self.int_opt[1], self.real_opt[2]),
@@ -5442,6 +5457,18 @@ impl<'a> ParamHolder<'a> {
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 let res = self.core.ht_trendmode(start_idx, end_idx, i0, &mut *o0);
                 self.int_out[0] = Some(o0);
+                match res {
+                    Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
+                    Err(e) => e,
+                }
+            }
+            FuncId::IBS => {
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let res = self.core.ibs(start_idx, end_idx, i0_1, i0_2, i0_3, &mut *o0);
+                self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
                     Err(e) => e,

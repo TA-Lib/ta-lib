@@ -243,6 +243,7 @@ public final class Functions {
       put(m, f_HT_SINE());
       put(m, f_HT_TRENDLINE());
       put(m, f_HT_TRENDMODE());
+      put(m, f_IBS());
       put(m, f_IMI());
       put(m, f_KAMA());
       put(m, f_KC());
@@ -2218,6 +2219,18 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
+         ));
+   }
+
+   private static FuncInfo f_IBS() {
+      return new FuncInfo(
+         "IBS", "Momentum Indicators", "Internal Bar Strength", 0x02000000,
+         List.of(
+            new InputInfo(InputType.PRICE, "inPriceHLC", 0x0000000E)
+         ),
+         List.of(),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
          ));
    }
 

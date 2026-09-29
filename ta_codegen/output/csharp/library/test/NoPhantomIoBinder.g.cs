@@ -857,6 +857,12 @@ internal static class NoPhantomIoBinder
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
+        ["IBS"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.IbsImpl(
+                startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.RealOut(0));
+            return new CallOutcome(rc, b, n);
+        },
         ["IMI"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.ImiImpl(
@@ -2164,6 +2170,12 @@ internal static class NoPhantomIoBinder
                 startIdx, endIdx, Narrow(c.Series(0)), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
+        ["IBS"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.IbsImpl(
+                startIdx, endIdx, Narrow(c.Price(0, PriceComponents.High)), Narrow(c.Price(0, PriceComponents.Low)), Narrow(c.Price(0, PriceComponents.Close)), out int b, out int n, c.RealOut(0));
+            return new CallOutcome(rc, b, n);
+        },
         ["IMI"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.ImiImpl(
@@ -2856,6 +2868,7 @@ internal static class NoPhantomIoBinder
         ["HT_SINE"] = static (core, c) => core.HtSineOpen(c.Series(0)),
         ["HT_TRENDLINE"] = static (core, c) => core.HtTrendlineOpen(c.Series(0)),
         ["HT_TRENDMODE"] = static (core, c) => core.HtTrendmodeOpen(c.Series(0)),
+        ["IBS"] = static (core, c) => core.IbsOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close)),
         ["IMI"] = static (core, c) => core.ImiOpen(c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.Close), c.IntOpt(0)),
         ["KAMA"] = static (core, c) => core.KamaOpen(c.Series(0), c.IntOpt(0)),
         ["KC"] = static (core, c) => core.KcOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.IntOpt(1), c.RealOpt(2)),

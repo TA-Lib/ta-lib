@@ -921,6 +921,7 @@ static ErrorNumber testTAFunction_ALL( void )
    DO_TEST( test_func_composite2, "SMI,COPPOCK,ER" );
    DO_TEST( test_func_marketfi, "MARKETFI" );
    DO_TEST( test_func_emv,       "EMV" );
+   DO_TEST( test_func_ibs,       "IBS" );
    DO_TEST( test_func_kst,       "KST" );
    DO_TEST( test_func_chop,      "CHOP,CHOPTR" );
    DO_TEST( test_func_cmf,       "CMF" );

@@ -6459,6 +6459,57 @@ static void icount_HT_TRENDMODE(int iters) {
     g_sink += acc + outNBElement;
 }
 
+static void icount_IBS(int iters) {
+    const char *nm = "IBS";
+    int outBegIdx = 0, outNBElement = 0;
+    double acc = 0.0;
+    TA_RetCode rc;
+    TA_IBS_Stream *st = NULL;
+    TA_IBS_Stream *stf = NULL;
+    double v0 = 0.0;
+
+    ICOUNT_ZERO();
+    rc = TA_IBS(0, g_nPoints - 1, g_high, g_low, g_close, &outBegIdx, &outNBElement, g_outBuf0);
+    ICOUNT_DUMP("IBS/batch");
+    icount_row(nm, "batch", 1, rc);
+    acc += g_outBuf0[0];
+
+    ICOUNT_ZERO();
+    rc = TA_IBS_OpenAndFill(&stf, g_high, g_low, g_close, g_nPoints, &outBegIdx, &outNBElement, g_outBuf0);
+    ICOUNT_DUMP("IBS/openfill");
+    icount_row(nm, "openfill", 1, rc);
+    acc += g_outBuf0[0];
+    if( stf ) TA_IBS_Close(stf);
+
+    ICOUNT_ZERO();
+    rc = TA_IBS_Open(&st, g_high, g_low, g_close, g_nPoints, &v0);
+    ICOUNT_DUMP("IBS/open");
+    icount_row(nm, "open", 1, rc);
+
+    if( rc == TA_SUCCESS && st ) {
+        TA_RetCode src = TA_SUCCESS;
+        ICOUNT_ZERO();
+        for( int it = 0; it < iters; it++ ) {
+            src = TA_IBS_Update(st, g_high[it & ICOUNT_MASK], g_low[it & ICOUNT_MASK], g_close[it & ICOUNT_MASK], &v0);
+            acc += v0;
+        }
+        ICOUNT_DUMP("IBS/update");
+        icount_row(nm, "update", 1, src);
+        ICOUNT_ZERO();
+        for( int it = 0; it < iters; it++ ) {
+            src = TA_IBS_Peek(st, g_high[it & ICOUNT_MASK], g_low[it & ICOUNT_MASK], g_close[it & ICOUNT_MASK], &v0);
+            acc += v0;
+        }
+        ICOUNT_DUMP("IBS/peek");
+        icount_row(nm, "peek", 1, src);
+    } else {
+        icount_row(nm, "update", 0, rc);
+        icount_row(nm, "peek", 0, rc);
+    }
+    if( st ) TA_IBS_Close(st);
+    g_sink += acc + outNBElement;
+}
+
 static void icount_IMI(int iters) {
     const char *nm = "IMI";
     int outBegIdx = 0, outNBElement = 0;
@@ -11477,6 +11528,7 @@ static void icount_all(const char *filter, int iters) {
     if( func_matches(filter, "HT_SINE") ) { icount_HT_SINE(iters); fflush(stdout); }
     if( func_matches(filter, "HT_TRENDLINE") ) { icount_HT_TRENDLINE(iters); fflush(stdout); }
     if( func_matches(filter, "HT_TRENDMODE") ) { icount_HT_TRENDMODE(iters); fflush(stdout); }
+    if( func_matches(filter, "IBS") ) { icount_IBS(iters); fflush(stdout); }
     if( func_matches(filter, "IMI") ) { icount_IMI(iters); fflush(stdout); }
     if( func_matches(filter, "KAMA") ) { icount_KAMA(iters); fflush(stdout); }
     if( func_matches(filter, "KC") ) { icount_KC(iters); fflush(stdout); }

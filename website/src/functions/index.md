@@ -72,6 +72,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 - [ERI](/functions/eri.md) — Elder Ray Index (Bull Power / Bear Power)
 - [FOSC](/functions/fosc.md) — Forecast Oscillator
 - [FRACTAL](/functions/fractal.md) — Williams Fractal
+- [IBS](/functions/ibs.md) — Internal Bar Strength
 - [IMI](/functions/imi.md) — Intraday Momentum Index
 - [KDJ](/functions/kdj.md) — KDJ Stochastic
 - [KST](/functions/kst.md) — Know Sure Thing (Pring)

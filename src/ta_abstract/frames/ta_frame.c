@@ -2799,6 +2799,28 @@ unsigned int TA_HT_TRENDMODE_FramePPLB( const TA_ParamHolderPriv *params )
    (void)params;
    return TA_HT_TRENDMODE_Lookback( );
 }
+TA_RetCode TA_IBS_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+{
+   return TA_IBS(
+               startIdx,
+               endIdx,
+               params->in[0].data.inPrice.high, /* inHigh */
+               params->in[0].data.inPrice.low, /* inLow */
+               params->in[0].data.inPrice.close, /* inClose */
+               outBegIdx, 
+               outNBElement, 
+               params->out[0].data.outReal /*  outReal */
+               );
+}
+unsigned int TA_IBS_FramePPLB( const TA_ParamHolderPriv *params )
+{
+   (void)params;
+   return TA_IBS_Lookback( );
+}
 TA_RetCode TA_IMI_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

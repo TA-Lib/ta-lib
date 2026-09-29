@@ -11432,6 +11432,93 @@ fn legs_HT_TRENDMODE(r: &mut Report) {
     r.legs_done("HT_TRENDMODE", 1);
 }
 
+const V_IBS: &[&str] = &[
+    "defaults",
+];
+
+fn sub_IBS(r: &mut Report) {
+    let core = Core::new();
+    for &label in V_IBS {
+        let Ok(lb) = core.ibs_lookback() else { continue; };
+        r.control("IBS", label, run(|| {
+            let inHigh: Vec<f64> = Vec::with_capacity(1);
+            let inLow: Vec<f64> = Vec::with_capacity(1);
+            let inClose: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.ibs_impl(0, lb, &inHigh, &inLow, &inClose, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+        if lb < 1 { r.no_quiet_range("IBS", label); continue; }
+        r.quiet("IBS", label, lb, run(|| {
+            let inHigh: Vec<f64> = Vec::with_capacity(1);
+            let inLow: Vec<f64> = Vec::with_capacity(1);
+            let inClose: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.ibs_impl(0, lb - 1, &inHigh, &inLow, &inClose, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+}
+
+fn legs_IBS(r: &mut Report) {
+    let core = Core::new();
+    let Ok(lb) = core.ibs_lookback() else { r.no_legs("IBS"); return; };
+    let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("IBS", run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.ibs_impl(startIdx, endIdx, &inHigh, &inLow, &inClose, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    {
+        let inHigh: Vec<f64> = Vec::with_capacity(1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("IBS", "inHigh", 0, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.ibs_impl(startIdx, endIdx, &inHigh, &inLow, &inClose, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = Vec::with_capacity(1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("IBS", "inLow", 1, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.ibs_impl(startIdx, endIdx, &inHigh, &inLow, &inClose, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = Vec::with_capacity(1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("IBS", "inClose", 2, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.ibs_impl(startIdx, endIdx, &inHigh, &inLow, &inClose, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    r.legs_done("IBS", 3);
+}
+
 const V_IMI: &[(&str, i32)] = &[
     ("defaults", i32::MIN),
     ("minimums", 2i32),
@@ -18397,6 +18484,7 @@ const PROBES: &[(&str, Probe, Probe)] = &[
     ("HT_SINE", sub_HT_SINE, legs_HT_SINE),
     ("HT_TRENDLINE", sub_HT_TRENDLINE, legs_HT_TRENDLINE),
     ("HT_TRENDMODE", sub_HT_TRENDMODE, legs_HT_TRENDMODE),
+    ("IBS", sub_IBS, legs_IBS),
     ("IMI", sub_IMI, legs_IMI),
     ("KAMA", sub_KAMA, legs_KAMA),
     ("KC", sub_KC, legs_KC),
@@ -18529,7 +18617,7 @@ fn no_phantom_io() {
     // The corpus is the generator's, not a list kept by hand: a probe that
     // stopped being emitted is a shrinking sweep, which is the one way this
     // file can fail open.
-    assert_eq!(PROBES.len(), 217, "probe count");
+    assert_eq!(PROBES.len(), 218, "probe count");
     assert_eq!(
         PROBES.len(),
         crate::abstract_api::funcs().count(),

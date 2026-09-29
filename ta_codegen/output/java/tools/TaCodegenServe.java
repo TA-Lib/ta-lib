@@ -113475,6 +113475,575 @@ class Core {
      *
      *  Initial  Name/description
      *  -------------------------------------------------------------------
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
+     *
+     * Change history:
+     *
+     *  MMDDYY BY     Description
+     *  -------------------------------------------------------------------
+     *  092926 MF,CC  Creation (#468).
+     */
+
+       /**
+        * Number of leading input bars {@link Core#ibs} consumes before it can
+        * produce its first value.
+        * <p>Equivalently, the index of the first bar with a value when the whole
+        * series is requested. Feed at least {@code lookback + 1} bars to get any
+        * output.
+        *
+        * @return The lookback, or {@code -1} if a parameter is out of range.
+        */
+       public int ibsLookback( )
+       {
+          /* One bar in, one bar out: the value reads only its own bar, so there is
+           * nothing to warm up. bop.c:19-22's lookback, and stochf_lookback(1,1,SMA)
+           * agrees, since ma_lookback returns 0 for a period of 1 (ma.c:28-29).
+           */
+          return 0 ;
+
+       }
+       RetCode ibsImpl( int startIdx,
+                        int endIdx,
+                        double inHigh[],
+                        double inLow[],
+                        double inClose[],
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
+       {
+          int outIdx = 0;
+          int i = 0;
+          double range = 0;
+          if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX ;
+          }
+          if( (endIdx < 0) || (endIdx > INDEX_MAX) || (endIdx < startIdx)) {
+             return RetCode.OUT_OF_RANGE_END_INDEX ;
+          }
+          /* IBS = (Close - Low)/(High - Low): where the close sits inside its own
+           * bar, 0 at the low and 1 at the high.
+           */
+          outIdx = 0;
+          for( i = startIdx; i <= endIdx; i += 1 ) {
+             /* The test is exact and spelled `<= 0.0`, which is bop.c:47-48's.
+              *
+              * Exact, with no band: a bar's range is the difference of two prices
+              * within a factor of two of each other, so it is computed exactly
+              * (Sterbenz) and is never a cancellation residue there is anything to
+              * absorb. A fixed band is issue #253 again -- at corpus prices scaled by
+              * 2^-50 a 1e-14 band sends 250 of 252 bars to the degenerate value.
+              *
+              * Spelled this way round rather than `range > 0.0 ? ratio : 0.5`: a NaN
+              * input compares false either way, so only this spelling lets it fall
+              * through to the division and come out NaN. The inverted spelling
+              * answers a finite, neutral-looking 0.5 where the input was garbage.
+              *
+              * 0.5 is this indicator's own neutral point, per issue #112's rule --
+              * the bar's midpoint, which is what ad.c:66 already assumes when it
+              * skips a bar with no range. 0.0 would read as "closed at the low",
+              * which is the primary's long trigger.
+              */
+             range = inHigh[i] - inLow[i];
+             if( range <= 0.0 ) {
+                outReal[outIdx++] = 0.5;
+             } else {
+                outReal[outIdx++] = (inClose[i] - inLow[i]) / range;
+             }
+          }
+          outNBElement.value = outIdx;
+          outBegIdx.value = startIdx;
+          return RetCode.SUCCESS ;
+       }
+       RetCode ibsImpl( int startIdx,
+                        int endIdx,
+                        float inHigh[],
+                        float inLow[],
+                        float inClose[],
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
+       {
+          int outIdx = 0;
+          int i = 0;
+          double range = 0;
+          if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX ;
+          }
+          if( (endIdx < 0) || (endIdx > INDEX_MAX) || (endIdx < startIdx)) {
+             return RetCode.OUT_OF_RANGE_END_INDEX ;
+          }
+          outIdx = 0;
+          for( i = startIdx; i <= endIdx; i += 1 ) {
+             range = (double)inHigh[i] - (double)inLow[i];
+             if( range <= 0.0 ) {
+                outReal[outIdx++] = 0.5;
+             } else {
+                outReal[outIdx++] = ((double)inClose[i] - (double)inLow[i]) / range;
+             }
+          }
+          outNBElement.value = outIdx;
+          outBegIdx.value = startIdx;
+          return RetCode.SUCCESS ;
+       }
+       /**
+        * Internal Bar Strength: where the close sits inside its own bar's range. It
+        * is 0 when the bar closes at its low, 1 at its high and 0.5 at the
+        * midpoint, and it reads one bar only, with no window and no state. It is
+        * the closing half of a stochastic oscillator taken over a single bar, which
+        * is how the paper that named the effect describes it. Low readings say the
+        * session ended on weakness, high readings on strength, and the published
+        * use is mean reversion on the next bar rather than trend confirmation.
+        * <p>Formula and more info at <a
+        * href="https://ta-lib.org/functions/ibs">ta-lib.org/functions/ibs</a>.
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are; nothing
+        * outside that range is touched, and the library never pads with NaN. A
+        * valid range that ends before {@link Core#ibsLookback} is a <b>success with
+        * no values</b> ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inHigh High price of each bar.
+        * @param inLow Low price of each bar.
+        * @param inClose Close price of each bar.
+        * @param outReal Position of the close within the bar's range, 0 to 1 on a
+        *        bar with range. Must hold at least
+        *        {@code endIdx - max(startIdx, ibsLookback(...)) + 1} values, the count the
+        *        call produces (none when that is not positive).
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#INDEX_MAX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. An output this function documents as declinable is the one
+        *        exception: {@code null} is how you decline it. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
+        */
+       public OutRange ibs( int startIdx,
+                            int endIdx,
+                            double inHigh[],
+                            double inLow[],
+                            double inClose[],
+                            double outReal[] )
+       {
+          requireIndexRange("IBS", startIdx, endIdx);
+          int guardStart = clampedStart("IBS", startIdx, ibsLookback());
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("IBS", "inHigh", inHigh, guardInLen);
+          requireLength("IBS", "inLow", inLow, guardInLen);
+          requireLength("IBS", "inClose", inClose, guardInLen);
+          requireLength("IBS", "outReal", outReal, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = ibsImpl(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
+          if( retCode != RetCode.SUCCESS ) {
+             throw failure("IBS", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+       /**
+        * Internal Bar Strength: where the close sits inside its own bar's range. It
+        * is 0 when the bar closes at its low, 1 at its high and 0.5 at the
+        * midpoint, and it reads one bar only, with no window and no state. It is
+        * the closing half of a stochastic oscillator taken over a single bar, which
+        * is how the paper that named the effect describes it. Low readings say the
+        * session ended on weakness, high readings on strength, and the published
+        * use is mean reversion on the next bar rather than trend confirmation.
+        * <p>Formula and more info at <a
+        * href="https://ta-lib.org/functions/ibs">ta-lib.org/functions/ibs</a>.
+        * <p>This is the {@code float[]} overload. The arithmetic is performed in
+        * {@code double} before being written to the {@code double[]} output, so a
+        * result beyond {@code float} range is still representable.
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are; nothing
+        * outside that range is touched, and the library never pads with NaN. A
+        * valid range that ends before {@link Core#ibsLookback} is a <b>success with
+        * no values</b> ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inHigh High price of each bar.
+        * @param inLow Low price of each bar.
+        * @param inClose Close price of each bar.
+        * @param outReal Position of the close within the bar's range, 0 to 1 on a
+        *        bar with range. Must hold at least
+        *        {@code endIdx - max(startIdx, ibsLookback(...)) + 1} values, the count the
+        *        call produces (none when that is not positive).
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#INDEX_MAX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. An output this function documents as declinable is the one
+        *        exception: {@code null} is how you decline it. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
+        */
+       public OutRange ibs( int startIdx,
+                            int endIdx,
+                            float inHigh[],
+                            float inLow[],
+                            float inClose[],
+                            double outReal[] )
+       {
+          requireIndexRange("IBS", startIdx, endIdx);
+          int guardStart = clampedStart("IBS", startIdx, ibsLookback());
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("IBS", "inHigh", inHigh, guardInLen);
+          requireLength("IBS", "inLow", inLow, guardInLen);
+          requireLength("IBS", "inClose", inClose, guardInLen);
+          requireLength("IBS", "outReal", outReal, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = ibsImpl(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
+          if( retCode != RetCode.SUCCESS ) {
+             throw failure("IBS", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+    /**** Streaming API *****/
+
+       /**
+        * A live IBS stream (unrelated to {@code java.util.stream}): one value per
+        * closed bar, bit-identical to {@link Core#ibs} over the same series.
+        * Open with {@link Core#ibsOpen}; there is no close — the handle is
+        * ordinary heap state, unreferenced handles are simply garbage-collected.
+        * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
+        * {@code value} and {@code clone} must not race with an {@code update} on
+        * the same handle. With no concurrent {@code update}, {@code peek}/
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
+        * <p>Not serializable by design: to checkpoint, retain the history and
+        * re-open — the result is bit-identical by contract.
+        */
+       public static final class IbsStream {
+          private Core core;
+          private double cur_outReal;
+          private int outRangeBegIdx;
+          private int outRangeCount;
+
+          private IbsStream( Core core ) { this.core = core; }
+
+          /**
+           * The bars this stream has an output for, in the input series'
+           * coordinates: {@code [begIdx, begIdx + count)}.
+           * <p>It is what {@link Core#ibs} reports over the same bars: the
+           * opener sets it to {@code (lookback, historyLen - lookback)}, every
+           * accepted {@code update} adds one to the count — a rejected one
+           * changes nothing, and neither does {@code peek} — and
+           * {@code clone()} carries it verbatim. A plain
+           * {@code open} hands back only the last value, a subset of this range,
+           * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#INDEX_MAX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
+           */
+          public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
+
+          /**
+           * Count one bar this stream was not fed: {@link #outRange()} advances
+           * by one and nothing else moves — {@link #value()} keeps answering the previous
+           * output, which is this bar's output too.
+           * <p>For a bar the caller leaves out: one an {@code update} rejected
+           * and that will not be re-fed, or a session with no print. Without it
+           * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#INDEX_MAX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
+           */
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
+                throw failure("IBS advance", RetCode.OUT_OF_RANGE_END_INDEX);
+             this.outRangeCount++;
+          }
+
+          private IbsStream( IbsStream other ) {
+             this.core = other.core;
+             this.cur_outReal = other.cur_outReal;
+             this.outRangeBegIdx = other.outRangeBegIdx;
+             this.outRangeCount = other.outRangeCount;
+          }
+
+          /**
+           * Commit one closed bar, returning the new current value.
+           * <p>Throws {@link IllegalArgumentException} if any bar value is not
+           * finite (NaN or an infinity). That check runs before anything is
+           * written, so nothing moves — {@link #outRange()} included — and
+           * {@link #value()} still answers the previous value. Re-feed the bar when a
+           * corrected value arrives, or call {@link #advance()} to count it and
+           * carry on; two handles on one feed drift a bar apart if neither
+           * happens.
+           * This is the one place the streaming tier is stricter than
+           * the batch API, which computes on whatever it is given: a handle
+           * retains its state, so a single non-finite bar would poison every
+           * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#INDEX_MAX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
+           */
+          public double update( double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
+                throw failure("IBS update", RetCode.OUT_OF_RANGE_END_INDEX);
+             if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
+                throw nonFiniteBar("IBS update", !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
+             core.ibsStepImpl(this, inHigh, inLow, inClose);
+             this.outRangeCount++;
+             return this.cur_outReal;
+          }
+
+          /**
+           * Evaluate a forming bar without committing — bit-identical to what the
+           * next {@code update} with the same bar would return — the same
+           * transition, with every store it would make carried in a local instead.
+           * Never writes this handle, so peeks may run concurrently with each other.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
+           */
+          public double peek( double inHigh, double inLow, double inClose ) {
+             if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
+                throw nonFiniteBar("IBS peek", !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
+             IbsStream sp = this;
+             double range = 0.0;
+             double cur_outReal = 0.0;
+             /* The test is exact and spelled `<= 0.0`, which is bop.c:47-48's.
+              *
+              * Exact, with no band: a bar's range is the difference of two prices
+              * within a factor of two of each other, so it is computed exactly
+              * (Sterbenz) and is never a cancellation residue there is anything to
+              * absorb. A fixed band is issue #253 again -- at corpus prices scaled by
+              * 2^-50 a 1e-14 band sends 250 of 252 bars to the degenerate value.
+              *
+              * Spelled this way round rather than `range > 0.0 ? ratio : 0.5`: a NaN
+              * input compares false either way, so only this spelling lets it fall
+              * through to the division and come out NaN. The inverted spelling
+              * answers a finite, neutral-looking 0.5 where the input was garbage.
+              *
+              * 0.5 is this indicator's own neutral point, per issue #112's rule --
+              * the bar's midpoint, which is what ad.c:66 already assumes when it
+              * skips a bar with no range. 0.0 would read as "closed at the low",
+              * which is the primary's long trigger.
+              */
+             range = inHigh - inLow;
+             if( range <= 0.0 ) {
+                cur_outReal = 0.5;
+             } else {
+                cur_outReal = (inClose - inLow) / range;
+             }
+             return cur_outReal;
+          }
+
+          /**
+           * The value at the last bar this stream counted — the bar
+           * {@link #outRange()} ends on. The last history bar right after open,
+           * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
+           */
+          public double value() {
+             return this.cur_outReal;
+          }
+
+          /**
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
+           */
+          @Override
+          public IbsStream clone() {
+             return new IbsStream(this);
+          }
+       }
+       private void ibsStepImpl( IbsStream sp, double inHigh, double inLow, double inClose )
+       {
+          double range = 0.0;
+          /* The test is exact and spelled `<= 0.0`, which is bop.c:47-48's.
+           *
+           * Exact, with no band: a bar's range is the difference of two prices
+           * within a factor of two of each other, so it is computed exactly
+           * (Sterbenz) and is never a cancellation residue there is anything to
+           * absorb. A fixed band is issue #253 again -- at corpus prices scaled by
+           * 2^-50 a 1e-14 band sends 250 of 252 bars to the degenerate value.
+           *
+           * Spelled this way round rather than `range > 0.0 ? ratio : 0.5`: a NaN
+           * input compares false either way, so only this spelling lets it fall
+           * through to the division and come out NaN. The inverted spelling
+           * answers a finite, neutral-looking 0.5 where the input was garbage.
+           *
+           * 0.5 is this indicator's own neutral point, per issue #112's rule --
+           * the bar's midpoint, which is what ad.c:66 already assumes when it
+           * skips a bar with no range. 0.0 would read as "closed at the low",
+           * which is the primary's long trigger.
+           */
+          range = inHigh - inLow;
+          if( range <= 0.0 ) {
+             sp.cur_outReal = 0.5;
+          } else {
+             sp.cur_outReal = (inClose - inLow) / range;
+          }
+       }
+       private RetCode ibsOpenImpl( IbsStream sp, double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+       {
+          int outIdx = 0;
+          int i = 0;
+          double range = 0;
+          int historyLen = inHigh.length;
+          int endIdx = historyLen - 1;
+          if( historyLen < 1 ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX;
+          }
+          if( historyLen > INDEX_MAX + 1 ) {
+             return RetCode.OUT_OF_RANGE_END_INDEX;
+          }
+          if( inLow.length != inHigh.length || inClose.length != inHigh.length ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.INSUFFICIENT_HISTORY;
+          }
+          /* IBS = (Close - Low)/(High - Low): where the close sits inside its own
+           * bar, 0 at the low and 1 at the high.
+           */
+          outIdx = 0;
+          for( i = startIdx; i <= endIdx; i += 1 ) {
+             /* The test is exact and spelled `<= 0.0`, which is bop.c:47-48's.
+              *
+              * Exact, with no band: a bar's range is the difference of two prices
+              * within a factor of two of each other, so it is computed exactly
+              * (Sterbenz) and is never a cancellation residue there is anything to
+              * absorb. A fixed band is issue #253 again -- at corpus prices scaled by
+              * 2^-50 a 1e-14 band sends 250 of 252 bars to the degenerate value.
+              *
+              * Spelled this way round rather than `range > 0.0 ? ratio : 0.5`: a NaN
+              * input compares false either way, so only this spelling lets it fall
+              * through to the division and come out NaN. The inverted spelling
+              * answers a finite, neutral-looking 0.5 where the input was garbage.
+              *
+              * 0.5 is this indicator's own neutral point, per issue #112's rule --
+              * the bar's midpoint, which is what ad.c:66 already assumes when it
+              * skips a bar with no range. 0.0 would read as "closed at the low",
+              * which is the primary's long trigger.
+              */
+             range = inHigh[i] - inLow[i];
+             if( range <= 0.0 ) {
+                outReal[outIdx++ * outStride] = 0.5;
+             } else {
+                outReal[outIdx++ * outStride] = (inClose[i] - inLow[i]) / range;
+             }
+          }
+          outNBElement.value = outIdx;
+          outBegIdx.value = startIdx;
+          /* Capture the live batch state into the handle. */
+          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
+          return RetCode.SUCCESS;
+       }
+       /* ibsOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+       IbsStream ibsOpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+       {
+          IbsStream sp = new IbsStream(this);
+          RetCode retCode = ibsOpenImpl(sp, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outReal, 1);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.SUCCESS ) {
+             return sp;
+          }
+          if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
+             throw insufficientHistory("IBS openAndFill", inHigh.length, startIdx, ibsLookback());
+          }
+          throw streamFailure("IBS openAndFill", retCode);
+       }
+       /* Internal startIdx-anchored open behind ibsOpen (composition seam). */
+       IbsStream ibsOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx )
+       {
+          IbsStream sp = new IbsStream(this);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          double[] sink_outReal = new double[1];
+          RetCode retCode = ibsOpenImpl(sp, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.SUCCESS ) {
+             return sp;
+          }
+          if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
+             throw insufficientHistory("IBS open", inHigh.length, startIdx, ibsLookback());
+          }
+          throw streamFailure("IBS open", retCode);
+       }
+       /**
+        * Open a live IBS stream over the warm-up history; the handle's
+        * {@code value()} starts at the last history bar's value — bit-identical
+        * to {@link Core#ibs} at that bar.
+        * <p>The history must hold at least {@code ibsLookback(...) + 1} bars
+        * (unstable-period aware), or {@link InsufficientHistoryException} is
+        * thrown. An EMPTY history throws
+        * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+        * names no bar — and a null argument {@link IllegalArgumentException},
+        * both ahead of everything above.
+        */
+       public IbsStream ibsOpen( double inHigh[], double inLow[], double inClose[] )
+       {
+          requireArgument("IBS open", "inHigh", inHigh);
+          requireHistory("IBS open", inHigh.length);
+          requireArgument("IBS open", "inLow", inLow);
+          requireArgument("IBS open", "inClose", inClose);
+          requireHistoryLength("IBS open", "inLow", inLow.length, inHigh.length);
+          requireHistoryLength("IBS open", "inClose", inClose.length, inHigh.length);
+          return ibsOpenInternal(inHigh, inLow, inClose, 0);
+       }
+       /**
+        * {@link Core#ibsOpen} that also fills the output array(s) bit-identically
+        * to {@link Core#ibs} over the whole history in the same single pass
+        * (no separate batch call needed for the warm-up plot). Output arrays must
+        * not alias the inputs or each other, and must hold
+        * {@code historyLen - lookback} values — both checked before anything is
+        * written, so an undersized array is an {@link IllegalArgumentException}
+        * naming it rather than a fault from inside the fill.
+        * <p>The range written is on the returned handle:
+        * {@link IbsStream#outRange()}.
+        */
+       public IbsStream ibsOpenAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] )
+       {
+          requireArgument("IBS openAndFill", "inHigh", inHigh);
+          requireHistory("IBS openAndFill", inHigh.length);
+          requireArgument("IBS openAndFill", "inLow", inLow);
+          requireArgument("IBS openAndFill", "inClose", inClose);
+          int guardOutLen = openFillCount("IBS openAndFill", inHigh.length, ibsLookback());
+          requireHistoryLength("IBS openAndFill", "inLow", inLow.length, inHigh.length);
+          requireHistoryLength("IBS openAndFill", "inClose", inClose.length, inHigh.length);
+          requireLength("IBS openAndFill", "outReal", outReal, guardOutLen);
+          if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
+             throw streamFailure("IBS openAndFill", RetCode.BAD_PARAM);
+          }
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          return ibsOpenAndFillInternal(inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outReal);
+       }
+    /* List of contributors:
+     *
+     *  Initial  Name/description
+     *  -------------------------------------------------------------------
      *  AB       Anatoliy Belsky
      *  MF       Mario Fortier
      *  WZ       wony (github @wony-zheng)
@@ -200558,7 +201127,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "f7bd1b9abbb8ceec";
+    static final String SPLICED_GENCODE_DIGEST = "f7b70c6d9eede064";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];
@@ -201214,6 +201783,10 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{  },
             new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
+        ABSTRACT.put("IBS", new AbsFunc("IBS", "Momentum Indicators", "Internal Bar Strength", 33554432,
+            new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("IMI", new AbsFunc("IMI", "Momentum Indicators", "Intraday Momentum Index", 33554432,
             new AbsIn[]{ new AbsIn(0,"inPriceOC",9) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
@@ -201821,6 +202394,7 @@ public class TaCodegenServe {
         "TA_HT_SINE",
         "TA_HT_TRENDLINE",
         "TA_HT_TRENDMODE",
+        "TA_IBS",
         "TA_IMI",
         "TA_KAMA",
         "TA_KC",
@@ -202044,100 +202618,101 @@ public class TaCodegenServe {
             case 120: return handle_HT_SINE(json);
             case 121: return handle_HT_TRENDLINE(json);
             case 122: return handle_HT_TRENDMODE(json);
-            case 123: return handle_IMI(json);
-            case 124: return handle_KAMA(json);
-            case 125: return handle_KC(json);
-            case 126: return handle_KDJ(json);
-            case 127: return handle_KST(json);
-            case 128: return handle_KURTOSIS(json);
-            case 129: return handle_LINEARREG(json);
-            case 130: return handle_LINEARREG_ANGLE(json);
-            case 131: return handle_LINEARREG_INTERCEPT(json);
-            case 132: return handle_LINEARREG_SLOPE(json);
-            case 133: return handle_LN(json);
-            case 134: return handle_LOG10(json);
-            case 135: return handle_MA(json);
-            case 136: return handle_MACD(json);
-            case 137: return handle_MACDEXT(json);
-            case 138: return handle_MACDFIX(json);
-            case 139: return handle_MAMA(json);
-            case 140: return handle_MARKETFI(json);
-            case 141: return handle_MASSI(json);
-            case 142: return handle_MAVP(json);
-            case 143: return handle_MAX(json);
-            case 144: return handle_MAXINDEX(json);
-            case 145: return handle_MCGD(json);
-            case 146: return handle_MEDIAN(json);
-            case 147: return handle_MEDPRICE(json);
-            case 148: return handle_MFI(json);
-            case 149: return handle_MIDPOINT(json);
-            case 150: return handle_MIDPRICE(json);
-            case 151: return handle_MIN(json);
-            case 152: return handle_MININDEX(json);
-            case 153: return handle_MINMAX(json);
-            case 154: return handle_MINMAXINDEX(json);
-            case 155: return handle_MINUS_DI(json);
-            case 156: return handle_MINUS_DM(json);
-            case 157: return handle_MOM(json);
-            case 158: return handle_MULT(json);
-            case 159: return handle_NATR(json);
-            case 160: return handle_NVI(json);
-            case 161: return handle_OBV(json);
-            case 162: return handle_PERCENTB(json);
-            case 163: return handle_PERCENTILE(json);
-            case 164: return handle_PERCENTRANK(json);
-            case 165: return handle_PLUS_DI(json);
-            case 166: return handle_PLUS_DM(json);
-            case 167: return handle_PPO(json);
-            case 168: return handle_PVI(json);
-            case 169: return handle_PVO(json);
-            case 170: return handle_PVT(json);
-            case 171: return handle_QSTICK(json);
-            case 172: return handle_RMA(json);
-            case 173: return handle_ROC(json);
-            case 174: return handle_ROCP(json);
-            case 175: return handle_ROCR(json);
-            case 176: return handle_ROCR100(json);
-            case 177: return handle_RSI(json);
-            case 178: return handle_RVI(json);
-            case 179: return handle_RVIR(json);
-            case 180: return handle_RVOL(json);
-            case 181: return handle_SAR(json);
-            case 182: return handle_SAREXT(json);
-            case 183: return handle_SI(json);
-            case 184: return handle_SIN(json);
-            case 185: return handle_SINH(json);
-            case 186: return handle_SMA(json);
-            case 187: return handle_SMI(json);
-            case 188: return handle_SQRT(json);
-            case 189: return handle_STDDEV(json);
-            case 190: return handle_STOCH(json);
-            case 191: return handle_STOCHF(json);
-            case 192: return handle_STOCHRSI(json);
-            case 193: return handle_SUB(json);
-            case 194: return handle_SUM(json);
-            case 195: return handle_SUPERTREND(json);
-            case 196: return handle_T3(json);
-            case 197: return handle_TAN(json);
-            case 198: return handle_TANH(json);
-            case 199: return handle_TEMA(json);
-            case 200: return handle_TRANGE(json);
-            case 201: return handle_TRIMA(json);
-            case 202: return handle_TRIX(json);
-            case 203: return handle_TSF(json);
-            case 204: return handle_TSI(json);
-            case 205: return handle_TYPPRICE(json);
-            case 206: return handle_ULTOSC(json);
-            case 207: return handle_VAR(json);
-            case 208: return handle_VHF(json);
-            case 209: return handle_VORTEX(json);
-            case 210: return handle_VWAP(json);
-            case 211: return handle_VWMA(json);
-            case 212: return handle_WAD(json);
-            case 213: return handle_WCLPRICE(json);
-            case 214: return handle_WILLR(json);
-            case 215: return handle_WMA(json);
-            case 216: return handle_ZLEMA(json);
+            case 123: return handle_IBS(json);
+            case 124: return handle_IMI(json);
+            case 125: return handle_KAMA(json);
+            case 126: return handle_KC(json);
+            case 127: return handle_KDJ(json);
+            case 128: return handle_KST(json);
+            case 129: return handle_KURTOSIS(json);
+            case 130: return handle_LINEARREG(json);
+            case 131: return handle_LINEARREG_ANGLE(json);
+            case 132: return handle_LINEARREG_INTERCEPT(json);
+            case 133: return handle_LINEARREG_SLOPE(json);
+            case 134: return handle_LN(json);
+            case 135: return handle_LOG10(json);
+            case 136: return handle_MA(json);
+            case 137: return handle_MACD(json);
+            case 138: return handle_MACDEXT(json);
+            case 139: return handle_MACDFIX(json);
+            case 140: return handle_MAMA(json);
+            case 141: return handle_MARKETFI(json);
+            case 142: return handle_MASSI(json);
+            case 143: return handle_MAVP(json);
+            case 144: return handle_MAX(json);
+            case 145: return handle_MAXINDEX(json);
+            case 146: return handle_MCGD(json);
+            case 147: return handle_MEDIAN(json);
+            case 148: return handle_MEDPRICE(json);
+            case 149: return handle_MFI(json);
+            case 150: return handle_MIDPOINT(json);
+            case 151: return handle_MIDPRICE(json);
+            case 152: return handle_MIN(json);
+            case 153: return handle_MININDEX(json);
+            case 154: return handle_MINMAX(json);
+            case 155: return handle_MINMAXINDEX(json);
+            case 156: return handle_MINUS_DI(json);
+            case 157: return handle_MINUS_DM(json);
+            case 158: return handle_MOM(json);
+            case 159: return handle_MULT(json);
+            case 160: return handle_NATR(json);
+            case 161: return handle_NVI(json);
+            case 162: return handle_OBV(json);
+            case 163: return handle_PERCENTB(json);
+            case 164: return handle_PERCENTILE(json);
+            case 165: return handle_PERCENTRANK(json);
+            case 166: return handle_PLUS_DI(json);
+            case 167: return handle_PLUS_DM(json);
+            case 168: return handle_PPO(json);
+            case 169: return handle_PVI(json);
+            case 170: return handle_PVO(json);
+            case 171: return handle_PVT(json);
+            case 172: return handle_QSTICK(json);
+            case 173: return handle_RMA(json);
+            case 174: return handle_ROC(json);
+            case 175: return handle_ROCP(json);
+            case 176: return handle_ROCR(json);
+            case 177: return handle_ROCR100(json);
+            case 178: return handle_RSI(json);
+            case 179: return handle_RVI(json);
+            case 180: return handle_RVIR(json);
+            case 181: return handle_RVOL(json);
+            case 182: return handle_SAR(json);
+            case 183: return handle_SAREXT(json);
+            case 184: return handle_SI(json);
+            case 185: return handle_SIN(json);
+            case 186: return handle_SINH(json);
+            case 187: return handle_SMA(json);
+            case 188: return handle_SMI(json);
+            case 189: return handle_SQRT(json);
+            case 190: return handle_STDDEV(json);
+            case 191: return handle_STOCH(json);
+            case 192: return handle_STOCHF(json);
+            case 193: return handle_STOCHRSI(json);
+            case 194: return handle_SUB(json);
+            case 195: return handle_SUM(json);
+            case 196: return handle_SUPERTREND(json);
+            case 197: return handle_T3(json);
+            case 198: return handle_TAN(json);
+            case 199: return handle_TANH(json);
+            case 200: return handle_TEMA(json);
+            case 201: return handle_TRANGE(json);
+            case 202: return handle_TRIMA(json);
+            case 203: return handle_TRIX(json);
+            case 204: return handle_TSF(json);
+            case 205: return handle_TSI(json);
+            case 206: return handle_TYPPRICE(json);
+            case 207: return handle_ULTOSC(json);
+            case 208: return handle_VAR(json);
+            case 209: return handle_VHF(json);
+            case 210: return handle_VORTEX(json);
+            case 211: return handle_VWAP(json);
+            case 212: return handle_VWMA(json);
+            case 213: return handle_WAD(json);
+            case 214: return handle_WCLPRICE(json);
+            case 215: return handle_WILLR(json);
+            case 216: return handle_WMA(json);
+            case 217: return handle_ZLEMA(json);
             default: return null;
         }
     }
@@ -222008,6 +222583,166 @@ public class TaCodegenServe {
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         rideHtTrendmode(core, json, endIdx, inReal, sb);
+        sb.append("}");
+        return sb.toString();
+    }
+
+    static String handle_IBS(String json) {
+        int startIdx = jsonInt(json, "startIdx");
+        int endIdx = jsonInt(json, "endIdx");
+        int use_preloaded = jsonInt(json, "use_preloaded");
+        int bench_iters = jsonInt(json, "iters");
+        if (bench_iters < 1) bench_iters = 1;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
+        if (use_preloaded != 0 && refN > 0) {
+            inHigh = new double[MAX_ARRAY_SIZE];
+            System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
+            System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
+            System.arraycopy(refClose, 0, inClose, 0, refN);
+        } else {
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
+        }
+        boolean _optRejected = false;
+        // The output buffers are sized to the count the call actually PRODUCES --
+        // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
+        // never below one. Not to the width of the requested range: that is the bound the
+        // managed backends check and the Rust asserts state, and at the range width it was
+        // slack by exactly the lookback, so no call could ever approach it.
+        // The pad is there because a bound is a MINIMUM, never an equality. A caller
+        // re-using a pre-allocated buffer passes a larger one, and that is not an error --
+        // the reported OutRange is what says which part was written. So the harness sends
+        // both: the startIdx axis sends no pad (the bound is reachable) while the
+        // full-range value comparison sends one (slack is legal). Sizing every call one way
+        // would silently drop the other property.
+        // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
+        // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
+        // for a range shorter than the lookback, where the output bound switches off and
+        // the spec says any length will do, including none. It does not: two EMPTY output
+        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
+        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
+        // accepted by C and Java -- a four-way divergence on a call the specification says
+        // all four accept. Sizing to zero here would reach it on every multi-output
+        // function, which is a semantic question, not a harness one. Recorded as
+        // error-handling-spec, open item 11.
+        // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
+        // sizes and cannot make the check, so an exact buffer would test nothing there.
+        int _lb = core.ibsLookback();
+        int _cs = startIdx > _lb ? startIdx : _lb;
+        int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
+        double[] outArr0 = new double[_outLen];
+        MInteger outBegIdx = new MInteger();
+        MInteger outNBElement = new MInteger();
+        RetCode rc = RetCode.SUCCESS;
+        int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        long startNs = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+        if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                rc = core.ibsImpl(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        } else {
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _pr = core.ibs(startIdx, endIdx, inHigh, inLow, inClose, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.SUCCESS;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        }
+        }
+        else if (_optRejected) { rc = RetCode.BAD_PARAM; }
+        else { try {
+            if (bench_mode == 1) {
+                core.ibsOpen(_warm_inHigh, _warm_inLow, _warm_inClose);
+            } else {
+                Core.IbsStream _wh = core.ibsOpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
+            }
+            rc = RetCode.SUCCESS;
+        } catch (RuntimeException _e) { rc = _e instanceof TALibFailure ? ((TALibFailure)_e).retCode() : RetCode.BAD_PARAM; } }
+        }
+        long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _fr = core.ibs(startIdx, endIdx, f_inHigh, f_inLow, f_inClose, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.SUCCESS;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+            usedFloat = 1;
+        }
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            StringBuilder hb = new StringBuilder();
+            hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            rideIbs(core, json, endIdx, inHigh, inLow, inClose, hb);
+            hb.append("}");
+            return hb.toString();
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"retCode\":").append(rc.toInt());
+        sb.append(",\"outBegIdx\":").append(outBegIdx.value);
+        sb.append(",\"outNBElement\":").append(outNBElement.value);
+        sb.append(",\"out_len\":").append(_outLen);
+        sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
+        sb.append(",\"timing_ns\":").append(elapsedNs);
+        rideIbs(core, json, endIdx, inHigh, inLow, inClose, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -256676,6 +257411,163 @@ public class TaCodegenServe {
         return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
+    static String sv_IBS(String json) {
+        int svShape = jsonInt(json, "gen_shape");
+        int svSeed = jsonInt(json, "gen_seed");
+        int svN = jsonInt(json, "gen_n");
+        if (svN < 2) svN = 2;
+        if (svN > 256) svN = 256;
+        int svK = jsonInt(json, "unstablePeriod");
+        double[] fz_o = new double[svN];
+        double[] fz_h = new double[svN];
+        double[] fz_l = new double[svN];
+        double[] fz_c = new double[svN];
+        double[] fz_v = new double[svN];
+        double[] fz_oi = new double[svN];
+        FuzzData.fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
+        double[] b0 = new double[svN];
+        long legs = 0;
+        boolean allOk = true;
+        boolean peekAll = true;
+        long peekReps = 0;
+        long peekRejects = 0;
+        boolean peekRepAll = true;
+        int fillChecked = 0;
+        boolean fillOk = true;
+        MInteger beg = new MInteger();
+        MInteger nb = new MInteger();
+        String diag = "";
+        int rangeChecked = 0;
+        boolean rangeOk = true;
+        long rangeLegs = 0;
+        int rangeSites = 0;
+        long[] zsign = { 0 };
+        int rounds = 1;
+        for (int rd = 0; rd < rounds; rd++) {
+            Core c2 = new Core();
+            RetCode rc;
+            try { rc = c2.ibsImpl(0, svN - 1, fz_h, fz_l, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
+            int lb = c2.ibsLookback();
+            if (rc != RetCode.SUCCESS || nb.value == 0) {
+                boolean openRejects;
+                try { c2.ibsOpen(fz_h, fz_l, fz_c); openRejects = false; } catch (IllegalArgumentException _e) { openRejects = true; }
+                return "{\"retCode\":" + rc.toInt() + ",\"legs\":0,\"nb\":" + nb.value + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
+            }
+            fillChecked = 1;
+            try {
+                double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                Core.IbsStream _fh = c2.ibsOpenAndFill(fz_h, fz_l, fz_c, f0);
+                OutRange _fr = _fh.outRange();
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
+                else {
+                    for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
+                }
+                try { c2.ibsOpenAndFill(fz_h, fz_l, fz_c, fz_h); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
+            } catch (IllegalArgumentException _e) { fillOk = false; }
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
+            java.util.Arrays.sort(pcs);
+            int prevP = -1;
+            for (int pi = 0; pi < pcs.length; pi++) {
+                int p = pcs[pi];
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
+                prevP = p;
+                Core.IbsStream st;
+                try { st = c2.ibsOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p)); }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
+                legs++;
+                if (svXtierNe(st.value(), b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                for (int t = p; t < svN; t++) {
+                    boolean pkTook = true;
+                    double pk = 0;
+                    try { pk = st.peek(fz_h[t], fz_l[t], fz_c[t]); } catch (IllegalArgumentException _e) { pkTook = false; peekRejects++; }
+                    if (t % 7 == 0) {
+                        boolean rpTook = pkTook;
+                        try { st.peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]); } catch (IllegalArgumentException _e) { peekRejects++; }
+                        double rp = 0;
+                        try { rp = st.peek(fz_h[t], fz_l[t], fz_c[t]); } catch (IllegalArgumentException _e) { rpTook = false; }
+                        if (rpTook) {
+                            peekReps++;
+                            if (svBne(rp, pk)) peekRepAll = false;
+                        } else { peekRejects++; }
+                    }
+                    double up = st.update(fz_h[t], fz_l[t], fz_c[t]);
+                    if (pkTook && svBne(pk, up)) peekAll = false;
+                    try { st.peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]); } catch (IllegalArgumentException _e) { peekRejects++; }
+                    if (svBne(st.value(), up)) allOk = false;
+                    if (svXtierNe(up, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up)) + "\""; }
+                }
+                if (allOk) {
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
+                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
+                    rangeLegs++; rangeSites |= 16;
+                    st.advance();
+                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value + 1) rangeOk = false;
+                }
+            }
+            {
+                int p0 = lb + 1;
+                if (p0 <= svN - 1) {
+                    try {
+                        Core.IbsStream sA = c2.ibsOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
+                        int mid = (p0 + svN) / 2;
+                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t]);
+                        Core.IbsStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        for (int t = mid; t < svN; t++) {
+                            double uA = sA.update(fz_h[t], fz_l[t], fz_c[t]);
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        if (allOk) {
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 8;
+                            if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                        }
+                    } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
+                }
+            }
+            if (lb >= 1 && lb < svN) {
+                try { c2.ibsOpen(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
+                catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.ibsOpenAndFill(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
+            }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.ibsImpl(Sidx, svN - 1, fz_h, fz_l, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rcS = ((TALibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.SUCCESS && nbS.value > 0) {
+                        try {
+                            Core.IbsStream stA = c2.ibsOpenInternal(java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
+        }
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign[0] + diag + "}";
+    }
+
     static String sv_IMI(String json) {
         int svShape = jsonInt(json, "gen_shape");
         int svSeed = jsonInt(json, "gen_seed");
@@ -272694,6 +273586,7 @@ public class TaCodegenServe {
         case "TA_HT_SINE": return sv_HT_SINE(json);
         case "TA_HT_TRENDLINE": return sv_HT_TRENDLINE(json);
         case "TA_HT_TRENDMODE": return sv_HT_TRENDMODE(json);
+        case "TA_IBS": return sv_IBS(json);
         case "TA_IMI": return sv_IMI(json);
         case "TA_KAMA": return sv_KAMA(json);
         case "TA_KC": return sv_KC(json);
@@ -285290,6 +286183,106 @@ public class TaCodegenServe {
                     for (int k = 0; k < nb; k++) {
                         boolean cmp = true;
                         if (cmp && fib0[k] != rib0[k]) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rib0[k]); r.stream = Double.doubleToRawLongBits(fib0[k]); }
+                        if (cmp) r.fillBars++;
+                        if (!cmp) { r.ok = false; r.leg = 2; r.bar = beg + k; break; }
+                    }
+                }
+            } catch (RuntimeException _e) { r.ok = false; r.leg = 2; }
+        }
+
+        if (r.ok) {
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
+            rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
+        }
+    }
+
+    static void rideIbs(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
+        if (!rideGate(json)) return;
+        RideResult r = new RideResult();
+        rideBodyIbs(core, json, endIdx, inHigh, inLow, inClose, r);
+        r.emit(sb);
+    }
+
+    @SuppressWarnings("unused")
+    static void rideBodyIbs(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
+        try { r.lb = core.ibsLookback(); } catch (RuntimeException _e) { r.lb = -1; }
+        int lb = r.lb;
+        int navail = endIdx + 1;
+        if (inHigh.length < navail) navail = inHigh.length;
+        if (inLow.length < navail) navail = inLow.length;
+        if (inClose.length < navail) navail = inClose.length;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
+        if (m > navail) m = navail;
+        r.m = m;
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
+        if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
+
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_IBS");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
+            r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
+        }
+
+        double[] rb0 = new double[m];
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
+        try { OutRange _rr = core.ibs(0, m - 1, java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), rb0); beg = _rr.begIdx(); nb = _rr.count(); }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.ibsOpen(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.ibsOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
+        if (nb == 0) { r.skip = 5; return; }
+        if (beg != lb) { r.skip = 6; return; }
+
+        try {
+            boolean cmp;
+            Core.IbsStream st = core.ibsOpen(java.util.Arrays.copyOf(inHigh, lb + 1), java.util.Arrays.copyOf(inLow, lb + 1), java.util.Arrays.copyOf(inClose, lb + 1));
+            double uv = st.value();
+            cmp = true;
+            if (cmp && svXtierNe(rb0[lb - beg], uv, r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[lb - beg]); r.stream = Double.doubleToRawLongBits(uv); }
+            if (cmp) r.openBars++;
+            if (!cmp) { r.ok = false; r.leg = 1; r.bar = lb; }
+            for (int t = lb + 1; r.ok && t < m; t++) {
+                double uv2 = st.update(inHigh[t], inLow[t], inClose[t]);
+                uv = uv2;
+                cmp = true;
+                if (cmp && svXtierNe(rb0[t - beg], uv, r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[t - beg]); r.stream = Double.doubleToRawLongBits(uv); }
+                if (cmp) r.openBars++;
+                if (!cmp) { r.ok = false; r.leg = 1; r.bar = t; }
+            }
+        } catch (RuntimeException _e) { r.ok = false; r.leg = 1; }
+
+        if (r.ok) {
+            double[] fb0 = new double[m];
+            try {
+                Core.IbsStream st2 = core.ibsOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), fb0);
+                if (st2.outRange().begIdx() != beg || st2.outRange().count() != nb) { r.ok = false; r.leg = 2; }
+                if (r.ok) {
+                    for (int k = 0; k < nb; k++) {
+                        boolean cmp = true;
+                        if (cmp && svXtierNe(rb0[k], fb0[k], r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[k]); r.stream = Double.doubleToRawLongBits(fb0[k]); }
                         if (cmp) r.fillBars++;
                         if (!cmp) { r.ok = false; r.leg = 2; r.bar = beg + k; break; }
                     }
