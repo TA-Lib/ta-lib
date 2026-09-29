@@ -30,6 +30,9 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   - PERCENTB: Bollinger Bands %B, where the input sits relative to the bands (#449)
   - RVIR: Relative Volatility Index, 1995 refined form (#416)
   - SI: Wilder Swing Index, each bar rated against the one before (#451)
+  - VIDYA: Variable Index Dynamic Average, Chande's EMA scaled bar by bar by the CMO (#474)
+- New MAType (for MA, BBANDS, STOCH etc...):
+  - TA_MAType_VIDYA (#474)
 
 ### Faster
 - ~1.3x to 2.7x: CMO, PLUS_DM, MINUS_DM, PLUS_DI, MINUS_DI, DX, ADX and ADXR (#411)

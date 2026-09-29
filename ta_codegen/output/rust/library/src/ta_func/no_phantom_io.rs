@@ -1264,6 +1264,8 @@ const V_APO: &[(&str, i32, i32, MAType)] = &[
     ("optInMAType=ZLEMA, periods doubled", 24i32, 52i32, MAType::ZLEMA),
     ("optInMAType=RMA", i32::MIN, i32::MIN, MAType::RMA),
     ("optInMAType=RMA, periods doubled", 24i32, 52i32, MAType::RMA),
+    ("optInMAType=VIDYA", i32::MIN, i32::MIN, MAType::VIDYA),
+    ("optInMAType=VIDYA, periods doubled", 24i32, 52i32, MAType::VIDYA),
 ];
 
 fn sub_APO(r: &mut Report) {
@@ -1970,6 +1972,8 @@ const V_BBANDS: &[(&str, i32, f64, f64, MAType)] = &[
     ("optInMAType=ZLEMA, periods doubled", 40i32, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::ZLEMA),
     ("optInMAType=RMA", i32::MIN, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::RMA),
     ("optInMAType=RMA, periods doubled", 40i32, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::RMA),
+    ("optInMAType=VIDYA", i32::MIN, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::VIDYA),
+    ("optInMAType=VIDYA, periods doubled", 40i32, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::VIDYA),
 ];
 
 fn sub_BBANDS(r: &mut Report) {
@@ -2066,6 +2070,8 @@ const V_BBW: &[(&str, i32, f64, f64, MAType)] = &[
     ("optInMAType=ZLEMA, periods doubled", 40i32, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::ZLEMA),
     ("optInMAType=RMA", i32::MIN, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::RMA),
     ("optInMAType=RMA, periods doubled", 40i32, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::RMA),
+    ("optInMAType=VIDYA", i32::MIN, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::VIDYA),
+    ("optInMAType=VIDYA, periods doubled", 40i32, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::VIDYA),
 ];
 
 fn sub_BBW(r: &mut Report) {
@@ -11782,6 +11788,8 @@ const V_KDJ: &[(&str, i32, i32, MAType, i32, MAType)] = &[
     ("optInSlowK_MAType=ZLEMA, periods doubled", 18i32, 6i32, MAType::ZLEMA, 6i32, MAType::DEFAULT),
     ("optInSlowK_MAType=RMA", i32::MIN, i32::MIN, MAType::RMA, i32::MIN, MAType::DEFAULT),
     ("optInSlowK_MAType=RMA, periods doubled", 18i32, 6i32, MAType::RMA, 6i32, MAType::DEFAULT),
+    ("optInSlowK_MAType=VIDYA", i32::MIN, i32::MIN, MAType::VIDYA, i32::MIN, MAType::DEFAULT),
+    ("optInSlowK_MAType=VIDYA, periods doubled", 18i32, 6i32, MAType::VIDYA, 6i32, MAType::DEFAULT),
     ("optInSlowD_MAType=SMA", i32::MIN, i32::MIN, MAType::DEFAULT, i32::MIN, MAType::SMA),
     ("optInSlowD_MAType=SMA, periods doubled", 18i32, 6i32, MAType::DEFAULT, 6i32, MAType::SMA),
     ("optInSlowD_MAType=EMA", i32::MIN, i32::MIN, MAType::DEFAULT, i32::MIN, MAType::EMA),
@@ -11810,6 +11818,8 @@ const V_KDJ: &[(&str, i32, i32, MAType, i32, MAType)] = &[
     ("optInSlowD_MAType=ZLEMA, periods doubled", 18i32, 6i32, MAType::DEFAULT, 6i32, MAType::ZLEMA),
     ("optInSlowD_MAType=RMA", i32::MIN, i32::MIN, MAType::DEFAULT, i32::MIN, MAType::RMA),
     ("optInSlowD_MAType=RMA, periods doubled", 18i32, 6i32, MAType::DEFAULT, 6i32, MAType::RMA),
+    ("optInSlowD_MAType=VIDYA", i32::MIN, i32::MIN, MAType::DEFAULT, i32::MIN, MAType::VIDYA),
+    ("optInSlowD_MAType=VIDYA, periods doubled", 18i32, 6i32, MAType::DEFAULT, 6i32, MAType::VIDYA),
 ];
 
 fn sub_KDJ(r: &mut Report) {
@@ -12407,6 +12417,8 @@ const V_MA: &[(&str, i32, MAType)] = &[
     ("optInMAType=ZLEMA, periods doubled", 60i32, MAType::ZLEMA),
     ("optInMAType=RMA", i32::MIN, MAType::RMA),
     ("optInMAType=RMA, periods doubled", 60i32, MAType::RMA),
+    ("optInMAType=VIDYA", i32::MIN, MAType::VIDYA),
+    ("optInMAType=VIDYA, periods doubled", 60i32, MAType::VIDYA),
 ];
 
 fn sub_MA(r: &mut Report) {
@@ -12560,6 +12572,8 @@ const V_MACDEXT: &[(&str, i32, MAType, i32, MAType, i32, MAType)] = &[
     ("optInFastMAType=ZLEMA, periods doubled", 24i32, MAType::ZLEMA, 52i32, MAType::DEFAULT, 18i32, MAType::DEFAULT),
     ("optInFastMAType=RMA", i32::MIN, MAType::RMA, i32::MIN, MAType::DEFAULT, i32::MIN, MAType::DEFAULT),
     ("optInFastMAType=RMA, periods doubled", 24i32, MAType::RMA, 52i32, MAType::DEFAULT, 18i32, MAType::DEFAULT),
+    ("optInFastMAType=VIDYA", i32::MIN, MAType::VIDYA, i32::MIN, MAType::DEFAULT, i32::MIN, MAType::DEFAULT),
+    ("optInFastMAType=VIDYA, periods doubled", 24i32, MAType::VIDYA, 52i32, MAType::DEFAULT, 18i32, MAType::DEFAULT),
     ("optInSlowMAType=SMA", i32::MIN, MAType::DEFAULT, i32::MIN, MAType::SMA, i32::MIN, MAType::DEFAULT),
     ("optInSlowMAType=SMA, periods doubled", 24i32, MAType::DEFAULT, 52i32, MAType::SMA, 18i32, MAType::DEFAULT),
     ("optInSlowMAType=EMA", i32::MIN, MAType::DEFAULT, i32::MIN, MAType::EMA, i32::MIN, MAType::DEFAULT),
@@ -12588,6 +12602,8 @@ const V_MACDEXT: &[(&str, i32, MAType, i32, MAType, i32, MAType)] = &[
     ("optInSlowMAType=ZLEMA, periods doubled", 24i32, MAType::DEFAULT, 52i32, MAType::ZLEMA, 18i32, MAType::DEFAULT),
     ("optInSlowMAType=RMA", i32::MIN, MAType::DEFAULT, i32::MIN, MAType::RMA, i32::MIN, MAType::DEFAULT),
     ("optInSlowMAType=RMA, periods doubled", 24i32, MAType::DEFAULT, 52i32, MAType::RMA, 18i32, MAType::DEFAULT),
+    ("optInSlowMAType=VIDYA", i32::MIN, MAType::DEFAULT, i32::MIN, MAType::VIDYA, i32::MIN, MAType::DEFAULT),
+    ("optInSlowMAType=VIDYA, periods doubled", 24i32, MAType::DEFAULT, 52i32, MAType::VIDYA, 18i32, MAType::DEFAULT),
     ("optInSignalMAType=SMA", i32::MIN, MAType::DEFAULT, i32::MIN, MAType::DEFAULT, i32::MIN, MAType::SMA),
     ("optInSignalMAType=SMA, periods doubled", 24i32, MAType::DEFAULT, 52i32, MAType::DEFAULT, 18i32, MAType::SMA),
     ("optInSignalMAType=EMA", i32::MIN, MAType::DEFAULT, i32::MIN, MAType::DEFAULT, i32::MIN, MAType::EMA),
@@ -12616,6 +12632,8 @@ const V_MACDEXT: &[(&str, i32, MAType, i32, MAType, i32, MAType)] = &[
     ("optInSignalMAType=ZLEMA, periods doubled", 24i32, MAType::DEFAULT, 52i32, MAType::DEFAULT, 18i32, MAType::ZLEMA),
     ("optInSignalMAType=RMA", i32::MIN, MAType::DEFAULT, i32::MIN, MAType::DEFAULT, i32::MIN, MAType::RMA),
     ("optInSignalMAType=RMA, periods doubled", 24i32, MAType::DEFAULT, 52i32, MAType::DEFAULT, 18i32, MAType::RMA),
+    ("optInSignalMAType=VIDYA", i32::MIN, MAType::DEFAULT, i32::MIN, MAType::DEFAULT, i32::MIN, MAType::VIDYA),
+    ("optInSignalMAType=VIDYA, periods doubled", 24i32, MAType::DEFAULT, 52i32, MAType::DEFAULT, 18i32, MAType::VIDYA),
 ];
 
 fn sub_MACDEXT(r: &mut Report) {
@@ -13001,6 +13019,8 @@ const V_MAVP: &[(&str, i32, i32, MAType)] = &[
     ("optInMAType=ZLEMA, periods doubled", 4i32, 60i32, MAType::ZLEMA),
     ("optInMAType=RMA", i32::MIN, i32::MIN, MAType::RMA),
     ("optInMAType=RMA, periods doubled", 4i32, 60i32, MAType::RMA),
+    ("optInMAType=VIDYA", i32::MIN, i32::MIN, MAType::VIDYA),
+    ("optInMAType=VIDYA, periods doubled", 4i32, 60i32, MAType::VIDYA),
 ];
 
 fn sub_MAVP(r: &mut Report) {
@@ -14391,6 +14411,8 @@ const V_PERCENTB: &[(&str, i32, f64, f64, MAType)] = &[
     ("optInMAType=ZLEMA, periods doubled", 40i32, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::ZLEMA),
     ("optInMAType=RMA", i32::MIN, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::RMA),
     ("optInMAType=RMA, periods doubled", 40i32, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::RMA),
+    ("optInMAType=VIDYA", i32::MIN, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::VIDYA),
+    ("optInMAType=VIDYA, periods doubled", 40i32, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::VIDYA),
 ];
 
 fn sub_PERCENTB(r: &mut Report) {
@@ -14755,6 +14777,8 @@ const V_PPO: &[(&str, i32, i32, MAType)] = &[
     ("optInMAType=ZLEMA, periods doubled", 24i32, 52i32, MAType::ZLEMA),
     ("optInMAType=RMA", i32::MIN, i32::MIN, MAType::RMA),
     ("optInMAType=RMA, periods doubled", 24i32, 52i32, MAType::RMA),
+    ("optInMAType=VIDYA", i32::MIN, i32::MIN, MAType::VIDYA),
+    ("optInMAType=VIDYA, periods doubled", 24i32, 52i32, MAType::VIDYA),
 ];
 
 fn sub_PPO(r: &mut Report) {
@@ -14912,6 +14936,8 @@ const V_PVO: &[(&str, i32, i32, MAType)] = &[
     ("optInMAType=ZLEMA, periods doubled", 24i32, 52i32, MAType::ZLEMA),
     ("optInMAType=RMA", i32::MIN, i32::MIN, MAType::RMA),
     ("optInMAType=RMA, periods doubled", 24i32, 52i32, MAType::RMA),
+    ("optInMAType=VIDYA", i32::MIN, i32::MIN, MAType::VIDYA),
+    ("optInMAType=VIDYA, periods doubled", 24i32, 52i32, MAType::VIDYA),
 ];
 
 fn sub_PVO(r: &mut Report) {
@@ -16309,6 +16335,8 @@ const V_STOCH: &[(&str, i32, i32, MAType, i32, MAType)] = &[
     ("optInSlowK_MAType=ZLEMA, periods doubled", 10i32, 6i32, MAType::ZLEMA, 6i32, MAType::DEFAULT),
     ("optInSlowK_MAType=RMA", i32::MIN, i32::MIN, MAType::RMA, i32::MIN, MAType::DEFAULT),
     ("optInSlowK_MAType=RMA, periods doubled", 10i32, 6i32, MAType::RMA, 6i32, MAType::DEFAULT),
+    ("optInSlowK_MAType=VIDYA", i32::MIN, i32::MIN, MAType::VIDYA, i32::MIN, MAType::DEFAULT),
+    ("optInSlowK_MAType=VIDYA, periods doubled", 10i32, 6i32, MAType::VIDYA, 6i32, MAType::DEFAULT),
     ("optInSlowD_MAType=SMA", i32::MIN, i32::MIN, MAType::DEFAULT, i32::MIN, MAType::SMA),
     ("optInSlowD_MAType=SMA, periods doubled", 10i32, 6i32, MAType::DEFAULT, 6i32, MAType::SMA),
     ("optInSlowD_MAType=EMA", i32::MIN, i32::MIN, MAType::DEFAULT, i32::MIN, MAType::EMA),
@@ -16337,6 +16365,8 @@ const V_STOCH: &[(&str, i32, i32, MAType, i32, MAType)] = &[
     ("optInSlowD_MAType=ZLEMA, periods doubled", 10i32, 6i32, MAType::DEFAULT, 6i32, MAType::ZLEMA),
     ("optInSlowD_MAType=RMA", i32::MIN, i32::MIN, MAType::DEFAULT, i32::MIN, MAType::RMA),
     ("optInSlowD_MAType=RMA, periods doubled", 10i32, 6i32, MAType::DEFAULT, 6i32, MAType::RMA),
+    ("optInSlowD_MAType=VIDYA", i32::MIN, i32::MIN, MAType::DEFAULT, i32::MIN, MAType::VIDYA),
+    ("optInSlowD_MAType=VIDYA, periods doubled", 10i32, 6i32, MAType::DEFAULT, 6i32, MAType::VIDYA),
 ];
 
 fn sub_STOCH(r: &mut Report) {
@@ -16464,6 +16494,8 @@ const V_STOCHF: &[(&str, i32, i32, MAType)] = &[
     ("optInFastD_MAType=ZLEMA, periods doubled", 10i32, 6i32, MAType::ZLEMA),
     ("optInFastD_MAType=RMA", i32::MIN, i32::MIN, MAType::RMA),
     ("optInFastD_MAType=RMA, periods doubled", 10i32, 6i32, MAType::RMA),
+    ("optInFastD_MAType=VIDYA", i32::MIN, i32::MIN, MAType::VIDYA),
+    ("optInFastD_MAType=VIDYA, periods doubled", 10i32, 6i32, MAType::VIDYA),
 ];
 
 fn sub_STOCHF(r: &mut Report) {
@@ -16589,6 +16621,8 @@ const V_STOCHRSI: &[(&str, i32, i32, i32, MAType)] = &[
     ("optInFastD_MAType=ZLEMA, periods doubled", 28i32, 10i32, 6i32, MAType::ZLEMA),
     ("optInFastD_MAType=RMA", i32::MIN, i32::MIN, i32::MIN, MAType::RMA),
     ("optInFastD_MAType=RMA, periods doubled", 28i32, 10i32, 6i32, MAType::RMA),
+    ("optInFastD_MAType=VIDYA", i32::MIN, i32::MIN, i32::MIN, MAType::VIDYA),
+    ("optInFastD_MAType=VIDYA, periods doubled", 28i32, 10i32, 6i32, MAType::VIDYA),
 ];
 
 fn sub_STOCHRSI(r: &mut Report) {
@@ -17707,6 +17741,64 @@ fn legs_VHF(r: &mut Report) {
     r.legs_done("VHF", 1);
 }
 
+const V_VIDYA: &[(&str, i32, i32)] = &[
+    ("defaults", i32::MIN, i32::MIN),
+    ("minimums", 1i32, 2i32),
+];
+
+fn sub_VIDYA(r: &mut Report) {
+    let core = Core::new();
+    for &(label, optInTimePeriod, optInCMOPeriod) in V_VIDYA {
+        let Ok(lb) = core.vidya_lookback(optInTimePeriod, optInCMOPeriod) else { continue; };
+        r.control("VIDYA", label, run(|| {
+            let inReal: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.vidya_impl(0, lb, &inReal, optInTimePeriod, optInCMOPeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+        if lb < 1 { r.no_quiet_range("VIDYA", label); continue; }
+        r.quiet("VIDYA", label, lb, run(|| {
+            let inReal: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.vidya_impl(0, lb - 1, &inReal, optInTimePeriod, optInCMOPeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+}
+
+fn legs_VIDYA(r: &mut Report) {
+    let core = Core::new();
+    let optInTimePeriod = i32::MIN;
+    let optInCMOPeriod = i32::MIN;
+    let Ok(lb) = core.vidya_lookback(optInTimePeriod, optInCMOPeriod) else { r.no_legs("VIDYA"); return; };
+    let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("VIDYA", run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.vidya_impl(startIdx, endIdx, &inReal, optInTimePeriod, optInCMOPeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    {
+        let inReal: Vec<f64> = Vec::with_capacity(1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("VIDYA", "inReal", 0, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.vidya_impl(startIdx, endIdx, &inReal, optInTimePeriod, optInCMOPeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    r.legs_done("VIDYA", 1);
+}
+
 const V_VORTEX: &[(&str, i32)] = &[
     ("defaults", i32::MIN),
     ("minimums", 1i32),
@@ -18571,6 +18663,7 @@ const PROBES: &[(&str, Probe, Probe)] = &[
     ("ULTOSC", sub_ULTOSC, legs_ULTOSC),
     ("VAR", sub_VAR, legs_VAR),
     ("VHF", sub_VHF, legs_VHF),
+    ("VIDYA", sub_VIDYA, legs_VIDYA),
     ("VORTEX", sub_VORTEX, legs_VORTEX),
     ("VWAP", sub_VWAP, legs_VWAP),
     ("VWMA", sub_VWMA, legs_VWMA),
@@ -18617,7 +18710,7 @@ fn no_phantom_io() {
     // The corpus is the generator's, not a list kept by hand: a probe that
     // stopped being emitted is a shrinking sweep, which is the one way this
     // file can fail open.
-    assert_eq!(PROBES.len(), 218, "probe count");
+    assert_eq!(PROBES.len(), 219, "probe count");
     assert_eq!(
         PROBES.len(),
         crate::abstract_api::funcs().count(),

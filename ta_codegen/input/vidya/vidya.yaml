@@ -1,0 +1,26 @@
+name: VIDYA
+group: Overlap Studies
+hint: Variable Index Dynamic Average
+flags: [overlap, unstable_period, stream, period1_identity]
+inputs:
+  - name: inReal
+    type: real
+optional_inputs:
+  - name: optInTimePeriod
+    type: integer
+    display_name: Time Period
+    hint: EMA-equivalent smoothing period, alpha = 2/(n+1)
+    range: [1, 100000]
+    default: 12
+    suggested: [4, 200, 1]
+  - name: optInCMOPeriod
+    type: integer
+    display_name: CMO Period
+    hint: Period of the unsmoothed CMO that scales alpha
+    range: [2, 100000]
+    default: 9
+    suggested: [4, 200, 1]
+outputs:
+  - name: outReal
+    type: real
+    flags: [line]

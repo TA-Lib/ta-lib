@@ -90,7 +90,7 @@ fn classification_matches_the_measured_library() {
         .filter(|f| f.flags.iter().any(|x| x == "unstable_period"))
         .map(|f| f.name.as_str())
         .collect();
-    assert_eq!(declared.len(), 25, "the measured set of self-declaring functions is 25");
+    assert_eq!(declared.len(), 26, "the measured set of self-declaring functions is 26");
     for f in &funcs {
         assert_eq!(
             st[&f.name].intrinsic,
@@ -147,7 +147,7 @@ fn classification_matches_the_measured_library() {
 #[test]
 fn ma_types_split_into_recursive_and_windowed() {
     let st = stability::classify(&load());
-    for name in ["EMA", "KAMA", "MAMA", "T3", "DEMA", "TEMA", "RMA"] {
+    for name in ["EMA", "KAMA", "MAMA", "T3", "DEMA", "TEMA", "RMA", "VIDYA"] {
         assert!(st[name].unconditional(), "{name} carries an unstable period");
     }
     for name in ["SMA", "WMA", "TRIMA", "HMA"] {

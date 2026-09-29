@@ -126,7 +126,7 @@
 #define PCTB_LONG_N      100500
 #define PCTB_ULP         ( DBL_EPSILON / 2.0 )
 #define PCTB_SV_MAX_BARS 16000
-#define PCTB_NB_MATYPE   14
+#define PCTB_NB_MATYPE   ( TA_MATYPE_MAX + 1 )
 
 enum { PCTB_CORPUS, PCTB_NEGCORPUS, PCTB_TICK100, PCTB_BIG1E8, PCTB_FINE100, PCTB_PEG,
        PCTB_FLATPOS, PCTB_FLATNEG, PCTB_STEPFLAT, PCTB_ZERO, PCTB_ALT, PCTB_EPS, PCTB_LONG,
@@ -1186,6 +1186,7 @@ static const struct { TA_FuncUnstId id; TA_MAType maType; } pctbUnst[] = {
    { TA_FUNC_UNST_EMA,  TA_MAType_TEMA  }, { TA_FUNC_UNST_EMA,  TA_MAType_ZLEMA },
    { TA_FUNC_UNST_KAMA, TA_MAType_KAMA  }, { TA_FUNC_UNST_T3,   TA_MAType_T3    },
    { TA_FUNC_UNST_MAMA, TA_MAType_MAMA  }, { TA_FUNC_UNST_RMA,  TA_MAType_RMA   },
+   { TA_FUNC_UNST_VIDYA, TA_MAType_VIDYA },
 };
 #define NB_PCTB_UNST ((int)(sizeof(pctbUnst)/sizeof(pctbUnst[0])))
 
@@ -1245,18 +1246,18 @@ static ErrorNumber test_pctb_all( void )
 {
    static const struct { const char *leg; int want; const int *got; } cov[] = {
       { "golden exact",            616, &g_pctbGoldenCmp   },
-      { "composition",        58592010, &g_pctbDiffCmp     },
-      { "zero width",          8659036, &g_pctbDiffZero    },
-      { "NaN and Inf input",     76868, &g_pctbNanCmp      },
-      { "float tier",            25912, &g_pctbFloatCmp    },
-      { "author's identity",    936174, &g_pctbIdentCmp    },
+      { "composition",        62497933, &g_pctbDiffCmp     },
+      { "zero width",          9221010, &g_pctbDiffZero    },
+      { "NaN and Inf input",     82868, &g_pctbNanCmp      },
+      { "float tier",            27832, &g_pctbFloatCmp    },
+      { "author's identity",    1003458, &g_pctbIdentCmp    },
       { "band crossing",           502, &g_pctbCrossCmp    },
-      { "lookback",               2530, &g_pctbLookbackCmp },
-      { "in-place",             996400, &g_pctbAliasCmp    },
-      { "anchor",               657436, &g_pctbAnchorCmp   },
+      { "lookback",               2710, &g_pctbLookbackCmp },
+      { "in-place",             1066162, &g_pctbAliasCmp    },
+      { "anchor",               705744, &g_pctbAnchorCmp   },
       { "parameters",             1194, &g_pctbParamCmp    },
-      { "degenerate",            78269, &g_pctbDegenCmp    },
-      { "sub-ulp width",           490, &g_pctbSubUlpCmp   },
+      { "degenerate",            84434, &g_pctbDegenCmp    },
+      { "sub-ulp width",           530, &g_pctbSubUlpCmp   },
       { "stream",                47696, &g_pctbStreamCmp   },
       { "stream near 1e15",         49, &g_pctbStreamHuge  },
    };
@@ -2213,11 +2214,11 @@ static ErrorNumber test_pctb_params( void )
       {     20, INFINITY,      2.0,   0, 0 }, {     20,      2.0, INFINITY,   0, 0 },
       {     20,-INFINITY,      2.0,   0, 0 }, {     20,      2.0,-INFINITY,   0, 0 },
       {     20,      NAN,      2.0,   0, 0 }, {     20,      2.0,      NAN,   0, 0 },
-      {     20,      2.0,      2.0,  -1, 0 }, {     20,      2.0,      2.0,  14, 0 },
+      {     20,      2.0,      2.0,  -1, 0 }, {     20,  2.0,  2.0, TA_MATYPE_MAX + 1, 0 },
       {     20,      2.0,      2.0, 100, 0 },
       {      2,      2.0,      2.0,   0, 1 }, { 100000,      2.0,      2.0,   0, 1 },
       {     20, TA_REAL_MAX, TA_REAL_MIN, 1, 1 }, {     20, TA_REAL_MIN, TA_REAL_MAX, 1, 1 },
-      {     20,      2.0,      2.0,  13, 1 },
+      {     20,      2.0,      2.0, TA_MATYPE_MAX, 1 },
    };
    const int nbV = (int)(sizeof(v)/sizeof(v[0]));
    TA_Integer beg, nb, begW, nbW;

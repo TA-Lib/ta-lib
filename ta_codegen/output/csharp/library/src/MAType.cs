@@ -67,6 +67,8 @@ public enum MAType
     ZLEMA = 12,
     /// <summary>The <c>TA_MAType_RMA</c> moving average.</summary>
     RMA = 13,
+    /// <summary>The <c>TA_MAType_VIDYA</c> moving average.</summary>
+    VIDYA = 14,
 }
 
 /// <summary>Companion constants for <see cref="MAType"/>.</summary>
@@ -79,5 +81,5 @@ internal static class MATypes
 
     /// <summary>Highest value <see cref="MAType"/> defines. Grows when a
     /// member is appended.</summary>
-    public const int Max = 13;
+    public const int Max = 14;
 }

@@ -24,14 +24,14 @@ enum FuncUnstId {
     HT_DCPERIOD, HT_DCPHASE, HT_PHASOR, HT_SINE, HT_TRENDLINE, HT_TRENDMODE,
     UNUSED_12, KAMA, MAMA, UNUSED_15, MINUS_DI, MINUS_DM,
     NATR, PLUS_DI, PLUS_DM, RSI, UNUSED_22, T3,
-    RMA, HA, RVI, FRAMA, MCGD,
+    RMA, HA, RVI, FRAMA, MCGD, VIDYA,
     ALL;
-    static final int COUNT = 29;
+    static final int COUNT = 30;
     int value() { return this == ALL ? 65535 : ordinal(); }
 }
 
 enum MAType {
-    SMA, EMA, WMA, DEMA, TEMA, TRIMA, KAMA, MAMA, T3, HMA, DISABLED, DEFAULT, ZLEMA, RMA;
+    SMA, EMA, WMA, DEMA, TEMA, TRIMA, KAMA, MAMA, T3, HMA, DISABLED, DEFAULT, ZLEMA, RMA, VIDYA;
 }
 
 enum RangeType {
@@ -8389,7 +8389,7 @@ class Core {
         *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInMAType Moving-average type used for both MAs (default 1 = EMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA;
         *        {@code MAType.DEFAULT} selects the default).
         * @return The lookback, or {@code -1} if a parameter is out of range.
         */
@@ -8852,7 +8852,7 @@ class Core {
         *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInMAType Moving-average type used for both MAs (default 1 = EMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA;
         *        {@code MAType.DEFAULT} selects the default).
         * @param outReal Fast MA minus slow MA. Must hold at least
         *        {@code endIdx - max(startIdx, apoLookback(...)) + 1} values, the count the
@@ -8929,7 +8929,7 @@ class Core {
         *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInMAType Moving-average type used for both MAs (default 1 = EMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA;
         *        {@code MAType.DEFAULT} selects the default).
         * @param outReal Fast MA minus slow MA. Must hold at least
         *        {@code endIdx - max(startIdx, apoLookback(...)) + 1} values, the count the
@@ -14724,7 +14724,7 @@ class Core {
         *        (default 2; {@link Core#REAL_DEFAULT} selects the default).
         * @param optInMAType Moving-average type for the middle band (default 0 =
         *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA;
         *        {@code MAType.DEFAULT} selects the default).
         * @return The lookback, or {@code -1} if a parameter is out of range.
         */
@@ -15328,7 +15328,7 @@ class Core {
         *        (default 2; {@link Core#REAL_DEFAULT} selects the default).
         * @param optInMAType Moving-average type for the middle band (default 0 =
         *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA;
         *        {@code MAType.DEFAULT} selects the default).
         * @param outRealUpperBand Middle band plus nbDevUp standard deviations. Must
         *        hold at least {@code endIdx - max(startIdx, bbandsLookback(...)) + 1}
@@ -15411,7 +15411,7 @@ class Core {
         *        (default 2; {@link Core#REAL_DEFAULT} selects the default).
         * @param optInMAType Moving-average type for the middle band (default 0 =
         *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA;
         *        {@code MAType.DEFAULT} selects the default).
         * @param outRealUpperBand Middle band plus nbDevUp standard deviations. Must
         *        hold at least {@code endIdx - max(startIdx, bbandsLookback(...)) + 1}
@@ -15948,7 +15948,7 @@ class Core {
         *        (default 2; {@link Core#REAL_DEFAULT} selects the default).
         * @param optInMAType Moving-average type for the middle band (default 0 =
         *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA;
         *        {@code MAType.DEFAULT} selects the default).
         * @return The lookback, or {@code -1} if a parameter is out of range.
         */
@@ -16488,7 +16488,7 @@ class Core {
         *        (default 2; {@link Core#REAL_DEFAULT} selects the default).
         * @param optInMAType Moving-average type for the middle band (default 0 =
         *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA;
         *        {@code MAType.DEFAULT} selects the default).
         * @param outReal Width of the bands as a percentage of the middle band. Must
         *        hold at least {@code endIdx - max(startIdx, bbwLookback(...)) + 1} values,
@@ -16571,7 +16571,7 @@ class Core {
         *        (default 2; {@link Core#REAL_DEFAULT} selects the default).
         * @param optInMAType Moving-average type for the middle band (default 0 =
         *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA;
         *        {@code MAType.DEFAULT} selects the default).
         * @param outReal Width of the bands as a percentage of the middle band. Must
         *        hold at least {@code endIdx - max(startIdx, bbwLookback(...)) + 1} values,
@@ -116872,13 +116872,13 @@ class Core {
         *        default).
         * @param optInSlowK_MAType MA type used to smooth into K (default 13 = RMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA;
         *        {@code MAType.DEFAULT} selects the default).
         * @param optInSlowD_Period Smoothing period for the D signal line (default
         *        3; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInSlowD_MAType MA type used for the D line (default 13 = RMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA;
         *        {@code MAType.DEFAULT} selects the default).
         * @return The lookback, or {@code -1} if a parameter is out of range.
         */
@@ -117091,13 +117091,13 @@ class Core {
         *        default).
         * @param optInSlowK_MAType MA type used to smooth into K (default 13 = RMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA;
         *        {@code MAType.DEFAULT} selects the default).
         * @param optInSlowD_Period Smoothing period for the D signal line (default
         *        3; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInSlowD_MAType MA type used for the D line (default 13 = RMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA;
         *        {@code MAType.DEFAULT} selects the default).
         * @param outK Raw stochastic smoothed by SlowK_Period MA. Must hold at least
         *        {@code endIdx - max(startIdx, kdjLookback(...)) + 1} values, the count the
@@ -117202,13 +117202,13 @@ class Core {
         *        default).
         * @param optInSlowK_MAType MA type used to smooth into K (default 13 = RMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA;
         *        {@code MAType.DEFAULT} selects the default).
         * @param optInSlowD_Period Smoothing period for the D signal line (default
         *        3; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInSlowD_MAType MA type used for the D line (default 13 = RMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA;
         *        {@code MAType.DEFAULT} selects the default).
         * @param outK Raw stochastic smoothed by SlowK_Period MA. Must hold at least
         *        {@code endIdx - max(startIdx, kdjLookback(...)) + 1} values, the count the
@@ -126035,6 +126035,7 @@ class Core {
      *  072426 MF,CC TA_MAType_DISABLED: period-independent identity copy (issue #93).
      *  090426 MF,CC Add ZLEMA (issue #347).
      *  090426 MF,CC Add RMA (issue #348).
+     *  092926 MF,CC Add VIDYA (issue #474).
      */
 
        /**
@@ -126048,7 +126049,7 @@ class Core {
         *        1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInMAType Which moving-average algorithm to dispatch to (default
         *        0 = SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA,
-        *        7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA;
         *        {@code MAType.DEFAULT} selects the default).
         * @return The lookback, or {@code -1} if a parameter is out of range.
         */
@@ -126103,6 +126104,9 @@ class Core {
              break;
           case RMA:
              retValue = rmaLookback(optInTimePeriod);
+             break;
+          case VIDYA:
+             retValue = vidyaLookback(optInTimePeriod, (3 * optInTimePeriod + 2) / 4);
              break;
           default:
              retValue = 0;
@@ -126258,6 +126262,15 @@ class Core {
              outNBElement.value = _xr11.count();
              retCode = RetCode.SUCCESS;
              break;
+          case VIDYA:
+             /* The one period is the EMA length; the CMO period is round(3n/4),
+              * Chande's 12:9 ratio.
+              */
+             OutRange _xr12 = vidya(startIdx, endIdx, inReal, optInTimePeriod, (3 * optInTimePeriod + 2) / 4, outReal);
+             outBegIdx.value = _xr12.begIdx();
+             outNBElement.value = _xr12.count();
+             retCode = RetCode.SUCCESS;
+             break;
           default:
              retCode = RetCode.BAD_PARAM;
              break;
@@ -126379,6 +126392,12 @@ class Core {
              outNBElement.value = _xr11.count();
              retCode = RetCode.SUCCESS;
              break;
+          case VIDYA:
+             OutRange _xr12 = vidya(startIdx, endIdx, inReal, optInTimePeriod, (3 * optInTimePeriod + 2) / 4, outReal);
+             outBegIdx.value = _xr12.begIdx();
+             outNBElement.value = _xr12.count();
+             retCode = RetCode.SUCCESS;
+             break;
           default:
              retCode = RetCode.BAD_PARAM;
              break;
@@ -126410,7 +126429,7 @@ class Core {
         *        1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInMAType Which moving-average algorithm to dispatch to (default
         *        0 = SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA,
-        *        7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA;
         *        {@code MAType.DEFAULT} selects the default).
         * @param outReal Selected moving average of the input. Must hold at least
         *        {@code endIdx - max(startIdx, maLookback(...)) + 1} values, the count the
@@ -126441,6 +126460,7 @@ class Core {
         * @see Core#hma
         * @see Core#zlema
         * @see Core#rma
+        * @see Core#vidya
         */
        public OutRange ma( int startIdx,
                            int endIdx,
@@ -126492,7 +126512,7 @@ class Core {
         *        1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInMAType Which moving-average algorithm to dispatch to (default
         *        0 = SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA,
-        *        7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA;
         *        {@code MAType.DEFAULT} selects the default).
         * @param outReal Selected moving average of the input. Must hold at least
         *        {@code endIdx - max(startIdx, maLookback(...)) + 1} values, the count the
@@ -126523,6 +126543,7 @@ class Core {
         * @see Core#hma
         * @see Core#zlema
         * @see Core#rma
+        * @see Core#vidya
         */
        public OutRange ma( int startIdx,
                            int endIdx,
@@ -126654,6 +126675,9 @@ class Core {
                 case RMA:
                    this.sub = new RmaStream((RmaStream) other.sub);
                    break;
+                case VIDYA:
+                   this.sub = new VidyaStream((VidyaStream) other.sub);
+                   break;
                 default:
                    throw new IllegalStateException("unreachable: open rejects arms without a sub-stream");
                 }
@@ -126745,6 +126769,9 @@ class Core {
              case RMA: {
                 return ((RmaStream) sp.sub).peek(inReal);
              }
+             case VIDYA: {
+                return ((VidyaStream) sp.sub).peek(inReal);
+             }
              default:
                 throw new IllegalStateException("unreachable: open rejects arms without a sub-stream");
              }
@@ -126832,6 +126859,10 @@ class Core {
           }
           case RMA: {
              sp.cur_outReal = ((RmaStream) sp.sub).update(inReal);
+             return;
+          }
+          case VIDYA: {
+             sp.cur_outReal = ((VidyaStream) sp.sub).update(inReal);
              return;
           }
           default:
@@ -126967,6 +126998,14 @@ class Core {
           }
           case RMA: {
              RmaStream sub = rmaOpenInternal(inReal, startIdx, optInTimePeriod);
+             sp.outRangeBegIdx = sub.outRangeBegIdx;
+             sp.outRangeCount = sub.outRangeCount;
+             sp.sub = sub;
+             sp.cur_outReal = sub.cur_outReal;
+             break;
+          }
+          case VIDYA: {
+             VidyaStream sub = vidyaOpenInternal(inReal, startIdx, optInTimePeriod, (3 * optInTimePeriod + 2) / 4);
              sp.outRangeBegIdx = sub.outRangeBegIdx;
              sp.outRangeCount = sub.outRangeCount;
              sp.sub = sub;
@@ -127117,6 +127156,14 @@ class Core {
              sp.cur_outReal = sub.cur_outReal;
              break;
           }
+          case VIDYA: {
+             VidyaStream sub = vidyaOpenAndFill(inReal, optInTimePeriod, (3 * optInTimePeriod + 2) / 4, outReal);
+             outBegIdx.value = sub.outRangeBegIdx;
+             outNBElement.value = sub.outRangeCount;
+             sp.sub = sub;
+             sp.cur_outReal = sub.cur_outReal;
+             break;
+          }
           default:
              return RetCode.BAD_PARAM;
           }
@@ -127234,6 +127281,12 @@ class Core {
           }
           case RMA: {
              RmaStream sub = rmaOpenAndFillInternal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+             sp.sub = sub;
+             sp.cur_outReal = sub.cur_outReal;
+             break;
+          }
+          case VIDYA: {
+             VidyaStream sub = vidyaOpenAndFillInternal(inReal, startIdx, optInTimePeriod, (3 * optInTimePeriod + 2) / 4, outBegIdx, outNBElement, outReal);
              sp.sub = sub;
              sp.cur_outReal = sub.cur_outReal;
              break;
@@ -127378,6 +127431,8 @@ class Core {
              return zlemaStepTape((ZlemaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
           case RMA:
              return rmaStepTape((RmaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
+          case VIDYA:
+             return vidyaStepTape((VidyaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
           default:
              throw new IllegalStateException("unreachable: open rejects arms without a sub-stream");
           }
@@ -127424,6 +127479,8 @@ class Core {
              return zlemaPeekTape((ZlemaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
           case RMA:
              return rmaPeekTape((RmaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
+          case VIDYA:
+             return vidyaPeekTape((VidyaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
           default:
              throw new IllegalStateException("unreachable: open rejects arms without a sub-stream");
           }
@@ -127459,6 +127516,8 @@ class Core {
              return zlemaTapeDetach((ZlemaStream) sp.sub);
           case RMA:
              return rmaTapeDetach((RmaStream) sp.sub);
+          case VIDYA:
+             return vidyaTapeDetach((VidyaStream) sp.sub);
           default:
              return 0;
           }
@@ -128586,19 +128645,19 @@ class Core {
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param optInFastMAType MA type for the fast MA (default 0 = SMA; values:
         *        0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-        *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA; {@code MAType.DEFAULT} selects
-        *        the default).
+        *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA;
+        *        {@code MAType.DEFAULT} selects the default).
         * @param optInSlowPeriod Period of the slow MA (default 26; range 2..100000;
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param optInSlowMAType MA type for the slow MA (default 0 = SMA; values:
         *        0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-        *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA; {@code MAType.DEFAULT} selects
-        *        the default).
+        *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA;
+        *        {@code MAType.DEFAULT} selects the default).
         * @param optInSignalPeriod Period of the signal-line MA (default 9; range
         *        1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInSignalMAType MA type for the signal line (default 0 = SMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA;
         *        {@code MAType.DEFAULT} selects the default).
         * @return The lookback, or {@code -1} if a parameter is out of range.
         */
@@ -128951,19 +129010,19 @@ class Core {
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param optInFastMAType MA type for the fast MA (default 0 = SMA; values:
         *        0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-        *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA; {@code MAType.DEFAULT} selects
-        *        the default).
+        *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA;
+        *        {@code MAType.DEFAULT} selects the default).
         * @param optInSlowPeriod Period of the slow MA (default 26; range 2..100000;
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param optInSlowMAType MA type for the slow MA (default 0 = SMA; values:
         *        0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-        *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA; {@code MAType.DEFAULT} selects
-        *        the default).
+        *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA;
+        *        {@code MAType.DEFAULT} selects the default).
         * @param optInSignalPeriod Period of the signal-line MA (default 9; range
         *        1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInSignalMAType MA type for the signal line (default 0 = SMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA;
         *        {@code MAType.DEFAULT} selects the default).
         * @param outMACD MACD line: fast MA minus slow MA. Must hold at least
         *        {@code endIdx - max(startIdx, macdextLookback(...)) + 1} values, the count
@@ -129056,19 +129115,19 @@ class Core {
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param optInFastMAType MA type for the fast MA (default 0 = SMA; values:
         *        0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-        *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA; {@code MAType.DEFAULT} selects
-        *        the default).
+        *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA;
+        *        {@code MAType.DEFAULT} selects the default).
         * @param optInSlowPeriod Period of the slow MA (default 26; range 2..100000;
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param optInSlowMAType MA type for the slow MA (default 0 = SMA; values:
         *        0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-        *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA; {@code MAType.DEFAULT} selects
-        *        the default).
+        *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA;
+        *        {@code MAType.DEFAULT} selects the default).
         * @param optInSignalPeriod Period of the signal-line MA (default 9; range
         *        1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInSignalMAType MA type for the signal line (default 0 = SMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA;
         *        {@code MAType.DEFAULT} selects the default).
         * @param outMACD MACD line: fast MA minus slow MA. Must hold at least
         *        {@code endIdx - max(startIdx, macdextLookback(...)) + 1} values, the count
@@ -134582,8 +134641,8 @@ class Core {
         *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInMAType Moving-average type applied (default 0 = SMA; values:
         *        0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-        *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA; {@code MAType.DEFAULT} selects
-        *        the default).
+        *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA;
+        *        {@code MAType.DEFAULT} selects the default).
         * @return The lookback, or {@code -1} if a parameter is out of range.
         */
        public int mavpLookback( int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
@@ -135071,8 +135130,8 @@ class Core {
         *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInMAType Moving-average type applied (default 0 = SMA; values:
         *        0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-        *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA; {@code MAType.DEFAULT} selects
-        *        the default).
+        *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA;
+        *        {@code MAType.DEFAULT} selects the default).
         * @param outReal variable-period moving average. Must hold at least
         *        {@code endIdx - max(startIdx, mavpLookback(...)) + 1} values, the count
         *        the call produces (none when that is not positive).
@@ -135150,8 +135209,8 @@ class Core {
         *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInMAType Moving-average type applied (default 0 = SMA; values:
         *        0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-        *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA; {@code MAType.DEFAULT} selects
-        *        the default).
+        *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA;
+        *        {@code MAType.DEFAULT} selects the default).
         * @param outReal variable-period moving average. Must hold at least
         *        {@code endIdx - max(startIdx, mavpLookback(...)) + 1} values, the count
         *        the call produces (none when that is not positive).
@@ -151713,7 +151772,7 @@ class Core {
         *        (default 2; {@link Core#REAL_DEFAULT} selects the default).
         * @param optInMAType Moving-average type for the middle band (default 0 =
         *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA;
         *        {@code MAType.DEFAULT} selects the default).
         * @return The lookback, or {@code -1} if a parameter is out of range.
         */
@@ -152286,7 +152345,7 @@ class Core {
         *        (default 2; {@link Core#REAL_DEFAULT} selects the default).
         * @param optInMAType Moving-average type for the middle band (default 0 =
         *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA;
         *        {@code MAType.DEFAULT} selects the default).
         * @param outReal Position of the input between the lower band (0) and the
         *        upper band (1) Must hold at least
@@ -152368,7 +152427,7 @@ class Core {
         *        (default 2; {@link Core#REAL_DEFAULT} selects the default).
         * @param optInMAType Moving-average type for the middle band (default 0 =
         *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA;
         *        {@code MAType.DEFAULT} selects the default).
         * @param outReal Position of the input between the lower band (0) and the
         *        upper band (1) Must hold at least
@@ -157390,7 +157449,7 @@ class Core {
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param optInMAType Moving average type used for both MAs (default 1 = EMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA;
         *        {@code MAType.DEFAULT} selects the default).
         * @return The lookback, or {@code -1} if a parameter is out of range.
         */
@@ -157976,7 +158035,7 @@ class Core {
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param optInMAType Moving average type used for both MAs (default 1 = EMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA;
         *        {@code MAType.DEFAULT} selects the default).
         * @param outReal PPO value in percent. Must hold at least
         *        {@code endIdx - max(startIdx, ppoLookback(...)) + 1} values, the count the
@@ -158052,7 +158111,7 @@ class Core {
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param optInMAType Moving average type used for both MAs (default 1 = EMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA;
         *        {@code MAType.DEFAULT} selects the default).
         * @param outReal PPO value in percent. Must hold at least
         *        {@code endIdx - max(startIdx, ppoLookback(...)) + 1} values, the count the
@@ -159172,7 +159231,7 @@ class Core {
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param optInMAType Moving average type used for both MAs (default 1 = EMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA;
         *        {@code MAType.DEFAULT} selects the default).
         * @return The lookback, or {@code -1} if a parameter is out of range.
         */
@@ -159760,7 +159819,7 @@ class Core {
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param optInMAType Moving average type used for both MAs (default 1 = EMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA;
         *        {@code MAType.DEFAULT} selects the default).
         * @param outReal PVO value in percent. Must hold at least
         *        {@code endIdx - max(startIdx, pvoLookback(...)) + 1} values, the count the
@@ -159838,7 +159897,7 @@ class Core {
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param optInMAType Moving average type used for both MAs (default 1 = EMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA;
         *        {@code MAType.DEFAULT} selects the default).
         * @param outReal PVO value in percent. Must hold at least
         *        {@code endIdx - max(startIdx, pvoLookback(...)) + 1} values, the count the
@@ -176539,14 +176598,14 @@ class Core {
         *        default).
         * @param optInSlowK_MAType MA type used to smooth into SlowK (default 0 =
         *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA;
         *        {@code MAType.DEFAULT} selects the default).
         * @param optInSlowD_Period Smoothing period for the SlowD signal line
         *        (default 3; range 1..100000; {@code Integer.MIN_VALUE} selects the
         *        default).
         * @param optInSlowD_MAType MA type used for the SlowD line (default 0 = SMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA;
         *        {@code MAType.DEFAULT} selects the default).
         * @return The lookback, or {@code -1} if a parameter is out of range.
         */
@@ -177000,14 +177059,14 @@ class Core {
         *        default).
         * @param optInSlowK_MAType MA type used to smooth into SlowK (default 0 =
         *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA;
         *        {@code MAType.DEFAULT} selects the default).
         * @param optInSlowD_Period Smoothing period for the SlowD signal line
         *        (default 3; range 1..100000; {@code Integer.MIN_VALUE} selects the
         *        default).
         * @param optInSlowD_MAType MA type used for the SlowD line (default 0 = SMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA;
         *        {@code MAType.DEFAULT} selects the default).
         * @param outSlowK Raw FastK smoothed by SlowK_Period MA. Must hold at least
         *        {@code endIdx - max(startIdx, stochLookback(...)) + 1} values, the count
@@ -177098,14 +177157,14 @@ class Core {
         *        default).
         * @param optInSlowK_MAType MA type used to smooth into SlowK (default 0 =
         *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA;
         *        {@code MAType.DEFAULT} selects the default).
         * @param optInSlowD_Period Smoothing period for the SlowD signal line
         *        (default 3; range 1..100000; {@code Integer.MIN_VALUE} selects the
         *        default).
         * @param optInSlowD_MAType MA type used for the SlowD line (default 0 = SMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA;
         *        {@code MAType.DEFAULT} selects the default).
         * @param outSlowK Raw FastK smoothed by SlowK_Period MA. Must hold at least
         *        {@code endIdx - max(startIdx, stochLookback(...)) + 1} values, the count
@@ -177920,8 +177979,8 @@ class Core {
         *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInFastD_MAType Moving-average type used to smooth Fast-D
         *        (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA,
-        *        6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
-        *        {@code MAType.DEFAULT} selects the default).
+        *        6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA,
+        *        14=VIDYA; {@code MAType.DEFAULT} selects the default).
         * @return The lookback, or {@code -1} if a parameter is out of range.
         */
        public int stochfLookback( int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
@@ -178326,8 +178385,8 @@ class Core {
         *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInFastD_MAType Moving-average type used to smooth Fast-D
         *        (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA,
-        *        6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
-        *        {@code MAType.DEFAULT} selects the default).
+        *        6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA,
+        *        14=VIDYA; {@code MAType.DEFAULT} selects the default).
         * @param outFastK Raw %K stochastic line. Must hold at least
         *        {@code endIdx - max(startIdx, stochfLookback(...)) + 1} values, the count
         *        the call produces (none when that is not positive).
@@ -178413,8 +178472,8 @@ class Core {
         *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInFastD_MAType Moving-average type used to smooth Fast-D
         *        (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA,
-        *        6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
-        *        {@code MAType.DEFAULT} selects the default).
+        *        6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA,
+        *        14=VIDYA; {@code MAType.DEFAULT} selects the default).
         * @param outFastK Raw %K stochastic line. Must hold at least
         *        {@code endIdx - max(startIdx, stochfLookback(...)) + 1} values, the count
         *        the call produces (none when that is not positive).
@@ -179180,7 +179239,7 @@ class Core {
         *        1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInFastD_MAType MA type used to smooth %D (default 0 = SMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA;
         *        {@code MAType.DEFAULT} selects the default).
         * @return The lookback, or {@code -1} if a parameter is out of range.
         */
@@ -179429,7 +179488,7 @@ class Core {
         *        1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInFastD_MAType MA type used to smooth %D (default 0 = SMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA;
         *        {@code MAType.DEFAULT} selects the default).
         * @param outFastK Unsmoothed stochastic of the RSI (raw %K) Must hold at
         *        least {@code endIdx - max(startIdx, stochrsiLookback(...)) + 1} values,
@@ -179515,7 +179574,7 @@ class Core {
         *        1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInFastD_MAType MA type used to smooth %D (default 0 = SMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA;
         *        {@code MAType.DEFAULT} selects the default).
         * @param outFastK Unsmoothed stochastic of the RSI (raw %K) Must hold at
         *        least {@code endIdx - max(startIdx, stochrsiLookback(...)) + 1} values,
@@ -193676,6 +193735,1231 @@ class Core {
      *
      *  Initial  Name/description
      *  -------------------------------------------------------------------
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
+     *
+     * Change history:
+     *
+     *  MMDDYY BY     Description
+     *  -------------------------------------------------------------------
+     *  092926 MF,CC  First version (issue #474).
+     */
+
+       /**
+        * Number of leading input bars {@link Core#vidya} consumes before it can
+        * produce its first value.
+        * <p>Equivalently, the index of the first bar with a value when the whole
+        * series is requested. Feed at least {@code lookback + 1} bars to get any
+        * output.
+        * <p>This function is recursive, so the result also includes this
+        * {@code Core}'s unstable-period setting — which is why it is an instance
+        * method.
+        *
+        * @param optInTimePeriod The EMA length whose alpha the CMO scales (default
+        *        12; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInCMOPeriod Number of trailing price changes in the CMO (default
+        *        9; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @return The lookback, or {@code -1} if a parameter is out of range.
+        */
+       public int vidyaLookback( int optInTimePeriod, int optInCMOPeriod )
+       {
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 12;
+          } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
+             return -1;
+          }
+          if( optInCMOPeriod == Integer.MIN_VALUE ) {
+             optInCMOPeriod = 9;
+          } else if( optInCMOPeriod < 2 || optInCMOPeriod > 100000 ) {
+             return -1;
+          }
+          if( optInTimePeriod == 1 ) {
+             return this.unstablePeriod[FuncUnstId.VIDYA.ordinal()] ;
+          }
+          return optInCMOPeriod + this.unstablePeriod[FuncUnstId.VIDYA.ordinal()] ;
+
+       }
+       RetCode vidyaImpl( int startIdx,
+                          int endIdx,
+                          double inReal[],
+                          int optInTimePeriod,
+                          int optInCMOPeriod,
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
+       {
+          int outIdx = 0;
+          int today = 0;
+          int trailingIdx = 0;
+          int lookbackTotal = 0;
+          int i = 0;
+          int nullRun = 0;
+          double upSum = 0;
+          double downSum = 0;
+          double sum = 0;
+          double diff = 0;
+          double tempReal = 0;
+          double prevValue = 0;
+          double trailingValue = 0;
+          double alpha = 0;
+          double k = 0;
+          double prevVIDYA = 0;
+          if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX ;
+          }
+          if( (endIdx < 0) || (endIdx > INDEX_MAX) || (endIdx < startIdx)) {
+             return RetCode.OUT_OF_RANGE_END_INDEX ;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 12;
+          } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInCMOPeriod == Integer.MIN_VALUE ) {
+             optInCMOPeriod = 9;
+          } else if( optInCMOPeriod < 2 || optInCMOPeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          outBegIdx.value = 0;
+          outNBElement.value = 0;
+          /* No smoothing at period 1: the output is a copy of the input, as MA gives
+           * for every MAType. The unstable period still delays the first output.
+           */
+          if( optInTimePeriod == 1 ) {
+             lookbackTotal = this.unstablePeriod[FuncUnstId.VIDYA.ordinal()];
+             if( startIdx < lookbackTotal ) {
+                startIdx = lookbackTotal;
+             }
+             if( startIdx > endIdx ) {
+                return RetCode.SUCCESS ;
+             }
+             outBegIdx.value = startIdx;
+             outIdx = 0;
+             today = startIdx;
+             while( today <= endIdx ) {
+                outReal[outIdx++] = inReal[today++];
+             }
+             outNBElement.value = outIdx;
+             return RetCode.SUCCESS ;
+          }
+          lookbackTotal = vidyaLookback(optInTimePeriod, optInCMOPeriod);
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             return RetCode.SUCCESS ;
+          }
+          alpha = 2.0 / (double)(optInTimePeriod + 1);
+          /* The CMO below is TA_CMOU's loop, spelling and nullRun reset included, so
+           * that from the first full window on VIDYA equals the composite of TA_CMOU
+           * bit for bit. The recursion is seeded on the window's first price and
+           * steps through the warm-up with the CMO of the changes seen so far. The
+           * unstable period enters it that many bars before startIdx.
+           */
+          today = startIdx - lookbackTotal;
+          trailingIdx = today + 1;
+          prevValue = inReal[today];
+          trailingValue = prevValue;
+          prevVIDYA = prevValue;
+          upSum = 0.0;
+          downSum = 0.0;
+          nullRun = 0;
+          for( i = 0; i < optInCMOPeriod; i += 1 ) {
+             today += 1;
+             tempReal = inReal[today];
+             diff = tempReal - prevValue;
+             prevValue = tempReal;
+             if( diff > 0.0 ) {
+                upSum += diff;
+             } else if( diff < 0.0 ) {
+                downSum -= diff;
+             }
+             if( diff == 0.0 ) {
+                nullRun += 1;
+             } else {
+                nullRun = 0;
+             }
+             sum = upSum + downSum;
+             if( sum > 0.0 ) {
+                k = alpha * (Math.abs(100.0 * (upSum - downSum) / sum) / 100.0);
+             } else {
+                k = 0.0;
+             }
+             prevVIDYA = Math.fma(prevValue - prevVIDYA, k, prevVIDYA);
+          }
+          today += 1;
+          /* Skip the unstable period: the whole computation, nothing written. */
+          while( today <= startIdx ) {
+             tempReal = inReal[trailingIdx];
+             diff = tempReal - trailingValue;
+             trailingValue = tempReal;
+             trailingIdx += 1;
+             if( diff > 0.0 ) {
+                upSum -= diff;
+             } else if( diff < 0.0 ) {
+                downSum += diff;
+             }
+             tempReal = inReal[today];
+             diff = tempReal - prevValue;
+             prevValue = tempReal;
+             if( diff > 0.0 ) {
+                upSum += diff;
+             } else if( diff < 0.0 ) {
+                downSum -= diff;
+             }
+             if( diff == 0.0 ) {
+                nullRun += 1;
+             } else {
+                nullRun = 0;
+             }
+             if( nullRun >= optInCMOPeriod ) {
+                nullRun = optInCMOPeriod;
+                upSum = 0.0;
+                downSum = 0.0;
+             }
+             sum = upSum + downSum;
+             if( sum > 0.0 ) {
+                k = alpha * (Math.abs(100.0 * (upSum - downSum) / sum) / 100.0);
+             } else {
+                k = 0.0;
+             }
+             prevVIDYA = Math.fma(prevValue - prevVIDYA, k, prevVIDYA);
+             today += 1;
+          }
+          outReal[0] = prevVIDYA;
+          outIdx = 1;
+          while( today <= endIdx ) {
+             tempReal = inReal[trailingIdx];
+             diff = tempReal - trailingValue;
+             trailingValue = tempReal;
+             trailingIdx += 1;
+             if( diff > 0.0 ) {
+                upSum -= diff;
+             } else if( diff < 0.0 ) {
+                downSum += diff;
+             }
+             tempReal = inReal[today];
+             diff = tempReal - prevValue;
+             prevValue = tempReal;
+             if( diff > 0.0 ) {
+                upSum += diff;
+             } else if( diff < 0.0 ) {
+                downSum -= diff;
+             }
+             if( diff == 0.0 ) {
+                nullRun += 1;
+             } else {
+                nullRun = 0;
+             }
+             if( nullRun >= optInCMOPeriod ) {
+                nullRun = optInCMOPeriod;
+                upSum = 0.0;
+                downSum = 0.0;
+             }
+             sum = upSum + downSum;
+             if( sum > 0.0 ) {
+                k = alpha * (Math.abs(100.0 * (upSum - downSum) / sum) / 100.0);
+             } else {
+                k = 0.0;
+             }
+             prevVIDYA = Math.fma(prevValue - prevVIDYA, k, prevVIDYA);
+             outReal[outIdx++] = prevVIDYA;
+             today += 1;
+          }
+          outBegIdx.value = startIdx;
+          outNBElement.value = outIdx;
+          return RetCode.SUCCESS ;
+       }
+       RetCode vidyaImpl( int startIdx,
+                          int endIdx,
+                          float inReal[],
+                          int optInTimePeriod,
+                          int optInCMOPeriod,
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
+       {
+          int outIdx = 0;
+          int today = 0;
+          int trailingIdx = 0;
+          int lookbackTotal = 0;
+          int i = 0;
+          int nullRun = 0;
+          double upSum = 0;
+          double downSum = 0;
+          double sum = 0;
+          double diff = 0;
+          double tempReal = 0;
+          double prevValue = 0;
+          double trailingValue = 0;
+          double alpha = 0;
+          double k = 0;
+          double prevVIDYA = 0;
+          if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX ;
+          }
+          if( (endIdx < 0) || (endIdx > INDEX_MAX) || (endIdx < startIdx)) {
+             return RetCode.OUT_OF_RANGE_END_INDEX ;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 12;
+          } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInCMOPeriod == Integer.MIN_VALUE ) {
+             optInCMOPeriod = 9;
+          } else if( optInCMOPeriod < 2 || optInCMOPeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          outBegIdx.value = 0;
+          outNBElement.value = 0;
+          if( optInTimePeriod == 1 ) {
+             lookbackTotal = this.unstablePeriod[FuncUnstId.VIDYA.ordinal()];
+             if( startIdx < lookbackTotal ) {
+                startIdx = lookbackTotal;
+             }
+             if( startIdx > endIdx ) {
+                return RetCode.SUCCESS ;
+             }
+             outBegIdx.value = startIdx;
+             outIdx = 0;
+             today = startIdx;
+             while( today <= endIdx ) {
+                outReal[outIdx++] = (double)inReal[today++];
+             }
+             outNBElement.value = outIdx;
+             return RetCode.SUCCESS ;
+          }
+          lookbackTotal = vidyaLookback(optInTimePeriod, optInCMOPeriod);
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             return RetCode.SUCCESS ;
+          }
+          alpha = 2.0 / (double)(optInTimePeriod + 1);
+          today = startIdx - lookbackTotal;
+          trailingIdx = today + 1;
+          prevValue = (double)inReal[today];
+          trailingValue = prevValue;
+          prevVIDYA = prevValue;
+          upSum = 0.0;
+          downSum = 0.0;
+          nullRun = 0;
+          for( i = 0; i < optInCMOPeriod; i += 1 ) {
+             today += 1;
+             tempReal = (double)inReal[today];
+             diff = tempReal - prevValue;
+             prevValue = tempReal;
+             if( diff > 0.0 ) {
+                upSum += diff;
+             } else if( diff < 0.0 ) {
+                downSum -= diff;
+             }
+             if( diff == 0.0 ) {
+                nullRun += 1;
+             } else {
+                nullRun = 0;
+             }
+             sum = upSum + downSum;
+             if( sum > 0.0 ) {
+                k = alpha * (Math.abs(100.0 * (upSum - downSum) / sum) / 100.0);
+             } else {
+                k = 0.0;
+             }
+             prevVIDYA = Math.fma(prevValue - prevVIDYA, k, prevVIDYA);
+          }
+          today += 1;
+          while( today <= startIdx ) {
+             tempReal = (double)inReal[trailingIdx];
+             diff = tempReal - trailingValue;
+             trailingValue = tempReal;
+             trailingIdx += 1;
+             if( diff > 0.0 ) {
+                upSum -= diff;
+             } else if( diff < 0.0 ) {
+                downSum += diff;
+             }
+             tempReal = (double)inReal[today];
+             diff = tempReal - prevValue;
+             prevValue = tempReal;
+             if( diff > 0.0 ) {
+                upSum += diff;
+             } else if( diff < 0.0 ) {
+                downSum -= diff;
+             }
+             if( diff == 0.0 ) {
+                nullRun += 1;
+             } else {
+                nullRun = 0;
+             }
+             if( nullRun >= optInCMOPeriod ) {
+                nullRun = optInCMOPeriod;
+                upSum = 0.0;
+                downSum = 0.0;
+             }
+             sum = upSum + downSum;
+             if( sum > 0.0 ) {
+                k = alpha * (Math.abs(100.0 * (upSum - downSum) / sum) / 100.0);
+             } else {
+                k = 0.0;
+             }
+             prevVIDYA = Math.fma(prevValue - prevVIDYA, k, prevVIDYA);
+             today += 1;
+          }
+          outReal[0] = prevVIDYA;
+          outIdx = 1;
+          while( today <= endIdx ) {
+             tempReal = (double)inReal[trailingIdx];
+             diff = tempReal - trailingValue;
+             trailingValue = tempReal;
+             trailingIdx += 1;
+             if( diff > 0.0 ) {
+                upSum -= diff;
+             } else if( diff < 0.0 ) {
+                downSum += diff;
+             }
+             tempReal = (double)inReal[today];
+             diff = tempReal - prevValue;
+             prevValue = tempReal;
+             if( diff > 0.0 ) {
+                upSum += diff;
+             } else if( diff < 0.0 ) {
+                downSum -= diff;
+             }
+             if( diff == 0.0 ) {
+                nullRun += 1;
+             } else {
+                nullRun = 0;
+             }
+             if( nullRun >= optInCMOPeriod ) {
+                nullRun = optInCMOPeriod;
+                upSum = 0.0;
+                downSum = 0.0;
+             }
+             sum = upSum + downSum;
+             if( sum > 0.0 ) {
+                k = alpha * (Math.abs(100.0 * (upSum - downSum) / sum) / 100.0);
+             } else {
+                k = 0.0;
+             }
+             prevVIDYA = Math.fma(prevValue - prevVIDYA, k, prevVIDYA);
+             outReal[outIdx++] = prevVIDYA;
+             today += 1;
+          }
+          outBegIdx.value = startIdx;
+          outNBElement.value = outIdx;
+          return RetCode.SUCCESS ;
+       }
+       /**
+        * Variable Index Dynamic Average (Tushar Chande): an EMA whose smoothing
+        * factor is scaled every bar by the absolute value of the Chande Momentum
+        * Oscillator. It follows the price like an EMA in a one-way move and stops
+        * moving when up and down moves balance, so it flattens out in
+        * consolidations.
+        * <p>Formula and more info at <a
+        * href="https://ta-lib.org/functions/vidya">ta-lib.org/functions/vidya</a>.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>A period of 1 performs no smoothing: the output is a copy of the input, consistent with {@code MA(period=1)} for every MAType.</li>
+        * <li>Chande's 1992 article drives the same step with a ratio of standard deviations; this is his 1995 form, driven by the CMO.</li>
+        * <li>The CMO is Chande's unsmoothed one. An implementation driven by a Wilder-smoothed CMO ({@code CMO}) computes a different line that does not converge to this one.</li>
+        * <li>Being recursive, an output depends on how much history precedes it, and the seed's influence decays more slowly the closer the CMO stays to 0. Implementations that seed differently agree with this one only once that influence has decayed.</li>
+        * <li>As an {@code MA} type, the one period is n and the CMO period is (3n + 2) / 4 in integer division, Chande's 12:9 ratio.</li>
+        * </ul>
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are; nothing
+        * outside that range is touched, and the library never pads with NaN. A
+        * valid range that ends before {@link Core#vidyaLookback} is a <b>success
+        * with no values</b> ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inReal Data on which to compute the average.
+        * @param optInTimePeriod The EMA length whose alpha the CMO scales (default
+        *        12; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInCMOPeriod Number of trailing price changes in the CMO (default
+        *        9; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param outReal Variable Index Dynamic Average line. Must hold at least
+        *        {@code endIdx - max(startIdx, vidyaLookback(...)) + 1} values, the count
+        *        the call produces (none when that is not positive).
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#INDEX_MAX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. An output this function documents as declinable is the one
+        *        exception: {@code null} is how you decline it. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
+        *
+        * @see Core#cmou
+        * @see Core#ema
+        * @see Core#kama
+        * @see Core#ma
+        */
+       public OutRange vidya( int startIdx,
+                              int endIdx,
+                              double inReal[],
+                              int optInTimePeriod,
+                              int optInCMOPeriod,
+                              double outReal[] )
+       {
+          requireIndexRange("VIDYA", startIdx, endIdx);
+          int guardStart = clampedStart("VIDYA", startIdx, vidyaLookback(optInTimePeriod, optInCMOPeriod));
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("VIDYA", "inReal", inReal, guardInLen);
+          requireLength("VIDYA", "outReal", outReal, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = vidyaImpl(startIdx, endIdx, inReal, optInTimePeriod, optInCMOPeriod, outBegIdx, outNBElement, outReal);
+          if( retCode != RetCode.SUCCESS ) {
+             throw failure("VIDYA", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+       /**
+        * Variable Index Dynamic Average (Tushar Chande): an EMA whose smoothing
+        * factor is scaled every bar by the absolute value of the Chande Momentum
+        * Oscillator. It follows the price like an EMA in a one-way move and stops
+        * moving when up and down moves balance, so it flattens out in
+        * consolidations.
+        * <p>Formula and more info at <a
+        * href="https://ta-lib.org/functions/vidya">ta-lib.org/functions/vidya</a>.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>A period of 1 performs no smoothing: the output is a copy of the input, consistent with {@code MA(period=1)} for every MAType.</li>
+        * <li>Chande's 1992 article drives the same step with a ratio of standard deviations; this is his 1995 form, driven by the CMO.</li>
+        * <li>The CMO is Chande's unsmoothed one. An implementation driven by a Wilder-smoothed CMO ({@code CMO}) computes a different line that does not converge to this one.</li>
+        * <li>Being recursive, an output depends on how much history precedes it, and the seed's influence decays more slowly the closer the CMO stays to 0. Implementations that seed differently agree with this one only once that influence has decayed.</li>
+        * <li>As an {@code MA} type, the one period is n and the CMO period is (3n + 2) / 4 in integer division, Chande's 12:9 ratio.</li>
+        * </ul>
+        * <p>This is the {@code float[]} overload. The arithmetic is performed in
+        * {@code double} before being written to the {@code double[]} output, so a
+        * result beyond {@code float} range is still representable.
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are; nothing
+        * outside that range is touched, and the library never pads with NaN. A
+        * valid range that ends before {@link Core#vidyaLookback} is a <b>success
+        * with no values</b> ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inReal Data on which to compute the average.
+        * @param optInTimePeriod The EMA length whose alpha the CMO scales (default
+        *        12; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInCMOPeriod Number of trailing price changes in the CMO (default
+        *        9; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param outReal Variable Index Dynamic Average line. Must hold at least
+        *        {@code endIdx - max(startIdx, vidyaLookback(...)) + 1} values, the count
+        *        the call produces (none when that is not positive).
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#INDEX_MAX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. An output this function documents as declinable is the one
+        *        exception: {@code null} is how you decline it. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
+        *
+        * @see Core#cmou
+        * @see Core#ema
+        * @see Core#kama
+        * @see Core#ma
+        */
+       public OutRange vidya( int startIdx,
+                              int endIdx,
+                              float inReal[],
+                              int optInTimePeriod,
+                              int optInCMOPeriod,
+                              double outReal[] )
+       {
+          requireIndexRange("VIDYA", startIdx, endIdx);
+          int guardStart = clampedStart("VIDYA", startIdx, vidyaLookback(optInTimePeriod, optInCMOPeriod));
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("VIDYA", "inReal", inReal, guardInLen);
+          requireLength("VIDYA", "outReal", outReal, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = vidyaImpl(startIdx, endIdx, inReal, optInTimePeriod, optInCMOPeriod, outBegIdx, outNBElement, outReal);
+          if( retCode != RetCode.SUCCESS ) {
+             throw failure("VIDYA", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+    /**** Streaming API *****/
+
+       /**
+        * A live VIDYA stream (unrelated to {@code java.util.stream}): one value per
+        * closed bar, bit-identical to {@link Core#vidya} over the same series.
+        * Open with {@link Core#vidyaOpen}; there is no close — the handle is
+        * ordinary heap state, unreferenced handles are simply garbage-collected.
+        * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
+        * {@code value} and {@code clone} must not race with an {@code update} on
+        * the same handle. With no concurrent {@code update}, {@code peek}/
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
+        * <p>Not serializable by design: to checkpoint, retain the history and
+        * re-open — the result is bit-identical by contract.
+        */
+       public static final class VidyaStream {
+          private Core core;
+          private int optInTimePeriod;
+          private int optInCMOPeriod;
+          private int nullRun;
+          private double upSum;
+          private double downSum;
+          private double prevValue;
+          private double trailingValue;
+          private double alpha;
+          private double prevVIDYA;
+          private int ringPos_trailingIdx;
+          private int ringCap_trailingIdx;
+          private double[] ring_trailingIdx_inReal;
+          private double cur_outReal;
+          private int outRangeBegIdx;
+          private int outRangeCount;
+
+          private VidyaStream( Core core ) { this.core = core; }
+
+          /**
+           * The bars this stream has an output for, in the input series'
+           * coordinates: {@code [begIdx, begIdx + count)}.
+           * <p>It is what {@link Core#vidya} reports over the same bars: the
+           * opener sets it to {@code (lookback, historyLen - lookback)}, every
+           * accepted {@code update} adds one to the count — a rejected one
+           * changes nothing, and neither does {@code peek} — and
+           * {@code clone()} carries it verbatim. A plain
+           * {@code open} hands back only the last value, a subset of this range,
+           * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#INDEX_MAX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
+           */
+          public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
+
+          /**
+           * Count one bar this stream was not fed: {@link #outRange()} advances
+           * by one and nothing else moves — {@link #value()} keeps answering the previous
+           * output, which is this bar's output too.
+           * <p>For a bar the caller leaves out: one an {@code update} rejected
+           * and that will not be re-fed, or a session with no print. Without it
+           * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#INDEX_MAX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
+           */
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
+                throw failure("VIDYA advance", RetCode.OUT_OF_RANGE_END_INDEX);
+             this.outRangeCount++;
+          }
+
+          private VidyaStream( VidyaStream other ) {
+             this.core = other.core;
+             this.optInTimePeriod = other.optInTimePeriod;
+             this.optInCMOPeriod = other.optInCMOPeriod;
+             this.nullRun = other.nullRun;
+             this.upSum = other.upSum;
+             this.downSum = other.downSum;
+             this.prevValue = other.prevValue;
+             this.trailingValue = other.trailingValue;
+             this.alpha = other.alpha;
+             this.prevVIDYA = other.prevVIDYA;
+             this.ringPos_trailingIdx = other.ringPos_trailingIdx;
+             this.ringCap_trailingIdx = other.ringCap_trailingIdx;
+             this.ring_trailingIdx_inReal = other.ring_trailingIdx_inReal.clone();
+             this.cur_outReal = other.cur_outReal;
+             this.outRangeBegIdx = other.outRangeBegIdx;
+             this.outRangeCount = other.outRangeCount;
+          }
+
+          /**
+           * Commit one closed bar, returning the new current value.
+           * <p>Throws {@link IllegalArgumentException} if any bar value is not
+           * finite (NaN or an infinity). That check runs before anything is
+           * written, so nothing moves — {@link #outRange()} included — and
+           * {@link #value()} still answers the previous value. Re-feed the bar when a
+           * corrected value arrives, or call {@link #advance()} to count it and
+           * carry on; two handles on one feed drift a bar apart if neither
+           * happens.
+           * This is the one place the streaming tier is stricter than
+           * the batch API, which computes on whatever it is given: a handle
+           * retains its state, so a single non-finite bar would poison every
+           * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#INDEX_MAX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
+           */
+          public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
+                throw failure("VIDYA update", RetCode.OUT_OF_RANGE_END_INDEX);
+             if( !Double.isFinite(inReal) )
+                throw nonFiniteBar("VIDYA update", "inReal");
+             core.vidyaStepImpl(this, inReal);
+             this.outRangeCount++;
+             return this.cur_outReal;
+          }
+
+          /**
+           * Evaluate a forming bar without committing — bit-identical to what the
+           * next {@code update} with the same bar would return — the same
+           * transition, with every store it would make carried in a local instead.
+           * Never writes this handle, so peeks may run concurrently with each other.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
+           */
+          public double peek( double inReal ) {
+             if( !Double.isFinite(inReal) )
+                throw nonFiniteBar("VIDYA peek", "inReal");
+             VidyaStream sp = this;
+             double sum = 0.0;
+             double diff = 0.0;
+             double tempReal = 0.0;
+             double k = 0.0;
+             double cur_outReal = 0.0;
+             double downSum = sp.downSum;
+             int nullRun = sp.nullRun;
+             double prevVIDYA = sp.prevVIDYA;
+             double prevValue = sp.prevValue;
+             double trailingValue = sp.trailingValue;
+             double upSum = sp.upSum;
+             if( sp.optInTimePeriod == 1 ) {
+                cur_outReal = inReal;
+                return cur_outReal ;
+             }
+             tempReal = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
+             diff = tempReal - trailingValue;
+             trailingValue = tempReal;
+             if( diff > 0.0 ) {
+                upSum -= diff;
+             } else if( diff < 0.0 ) {
+                downSum += diff;
+             }
+             tempReal = inReal;
+             diff = tempReal - prevValue;
+             prevValue = tempReal;
+             if( diff > 0.0 ) {
+                upSum += diff;
+             } else if( diff < 0.0 ) {
+                downSum -= diff;
+             }
+             if( diff == 0.0 ) {
+                nullRun += 1;
+             } else {
+                nullRun = 0;
+             }
+             if( nullRun >= sp.optInCMOPeriod ) {
+                nullRun = sp.optInCMOPeriod;
+                upSum = 0.0;
+                downSum = 0.0;
+             }
+             sum = upSum + downSum;
+             if( sum > 0.0 ) {
+                k = sp.alpha * (Math.abs(100.0 * (upSum - downSum) / sum) / 100.0);
+             } else {
+                k = 0.0;
+             }
+             prevVIDYA = Math.fma(prevValue - prevVIDYA, k, prevVIDYA);
+             cur_outReal = prevVIDYA;
+             return cur_outReal;
+          }
+
+          /**
+           * The value at the last bar this stream counted — the bar
+           * {@link #outRange()} ends on. The last history bar right after open,
+           * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
+           */
+          public double value() {
+             return this.cur_outReal;
+          }
+
+          /**
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
+           */
+          @Override
+          public VidyaStream clone() {
+             return new VidyaStream(this);
+          }
+       }
+       private void vidyaStepImpl( VidyaStream sp, double inReal )
+       {
+          double sum = 0.0;
+          double diff = 0.0;
+          double tempReal = 0.0;
+          double k = 0.0;
+          int ringCapL_trailingIdx = 0;
+          if( sp.optInTimePeriod == 1 ) {
+             sp.cur_outReal = inReal;
+             return ;
+          }
+          tempReal = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
+          diff = tempReal - sp.trailingValue;
+          sp.trailingValue = tempReal;
+          if( diff > 0.0 ) {
+             sp.upSum -= diff;
+          } else if( diff < 0.0 ) {
+             sp.downSum += diff;
+          }
+          tempReal = inReal;
+          diff = tempReal - sp.prevValue;
+          sp.prevValue = tempReal;
+          if( diff > 0.0 ) {
+             sp.upSum += diff;
+          } else if( diff < 0.0 ) {
+             sp.downSum -= diff;
+          }
+          if( diff == 0.0 ) {
+             sp.nullRun += 1;
+          } else {
+             sp.nullRun = 0;
+          }
+          if( sp.nullRun >= sp.optInCMOPeriod ) {
+             sp.nullRun = sp.optInCMOPeriod;
+             sp.upSum = 0.0;
+             sp.downSum = 0.0;
+          }
+          sum = sp.upSum + sp.downSum;
+          if( sum > 0.0 ) {
+             k = sp.alpha * (Math.abs(100.0 * (sp.upSum - sp.downSum) / sum) / 100.0);
+          } else {
+             k = 0.0;
+          }
+          sp.prevVIDYA = Math.fma(sp.prevValue - sp.prevVIDYA, k, sp.prevVIDYA);
+          sp.cur_outReal = sp.prevVIDYA;
+          ringCapL_trailingIdx = sp.ringCap_trailingIdx;
+          sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
+          sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
+          if( sp.ringPos_trailingIdx >= ringCapL_trailingIdx ) {
+             sp.ringPos_trailingIdx = 0;
+          }
+       }
+       private RetCode vidyaOpenImpl( VidyaStream sp, double inReal[], int startIdx, int optInTimePeriod, int optInCMOPeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+       {
+          int outIdx = 0;
+          int today = 0;
+          int trailingIdx = 0;
+          int lookbackTotal = 0;
+          int i = 0;
+          int nullRun = 0;
+          double upSum = 0;
+          double downSum = 0;
+          double sum = 0;
+          double diff = 0;
+          double tempReal = 0;
+          double prevValue = 0;
+          double trailingValue = 0;
+          double alpha = 0;
+          double k = 0;
+          double prevVIDYA = 0;
+          int historyLen = inReal.length;
+          int endIdx = historyLen - 1;
+          if( historyLen < 1 ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX;
+          }
+          if( historyLen > INDEX_MAX + 1 ) {
+             return RetCode.OUT_OF_RANGE_END_INDEX;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 12;
+          } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInCMOPeriod == Integer.MIN_VALUE ) {
+             optInCMOPeriod = 9;
+          } else if( optInCMOPeriod < 2 || optInCMOPeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.INSUFFICIENT_HISTORY;
+          }
+          if( optInTimePeriod == 1 ) {
+             int fillLb = vidyaLookback(optInTimePeriod, optInCMOPeriod);
+             if( startIdx > fillLb ) fillLb = startIdx;
+             if( historyLen < fillLb + 1 ) {
+                return RetCode.INSUFFICIENT_HISTORY;
+             }
+             sp.optInTimePeriod = optInTimePeriod;
+             sp.optInCMOPeriod = optInCMOPeriod;
+             sp.nullRun = 0;
+             sp.upSum = 0.0;
+             sp.downSum = 0.0;
+             sp.prevValue = 0.0;
+             sp.trailingValue = 0.0;
+             sp.alpha = 0.0;
+             sp.prevVIDYA = 0.0;
+             sp.ringPos_trailingIdx = 0;
+             sp.ringCap_trailingIdx = 0;
+             sp.ring_trailingIdx_inReal = new double[1];
+             outBegIdx.value = fillLb;
+             outNBElement.value = historyLen - fillLb;
+             if( outStride == 0 ) {
+                outReal[0] = inReal[historyLen - 1];
+             } else {
+                for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
+                   outReal[fillIdx] = inReal[fillLb + fillIdx];
+                }
+             }
+             sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
+             return RetCode.SUCCESS;
+          }
+          outBegIdx.value = 0;
+          outNBElement.value = 0;
+          lookbackTotal = vidyaLookback(optInTimePeriod, optInCMOPeriod);
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             return RetCode.INSUFFICIENT_HISTORY ;
+          }
+          alpha = 2.0 / (double)(optInTimePeriod + 1);
+          /* The CMO below is TA_CMOU's loop, spelling and nullRun reset included, so
+           * that from the first full window on VIDYA equals the composite of TA_CMOU
+           * bit for bit. The recursion is seeded on the window's first price and
+           * steps through the warm-up with the CMO of the changes seen so far. The
+           * unstable period enters it that many bars before startIdx.
+           */
+          today = startIdx - lookbackTotal;
+          trailingIdx = today + 1;
+          prevValue = inReal[today];
+          trailingValue = prevValue;
+          prevVIDYA = prevValue;
+          upSum = 0.0;
+          downSum = 0.0;
+          nullRun = 0;
+          for( i = 0; i < optInCMOPeriod; i += 1 ) {
+             today += 1;
+             tempReal = inReal[today];
+             diff = tempReal - prevValue;
+             prevValue = tempReal;
+             if( diff > 0.0 ) {
+                upSum += diff;
+             } else if( diff < 0.0 ) {
+                downSum -= diff;
+             }
+             if( diff == 0.0 ) {
+                nullRun += 1;
+             } else {
+                nullRun = 0;
+             }
+             sum = upSum + downSum;
+             if( sum > 0.0 ) {
+                k = alpha * (Math.abs(100.0 * (upSum - downSum) / sum) / 100.0);
+             } else {
+                k = 0.0;
+             }
+             prevVIDYA = Math.fma(prevValue - prevVIDYA, k, prevVIDYA);
+          }
+          today += 1;
+          /* Skip the unstable period: the whole computation, nothing written. */
+          while( today <= startIdx ) {
+             tempReal = inReal[trailingIdx];
+             diff = tempReal - trailingValue;
+             trailingValue = tempReal;
+             trailingIdx += 1;
+             if( diff > 0.0 ) {
+                upSum -= diff;
+             } else if( diff < 0.0 ) {
+                downSum += diff;
+             }
+             tempReal = inReal[today];
+             diff = tempReal - prevValue;
+             prevValue = tempReal;
+             if( diff > 0.0 ) {
+                upSum += diff;
+             } else if( diff < 0.0 ) {
+                downSum -= diff;
+             }
+             if( diff == 0.0 ) {
+                nullRun += 1;
+             } else {
+                nullRun = 0;
+             }
+             if( nullRun >= optInCMOPeriod ) {
+                nullRun = optInCMOPeriod;
+                upSum = 0.0;
+                downSum = 0.0;
+             }
+             sum = upSum + downSum;
+             if( sum > 0.0 ) {
+                k = alpha * (Math.abs(100.0 * (upSum - downSum) / sum) / 100.0);
+             } else {
+                k = 0.0;
+             }
+             prevVIDYA = Math.fma(prevValue - prevVIDYA, k, prevVIDYA);
+             today += 1;
+          }
+          outReal[0 * outStride] = prevVIDYA;
+          outIdx = 1;
+          while( today <= endIdx ) {
+             tempReal = inReal[trailingIdx];
+             diff = tempReal - trailingValue;
+             trailingValue = tempReal;
+             trailingIdx += 1;
+             if( diff > 0.0 ) {
+                upSum -= diff;
+             } else if( diff < 0.0 ) {
+                downSum += diff;
+             }
+             tempReal = inReal[today];
+             diff = tempReal - prevValue;
+             prevValue = tempReal;
+             if( diff > 0.0 ) {
+                upSum += diff;
+             } else if( diff < 0.0 ) {
+                downSum -= diff;
+             }
+             if( diff == 0.0 ) {
+                nullRun += 1;
+             } else {
+                nullRun = 0;
+             }
+             if( nullRun >= optInCMOPeriod ) {
+                nullRun = optInCMOPeriod;
+                upSum = 0.0;
+                downSum = 0.0;
+             }
+             sum = upSum + downSum;
+             if( sum > 0.0 ) {
+                k = alpha * (Math.abs(100.0 * (upSum - downSum) / sum) / 100.0);
+             } else {
+                k = 0.0;
+             }
+             prevVIDYA = Math.fma(prevValue - prevVIDYA, k, prevVIDYA);
+             outReal[outIdx++ * outStride] = prevVIDYA;
+             today += 1;
+          }
+          outBegIdx.value = startIdx;
+          outNBElement.value = outIdx;
+          /* Capture the live batch state into the handle. */
+          int cap_trailingIdx = today - trailingIdx;
+          if( cap_trailingIdx < 1 || cap_trailingIdx > historyLen ) {
+             return RetCode.INTERNAL_ERROR;
+          }
+          int allocN_trailingIdx = (cap_trailingIdx > 0)? cap_trailingIdx : 1;
+          double[] capRing_trailingIdx_inReal = new double[allocN_trailingIdx];
+          System.arraycopy(inReal, historyLen - cap_trailingIdx, capRing_trailingIdx_inReal, 0, cap_trailingIdx);
+          sp.optInTimePeriod = optInTimePeriod;
+          sp.optInCMOPeriod = optInCMOPeriod;
+          sp.nullRun = nullRun;
+          sp.upSum = upSum;
+          sp.downSum = downSum;
+          sp.prevValue = prevValue;
+          sp.trailingValue = trailingValue;
+          sp.alpha = alpha;
+          sp.prevVIDYA = prevVIDYA;
+          sp.ringPos_trailingIdx = 0;
+          sp.ringCap_trailingIdx = cap_trailingIdx;
+          sp.ring_trailingIdx_inReal = capRing_trailingIdx_inReal;
+          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
+          return RetCode.SUCCESS;
+       }
+       /* vidyaOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+       VidyaStream vidyaOpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, int optInCMOPeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+       {
+          VidyaStream sp = new VidyaStream(this);
+          RetCode retCode = vidyaOpenImpl(sp, inReal, startIdx, optInTimePeriod, optInCMOPeriod, outBegIdx, outNBElement, outReal, 1);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.SUCCESS ) {
+             return sp;
+          }
+          if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
+             throw insufficientHistory("VIDYA openAndFill", inReal.length, startIdx, vidyaLookback(optInTimePeriod, optInCMOPeriod));
+          }
+          throw streamFailure("VIDYA openAndFill", retCode);
+       }
+       /* Internal startIdx-anchored open behind vidyaOpen (composition seam). */
+       VidyaStream vidyaOpenInternal( double inReal[], int startIdx, int optInTimePeriod, int optInCMOPeriod )
+       {
+          VidyaStream sp = new VidyaStream(this);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          double[] sink_outReal = new double[1];
+          RetCode retCode = vidyaOpenImpl(sp, inReal, startIdx, optInTimePeriod, optInCMOPeriod, outBegIdx, outNBElement, sink_outReal, 0);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.SUCCESS ) {
+             return sp;
+          }
+          if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
+             throw insufficientHistory("VIDYA open", inReal.length, startIdx, vidyaLookback(optInTimePeriod, optInCMOPeriod));
+          }
+          throw streamFailure("VIDYA open", retCode);
+       }
+       /**
+        * Open a live VIDYA stream over the warm-up history; the handle's
+        * {@code value()} starts at the last history bar's value — bit-identical
+        * to {@link Core#vidya} at that bar.
+        * <p>The history must hold at least {@code vidyaLookback(...) + 1} bars
+        * (unstable-period aware), or {@link InsufficientHistoryException} is
+        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+        * as in the batch API). An EMPTY history throws
+        * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+        * names no bar — and a null argument {@link IllegalArgumentException},
+        * both ahead of everything above.
+        */
+       public VidyaStream vidyaOpen( double inReal[], int optInTimePeriod, int optInCMOPeriod )
+       {
+          requireArgument("VIDYA open", "inReal", inReal);
+          requireHistory("VIDYA open", inReal.length);
+          return vidyaOpenInternal(inReal, 0, optInTimePeriod, optInCMOPeriod);
+       }
+       /**
+        * {@link Core#vidyaOpen} that also fills the output array(s) bit-identically
+        * to {@link Core#vidya} over the whole history in the same single pass
+        * (no separate batch call needed for the warm-up plot). Output arrays must
+        * not alias the inputs or each other, and must hold
+        * {@code historyLen - lookback} values — both checked before anything is
+        * written, so an undersized array is an {@link IllegalArgumentException}
+        * naming it rather than a fault from inside the fill.
+        * <p>The range written is on the returned handle:
+        * {@link VidyaStream#outRange()}.
+        */
+       public VidyaStream vidyaOpenAndFill( double inReal[], int optInTimePeriod, int optInCMOPeriod, double outReal[] )
+       {
+          requireArgument("VIDYA openAndFill", "inReal", inReal);
+          requireHistory("VIDYA openAndFill", inReal.length);
+          int guardOutLen = openFillCount("VIDYA openAndFill", inReal.length, vidyaLookback(optInTimePeriod, optInCMOPeriod));
+          requireLength("VIDYA openAndFill", "outReal", outReal, guardOutLen);
+          if( (Object)outReal == (Object)inReal ) {
+             throw streamFailure("VIDYA openAndFill", RetCode.BAD_PARAM);
+          }
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          return vidyaOpenAndFillInternal(inReal, 0, optInTimePeriod, optInCMOPeriod, outBegIdx, outNBElement, outReal);
+       }
+       private double vidyaStepTape( VidyaStream sp, double[] tape, int tapeBase, int tapeMask, double inReal )
+       {
+          double sum = 0.0;
+          double diff = 0.0;
+          double tempReal = 0.0;
+          double k = 0.0;
+          tempReal = tape[(tapeBase - sp.ringCap_trailingIdx) & tapeMask];
+          diff = tempReal - sp.trailingValue;
+          sp.trailingValue = tempReal;
+          if( diff > 0.0 ) {
+             sp.upSum -= diff;
+          } else if( diff < 0.0 ) {
+             sp.downSum += diff;
+          }
+          tempReal = inReal;
+          diff = tempReal - sp.prevValue;
+          sp.prevValue = tempReal;
+          if( diff > 0.0 ) {
+             sp.upSum += diff;
+          } else if( diff < 0.0 ) {
+             sp.downSum -= diff;
+          }
+          if( diff == 0.0 ) {
+             sp.nullRun += 1;
+          } else {
+             sp.nullRun = 0;
+          }
+          if( sp.nullRun >= sp.optInCMOPeriod ) {
+             sp.nullRun = sp.optInCMOPeriod;
+             sp.upSum = 0.0;
+             sp.downSum = 0.0;
+          }
+          sum = sp.upSum + sp.downSum;
+          if( sum > 0.0 ) {
+             k = sp.alpha * (Math.abs(100.0 * (sp.upSum - sp.downSum) / sum) / 100.0);
+          } else {
+             k = 0.0;
+          }
+          sp.prevVIDYA = Math.fma(sp.prevValue - sp.prevVIDYA, k, sp.prevVIDYA);
+          sp.cur_outReal = sp.prevVIDYA;
+          sp.outRangeCount++;
+          return sp.cur_outReal;
+       }
+       private double vidyaPeekTape( VidyaStream sp, double[] tape, int tapeBase, int tapeMask, double inReal )
+       {
+          double sum = 0.0;
+          double diff = 0.0;
+          double tempReal = 0.0;
+          double k = 0.0;
+          double cur_outReal = 0.0;
+          double downSum = sp.downSum;
+          int nullRun = sp.nullRun;
+          double prevVIDYA = sp.prevVIDYA;
+          double prevValue = sp.prevValue;
+          double trailingValue = sp.trailingValue;
+          double upSum = sp.upSum;
+          tempReal = tape[(tapeBase - sp.ringCap_trailingIdx) & tapeMask];
+          diff = tempReal - trailingValue;
+          trailingValue = tempReal;
+          if( diff > 0.0 ) {
+             upSum -= diff;
+          } else if( diff < 0.0 ) {
+             downSum += diff;
+          }
+          tempReal = inReal;
+          diff = tempReal - prevValue;
+          prevValue = tempReal;
+          if( diff > 0.0 ) {
+             upSum += diff;
+          } else if( diff < 0.0 ) {
+             downSum -= diff;
+          }
+          if( diff == 0.0 ) {
+             nullRun += 1;
+          } else {
+             nullRun = 0;
+          }
+          if( nullRun >= sp.optInCMOPeriod ) {
+             nullRun = sp.optInCMOPeriod;
+             upSum = 0.0;
+             downSum = 0.0;
+          }
+          sum = upSum + downSum;
+          if( sum > 0.0 ) {
+             k = sp.alpha * (Math.abs(100.0 * (upSum - downSum) / sum) / 100.0);
+          } else {
+             k = 0.0;
+          }
+          prevVIDYA = Math.fma(prevValue - prevVIDYA, k, prevVIDYA);
+          cur_outReal = prevVIDYA;
+          return cur_outReal;
+       }
+       private int vidyaTapeDetach( VidyaStream sp )
+       {
+          int reach = 0;
+          sp.ring_trailingIdx_inReal = new double[0];
+          if( sp.ringCap_trailingIdx > reach ) {
+             reach = sp.ringCap_trailingIdx;
+          }
+          return reach;
+       }
+    /* List of contributors:
+     *
+     *  Initial  Name/description
+     *  -------------------------------------------------------------------
      *  KL       Kevin Lin
      *
      * Change history:
@@ -201083,7 +202367,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "86575af15d72e168";
+    static final String SPLICED_GENCODE_DIGEST = "c82451a71acd1be6";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];
@@ -201289,7 +202573,7 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(0,"outReal",16) }));
         ABSTRACT.put("APO", new AbsFunc("APO", "Momentum Indicators", "Absolute Price Oscillator", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInFastPeriod",0,"Fast Period","Period of the fast MA",12.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInSlowPeriod",0,"Slow Period","Period of the slow MA",26.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(3,"optInMAType",0,"MA Type","Type of Moving Average",1.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA") },
+            new AbsOpt[]{ new AbsOpt(2,"optInFastPeriod",0,"Fast Period","Period of the fast MA",12.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInSlowPeriod",0,"Slow Period","Period of the slow MA",26.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(3,"optInMAType",0,"MA Type","Type of Moving Average",1.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA") },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("AROON", new AbsFunc("AROON", "Momentum Indicators", "Aroon", 33554432,
             new AbsIn[]{ new AbsIn(0,"inPriceHL",6) },
@@ -201325,11 +202609,11 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("BBANDS", new AbsFunc("BBANDS", "Overlap Studies", "Bollinger Bands", 50331648,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",20.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(0,"optInNbDevUp",0,"Deviations up","Deviation multiplier for upper band",2.0, -3e37,3e37,2,-2.0,2.0,0.2, 0,0,0,0,0, null), new AbsOpt(0,"optInNbDevDn",0,"Deviations down","Deviation multiplier for lower band",2.0, -3e37,3e37,2,-2.0,2.0,0.2, 0,0,0,0,0, null), new AbsOpt(3,"optInMAType",0,"MA Type","Type of Moving Average",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA") },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",20.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(0,"optInNbDevUp",0,"Deviations up","Deviation multiplier for upper band",2.0, -3e37,3e37,2,-2.0,2.0,0.2, 0,0,0,0,0, null), new AbsOpt(0,"optInNbDevDn",0,"Deviations down","Deviation multiplier for lower band",2.0, -3e37,3e37,2,-2.0,2.0,0.2, 0,0,0,0,0, null), new AbsOpt(3,"optInMAType",0,"MA Type","Type of Moving Average",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA") },
             new AbsOut[]{ new AbsOut(0,"outRealUpperBand",2048), new AbsOut(0,"outRealMiddleBand",1), new AbsOut(0,"outRealLowerBand",4096) }));
         ABSTRACT.put("BBW", new AbsFunc("BBW", "Volatility Indicators", "Bollinger BandWidth", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",20.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(0,"optInNbDevUp",0,"Deviations up","Deviation multiplier for upper band",2.0, -3e37,3e37,2,-2.0,2.0,0.2, 0,0,0,0,0, null), new AbsOpt(0,"optInNbDevDn",0,"Deviations down","Deviation multiplier for lower band",2.0, -3e37,3e37,2,-2.0,2.0,0.2, 0,0,0,0,0, null), new AbsOpt(3,"optInMAType",0,"MA Type","Type of Moving Average",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA") },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",20.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(0,"optInNbDevUp",0,"Deviations up","Deviation multiplier for upper band",2.0, -3e37,3e37,2,-2.0,2.0,0.2, 0,0,0,0,0, null), new AbsOpt(0,"optInNbDevDn",0,"Deviations down","Deviation multiplier for lower band",2.0, -3e37,3e37,2,-2.0,2.0,0.2, 0,0,0,0,0, null), new AbsOpt(3,"optInMAType",0,"MA Type","Type of Moving Average",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA") },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("BETA", new AbsFunc("BETA", "Statistic Functions", "Beta", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal0",0), new AbsIn(1,"inReal1",0) },
@@ -201757,7 +203041,7 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(0,"outRealUpperBand",2048), new AbsOut(0,"outRealMiddleBand",1), new AbsOut(0,"outRealLowerBand",4096) }));
         ABSTRACT.put("KDJ", new AbsFunc("KDJ", "Momentum Indicators", "KDJ Stochastic", 33554432,
             new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
-            new AbsOpt[]{ new AbsOpt(2,"optInFastK_Period",0,"Fast-K Period","Time period for building the Fast-K line",9.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInSlowK_Period",0,"Slow-K Period","Smoothing for making the Slow-K line. Usually set to 3",3.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInSlowK_MAType",0,"Slow-K MA","Type of Moving Average for Slow-K",13.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA"), new AbsOpt(2,"optInSlowD_Period",0,"Slow-D Period","Smoothing for making the Slow-D line",3.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInSlowD_MAType",0,"Slow-D MA","Type of Moving Average for Slow-D",13.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA") },
+            new AbsOpt[]{ new AbsOpt(2,"optInFastK_Period",0,"Fast-K Period","Time period for building the Fast-K line",9.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInSlowK_Period",0,"Slow-K Period","Smoothing for making the Slow-K line. Usually set to 3",3.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInSlowK_MAType",0,"Slow-K MA","Type of Moving Average for Slow-K",13.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA"), new AbsOpt(2,"optInSlowD_Period",0,"Slow-D Period","Smoothing for making the Slow-D line",3.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInSlowD_MAType",0,"Slow-D MA","Type of Moving Average for Slow-D",13.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA") },
             new AbsOut[]{ new AbsOut(0,"outK",1), new AbsOut(0,"outD",1), new AbsOut(0,"outJ",1) }));
         ABSTRACT.put("KST", new AbsFunc("KST", "Momentum Indicators", "Know Sure Thing (Pring)", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
@@ -201793,7 +203077,7 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("MA", new AbsFunc("MA", "Overlap Studies", "Moving average", 50331649,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInMAType",0,"MA Type","Type of Moving Average",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA") },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInMAType",0,"MA Type","Type of Moving Average",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA") },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("MACD", new AbsFunc("MACD", "Momentum Indicators", "Moving Average Convergence/Divergence", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
@@ -201801,7 +203085,7 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(0,"outMACD",1), new AbsOut(0,"outMACDSignal",4), new AbsOut(0,"outMACDHist",16) }));
         ABSTRACT.put("MACDEXT", new AbsFunc("MACDEXT", "Momentum Indicators", "MACD with controllable MA type", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInFastPeriod",0,"Fast Period","Period of the fast MA",12.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(3,"optInFastMAType",0,"Fast MA","Type of Moving Average for fast MA",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA"), new AbsOpt(2,"optInSlowPeriod",0,"Slow Period","Period of the slow MA",26.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(3,"optInSlowMAType",0,"Slow MA","Type of Moving Average for slow MA",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA"), new AbsOpt(2,"optInSignalPeriod",0,"Signal Period","Smoothing for the signal line (period length)",9.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInSignalMAType",0,"Signal MA","Type of Moving Average for signal line",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA") },
+            new AbsOpt[]{ new AbsOpt(2,"optInFastPeriod",0,"Fast Period","Period of the fast MA",12.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(3,"optInFastMAType",0,"Fast MA","Type of Moving Average for fast MA",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA"), new AbsOpt(2,"optInSlowPeriod",0,"Slow Period","Period of the slow MA",26.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(3,"optInSlowMAType",0,"Slow MA","Type of Moving Average for slow MA",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA"), new AbsOpt(2,"optInSignalPeriod",0,"Signal Period","Smoothing for the signal line (period length)",9.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInSignalMAType",0,"Signal MA","Type of Moving Average for signal line",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA") },
             new AbsOut[]{ new AbsOut(0,"outMACD",1), new AbsOut(0,"outMACDSignal",4), new AbsOut(0,"outMACDHist",16) }));
         ABSTRACT.put("MACDFIX", new AbsFunc("MACDFIX", "Momentum Indicators", "Moving Average Convergence/Divergence Fix 12/26", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
@@ -201821,7 +203105,7 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("MAVP", new AbsFunc("MAVP", "Overlap Studies", "Moving average with variable period", 50331648,
             new AbsIn[]{ new AbsIn(1,"inReal",0), new AbsIn(1,"inPeriods",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInMinPeriod",0,"Minimum Period","Value less than minimum will be changed to Minimum period",2.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInMaxPeriod",0,"Maximum Period","Value higher than maximum will be changed to Maximum period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInMAType",0,"MA Type","Type of Moving Average",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA") },
+            new AbsOpt[]{ new AbsOpt(2,"optInMinPeriod",0,"Minimum Period","Value less than minimum will be changed to Minimum period",2.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInMaxPeriod",0,"Maximum Period","Value higher than maximum will be changed to Maximum period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInMAType",0,"MA Type","Type of Moving Average",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA") },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("MAX", new AbsFunc("MAX", "Math Operators", "Highest value over a specified period", 50331648,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
@@ -201901,7 +203185,7 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("PERCENTB", new AbsFunc("PERCENTB", "Volatility Indicators", "Bollinger Bands %B", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",20.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(0,"optInNbDevUp",0,"Deviations up","Deviation multiplier for upper band",2.0, -3e37,3e37,2,-2.0,2.0,0.2, 0,0,0,0,0, null), new AbsOpt(0,"optInNbDevDn",0,"Deviations down","Deviation multiplier for lower band",2.0, -3e37,3e37,2,-2.0,2.0,0.2, 0,0,0,0,0, null), new AbsOpt(3,"optInMAType",0,"MA Type","Type of Moving Average",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA") },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",20.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(0,"optInNbDevUp",0,"Deviations up","Deviation multiplier for upper band",2.0, -3e37,3e37,2,-2.0,2.0,0.2, 0,0,0,0,0, null), new AbsOpt(0,"optInNbDevDn",0,"Deviations down","Deviation multiplier for lower band",2.0, -3e37,3e37,2,-2.0,2.0,0.2, 0,0,0,0,0, null), new AbsOpt(3,"optInMAType",0,"MA Type","Type of Moving Average",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA") },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("PERCENTILE", new AbsFunc("PERCENTILE", "Statistic Functions", "Percentile (nearest rank)", 50331648,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
@@ -201921,7 +203205,7 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("PPO", new AbsFunc("PPO", "Momentum Indicators", "Percentage Price Oscillator", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInFastPeriod",0,"Fast Period","Period of the fast MA",12.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInSlowPeriod",0,"Slow Period","Period of the slow MA",26.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(3,"optInMAType",0,"MA Type","Type of Moving Average",1.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA") },
+            new AbsOpt[]{ new AbsOpt(2,"optInFastPeriod",0,"Fast Period","Period of the fast MA",12.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInSlowPeriod",0,"Slow Period","Period of the slow MA",26.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(3,"optInMAType",0,"MA Type","Type of Moving Average",1.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA") },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("PVI", new AbsFunc("PVI", "Volume Indicators", "Positive Volume Index", 570425344,
             new AbsIn[]{ new AbsIn(0,"inPriceCV",24) },
@@ -201929,7 +203213,7 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("PVO", new AbsFunc("PVO", "Volume Indicators", "Percentage Volume Oscillator", 33554432,
             new AbsIn[]{ new AbsIn(0,"inPriceV",16) },
-            new AbsOpt[]{ new AbsOpt(2,"optInFastPeriod",0,"Fast Period","Period of the fast MA",12.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInSlowPeriod",0,"Slow Period","Period of the slow MA",26.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(3,"optInMAType",0,"MA Type","Type of Moving Average",1.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA") },
+            new AbsOpt[]{ new AbsOpt(2,"optInFastPeriod",0,"Fast Period","Period of the fast MA",12.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInSlowPeriod",0,"Slow Period","Period of the slow MA",26.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(3,"optInMAType",0,"MA Type","Type of Moving Average",1.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA") },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("PVT", new AbsFunc("PVT", "Volume Indicators", "Price Volume Trend", 570425344,
             new AbsIn[]{ new AbsIn(0,"inPriceCV",24) },
@@ -202013,15 +203297,15 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("STOCH", new AbsFunc("STOCH", "Momentum Indicators", "Stochastic", 33554432,
             new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
-            new AbsOpt[]{ new AbsOpt(2,"optInFastK_Period",0,"Fast-K Period","Time period for building the Fast-K line",5.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInSlowK_Period",0,"Slow-K Period","Smoothing for making the Slow-K line. Usually set to 3",3.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInSlowK_MAType",0,"Slow-K MA","Type of Moving Average for Slow-K",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA"), new AbsOpt(2,"optInSlowD_Period",0,"Slow-D Period","Smoothing for making the Slow-D line",3.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInSlowD_MAType",0,"Slow-D MA","Type of Moving Average for Slow-D",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA") },
+            new AbsOpt[]{ new AbsOpt(2,"optInFastK_Period",0,"Fast-K Period","Time period for building the Fast-K line",5.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInSlowK_Period",0,"Slow-K Period","Smoothing for making the Slow-K line. Usually set to 3",3.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInSlowK_MAType",0,"Slow-K MA","Type of Moving Average for Slow-K",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA"), new AbsOpt(2,"optInSlowD_Period",0,"Slow-D Period","Smoothing for making the Slow-D line",3.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInSlowD_MAType",0,"Slow-D MA","Type of Moving Average for Slow-D",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA") },
             new AbsOut[]{ new AbsOut(0,"outSlowK",4), new AbsOut(0,"outSlowD",4) }));
         ABSTRACT.put("STOCHF", new AbsFunc("STOCHF", "Momentum Indicators", "Stochastic Fast", 33554432,
             new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
-            new AbsOpt[]{ new AbsOpt(2,"optInFastK_Period",0,"Fast-K Period","Time period for building the Fast-K line",5.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInFastD_Period",0,"Fast-D Period","Smoothing for making the Fast-D line. Usually set to 3",3.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInFastD_MAType",0,"Fast-D MA","Type of Moving Average for Fast-D",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA") },
+            new AbsOpt[]{ new AbsOpt(2,"optInFastK_Period",0,"Fast-K Period","Time period for building the Fast-K line",5.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInFastD_Period",0,"Fast-D Period","Smoothing for making the Fast-D line. Usually set to 3",3.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInFastD_MAType",0,"Fast-D MA","Type of Moving Average for Fast-D",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA") },
             new AbsOut[]{ new AbsOut(0,"outFastK",1), new AbsOut(0,"outFastD",1) }));
         ABSTRACT.put("STOCHRSI", new AbsFunc("STOCHRSI", "Momentum Indicators", "Stochastic Relative Strength Index", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInFastK_Period",0,"Fast-K Period","Time period for building the Fast-K line",5.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInFastD_Period",0,"Fast-D Period","Smoothing for making the Fast-D line. Usually set to 3",3.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInFastD_MAType",0,"Fast-D MA","Type of Moving Average for Fast-D",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA") },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInFastK_Period",0,"Fast-K Period","Time period for building the Fast-K line",5.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInFastD_Period",0,"Fast-D Period","Smoothing for making the Fast-D line. Usually set to 3",3.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInFastD_MAType",0,"Fast-D MA","Type of Moving Average for Fast-D",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA") },
             new AbsOut[]{ new AbsOut(0,"outFastK",1), new AbsOut(0,"outFastD",1) }));
         ABSTRACT.put("SUB", new AbsFunc("SUB", "Math Operators", "Vector Arithmetic Subtraction", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal0",0), new AbsIn(1,"inReal1",0) },
@@ -202086,6 +203370,10 @@ public class TaCodegenServe {
         ABSTRACT.put("VHF", new AbsFunc("VHF", "Momentum Indicators", "Vertical Horizontal Filter", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",28.0, 0,0,0,0,0,0, 2,100000,14,56,7, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("VIDYA", new AbsFunc("VIDYA", "Overlap Studies", "Variable Index Dynamic Average", 184549377,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","EMA-equivalent smoothing period, alpha = 2/(n+1)",12.0, 0,0,0,0,0,0, 1,100000,4,200,1, null), new AbsOpt(2,"optInCMOPeriod",0,"CMO Period","Period of the unsmoothed CMO that scales alpha",9.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("VORTEX", new AbsFunc("VORTEX", "Momentum Indicators", "Vortex Indicator", 33554432,
             new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
@@ -202437,6 +203725,7 @@ public class TaCodegenServe {
         "TA_ULTOSC",
         "TA_VAR",
         "TA_VHF",
+        "TA_VIDYA",
         "TA_VORTEX",
         "TA_VWAP",
         "TA_VWMA",
@@ -202661,14 +203950,15 @@ public class TaCodegenServe {
             case 207: return handle_ULTOSC(json);
             case 208: return handle_VAR(json);
             case 209: return handle_VHF(json);
-            case 210: return handle_VORTEX(json);
-            case 211: return handle_VWAP(json);
-            case 212: return handle_VWMA(json);
-            case 213: return handle_WAD(json);
-            case 214: return handle_WCLPRICE(json);
-            case 215: return handle_WILLR(json);
-            case 216: return handle_WMA(json);
-            case 217: return handle_ZLEMA(json);
+            case 210: return handle_VIDYA(json);
+            case 211: return handle_VORTEX(json);
+            case 212: return handle_VWAP(json);
+            case 213: return handle_VWMA(json);
+            case 214: return handle_WAD(json);
+            case 215: return handle_WCLPRICE(json);
+            case 216: return handle_WILLR(json);
+            case 217: return handle_WMA(json);
+            case 218: return handle_ZLEMA(json);
             default: return null;
         }
     }
@@ -235831,6 +237121,155 @@ public class TaCodegenServe {
         return sb.toString();
     }
 
+    static String handle_VIDYA(String json) {
+        int startIdx = jsonInt(json, "startIdx");
+        int endIdx = jsonInt(json, "endIdx");
+        int use_preloaded = jsonInt(json, "use_preloaded");
+        int bench_iters = jsonInt(json, "iters");
+        if (bench_iters < 1) bench_iters = 1;
+        double[] inReal;
+        if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
+            System.arraycopy(refClose, 0, inReal, 0, refN);
+        } else {
+            inReal = jsonDoubleArray(json, "inReal");
+        }
+        boolean _optRejected = false;
+        int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+        int optInCMOPeriod = jsonInt(json, "optInCMOPeriod");
+        core.unstablePeriod[29] = jsonInt(json, "unstablePeriod");
+        // The output buffers are sized to the count the call actually PRODUCES --
+        // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
+        // never below one. Not to the width of the requested range: that is the bound the
+        // managed backends check and the Rust asserts state, and at the range width it was
+        // slack by exactly the lookback, so no call could ever approach it.
+        // The pad is there because a bound is a MINIMUM, never an equality. A caller
+        // re-using a pre-allocated buffer passes a larger one, and that is not an error --
+        // the reported OutRange is what says which part was written. So the harness sends
+        // both: the startIdx axis sends no pad (the bound is reachable) while the
+        // full-range value comparison sends one (slack is legal). Sizing every call one way
+        // would silently drop the other property.
+        // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
+        // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
+        // for a range shorter than the lookback, where the output bound switches off and
+        // the spec says any length will do, including none. It does not: two EMPTY output
+        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
+        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
+        // accepted by C and Java -- a four-way divergence on a call the specification says
+        // all four accept. Sizing to zero here would reach it on every multi-output
+        // function, which is a semantic question, not a harness one. Recorded as
+        // error-handling-spec, open item 11.
+        // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
+        // sizes and cannot make the check, so an exact buffer would test nothing there.
+        int _lb = core.vidyaLookback(optInTimePeriod, optInCMOPeriod);
+        int _cs = startIdx > _lb ? startIdx : _lb;
+        int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
+        double[] outArr0 = new double[_outLen];
+        MInteger outBegIdx = new MInteger();
+        MInteger outNBElement = new MInteger();
+        RetCode rc = RetCode.SUCCESS;
+        int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        long startNs = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+        if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                rc = core.vidyaImpl(startIdx, endIdx, inReal, optInTimePeriod, optInCMOPeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        } else {
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _pr = core.vidya(startIdx, endIdx, inReal, optInTimePeriod, optInCMOPeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.SUCCESS;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        }
+        }
+        else if (_optRejected) { rc = RetCode.BAD_PARAM; }
+        else { try {
+            if (bench_mode == 1) {
+                core.vidyaOpen(_warm_inReal, optInTimePeriod, optInCMOPeriod);
+            } else {
+                Core.VidyaStream _wh = core.vidyaOpenAndFill(_warm_inReal, optInTimePeriod, optInCMOPeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
+            }
+            rc = RetCode.SUCCESS;
+        } catch (RuntimeException _e) { rc = _e instanceof TALibFailure ? ((TALibFailure)_e).retCode() : RetCode.BAD_PARAM; } }
+        }
+        long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _fr = core.vidya(startIdx, endIdx, f_inReal, optInTimePeriod, optInCMOPeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.SUCCESS;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+            usedFloat = 1;
+        }
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            StringBuilder hb = new StringBuilder();
+            hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            rideVidya(core, json, endIdx, inReal, optInTimePeriod, optInCMOPeriod, hb);
+            hb.append("}");
+            return hb.toString();
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"retCode\":").append(rc.toInt());
+        sb.append(",\"outBegIdx\":").append(outBegIdx.value);
+        sb.append(",\"outNBElement\":").append(outNBElement.value);
+        sb.append(",\"out_len\":").append(_outLen);
+        sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
+        sb.append(",\"timing_ns\":").append(elapsedNs);
+        rideVidya(core, json, endIdx, inReal, optInTimePeriod, optInCMOPeriod, sb);
+        sb.append("}");
+        return sb.toString();
+    }
+
     static String handle_VORTEX(String json) {
         int startIdx = jsonInt(json, "startIdx");
         int endIdx = jsonInt(json, "endIdx");
@@ -238954,6 +240393,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.unstablePeriod[29] = svK;
             c2.unstablePeriod[24] = svK;
             c2.unstablePeriod[5] = svK;
             c2.unstablePeriod[23] = svK;
@@ -240441,6 +241881,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.unstablePeriod[29] = svK;
             c2.unstablePeriod[24] = svK;
             c2.unstablePeriod[5] = svK;
             c2.unstablePeriod[23] = svK;
@@ -240659,6 +242100,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.unstablePeriod[29] = svK;
             c2.unstablePeriod[24] = svK;
             c2.unstablePeriod[5] = svK;
             c2.unstablePeriod[23] = svK;
@@ -258114,6 +259556,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.unstablePeriod[29] = svK;
             c2.unstablePeriod[24] = svK;
             c2.unstablePeriod[5] = svK;
             c2.unstablePeriod[23] = svK;
@@ -259656,6 +261099,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.unstablePeriod[29] = svK;
             c2.unstablePeriod[24] = svK;
             c2.unstablePeriod[5] = svK;
             c2.unstablePeriod[23] = svK;
@@ -260058,6 +261502,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.unstablePeriod[29] = svK;
             c2.unstablePeriod[24] = svK;
             c2.unstablePeriod[5] = svK;
             c2.unstablePeriod[23] = svK;
@@ -260988,6 +262433,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.unstablePeriod[29] = svK;
             c2.unstablePeriod[24] = svK;
             c2.unstablePeriod[5] = svK;
             c2.unstablePeriod[23] = svK;
@@ -264290,6 +265736,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.unstablePeriod[29] = svK;
             c2.unstablePeriod[24] = svK;
             c2.unstablePeriod[5] = svK;
             c2.unstablePeriod[23] = svK;
@@ -265121,6 +266568,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.unstablePeriod[29] = svK;
             c2.unstablePeriod[24] = svK;
             c2.unstablePeriod[5] = svK;
             c2.unstablePeriod[23] = svK;
@@ -265454,6 +266902,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.unstablePeriod[29] = svK;
             c2.unstablePeriod[24] = svK;
             c2.unstablePeriod[5] = svK;
             c2.unstablePeriod[23] = svK;
@@ -268905,6 +270354,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.unstablePeriod[29] = svK;
             c2.unstablePeriod[24] = svK;
             c2.unstablePeriod[5] = svK;
             c2.unstablePeriod[23] = svK;
@@ -269107,6 +270557,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.unstablePeriod[29] = svK;
             c2.unstablePeriod[24] = svK;
             c2.unstablePeriod[5] = svK;
             c2.unstablePeriod[23] = svK;
@@ -269310,6 +270761,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.unstablePeriod[29] = svK;
             c2.unstablePeriod[24] = svK;
             c2.unstablePeriod[5] = svK;
             c2.unstablePeriod[23] = svK;
@@ -272083,6 +273535,171 @@ public class TaCodegenServe {
         return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
+    static String sv_VIDYA(String json) {
+        int svShape = jsonInt(json, "gen_shape");
+        int svSeed = jsonInt(json, "gen_seed");
+        int svN = jsonInt(json, "gen_n");
+        if (svN < 2) svN = 2;
+        if (svN > 256) svN = 256;
+        int svK = jsonInt(json, "unstablePeriod");
+        int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 12;
+        int optInCMOPeriod = json.contains("\"optInCMOPeriod\"") ? jsonInt(json, "optInCMOPeriod") : 9;
+        double[] fz_o = new double[svN];
+        double[] fz_h = new double[svN];
+        double[] fz_l = new double[svN];
+        double[] fz_c = new double[svN];
+        double[] fz_v = new double[svN];
+        double[] fz_oi = new double[svN];
+        FuzzData.fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
+        double[] b0 = new double[svN];
+        long legs = 0;
+        boolean allOk = true;
+        boolean peekAll = true;
+        long peekReps = 0;
+        long peekRejects = 0;
+        boolean peekRepAll = true;
+        int fillChecked = 0;
+        boolean fillOk = true;
+        MInteger beg = new MInteger();
+        MInteger nb = new MInteger();
+        String diag = "";
+        int rangeChecked = 0;
+        boolean rangeOk = true;
+        long rangeLegs = 0;
+        int rangeSites = 0;
+        long[] zsign = { 0 };
+        int rounds = 1;
+        for (int rd = 0; rd < rounds; rd++) {
+            Core c2 = new Core();
+            c2.unstablePeriod[29] = svK;
+            RetCode rc;
+            try { rc = c2.vidyaImpl(0, svN - 1, fz_c, optInTimePeriod, optInCMOPeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
+            int lb = c2.vidyaLookback(optInTimePeriod, optInCMOPeriod);
+            if (rc != RetCode.SUCCESS || nb.value == 0) {
+                boolean openRejects;
+                try { c2.vidyaOpen(fz_c, optInTimePeriod, optInCMOPeriod); openRejects = false; } catch (IllegalArgumentException _e) { openRejects = true; }
+                return "{\"retCode\":" + rc.toInt() + ",\"legs\":0,\"nb\":" + nb.value + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
+            }
+            fillChecked = 1;
+            try {
+                double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                Core.VidyaStream _fh = c2.vidyaOpenAndFill(fz_c, optInTimePeriod, optInCMOPeriod, f0);
+                OutRange _fr = _fh.outRange();
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
+                else {
+                    for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
+                }
+                try { c2.vidyaOpenAndFill(fz_c, optInTimePeriod, optInCMOPeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
+            } catch (IllegalArgumentException _e) { fillOk = false; }
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
+            java.util.Arrays.sort(pcs);
+            int prevP = -1;
+            for (int pi = 0; pi < pcs.length; pi++) {
+                int p = pcs[pi];
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
+                prevP = p;
+                Core.VidyaStream st;
+                try { st = c2.vidyaOpen(java.util.Arrays.copyOf(fz_c, p), optInTimePeriod, optInCMOPeriod); }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
+                legs++;
+                if (svXtierNe(st.value(), b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                for (int t = p; t < svN; t++) {
+                    boolean pkTook = true;
+                    double pk = 0;
+                    try { pk = st.peek(fz_c[t]); } catch (IllegalArgumentException _e) { pkTook = false; peekRejects++; }
+                    if (t % 7 == 0) {
+                        boolean rpTook = pkTook;
+                        try { st.peek(fz_c[t - 1]); } catch (IllegalArgumentException _e) { peekRejects++; }
+                        double rp = 0;
+                        try { rp = st.peek(fz_c[t]); } catch (IllegalArgumentException _e) { rpTook = false; }
+                        if (rpTook) {
+                            peekReps++;
+                            if (svBne(rp, pk)) peekRepAll = false;
+                        } else { peekRejects++; }
+                    }
+                    double up = st.update(fz_c[t]);
+                    if (pkTook && svBne(pk, up)) peekAll = false;
+                    try { st.peek(fz_c[t - 1]); } catch (IllegalArgumentException _e) { peekRejects++; }
+                    if (svBne(st.value(), up)) allOk = false;
+                    if (svXtierNe(up, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up)) + "\""; }
+                }
+                if (allOk) {
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
+                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
+                    rangeLegs++; rangeSites |= 16;
+                    st.advance();
+                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value + 1) rangeOk = false;
+                }
+            }
+            {
+                int p0 = lb + 1;
+                if (p0 <= svN - 1) {
+                    try {
+                        Core.VidyaStream sA = c2.vidyaOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInCMOPeriod);
+                        int mid = (p0 + svN) / 2;
+                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        Core.VidyaStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        for (int t = mid; t < svN; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        if (allOk) {
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 8;
+                            if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                        }
+                    } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
+                }
+            }
+            if (lb >= 1 && lb < svN) {
+                try { c2.vidyaOpen(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, optInCMOPeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
+                catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.vidyaOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, optInCMOPeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
+            }
+            try {
+                Core.VidyaStream sD = c2.vidyaOpen(fz_c, Integer.MIN_VALUE, Integer.MIN_VALUE);
+                Core.VidyaStream sE = c2.vidyaOpen(fz_c, 12, 9);
+                if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+            } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.vidyaImpl(Sidx, svN - 1, fz_c, optInTimePeriod, optInCMOPeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rcS = ((TALibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.SUCCESS && nbS.value > 0) {
+                        try {
+                            Core.VidyaStream stA = c2.vidyaOpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod, optInCMOPeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
+        }
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign[0] + diag + "}";
+    }
+
     static String sv_VORTEX(String json) {
         int svShape = jsonInt(json, "gen_shape");
         int svSeed = jsonInt(json, "gen_seed");
@@ -273629,6 +275246,7 @@ public class TaCodegenServe {
         case "TA_ULTOSC": return sv_ULTOSC(json);
         case "TA_VAR": return sv_VAR(json);
         case "TA_VHF": return sv_VHF(json);
+        case "TA_VIDYA": return sv_VIDYA(json);
         case "TA_VORTEX": return sv_VORTEX(json);
         case "TA_VWAP": return sv_VWAP(json);
         case "TA_VWMA": return sv_VWMA(json);
@@ -294820,6 +296438,104 @@ public class TaCodegenServe {
             double[] fb0 = new double[m];
             try {
                 Core.VhfStream st2 = core.vhfOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, fb0);
+                if (st2.outRange().begIdx() != beg || st2.outRange().count() != nb) { r.ok = false; r.leg = 2; }
+                if (r.ok) {
+                    for (int k = 0; k < nb; k++) {
+                        boolean cmp = true;
+                        if (cmp && svXtierNe(rb0[k], fb0[k], r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[k]); r.stream = Double.doubleToRawLongBits(fb0[k]); }
+                        if (cmp) r.fillBars++;
+                        if (!cmp) { r.ok = false; r.leg = 2; r.bar = beg + k; break; }
+                    }
+                }
+            } catch (RuntimeException _e) { r.ok = false; r.leg = 2; }
+        }
+
+        if (r.ok) {
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
+            rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
+        }
+    }
+
+    static void rideVidya(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, int optInCMOPeriod, StringBuilder sb) {
+        if (!rideGate(json)) return;
+        RideResult r = new RideResult();
+        rideBodyVidya(core, json, endIdx, inReal, optInTimePeriod, optInCMOPeriod, r);
+        r.emit(sb);
+    }
+
+    @SuppressWarnings("unused")
+    static void rideBodyVidya(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, int optInCMOPeriod, RideResult r) {
+        try { r.lb = core.vidyaLookback(optInTimePeriod, optInCMOPeriod); } catch (RuntimeException _e) { r.lb = -1; }
+        int lb = r.lb;
+        int navail = endIdx + 1;
+        if (inReal.length < navail) navail = inReal.length;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
+        if (m > navail) m = navail;
+        r.m = m;
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
+        if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
+
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_VIDYA");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMix(hash, optInCMOPeriod);
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
+            r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
+        }
+
+        double[] rb0 = new double[m];
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
+        try { OutRange _rr = core.vidya(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInTimePeriod, optInCMOPeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.vidyaOpen(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, optInCMOPeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.vidyaOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, optInCMOPeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
+        if (nb == 0) { r.skip = 5; return; }
+        if (beg != lb) { r.skip = 6; return; }
+
+        try {
+            boolean cmp;
+            Core.VidyaStream st = core.vidyaOpen(java.util.Arrays.copyOf(inReal, lb + 1), optInTimePeriod, optInCMOPeriod);
+            double uv = st.value();
+            cmp = true;
+            if (cmp && svXtierNe(rb0[lb - beg], uv, r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[lb - beg]); r.stream = Double.doubleToRawLongBits(uv); }
+            if (cmp) r.openBars++;
+            if (!cmp) { r.ok = false; r.leg = 1; r.bar = lb; }
+            for (int t = lb + 1; r.ok && t < m; t++) {
+                double uv2 = st.update(inReal[t]);
+                uv = uv2;
+                cmp = true;
+                if (cmp && svXtierNe(rb0[t - beg], uv, r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[t - beg]); r.stream = Double.doubleToRawLongBits(uv); }
+                if (cmp) r.openBars++;
+                if (!cmp) { r.ok = false; r.leg = 1; r.bar = t; }
+            }
+        } catch (RuntimeException _e) { r.ok = false; r.leg = 1; }
+
+        if (r.ok) {
+            double[] fb0 = new double[m];
+            try {
+                Core.VidyaStream st2 = core.vidyaOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, optInCMOPeriod, fb0);
                 if (st2.outRange().begIdx() != beg || st2.outRange().count() != nb) { r.ok = false; r.leg = 2; }
                 if (r.ok) {
                     for (int k = 0; k < nb; k++) {

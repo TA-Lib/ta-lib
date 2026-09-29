@@ -686,6 +686,9 @@ final class Dispatch {
          case "VHF":
             return core.vhf(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
+         case "VIDYA":
+            return core.vidya(
+               startIdx, endIdx, h.realInput(0), h.intOpt(0), h.intOpt(1), h.realOutput(0));
          case "VORTEX":
             return core.vortex(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOpt(0), h.realOutput(0), h.realOutput(1));
@@ -1141,6 +1144,8 @@ final class Dispatch {
             return core.varLookback(h.intOpt(0), h.realOpt(1));
          case "VHF":
             return core.vhfLookback(h.intOpt(0));
+         case "VIDYA":
+            return core.vidyaLookback(h.intOpt(0), h.intOpt(1));
          case "VORTEX":
             return core.vortexLookback(h.intOpt(0));
          case "VWAP":

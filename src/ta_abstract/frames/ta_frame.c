@@ -4735,6 +4735,28 @@ unsigned int TA_VHF_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_VHF_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
 }
+TA_RetCode TA_VIDYA_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+{
+   return TA_VIDYA(
+               startIdx,
+               endIdx,
+               params->in[0].data.inReal, /* inReal */
+               params->optIn[0].data.optInInteger, /* optInTimePeriod*/
+               params->optIn[1].data.optInInteger, /* optInCMOPeriod*/
+               outBegIdx, 
+               outNBElement, 
+               params->out[0].data.outReal /*  outReal */
+               );
+}
+unsigned int TA_VIDYA_FramePPLB( const TA_ParamHolderPriv *params )
+{
+   return TA_VIDYA_Lookback(params->optIn[0].data.optInInteger, /* optInTimePeriod*/
+                    params->optIn[1].data.optInInteger /* optInCMOPeriod*/ );
+}
 TA_RetCode TA_VORTEX_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

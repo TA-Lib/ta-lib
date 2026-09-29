@@ -19,6 +19,7 @@
  *  072426 MF,CC TA_MAType_DISABLED: period-independent identity copy (issue #93).
  *  090426 MF,CC Add ZLEMA (issue #347).
  *  090426 MF,CC Add RMA (issue #348).
+ *  092926 MF,CC Add VIDYA (issue #474).
  */
 
    /**
@@ -32,7 +33,7 @@
     *        1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInMAType Which moving-average algorithm to dispatch to (default
     *        0 = SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA,
-    *        7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+    *        7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA;
     *        {@code MAType.DEFAULT} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
@@ -87,6 +88,9 @@
          break;
       case RMA:
          retValue = rmaLookback(optInTimePeriod);
+         break;
+      case VIDYA:
+         retValue = vidyaLookback(optInTimePeriod, (3 * optInTimePeriod + 2) / 4);
          break;
       default:
          retValue = 0;
@@ -242,6 +246,15 @@
          outNBElement.value = _xr11.count();
          retCode = RetCode.SUCCESS;
          break;
+      case VIDYA:
+         /* The one period is the EMA length; the CMO period is round(3n/4),
+          * Chande's 12:9 ratio.
+          */
+         OutRange _xr12 = vidya(startIdx, endIdx, inReal, optInTimePeriod, (3 * optInTimePeriod + 2) / 4, outReal);
+         outBegIdx.value = _xr12.begIdx();
+         outNBElement.value = _xr12.count();
+         retCode = RetCode.SUCCESS;
+         break;
       default:
          retCode = RetCode.BAD_PARAM;
          break;
@@ -363,6 +376,12 @@
          outNBElement.value = _xr11.count();
          retCode = RetCode.SUCCESS;
          break;
+      case VIDYA:
+         OutRange _xr12 = vidya(startIdx, endIdx, inReal, optInTimePeriod, (3 * optInTimePeriod + 2) / 4, outReal);
+         outBegIdx.value = _xr12.begIdx();
+         outNBElement.value = _xr12.count();
+         retCode = RetCode.SUCCESS;
+         break;
       default:
          retCode = RetCode.BAD_PARAM;
          break;
@@ -394,7 +413,7 @@
     *        1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInMAType Which moving-average algorithm to dispatch to (default
     *        0 = SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA,
-    *        7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+    *        7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA;
     *        {@code MAType.DEFAULT} selects the default).
     * @param outReal Selected moving average of the input. Must hold at least
     *        {@code endIdx - max(startIdx, maLookback(...)) + 1} values, the count the
@@ -425,6 +444,7 @@
     * @see Core#hma
     * @see Core#zlema
     * @see Core#rma
+    * @see Core#vidya
     */
    public OutRange ma( int startIdx,
                        int endIdx,
@@ -476,7 +496,7 @@
     *        1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInMAType Which moving-average algorithm to dispatch to (default
     *        0 = SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA,
-    *        7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+    *        7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA;
     *        {@code MAType.DEFAULT} selects the default).
     * @param outReal Selected moving average of the input. Must hold at least
     *        {@code endIdx - max(startIdx, maLookback(...)) + 1} values, the count the
@@ -507,6 +527,7 @@
     * @see Core#hma
     * @see Core#zlema
     * @see Core#rma
+    * @see Core#vidya
     */
    public OutRange ma( int startIdx,
                        int endIdx,
@@ -638,6 +659,9 @@
             case RMA:
                this.sub = new RmaStream((RmaStream) other.sub);
                break;
+            case VIDYA:
+               this.sub = new VidyaStream((VidyaStream) other.sub);
+               break;
             default:
                throw new IllegalStateException("unreachable: open rejects arms without a sub-stream");
             }
@@ -729,6 +753,9 @@
          case RMA: {
             return ((RmaStream) sp.sub).peek(inReal);
          }
+         case VIDYA: {
+            return ((VidyaStream) sp.sub).peek(inReal);
+         }
          default:
             throw new IllegalStateException("unreachable: open rejects arms without a sub-stream");
          }
@@ -816,6 +843,10 @@
       }
       case RMA: {
          sp.cur_outReal = ((RmaStream) sp.sub).update(inReal);
+         return;
+      }
+      case VIDYA: {
+         sp.cur_outReal = ((VidyaStream) sp.sub).update(inReal);
          return;
       }
       default:
@@ -951,6 +982,14 @@
       }
       case RMA: {
          RmaStream sub = rmaOpenInternal(inReal, startIdx, optInTimePeriod);
+         sp.outRangeBegIdx = sub.outRangeBegIdx;
+         sp.outRangeCount = sub.outRangeCount;
+         sp.sub = sub;
+         sp.cur_outReal = sub.cur_outReal;
+         break;
+      }
+      case VIDYA: {
+         VidyaStream sub = vidyaOpenInternal(inReal, startIdx, optInTimePeriod, (3 * optInTimePeriod + 2) / 4);
          sp.outRangeBegIdx = sub.outRangeBegIdx;
          sp.outRangeCount = sub.outRangeCount;
          sp.sub = sub;
@@ -1101,6 +1140,14 @@
          sp.cur_outReal = sub.cur_outReal;
          break;
       }
+      case VIDYA: {
+         VidyaStream sub = vidyaOpenAndFill(inReal, optInTimePeriod, (3 * optInTimePeriod + 2) / 4, outReal);
+         outBegIdx.value = sub.outRangeBegIdx;
+         outNBElement.value = sub.outRangeCount;
+         sp.sub = sub;
+         sp.cur_outReal = sub.cur_outReal;
+         break;
+      }
       default:
          return RetCode.BAD_PARAM;
       }
@@ -1218,6 +1265,12 @@
       }
       case RMA: {
          RmaStream sub = rmaOpenAndFillInternal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+         sp.sub = sub;
+         sp.cur_outReal = sub.cur_outReal;
+         break;
+      }
+      case VIDYA: {
+         VidyaStream sub = vidyaOpenAndFillInternal(inReal, startIdx, optInTimePeriod, (3 * optInTimePeriod + 2) / 4, outBegIdx, outNBElement, outReal);
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outReal;
          break;
@@ -1362,6 +1415,8 @@
          return zlemaStepTape((ZlemaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
       case RMA:
          return rmaStepTape((RmaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
+      case VIDYA:
+         return vidyaStepTape((VidyaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
       default:
          throw new IllegalStateException("unreachable: open rejects arms without a sub-stream");
       }
@@ -1408,6 +1463,8 @@
          return zlemaPeekTape((ZlemaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
       case RMA:
          return rmaPeekTape((RmaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
+      case VIDYA:
+         return vidyaPeekTape((VidyaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
       default:
          throw new IllegalStateException("unreachable: open rejects arms without a sub-stream");
       }
@@ -1443,6 +1500,8 @@
          return zlemaTapeDetach((ZlemaStream) sp.sub);
       case RMA:
          return rmaTapeDetach((RmaStream) sp.sub);
+      case VIDYA:
+         return vidyaTapeDetach((VidyaStream) sp.sub);
       default:
          return 0;
       }

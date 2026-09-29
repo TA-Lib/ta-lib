@@ -86,6 +86,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         new(11, "DEFAULT"),
         new(12, "ZLEMA"),
         new(13, "RMA"),
+        new(14, "VIDYA"),
     ];
 
     /// <summary>The process-wide catalogue.</summary>
@@ -323,6 +324,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
             MakeUltosc(),
             MakeVar(),
             MakeVhf(),
+            MakeVidya(),
             MakeVortex(),
             MakeVwap(),
             MakeVwma(),
@@ -5046,6 +5048,30 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         invoke: static (core, c, startIdx, endIdx) =>
             core.Vhf(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0)));
+
+    private static FuncInfo MakeVidya() => new(
+        name: "VIDYA",
+        group: FunctionGroup.OverlapStudies,
+        hint: "Variable Index Dynamic Average",
+        flags: FuncFlags.Overlap | FuncFlags.Stream | FuncFlags.UnstablePeriod | FuncFlags.Period1Identity,
+        unstableId: FuncUnstId.VIDYA,
+        inputs:
+        [
+            new InputInfo(InputKind.Real, "inReal", PriceComponents.None, []),
+        ],
+        optInputs:
+        [
+            new OptInputInfo("optInTimePeriod", "Time Period", "EMA-equivalent smoothing period, alpha = 2/(n+1)", OptInputFlags.None, new OptInputDomain.IntegerRange(1, 100000, 12, 4, 200, 1)),
+            new OptInputInfo("optInCMOPeriod", "CMO Period", "Period of the unsmoothed CMO that scales alpha", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 9, 4, 200, 1)),
+        ],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+        ],
+        lookback: static (core, c) => core.VidyaLookback(c.IntOpt(0), c.IntOpt(1)),
+        invoke: static (core, c, startIdx, endIdx) =>
+            core.Vidya(
+                startIdx, endIdx, c.Series(0), c.IntOpt(0), c.IntOpt(1), c.RealOut(0)));
 
     private static FuncInfo MakeVortex() => new(
         name: "VORTEX",

@@ -4,7 +4,7 @@ format 9
 soname libta-lib.so.1
 version-info 3:0:2
 headers ta_abstract.h ta_common.h ta_defs.h ta_func.h ta_libc.h
-function-count 2655
+function-count 2667
 platform pointer=8 long=8 int=4 enum=4
 type TA_FuncInfo sizeof=48 name:const_char_*=0 group:const_char_*=8 hint:const_char_*=16 flags:TA_FuncFlags=24 nbInput:unsigned_int=28 nbOptInput:unsigned_int=32 nbOutput:unsigned_int=36 handle:const_TA_FuncHandle_*=40
 type TA_InputParameterInfo sizeof=24 type:TA_InputParameterType=0 paramName:const_char_*=8 flags:TA_InputFlags=16
@@ -65,6 +65,7 @@ enum TA_FuncUnstId TA_FUNC_UNST_HA = 25
 enum TA_FuncUnstId TA_FUNC_UNST_RVI = 26
 enum TA_FuncUnstId TA_FUNC_UNST_FRAMA = 27
 enum TA_FuncUnstId TA_FUNC_UNST_MCGD = 28
+enum TA_FuncUnstId TA_FUNC_UNST_VIDYA = 29
 enum TA_FuncUnstId TA_FUNC_UNST_ALL = 65535
 enum TA_InputParameterType sizeof=4
 enum TA_InputParameterType TA_Input_Price = 0
@@ -85,6 +86,7 @@ enum TA_MAType TA_MAType_DISABLED = 10
 enum TA_MAType TA_MAType_DEFAULT = 11
 enum TA_MAType TA_MAType_ZLEMA = 12
 enum TA_MAType TA_MAType_RMA = 13
+enum TA_MAType TA_MAType_VIDYA = 14
 enum TA_OptInputParameterType sizeof=4
 enum TA_OptInputParameterType TA_OptInput_RealRange = 0
 enum TA_OptInputParameterType TA_OptInput_RealList = 1
@@ -2371,6 +2373,7 @@ function TA_RetCode TA_S_TYPPRICE(int, int, const float *, const float *, const 
 function TA_RetCode TA_S_ULTOSC(int, int, const float *, const float *, const float *, int, int, int, int *, int *, double *)
 function TA_RetCode TA_S_VAR(int, int, const float *, int, double, int *, int *, double *)
 function TA_RetCode TA_S_VHF(int, int, const float *, int, int *, int *, double *)
+function TA_RetCode TA_S_VIDYA(int, int, const float *, int, int, int *, int *, double *)
 function TA_RetCode TA_S_VORTEX(int, int, const float *, const float *, const float *, int, int *, int *, double *, double *)
 function TA_RetCode TA_S_VWAP(int, int, const float *, const float *, const float *, const float *, int *, int *, double *)
 function TA_RetCode TA_S_VWMA(int, int, const float *, const float *, int, int *, int *, double *)
@@ -2520,6 +2523,16 @@ function TA_RetCode TA_VHF_OutRange(const TA_VHF_Stream *, int *, int *)
 function TA_RetCode TA_VHF_Peek(const TA_VHF_Stream *, double, double *)
 function TA_RetCode TA_VHF_Update(TA_VHF_Stream *, double, double *)
 function TA_RetCode TA_VHF_Value(const TA_VHF_Stream *, double *)
+function TA_RetCode TA_VIDYA(int, int, const double *, int, int, int *, int *, double *)
+function TA_RetCode TA_VIDYA_Advance(TA_VIDYA_Stream *)
+function TA_RetCode TA_VIDYA_Clone(const TA_VIDYA_Stream *, TA_VIDYA_Stream **)
+function TA_RetCode TA_VIDYA_Close(TA_VIDYA_Stream *)
+function TA_RetCode TA_VIDYA_Open(TA_VIDYA_Stream **, const double *, int, int, int, double *)
+function TA_RetCode TA_VIDYA_OpenAndFill(TA_VIDYA_Stream **, const double *, int, int, int, int *, int *, double *)
+function TA_RetCode TA_VIDYA_OutRange(const TA_VIDYA_Stream *, int *, int *)
+function TA_RetCode TA_VIDYA_Peek(const TA_VIDYA_Stream *, double, double *)
+function TA_RetCode TA_VIDYA_Update(TA_VIDYA_Stream *, double, double *)
+function TA_RetCode TA_VIDYA_Value(const TA_VIDYA_Stream *, double *)
 function TA_RetCode TA_VORTEX(int, int, const double *, const double *, const double *, int, int *, int *, double *, double *)
 function TA_RetCode TA_VORTEX_Advance(TA_VORTEX_Stream *)
 function TA_RetCode TA_VORTEX_Clone(const TA_VORTEX_Stream *, TA_VORTEX_Stream **)
@@ -2819,6 +2832,7 @@ function int TA_TYPPRICE_Lookback(void)
 function int TA_ULTOSC_Lookback(int, int, int)
 function int TA_VAR_Lookback(int, double)
 function int TA_VHF_Lookback(int)
+function int TA_VIDYA_Lookback(int, int)
 function int TA_VORTEX_Lookback(int)
 function int TA_VWAP_Lookback(void)
 function int TA_VWMA_Lookback(int)

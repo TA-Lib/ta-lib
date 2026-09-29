@@ -541,6 +541,9 @@ typedef enum
   /* (#469) CHOP/CHOPTR legs that ran while comparing nothing. */
   TA_CHOP_VACUOUS                    = 1690,
 
+  /* (#474) VIDYA legs that ran while comparing nothing. */
+  TA_VIDYA_VACUOUS                   = 1691,
+
   /* One code for every suite that routes a fixed vector through server_verify
    * (#427), because it reports one failure and the message names the leg.
    * server_verify answers TA_TEST_PASS when it cannot build the request, so a

@@ -235,7 +235,7 @@
 //! * [`WAD`](Core::wad) — Williams' Accumulation/Distribution
 //! * [`WILLR`](Core::willr) — Williams' %R
 //!
-//! ## Overlap Studies (27)
+//! ## Overlap Studies (28)
 //!
 //! * [`ACCBANDS`](Core::accbands) — Acceleration Bands
 //! * [`BBANDS`](Core::bbands) — Bollinger Bands
@@ -261,6 +261,7 @@
 //! * [`T3`](Core::t3) — Triple Exponential Moving Average (T3)
 //! * [`TEMA`](Core::tema) — Triple Exponential Moving Average
 //! * [`TRIMA`](Core::trima) — Triangular Moving Average
+//! * [`VIDYA`](Core::vidya) — Variable Index Dynamic Average
 //! * [`VWMA`](Core::vwma) — Volume Weighted Moving Average
 //! * [`WMA`](Core::wma) — Weighted Moving Average
 //! * [`ZLEMA`](Core::zlema) — Zero-Lag Exponential Moving Average

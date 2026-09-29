@@ -44,6 +44,8 @@ pub enum MAType {
     ZLEMA = 12,
     /// The `TA_MAType_RMA` moving average.
     RMA = 13,
+    /// The `TA_MAType_VIDYA` moving average.
+    VIDYA = 14,
 }
 
 impl TryFrom<i32> for MAType {
@@ -77,6 +79,7 @@ impl TryFrom<i32> for MAType {
             11 => Self::DEFAULT,
             12 => Self::ZLEMA,
             13 => Self::RMA,
+            14 => Self::VIDYA,
             i32::MIN => Self::DEFAULT,
             _ => return Err(RetCode::BadParam),
         })
@@ -308,6 +311,7 @@ mod typprice;
 mod ultosc;
 mod var;
 mod vhf;
+mod vidya;
 mod vortex;
 mod vwap;
 mod vwma;
@@ -528,6 +532,7 @@ pub use typprice::TyppriceStream;
 pub use ultosc::UltoscStream;
 pub use var::VarStream;
 pub use vhf::VhfStream;
+pub use vidya::VidyaStream;
 pub use vortex::VortexStream;
 pub use vwap::VwapStream;
 pub use vwma::VwmaStream;

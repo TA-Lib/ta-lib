@@ -1379,6 +1379,12 @@ internal static class NoPhantomIoBinder
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
+        ["VIDYA"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.VidyaImpl(
+                startIdx, endIdx, c.Series(0), c.IntOpt(0), c.IntOpt(1), out int b, out int n, c.RealOut(0));
+            return new CallOutcome(rc, b, n);
+        },
         ["VORTEX"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.VortexImpl(
@@ -2692,6 +2698,12 @@ internal static class NoPhantomIoBinder
                 startIdx, endIdx, Narrow(c.Series(0)), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
+        ["VIDYA"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.VidyaImpl(
+                startIdx, endIdx, Narrow(c.Series(0)), c.IntOpt(0), c.IntOpt(1), out int b, out int n, c.RealOut(0));
+            return new CallOutcome(rc, b, n);
+        },
         ["VORTEX"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.VortexImpl(
@@ -2955,6 +2967,7 @@ internal static class NoPhantomIoBinder
         ["ULTOSC"] = static (core, c) => core.UltoscOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.IntOpt(1), c.IntOpt(2)),
         ["VAR"] = static (core, c) => core.VarOpen(c.Series(0), c.IntOpt(0), c.RealOpt(1)),
         ["VHF"] = static (core, c) => core.VhfOpen(c.Series(0), c.IntOpt(0)),
+        ["VIDYA"] = static (core, c) => core.VidyaOpen(c.Series(0), c.IntOpt(0), c.IntOpt(1)),
         ["VORTEX"] = static (core, c) => core.VortexOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0)),
         ["VWAP"] = static (core, c) => core.VwapOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.Price(0, PriceComponents.Volume)),
         ["VWMA"] = static (core, c) => core.VwmaOpen(c.Series(0), c.Price(1, PriceComponents.Volume), c.IntOpt(0)),

@@ -39,7 +39,7 @@ pub const FUSING_INVENTORY: &[&str] = &[
     "ht_trendline", "ht_trendmode", "kama", "kst", "kurtosis", "linearreg", "macd",
     "macdfix", "mama", "massi", "natr", "percentb", "ppo", "pvo", "rma", "rvi",
     "sar", "sarext", "smi", "supertrend",
-    "t3", "tema", "trix", "tsf", "tsi", "wclprice", "zlema",
+    "t3", "tema", "trix", "tsf", "tsi", "vidya", "wclprice", "zlema",
 ];
 
 use std::collections::HashSet;

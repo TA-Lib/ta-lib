@@ -61,6 +61,7 @@
  *  072426 MF,CC TA_MAType_DISABLED: period-independent identity copy (issue #93).
  *  090426 MF,CC Add ZLEMA (issue #347).
  *  090426 MF,CC Add RMA (issue #348).
+ *  092926 MF,CC Add VIDYA (issue #474).
  */
 
 // Import types from parent module
@@ -81,7 +82,7 @@ impl Core {
     /// * `optInTimePeriod` — Averaging window length (default 30, range 1..=100000)
     /// * `optInMAType` — Which moving-average algorithm to dispatch to (default 0 = SMA, values:
     ///   0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, `MAType::DEFAULT` selects the default)
+    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, `MAType::DEFAULT` selects the default)
     ///
     /// # Errors
     ///
@@ -138,6 +139,9 @@ impl Core {
             }
             MAType::RMA => {
                 retValue = self.rma_lookback(optInTimePeriod)?;
+            }
+            MAType::VIDYA => {
+                retValue = self.vidya_lookback(optInTimePeriod, (3 * optInTimePeriod + 2) / 4)?;
             }
             _ => {
                 retValue = 0;
@@ -307,6 +311,14 @@ impl Core {
                 (*outNBElement) = _xr11.count;
                 retCode = RetCode::Success;
             }
+            MAType::VIDYA => {
+                // The one period is the EMA length; the CMO period is round(3n/4),
+                // Chande's 12:9 ratio.
+                let _xr12 = match self.vidya(startIdx, endIdx, inReal, optInTimePeriod, (3 * optInTimePeriod + 2) / 4, outReal) { Ok(_r) => _r, Err(_e) => return _e };
+                (*outBegIdx) = _xr12.beg_idx;
+                (*outNBElement) = _xr12.count;
+                retCode = RetCode::Success;
+            }
             _ => {
                 retCode = RetCode::BadParam;
             }
@@ -326,7 +338,7 @@ impl Core {
     /// * `optInTimePeriod` — Averaging window length (default 30, range 1..=100000)
     /// * `optInMAType` — Which moving-average algorithm to dispatch to (default 0 = SMA, values:
     ///   0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, `MAType::DEFAULT` selects the default)
+    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, `MAType::DEFAULT` selects the default)
     /// * `outReal` — Selected moving average of the input.
     ///
     /// Integer parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
@@ -370,7 +382,7 @@ impl Core {
     /// [`SMA`](Core::sma) · [`EMA`](Core::ema) · [`WMA`](Core::wma) · [`DEMA`](Core::dema) ·
     /// [`TEMA`](Core::tema) · [`TRIMA`](Core::trima) · [`KAMA`](Core::kama) ·
     /// [`MAMA`](Core::mama) · [`T3`](Core::t3) · [`HMA`](Core::hma) · [`ZLEMA`](Core::zlema) ·
-    /// [`RMA`](Core::rma)
+    /// [`RMA`](Core::rma) · [`VIDYA`](Core::vidya)
     #[doc(alias = "TA_MA")]
     #[doc(alias = "MovingAverage")]
     pub fn ma(
@@ -457,6 +469,7 @@ enum MaSub {
     Hma(HmaStream),
     Zlema(ZlemaStream),
     Rma(RmaStream),
+    Vidya(VidyaStream),
 }
 
 #[allow(unused_variables)]
@@ -511,6 +524,9 @@ impl Core {
             MaSub::Rma(sub) => {
                 (*outReal) = sub.update(inReal)?;
             }
+            MaSub::Vidya(sub) => {
+                (*outReal) = sub.update(inReal)?;
+            }
         }
         Ok(())
     }
@@ -559,6 +575,9 @@ impl Core {
                 (*outReal) = sub.step_tape(tape, tapeBase, tapeMask, inReal);
             }
             MaSub::Rma(sub) => {
+                (*outReal) = sub.step_tape(tape, tapeBase, tapeMask, inReal);
+            }
+            MaSub::Vidya(sub) => {
                 (*outReal) = sub.step_tape(tape, tapeBase, tapeMask, inReal);
             }
         }
@@ -655,6 +674,11 @@ impl Core {
                 let (sub, subValue) = self.rma_open_internal(inReal, startIdx, optInTimePeriod)?;
                 let subRange = sub.out_range();
                 (MaSub::Rma(sub), subValue, subRange)
+            }
+            MAType::VIDYA => {
+                let (sub, subValue) = self.vidya_open_internal(inReal, startIdx, optInTimePeriod, (3 * optInTimePeriod + 2) / 4)?;
+                let subRange = sub.out_range();
+                (MaSub::Vidya(sub), subValue, subRange)
             }
             _ => return Err(RetCode::BadParam),
         };
@@ -807,6 +831,10 @@ impl Core {
                 let (sub, fillRange) = self.rma_open_and_fill(inReal, optInTimePeriod, outReal)?;
                 (MaSub::Rma(sub), fillRange)
             }
+            MAType::VIDYA => {
+                let (sub, fillRange) = self.vidya_open_and_fill(inReal, optInTimePeriod, (3 * optInTimePeriod + 2) / 4, outReal)?;
+                (MaSub::Vidya(sub), fillRange)
+            }
             _ => return Err(RetCode::BadParam),
         };
         let state = MaStreamState { optInTimePeriod, optInMAType, sub, cur_outReal: outReal[fillRange.count - 1], };
@@ -888,6 +916,9 @@ impl Core {
             ),
             MAType::RMA => MaSub::Rma(
                 self.rma_open_and_fill_internal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal)?,
+            ),
+            MAType::VIDYA => MaSub::Vidya(
+                self.vidya_open_and_fill_internal(inReal, startIdx, optInTimePeriod, (3 * optInTimePeriod + 2) / 4, outBegIdx, outNBElement, outReal)?,
             ),
             _ => return Err(RetCode::BadParam),
         };
@@ -979,6 +1010,7 @@ impl MaStream {
                 MaSub::Hma(sub) => { outReal = sub.peek(inReal)?; }
                 MaSub::Zlema(sub) => { outReal = sub.peek(inReal)?; }
                 MaSub::Rma(sub) => { outReal = sub.peek(inReal)?; }
+                MaSub::Vidya(sub) => { outReal = sub.peek(inReal)?; }
             }
         }
         Ok(outReal)
@@ -1100,6 +1132,9 @@ impl MaStream {
                 MaSub::Rma(sub) => {
                     outReal = sub.peek_tape(tape, tapeBase, tapeMask, inReal)?;
                 }
+                MaSub::Vidya(sub) => {
+                    outReal = sub.peek_tape(tape, tapeBase, tapeMask, inReal)?;
+                }
             }
         }
         Ok(outReal)
@@ -1120,6 +1155,7 @@ impl MaStream {
             MaSub::Hma(sub) => sub.tape_detach(),
             MaSub::Zlema(sub) => sub.tape_detach(),
             MaSub::Rma(sub) => sub.tape_detach(),
+            MaSub::Vidya(sub) => sub.tape_detach(),
         }
     }
 }

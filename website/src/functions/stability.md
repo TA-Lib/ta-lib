@@ -35,6 +35,7 @@ Some functions take an `optInMAType` parameter selecting how their moving averag
 | `DEFAULT` | 11 | &mdash; | Not a moving average: selects the documented default of whichever parameter it is passed to. |
 | [ZLEMA](/functions/zlema.md) | 12 | Initial Unstable Period | Built from EMA, and inherits its unstable period. |
 | [RMA](/functions/rma.md) | 13 | Initial Unstable Period | Recursive: each value folds in the previous one. Tunable via RMA's own unstable period. |
+| [VIDYA](/functions/vidya.md) | 14 | Initial Unstable Period | Recursive: each value folds in the previous one. Tunable via VIDYA's own unstable period. |
 
 ## If Path-Dependent, then... {#path-dependent}
 

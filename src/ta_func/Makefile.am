@@ -213,6 +213,7 @@ libta_func_la_SOURCES = ta_utility.c \
 	ta_ULTOSC.c \
 	ta_VAR.c \
 	ta_VHF.c \
+	ta_VIDYA.c \
 	ta_VORTEX.c \
 	ta_VWAP.c \
 	ta_VWMA.c \

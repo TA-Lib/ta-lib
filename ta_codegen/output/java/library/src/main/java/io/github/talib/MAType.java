@@ -63,5 +63,6 @@ public enum MAType
    /** Not a moving average: selects the documented default of whichever parameter it is passed to. */
    DEFAULT,
    ZLEMA,
-   RMA
+   RMA,
+   VIDYA
 };

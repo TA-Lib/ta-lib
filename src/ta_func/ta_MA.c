@@ -63,6 +63,7 @@
  *  072426 MF,CC TA_MAType_DISABLED: period-independent identity copy (issue #93).
  *  090426 MF,CC Add ZLEMA (issue #347).
  *  090426 MF,CC Add RMA (issue #348).
+ *  092926 MF,CC Add VIDYA (issue #474).
  */
 
 TA_LIB_API int TA_MA_Lookback( int optInTimePeriod, TA_MAType optInMAType )
@@ -117,6 +118,9 @@ TA_LIB_API int TA_MA_Lookback( int optInTimePeriod, TA_MAType optInMAType )
       break;
    case TA_MAType_RMA:
       retValue = TA_RMA_Lookback(optInTimePeriod);
+      break;
+   case TA_MAType_VIDYA:
+      retValue = TA_VIDYA_Lookback(optInTimePeriod,(3 * optInTimePeriod + 2) / 4);
       break;
    default:
       retValue = 0;
@@ -246,6 +250,12 @@ TA_LIB_API TA_RetCode TA_MA( int    startIdx,
    case TA_MAType_RMA:
       retCode = TA_RMA(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
       break;
+   case TA_MAType_VIDYA:
+      /* The one period is the EMA length; the CMO period is round(3n/4),
+       * Chande's 12:9 ratio.
+       */
+      retCode = TA_VIDYA(startIdx,endIdx,inReal,optInTimePeriod,(3 * optInTimePeriod + 2) / 4,outBegIdx,outNBElement,outReal);
+      break;
    default:
       retCode = TA_BAD_PARAM;
       break;
@@ -341,6 +351,9 @@ TA_RetCode TA_S_MA( int    startIdx,
       break;
    case TA_MAType_RMA:
       retCode = TA_S_RMA(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
+      break;
+   case TA_MAType_VIDYA:
+      retCode = TA_S_VIDYA(startIdx,endIdx,inReal,optInTimePeriod,(3 * optInTimePeriod + 2) / 4,outBegIdx,outNBElement,outReal);
       break;
    default:
       retCode = TA_BAD_PARAM;
@@ -513,6 +526,15 @@ TA_RetCode TA_MA_OpenInternal( struct TA_MA_Stream **stream, const double inReal
             TA_RMA_OutRange( sub, &sp->outRangeBegIdx, &sp->outRangeCount );
       }
       break;
+   case TA_MAType_VIDYA:
+      {
+         TA_VIDYA_Stream *sub = NULL;
+         retCode = TA_VIDYA_OpenInternal( &sub, inReal, startIdx, historyLen, optInTimePeriod, (3 * optInTimePeriod + 2) / 4, outReal );
+         sp->sub = sub;
+         if( retCode == TA_SUCCESS )
+            TA_VIDYA_OutRange( sub, &sp->outRangeBegIdx, &sp->outRangeCount );
+      }
+      break;
    default:
       retCode = TA_BAD_PARAM;
       break;
@@ -671,6 +693,13 @@ TA_LIB_API TA_RetCode TA_MA_OpenAndFill( TA_MA_Stream **stream, const double inR
          sp->sub = sub;
       }
       break;
+   case TA_MAType_VIDYA:
+      {
+         TA_VIDYA_Stream *sub = NULL;
+         retCode = TA_VIDYA_OpenAndFill( &sub, inReal, historyLen, optInTimePeriod, (3 * optInTimePeriod + 2) / 4, outBegIdx, outNBElement, outReal );
+         sp->sub = sub;
+      }
+      break;
    default:
       retCode = TA_BAD_PARAM;
       break;
@@ -822,6 +851,13 @@ TA_RetCode TA_MA_OpenAndFillInternal( struct TA_MA_Stream **stream, const double
          sp->sub = sub;
       }
       break;
+   case TA_MAType_VIDYA:
+      {
+         TA_VIDYA_Stream *sub = NULL;
+         retCode = TA_VIDYA_OpenAndFillInternal( &sub, inReal, startIdx, historyLen, optInTimePeriod, (3 * optInTimePeriod + 2) / 4, outBegIdx, outNBElement, outReal );
+         sp->sub = sub;
+      }
+      break;
    default:
       retCode = TA_BAD_PARAM;
       break;
@@ -893,6 +929,9 @@ TA_LIB_API TA_RetCode TA_MA_Update( TA_MA_Stream *stream, double inReal, double 
    case TA_MAType_RMA:
       retCode = TA_RMA_Update( (TA_RMA_Stream *)stream->sub, inReal, outReal );
       break;
+   case TA_MAType_VIDYA:
+      retCode = TA_VIDYA_Update( (TA_VIDYA_Stream *)stream->sub, inReal, outReal );
+      break;
    default:
       /* Unreachable: Open rejects arms without a sub-stream. */
       return TA_INTERNAL_ERROR(343);
@@ -938,6 +977,8 @@ TA_LIB_API TA_RetCode TA_MA_Peek( const TA_MA_Stream *stream, double inReal, dou
       return TA_ZLEMA_Peek( (const TA_ZLEMA_Stream *)stream->sub, inReal, outReal );
    case TA_MAType_RMA:
       return TA_RMA_Peek( (const TA_RMA_Stream *)stream->sub, inReal, outReal );
+   case TA_MAType_VIDYA:
+      return TA_VIDYA_Peek( (const TA_VIDYA_Stream *)stream->sub, inReal, outReal );
    default:
       /* Unreachable: Open rejects arms without a sub-stream. */
       return TA_INTERNAL_ERROR(344);
@@ -991,6 +1032,9 @@ void TA_MA_StepTape( struct TA_MA_Stream *stream, const double tape[], int tapeB
       break;
    case TA_MAType_RMA:
       TA_RMA_StepTape( (struct TA_RMA_Stream *)stream->sub, tape, tapeBase, tapeMask, inReal, outReal );
+      break;
+   case TA_MAType_VIDYA:
+      TA_VIDYA_StepTape( (struct TA_VIDYA_Stream *)stream->sub, tape, tapeBase, tapeMask, inReal, outReal );
       break;
    default:
       /* Unreachable: Open rejects arms without a sub-stream. */
@@ -1046,6 +1090,9 @@ void TA_MA_PeekTape( const struct TA_MA_Stream *stream, const double tape[], int
    case TA_MAType_RMA:
       TA_RMA_PeekTape( (const struct TA_RMA_Stream *)stream->sub, tape, tapeBase, tapeMask, inReal, outReal );
       break;
+   case TA_MAType_VIDYA:
+      TA_VIDYA_PeekTape( (const struct TA_VIDYA_Stream *)stream->sub, tape, tapeBase, tapeMask, inReal, outReal );
+      break;
    default:
       break;
    }
@@ -1081,6 +1128,8 @@ int TA_MA_TapeDetach( struct TA_MA_Stream *stream )
       return TA_ZLEMA_TapeDetach( (struct TA_ZLEMA_Stream *)stream->sub );
    case TA_MAType_RMA:
       return TA_RMA_TapeDetach( (struct TA_RMA_Stream *)stream->sub );
+   case TA_MAType_VIDYA:
+      return TA_VIDYA_TapeDetach( (struct TA_VIDYA_Stream *)stream->sub );
    default:
       return 0;
    }
@@ -1126,6 +1175,9 @@ TA_LIB_API TA_RetCode TA_MA_Close( TA_MA_Stream *stream )
       break;
    case TA_MAType_RMA:
       TA_RMA_Close( (TA_RMA_Stream *)stream->sub );
+      break;
+   case TA_MAType_VIDYA:
+      TA_VIDYA_Close( (TA_VIDYA_Stream *)stream->sub );
       break;
    default:
       break; /* identity-only or rejected arm: no sub-stream */
@@ -1255,6 +1307,13 @@ TA_LIB_API TA_RetCode TA_MA_Clone( const TA_MA_Stream *stream, TA_MA_Stream **cl
          {
             TA_RMA_Stream *subClone = NULL;
             subRc = TA_RMA_Clone( (const TA_RMA_Stream *)stream->sub, &subClone );
+            sp->sub = subClone;
+         }
+         break;
+      case TA_MAType_VIDYA:
+         {
+            TA_VIDYA_Stream *subClone = NULL;
+            subRc = TA_VIDYA_Clone( (const TA_VIDYA_Stream *)stream->sub, &subClone );
             sp->sub = subClone;
          }
          break;

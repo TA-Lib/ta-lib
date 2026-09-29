@@ -250,6 +250,7 @@ extern const TA_FuncDef TA_DEF_TYPPRICE;
 extern const TA_FuncDef TA_DEF_ULTOSC;
 extern const TA_FuncDef TA_DEF_VAR;
 extern const TA_FuncDef TA_DEF_VHF;
+extern const TA_FuncDef TA_DEF_VIDYA;
 extern const TA_FuncDef TA_DEF_VORTEX;
 extern const TA_FuncDef TA_DEF_VWAP;
 extern const TA_FuncDef TA_DEF_VWMA;
@@ -319,6 +320,7 @@ const TA_FuncDef *TA_PerGroupFunc_2[] = {
 &TA_DEF_T3,
 &TA_DEF_TEMA,
 &TA_DEF_TRIMA,
+&TA_DEF_VIDYA,
 &TA_DEF_VWMA,
 &TA_DEF_WMA,
 &TA_DEF_ZLEMA,

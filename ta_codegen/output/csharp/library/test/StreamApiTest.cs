@@ -1666,7 +1666,7 @@ public static class StreamApiTest
             "a bad parameter outranks an empty output on a composed tier", null, "STOCH openAndFill: bad parameter");
 
         // A C# enum is not a closed domain.
-        foreach (int raw in new[] { 999, -1, (int)MAType.RMA + 1 })
+        foreach (int raw in new[] { 999, -1, (int)Enum.GetValues<MAType>()[^1] + 1 })
         {
             var t = (MAType)raw;
             StreamRejects(() => core.MaOpen(input, 30, t), $"MaOpen((MAType){raw})", null, "MA open: bad parameter");
@@ -1684,8 +1684,9 @@ public static class StreamApiTest
         StreamAccepts(() => core.StochOpenAndFill(input, input, input, 5, 3, MAType.SMA, 3, MAType.SMA, output, output2),
             "StochOpenAndFill");
         StreamAccepts(() => core.MavpOpenAndFill(input, periods, 2, 30, MAType.SMA, output), "MavpOpenAndFill");
-        StreamAccepts(() => core.MaOpen(input, 30, MAType.RMA), "MaOpen(RMA)");
-        StreamAccepts(() => core.BbandsOpen(input, 20, 2.0, 2.0, MAType.RMA), "BbandsOpen(RMA)");
+        var last = Enum.GetValues<MAType>()[^1];
+        StreamAccepts(() => core.MaOpen(input, 30, last), $"MaOpen({last})");
+        StreamAccepts(() => core.BbandsOpen(input, 20, 2.0, 2.0, last), $"BbandsOpen({last})");
     }
 
     /// <summary>Rule S1 ahead of every other opener check: an empty history is

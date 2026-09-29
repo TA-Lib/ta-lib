@@ -37,6 +37,7 @@ MAType:
     # shipped ABI. Cosmetic, and not to be "fixed" by renumbering.
     - { name: ZLEMA,    value: 12 }
     - { name: RMA,      value: 13 }
+    - { name: VIDYA,    value: 14 }
 
 # FuncUnstId — the unstable-period function IDs. This list IS the source of truth
 # for the FuncUnstId enum generated into the GENCODE section of include/ta_defs.h
@@ -79,3 +80,4 @@ FuncUnstId:
     - { name: RVI,          value: 26 }
     - { name: FRAMA,        value: 27 }
     - { name: MCGD,         value: 28 }
+    - { name: VIDYA,        value: 29 }

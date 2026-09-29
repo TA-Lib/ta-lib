@@ -8449,6 +8449,44 @@ static TA_RetCode TA_VHF_SFrameClose( void *stream )
    return TA_VHF_Close( (TA_VHF_Stream *)stream );
 }
 
+static TA_RetCode TA_VIDYA_SFrameOpen( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_VIDYA_Open(
+               (TA_VIDYA_Stream **)stream,
+               in[0] /* inReal */,
+               historyLen,
+               (int)optIn[0] /* optInTimePeriod */,
+               (int)optIn[1] /* optInCMOPeriod */,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_VIDYA_SFrameFill( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_VIDYA_OpenAndFill(
+               (TA_VIDYA_Stream **)stream,
+               in[0] /* inReal */,
+               historyLen,
+               (int)optIn[0] /* optInTimePeriod */,
+               (int)optIn[1] /* optInCMOPeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_VIDYA_SFrameClose( void *stream )
+{
+   return TA_VIDYA_Close( (TA_VIDYA_Stream *)stream );
+}
+
 static TA_RetCode TA_VORTEX_SFrameOpen( void **stream,
                   const double *const in[], int historyLen,
                   const double optIn[],
@@ -9184,6 +9222,8 @@ static const TA_StreamEntry TA_StreamTable[] = {
      1, TA_VIn_VAR, 2, TA_VOpt_VAR, 1, TA_VOutIsInt_VAR },
    { "VHF", TA_VHF_SFrameOpen, TA_VHF_SFrameFill, TA_VHF_SFrameClose,
      1, TA_VIn_VHF, 1, TA_VOpt_VHF, 1, TA_VOutIsInt_VHF },
+   { "VIDYA", TA_VIDYA_SFrameOpen, TA_VIDYA_SFrameFill, TA_VIDYA_SFrameClose,
+     1, TA_VIn_VIDYA, 2, TA_VOpt_VIDYA, 1, TA_VOutIsInt_VIDYA },
    { "VORTEX", TA_VORTEX_SFrameOpen, TA_VORTEX_SFrameFill, TA_VORTEX_SFrameClose,
      3, TA_VIn_VORTEX, 1, TA_VOpt_VORTEX, 2, TA_VOutIsInt_VORTEX },
    { "VWAP", TA_VWAP_SFrameOpen, TA_VWAP_SFrameFill, TA_VWAP_SFrameClose,
@@ -9202,6 +9242,6 @@ static const TA_StreamEntry TA_StreamTable[] = {
      1, TA_VIn_ZLEMA, 1, TA_VOpt_ZLEMA, 1, TA_VOutIsInt_ZLEMA },
 };
 
-#define TA_STREAM_TABLE_SIZE 218
+#define TA_STREAM_TABLE_SIZE 219
 
 #endif /* TA_STREAM_FRAME_H */

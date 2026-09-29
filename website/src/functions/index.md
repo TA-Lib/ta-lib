@@ -131,6 +131,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 - [T3](/functions/t3.md) — Triple Exponential Moving Average (T3)
 - [TEMA](/functions/tema.md) — Triple Exponential Moving Average
 - [TRIMA](/functions/trima.md) — Triangular Moving Average
+- [VIDYA](/functions/vidya.md) — Variable Index Dynamic Average
 - [VWMA](/functions/vwma.md) — Volume Weighted Moving Average
 - [WMA](/functions/wma.md) — Weighted Moving Average
 - [ZLEMA](/functions/zlema.md) — Zero-Lag Exponential Moving Average

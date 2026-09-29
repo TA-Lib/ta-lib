@@ -117,7 +117,7 @@
 #define BBW_LONG_N      100500
 #define BBW_ULP         ( DBL_EPSILON / 2.0 )
 #define BBW_SV_MAX_BARS 16000
-#define BBW_NB_MATYPE   14
+#define BBW_NB_MATYPE   ( TA_MATYPE_MAX + 1 )
 
 enum { BBW_CORPUS, BBW_NEGCORPUS, BBW_TICK100, BBW_BIG1E8, BBW_FINE100, BBW_PEG,
        BBW_FLATPOS, BBW_FLATNEG, BBW_STEPFLAT, BBW_ZERO, BBW_ALT, BBW_EPS, BBW_LONG,
@@ -810,6 +810,7 @@ static const struct { TA_FuncUnstId id; TA_MAType maType; } bbwUnst[] = {
    { TA_FUNC_UNST_EMA,  TA_MAType_TEMA  }, { TA_FUNC_UNST_EMA,  TA_MAType_ZLEMA },
    { TA_FUNC_UNST_KAMA, TA_MAType_KAMA  }, { TA_FUNC_UNST_T3,   TA_MAType_T3    },
    { TA_FUNC_UNST_MAMA, TA_MAType_MAMA  }, { TA_FUNC_UNST_RMA,  TA_MAType_RMA   },
+   { TA_FUNC_UNST_VIDYA, TA_MAType_VIDYA },
 };
 #define NB_BBW_UNST ((int)(sizeof(bbwUnst)/sizeof(bbwUnst[0])))
 
@@ -861,15 +862,15 @@ static ErrorNumber test_bbw_all( void )
 {
    static const struct { const char *leg; int want; const int *got; } cov[] = {
       { "golden exact",        361, &g_bbwGoldenCmp   },
-      { "composition",    45112402, &g_bbwDiffCmp     },
-      { "middle == 0",      140020, &g_bbwDiffMid0    },
-      { "float tier",        25912, &g_bbwFloatCmp    },
-      { "rule 18",          669614, &g_bbwIdentCmp    },
-      { "lookback",           2530, &g_bbwLookbackCmp },
-      { "in-place",         996400, &g_bbwAliasCmp    },
-      { "anchor",           328718, &g_bbwAnchorCmp   },
+      { "composition",    48139400, &g_bbwDiffCmp     },
+      { "middle == 0",      148860, &g_bbwDiffMid0    },
+      { "float tier",        27832, &g_bbwFloatCmp    },
+      { "rule 18",          717674, &g_bbwIdentCmp    },
+      { "lookback",           2710, &g_bbwLookbackCmp },
+      { "in-place",         1066162, &g_bbwAliasCmp    },
+      { "anchor",           352872, &g_bbwAnchorCmp   },
       { "parameters",         1194, &g_bbwParamCmp    },
-      { "degenerate",        60910, &g_bbwDegenCmp    },
+      { "degenerate",        65590, &g_bbwDegenCmp    },
    };
    ErrorNumber err;
    unsigned int c;
@@ -1647,11 +1648,11 @@ static ErrorNumber test_bbw_params( void )
       {     20, INFINITY,      2.0,   0, 0 }, {     20,      2.0, INFINITY,   0, 0 },
       {     20,-INFINITY,      2.0,   0, 0 }, {     20,      2.0,-INFINITY,   0, 0 },
       {     20,      NAN,      2.0,   0, 0 }, {     20,      2.0,      NAN,   0, 0 },
-      {     20,      2.0,      2.0,  -1, 0 }, {     20,      2.0,      2.0,  14, 0 },
+      {     20,      2.0,      2.0,  -1, 0 }, {     20,  2.0,  2.0, TA_MATYPE_MAX + 1, 0 },
       {     20,      2.0,      2.0, 100, 0 },
       {      2,      2.0,      2.0,   0, 1 }, { 100000,      2.0,      2.0,   0, 1 },
       {     20, TA_REAL_MAX, TA_REAL_MIN, 1, 1 }, {     20, TA_REAL_MIN, TA_REAL_MAX, 1, 1 },
-      {     20,      2.0,      2.0,  13, 1 },
+      {     20,      2.0,      2.0, TA_MATYPE_MAX, 1 },
    };
    const int nbV = (int)(sizeof(v)/sizeof(v[0]));
    TA_Integer beg, nb, begW, nbW;

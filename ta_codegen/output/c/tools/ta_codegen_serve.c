@@ -229,6 +229,7 @@
 #include "ta_func/ta_ULTOSC.c"
 #include "ta_func/ta_VAR.c"
 #include "ta_func/ta_VHF.c"
+#include "ta_func/ta_VIDYA.c"
 #include "ta_func/ta_VORTEX.c"
 #include "ta_func/ta_VWAP.c"
 #include "ta_func/ta_VWMA.c"
@@ -768,6 +769,7 @@ static int sv_steq_TA_TYPPRICE( const struct TA_TYPPRICE_Stream *a, const struct
 static int sv_steq_TA_ULTOSC( const struct TA_ULTOSC_Stream *a, const struct TA_ULTOSC_Stream *b, const char **w, int *z );
 static int sv_steq_TA_VAR( const struct TA_VAR_Stream *a, const struct TA_VAR_Stream *b, const char **w, int *z );
 static int sv_steq_TA_VHF( const struct TA_VHF_Stream *a, const struct TA_VHF_Stream *b, const char **w, int *z );
+static int sv_steq_TA_VIDYA( const struct TA_VIDYA_Stream *a, const struct TA_VIDYA_Stream *b, const char **w, int *z );
 static int sv_steq_TA_VORTEX( const struct TA_VORTEX_Stream *a, const struct TA_VORTEX_Stream *b, const char **w, int *z );
 static int sv_steq_TA_VWAP( const struct TA_VWAP_Stream *a, const struct TA_VWAP_Stream *b, const char **w, int *z );
 static int sv_steq_TA_VWMA( const struct TA_VWMA_Stream *a, const struct TA_VWMA_Stream *b, const char **w, int *z );
@@ -4924,6 +4926,9 @@ static int sv_steq_TA_MA( const struct TA_MA_Stream *a, const struct TA_MA_Strea
       case TA_MAType_RMA:
          if( sv_steq_TA_RMA( (const struct TA_RMA_Stream *)a->sub, (const struct TA_RMA_Stream *)b->sub, w, z ) ) return 1;
          break;
+      case TA_MAType_VIDYA:
+         if( sv_steq_TA_VIDYA( (const struct TA_VIDYA_Stream *)a->sub, (const struct TA_VIDYA_Stream *)b->sub, w, z ) ) return 1;
+         break;
       default:
          *w = "sub"; return 1;
       }
@@ -6464,6 +6469,33 @@ static int sv_steq_TA_VHF( const struct TA_VHF_Stream *a, const struct TA_VHF_St
       ia = (a->winPos_i + k) % a->winCap_i;
       ib = (b->winPos_i + k) % b->winCap_i;
       if( sv_xtier_ne(a->win_i_inReal[ia], b->win_i_inReal[ib], z) ) { *w = "win_i_inReal"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_VIDYA( const struct TA_VIDYA_Stream *a, const struct TA_VIDYA_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)ix;
+   if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
+   if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( a->optInCMOPeriod != b->optInCMOPeriod ) { *w = "optInCMOPeriod"; return 1; }
+   if( a->nullRun != b->nullRun ) { *w = "nullRun"; return 1; }
+   if( sv_xtier_ne(a->upSum, b->upSum, z) ) { *w = "upSum"; return 1; }
+   if( sv_xtier_ne(a->downSum, b->downSum, z) ) { *w = "downSum"; return 1; }
+   if( sv_xtier_ne(a->prevValue, b->prevValue, z) ) { *w = "prevValue"; return 1; }
+   if( sv_xtier_ne(a->trailingValue, b->trailingValue, z) ) { *w = "trailingValue"; return 1; }
+   if( sv_xtier_ne(a->alpha, b->alpha, z) ) { *w = "alpha"; return 1; }
+   if( sv_xtier_ne(a->prevVIDYA, b->prevVIDYA, z) ) { *w = "prevVIDYA"; return 1; }
+   if( a->ringCap_trailingIdx != b->ringCap_trailingIdx ) { *w = "ringCap_trailingIdx"; return 1; }
+   if( (a->ring_trailingIdx_inReal == NULL) != (b->ring_trailingIdx_inReal == NULL) ) { *w = "ring_trailingIdx_inReal"; return 1; }
+   if( a->ring_trailingIdx_inReal ) for( k = 0; k < a->ringCap_trailingIdx; k++ )
+   {
+      ia = (a->ringPos_trailingIdx + k) % a->ringCap_trailingIdx;
+      ib = (b->ringPos_trailingIdx + k) % b->ringCap_trailingIdx;
+      if( sv_xtier_ne(a->ring_trailingIdx_inReal[ia], b->ring_trailingIdx_inReal[ib], z) ) { *w = "ring_trailingIdx_inReal"; return 1; }
    }
    return 0;
 }
@@ -9390,6 +9422,7 @@ static SV_NOINLINE void sv_verify_APO(const char *json, char *resp, int resp_siz
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
+    TA_SetUnstablePeriod(29, (unsigned int)svK);
     TA_SetUnstablePeriod(24, (unsigned int)svK);
     TA_SetUnstablePeriod(5, (unsigned int)svK);
     TA_SetUnstablePeriod(23, (unsigned int)svK);
@@ -9401,6 +9434,7 @@ static SV_NOINLINE void sv_verify_APO(const char *json, char *resp, int resp_siz
         int openRejects = 0;
         { TA_APO_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_APO_Open(&st, sv_c, svN, optInFastPeriod, optInSlowPeriod, optInMAType, &v0);
           if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_APO_Close(st); }
+        TA_SetUnstablePeriod(29, 0);
         TA_SetUnstablePeriod(24, 0);
         TA_SetUnstablePeriod(5, 0);
         TA_SetUnstablePeriod(23, 0);
@@ -9629,6 +9663,7 @@ static SV_NOINLINE void sv_verify_APO(const char *json, char *resp, int resp_siz
           }
     }
     if( shortHistChecked && !shortHistOk ) allOk = 0;
+    TA_SetUnstablePeriod(29, 0);
     TA_SetUnstablePeriod(24, 0);
     TA_SetUnstablePeriod(5, 0);
     TA_SetUnstablePeriod(23, 0);
@@ -11808,6 +11843,7 @@ static SV_NOINLINE void sv_verify_BBANDS(const char *json, char *resp, int resp_
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
+    TA_SetUnstablePeriod(29, (unsigned int)svK);
     TA_SetUnstablePeriod(24, (unsigned int)svK);
     TA_SetUnstablePeriod(5, (unsigned int)svK);
     TA_SetUnstablePeriod(23, (unsigned int)svK);
@@ -11819,6 +11855,7 @@ static SV_NOINLINE void sv_verify_BBANDS(const char *json, char *resp, int resp_
         int openRejects = 0;
         { TA_BBANDS_Stream *st = NULL; double v0 = 0.0; double v1 = 0.0; double v2 = 0.0; TA_RetCode orc = TA_BBANDS_Open(&st, sv_c, svN, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &v0, &v1, &v2);
           if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_BBANDS_Close(st); }
+        TA_SetUnstablePeriod(29, 0);
         TA_SetUnstablePeriod(24, 0);
         TA_SetUnstablePeriod(5, 0);
         TA_SetUnstablePeriod(23, 0);
@@ -12092,6 +12129,7 @@ static SV_NOINLINE void sv_verify_BBANDS(const char *json, char *resp, int resp_
           }
     }
     if( shortHistChecked && !shortHistOk ) allOk = 0;
+    TA_SetUnstablePeriod(29, 0);
     TA_SetUnstablePeriod(24, 0);
     TA_SetUnstablePeriod(5, 0);
     TA_SetUnstablePeriod(23, 0);
@@ -12134,6 +12172,7 @@ static SV_NOINLINE void sv_verify_BBW(const char *json, char *resp, int resp_siz
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
+    TA_SetUnstablePeriod(29, (unsigned int)svK);
     TA_SetUnstablePeriod(24, (unsigned int)svK);
     TA_SetUnstablePeriod(5, (unsigned int)svK);
     TA_SetUnstablePeriod(23, (unsigned int)svK);
@@ -12145,6 +12184,7 @@ static SV_NOINLINE void sv_verify_BBW(const char *json, char *resp, int resp_siz
         int openRejects = 0;
         { TA_BBW_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_BBW_Open(&st, sv_c, svN, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &v0);
           if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_BBW_Close(st); }
+        TA_SetUnstablePeriod(29, 0);
         TA_SetUnstablePeriod(24, 0);
         TA_SetUnstablePeriod(5, 0);
         TA_SetUnstablePeriod(23, 0);
@@ -12373,6 +12413,7 @@ static SV_NOINLINE void sv_verify_BBW(const char *json, char *resp, int resp_siz
           }
     }
     if( shortHistChecked && !shortHistOk ) allOk = 0;
+    TA_SetUnstablePeriod(29, 0);
     TA_SetUnstablePeriod(24, 0);
     TA_SetUnstablePeriod(5, 0);
     TA_SetUnstablePeriod(23, 0);
@@ -40742,6 +40783,7 @@ static SV_NOINLINE void sv_verify_KDJ(const char *json, char *resp, int resp_siz
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
+    TA_SetUnstablePeriod(29, (unsigned int)svK);
     TA_SetUnstablePeriod(24, (unsigned int)svK);
     TA_SetUnstablePeriod(5, (unsigned int)svK);
     TA_SetUnstablePeriod(23, (unsigned int)svK);
@@ -40753,6 +40795,7 @@ static SV_NOINLINE void sv_verify_KDJ(const char *json, char *resp, int resp_siz
         int openRejects = 0;
         { TA_KDJ_Stream *st = NULL; double v0 = 0.0; double v1 = 0.0; double v2 = 0.0; TA_RetCode orc = TA_KDJ_Open(&st, sv_h, sv_l, sv_c, svN, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &v0, &v1, &v2);
           if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_KDJ_Close(st); }
+        TA_SetUnstablePeriod(29, 0);
         TA_SetUnstablePeriod(24, 0);
         TA_SetUnstablePeriod(5, 0);
         TA_SetUnstablePeriod(23, 0);
@@ -41026,6 +41069,7 @@ static SV_NOINLINE void sv_verify_KDJ(const char *json, char *resp, int resp_siz
           }
     }
     if( shortHistChecked && !shortHistOk ) allOk = 0;
+    TA_SetUnstablePeriod(29, 0);
     TA_SetUnstablePeriod(24, 0);
     TA_SetUnstablePeriod(5, 0);
     TA_SetUnstablePeriod(23, 0);
@@ -43210,6 +43254,7 @@ static SV_NOINLINE void sv_verify_MA(const char *json, char *resp, int resp_size
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
+    TA_SetUnstablePeriod(29, (unsigned int)svK);
     TA_SetUnstablePeriod(24, (unsigned int)svK);
     TA_SetUnstablePeriod(5, (unsigned int)svK);
     TA_SetUnstablePeriod(23, (unsigned int)svK);
@@ -43221,6 +43266,7 @@ static SV_NOINLINE void sv_verify_MA(const char *json, char *resp, int resp_size
         int openRejects = 0;
         { TA_MA_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_MA_Open(&st, sv_c, svN, optInTimePeriod, optInMAType, &v0);
           if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_MA_Close(st); }
+        TA_SetUnstablePeriod(29, 0);
         TA_SetUnstablePeriod(24, 0);
         TA_SetUnstablePeriod(5, 0);
         TA_SetUnstablePeriod(23, 0);
@@ -43449,6 +43495,7 @@ static SV_NOINLINE void sv_verify_MA(const char *json, char *resp, int resp_size
           }
     }
     if( shortHistChecked && !shortHistOk ) allOk = 0;
+    TA_SetUnstablePeriod(29, 0);
     TA_SetUnstablePeriod(24, 0);
     TA_SetUnstablePeriod(5, 0);
     TA_SetUnstablePeriod(23, 0);
@@ -43806,6 +43853,7 @@ static SV_NOINLINE void sv_verify_MACDEXT(const char *json, char *resp, int resp
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
+    TA_SetUnstablePeriod(29, (unsigned int)svK);
     TA_SetUnstablePeriod(24, (unsigned int)svK);
     TA_SetUnstablePeriod(5, (unsigned int)svK);
     TA_SetUnstablePeriod(23, (unsigned int)svK);
@@ -43817,6 +43865,7 @@ static SV_NOINLINE void sv_verify_MACDEXT(const char *json, char *resp, int resp
         int openRejects = 0;
         { TA_MACDEXT_Stream *st = NULL; double v0 = 0.0; double v1 = 0.0; double v2 = 0.0; TA_RetCode orc = TA_MACDEXT_Open(&st, sv_c, svN, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, &v0, &v1, &v2);
           if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_MACDEXT_Close(st); }
+        TA_SetUnstablePeriod(29, 0);
         TA_SetUnstablePeriod(24, 0);
         TA_SetUnstablePeriod(5, 0);
         TA_SetUnstablePeriod(23, 0);
@@ -44090,6 +44139,7 @@ static SV_NOINLINE void sv_verify_MACDEXT(const char *json, char *resp, int resp
           }
     }
     if( shortHistChecked && !shortHistOk ) allOk = 0;
+    TA_SetUnstablePeriod(29, 0);
     TA_SetUnstablePeriod(24, 0);
     TA_SetUnstablePeriod(5, 0);
     TA_SetUnstablePeriod(23, 0);
@@ -45266,6 +45316,7 @@ static SV_NOINLINE void sv_verify_MAVP(const char *json, char *resp, int resp_si
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
+    TA_SetUnstablePeriod(29, (unsigned int)svK);
     TA_SetUnstablePeriod(24, (unsigned int)svK);
     TA_SetUnstablePeriod(5, (unsigned int)svK);
     TA_SetUnstablePeriod(23, (unsigned int)svK);
@@ -45277,6 +45328,7 @@ static SV_NOINLINE void sv_verify_MAVP(const char *json, char *resp, int resp_si
         int openRejects = 0;
         { TA_MAVP_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_MAVP_Open(&st, sv_c, sv_v, svN, optInMinPeriod, optInMaxPeriod, optInMAType, &v0);
           if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_MAVP_Close(st); }
+        TA_SetUnstablePeriod(29, 0);
         TA_SetUnstablePeriod(24, 0);
         TA_SetUnstablePeriod(5, 0);
         TA_SetUnstablePeriod(23, 0);
@@ -45505,6 +45557,7 @@ static SV_NOINLINE void sv_verify_MAVP(const char *json, char *resp, int resp_si
           }
     }
     if( shortHistChecked && !shortHistOk ) allOk = 0;
+    TA_SetUnstablePeriod(29, 0);
     TA_SetUnstablePeriod(24, 0);
     TA_SetUnstablePeriod(5, 0);
     TA_SetUnstablePeriod(23, 0);
@@ -50598,6 +50651,7 @@ static SV_NOINLINE void sv_verify_PERCENTB(const char *json, char *resp, int res
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
+    TA_SetUnstablePeriod(29, (unsigned int)svK);
     TA_SetUnstablePeriod(24, (unsigned int)svK);
     TA_SetUnstablePeriod(5, (unsigned int)svK);
     TA_SetUnstablePeriod(23, (unsigned int)svK);
@@ -50609,6 +50663,7 @@ static SV_NOINLINE void sv_verify_PERCENTB(const char *json, char *resp, int res
         int openRejects = 0;
         { TA_PERCENTB_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_PERCENTB_Open(&st, sv_c, svN, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &v0);
           if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_PERCENTB_Close(st); }
+        TA_SetUnstablePeriod(29, 0);
         TA_SetUnstablePeriod(24, 0);
         TA_SetUnstablePeriod(5, 0);
         TA_SetUnstablePeriod(23, 0);
@@ -50837,6 +50892,7 @@ static SV_NOINLINE void sv_verify_PERCENTB(const char *json, char *resp, int res
           }
     }
     if( shortHistChecked && !shortHistOk ) allOk = 0;
+    TA_SetUnstablePeriod(29, 0);
     TA_SetUnstablePeriod(24, 0);
     TA_SetUnstablePeriod(5, 0);
     TA_SetUnstablePeriod(23, 0);
@@ -51939,6 +51995,7 @@ static SV_NOINLINE void sv_verify_PPO(const char *json, char *resp, int resp_siz
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
+    TA_SetUnstablePeriod(29, (unsigned int)svK);
     TA_SetUnstablePeriod(24, (unsigned int)svK);
     TA_SetUnstablePeriod(5, (unsigned int)svK);
     TA_SetUnstablePeriod(23, (unsigned int)svK);
@@ -51950,6 +52007,7 @@ static SV_NOINLINE void sv_verify_PPO(const char *json, char *resp, int resp_siz
         int openRejects = 0;
         { TA_PPO_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_PPO_Open(&st, sv_c, svN, optInFastPeriod, optInSlowPeriod, optInMAType, &v0);
           if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_PPO_Close(st); }
+        TA_SetUnstablePeriod(29, 0);
         TA_SetUnstablePeriod(24, 0);
         TA_SetUnstablePeriod(5, 0);
         TA_SetUnstablePeriod(23, 0);
@@ -52178,6 +52236,7 @@ static SV_NOINLINE void sv_verify_PPO(const char *json, char *resp, int resp_siz
           }
     }
     if( shortHistChecked && !shortHistOk ) allOk = 0;
+    TA_SetUnstablePeriod(29, 0);
     TA_SetUnstablePeriod(24, 0);
     TA_SetUnstablePeriod(5, 0);
     TA_SetUnstablePeriod(23, 0);
@@ -52482,6 +52541,7 @@ static SV_NOINLINE void sv_verify_PVO(const char *json, char *resp, int resp_siz
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
+    TA_SetUnstablePeriod(29, (unsigned int)svK);
     TA_SetUnstablePeriod(24, (unsigned int)svK);
     TA_SetUnstablePeriod(5, (unsigned int)svK);
     TA_SetUnstablePeriod(23, (unsigned int)svK);
@@ -52493,6 +52553,7 @@ static SV_NOINLINE void sv_verify_PVO(const char *json, char *resp, int resp_siz
         int openRejects = 0;
         { TA_PVO_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_PVO_Open(&st, sv_v, svN, optInFastPeriod, optInSlowPeriod, optInMAType, &v0);
           if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_PVO_Close(st); }
+        TA_SetUnstablePeriod(29, 0);
         TA_SetUnstablePeriod(24, 0);
         TA_SetUnstablePeriod(5, 0);
         TA_SetUnstablePeriod(23, 0);
@@ -52721,6 +52782,7 @@ static SV_NOINLINE void sv_verify_PVO(const char *json, char *resp, int resp_siz
           }
     }
     if( shortHistChecked && !shortHistOk ) allOk = 0;
+    TA_SetUnstablePeriod(29, 0);
     TA_SetUnstablePeriod(24, 0);
     TA_SetUnstablePeriod(5, 0);
     TA_SetUnstablePeriod(23, 0);
@@ -58090,6 +58152,7 @@ static SV_NOINLINE void sv_verify_STOCH(const char *json, char *resp, int resp_s
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
+    TA_SetUnstablePeriod(29, (unsigned int)svK);
     TA_SetUnstablePeriod(24, (unsigned int)svK);
     TA_SetUnstablePeriod(5, (unsigned int)svK);
     TA_SetUnstablePeriod(23, (unsigned int)svK);
@@ -58101,6 +58164,7 @@ static SV_NOINLINE void sv_verify_STOCH(const char *json, char *resp, int resp_s
         int openRejects = 0;
         { TA_STOCH_Stream *st = NULL; double v0 = 0.0; double v1 = 0.0; TA_RetCode orc = TA_STOCH_Open(&st, sv_h, sv_l, sv_c, svN, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &v0, &v1);
           if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_STOCH_Close(st); }
+        TA_SetUnstablePeriod(29, 0);
         TA_SetUnstablePeriod(24, 0);
         TA_SetUnstablePeriod(5, 0);
         TA_SetUnstablePeriod(23, 0);
@@ -58355,6 +58419,7 @@ static SV_NOINLINE void sv_verify_STOCH(const char *json, char *resp, int resp_s
           }
     }
     if( shortHistChecked && !shortHistOk ) allOk = 0;
+    TA_SetUnstablePeriod(29, 0);
     TA_SetUnstablePeriod(24, 0);
     TA_SetUnstablePeriod(5, 0);
     TA_SetUnstablePeriod(23, 0);
@@ -58396,6 +58461,7 @@ static SV_NOINLINE void sv_verify_STOCHF(const char *json, char *resp, int resp_
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
+    TA_SetUnstablePeriod(29, (unsigned int)svK);
     TA_SetUnstablePeriod(24, (unsigned int)svK);
     TA_SetUnstablePeriod(5, (unsigned int)svK);
     TA_SetUnstablePeriod(23, (unsigned int)svK);
@@ -58407,6 +58473,7 @@ static SV_NOINLINE void sv_verify_STOCHF(const char *json, char *resp, int resp_
         int openRejects = 0;
         { TA_STOCHF_Stream *st = NULL; double v0 = 0.0; double v1 = 0.0; TA_RetCode orc = TA_STOCHF_Open(&st, sv_h, sv_l, sv_c, svN, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &v0, &v1);
           if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_STOCHF_Close(st); }
+        TA_SetUnstablePeriod(29, 0);
         TA_SetUnstablePeriod(24, 0);
         TA_SetUnstablePeriod(5, 0);
         TA_SetUnstablePeriod(23, 0);
@@ -58661,6 +58728,7 @@ static SV_NOINLINE void sv_verify_STOCHF(const char *json, char *resp, int resp_
           }
     }
     if( shortHistChecked && !shortHistOk ) allOk = 0;
+    TA_SetUnstablePeriod(29, 0);
     TA_SetUnstablePeriod(24, 0);
     TA_SetUnstablePeriod(5, 0);
     TA_SetUnstablePeriod(23, 0);
@@ -58703,6 +58771,7 @@ static SV_NOINLINE void sv_verify_STOCHRSI(const char *json, char *resp, int res
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
+    TA_SetUnstablePeriod(29, (unsigned int)svK);
     TA_SetUnstablePeriod(24, (unsigned int)svK);
     TA_SetUnstablePeriod(5, (unsigned int)svK);
     TA_SetUnstablePeriod(23, (unsigned int)svK);
@@ -58715,6 +58784,7 @@ static SV_NOINLINE void sv_verify_STOCHRSI(const char *json, char *resp, int res
         int openRejects = 0;
         { TA_STOCHRSI_Stream *st = NULL; double v0 = 0.0; double v1 = 0.0; TA_RetCode orc = TA_STOCHRSI_Open(&st, sv_c, svN, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &v0, &v1);
           if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_STOCHRSI_Close(st); }
+        TA_SetUnstablePeriod(29, 0);
         TA_SetUnstablePeriod(24, 0);
         TA_SetUnstablePeriod(5, 0);
         TA_SetUnstablePeriod(23, 0);
@@ -58970,6 +59040,7 @@ static SV_NOINLINE void sv_verify_STOCHRSI(const char *json, char *resp, int res
           }
     }
     if( shortHistChecked && !shortHistOk ) allOk = 0;
+    TA_SetUnstablePeriod(29, 0);
     TA_SetUnstablePeriod(24, 0);
     TA_SetUnstablePeriod(5, 0);
     TA_SetUnstablePeriod(23, 0);
@@ -63240,6 +63311,273 @@ static SV_NOINLINE void sv_verify_VHF(const char *json, char *resp, int resp_siz
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
 }
 
+static SV_NOINLINE void sv_verify_VIDYA(const char *json, char *resp, int resp_size, int svN, int svK, int svCandle) {
+    (void)svCandle;
+    int optInTimePeriod = json_find_int(json, "optInTimePeriod");
+    int optInCMOPeriod = json_find_int(json, "optInCMOPeriod");
+    TA_RetCode rc;
+    int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
+    int peekChecked = 0;
+    int peekReps = 0, peekRepAll = 1;
+    int peekRejects = 0;
+    TA_RetCode pkRc = TA_SUCCESS;
+    int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
+    int valueChecked = 0, valueOk = 1, valueLegs = 0;
+    const char *valueBad = "-";
+    const char *cloneBad = "-";
+    int shortHistChecked = 0, shortHistOk = 1;
+    const char *shortHistBad = "-";
+    const char *peekBad = "-";
+    int fillOk = 1, fillChecked = 0, fillBars = 0;
+    int stateChecked = 0, stateOk = 1, stateLegs = 0;
+    const char *stateWhat = "-";
+    TA_VIDYA_Stream *stEq = NULL;
+    int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
+    int rB = 0, rN = 0;
+    int svZsign = 0;
+    int pref[4]; int pc[4];
+    TA_SetUnstablePeriod(29, (unsigned int)svK);
+    rc = TA_VIDYA(0, svN - 1, sv_c, optInTimePeriod, optInCMOPeriod, &svBeg, &svNb, sv_b0);
+    lb = TA_VIDYA_Lookback(optInTimePeriod, optInCMOPeriod);
+    if( rc != TA_SUCCESS || svNb <= 0 ) {
+        int openRejects = 0;
+        { TA_VIDYA_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_VIDYA_Open(&st, sv_c, svN, optInTimePeriod, optInCMOPeriod, &v0);
+          if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_VIDYA_Close(st); }
+        TA_SetUnstablePeriod(29, 0);
+        snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
+        return;
+    }
+    {
+        int fBeg = 0, fNb = 0, ft;
+        TA_VIDYA_Stream *stf = NULL;
+        TA_RetCode frc;
+        for( ft = 0; ft < SV_MAXN; ft++ ) {
+           sv_f0[ft] = SV_FILL_CANARY;
+        }
+        frc = TA_VIDYA_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, optInCMOPeriod, &fBeg, &fNb, sv_f0);
+        fillChecked = 1;
+        if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
+        if( fillOk && stf )
+        {
+           double vq0 = 0.0;
+           valueChecked = 1; valueLegs++;
+           if( TA_VIDYA_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
+           if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
+        }
+        for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+            fillBars++;
+        }
+        if( frc == TA_SUCCESS )
+           for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+              if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+           }
+        if( frc == TA_SUCCESS && stf )
+        {
+            rangeChecked = 1; rangeLegs++; rangeSites |= 1;
+            rB = -1; rN = -1;
+            if( TA_VIDYA_OutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
+        }
+        if( stf ) TA_VIDYA_Close(stf);
+    }
+    {
+        int alB = 0, alN = 0;
+        TA_VIDYA_Stream *sal = NULL;
+        TA_RetCode alrc = TA_VIDYA_OpenAndFill(&sal, sv_c, svN, optInTimePeriod, optInCMOPeriod, &alB, &alN, sv_c);
+        if( !( alrc == TA_BAD_PARAM && !sal ) ) fillOk = 0;
+        if( sal ) TA_VIDYA_Close(sal);
+    }
+    npref = 0;
+    pc[0] = lb + 1; pc[1] = lb + 13; pc[2] = svN / 2; pc[3] = svN - 1;
+    for( li = 0; li < 4; li++ ) {
+        int P = pc[li]; int seen = 0, k;
+        if( P < lb + 1 ) P = lb + 1;
+        if( P > svN - 1 ) P = svN - 1;
+        if( P < 1 ) continue;
+        for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
+        if( !seen ) pref[npref++] = P;
+    }
+    {
+        double e0 = 0.0;
+        if( TA_VIDYA_Open( &stEq, sv_c, svN, optInTimePeriod, optInCMOPeriod, &e0 ) != TA_SUCCESS ) stEq = NULL;
+    }
+    pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+    for( li = 0; li < npref; li++ ) {
+        int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
+        double bv = 0.0, sv = 0.0;
+        TA_VIDYA_Stream *st = NULL;
+        double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
+        rc = TA_VIDYA_Open(&st, sv_c, P, optInTimePeriod, optInCMOPeriod, &v0);
+        if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
+        if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
+        if( ok && st )
+        {
+           double vq0 = 0.0;
+           valueChecked = 1; valueLegs++;
+           if( TA_VIDYA_Value( st, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after Open is not the last history bar: Value rejected a live stream"; }
+           if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
+        }
+        for( t = P; ok && t < svN; t++ ) {
+            pkRc = TA_VIDYA_Peek(st, sv_c[t], &pk0);
+            if( pkRc != TA_SUCCESS ) peekRejects++;
+            if( (t % SV_PEEK_EVERY) == 0 )
+            {
+               if( TA_VIDYA_Peek(st, sv_c[t - 1], &rp0) != TA_SUCCESS ) peekRejects++;
+               if( pkRc == TA_SUCCESS && TA_VIDYA_Peek(st, sv_c[t], &rp0) == TA_SUCCESS )
+               {
+                  peekReps++;
+                  if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+               }
+               else peekRejects++;
+            }
+            TA_VIDYA_Update(st, sv_c[t], &v0);
+            if( pkRc == TA_SUCCESS && (sv_bitne(pk0, v0)) ) pkOk = 0;
+            if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
+            if( ok )
+            {
+               double vq0 = 0.0;
+               valueChecked = 1; valueLegs++;
+               if( TA_VIDYA_Value( st, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after Update is not the bar just committed: Value rejected a live stream"; }
+               if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Update is not the bar just committed"; }
+            }
+        }
+        if( ok && st && stEq )
+        {
+            stateChecked = 1; stateLegs++;
+            if( sv_steq_TA_VIDYA( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+        }
+        if( ok && st )
+        {
+            rangeChecked = 1; rangeLegs++; rangeSites |= 2;
+            rB = -1; rN = -1;
+            if( TA_VIDYA_OutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
+        }
+        if( ok && st && TA_VIDYA_Advance( st ) != TA_SUCCESS ) rangeOk = 0;
+        if( ok && st )
+        {
+            rangeChecked = 1; rangeLegs++; rangeSites |= 16;
+            rB = -1; rN = -1;
+            if( TA_VIDYA_OutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb + 1 ) rangeOk = 0;
+        }
+        if( st ) TA_VIDYA_Close(st);
+        pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+        if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+        if( !pkOk ) peekAll = 0;
+    }
+    if( stEq )
+    {
+        TA_VIDYA_Stream *stPk = NULL; double q0 = 0.0;
+        if( TA_VIDYA_Open( &stPk, sv_c, svN, optInTimePeriod, optInCMOPeriod, &q0 ) == TA_SUCCESS && stPk )
+        {
+            int pi;
+            for( pi = svBeg; pi < svN; pi += SV_PEEK_EVERY )
+            {
+                if( TA_VIDYA_Peek(stPk, sv_c[pi], &q0) == TA_SUCCESS ) peekChecked++;
+                else peekRejects++;
+            }
+            {
+                const char *pkWhat = "-";
+                if( sv_steq_TA_VIDYA( stPk, stEq, &pkWhat, &svZsign ) ) { peekAll = 0; peekBad = pkWhat; }
+            }
+        }
+        if( stPk ) TA_VIDYA_Close(stPk);
+    }
+    {
+        TA_VIDYA_Stream *cA = NULL, *cB = NULL;
+        double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
+        int cp0 = lb + 1, cmid, t, cOk = 1;
+        double *fk0 = NULL;
+        if( cp0 <= svN - 1 )
+        {
+            if( TA_VIDYA_Open(&cA, sv_c, cp0, optInTimePeriod, optInCMOPeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
+            cmid = (cp0 + svN) / 2;
+            for( t = cp0; cOk && t < cmid; t++ )
+                TA_VIDYA_Update(cA, sv_c[t], &ca0);
+            if( cOk )
+            {
+                if( TA_VIDYA_Clone(cA, &cB) != TA_SUCCESS || !cB ) { cOk = 0; cloneBad = "clone rejected"; }
+                else if( cB == cA ) { cOk = 0; cloneBad = "clone returned the original"; }
+            }
+            if( cOk )
+            {
+                if( TA_VIDYA_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
+                if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
+            }
+            if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+            for( t = cmid; cOk && t < svN; t++ )
+            {
+                TA_VIDYA_Update(cB, sv_c[t], &cb0);
+                fk0[t] = cb0;
+                if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+            }
+            for( t = cmid; cOk && t < svN; t++ )
+            {
+                TA_VIDYA_Update(cA, sv_c[t], &ca0);
+                if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
+            }
+            free( fk0 );
+            cloneChecked = 1; cloneLegs++;
+            if( !cOk ) cloneOk = 0;
+            if( cOk )
+            {
+                int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 8;
+                if( TA_VIDYA_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
+                if( TA_VIDYA_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range"; }
+            }
+            if( cA ) TA_VIDYA_Close(cA);
+            if( cB ) TA_VIDYA_Close(cB);
+        }
+    }
+    if( stEq ) { TA_VIDYA_Close(stEq); stEq = NULL; }
+    {
+        int Sidx = lb + (svN - lb) / 3;
+        if( Sidx > lb && Sidx < svN - 1 ) {
+            int svBegS = 0, svNbS = 0;
+            rc = TA_VIDYA(Sidx, svN - 1, sv_c, optInTimePeriod, optInCMOPeriod, &svBegS, &svNbS, sv_b0);
+            if( rc == TA_SUCCESS && svNbS > 0 ) {
+                int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
+                double v0 = 0.0;
+                TA_VIDYA_Stream *stA = NULL;
+                TA_RetCode arc = TA_VIDYA_OpenInternal(&stA, sv_c, Sidx, svN, optInTimePeriod, optInCMOPeriod, &v0);
+                if( arc != TA_SUCCESS || !stA ) ok = 0;
+                if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
+                if( ok && stA )
+                {
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                    rB = -1; rN = -1;
+                    if( TA_VIDYA_OutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
+                }
+                if( stA ) TA_VIDYA_Close(stA);
+                if( !ok ) allOk = 0;
+                (void)badBar; (void)badOut; (void)bv; (void)sv;
+            }
+        }
+    }
+    if( lb >= 1 && lb < svN ) {
+        shortHistChecked = 1;
+        { TA_VIDYA_Stream *stSH = NULL; double sh0 = 0.0; TA_RetCode shrc = TA_VIDYA_Open(&stSH, sv_c, lb, optInTimePeriod, optInCMOPeriod, &sh0);
+          if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_VIDYA_Close(stSH); }
+          else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+          }
+        { TA_VIDYA_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_VIDYA_OpenAndFill(&stSF, sv_c, lb, optInTimePeriod, optInCMOPeriod, &sfB, &sfN, sv_f0);
+          if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_VIDYA_Close(stSF); }
+          else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+          }
+    }
+    if( shortHistChecked && !shortHistOk ) allOk = 0;
+    TA_SetUnstablePeriod(29, 0);
+    if( fillChecked && !fillOk ) allOk = 0;
+    if( stateChecked && !stateOk ) allOk = 0;
+    if( cloneChecked && !cloneOk ) allOk = 0;
+    if( valueChecked && !valueOk ) allOk = 0;
+    pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
+    if( rangeChecked && !rangeOk ) allOk = 0;
+    pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+}
+
 static SV_NOINLINE void sv_verify_VORTEX(const char *json, char *resp, int resp_size, int svN, int svK, int svCandle) {
     (void)svK;
     (void)svCandle;
@@ -65599,6 +65937,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
     if( fnLen == 9 && strncmp(fn, "TA_ULTOSC", 9) == 0 ) { sv_verify_ULTOSC(json, resp, resp_size, svN, svK, svCandle); return; }
     if( fnLen == 6 && strncmp(fn, "TA_VAR", 6) == 0 ) { sv_verify_VAR(json, resp, resp_size, svN, svK, svCandle); return; }
     if( fnLen == 6 && strncmp(fn, "TA_VHF", 6) == 0 ) { sv_verify_VHF(json, resp, resp_size, svN, svK, svCandle); return; }
+    if( fnLen == 8 && strncmp(fn, "TA_VIDYA", 8) == 0 ) { sv_verify_VIDYA(json, resp, resp_size, svN, svK, svCandle); return; }
     if( fnLen == 9 && strncmp(fn, "TA_VORTEX", 9) == 0 ) { sv_verify_VORTEX(json, resp, resp_size, svN, svK, svCandle); return; }
     if( fnLen == 7 && strncmp(fn, "TA_VWAP", 7) == 0 ) { sv_verify_VWAP(json, resp, resp_size, svN, svK, svCandle); return; }
     if( fnLen == 7 && strncmp(fn, "TA_VWMA", 7) == 0 ) { sv_verify_VWMA(json, resp, resp_size, svN, svK, svCandle); return; }
@@ -92692,6 +93031,132 @@ sr_out:
             srLeg, srBar, srOut, sr_bits(srA), sr_bits(srB));
 }
 
+static void sr_VIDYA( const char *json, int endIdx, int optInTimePeriod, int optInCMOPeriod, char *resp, int resp_size, int *pos )
+{
+    int srLb = -1, srM = 0, srAvail, srT, srK, srCmp;
+    int srSkip = 0, srDedup = 0, srOk = 1, srBenign = 0;
+    int srOpenBars = 0, srFillBars = 0;
+    int srLeg = 0, srBar = -1, srOut = -1;
+    double srA = 0.0, srB = 0.0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
+    unsigned long long srKey;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
+
+    if( !sr_gate(json) ) return;
+
+    srLb = TA_VIDYA_Lookback( optInTimePeriod, optInCMOPeriod );
+    srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
+    { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
+    if( srM > srAvail ) srM = srAvail;
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
+
+    srKey = sr_ambient(fuzz_hash_init());
+    srKey = fuzz_hash_bytes(srKey, "TA_VIDYA", 8);
+    srKey = fuzz_hash_bytes(srKey, &srM, sizeof(srM));
+    srKey = fuzz_hash_bytes(srKey, &optInTimePeriod, sizeof(optInTimePeriod));
+    srKey = fuzz_hash_bytes(srKey, &optInCMOPeriod, sizeof(optInCMOPeriod));
+    srKey = fuzz_hash_bytes(srKey, g_inBuf0, (unsigned long)srM * sizeof(double));
+    srKey = fuzz_hash_fin(srKey);
+    srSlot = (int)(srKey % (unsigned long long)SR_SEEN_N);
+    if( g_srKeyUsed[srSlot] && g_srKey[srSlot] == srKey )
+    {
+        srDedup = 1;
+        srOpenBars = g_srOpenBars[srSlot];
+        srFillBars = g_srFillBars[srSlot];
+        goto sr_out;
+    }
+
+    srRc = TA_VIDYA( 0, srM - 1, g_inBuf0, optInTimePeriod, optInCMOPeriod, &srBeg, &srNb, sr_b0 );
+    if( srRc != TA_SUCCESS )
+    {
+        TA_VIDYA_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_VIDYA_Open( &srHR, g_inBuf0, srM, optInTimePeriod, optInCMOPeriod, &srO0 );
+        if( srHR ) TA_VIDYA_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_VIDYA_OpenAndFill( &srHR, g_inBuf0, srM, optInTimePeriod, optInCMOPeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_VIDYA_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
+
+    {
+        TA_VIDYA_Stream *srH = NULL;
+        double srO0 = 0.0;
+        srRc = TA_VIDYA_Open( &srH, g_inBuf0, srLb + 1, optInTimePeriod, optInCMOPeriod, &srO0 );
+        if( srRc != TA_SUCCESS || !srH ) { srOk = 0; srLeg = 1; srBar = srLb; }
+        if( srOk )
+        {
+            srCmp = 1;
+            if( srCmp && sv_xtier_ne(sr_b0[srLb - srBeg], srO0, &srBenign) ) { srCmp = 0; srOut = 0; srA = sr_b0[srLb - srBeg]; srB = srO0; }
+            if( srCmp ) srOpenBars++;
+            if( !srCmp ) { srOk = 0; srLeg = 1; srBar = srLb; }
+            for( srT = srLb + 1; srOk && srT < srM; srT++ )
+            {
+                srRc = TA_VIDYA_Update( srH, g_inBuf0[srT], &srO0 );
+                if( srRc != TA_SUCCESS ) { srOk = 0; srLeg = 1; srBar = srT; break; }
+                srCmp = 1;
+                if( srCmp && sv_xtier_ne(sr_b0[srT - srBeg], srO0, &srBenign) ) { srCmp = 0; srOut = 0; srA = sr_b0[srT - srBeg]; srB = srO0; }
+                if( srCmp ) srOpenBars++;
+                if( !srCmp ) { srOk = 0; srLeg = 1; srBar = srT; }
+            }
+        }
+        if( srH ) TA_VIDYA_Close( srH );
+    }
+
+    if( srOk )
+    {
+        TA_VIDYA_Stream *srH2 = NULL;
+        int srFBeg = 0, srFNb = 0;
+        srRc = TA_VIDYA_OpenAndFill( &srH2, g_inBuf0, srM, optInTimePeriod, optInCMOPeriod, &srFBeg, &srFNb, sr_f0 );
+        if( srRc != TA_SUCCESS || !srH2 || srFBeg != srBeg || srFNb != srNb ) { srOk = 0; srLeg = 2; srBar = -1; }
+        if( srOk )
+        {
+            for( srK = 0; srOk && srK < srNb; srK++ )
+            {
+                srCmp = 1;
+                if( srCmp && sv_xtier_ne(sr_b0[srK], sr_f0[srK], &srBenign) ) { srCmp = 0; srOut = 0; srA = sr_b0[srK]; srB = sr_f0[srK]; }
+                if( srCmp ) srFillBars++;
+                if( !srCmp ) { srOk = 0; srLeg = 2; srBar = srBeg + srK; }
+            }
+        }
+        if( srH2 ) TA_VIDYA_Close( srH2 );
+    }
+
+    if( srOk )
+    {
+        g_srKeyUsed[srSlot] = 1;
+        g_srKey[srSlot] = srKey;
+        g_srOpenBars[srSlot] = srOpenBars;
+        g_srFillBars[srSlot] = srFillBars;
+    }
+
+sr_out:
+    *pos = json_appendf(resp, resp_size, *pos,
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
+    if( !srOk )
+        *pos = json_appendf(resp, resp_size, *pos,
+            ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
+            srLeg, srBar, srOut, sr_bits(srA), sr_bits(srB));
+}
+
 static void sr_VORTEX( const char *json, int endIdx, int optInTimePeriod, char *resp, int resp_size, int *pos )
 {
     int srLb = -1, srM = 0, srAvail, srT, srK, srCmp;
@@ -113089,6 +113554,96 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         pos = json_appendf(resp, resp_size, pos, "}");
     }
+    else if ( methodLen == 8 && strncmp(method, "TA_VIDYA", 8) == 0 ) {
+        int startIdx = json_find_int(json, "startIdx");
+        int endIdx = json_find_int(json, "endIdx");
+        int use_preloaded = json_find_int(json, "use_preloaded");
+        if( use_preloaded && g_refN > 0 ) {
+            preload_to_working(1, 0);
+        } else {
+            json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
+        }
+        int optInTimePeriod = json_find_int(json, "optInTimePeriod");
+        int optInCMOPeriod = json_find_int(json, "optInCMOPeriod");
+        TA_SetUnstablePeriod(29, json_find_int(json, "unstablePeriod"));
+        int outBegIdx = 0, outNBElement = 0;
+        int bench_iters = json_find_int(json, "iters");
+        if( bench_iters < 1 ) bench_iters = 1;
+        int bench_mode = json_find_int(json, "bench_mode");
+#ifdef TA_REF_SERVE
+        if( bench_mode != 0 ) {
+            snprintf(resp, resp_size, "{\"retCode\":0,\"timing_ns\":0,\"unsupported_mode\":1}");
+            return;
+        }
+#endif /* TA_REF_SERVE */
+        TA_RetCode rc = 0;
+        if( use_preloaded ) {
+            preload_to_working(1, 0);
+        }
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
+        if( bench_mode == 0 )
+        rc = TA_VIDYA(
+            startIdx, endIdx,
+            g_inBuf0,
+            optInTimePeriod,
+            optInCMOPeriod,
+            &outBegIdx, &outNBElement, g_outBuf0);
+#ifndef TA_REF_SERVE
+        else if( bench_mode == 1 ) {
+            TA_VIDYA_Stream *_h = NULL;
+            double _openOut0 = 0;
+            rc = TA_VIDYA_Open( &_h, g_inBuf0, endIdx + 1, optInTimePeriod, optInCMOPeriod, &_openOut0 );
+            if( _h ) TA_VIDYA_Close( _h );
+        }
+        else {
+            TA_VIDYA_Stream *_h = NULL;
+            rc = TA_VIDYA_OpenAndFill( &_h, g_inBuf0, endIdx + 1, optInTimePeriod, optInCMOPeriod, &outBegIdx, &outNBElement, g_outBuf0 );
+            if( _h ) TA_VIDYA_Close( _h );
+        }
+#endif /* TA_REF_SERVE */
+        }
+        long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            int _hp = json_appendf(resp, resp_size, 0, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"", (int)rc, outBegIdx, outNBElement, _oh);
+#ifndef TA_REF_SERVE
+            sr_VIDYA( json, endIdx, optInTimePeriod, optInCMOPeriod, resp, resp_size, &_hp );
+#endif /* TA_REF_SERVE */
+            json_appendf(resp, resp_size, _hp, "}");
+            return;
+        }
+#endif /* TA_REF_SERVE */
+        int usedFloat = 0;
+        if( json_find_int(json, "use_float") ) {
+            for( int _fi = 0; _fi <= endIdx; _fi++ ) g_sinBuf0[_fi] = (float)g_inBuf0[_fi];
+            rc = TA_S_VIDYA(
+                startIdx, endIdx,
+                g_sinBuf0,
+                optInTimePeriod,
+                optInCMOPeriod,
+                &outBegIdx, &outNBElement, g_outBuf0);
+            usedFloat = 1;
+        }
+        int pos = json_appendf(resp, resp_size, 0,
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
+        pos = json_appendf(resp, resp_size, pos, ",\"used_float\":%d", usedFloat);
+#ifndef TA_REF_SERVE
+        sr_VIDYA( json, endIdx, optInTimePeriod, optInCMOPeriod, resp, resp_size, &pos );
+#endif /* TA_REF_SERVE */
+        pos = json_appendf(resp, resp_size, pos, "}");
+    }
     else if ( methodLen == 9 && strncmp(method, "TA_VORTEX", 9) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
         int endIdx = json_find_int(json, "endIdx");
@@ -115069,6 +115624,13 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         snprintf(resp, resp_size,
             "{\"lookback\":%d}", lookback);
     }
+    else if ( methodLen == 17 && strncmp(method, "TA_VIDYA_Lookback", 17) == 0 ) {
+        int optInTimePeriod = json_find_int(json, "optInTimePeriod");
+        int optInCMOPeriod = json_find_int(json, "optInCMOPeriod");
+        int lookback = TA_VIDYA_Lookback(optInTimePeriod, optInCMOPeriod);
+        snprintf(resp, resp_size,
+            "{\"lookback\":%d}", lookback);
+    }
     else if ( methodLen == 18 && strncmp(method, "TA_VORTEX_Lookback", 18) == 0 ) {
         int optInTimePeriod = json_find_int(json, "optInTimePeriod");
         int lookback = TA_VORTEX_Lookback(optInTimePeriod);
@@ -115326,6 +115888,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"TA_ULTOSC\"");
         pos = json_appendf(resp, resp_size, pos, ",\"TA_VAR\"");
         pos = json_appendf(resp, resp_size, pos, ",\"TA_VHF\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_VIDYA\"");
         pos = json_appendf(resp, resp_size, pos, ",\"TA_VORTEX\"");
         pos = json_appendf(resp, resp_size, pos, ",\"TA_VWAP\"");
         pos = json_appendf(resp, resp_size, pos, ",\"TA_VWMA\"");

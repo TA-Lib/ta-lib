@@ -10991,6 +10991,57 @@ static void icount_VHF(int iters) {
     g_sink += acc + outNBElement;
 }
 
+static void icount_VIDYA(int iters) {
+    const char *nm = "VIDYA";
+    int outBegIdx = 0, outNBElement = 0;
+    double acc = 0.0;
+    TA_RetCode rc;
+    TA_VIDYA_Stream *st = NULL;
+    TA_VIDYA_Stream *stf = NULL;
+    double v0 = 0.0;
+
+    ICOUNT_ZERO();
+    rc = TA_VIDYA(0, g_nPoints - 1, g_close, 12, 9, &outBegIdx, &outNBElement, g_outBuf0);
+    ICOUNT_DUMP("VIDYA/batch");
+    icount_row(nm, "batch", 1, rc);
+    acc += g_outBuf0[0];
+
+    ICOUNT_ZERO();
+    rc = TA_VIDYA_OpenAndFill(&stf, g_close, g_nPoints, 12, 9, &outBegIdx, &outNBElement, g_outBuf0);
+    ICOUNT_DUMP("VIDYA/openfill");
+    icount_row(nm, "openfill", 1, rc);
+    acc += g_outBuf0[0];
+    if( stf ) TA_VIDYA_Close(stf);
+
+    ICOUNT_ZERO();
+    rc = TA_VIDYA_Open(&st, g_close, g_nPoints, 12, 9, &v0);
+    ICOUNT_DUMP("VIDYA/open");
+    icount_row(nm, "open", 1, rc);
+
+    if( rc == TA_SUCCESS && st ) {
+        TA_RetCode src = TA_SUCCESS;
+        ICOUNT_ZERO();
+        for( int it = 0; it < iters; it++ ) {
+            src = TA_VIDYA_Update(st, g_close[it & ICOUNT_MASK], &v0);
+            acc += v0;
+        }
+        ICOUNT_DUMP("VIDYA/update");
+        icount_row(nm, "update", 1, src);
+        ICOUNT_ZERO();
+        for( int it = 0; it < iters; it++ ) {
+            src = TA_VIDYA_Peek(st, g_close[it & ICOUNT_MASK], &v0);
+            acc += v0;
+        }
+        ICOUNT_DUMP("VIDYA/peek");
+        icount_row(nm, "peek", 1, src);
+    } else {
+        icount_row(nm, "update", 0, rc);
+        icount_row(nm, "peek", 0, rc);
+    }
+    if( st ) TA_VIDYA_Close(st);
+    g_sink += acc + outNBElement;
+}
+
 static void icount_VORTEX(int iters) {
     const char *nm = "VORTEX";
     int outBegIdx = 0, outNBElement = 0;
@@ -11615,6 +11666,7 @@ static void icount_all(const char *filter, int iters) {
     if( func_matches(filter, "ULTOSC") ) { icount_ULTOSC(iters); fflush(stdout); }
     if( func_matches(filter, "VAR") ) { icount_VAR(iters); fflush(stdout); }
     if( func_matches(filter, "VHF") ) { icount_VHF(iters); fflush(stdout); }
+    if( func_matches(filter, "VIDYA") ) { icount_VIDYA(iters); fflush(stdout); }
     if( func_matches(filter, "VORTEX") ) { icount_VORTEX(iters); fflush(stdout); }
     if( func_matches(filter, "VWAP") ) { icount_VWAP(iters); fflush(stdout); }
     if( func_matches(filter, "VWMA") ) { icount_VWMA(iters); fflush(stdout); }

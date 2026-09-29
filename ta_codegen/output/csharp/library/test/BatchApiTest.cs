@@ -1128,7 +1128,7 @@ public static class BatchApiTest
             inputF[i] = (float)input[i];
         }
 
-        foreach (int raw in new[] { 999, -1, (int)MAType.RMA + 1 })
+        foreach (int raw in new[] { 999, -1, (int)Enum.GetValues<MAType>()[^1] + 1 })
         {
             var t = (MAType)raw;
             Check(core.MaLookback(10, t) == -1 && core.BbandsLookback(20, 2.0, 2.0, t) == -1,
@@ -1145,8 +1145,9 @@ public static class BatchApiTest
                 $"Bbands((MAType){raw}) names the parameter fault", "BBANDS", "bad parameter");
         }
         // Control: the last member of the domain is accepted by both.
-        Check(core.Ma(0, 199, input, 10, MAType.RMA, o1).Count > 0
-              && core.Bbands(0, 199, input, 20, 2.0, 2.0, MAType.RMA, o1, o2, o3).Count > 0,
+        var last = Enum.GetValues<MAType>()[^1];
+        Check(core.Ma(0, 199, input, 10, last, o1).Count > 0
+              && core.Bbands(0, 199, input, 20, 2.0, 2.0, last, o1, o2, o3).Count > 0,
             "the highest defined MAType is accepted");
     }
 

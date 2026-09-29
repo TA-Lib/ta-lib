@@ -112,6 +112,69 @@ DEF_FUNCTION( VHF,
              );
 /* VHF END */
 
+/* VIDYA BEGIN */
+static const TA_IntegerRange TA_DEF_VIDYA_TimePeriod =
+{
+   1,
+   100000,
+   4,
+   200,
+   1
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_VIDYA_TimePeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInTimePeriod",
+   0,
+
+   "Time Period",
+   (const void *)&TA_DEF_VIDYA_TimePeriod,
+   12,
+   "EMA-equivalent smoothing period, alpha = 2/(n+1)",
+
+   NULL
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_VIDYA_CMOPeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInCMOPeriod",
+   0,
+
+   "CMO Period",
+   (const void *)&TA_DEF_TimePeriod_Positive_Minimum2,
+   9,
+   "Period of the unsmoothed CMO that scales alpha",
+
+   NULL
+};
+
+static const TA_InputParameterInfo    *TA_VIDYA_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Real,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_VIDYA_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_VIDYA_OptInputs[] =
+{ &TA_DEF_UI_D_VIDYA_TimePeriod,
+  &TA_DEF_UI_D_VIDYA_CMOPeriod,
+  NULL
+};
+
+DEF_FUNCTION( VIDYA,
+              TA_GroupId_OverlapStudies,
+              "Variable Index Dynamic Average",
+              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM | TA_FUNC_FLG_PERIOD1_IDENTITY
+             );
+/* VIDYA END */
+
 /* VORTEX BEGIN */
 static const TA_OptInputParameterInfo TA_DEF_UI_D_VORTEX_TimePeriod =
 {
@@ -215,6 +278,7 @@ const TA_FuncDef *TA_DEF_TableV[] =
 {
    ADD_TO_TABLE(VAR),
    ADD_TO_TABLE(VHF),
+   ADD_TO_TABLE(VIDYA),
    ADD_TO_TABLE(VORTEX),
    ADD_TO_TABLE(VWAP),
    ADD_TO_TABLE(VWMA),
