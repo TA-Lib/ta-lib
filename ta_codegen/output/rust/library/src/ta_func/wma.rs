@@ -1267,7 +1267,7 @@ impl WmaStream {
             // the next iteration.
             // (must be saved here just in case outReal and
             //  inReal are the same buffer).
-            trailingValue = (if ((tapeBase - sp.ringCap_trailingIdx & tapeMask) as usize) != pkSlot0 { tape[(tapeBase - sp.ringCap_trailingIdx & tapeMask) as usize] } else { pkVal0 });
+            trailingValue = tape[(tapeBase - sp.ringCap_trailingIdx & tapeMask) as usize];
             // Calculate the WMA for this price bar.
             (*outReal) = periodSum / sp.divider;
         }

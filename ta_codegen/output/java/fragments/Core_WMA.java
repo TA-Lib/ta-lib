@@ -1276,7 +1276,7 @@
        * (must be saved here just in case outReal and
        *  inReal are the same buffer).
        */
-      trailingValue = (((tapeBase - sp.ringCap_trailingIdx) & tapeMask) != pkSlot0) ? tape[(tapeBase - sp.ringCap_trailingIdx) & tapeMask] : pkVal0;
+      trailingValue = tape[(tapeBase - sp.ringCap_trailingIdx) & tapeMask];
       /* Calculate the WMA for this price bar. */
       cur_outReal = periodSum / sp.divider;
       return cur_outReal;

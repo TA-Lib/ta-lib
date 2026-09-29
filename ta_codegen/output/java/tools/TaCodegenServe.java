@@ -99187,7 +99187,7 @@ class Core {
                    rw += 1;
                 }
              }
-             trailingFull = (((tapeBase - sp.ringCap_trailingIdxFull) & tapeMask) != pkSlot0) ? tape[(tapeBase - sp.ringCap_trailingIdxFull) & tapeMask] : pkVal0;
+             trailingFull = tape[(tapeBase - sp.ringCap_trailingIdxFull) & tapeMask];
              fullOut = periodSumFull / sp.dividerFull;
              periodSumFull -= periodSubFull;
              cur_outReal = 2.0 * tempReal - fullOut;
@@ -99236,7 +99236,7 @@ class Core {
                    rw += 1;
                 }
              }
-             trailingFull = (((tapeBase - sp.ringCap_trailingIdxFull) & tapeMask) != pkSlot0) ? tape[(tapeBase - sp.ringCap_trailingIdxFull) & tapeMask] : pkVal0;
+             trailingFull = tape[(tapeBase - sp.ringCap_trailingIdxFull) & tapeMask];
              fullOut = periodSumFull / sp.dividerFull;
              periodSumFull -= periodSubFull;
              periodSubHalf += tempReal;
@@ -99255,7 +99255,7 @@ class Core {
                    rw += 1;
                 }
              }
-             trailingHalf = (((tapeBase - sp.ringCap_trailingIdxHalf) & tapeMask) != pkSlot0) ? tape[(tapeBase - sp.ringCap_trailingIdxHalf) & tapeMask] : pkVal0;
+             trailingHalf = tape[(tapeBase - sp.ringCap_trailingIdxHalf) & tapeMask];
              halfOut = periodSumHalf / sp.dividerHalf;
              periodSumHalf -= periodSubHalf;
              diffReal = 2.0 * halfOut - fullOut;
@@ -113704,12 +113704,8 @@ class Core {
           double prevKAMA = sp.prevKAMA;
           double sumROC1 = sp.sumROC1;
           double trailingValue = sp.trailingValue;
-          int pkSlot0 = -1;
-          double pkVal0 = 0.0;
-          pkSlot0 = tapeBase & tapeMask;
-          pkVal0 = inReal;
           tempReal = inReal;
-          tempReal2 = (((tapeBase - sp.ringCap_trailingIdx) & tapeMask) != pkSlot0) ? tape[(tapeBase - sp.ringCap_trailingIdx) & tapeMask] : pkVal0;
+          tempReal2 = tape[(tapeBase - sp.ringCap_trailingIdx) & tapeMask];
           periodROC = tempReal - tempReal2;
           /* Adjust sumROC1:
            *  - Remove trailing ROC1
@@ -128827,16 +128823,12 @@ class Core {
           double prev_jQ_input_Even = sp.prev_jQ_input_Even;
           double prev_jQ_input_Odd = sp.prev_jQ_input_Odd;
           double trailingWMAValue = sp.trailingWMAValue;
-          int pkSlot0 = -1;
-          double pkVal0 = 0.0;
-          pkSlot0 = tapeBase & tapeMask;
-          pkVal0 = inReal;
           adjustedPrevPeriod = Math.fma(0.075, sp.period, 0.54);
           todayValue = inReal;
           periodWMASub += todayValue;
           periodWMASub -= trailingWMAValue;
           periodWMASum += todayValue * 4.0;
-          trailingWMAValue = (((tapeBase - sp.ringCap_trailingWMAIdx) & tapeMask) != pkSlot0) ? tape[(tapeBase - sp.ringCap_trailingWMAIdx) & tapeMask] : pkVal0;
+          trailingWMAValue = tape[(tapeBase - sp.ringCap_trailingWMAIdx) & tapeMask];
           smoothedValue = periodWMASum * 0.1;
           periodWMASum -= periodWMASub;
           if( sp.streamParity == 0 ) {
@@ -182296,14 +182288,10 @@ class Core {
              double numeratorAdd = sp.numeratorAdd;
              double numeratorSub = sp.numeratorSub;
              double tempReal = sp.tempReal;
-             int pkSlot0 = -1;
-             double pkVal0 = 0.0;
-             pkSlot0 = tapeBase & tapeMask;
-             pkVal0 = inReal;
              /* Step (1) */
              numerator -= numeratorSub;
              numeratorSub -= tempReal;
-             tempReal = (((tapeBase - sp.ringCap_middleIdx) & tapeMask) != pkSlot0) ? tape[(tapeBase - sp.ringCap_middleIdx) & tapeMask] : pkVal0;
+             tempReal = tape[(tapeBase - sp.ringCap_middleIdx) & tapeMask];
              numeratorSub += tempReal;
              /* Step (2) */
              numeratorAdd -= tempReal;
@@ -182313,7 +182301,7 @@ class Core {
              /* Step (3) */
              numerator += tempReal;
              /* Step (4) */
-             tempReal = (((tapeBase - sp.ringCap_trailingIdx) & tapeMask) != pkSlot0) ? tape[(tapeBase - sp.ringCap_trailingIdx) & tapeMask] : pkVal0;
+             tempReal = tape[(tapeBase - sp.ringCap_trailingIdx) & tapeMask];
              cur_outReal = numerator * sp.factor;
           }
           return cur_outReal;
@@ -195583,7 +195571,7 @@ class Core {
            * (must be saved here just in case outReal and
            *  inReal are the same buffer).
            */
-          trailingValue = (((tapeBase - sp.ringCap_trailingIdx) & tapeMask) != pkSlot0) ? tape[(tapeBase - sp.ringCap_trailingIdx) & tapeMask] : pkVal0;
+          trailingValue = tape[(tapeBase - sp.ringCap_trailingIdx) & tapeMask];
           /* Calculate the WMA for this price bar. */
           cur_outReal = periodSum / sp.divider;
           return cur_outReal;
@@ -196389,7 +196377,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "3935e31a04a901ef";
+    static final String SPLICED_GENCODE_DIGEST = "4c51dde7e46fad92";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];

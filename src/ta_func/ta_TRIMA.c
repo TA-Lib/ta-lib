@@ -1336,19 +1336,15 @@ void TA_TRIMA_PeekTape( const struct TA_TRIMA_Stream *sp, const double tape[], i
       double numeratorAdd;
       double numeratorSub;
       double tempReal;
-      int pkSlot0 = -1;
-      double pkVal0 = 0.0;
 
       numerator = sp->numerator;
       numeratorAdd = sp->numeratorAdd;
       numeratorSub = sp->numeratorSub;
       tempReal = sp->tempReal;
-      pkSlot0 = tapeBase & tapeMask;
-      pkVal0 = inReal;
       /* Step (1) */
       numerator -= numeratorSub;
       numeratorSub -= tempReal;
-      tempReal = (((tapeBase - sp->ringCap_middleIdx) & tapeMask) != pkSlot0) ? tape[(tapeBase - sp->ringCap_middleIdx) & tapeMask] : pkVal0;
+      tempReal = tape[(tapeBase - sp->ringCap_middleIdx) & tapeMask];
       numeratorSub += tempReal;
       /* Step (2) */
       numeratorAdd -= tempReal;
@@ -1358,7 +1354,7 @@ void TA_TRIMA_PeekTape( const struct TA_TRIMA_Stream *sp, const double tape[], i
       /* Step (3) */
       numerator += tempReal;
       /* Step (4) */
-      tempReal = (((tapeBase - sp->ringCap_trailingIdx) & tapeMask) != pkSlot0) ? tape[(tapeBase - sp->ringCap_trailingIdx) & tapeMask] : pkVal0;
+      tempReal = tape[(tapeBase - sp->ringCap_trailingIdx) & tapeMask];
       *outReal= numerator * sp->factor;
    }
 }

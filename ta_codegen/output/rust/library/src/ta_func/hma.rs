@@ -2016,7 +2016,7 @@ impl HmaStream {
                         jFull -= 1;
                     }
                 }
-                trailingFull = (if ((tapeBase - sp.ringCap_trailingIdxFull & tapeMask) as usize) != pkSlot0 { tape[(tapeBase - sp.ringCap_trailingIdxFull & tapeMask) as usize] } else { pkVal0 });
+                trailingFull = tape[(tapeBase - sp.ringCap_trailingIdxFull & tapeMask) as usize];
                 fullOut = periodSumFull / sp.dividerFull;
                 periodSumFull -= periodSubFull;
                 (*outReal) = 2.0 * tempReal - fullOut;
@@ -2069,7 +2069,7 @@ impl HmaStream {
                         jFull -= 1;
                     }
                 }
-                trailingFull = (if ((tapeBase - sp.ringCap_trailingIdxFull & tapeMask) as usize) != pkSlot0 { tape[(tapeBase - sp.ringCap_trailingIdxFull & tapeMask) as usize] } else { pkVal0 });
+                trailingFull = tape[(tapeBase - sp.ringCap_trailingIdxFull & tapeMask) as usize];
                 fullOut = periodSumFull / sp.dividerFull;
                 periodSumFull -= periodSubFull;
                 periodSubHalf += tempReal;
@@ -2092,7 +2092,7 @@ impl HmaStream {
                         jHalf -= 1;
                     }
                 }
-                trailingHalf = (if ((tapeBase - sp.ringCap_trailingIdxHalf & tapeMask) as usize) != pkSlot0 { tape[(tapeBase - sp.ringCap_trailingIdxHalf & tapeMask) as usize] } else { pkVal0 });
+                trailingHalf = tape[(tapeBase - sp.ringCap_trailingIdxHalf & tapeMask) as usize];
                 halfOut = periodSumHalf / sp.dividerHalf;
                 periodSumHalf -= periodSubHalf;
                 diffReal = 2.0 * halfOut - fullOut;

@@ -1198,17 +1198,13 @@ void TA_KAMA_PeekTape( const struct TA_KAMA_Stream *sp, const double tape[], int
    double prevKAMA;
    double sumROC1;
    double trailingValue;
-   int pkSlot0 = -1;
-   double pkVal0 = 0.0;
 
    nullRun = sp->nullRun;
    prevKAMA = sp->prevKAMA;
    sumROC1 = sp->sumROC1;
    trailingValue = sp->trailingValue;
-   pkSlot0 = tapeBase & tapeMask;
-   pkVal0 = inReal;
    tempReal = inReal;
-   tempReal2 = (((tapeBase - sp->ringCap_trailingIdx) & tapeMask) != pkSlot0) ? tape[(tapeBase - sp->ringCap_trailingIdx) & tapeMask] : pkVal0;
+   tempReal2 = tape[(tapeBase - sp->ringCap_trailingIdx) & tapeMask];
    periodROC = tempReal - tempReal2;
    /* Adjust sumROC1:
     *  - Remove trailing ROC1

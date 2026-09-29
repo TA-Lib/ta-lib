@@ -1447,14 +1447,10 @@
          double numeratorAdd = sp.numeratorAdd;
          double numeratorSub = sp.numeratorSub;
          double tempReal = sp.tempReal;
-         int pkSlot0 = -1;
-         double pkVal0 = 0.0;
-         pkSlot0 = tapeBase & tapeMask;
-         pkVal0 = inReal;
          /* Step (1) */
          numerator -= numeratorSub;
          numeratorSub -= tempReal;
-         tempReal = (((tapeBase - sp.ringCap_middleIdx) & tapeMask) != pkSlot0) ? tape[(tapeBase - sp.ringCap_middleIdx) & tapeMask] : pkVal0;
+         tempReal = tape[(tapeBase - sp.ringCap_middleIdx) & tapeMask];
          numeratorSub += tempReal;
          /* Step (2) */
          numeratorAdd -= tempReal;
@@ -1464,7 +1460,7 @@
          /* Step (3) */
          numerator += tempReal;
          /* Step (4) */
-         tempReal = (((tapeBase - sp.ringCap_trailingIdx) & tapeMask) != pkSlot0) ? tape[(tapeBase - sp.ringCap_trailingIdx) & tapeMask] : pkVal0;
+         tempReal = tape[(tapeBase - sp.ringCap_trailingIdx) & tapeMask];
          cur_outReal = numerator * sp.factor;
       }
       return cur_outReal;

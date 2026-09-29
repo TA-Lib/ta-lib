@@ -2131,8 +2131,6 @@ void TA_MAMA_PeekTape( const struct TA_MAMA_Stream *sp, const double tape[], int
    double prev_detrender_input_Even;
    double prev_detrender_input_Odd;
    double trailingWMAValue;
-   int pkSlot0 = -1;
-   double pkVal0 = 0.0;
 
    I1ForEvenPrev2 = sp->I1ForEvenPrev2;
    I1ForEvenPrev3 = sp->I1ForEvenPrev3;
@@ -2153,14 +2151,12 @@ void TA_MAMA_PeekTape( const struct TA_MAMA_Stream *sp, const double tape[], int
    prev_detrender_input_Even = sp->prev_detrender_input_Even;
    prev_detrender_input_Odd = sp->prev_detrender_input_Odd;
    trailingWMAValue = sp->trailingWMAValue;
-   pkSlot0 = tapeBase & tapeMask;
-   pkVal0 = inReal;
    adjustedPrevPeriod = fma(0.075, sp->period, 0.54);
    todayValue = inReal;
    periodWMASub += todayValue;
    periodWMASub -= trailingWMAValue;
    periodWMASum += todayValue * 4.0;
-   trailingWMAValue = (((tapeBase - sp->ringCap_trailingWMAIdx) & tapeMask) != pkSlot0) ? tape[(tapeBase - sp->ringCap_trailingWMAIdx) & tapeMask] : pkVal0;
+   trailingWMAValue = tape[(tapeBase - sp->ringCap_trailingWMAIdx) & tapeMask];
    smoothedValue = periodWMASum * 0.1;
    periodWMASum -= periodWMASub;
    if( sp->streamParity == 0 )

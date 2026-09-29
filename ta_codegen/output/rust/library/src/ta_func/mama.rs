@@ -2007,16 +2007,12 @@ impl MamaStream {
             let mut prev_jQ_input_Even = sp.prev_jQ_input_Even;
             let mut prev_jQ_input_Odd = sp.prev_jQ_input_Odd;
             let mut trailingWMAValue = sp.trailingWMAValue;
-            let mut pkSlot0: usize = usize::MAX;
-            let mut pkVal0: f64 = 0.0_f64;
-            pkSlot0 = (tapeBase & tapeMask) as usize;
-            pkVal0 = inReal;
             adjustedPrevPeriod = (0.075 as f64).mul_add(sp.period, 0.54);
             todayValue = inReal;
             periodWMASub += todayValue;
             periodWMASub -= trailingWMAValue;
             periodWMASum += todayValue * 4.0;
-            trailingWMAValue = (if ((tapeBase - sp.ringCap_trailingWMAIdx & tapeMask) as usize) != pkSlot0 { tape[(tapeBase - sp.ringCap_trailingWMAIdx & tapeMask) as usize] } else { pkVal0 });
+            trailingWMAValue = tape[(tapeBase - sp.ringCap_trailingWMAIdx & tapeMask) as usize];
             smoothedValue = periodWMASum * 0.1;
             periodWMASum -= periodWMASub;
             if sp.streamParity == 0 {

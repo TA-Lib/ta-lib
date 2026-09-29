@@ -2101,7 +2101,7 @@ void TA_HMA_PeekTape( const struct TA_HMA_Stream *sp, const double tape[], int t
             rw += 1;
          }
       }
-      trailingFull = (((tapeBase - sp->ringCap_trailingIdxFull) & tapeMask) != pkSlot0) ? tape[(tapeBase - sp->ringCap_trailingIdxFull) & tapeMask] : pkVal0;
+      trailingFull = tape[(tapeBase - sp->ringCap_trailingIdxFull) & tapeMask];
       fullOut = periodSumFull / sp->dividerFull;
       periodSumFull -= periodSubFull;
       *outReal= 2.0 * tempReal - fullOut;
@@ -2166,7 +2166,7 @@ void TA_HMA_PeekTape( const struct TA_HMA_Stream *sp, const double tape[], int t
             rw += 1;
          }
       }
-      trailingFull = (((tapeBase - sp->ringCap_trailingIdxFull) & tapeMask) != pkSlot0) ? tape[(tapeBase - sp->ringCap_trailingIdxFull) & tapeMask] : pkVal0;
+      trailingFull = tape[(tapeBase - sp->ringCap_trailingIdxFull) & tapeMask];
       fullOut = periodSumFull / sp->dividerFull;
       periodSumFull -= periodSubFull;
       periodSubHalf += tempReal;
@@ -2187,7 +2187,7 @@ void TA_HMA_PeekTape( const struct TA_HMA_Stream *sp, const double tape[], int t
             rw += 1;
          }
       }
-      trailingHalf = (((tapeBase - sp->ringCap_trailingIdxHalf) & tapeMask) != pkSlot0) ? tape[(tapeBase - sp->ringCap_trailingIdxHalf) & tapeMask] : pkVal0;
+      trailingHalf = tape[(tapeBase - sp->ringCap_trailingIdxHalf) & tapeMask];
       halfOut = periodSumHalf / sp->dividerHalf;
       periodSumHalf -= periodSubHalf;
       diffReal = 2.0 * halfOut - fullOut;

@@ -1198,12 +1198,8 @@ impl KamaStream {
             let mut prevKAMA = sp.prevKAMA;
             let mut sumROC1 = sp.sumROC1;
             let mut trailingValue = sp.trailingValue;
-            let mut pkSlot0: usize = usize::MAX;
-            let mut pkVal0: f64 = 0.0_f64;
-            pkSlot0 = (tapeBase & tapeMask) as usize;
-            pkVal0 = inReal;
             tempReal = inReal;
-            tempReal2 = (if ((tapeBase - sp.ringCap_trailingIdx & tapeMask) as usize) != pkSlot0 { tape[(tapeBase - sp.ringCap_trailingIdx & tapeMask) as usize] } else { pkVal0 });
+            tempReal2 = tape[(tapeBase - sp.ringCap_trailingIdx & tapeMask) as usize];
             periodROC = tempReal - tempReal2;
             // Adjust sumROC1:
             //  - Remove trailing ROC1

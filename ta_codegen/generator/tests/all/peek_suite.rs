@@ -1158,6 +1158,16 @@ fn a_ring_proved_to_lag_takes_no_guard_and_no_select() {
     assert!(src.contains("sp->ringCap_trailingIdx < 1 ||"), "Open keeps the proof honest");
 }
 
+/// A tape peek shadows the bar at lag 0, which a proven ring never reads.
+#[test]
+fn a_proven_tape_peek_takes_no_select() {
+    let (func, enums) = load("kama").expect("KAMA streams");
+    let src = stream_c(&func, &enums);
+    let tape = body_of(&src, "void TA_KAMA_PeekTape(").expect("KAMA has a tape peek");
+    assert!(tape.contains("= tape[(tapeBase - sp->ringCap_trailingIdx) & tapeMask];"), "{tape}");
+    assert!(!tape.contains("pkSlot"), "{tape}");
+}
+
 /// The proof is per mode: TRIMA's even arm lags by at least one bar, its odd
 /// arm reaches a lag of 0 at a period of 1.
 #[test]
@@ -1170,6 +1180,10 @@ fn trima_drops_the_guard_in_its_even_arm_only() {
         assert_eq!(src.matches(&format!("sp->ringCap_{v} < 0 ||")).count(), 1, "{v}");
         assert_eq!(src.matches(&format!("sp->ringCap_{v} < 1 ||")).count(), 1, "{v}");
     }
+    let tape = body_of(&src, "void TA_TRIMA_PeekTape(").expect("TRIMA has a tape peek");
+    let (odd, even) = tape.split_once("else").expect("the tape peek has both arms");
+    assert_eq!(odd.matches("& tapeMask) != pkSlot0)").count(), 2, "{odd}");
+    assert!(even.matches("= tape[").count() == 2 && !even.contains("pkSlot"), "{even}");
 }
 
 /// The handle's fixed-size REAL accumulator fields — the set

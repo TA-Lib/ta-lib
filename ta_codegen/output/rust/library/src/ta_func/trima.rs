@@ -1440,14 +1440,10 @@ impl TrimaStream {
                 let mut numeratorAdd = sp.numeratorAdd;
                 let mut numeratorSub = sp.numeratorSub;
                 let mut tempReal = sp.tempReal;
-                let mut pkSlot0: usize = usize::MAX;
-                let mut pkVal0: f64 = 0.0_f64;
-                pkSlot0 = (tapeBase & tapeMask) as usize;
-                pkVal0 = inReal;
                 // Step (1)
                 numerator -= numeratorSub;
                 numeratorSub -= tempReal;
-                tempReal = (if ((tapeBase - sp.ringCap_middleIdx & tapeMask) as usize) != pkSlot0 { tape[(tapeBase - sp.ringCap_middleIdx & tapeMask) as usize] } else { pkVal0 });
+                tempReal = tape[(tapeBase - sp.ringCap_middleIdx & tapeMask) as usize];
                 numeratorSub += tempReal;
                 // Step (2)
                 numeratorAdd -= tempReal;
@@ -1457,7 +1453,7 @@ impl TrimaStream {
                 // Step (3)
                 numerator += tempReal;
                 // Step (4)
-                tempReal = (if ((tapeBase - sp.ringCap_trailingIdx & tapeMask) as usize) != pkSlot0 { tape[(tapeBase - sp.ringCap_trailingIdx & tapeMask) as usize] } else { pkVal0 });
+                tempReal = tape[(tapeBase - sp.ringCap_trailingIdx & tapeMask) as usize];
                 (*outReal) = numerator * sp.factor;
             }
         }

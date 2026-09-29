@@ -8399,22 +8399,33 @@ pub fn peek_transition_widest(
     transition: &[Statement],
     slot_cast: Option<VarType>,
 ) -> Result<PeekTransition, String> {
+    widest_peek(model, names, transition, slot_cast, &[])
+}
+
+fn widest_peek(
+    model: &StreamModel,
+    names: &dyn NameMap,
+    transition: &[Statement],
+    slot_cast: Option<VarType>,
+    unshadowed: &[(Expr, Expr)],
+) -> Result<PeekTransition, String> {
     // The buffer set is elected on the UNTRIMMED transition, deliberately. The
     // trim only removes statements, so it can only make `validate_peekable`
     // accept where it used to refuse — and an election that flipped would
     // shadow-rewrite a read in the KEPT prefix, moving arithmetic this pass has
     // no business moving.
     let wide = transition_buffers_with_state_arrays(model, names);
-    let elected = if peek_transition(transition, &wide, &model.temps, slot_cast.clone()).is_ok() {
+    let elected = if peek_with(transition, &wide, &model.temps, slot_cast.clone(), unshadowed).is_ok() {
         wide
     } else {
         transition_buffers(model, names)
     };
-    peek_transition(
+    peek_with(
         &peek_tail_trimmed(model, names, transition),
         &elected,
         &model.temps,
         slot_cast,
+        unshadowed,
     )
 }
 
@@ -8441,7 +8452,16 @@ pub fn tape_peek_transition(
         compound: false,
     });
     with_bar.extend_from_slice(transition);
-    peek_transition_widest(model, names, &with_bar, slot_cast)
+    // The shadowed bar sits at lag 0, and a ring read at lag `ringCap` lands on
+    // it only when `ringCap` is a multiple of the tape size. A proven ring's
+    // Open rejects `ringCap < 1` and the tape is sized above every `ringCap`,
+    // so its read never does. Anything else, a window read included, can.
+    let unshadowed: Vec<(Expr, Expr)> = tape_covered_rings(model, &t.input)
+        .into_iter()
+        .filter(|r| r.lag_ge1)
+        .map(|r| (t.read(Expr::Var(names.ring_cap(&r.var))), t.current_slot()))
+        .collect();
+    widest_peek(model, names, &with_bar, slot_cast, &unshadowed)
 }
 
 /// `transition` with every statement below its last store to an output sink
@@ -9041,6 +9061,18 @@ pub fn peek_transition(
     temps: &[(String, VarType)],
     slot_cast: Option<VarType>,
 ) -> Result<PeekTransition, String> {
+    peek_with(transition, buffers, temps, slot_cast, &[])
+}
+
+/// [`peek_transition`] where a load equal to `unshadowed[i].0` skips the
+/// select on a shadow stored at `unshadowed[i].1`.
+fn peek_with(
+    transition: &[Statement],
+    buffers: &[(String, bool)],
+    temps: &[(String, VarType)],
+    slot_cast: Option<VarType>,
+    unshadowed: &[(Expr, Expr)],
+) -> Result<PeekTransition, String> {
     let bufs: BTreeMap<String, bool> = buffers.iter().map(|(n, i)| (n.clone(), *i)).collect();
     let transition = &drop_stores_no_load_reaches(transition, &bufs)[..];
     validate_peekable(transition, &bufs, 0)?;
@@ -9057,6 +9089,7 @@ pub fn peek_transition(
     let mut rw = PeekRewrite {
         bufs: &bufs,
         shadowed: &shadowed,
+        unshadowed,
         slot_cast,
         armed: BTreeMap::new(),
         pending: Vec::new(),
@@ -9270,6 +9303,8 @@ fn counted_range(init: &Statement, condition: &Expr, update: &Statement, body: &
 struct PeekRewrite<'a> {
     bufs: &'a BTreeMap<String, bool>,
     shadowed: &'a BTreeSet<String>,
+    /// `(load, slot)`: that exact load never reads the shadow stored at `slot`.
+    unshadowed: &'a [(Expr, Expr)],
     slot_cast: Option<VarType>,
     /// Buffer -> indices into `out.shadows` whose store may have run.
     armed: BTreeMap<String, Vec<usize>>,
@@ -9342,7 +9377,9 @@ impl PeekRewrite<'_> {
                 if self.bufs.contains_key(buf) =>
             {
                 debug_assert!(!*compound, "validated away");
-                let slot_expr = is_scalar_arith(idx).then(|| (**idx).clone());
+                let masked = matches!(&**idx, Expr::BinOp(l, BinOp::BitwiseAnd, r)
+                    if is_scalar_arith(l) && is_scalar_arith(r));
+                let slot_expr = (is_scalar_arith(idx) || masked).then(|| (**idx).clone());
                 let idx = self.expr(idx);
                 let value = self.expr(value);
                 if !self.shadowed.contains(buf) {
@@ -9505,6 +9542,13 @@ impl PeekRewrite<'_> {
         below == slot || *from == after
     }
 
+    fn never_lands(&self, load: &Expr, k: usize) -> bool {
+        let Some(Some(slot)) = self.slot_exprs.get(k) else {
+            return false;
+        };
+        self.unshadowed.iter().any(|(l, s)| l == load && s == slot)
+    }
+
     /// An index as the SLOT type — what the subscript would coerce it to.
     fn as_slot(&self, e: Expr) -> Expr {
         match &self.slot_cast {
@@ -9531,7 +9575,7 @@ impl PeekRewrite<'_> {
         match e {
             Expr::ArrayAccess(name, idx) => {
                 let mut armed = self.armed.get(name).cloned().unwrap_or_default();
-                armed.retain(|&k| !self.slot_excluded(idx, k));
+                armed.retain(|&k| !self.slot_excluded(idx, k) && !self.never_lands(e, k));
                 let idx = self.expr(idx);
                 if armed.is_empty() {
                     return Expr::ArrayAccess(name.clone(), Box::new(idx));

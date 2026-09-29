@@ -1284,12 +1284,8 @@
       double prevKAMA = sp.prevKAMA;
       double sumROC1 = sp.sumROC1;
       double trailingValue = sp.trailingValue;
-      int pkSlot0 = -1;
-      double pkVal0 = 0.0;
-      pkSlot0 = tapeBase & tapeMask;
-      pkVal0 = inReal;
       tempReal = inReal;
-      tempReal2 = (((tapeBase - sp.ringCap_trailingIdx) & tapeMask) != pkSlot0) ? tape[(tapeBase - sp.ringCap_trailingIdx) & tapeMask] : pkVal0;
+      tempReal2 = tape[(tapeBase - sp.ringCap_trailingIdx) & tapeMask];
       periodROC = tempReal - tempReal2;
       /* Adjust sumROC1:
        *  - Remove trailing ROC1
