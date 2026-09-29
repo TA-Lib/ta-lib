@@ -807,20 +807,8 @@ public partial class Core
          double periodSum = sp.periodSum;
          int sRing_Idx = sp.sRing_Idx;
          double trailingValue = sp.trailingValue;
-         int pkSlot0 = -1;
-         double pkVal0 = 0.0;
-         int pkSlot1 = -1;
-         double pkVal1 = 0.0;
-         if( sp.ringCap_roc1Idx == 0 ) {
-            pkSlot0 = 0;
-            pkVal0 = inReal;
-         }
-         if( sp.ringCap_roc2Idx == 0 ) {
-            pkSlot1 = 0;
-            pkVal1 = inReal;
-         }
-         base1 = (sp.ringPos_roc1Idx != pkSlot0) ? sp.ring_roc1Idx_inReal[sp.ringPos_roc1Idx] : pkVal0;
-         base2 = (sp.ringPos_roc2Idx != pkSlot1) ? sp.ring_roc2Idx_inReal[sp.ringPos_roc2Idx] : pkVal1;
+         base1 = sp.ring_roc1Idx_inReal[sp.ringPos_roc1Idx];
+         base2 = sp.ring_roc2Idx_inReal[sp.ringPos_roc2Idx];
          roc1 = (base1 != 0.0) ? (inReal / base1 - 1.0) * 100.0 : 0.0;
          roc2 = (base2 != 0.0) ? (inReal / base2 - 1.0) * 100.0 : 0.0;
          tempReal = roc1 + roc2;
@@ -904,12 +892,8 @@ public partial class Core
       double base2 = 0.0;
       double roc1 = 0.0;
       double roc2 = 0.0;
-      if( sp.ringCap_roc1Idx == 0 ) {
-         sp.ring_roc1Idx_inReal[0] = inReal;
-      }
-      if( sp.ringCap_roc2Idx == 0 ) {
-         sp.ring_roc2Idx_inReal[0] = inReal;
-      }
+      int ringCapL_roc1Idx = 0;
+      int ringCapL_roc2Idx = 0;
       base1 = sp.ring_roc1Idx_inReal[sp.ringPos_roc1Idx];
       base2 = sp.ring_roc2Idx_inReal[sp.ringPos_roc2Idx];
       roc1 = (base1 != 0.0) ? (inReal / base1 - 1.0) * 100.0 : 0.0;
@@ -966,14 +950,16 @@ public partial class Core
          sp.cur_outReal = sp.periodSum / sp.divider;
       }
       sp.periodSum -= sp.periodSub;
+      ringCapL_roc1Idx = sp.ringCap_roc1Idx;
       sp.ring_roc1Idx_inReal[sp.ringPos_roc1Idx] = inReal;
       sp.ringPos_roc1Idx = sp.ringPos_roc1Idx + 1;
-      if( sp.ringPos_roc1Idx >= sp.ringCap_roc1Idx ) {
+      if( sp.ringPos_roc1Idx >= ringCapL_roc1Idx ) {
          sp.ringPos_roc1Idx = 0;
       }
+      ringCapL_roc2Idx = sp.ringCap_roc2Idx;
       sp.ring_roc2Idx_inReal[sp.ringPos_roc2Idx] = inReal;
       sp.ringPos_roc2Idx = sp.ringPos_roc2Idx + 1;
-      if( sp.ringPos_roc2Idx >= sp.ringCap_roc2Idx ) {
+      if( sp.ringPos_roc2Idx >= ringCapL_roc2Idx ) {
          sp.ringPos_roc2Idx = 0;
       }
    }
@@ -1189,14 +1175,14 @@ public partial class Core
       outNBElement = outIdx;
       /* Capture the live batch state into the handle. */
       int cap_roc1Idx = inIdx - roc1Idx;
-      if( cap_roc1Idx < 0 || cap_roc1Idx > historyLen ) {
+      if( cap_roc1Idx < 1 || cap_roc1Idx > historyLen ) {
          return RetCode.InternalError;
       }
       int allocN_roc1Idx = (cap_roc1Idx > 0)? cap_roc1Idx : 1;
       double[] capRing_roc1Idx_inReal = new double[allocN_roc1Idx];
       inReal.Slice(historyLen - cap_roc1Idx, cap_roc1Idx).CopyTo(capRing_roc1Idx_inReal);
       int cap_roc2Idx = inIdx - roc2Idx;
-      if( cap_roc2Idx < 0 || cap_roc2Idx > historyLen ) {
+      if( cap_roc2Idx < 1 || cap_roc2Idx > historyLen ) {
          return RetCode.InternalError;
       }
       int allocN_roc2Idx = (cap_roc2Idx > 0)? cap_roc2Idx : 1;

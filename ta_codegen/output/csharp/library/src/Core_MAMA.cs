@@ -1291,18 +1291,12 @@ public partial class Core
          double prev_jQ_input_Even = sp.prev_jQ_input_Even;
          double prev_jQ_input_Odd = sp.prev_jQ_input_Odd;
          double trailingWMAValue = sp.trailingWMAValue;
-         int pkSlot0 = -1;
-         double pkVal0 = 0.0;
-         if( sp.ringCap_trailingWMAIdx == 0 ) {
-            pkSlot0 = 0;
-            pkVal0 = inReal;
-         }
          adjustedPrevPeriod = Math.FusedMultiplyAdd(0.075, sp.period, 0.54);
          todayValue = inReal;
          periodWMASub += todayValue;
          periodWMASub -= trailingWMAValue;
          periodWMASum += todayValue * 4.0;
-         trailingWMAValue = (sp.ringPos_trailingWMAIdx != pkSlot0) ? sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx] : pkVal0;
+         trailingWMAValue = sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx];
          smoothedValue = periodWMASum * 0.1;
          periodWMASum -= periodWMASub;
          if( sp.streamParity == 0 ) {
@@ -1439,9 +1433,7 @@ public partial class Core
       double Q2 = 0.0;
       double I2 = 0.0;
       double todayValue = 0.0;
-      if( sp.ringCap_trailingWMAIdx == 0 ) {
-         sp.ring_trailingWMAIdx_inReal[0] = inReal;
-      }
+      int ringCapL_trailingWMAIdx = 0;
       adjustedPrevPeriod = Math.FusedMultiplyAdd(0.075, sp.period, 0.54);
       todayValue = inReal;
       sp.periodWMASub += todayValue;
@@ -1606,9 +1598,10 @@ public partial class Core
       }
       sp.period = Math.FusedMultiplyAdd(0.2, sp.period, 0.8 * tempReal);
       /* Ooof... let's do the next price bar now! */
+      ringCapL_trailingWMAIdx = sp.ringCap_trailingWMAIdx;
       sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx] = inReal;
       sp.ringPos_trailingWMAIdx = sp.ringPos_trailingWMAIdx + 1;
-      if( sp.ringPos_trailingWMAIdx >= sp.ringCap_trailingWMAIdx ) {
+      if( sp.ringPos_trailingWMAIdx >= ringCapL_trailingWMAIdx ) {
          sp.ringPos_trailingWMAIdx = 0;
       }
       sp.streamParity = 1 - sp.streamParity;
@@ -2006,7 +1999,7 @@ public partial class Core
       outNBElement = outIdx;
       /* Capture the live batch state into the handle. */
       int cap_trailingWMAIdx = today - trailingWMAIdx;
-      if( cap_trailingWMAIdx < 0 || cap_trailingWMAIdx > historyLen ) {
+      if( cap_trailingWMAIdx < 1 || cap_trailingWMAIdx > historyLen ) {
          return RetCode.InternalError;
       }
       int allocN_trailingWMAIdx = (cap_trailingWMAIdx > 0)? cap_trailingWMAIdx : 1;

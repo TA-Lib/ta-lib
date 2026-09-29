@@ -964,15 +964,12 @@ static TA_FMA_STEP_INLINE void TA_MAMA_StepImpl( struct TA_MAMA_Stream *sp, doub
    double Q2;
    double I2;
    double todayValue;
+   int ringCapL_trailingWMAIdx;
    double mama;
    double fama;
 
    mama = sp->mama;
    fama = sp->fama;
-   if( sp->ringCap_trailingWMAIdx == 0 )
-   {
-      sp->ring_trailingWMAIdx_inReal[0] = inReal;
-   }
    adjustedPrevPeriod = fma(0.075, sp->period, 0.54);
    todayValue = inReal;
    sp->periodWMASub += todayValue;
@@ -1160,9 +1157,10 @@ static TA_FMA_STEP_INLINE void TA_MAMA_StepImpl( struct TA_MAMA_Stream *sp, doub
    /* Ooof... let's do the next price bar now! */
    sp->cur_outMAMA = *outMAMA;
    sp->cur_outFAMA = fama;
+   ringCapL_trailingWMAIdx = sp->ringCap_trailingWMAIdx;
    sp->ring_trailingWMAIdx_inReal[sp->ringPos_trailingWMAIdx] = inReal;
    sp->ringPos_trailingWMAIdx = sp->ringPos_trailingWMAIdx + 1;
-   if( sp->ringPos_trailingWMAIdx >= sp->ringCap_trailingWMAIdx )
+   if( sp->ringPos_trailingWMAIdx >= ringCapL_trailingWMAIdx )
    {
       sp->ringPos_trailingWMAIdx = 0;
    }
@@ -1638,7 +1636,7 @@ static TA_RetCode TA_MAMA_OpenImpl( struct TA_MAMA_Stream **stream, const double
       sp->prevPhase = prevPhase;
       sp->streamParity = historyLen % 2;
       sp->ringCap_trailingWMAIdx = (int)(today - trailingWMAIdx);
-      if( sp->ringCap_trailingWMAIdx < 0 || sp->ringCap_trailingWMAIdx > historyLen ) { TA_MAMA_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(346); }
+      if( sp->ringCap_trailingWMAIdx < 1 || sp->ringCap_trailingWMAIdx > historyLen ) { TA_MAMA_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(346); }
       { size_t allocN = (size_t)(sp->ringCap_trailingWMAIdx > 0 ? sp->ringCap_trailingWMAIdx : 1);
         sp->ring_trailingWMAIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_trailingWMAIdx_inReal ) { TA_MAMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
@@ -1742,8 +1740,6 @@ TA_LIB_API TA_RetCode TA_MAMA_Peek( const TA_MAMA_Stream *stream, double inReal,
    double prev_detrender_input_Odd;
    double trailingWMAValue;
    double *ring_trailingWMAIdx_inReal;
-   int pkSlot0 = -1;
-   double pkVal0 = 0.0;
 
    if( !stream || !outMAMA ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
@@ -1767,17 +1763,12 @@ TA_LIB_API TA_RetCode TA_MAMA_Peek( const TA_MAMA_Stream *stream, double inReal,
    prev_detrender_input_Odd = sp->prev_detrender_input_Odd;
    trailingWMAValue = sp->trailingWMAValue;
    ring_trailingWMAIdx_inReal = sp->ring_trailingWMAIdx_inReal;
-   if( sp->ringCap_trailingWMAIdx == 0 )
-   {
-      pkSlot0 = 0;
-      pkVal0 = inReal;
-   }
    adjustedPrevPeriod = fma(0.075, sp->period, 0.54);
    todayValue = inReal;
    periodWMASub += todayValue;
    periodWMASub -= trailingWMAValue;
    periodWMASum += todayValue * 4.0;
-   trailingWMAValue = (sp->ringPos_trailingWMAIdx != pkSlot0) ? ring_trailingWMAIdx_inReal[sp->ringPos_trailingWMAIdx] : pkVal0;
+   trailingWMAValue = ring_trailingWMAIdx_inReal[sp->ringPos_trailingWMAIdx];
    smoothedValue = periodWMASum * 0.1;
    periodWMASum -= periodWMASub;
    if( sp->streamParity == 0 )

@@ -547,19 +547,13 @@ static void TA_COPPOCK_StepImpl( struct TA_COPPOCK_Stream *sp, double inReal, do
    double base2;
    double roc1;
    double roc2;
+   int ringCapL_roc1Idx;
+   int ringCapL_roc2Idx;
    double periodSum;
    double periodSub;
 
    periodSum = sp->periodSum;
    periodSub = sp->periodSub;
-   if( sp->ringCap_roc1Idx == 0 )
-   {
-      sp->ring_roc1Idx_inReal[0] = inReal;
-   }
-   if( sp->ringCap_roc2Idx == 0 )
-   {
-      sp->ring_roc2Idx_inReal[0] = inReal;
-   }
    base1 = sp->ring_roc1Idx_inReal[sp->ringPos_roc1Idx];
    base2 = sp->ring_roc2Idx_inReal[sp->ringPos_roc2Idx];
    roc1 = (base1 != 0.0) ? (inReal / base1 - 1.0) * 100.0 : 0.0;
@@ -623,15 +617,17 @@ static void TA_COPPOCK_StepImpl( struct TA_COPPOCK_Stream *sp, double inReal, do
    }
    periodSum -= periodSub;
    sp->cur_outReal = *outReal;
+   ringCapL_roc1Idx = sp->ringCap_roc1Idx;
    sp->ring_roc1Idx_inReal[sp->ringPos_roc1Idx] = inReal;
    sp->ringPos_roc1Idx = sp->ringPos_roc1Idx + 1;
-   if( sp->ringPos_roc1Idx >= sp->ringCap_roc1Idx )
+   if( sp->ringPos_roc1Idx >= ringCapL_roc1Idx )
    {
       sp->ringPos_roc1Idx = 0;
    }
+   ringCapL_roc2Idx = sp->ringCap_roc2Idx;
    sp->ring_roc2Idx_inReal[sp->ringPos_roc2Idx] = inReal;
    sp->ringPos_roc2Idx = sp->ringPos_roc2Idx + 1;
-   if( sp->ringPos_roc2Idx >= sp->ringCap_roc2Idx )
+   if( sp->ringPos_roc2Idx >= ringCapL_roc2Idx )
    {
       sp->ringPos_roc2Idx = 0;
    }
@@ -887,7 +883,7 @@ static TA_RetCode TA_COPPOCK_OpenImpl( struct TA_COPPOCK_Stream **stream, const 
       sp->sRing_Idx = sRing_Idx;
       sp->maxIdx_sRing = maxIdx_sRing;
       sp->ringCap_roc1Idx = (int)(inIdx - roc1Idx);
-      if( sp->ringCap_roc1Idx < 0 || sp->ringCap_roc1Idx > historyLen ) { TA_COPPOCK_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(421); }
+      if( sp->ringCap_roc1Idx < 1 || sp->ringCap_roc1Idx > historyLen ) { TA_COPPOCK_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(421); }
       { size_t allocN = (size_t)(sp->ringCap_roc1Idx > 0 ? sp->ringCap_roc1Idx : 1);
         sp->ring_roc1Idx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_roc1Idx_inReal ) { TA_COPPOCK_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
@@ -895,7 +891,7 @@ static TA_RetCode TA_COPPOCK_OpenImpl( struct TA_COPPOCK_Stream **stream, const 
       }
       sp->ringPos_roc1Idx = 0;
       sp->ringCap_roc2Idx = (int)(inIdx - roc2Idx);
-      if( sp->ringCap_roc2Idx < 0 || sp->ringCap_roc2Idx > historyLen ) { TA_COPPOCK_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(422); }
+      if( sp->ringCap_roc2Idx < 1 || sp->ringCap_roc2Idx > historyLen ) { TA_COPPOCK_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(422); }
       { size_t allocN = (size_t)(sp->ringCap_roc2Idx > 0 ? sp->ringCap_roc2Idx : 1);
         sp->ring_roc2Idx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_roc2Idx_inReal ) { TA_COPPOCK_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
@@ -988,10 +984,6 @@ TA_LIB_API TA_RetCode TA_COPPOCK_Peek( const TA_COPPOCK_Stream *stream, double i
    double *cb_sRing;
    double *ring_roc1Idx_inReal;
    double *ring_roc2Idx_inReal;
-   int pkSlot0 = -1;
-   double pkVal0 = 0.0;
-   int pkSlot1 = -1;
-   double pkVal1 = 0.0;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
@@ -1001,18 +993,8 @@ TA_LIB_API TA_RetCode TA_COPPOCK_Peek( const TA_COPPOCK_Stream *stream, double i
    cb_sRing = sp->cb_sRing;
    ring_roc1Idx_inReal = sp->ring_roc1Idx_inReal;
    ring_roc2Idx_inReal = sp->ring_roc2Idx_inReal;
-   if( sp->ringCap_roc1Idx == 0 )
-   {
-      pkSlot0 = 0;
-      pkVal0 = inReal;
-   }
-   if( sp->ringCap_roc2Idx == 0 )
-   {
-      pkSlot1 = 0;
-      pkVal1 = inReal;
-   }
-   base1 = (sp->ringPos_roc1Idx != pkSlot0) ? ring_roc1Idx_inReal[sp->ringPos_roc1Idx] : pkVal0;
-   base2 = (sp->ringPos_roc2Idx != pkSlot1) ? ring_roc2Idx_inReal[sp->ringPos_roc2Idx] : pkVal1;
+   base1 = ring_roc1Idx_inReal[sp->ringPos_roc1Idx];
+   base2 = ring_roc2Idx_inReal[sp->ringPos_roc2Idx];
    roc1 = (base1 != 0.0) ? (inReal / base1 - 1.0) * 100.0 : 0.0;
    roc2 = (base2 != 0.0) ? (inReal / base2 - 1.0) * 100.0 : 0.0;
    tempReal = roc1 + roc2;

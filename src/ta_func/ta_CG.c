@@ -1066,11 +1066,8 @@ static void TA_CG_StepImpl( struct TA_CG_Stream *sp, double inReal, double *outR
    double c;
    double q;
    double t;
+   int ringCapL_trailingIdx;
 
-   if( sp->ringCap_trailingIdx == 0 )
-   {
-      sp->ring_trailingIdx_inReal[0] = inReal;
-   }
    sp->win_j_inReal[sp->winPos_j] = inReal;
    /* Between bars the sums hold the window less its oldest value. */
    fits = 0;
@@ -1398,9 +1395,10 @@ static void TA_CG_StepImpl( struct TA_CG_Stream *sp, double inReal, double *outR
    /* After the trailing value is read: outReal may be inReal. */
    *outReal= value;
    sp->cur_outReal = *outReal;
+   ringCapL_trailingIdx = sp->ringCap_trailingIdx;
    sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx] = inReal;
    sp->ringPos_trailingIdx = sp->ringPos_trailingIdx + 1;
-   if( sp->ringPos_trailingIdx >= sp->ringCap_trailingIdx )
+   if( sp->ringPos_trailingIdx >= ringCapL_trailingIdx )
    {
       sp->ringPos_trailingIdx = 0;
    }
@@ -1928,7 +1926,7 @@ static TA_RetCode TA_CG_OpenImpl( struct TA_CG_Stream **stream, const double inR
       sp->numB = numB;
       sp->numC = numC;
       sp->ringCap_trailingIdx = (int)(today - trailingIdx);
-      if( sp->ringCap_trailingIdx < 0 || sp->ringCap_trailingIdx > historyLen ) { TA_CG_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(436); }
+      if( sp->ringCap_trailingIdx < 1 || sp->ringCap_trailingIdx > historyLen ) { TA_CG_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(436); }
       { size_t allocN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);
         sp->ring_trailingIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_trailingIdx_inReal ) { TA_CG_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
@@ -2048,8 +2046,6 @@ TA_LIB_API TA_RetCode TA_CG_Peek( const TA_CG_Stream *stream, double inReal, dou
    double *win_j_inReal;
    int pkSlot0 = -1;
    double pkVal0 = 0.0;
-   int pkSlot1 = -1;
-   double pkVal1 = 0.0;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
@@ -2072,13 +2068,8 @@ TA_LIB_API TA_RetCode TA_CG_Peek( const TA_CG_Stream *stream, double inReal, dou
    ylim = sp->ylim;
    ring_trailingIdx_inReal = sp->ring_trailingIdx_inReal;
    win_j_inReal = sp->win_j_inReal;
-   if( sp->ringCap_trailingIdx == 0 )
-   {
-      pkSlot0 = 0;
-      pkVal0 = inReal;
-   }
-   pkSlot1 = sp->winPos_j;
-   pkVal1 = inReal;
+   pkSlot0 = sp->winPos_j;
+   pkVal0 = inReal;
    /* Between bars the sums hold the window less its oldest value. */
    fits = 0;
    x = inReal;
@@ -2135,7 +2126,7 @@ TA_LIB_API TA_RetCode TA_CG_Peek( const TA_CG_Stream *stream, double inReal, dou
       den = 0.0;
       for( j = sp->lookbackTotal; j >= 0; j -= 1 )
       {
-         den += (((sp->winPos_j + sp->winCap_j - j >= sp->winCap_j) ? sp->winPos_j + sp->winCap_j - j - sp->winCap_j : sp->winPos_j + sp->winCap_j - j) != pkSlot1) ? win_j_inReal[(sp->winPos_j + sp->winCap_j - j >= sp->winCap_j) ? sp->winPos_j + sp->winCap_j - j - sp->winCap_j : sp->winPos_j + sp->winCap_j - j] : pkVal1;
+         den += (((sp->winPos_j + sp->winCap_j - j >= sp->winCap_j) ? sp->winPos_j + sp->winCap_j - j - sp->winCap_j : sp->winPos_j + sp->winCap_j - j) != pkSlot0) ? win_j_inReal[(sp->winPos_j + sp->winCap_j - j >= sp->winCap_j) ? sp->winPos_j + sp->winCap_j - j - sp->winCap_j : sp->winPos_j + sp->winCap_j - j] : pkVal0;
          num += den;
       }
    } else if( fits == 0 )
@@ -2148,7 +2139,7 @@ TA_LIB_API TA_RetCode TA_CG_Peek( const TA_CG_Stream *stream, double inReal, dou
       k = 0;
       for( j = sp->lookbackTotal; j >= 0; j -= 1 )
       {
-         x = fabs((((sp->winPos_j + sp->winCap_j - j >= sp->winCap_j) ? sp->winPos_j + sp->winCap_j - j - sp->winCap_j : sp->winPos_j + sp->winCap_j - j) != pkSlot1) ? win_j_inReal[(sp->winPos_j + sp->winCap_j - j >= sp->winCap_j) ? sp->winPos_j + sp->winCap_j - j - sp->winCap_j : sp->winPos_j + sp->winCap_j - j] : pkVal1);
+         x = fabs((((sp->winPos_j + sp->winCap_j - j >= sp->winCap_j) ? sp->winPos_j + sp->winCap_j - j - sp->winCap_j : sp->winPos_j + sp->winCap_j - j) != pkSlot0) ? win_j_inReal[(sp->winPos_j + sp->winCap_j - j >= sp->winCap_j) ? sp->winPos_j + sp->winCap_j - j - sp->winCap_j : sp->winPos_j + sp->winCap_j - j] : pkVal0);
          if( x >= maxAbs )
          {
             maxAbs = x;
@@ -2213,7 +2204,7 @@ TA_LIB_API TA_RetCode TA_CG_Peek( const TA_CG_Stream *stream, double inReal, dou
       k = 0;
       for( j = sp->lookbackTotal; j >= 0; j -= 1 )
       {
-         x = (((sp->winPos_j + sp->winCap_j - j >= sp->winCap_j) ? sp->winPos_j + sp->winCap_j - j - sp->winCap_j : sp->winPos_j + sp->winCap_j - j) != pkSlot1) ? win_j_inReal[(sp->winPos_j + sp->winCap_j - j >= sp->winCap_j) ? sp->winPos_j + sp->winCap_j - j - sp->winCap_j : sp->winPos_j + sp->winCap_j - j] : pkVal1;
+         x = (((sp->winPos_j + sp->winCap_j - j >= sp->winCap_j) ? sp->winPos_j + sp->winCap_j - j - sp->winCap_j : sp->winPos_j + sp->winCap_j - j) != pkSlot0) ? win_j_inReal[(sp->winPos_j + sp->winCap_j - j >= sp->winCap_j) ? sp->winPos_j + sp->winCap_j - j - sp->winCap_j : sp->winPos_j + sp->winCap_j - j] : pkVal0;
          den += x;
          num += den;
          y = fabs(x * scale2Mid);
@@ -2288,7 +2279,7 @@ TA_LIB_API TA_RetCode TA_CG_Peek( const TA_CG_Stream *stream, double inReal, dou
          {
             for( j = sp->lookbackTotal; j >= 0; j -= 1 )
             {
-               y = ((((sp->winPos_j + sp->winCap_j - j >= sp->winCap_j) ? sp->winPos_j + sp->winCap_j - j - sp->winCap_j : sp->winPos_j + sp->winCap_j - j) != pkSlot1) ? win_j_inReal[(sp->winPos_j + sp->winCap_j - j >= sp->winCap_j) ? sp->winPos_j + sp->winCap_j - j - sp->winCap_j : sp->winPos_j + sp->winCap_j - j] : pkVal1) * scale;
+               y = ((((sp->winPos_j + sp->winCap_j - j >= sp->winCap_j) ? sp->winPos_j + sp->winCap_j - j - sp->winCap_j : sp->winPos_j + sp->winCap_j - j) != pkSlot0) ? win_j_inReal[(sp->winPos_j + sp->winCap_j - j >= sp->winCap_j) ? sp->winPos_j + sp->winCap_j - j - sp->winCap_j : sp->winPos_j + sp->winCap_j - j] : pkVal0) * scale;
                t = y * invWidth;
                a = t + 6.755399441055744e15 - 6.755399441055744e15;
                t = a * width;
@@ -2302,7 +2293,7 @@ TA_LIB_API TA_RetCode TA_CG_Peek( const TA_CG_Stream *stream, double inReal, dou
          {
             for( j = sp->lookbackTotal; j >= 0; j -= 1 )
             {
-               y = ((((sp->winPos_j + sp->winCap_j - j >= sp->winCap_j) ? sp->winPos_j + sp->winCap_j - j - sp->winCap_j : sp->winPos_j + sp->winCap_j - j) != pkSlot1) ? win_j_inReal[(sp->winPos_j + sp->winCap_j - j >= sp->winCap_j) ? sp->winPos_j + sp->winCap_j - j - sp->winCap_j : sp->winPos_j + sp->winCap_j - j] : pkVal1) * scale;
+               y = ((((sp->winPos_j + sp->winCap_j - j >= sp->winCap_j) ? sp->winPos_j + sp->winCap_j - j - sp->winCap_j : sp->winPos_j + sp->winCap_j - j) != pkSlot0) ? win_j_inReal[(sp->winPos_j + sp->winCap_j - j >= sp->winCap_j) ? sp->winPos_j + sp->winCap_j - j - sp->winCap_j : sp->winPos_j + sp->winCap_j - j] : pkVal0) * scale;
                t = y * invWidthSq;
                a = t + 6.755399441055744e15 - 6.755399441055744e15;
                t = a * widthSq;
@@ -2375,7 +2366,7 @@ TA_LIB_API TA_RetCode TA_CG_Peek( const TA_CG_Stream *stream, double inReal, dou
    }
    if( limbs == 2 )
    {
-      y = ((sp->ringPos_trailingIdx != pkSlot0) ? ring_trailingIdx_inReal[sp->ringPos_trailingIdx] : pkVal0) * scale;
+      y = ring_trailingIdx_inReal[sp->ringPos_trailingIdx] * scale;
       t = y * invWidth;
       a = t + 6.755399441055744e15 - 6.755399441055744e15;
       t = a * width;
@@ -2386,7 +2377,7 @@ TA_LIB_API TA_RetCode TA_CG_Peek( const TA_CG_Stream *stream, double inReal, dou
       numC -= sp->periodDouble * c;
    } else if( limbs == 3 )
    {
-      y = ((sp->ringPos_trailingIdx != pkSlot0) ? ring_trailingIdx_inReal[sp->ringPos_trailingIdx] : pkVal0) * scale;
+      y = ring_trailingIdx_inReal[sp->ringPos_trailingIdx] * scale;
       t = y * invWidthSq;
       a = t + 6.755399441055744e15 - 6.755399441055744e15;
       t = a * widthSq;

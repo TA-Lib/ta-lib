@@ -410,9 +410,7 @@ impl Core {
         let mut sum: f64 = 0.0_f64;
         let mut diff: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
-        if sp.ringCap_trailingIdx == 0 {
-            sp.ring_trailingIdx_inReal[0] = inReal;
-        }
+        let mut ringCapL_trailingIdx: usize = 0_usize;
         // Drop the oldest change: inReal[trailingIdx] - inReal[trailingIdx-1].
         // inReal[trailingIdx-1] comes from the cache (already overwritten when
         // outReal == inReal); inReal[trailingIdx] is read here, before this
@@ -454,9 +452,10 @@ impl Core {
             (*outReal) = 0.0;
         }
         sp.cur_outReal = (*outReal);
+        ringCapL_trailingIdx = sp.ringCap_trailingIdx;
         sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
         sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
-        if sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx {
+        if sp.ringPos_trailingIdx >= ringCapL_trailingIdx {
             sp.ringPos_trailingIdx = 0;
         }
     }
@@ -624,7 +623,7 @@ impl Core {
 
         // Capture the live batch state into the handle.
         let cap_trailingIdx: i64 = (today as i64) - (trailingIdx as i64);
-        if cap_trailingIdx < 0 || cap_trailingIdx > historyLen as i64 {
+        if cap_trailingIdx < 1 || cap_trailingIdx > historyLen as i64 {
             return Err(RetCode::InternalError);
         }
         let allocN_trailingIdx: usize = if cap_trailingIdx > 0 { cap_trailingIdx as usize } else { 1 };
@@ -816,17 +815,11 @@ impl CmouStream {
             let mut prevValue = sp.prevValue;
             let mut trailingValue = sp.trailingValue;
             let mut upSum = sp.upSum;
-            let mut pkSlot0: usize = usize::MAX;
-            let mut pkVal0: f64 = 0.0_f64;
-            if sp.ringCap_trailingIdx == 0 {
-                pkSlot0 = 0;
-                pkVal0 = inReal;
-            }
             // Drop the oldest change: inReal[trailingIdx] - inReal[trailingIdx-1].
             // inReal[trailingIdx-1] comes from the cache (already overwritten when
             // outReal == inReal); inReal[trailingIdx] is read here, before this
             // iteration writes outReal[outIdx], so it is still the original price.
-            tempReal = (if (sp.ringPos_trailingIdx as usize) != pkSlot0 { sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] } else { pkVal0 });
+            tempReal = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
             diff = tempReal - trailingValue;
             trailingValue = tempReal;
             if diff > 0.0 {

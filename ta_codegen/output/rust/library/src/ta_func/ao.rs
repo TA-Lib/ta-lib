@@ -415,12 +415,8 @@ impl Core {
     fn ao_step_impl(sp: &mut AoStreamState, inHigh: f64, inLow: f64, outReal: &mut f64) {
         let mut medianPrice: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
-        if sp.ringCap_trailingFastIdx == 0 {
-            sp.ring_trailingFastIdx_derived[0] = (inHigh + inLow) / 2.0;
-        }
-        if sp.ringCap_trailingSlowIdx == 0 {
-            sp.ring_trailingSlowIdx_derived[0] = (inHigh + inLow) / 2.0;
-        }
+        let mut ringCapL_trailingFastIdx: usize = 0_usize;
+        let mut ringCapL_trailingSlowIdx: usize = 0_usize;
         medianPrice = (inHigh + inLow) / 2.0;
         sp.sumFast += medianPrice;
         sp.sumSlow += medianPrice;
@@ -436,14 +432,16 @@ impl Core {
         sp.sumSlow -= sp.ring_trailingSlowIdx_derived[sp.ringPos_trailingSlowIdx];
         (*outReal) = tempReal;
         sp.cur_outReal = (*outReal);
+        ringCapL_trailingFastIdx = sp.ringCap_trailingFastIdx;
         sp.ring_trailingFastIdx_derived[sp.ringPos_trailingFastIdx] = (inHigh + inLow) / 2.0;
         sp.ringPos_trailingFastIdx = sp.ringPos_trailingFastIdx + 1;
-        if sp.ringPos_trailingFastIdx >= sp.ringCap_trailingFastIdx {
+        if sp.ringPos_trailingFastIdx >= ringCapL_trailingFastIdx {
             sp.ringPos_trailingFastIdx = 0;
         }
+        ringCapL_trailingSlowIdx = sp.ringCap_trailingSlowIdx;
         sp.ring_trailingSlowIdx_derived[sp.ringPos_trailingSlowIdx] = (inHigh + inLow) / 2.0;
         sp.ringPos_trailingSlowIdx = sp.ringPos_trailingSlowIdx + 1;
-        if sp.ringPos_trailingSlowIdx >= sp.ringCap_trailingSlowIdx {
+        if sp.ringPos_trailingSlowIdx >= ringCapL_trailingSlowIdx {
             sp.ringPos_trailingSlowIdx = 0;
         }
     }
@@ -583,7 +581,7 @@ impl Core {
 
         // Capture the live batch state into the handle.
         let cap_trailingFastIdx: i64 = (i as i64) - (trailingFastIdx as i64);
-        if cap_trailingFastIdx < 0 || cap_trailingFastIdx > historyLen as i64 {
+        if cap_trailingFastIdx < 1 || cap_trailingFastIdx > historyLen as i64 {
             return Err(RetCode::InternalError);
         }
         let allocN_trailingFastIdx: usize = if cap_trailingFastIdx > 0 { cap_trailingFastIdx as usize } else { 1 };
@@ -596,7 +594,7 @@ impl Core {
             }
         }
         let cap_trailingSlowIdx: i64 = (i as i64) - (trailingSlowIdx as i64);
-        if cap_trailingSlowIdx < 0 || cap_trailingSlowIdx > historyLen as i64 {
+        if cap_trailingSlowIdx < 1 || cap_trailingSlowIdx > historyLen as i64 {
             return Err(RetCode::InternalError);
         }
         let allocN_trailingSlowIdx: usize = if cap_trailingSlowIdx > 0 { cap_trailingSlowIdx as usize } else { 1 };
@@ -795,18 +793,6 @@ impl AoStream {
             let mut tempReal: f64 = 0.0_f64;
             let mut sumFast = sp.sumFast;
             let mut sumSlow = sp.sumSlow;
-            let mut pkSlot0: usize = usize::MAX;
-            let mut pkVal0: f64 = 0.0_f64;
-            let mut pkSlot1: usize = usize::MAX;
-            let mut pkVal1: f64 = 0.0_f64;
-            if sp.ringCap_trailingFastIdx == 0 {
-                pkSlot0 = 0;
-                pkVal0 = (inHigh + inLow) / 2.0;
-            }
-            if sp.ringCap_trailingSlowIdx == 0 {
-                pkSlot1 = 0;
-                pkVal1 = (inHigh + inLow) / 2.0;
-            }
             medianPrice = (inHigh + inLow) / 2.0;
             sumFast += medianPrice;
             sumSlow += medianPrice;
@@ -818,8 +804,8 @@ impl AoStream {
             // outIdx exactly, so a store hoisted above this would read back the
             // value it had just overwritten whenever the caller aliases outReal
             // over inHigh or inLow.
-            sumFast -= (if (sp.ringPos_trailingFastIdx as usize) != pkSlot0 { sp.ring_trailingFastIdx_derived[sp.ringPos_trailingFastIdx] } else { pkVal0 });
-            sumSlow -= (if (sp.ringPos_trailingSlowIdx as usize) != pkSlot1 { sp.ring_trailingSlowIdx_derived[sp.ringPos_trailingSlowIdx] } else { pkVal1 });
+            sumFast -= sp.ring_trailingFastIdx_derived[sp.ringPos_trailingFastIdx];
+            sumSlow -= sp.ring_trailingSlowIdx_derived[sp.ringPos_trailingSlowIdx];
             (*outReal) = tempReal;
         }
         Ok(outReal)

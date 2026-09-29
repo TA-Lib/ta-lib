@@ -4423,7 +4423,7 @@ fn emit_step_inner(
     };
     let transition = apply_step_scalars(&transition, &elected);
     let temps = match frame {
-        StepFrame::Commit => model.temps.clone(),
+        StepFrame::Commit => streaming::step_temps(model, tape),
         StepFrame::Peek => streaming::temps_used(&model.temps, &transition),
     };
     for (name, ty) in &temps {
@@ -5261,8 +5261,8 @@ fn emit_ring_slots(
 /// loop-invariant), buffers are filled from the history tail (phase-free
 /// trailing reads only; CIRCBUF-order functions are a later tranche), and
 /// Peek's scratch mirrors are pre-allocated. On the identity path
-/// (`with_state == false`) capacities are zero and 1-slot buffers keep the
-/// transition's cap-0 guard and Peek's mirror copy well-defined.
+/// (`with_state == false`) capacities are zero and a 1-slot buffer keeps any
+/// read and Peek's mirror copy in bounds.
 #[allow(clippy::too_many_lines)]
 fn alloc_and_capture(
     func: &FuncDef,
@@ -5360,7 +5360,8 @@ fn alloc_and_capture(
                 let _ = writeln!(s, "{pad}sp->ringCap_{v} = (int)({} - {v});", model.cursor);
                 let _ = writeln!(
                     s,
-                    "{pad}if( sp->ringCap_{v} < 0 || sp->ringCap_{v} > historyLen ) {{ {pre}TA_{n}_ReleaseImpl( sp ); return TA_INTERNAL_ERROR({eid}); }}",
+                    "{pad}if( sp->ringCap_{v} < {min} || sp->ringCap_{v} > historyLen ) {{ {pre}TA_{n}_ReleaseImpl( sp ); return TA_INTERNAL_ERROR({eid}); }}",
+                    min = i32::from(ring.lag_ge1),
                     eid = crate::internal_error_ids::site(&format!("ringcap.{v}"))
                 );
             }

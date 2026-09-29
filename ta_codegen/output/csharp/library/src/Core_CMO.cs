@@ -60,6 +60,7 @@ public partial class Core
     *                 the fixed TA_IS_ZERO band, which zeroed the oscillator for any
     *                 instrument quoted small enough to fall under it.
     *  091326 MF,CC   #411 Wilder step without a divide or a branch.
+    *  092826 MF,CC   #466 Drop the period-1 copy-through; the range starts at 2.
     */
    /// <summary>
    /// Number of leading input bars <c>Cmo</c> consumes before it can produce its
@@ -137,24 +138,6 @@ public partial class Core
       }
       outIdx = 0;
       /* Index into the output. */
-      /* Trap special case where the period is '1'.
-       * In that case, just copy the input into the
-       * output for the requested range (as-is !)
-       */
-      if( optInTimePeriod == 1 ) {
-         outBegIdx = startIdx;
-         i = endIdx - startIdx + 1;
-         outNBElement = i;
-         /* Element loop, not a block copy: the C single-precision variant reads a
-          * float array, so a double-sized byte copy would reinterpret and
-          * over-read it (#137). Forward order keeps the in-place case correct (#94).
-          */
-         today = startIdx;
-         for( outIdx = 0; outIdx < i; outIdx += 1 ) {
-            outReal[outIdx] = inReal[today++];
-         }
-         return RetCode.Success ;
-      }
       /* The declaration order above sets invPeriod's place in the stream state,
        * and that place is load-bearing: a layout that lets Update load it paired
        * with a field the previous bar stored stalls every call. Re-measure Update
@@ -289,16 +272,6 @@ public partial class Core
          return RetCode.Success ;
       }
       outIdx = 0;
-      if( optInTimePeriod == 1 ) {
-         outBegIdx = startIdx;
-         i = endIdx - startIdx + 1;
-         outNBElement = i;
-         today = startIdx;
-         for( outIdx = 0; outIdx < i; outIdx += 1 ) {
-            outReal[outIdx] = (double)inReal[today++];
-         }
-         return RetCode.Success ;
-      }
       invPeriod = 1.0 / (double)optInTimePeriod;
       today = startIdx - lookbackTotal;
       prevValue = (double)inReal[today];
@@ -639,10 +612,6 @@ public partial class Core
          double prevGain = sp.prevGain;
          double prevLoss = sp.prevLoss;
          double prevValue = sp.prevValue;
-         if( sp.optInTimePeriod == 1 ) {
-            cur_outReal = inReal;
-            return cur_outReal ;
-         }
          tempValue1 = inReal;
          tempValue2 = tempValue1 - prevValue;
          prevValue = tempValue1;
@@ -680,10 +649,6 @@ public partial class Core
       double gainDelta = 0.0;
       double tempValue1 = 0.0;
       double tempValue2 = 0.0;
-      if( sp.optInTimePeriod == 1 ) {
-         sp.cur_outReal = inReal;
-         return ;
-      }
       tempValue1 = inReal;
       tempValue2 = tempValue1 - sp.prevValue;
       sp.prevValue = tempValue1;
@@ -730,29 +695,6 @@ public partial class Core
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
-      }
-      if( optInTimePeriod == 1 ) {
-         int fillLb = CmoLookback(optInTimePeriod);
-         if( startIdx > fillLb ) fillLb = startIdx;
-         if( historyLen < fillLb + 1 ) {
-            return RetCode.InsufficientHistory;
-         }
-         sp.optInTimePeriod = optInTimePeriod;
-         sp.prevGain = 0.0;
-         sp.prevLoss = 0.0;
-         sp.invPeriod = 0.0;
-         sp.prevValue = 0.0;
-         outBegIdx = fillLb;
-         outNBElement = historyLen - fillLb;
-         if( outStride == 0 ) {
-            outReal[0] = inReal[historyLen - 1];
-         } else {
-            for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
-               outReal[fillIdx] = inReal[fillLb + fillIdx];
-            }
-         }
-         sp.cur_outReal = outReal[(outNBElement - 1) * outStride];
-         return RetCode.Success;
       }
       outBegIdx = 0;
       outNBElement = 0;

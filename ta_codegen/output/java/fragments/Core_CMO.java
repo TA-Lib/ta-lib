@@ -16,6 +16,7 @@
  *                 the fixed TA_IS_ZERO band, which zeroed the oscillator for any
  *                 instrument quoted small enough to fall under it.
  *  091326 MF,CC   #411 Wilder step without a divide or a branch.
+ *  092826 MF,CC   #466 Drop the period-1 copy-through; the range starts at 2.
  */
 
    /**
@@ -87,24 +88,6 @@
       }
       outIdx = 0;
       /* Index into the output. */
-      /* Trap special case where the period is '1'.
-       * In that case, just copy the input into the
-       * output for the requested range (as-is !)
-       */
-      if( optInTimePeriod == 1 ) {
-         outBegIdx.value = startIdx;
-         i = endIdx - startIdx + 1;
-         outNBElement.value = i;
-         /* Element loop, not a block copy: the C single-precision variant reads a
-          * float array, so a double-sized byte copy would reinterpret and
-          * over-read it (#137). Forward order keeps the in-place case correct (#94).
-          */
-         today = startIdx;
-         for( outIdx = 0; outIdx < i; outIdx += 1 ) {
-            outReal[outIdx] = inReal[today++];
-         }
-         return RetCode.SUCCESS ;
-      }
       /* The declaration order above sets invPeriod's place in the stream state,
        * and that place is load-bearing: a layout that lets Update load it paired
        * with a field the previous bar stored stalls every call. Re-measure Update
@@ -234,16 +217,6 @@
          return RetCode.SUCCESS ;
       }
       outIdx = 0;
-      if( optInTimePeriod == 1 ) {
-         outBegIdx.value = startIdx;
-         i = endIdx - startIdx + 1;
-         outNBElement.value = i;
-         today = startIdx;
-         for( outIdx = 0; outIdx < i; outIdx += 1 ) {
-            outReal[outIdx] = (double)inReal[today++];
-         }
-         return RetCode.SUCCESS ;
-      }
       invPeriod = 1.0 / (double)optInTimePeriod;
       today = startIdx - lookbackTotal;
       prevValue = (double)inReal[today];
@@ -543,10 +516,6 @@
          double prevGain = sp.prevGain;
          double prevLoss = sp.prevLoss;
          double prevValue = sp.prevValue;
-         if( sp.optInTimePeriod == 1 ) {
-            cur_outReal = inReal;
-            return cur_outReal ;
-         }
          tempValue1 = inReal;
          tempValue2 = tempValue1 - prevValue;
          prevValue = tempValue1;
@@ -593,10 +562,6 @@
       double gainDelta = 0.0;
       double tempValue1 = 0.0;
       double tempValue2 = 0.0;
-      if( sp.optInTimePeriod == 1 ) {
-         sp.cur_outReal = inReal;
-         return ;
-      }
       tempValue1 = inReal;
       tempValue2 = tempValue1 - sp.prevValue;
       sp.prevValue = tempValue1;
@@ -640,29 +605,6 @@
          outBegIdx.value = 0;
          outNBElement.value = 0;
          return RetCode.INSUFFICIENT_HISTORY;
-      }
-      if( optInTimePeriod == 1 ) {
-         int fillLb = cmoLookback(optInTimePeriod);
-         if( startIdx > fillLb ) fillLb = startIdx;
-         if( historyLen < fillLb + 1 ) {
-            return RetCode.INSUFFICIENT_HISTORY;
-         }
-         sp.optInTimePeriod = optInTimePeriod;
-         sp.prevGain = 0.0;
-         sp.prevLoss = 0.0;
-         sp.invPeriod = 0.0;
-         sp.prevValue = 0.0;
-         outBegIdx.value = fillLb;
-         outNBElement.value = historyLen - fillLb;
-         if( outStride == 0 ) {
-            outReal[0] = inReal[historyLen - 1];
-         } else {
-            for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
-               outReal[fillIdx] = inReal[fillLb + fillIdx];
-            }
-         }
-         sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
-         return RetCode.SUCCESS;
       }
       outBegIdx.value = 0;
       outNBElement.value = 0;

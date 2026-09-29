@@ -403,13 +403,7 @@
          RocStream sp = this;
          double tempReal = 0.0;
          double cur_outReal = 0.0;
-         int pkSlot0 = -1;
-         double pkVal0 = 0.0;
-         if( sp.ringCap_trailingIdx == 0 ) {
-            pkSlot0 = 0;
-            pkVal0 = inReal;
-         }
-         tempReal = (sp.ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] : pkVal0;
+         tempReal = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
          if( tempReal != 0.0 ) {
             cur_outReal = (inReal / tempReal - 1.0) * 100.0;
          } else {
@@ -447,18 +441,17 @@
    private void rocStepImpl( RocStream sp, double inReal )
    {
       double tempReal = 0.0;
-      if( sp.ringCap_trailingIdx == 0 ) {
-         sp.ring_trailingIdx_inReal[0] = inReal;
-      }
+      int ringCapL_trailingIdx = 0;
       tempReal = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
       if( tempReal != 0.0 ) {
          sp.cur_outReal = (inReal / tempReal - 1.0) * 100.0;
       } else {
          sp.cur_outReal = 0.0;
       }
+      ringCapL_trailingIdx = sp.ringCap_trailingIdx;
       sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
       sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
-      if( sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
+      if( sp.ringPos_trailingIdx >= ringCapL_trailingIdx ) {
          sp.ringPos_trailingIdx = 0;
       }
    }
@@ -547,7 +540,7 @@
       outBegIdx.value = startIdx;
       /* Capture the live batch state into the handle. */
       int cap_trailingIdx = inIdx - trailingIdx;
-      if( cap_trailingIdx < 0 || cap_trailingIdx > historyLen ) {
+      if( cap_trailingIdx < 1 || cap_trailingIdx > historyLen ) {
          return RetCode.INTERNAL_ERROR;
       }
       int allocN_trailingIdx = (cap_trailingIdx > 0)? cap_trailingIdx : 1;

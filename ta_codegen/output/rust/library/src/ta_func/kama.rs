@@ -523,13 +523,11 @@ impl Core {
         let mut tempReal: f64 = 0.0_f64;
         let mut tempReal2: f64 = 0.0_f64;
         let mut periodROC: f64 = 0.0_f64;
+        let mut ringCapL_trailingIdx: usize = 0_usize;
         if sp.optInTimePeriod == 1 {
             (*outReal) = inReal;
             sp.cur_outReal = (*outReal);
             return;
-        }
-        if sp.ringCap_trailingIdx == 0 {
-            sp.ring_trailingIdx_inReal[0] = inReal;
         }
         tempReal = inReal;
         tempReal2 = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
@@ -574,9 +572,10 @@ impl Core {
         (*outReal) = sp.prevKAMA;
         sp.cur_outReal = (*outReal);
         sp.lag1_inReal = inReal;
+        ringCapL_trailingIdx = sp.ringCap_trailingIdx;
         sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
         sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
-        if sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx {
+        if sp.ringPos_trailingIdx >= ringCapL_trailingIdx {
             sp.ringPos_trailingIdx = 0;
         }
     }
@@ -879,7 +878,7 @@ impl Core {
 
         // Capture the live batch state into the handle.
         let cap_trailingIdx: i64 = (today as i64) - (trailingIdx as i64);
-        if cap_trailingIdx < 0 || cap_trailingIdx > historyLen as i64 {
+        if cap_trailingIdx < 1 || cap_trailingIdx > historyLen as i64 {
             return Err(RetCode::InternalError);
         }
         let allocN_trailingIdx: usize = if cap_trailingIdx > 0 { cap_trailingIdx as usize } else { 1 };
@@ -1072,18 +1071,12 @@ impl KamaStream {
             let mut prevKAMA = sp.prevKAMA;
             let mut sumROC1 = sp.sumROC1;
             let mut trailingValue = sp.trailingValue;
-            let mut pkSlot0: usize = usize::MAX;
-            let mut pkVal0: f64 = 0.0_f64;
             if sp.optInTimePeriod == 1 {
                 (*outReal) = inReal;
                 return Ok((*outReal));
             }
-            if sp.ringCap_trailingIdx == 0 {
-                pkSlot0 = 0;
-                pkVal0 = inReal;
-            }
             tempReal = inReal;
-            tempReal2 = (if (sp.ringPos_trailingIdx as usize) != pkSlot0 { sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] } else { pkVal0 });
+            tempReal2 = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
             periodROC = tempReal - tempReal2;
             // Adjust sumROC1:
             //  - Remove trailing ROC1

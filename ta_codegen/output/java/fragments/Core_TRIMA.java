@@ -741,22 +741,10 @@
             double numeratorAdd = sp.numeratorAdd;
             double numeratorSub = sp.numeratorSub;
             double tempReal = sp.tempReal;
-            int pkSlot0 = -1;
-            double pkVal0 = 0.0;
-            int pkSlot1 = -1;
-            double pkVal1 = 0.0;
-            if( sp.ringCap_middleIdx == 0 ) {
-               pkSlot0 = 0;
-               pkVal0 = inReal;
-            }
-            if( sp.ringCap_trailingIdx == 0 ) {
-               pkSlot1 = 0;
-               pkVal1 = inReal;
-            }
             /* Step (1) */
             numerator -= numeratorSub;
             numeratorSub -= tempReal;
-            tempReal = (sp.ringPos_middleIdx != pkSlot0) ? sp.ring_middleIdx_inReal[sp.ringPos_middleIdx] : pkVal0;
+            tempReal = sp.ring_middleIdx_inReal[sp.ringPos_middleIdx];
             numeratorSub += tempReal;
             /* Step (2) */
             numeratorAdd -= tempReal;
@@ -766,7 +754,7 @@
             /* Step (3) */
             numerator += tempReal;
             /* Step (4) */
-            tempReal = (sp.ringPos_trailingIdx != pkSlot1) ? sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] : pkVal1;
+            tempReal = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
             cur_outReal = numerator * sp.factor;
          }
          return cur_outReal;
@@ -833,12 +821,8 @@
             sp.ringPos_trailingIdx = 0;
          }
       } else {
-         if( sp.ringCap_middleIdx == 0 ) {
-            sp.ring_middleIdx_inReal[0] = inReal;
-         }
-         if( sp.ringCap_trailingIdx == 0 ) {
-            sp.ring_trailingIdx_inReal[0] = inReal;
-         }
+         int ringCapL_middleIdx = 0;
+         int ringCapL_trailingIdx = 0;
          /* Step (1) */
          sp.numerator -= sp.numeratorSub;
          sp.numeratorSub -= sp.tempReal;
@@ -854,14 +838,16 @@
          /* Step (4) */
          sp.tempReal = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
          sp.cur_outReal = sp.numerator * sp.factor;
+         ringCapL_middleIdx = sp.ringCap_middleIdx;
          sp.ring_middleIdx_inReal[sp.ringPos_middleIdx] = inReal;
          sp.ringPos_middleIdx = sp.ringPos_middleIdx + 1;
-         if( sp.ringPos_middleIdx >= sp.ringCap_middleIdx ) {
+         if( sp.ringPos_middleIdx >= ringCapL_middleIdx ) {
             sp.ringPos_middleIdx = 0;
          }
+         ringCapL_trailingIdx = sp.ringCap_trailingIdx;
          sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
          sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
-         if( sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
+         if( sp.ringPos_trailingIdx >= ringCapL_trailingIdx ) {
             sp.ringPos_trailingIdx = 0;
          }
       }
@@ -1286,14 +1272,14 @@
          outBegIdx.value = startIdx;
          /* Capture the live batch state into the handle. */
          int cap_middleIdx = todayIdx - middleIdx;
-         if( cap_middleIdx < 0 || cap_middleIdx > historyLen ) {
+         if( cap_middleIdx < 1 || cap_middleIdx > historyLen ) {
             return RetCode.INTERNAL_ERROR;
          }
          int allocN_middleIdx = (cap_middleIdx > 0)? cap_middleIdx : 1;
          double[] capRing_middleIdx_inReal = new double[allocN_middleIdx];
          System.arraycopy(inReal, historyLen - cap_middleIdx, capRing_middleIdx_inReal, 0, cap_middleIdx);
          int cap_trailingIdx = todayIdx - trailingIdx;
-         if( cap_trailingIdx < 0 || cap_trailingIdx > historyLen ) {
+         if( cap_trailingIdx < 1 || cap_trailingIdx > historyLen ) {
             return RetCode.INTERNAL_ERROR;
          }
          int allocN_trailingIdx = (cap_trailingIdx > 0)? cap_trailingIdx : 1;

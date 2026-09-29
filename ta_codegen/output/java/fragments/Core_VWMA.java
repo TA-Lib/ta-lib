@@ -548,19 +548,9 @@
          double sumPV = sp.sumPV;
          double sumV = sp.sumV;
          int zeroCount = sp.zeroCount;
-         int pkSlot0 = -1;
-         double pkVal0 = 0.0;
-         int pkSlot1 = -1;
-         double pkVal1 = 0.0;
          if( sp.optInTimePeriod == 1 ) {
             cur_outReal = inReal;
             return cur_outReal ;
-         }
-         if( sp.ringCap_trailingIdx == 0 ) {
-            pkSlot0 = 0;
-            pkVal0 = inReal;
-            pkSlot1 = 0;
-            pkVal1 = inVolume;
          }
          tempReal = inReal * inVolume;
          sumPV += tempReal;
@@ -569,8 +559,8 @@
          /* Read the trailing values before writing the output, since the caller
           * may pass the same buffer for an input and the output.
           */
-         trailingVolume = (sp.ringPos_trailingIdx != pkSlot1) ? sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx] : pkVal1;
-         tempReal = ((sp.ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] : pkVal0) * trailingVolume;
+         trailingVolume = sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx];
+         tempReal = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] * trailingVolume;
          /* Each branch writes its own output: a branch that only zeroes the sums
           * is if-converted into a mask on their dependency chain.
           */
@@ -630,13 +620,10 @@
       double tempV = 0.0;
       double tempReal = 0.0;
       double trailingVolume = 0.0;
+      int ringCapL_trailingIdx = 0;
       if( sp.optInTimePeriod == 1 ) {
          sp.cur_outReal = inReal;
          return ;
-      }
-      if( sp.ringCap_trailingIdx == 0 ) {
-         sp.ring_trailingIdx_inReal[0] = inReal;
-         sp.ring_trailingIdx_inVolume[0] = inVolume;
       }
       tempReal = inReal * inVolume;
       sp.sumPV += tempReal;
@@ -672,10 +659,11 @@
          sp.cur_outReal = tempPV / (double)sp.optInTimePeriod / (tempV / (double)sp.optInTimePeriod);
       }
       sp.zeroCount -= (Math.abs(trailingVolume) <= 0.0) ? 1 : 0;
+      ringCapL_trailingIdx = sp.ringCap_trailingIdx;
       sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
       sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx] = inVolume;
       sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
-      if( sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
+      if( sp.ringPos_trailingIdx >= ringCapL_trailingIdx ) {
          sp.ringPos_trailingIdx = 0;
       }
    }
@@ -830,7 +818,7 @@
       outBegIdx.value = startIdx;
       /* Capture the live batch state into the handle. */
       int cap_trailingIdx = i - trailingIdx;
-      if( cap_trailingIdx < 0 || cap_trailingIdx > historyLen ) {
+      if( cap_trailingIdx < 1 || cap_trailingIdx > historyLen ) {
          return RetCode.INTERNAL_ERROR;
       }
       int allocN_trailingIdx = (cap_trailingIdx > 0)? cap_trailingIdx : 1;

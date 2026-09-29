@@ -1197,14 +1197,8 @@
          double ylim = sp.ylim;
          int pkSlot0 = -1;
          double pkVal0 = 0.0;
-         int pkSlot1 = -1;
-         double pkVal1 = 0.0;
-         if( sp.ringCap_trailingIdx == 0 ) {
-            pkSlot0 = 0;
-            pkVal0 = inReal;
-         }
-         pkSlot1 = sp.winPos_j;
-         pkVal1 = inReal;
+         pkSlot0 = sp.winPos_j;
+         pkVal0 = inReal;
          /* Between bars the sums hold the window less its oldest value. */
          fits = 0;
          x = inReal;
@@ -1253,7 +1247,7 @@
             num = 0.0;
             den = 0.0;
             for( j = sp.lookbackTotal; j >= 0; j -= 1 ) {
-               den += (((sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j) != pkSlot1) ? sp.win_j_inReal[(sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j] : pkVal1;
+               den += (((sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j) != pkSlot0) ? sp.win_j_inReal[(sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j] : pkVal0;
                num += den;
             }
          } else if( fits == 0 ) {
@@ -1264,7 +1258,7 @@
             maxAt = 0;
             k = 0;
             for( j = sp.lookbackTotal; j >= 0; j -= 1 ) {
-               x = Math.abs((((sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j) != pkSlot1) ? sp.win_j_inReal[(sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j] : pkVal1);
+               x = Math.abs((((sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j) != pkSlot0) ? sp.win_j_inReal[(sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j] : pkVal0);
                if( x >= maxAbs ) {
                   maxAbs = x;
                   maxAt = k;
@@ -1320,7 +1314,7 @@
             den = 0.0;
             k = 0;
             for( j = sp.lookbackTotal; j >= 0; j -= 1 ) {
-               x = (((sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j) != pkSlot1) ? sp.win_j_inReal[(sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j] : pkVal1;
+               x = (((sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j) != pkSlot0) ? sp.win_j_inReal[(sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j] : pkVal0;
                den += x;
                num += den;
                y = Math.abs(x * scale2Mid);
@@ -1379,7 +1373,7 @@
                numC = 0.0;
                if( limbs == 2 ) {
                   for( j = sp.lookbackTotal; j >= 0; j -= 1 ) {
-                     y = ((((sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j) != pkSlot1) ? sp.win_j_inReal[(sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j] : pkVal1) * scale;
+                     y = ((((sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j) != pkSlot0) ? sp.win_j_inReal[(sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j] : pkVal0) * scale;
                      t = y * invWidth;
                      a = t + 6.755399441055744e15 - 6.755399441055744e15;
                      t = a * width;
@@ -1391,7 +1385,7 @@
                   }
                } else {
                   for( j = sp.lookbackTotal; j >= 0; j -= 1 ) {
-                     y = ((((sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j) != pkSlot1) ? sp.win_j_inReal[(sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j] : pkVal1) * scale;
+                     y = ((((sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j) != pkSlot0) ? sp.win_j_inReal[(sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j] : pkVal0) * scale;
                      t = y * invWidthSq;
                      a = t + 6.755399441055744e15 - 6.755399441055744e15;
                      t = a * widthSq;
@@ -1459,7 +1453,7 @@
             value = sp.flatValue;
          }
          if( limbs == 2 ) {
-            y = ((sp.ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] : pkVal0) * scale;
+            y = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] * scale;
             t = y * invWidth;
             a = t + 6.755399441055744e15 - 6.755399441055744e15;
             t = a * width;
@@ -1469,7 +1463,7 @@
             numA -= sp.periodDouble * a;
             numC -= sp.periodDouble * c;
          } else if( limbs == 3 ) {
-            y = ((sp.ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] : pkVal0) * scale;
+            y = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] * scale;
             t = y * invWidthSq;
             a = t + 6.755399441055744e15 - 6.755399441055744e15;
             t = a * widthSq;
@@ -1539,9 +1533,7 @@
       double c = 0.0;
       double q = 0.0;
       double t = 0.0;
-      if( sp.ringCap_trailingIdx == 0 ) {
-         sp.ring_trailingIdx_inReal[0] = inReal;
-      }
+      int ringCapL_trailingIdx = 0;
       sp.win_j_inReal[sp.winPos_j] = inReal;
       /* Between bars the sums hold the window less its oldest value. */
       fits = 0;
@@ -1825,9 +1817,10 @@
       }
       /* After the trailing value is read: outReal may be inReal. */
       sp.cur_outReal = value;
+      ringCapL_trailingIdx = sp.ringCap_trailingIdx;
       sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
       sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
-      if( sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
+      if( sp.ringPos_trailingIdx >= ringCapL_trailingIdx ) {
          sp.ringPos_trailingIdx = 0;
       }
       sp.winPos_j = sp.winPos_j + 1;
@@ -2267,7 +2260,7 @@
       outNBElement.value = outIdx;
       /* Capture the live batch state into the handle. */
       int cap_trailingIdx = today - trailingIdx;
-      if( cap_trailingIdx < 0 || cap_trailingIdx > historyLen ) {
+      if( cap_trailingIdx < 1 || cap_trailingIdx > historyLen ) {
          return RetCode.INTERNAL_ERROR;
       }
       int allocN_trailingIdx = (cap_trailingIdx > 0)? cap_trailingIdx : 1;

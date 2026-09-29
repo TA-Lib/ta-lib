@@ -62,6 +62,7 @@
  *  090926 MF,CC #410 Scale the Wilder step by a hoisted 1/period and split the
  *               gain/loss without a branch; the loop-carried chain keeps
  *               neither a divide nor a 50/50 mispredict.
+ *  092826 MF,CC #466 Drop the period-1 copy-through; the range starts at 2.
  */
 
 TA_LIB_API int TA_RSI_Lookback( int optInTimePeriod )
@@ -130,26 +131,6 @@ TA_LIB_API TA_RetCode TA_RSI( int    startIdx,
    }
    outIdx = 0;
    /* Index into the output. */
-   /* Trap special case where the period is '1'.
-    * In that case, just copy the input into the
-    * output for the requested range (as-is !)
-    */
-   if( optInTimePeriod == 1 )
-   {
-      *outBegIdx= startIdx;
-      i = (int)(endIdx - startIdx + 1);
-      *outNBElement= (int)i;
-      /* Element loop, not a block copy: the C single-precision variant reads a
-       * float array, so a double-sized byte copy would reinterpret and
-       * over-read it (#137). Forward order keeps the in-place case correct (#94).
-       */
-      today = (int)startIdx;
-      for( outIdx = 0; outIdx < (int)i; outIdx += 1 )
-      {
-         outReal[outIdx] = inReal[today++];
-      }
-      return TA_SUCCESS;
-   }
    invPeriod = 1.0 / (double)optInTimePeriod;
    /* Accumulate Wilder's "Average Gain" and "Average Loss"
     * among the initial period.
@@ -305,18 +286,6 @@ TA_RetCode TA_S_RSI( int    startIdx,
       return TA_SUCCESS;
    }
    outIdx = 0;
-   if( optInTimePeriod == 1 )
-   {
-      *outBegIdx= startIdx;
-      i = (int)(endIdx - startIdx + 1);
-      *outNBElement= (int)i;
-      today = (int)startIdx;
-      for( outIdx = 0; outIdx < (int)i; outIdx += 1 )
-      {
-         outReal[outIdx] = (double)inReal[today++];
-      }
-      return TA_SUCCESS;
-   }
    invPeriod = 1.0 / (double)optInTimePeriod;
    today = startIdx - lookbackTotal;
    prevValue = (double)inReal[today];
@@ -416,12 +385,6 @@ static void TA_RSI_StepImpl( struct TA_RSI_Stream *sp, double inReal, double *ou
    double tempValue1;
    double tempValue2;
 
-   if( sp->optInTimePeriod == 1 )
-   {
-      *outReal= inReal;
-      sp->cur_outReal = *outReal;
-      return;
-   }
    tempValue1 = (double)inReal;
    tempValue2 = tempValue1 - sp->prevValue;
    sp->prevValue = tempValue1;
@@ -465,43 +428,6 @@ static TA_RetCode TA_RSI_OpenImpl( struct TA_RSI_Stream **stream, const double i
    }
 
    endIdx = historyLen - 1;
-
-   if( optInTimePeriod == 1 )
-   {
-      int fillLb = TA_RSI_Lookback( optInTimePeriod );
-      if( startIdx > fillLb ) fillLb = startIdx;
-      if( historyLen < fillLb + 1 )
-      {
-         *outBegIdx = 0;
-         *outNBElement = 0;
-         return TA_INSUFFICIENT_HISTORY;
-      }
-      sp = (struct TA_RSI_Stream *)TA_Malloc( sizeof(*sp) );
-      if( !sp ) { return TA_ALLOC_ERR; }
-      memset( sp, 0, sizeof(*sp) );
-      sp->optInTimePeriod = optInTimePeriod;
-      {
-         int fillIdx;
-         *outBegIdx = fillLb;
-         *outNBElement = historyLen - fillLb;
-         if( outStride )
-         {
-            for( fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ )
-            {
-               outReal[fillIdx] = inReal[fillLb + fillIdx];
-            }
-         }
-         else
-         {
-            outReal[0] = inReal[historyLen - 1];
-         }
-      }
-      sp->outRangeBegIdx = *outBegIdx;
-      sp->outRangeCount = *outNBElement;
-      sp->cur_outReal = outReal[(*outNBElement - 1) * outStride];
-      *stream = sp;
-      return TA_SUCCESS;
-   }
 
    {
       int outIdx;
@@ -725,11 +651,6 @@ TA_LIB_API TA_RetCode TA_RSI_Peek( const TA_RSI_Stream *stream, double inReal, d
    prevGain = sp->prevGain;
    prevLoss = sp->prevLoss;
    prevValue = sp->prevValue;
-   if( sp->optInTimePeriod == 1 )
-   {
-      *outReal= inReal;
-      return TA_SUCCESS;
-   }
    tempValue1 = (double)inReal;
    tempValue2 = tempValue1 - prevValue;
    prevValue = tempValue1;

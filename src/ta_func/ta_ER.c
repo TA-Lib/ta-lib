@@ -398,11 +398,8 @@ static void TA_ER_StepImpl( struct TA_ER_Stream *sp, double inReal, double *outR
    double periodROC;
    double tempReal;
    double tempReal2;
+   int ringCapL_trailingIdx;
 
-   if( sp->ringCap_trailingIdx == 0 )
-   {
-      sp->ring_trailingIdx_inReal[0] = inReal;
-   }
    tempReal = inReal;
    tempReal2 = sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx];
    periodROC = tempReal - tempReal2;
@@ -444,9 +441,10 @@ static void TA_ER_StepImpl( struct TA_ER_Stream *sp, double inReal, double *outR
    }
    sp->cur_outReal = *outReal;
    sp->lag1_inReal = inReal;
+   ringCapL_trailingIdx = sp->ringCap_trailingIdx;
    sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx] = inReal;
    sp->ringPos_trailingIdx = sp->ringPos_trailingIdx + 1;
-   if( sp->ringPos_trailingIdx >= sp->ringCap_trailingIdx )
+   if( sp->ringPos_trailingIdx >= ringCapL_trailingIdx )
    {
       sp->ringPos_trailingIdx = 0;
    }
@@ -637,7 +635,7 @@ static TA_RetCode TA_ER_OpenImpl( struct TA_ER_Stream **stream, const double inR
       sp->sumROC1 = sumROC1;
       sp->trailingValue = trailingValue;
       sp->ringCap_trailingIdx = (int)(today - trailingIdx);
-      if( sp->ringCap_trailingIdx < 0 || sp->ringCap_trailingIdx > historyLen ) { TA_ER_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(426); }
+      if( sp->ringCap_trailingIdx < 1 || sp->ringCap_trailingIdx > historyLen ) { TA_ER_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(426); }
       { size_t allocN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);
         sp->ring_trailingIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_trailingIdx_inReal ) { TA_ER_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
@@ -717,8 +715,6 @@ TA_LIB_API TA_RetCode TA_ER_Peek( const TA_ER_Stream *stream, double inReal, dou
    double sumROC1;
    double trailingValue;
    double *ring_trailingIdx_inReal;
-   int pkSlot0 = -1;
-   double pkVal0 = 0.0;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
@@ -726,13 +722,8 @@ TA_LIB_API TA_RetCode TA_ER_Peek( const TA_ER_Stream *stream, double inReal, dou
    sumROC1 = sp->sumROC1;
    trailingValue = sp->trailingValue;
    ring_trailingIdx_inReal = sp->ring_trailingIdx_inReal;
-   if( sp->ringCap_trailingIdx == 0 )
-   {
-      pkSlot0 = 0;
-      pkVal0 = inReal;
-   }
    tempReal = inReal;
-   tempReal2 = (sp->ringPos_trailingIdx != pkSlot0) ? ring_trailingIdx_inReal[sp->ringPos_trailingIdx] : pkVal0;
+   tempReal2 = ring_trailingIdx_inReal[sp->ringPos_trailingIdx];
    periodROC = tempReal - tempReal2;
    /* Subtract-then-add, TA_SUM's own order. */
    sumROC1 -= fabs(trailingValue - tempReal2);

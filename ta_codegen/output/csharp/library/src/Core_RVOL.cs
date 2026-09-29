@@ -552,19 +552,13 @@ public partial class Core
          double cur_outReal = 0.0;
          double periodTotal = sp.periodTotal;
          int zeroCount = sp.zeroCount;
-         int pkSlot0 = -1;
-         double pkVal0 = 0.0;
-         if( sp.ringCap_trailingIdx == 0 ) {
-            pkSlot0 = 0;
-            pkVal0 = inVolume;
-         }
          /* Drop the trailing bar BEFORE adding today's. Up to the first dead
           * window, that order makes each baseline bit-identical to the moving
           * average of the same period at the previous bar; the reverse order
           * differs only in the last ulp, so no tolerance can tell the two apart.
           */
          baseline = periodTotal / (double)sp.optInTimePeriod;
-         trailingVolume = (double)((sp.ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx] : pkVal0);
+         trailingVolume = (double)sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx];
          periodTotal -= trailingVolume;
          zeroOut = (Math.Abs(trailingVolume) <= 0.0) ? 1 : 0;
          todayVolume = (double)inVolume;
@@ -602,9 +596,7 @@ public partial class Core
       double trailingVolume = 0.0;
       int zeroIn = 0;
       int zeroOut = 0;
-      if( sp.ringCap_trailingIdx == 0 ) {
-         sp.ring_trailingIdx_inVolume[0] = inVolume;
-      }
+      int ringCapL_trailingIdx = 0;
       /* Drop the trailing bar BEFORE adding today's. Up to the first dead
        * window, that order makes each baseline bit-identical to the moving
        * average of the same period at the previous bar; the reverse order
@@ -622,9 +614,10 @@ public partial class Core
          sp.periodTotal = 0.0;
       }
       sp.cur_outReal = todayVolume / baseline;
+      ringCapL_trailingIdx = sp.ringCap_trailingIdx;
       sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx] = inVolume;
       sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
-      if( sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
+      if( sp.ringPos_trailingIdx >= ringCapL_trailingIdx ) {
          sp.ringPos_trailingIdx = 0;
       }
    }
@@ -715,7 +708,7 @@ public partial class Core
       outBegIdx = startIdx;
       /* Capture the live batch state into the handle. */
       int cap_trailingIdx = i - trailingIdx;
-      if( cap_trailingIdx < 0 || cap_trailingIdx > historyLen ) {
+      if( cap_trailingIdx < 1 || cap_trailingIdx > historyLen ) {
          return RetCode.InternalError;
       }
       int allocN_trailingIdx = (cap_trailingIdx > 0)? cap_trailingIdx : 1;

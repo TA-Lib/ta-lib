@@ -648,14 +648,8 @@ public partial class Core
          int nullRun = sp.nullRun;
          double sumROC1 = sp.sumROC1;
          double trailingValue = sp.trailingValue;
-         int pkSlot0 = -1;
-         double pkVal0 = 0.0;
-         if( sp.ringCap_trailingIdx == 0 ) {
-            pkSlot0 = 0;
-            pkVal0 = inReal;
-         }
          tempReal = inReal;
-         tempReal2 = (sp.ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] : pkVal0;
+         tempReal2 = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
          periodROC = tempReal - tempReal2;
          /* Subtract-then-add, TA_SUM's own order. */
          sumROC1 -= Math.Abs(trailingValue - tempReal2);
@@ -710,9 +704,7 @@ public partial class Core
       double periodROC = 0.0;
       double tempReal = 0.0;
       double tempReal2 = 0.0;
-      if( sp.ringCap_trailingIdx == 0 ) {
-         sp.ring_trailingIdx_inReal[0] = inReal;
-      }
+      int ringCapL_trailingIdx = 0;
       tempReal = inReal;
       tempReal2 = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
       periodROC = tempReal - tempReal2;
@@ -745,9 +737,10 @@ public partial class Core
          sp.cur_outReal = tempReal;
       }
       sp.lag1_inReal = inReal;
+      ringCapL_trailingIdx = sp.ringCap_trailingIdx;
       sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
       sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
-      if( sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
+      if( sp.ringPos_trailingIdx >= ringCapL_trailingIdx ) {
          sp.ringPos_trailingIdx = 0;
       }
    }
@@ -908,7 +901,7 @@ public partial class Core
       outNBElement = outIdx;
       /* Capture the live batch state into the handle. */
       int cap_trailingIdx = today - trailingIdx;
-      if( cap_trailingIdx < 0 || cap_trailingIdx > historyLen ) {
+      if( cap_trailingIdx < 1 || cap_trailingIdx > historyLen ) {
          return RetCode.InternalError;
       }
       int allocN_trailingIdx = (cap_trailingIdx > 0)? cap_trailingIdx : 1;

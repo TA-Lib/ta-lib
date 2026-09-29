@@ -1348,27 +1348,21 @@
          double pkVal0 = 0.0;
          int pkSlot1 = -1;
          double pkVal1 = 0.0;
-         int pkSlot2 = -1;
-         double pkVal2 = 0.0;
-         if( sp.ringCap_trailingWMAIdx == 0 ) {
-            pkSlot0 = 0;
-            pkVal0 = inReal;
-         }
-         pkSlot1 = sp.winPos_j;
-         pkVal1 = inReal;
+         pkSlot0 = sp.winPos_j;
+         pkVal0 = inReal;
          adjustedPrevPeriod = Math.fma(0.075, period, 0.54);
          todayValue = inReal;
          periodWMASub += todayValue;
          periodWMASub -= trailingWMAValue;
          periodWMASum += todayValue * 4.0;
-         trailingWMAValue = (sp.ringPos_trailingWMAIdx != pkSlot0) ? sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx] : pkVal0;
+         trailingWMAValue = sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx];
          smoothedValue = periodWMASum * 0.1;
          periodWMASum -= periodWMASub;
          /* Remember the smoothedValue into the smoothPrice
           * circular buffer.
           */
-         pkSlot2 = sp.smoothPrice_Idx;
-         pkVal2 = smoothedValue;
+         pkSlot1 = sp.smoothPrice_Idx;
+         pkVal1 = smoothedValue;
          if( sp.streamParity == 0 ) {
             /* Do the Hilbert Transforms for even price bar */
             hilbertTempReal = sp.a * smoothedValue;
@@ -1497,7 +1491,7 @@
          idx = sp.smoothPrice_Idx;
          for( i = 0; i < DCPeriodInt; i += 1 ) {
             tempReal = (double)i * sp.constDeg2RadBy360 / (double)DCPeriodInt;
-            tempReal2 = (idx != pkSlot2) ? sp.cb_smoothPrice[idx] : pkVal2;
+            tempReal2 = (idx != pkSlot1) ? sp.cb_smoothPrice[idx] : pkVal1;
             realPart += Math.sin(tempReal) * tempReal2;
             imagPart += Math.cos(tempReal) * tempReal2;
             if( idx == 0 ) {
@@ -1548,7 +1542,7 @@
          tempReal = 0.0;
          for( j = 0; j < 50; j += 1 ) {
             if( j < DCPeriodInt ) {
-               tempReal += (((sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j) != pkSlot1) ? sp.win_j_inReal[(sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j] : pkVal1;
+               tempReal += (((sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j) != pkSlot0) ? sp.win_j_inReal[(sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j] : pkVal0;
             }
          }
          if( DCPeriodInt > 0 ) {
@@ -1573,7 +1567,7 @@
          if( smoothPeriod != 0.0 && (tempReal > 0.67 * 360.0 / smoothPeriod && tempReal < 1.5 * 360.0 / smoothPeriod) ) {
             trend = 0;
          }
-         tempReal = (sp.smoothPrice_Idx != pkSlot2) ? sp.cb_smoothPrice[sp.smoothPrice_Idx] : pkVal2;
+         tempReal = (sp.smoothPrice_Idx != pkSlot1) ? sp.cb_smoothPrice[sp.smoothPrice_Idx] : pkVal1;
          if( trendline != 0.0 && Math.abs((tempReal - trendline) / trendline) >= 0.015 ) {
             trend = 1;
          }
@@ -1633,9 +1627,7 @@
       double trendline = 0.0;
       double prevSine = 0.0;
       double prevLeadSine = 0.0;
-      if( sp.ringCap_trailingWMAIdx == 0 ) {
-         sp.ring_trailingWMAIdx_inReal[0] = inReal;
-      }
+      int ringCapL_trailingWMAIdx = 0;
       sp.win_j_inReal[sp.winPos_j] = inReal;
       adjustedPrevPeriod = Math.fma(0.075, sp.period, 0.54);
       todayValue = inReal;
@@ -1871,9 +1863,10 @@
       if( sp.smoothPrice_Idx > sp.maxIdx_smoothPrice ) {
          sp.smoothPrice_Idx = 0;
       }
+      ringCapL_trailingWMAIdx = sp.ringCap_trailingWMAIdx;
       sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx] = inReal;
       sp.ringPos_trailingWMAIdx = sp.ringPos_trailingWMAIdx + 1;
-      if( sp.ringPos_trailingWMAIdx >= sp.ringCap_trailingWMAIdx ) {
+      if( sp.ringPos_trailingWMAIdx >= ringCapL_trailingWMAIdx ) {
          sp.ringPos_trailingWMAIdx = 0;
       }
       sp.winPos_j = sp.winPos_j + 1;
@@ -2371,7 +2364,7 @@
       outNBElement.value = outIdx;
       /* Capture the live batch state into the handle. */
       int cap_trailingWMAIdx = today - trailingWMAIdx;
-      if( cap_trailingWMAIdx < 0 || cap_trailingWMAIdx > historyLen ) {
+      if( cap_trailingWMAIdx < 1 || cap_trailingWMAIdx > historyLen ) {
          return RetCode.INTERNAL_ERROR;
       }
       int allocN_trailingWMAIdx = (cap_trailingWMAIdx > 0)? cap_trailingWMAIdx : 1;

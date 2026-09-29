@@ -446,8 +446,8 @@ fn state_fields_from(
     for ring in model.rings() {
         let v = &ring.var;
         fields.push((format!("ringPos_{v}"), "usize".into(), "0_usize".into()));
-        // Identity path: cap 0 (back==0) / back+1 (back>0) with 1-slot buffers,
-        // keeping the transition's cap-0 guard and any read well-defined.
+        // Identity path: cap 0 (back==0) / back+1 (back>0); a 1-slot buffer
+        // keeps any read in bounds.
         let id_cap = if ring.back > 0 {
             format!("{}_usize", ring.back + 1)
         } else {
@@ -1876,7 +1876,7 @@ fn emit_step_body(
     indent: usize,
 ) {
     let pad = " ".repeat(indent);
-    for (name, ty) in &model.temps {
+    for (name, ty) in &streaming::step_temps(model, names.tape().as_ref()) {
         let (rty, default) = field_type_and_default(typing, name, ty, false);
         o.push_str(&decl_line(&pad, name, &rty, default.as_ref()));
     }
@@ -2540,7 +2540,7 @@ fn emit_identity_fast_path(
         "            if historyLen < fillLb + 1 {{\n                return Err(RetCode::InsufficientHistory);\n            }}"
     );
     // Identity state: params captured, everything else deterministic defaults
-    // (1-slot buffers keep the transition's cap-0 guard well-defined).
+    // (a 1-slot buffer keeps any read in bounds).
     // The identity path produces its input verbatim, so the value at the last
     // committed bar is the last history bar — the same expression the stride-0
     // fill below writes.
@@ -2657,7 +2657,8 @@ fn emit_capture(
             );
             let _ = writeln!(
                 o,
-                "        if cap_{v} < 0 || cap_{v} > historyLen as i64 {{\n            return Err(RetCode::InternalError);\n        }}"
+                "        if cap_{v} < {min} || cap_{v} > historyLen as i64 {{\n            return Err(RetCode::InternalError);\n        }}",
+                min = i32::from(ring.lag_ge1)
             );
         }
         let _ = writeln!(

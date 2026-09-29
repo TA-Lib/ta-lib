@@ -33,6 +33,10 @@ pub struct Registry {
     /// The functions a period bank steps through a tape frame (#445), by dir-name;
     /// see [`crate::streaming::tape_set`].
     tape_set: std::collections::BTreeSet<String>,
+    /// The input tree the definitions came from.
+    base_dir: std::path::PathBuf,
+    /// Lookbacks parsed on first request, by dir-name.
+    lookbacks: std::sync::Mutex<HashMap<String, Option<crate::streaming::CalleeLookback>>>,
 }
 
 impl Registry {
@@ -85,6 +89,8 @@ impl Registry {
             callee_out_names,
             defs,
             tape_set: std::collections::BTreeSet::new(),
+            base_dir: base_dir.to_path_buf(),
+            lookbacks: std::sync::Mutex::new(HashMap::new()),
         };
         registry.tape_set =
             crate::streaming::tape_set(base_dir, &registry.indicators, &registry);
@@ -206,6 +212,21 @@ impl Registry {
 impl crate::streaming::CalleeLookup for Registry {
     fn callee(&self, name: &str) -> Option<crate::streaming::CalleeSig> {
         self.callee_sigs.get(name).cloned()
+    }
+    fn lookback(&self, name: &str) -> Option<crate::streaming::CalleeLookback> {
+        let key = name.to_ascii_lowercase();
+        if let Some(hit) = self.lookbacks.lock().expect("lookbacks").get(&key) {
+            return hit.clone();
+        }
+        let src = self.base_dir.join(&key).join(format!("{key}.c"));
+        let found = self.defs.get(&key).filter(|_| src.is_file()).map(|def| {
+            crate::streaming::CalleeLookback {
+                params: def.optional_inputs.clone(),
+                body: crate::parser::c_source::parse_c_source(&src).lookback_body,
+            }
+        });
+        self.lookbacks.lock().expect("lookbacks").insert(key, found.clone());
+        found
     }
 }
 

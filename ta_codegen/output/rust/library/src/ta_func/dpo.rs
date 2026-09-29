@@ -325,12 +325,8 @@ impl Core {
     fn dpo_step_impl(sp: &mut DpoStreamState, inReal: f64, outReal: &mut f64) {
         let mut tempReal: f64 = 0.0_f64;
         let mut dispVal: f64 = 0.0_f64;
-        if sp.ringCap_dispIdx == 0 {
-            sp.ring_dispIdx_inReal[0] = inReal;
-        }
-        if sp.ringCap_trailingIdx == 0 {
-            sp.ring_trailingIdx_inReal[0] = inReal;
-        }
+        let mut ringCapL_dispIdx: usize = 0_usize;
+        let mut ringCapL_trailingIdx: usize = 0_usize;
         sp.periodTotal += inReal;
         tempReal = sp.periodTotal;
         sp.periodTotal -= sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
@@ -342,14 +338,16 @@ impl Core {
         dispVal = sp.ring_dispIdx_inReal[sp.ringPos_dispIdx];
         (*outReal) = dispVal - tempReal / (sp.optInTimePeriod as f64);
         sp.cur_outReal = (*outReal);
+        ringCapL_dispIdx = sp.ringCap_dispIdx;
         sp.ring_dispIdx_inReal[sp.ringPos_dispIdx] = inReal;
         sp.ringPos_dispIdx = sp.ringPos_dispIdx + 1;
-        if sp.ringPos_dispIdx >= sp.ringCap_dispIdx {
+        if sp.ringPos_dispIdx >= ringCapL_dispIdx {
             sp.ringPos_dispIdx = 0;
         }
+        ringCapL_trailingIdx = sp.ringCap_trailingIdx;
         sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
         sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
-        if sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx {
+        if sp.ringPos_trailingIdx >= ringCapL_trailingIdx {
             sp.ringPos_trailingIdx = 0;
         }
     }
@@ -434,7 +432,7 @@ impl Core {
 
         // Capture the live batch state into the handle.
         let cap_dispIdx: i64 = (i as i64) - (dispIdx as i64);
-        if cap_dispIdx < 0 || cap_dispIdx > historyLen as i64 {
+        if cap_dispIdx < 1 || cap_dispIdx > historyLen as i64 {
             return Err(RetCode::InternalError);
         }
         let allocN_dispIdx: usize = if cap_dispIdx > 0 { cap_dispIdx as usize } else { 1 };
@@ -442,7 +440,7 @@ impl Core {
         ring_dispIdx_inReal[..cap_dispIdx as usize]
             .copy_from_slice(&inReal[historyLen - cap_dispIdx as usize..]);
         let cap_trailingIdx: i64 = (i as i64) - (trailingIdx as i64);
-        if cap_trailingIdx < 0 || cap_trailingIdx > historyLen as i64 {
+        if cap_trailingIdx < 1 || cap_trailingIdx > historyLen as i64 {
             return Err(RetCode::InternalError);
         }
         let allocN_trailingIdx: usize = if cap_trailingIdx > 0 { cap_trailingIdx as usize } else { 1 };
@@ -628,27 +626,15 @@ impl DpoStream {
             let mut tempReal: f64 = 0.0_f64;
             let mut dispVal: f64 = 0.0_f64;
             let mut periodTotal = sp.periodTotal;
-            let mut pkSlot0: usize = usize::MAX;
-            let mut pkVal0: f64 = 0.0_f64;
-            let mut pkSlot1: usize = usize::MAX;
-            let mut pkVal1: f64 = 0.0_f64;
-            if sp.ringCap_dispIdx == 0 {
-                pkSlot0 = 0;
-                pkVal0 = inReal;
-            }
-            if sp.ringCap_trailingIdx == 0 {
-                pkSlot1 = 0;
-                pkVal1 = inReal;
-            }
             periodTotal += inReal;
             tempReal = periodTotal;
-            periodTotal -= (if (sp.ringPos_trailingIdx as usize) != pkSlot1 { sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] } else { pkVal1 });
+            periodTotal -= sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
             // Both reads precede the store. Either cursor can EQUAL outIdx -- the
             // displaced one whenever startIdx equals the displacement, the trailing
             // one whenever startIdx sits at the lookback -- so a store hoisted above
             // them would read back what it had just overwritten when the caller
             // aliases outReal over inReal.
-            dispVal = (if (sp.ringPos_dispIdx as usize) != pkSlot0 { sp.ring_dispIdx_inReal[sp.ringPos_dispIdx] } else { pkVal0 });
+            dispVal = sp.ring_dispIdx_inReal[sp.ringPos_dispIdx];
             (*outReal) = dispVal - tempReal / (sp.optInTimePeriod as f64);
         }
         Ok(outReal)

@@ -505,12 +505,8 @@ impl Core {
         let mut base2: f64 = 0.0_f64;
         let mut roc1: f64 = 0.0_f64;
         let mut roc2: f64 = 0.0_f64;
-        if sp.ringCap_roc1Idx == 0 {
-            sp.ring_roc1Idx_inReal[0] = inReal;
-        }
-        if sp.ringCap_roc2Idx == 0 {
-            sp.ring_roc2Idx_inReal[0] = inReal;
-        }
+        let mut ringCapL_roc1Idx: usize = 0_usize;
+        let mut ringCapL_roc2Idx: usize = 0_usize;
         base1 = sp.ring_roc1Idx_inReal[sp.ringPos_roc1Idx];
         base2 = sp.ring_roc2Idx_inReal[sp.ringPos_roc2Idx];
         roc1 = (if base1 != 0.0 { (inReal / base1 - 1.0) * 100.0 } else { 0.0 });
@@ -568,14 +564,16 @@ impl Core {
         }
         sp.periodSum -= sp.periodSub;
         sp.cur_outReal = (*outReal);
+        ringCapL_roc1Idx = sp.ringCap_roc1Idx;
         sp.ring_roc1Idx_inReal[sp.ringPos_roc1Idx] = inReal;
         sp.ringPos_roc1Idx = sp.ringPos_roc1Idx + 1;
-        if sp.ringPos_roc1Idx >= sp.ringCap_roc1Idx {
+        if sp.ringPos_roc1Idx >= ringCapL_roc1Idx {
             sp.ringPos_roc1Idx = 0;
         }
+        ringCapL_roc2Idx = sp.ringCap_roc2Idx;
         sp.ring_roc2Idx_inReal[sp.ringPos_roc2Idx] = inReal;
         sp.ringPos_roc2Idx = sp.ringPos_roc2Idx + 1;
-        if sp.ringPos_roc2Idx >= sp.ringCap_roc2Idx {
+        if sp.ringPos_roc2Idx >= ringCapL_roc2Idx {
             sp.ringPos_roc2Idx = 0;
         }
     }
@@ -790,7 +788,7 @@ impl Core {
 
         // Capture the live batch state into the handle.
         let cap_roc1Idx: i64 = (inIdx as i64) - (roc1Idx as i64);
-        if cap_roc1Idx < 0 || cap_roc1Idx > historyLen as i64 {
+        if cap_roc1Idx < 1 || cap_roc1Idx > historyLen as i64 {
             return Err(RetCode::InternalError);
         }
         let allocN_roc1Idx: usize = if cap_roc1Idx > 0 { cap_roc1Idx as usize } else { 1 };
@@ -798,7 +796,7 @@ impl Core {
         ring_roc1Idx_inReal[..cap_roc1Idx as usize]
             .copy_from_slice(&inReal[historyLen - cap_roc1Idx as usize..]);
         let cap_roc2Idx: i64 = (inIdx as i64) - (roc2Idx as i64);
-        if cap_roc2Idx < 0 || cap_roc2Idx > historyLen as i64 {
+        if cap_roc2Idx < 1 || cap_roc2Idx > historyLen as i64 {
             return Err(RetCode::InternalError);
         }
         let allocN_roc2Idx: usize = if cap_roc2Idx > 0 { cap_roc2Idx as usize } else { 1 };
@@ -1010,20 +1008,8 @@ impl CoppockStream {
             let mut periodSum = sp.periodSum;
             let mut sRing_Idx = sp.sRing_Idx;
             let mut trailingValue = sp.trailingValue;
-            let mut pkSlot0: usize = usize::MAX;
-            let mut pkVal0: f64 = 0.0_f64;
-            let mut pkSlot1: usize = usize::MAX;
-            let mut pkVal1: f64 = 0.0_f64;
-            if sp.ringCap_roc1Idx == 0 {
-                pkSlot0 = 0;
-                pkVal0 = inReal;
-            }
-            if sp.ringCap_roc2Idx == 0 {
-                pkSlot1 = 0;
-                pkVal1 = inReal;
-            }
-            base1 = (if (sp.ringPos_roc1Idx as usize) != pkSlot0 { sp.ring_roc1Idx_inReal[sp.ringPos_roc1Idx] } else { pkVal0 });
-            base2 = (if (sp.ringPos_roc2Idx as usize) != pkSlot1 { sp.ring_roc2Idx_inReal[sp.ringPos_roc2Idx] } else { pkVal1 });
+            base1 = sp.ring_roc1Idx_inReal[sp.ringPos_roc1Idx];
+            base2 = sp.ring_roc2Idx_inReal[sp.ringPos_roc2Idx];
             roc1 = (if base1 != 0.0 { (inReal / base1 - 1.0) * 100.0 } else { 0.0 });
             roc2 = (if base2 != 0.0 { (inReal / base2 - 1.0) * 100.0 } else { 0.0 });
             tempReal = roc1 + roc2;

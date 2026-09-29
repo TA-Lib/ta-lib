@@ -586,14 +586,9 @@ static void TA_TRIMA_StepImpl( struct TA_TRIMA_Stream *sp, double inReal, double
    }
    else
    {
-      if( sp->ringCap_middleIdx == 0 )
-      {
-         sp->ring_middleIdx_inReal[0] = inReal;
-      }
-      if( sp->ringCap_trailingIdx == 0 )
-      {
-         sp->ring_trailingIdx_inReal[0] = inReal;
-      }
+      int ringCapL_middleIdx;
+      int ringCapL_trailingIdx;
+
       /* Step (1) */
       sp->numerator -= sp->numeratorSub;
       sp->numeratorSub -= sp->tempReal;
@@ -610,15 +605,17 @@ static void TA_TRIMA_StepImpl( struct TA_TRIMA_Stream *sp, double inReal, double
       sp->tempReal = sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx];
       *outReal= sp->numerator * sp->factor;
       sp->cur_outReal = *outReal;
+      ringCapL_middleIdx = sp->ringCap_middleIdx;
       sp->ring_middleIdx_inReal[sp->ringPos_middleIdx] = inReal;
       sp->ringPos_middleIdx = sp->ringPos_middleIdx + 1;
-      if( sp->ringPos_middleIdx >= sp->ringCap_middleIdx )
+      if( sp->ringPos_middleIdx >= ringCapL_middleIdx )
       {
          sp->ringPos_middleIdx = 0;
       }
+      ringCapL_trailingIdx = sp->ringCap_trailingIdx;
       sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx] = inReal;
       sp->ringPos_trailingIdx = sp->ringPos_trailingIdx + 1;
-      if( sp->ringPos_trailingIdx >= sp->ringCap_trailingIdx )
+      if( sp->ringPos_trailingIdx >= ringCapL_trailingIdx )
       {
          sp->ringPos_trailingIdx = 0;
       }
@@ -1084,7 +1081,7 @@ static TA_RetCode TA_TRIMA_OpenImpl( struct TA_TRIMA_Stream **stream, const doub
       sp->factor = factor;
       sp->tempReal = tempReal;
       sp->ringCap_middleIdx = (int)(todayIdx - middleIdx);
-      if( sp->ringCap_middleIdx < 0 || sp->ringCap_middleIdx > historyLen ) { TA_TRIMA_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(388); }
+      if( sp->ringCap_middleIdx < 1 || sp->ringCap_middleIdx > historyLen ) { TA_TRIMA_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(388); }
       { size_t allocN = (size_t)(sp->ringCap_middleIdx > 0 ? sp->ringCap_middleIdx : 1);
         sp->ring_middleIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_middleIdx_inReal ) { TA_TRIMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
@@ -1092,7 +1089,7 @@ static TA_RetCode TA_TRIMA_OpenImpl( struct TA_TRIMA_Stream **stream, const doub
       }
       sp->ringPos_middleIdx = 0;
       sp->ringCap_trailingIdx = (int)(todayIdx - trailingIdx);
-      if( sp->ringCap_trailingIdx < 0 || sp->ringCap_trailingIdx > historyLen ) { TA_TRIMA_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(389); }
+      if( sp->ringCap_trailingIdx < 1 || sp->ringCap_trailingIdx > historyLen ) { TA_TRIMA_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(389); }
       { size_t allocN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);
         sp->ring_trailingIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_trailingIdx_inReal ) { TA_TRIMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
@@ -1223,10 +1220,6 @@ TA_LIB_API TA_RetCode TA_TRIMA_Peek( const TA_TRIMA_Stream *stream, double inRea
       double tempReal;
       double *ring_middleIdx_inReal;
       double *ring_trailingIdx_inReal;
-      int pkSlot0 = -1;
-      double pkVal0 = 0.0;
-      int pkSlot1 = -1;
-      double pkVal1 = 0.0;
 
       numerator = sp->numerator;
       numeratorAdd = sp->numeratorAdd;
@@ -1234,20 +1227,10 @@ TA_LIB_API TA_RetCode TA_TRIMA_Peek( const TA_TRIMA_Stream *stream, double inRea
       tempReal = sp->tempReal;
       ring_middleIdx_inReal = sp->ring_middleIdx_inReal;
       ring_trailingIdx_inReal = sp->ring_trailingIdx_inReal;
-      if( sp->ringCap_middleIdx == 0 )
-      {
-         pkSlot0 = 0;
-         pkVal0 = inReal;
-      }
-      if( sp->ringCap_trailingIdx == 0 )
-      {
-         pkSlot1 = 0;
-         pkVal1 = inReal;
-      }
       /* Step (1) */
       numerator -= numeratorSub;
       numeratorSub -= tempReal;
-      tempReal = (sp->ringPos_middleIdx != pkSlot0) ? ring_middleIdx_inReal[sp->ringPos_middleIdx] : pkVal0;
+      tempReal = ring_middleIdx_inReal[sp->ringPos_middleIdx];
       numeratorSub += tempReal;
       /* Step (2) */
       numeratorAdd -= tempReal;
@@ -1257,7 +1240,7 @@ TA_LIB_API TA_RetCode TA_TRIMA_Peek( const TA_TRIMA_Stream *stream, double inRea
       /* Step (3) */
       numerator += tempReal;
       /* Step (4) */
-      tempReal = (sp->ringPos_trailingIdx != pkSlot1) ? ring_trailingIdx_inReal[sp->ringPos_trailingIdx] : pkVal1;
+      tempReal = ring_trailingIdx_inReal[sp->ringPos_trailingIdx];
       *outReal= numerator * sp->factor;
    }
    return TA_SUCCESS;

@@ -392,14 +392,11 @@ impl Core {
         let mut tempV: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
         let mut trailingVolume: f64 = 0.0_f64;
+        let mut ringCapL_trailingIdx: usize = 0_usize;
         if sp.optInTimePeriod == 1 {
             (*outReal) = inReal;
             sp.cur_outReal = (*outReal);
             return;
-        }
-        if sp.ringCap_trailingIdx == 0 {
-            sp.ring_trailingIdx_inReal[0] = inReal;
-            sp.ring_trailingIdx_inVolume[0] = inVolume;
         }
         tempReal = inReal * inVolume;
         sp.sumPV += tempReal;
@@ -432,10 +429,11 @@ impl Core {
         }
         sp.zeroCount -= (if (trailingVolume).abs() <= 0.0 { 1 } else { 0 });
         sp.cur_outReal = (*outReal);
+        ringCapL_trailingIdx = sp.ringCap_trailingIdx;
         sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
         sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx] = inVolume;
         sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
-        if sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx {
+        if sp.ringPos_trailingIdx >= ringCapL_trailingIdx {
             sp.ringPos_trailingIdx = 0;
         }
     }
@@ -593,7 +591,7 @@ impl Core {
 
         // Capture the live batch state into the handle.
         let cap_trailingIdx: i64 = (i as i64) - (trailingIdx as i64);
-        if cap_trailingIdx < 0 || cap_trailingIdx > historyLen as i64 {
+        if cap_trailingIdx < 1 || cap_trailingIdx > historyLen as i64 {
             return Err(RetCode::InternalError);
         }
         let allocN_trailingIdx: usize = if cap_trailingIdx > 0 { cap_trailingIdx as usize } else { 1 };
@@ -795,19 +793,9 @@ impl VwmaStream {
             let mut sumPV = sp.sumPV;
             let mut sumV = sp.sumV;
             let mut zeroCount = sp.zeroCount;
-            let mut pkSlot0: usize = usize::MAX;
-            let mut pkVal0: f64 = 0.0_f64;
-            let mut pkSlot1: usize = usize::MAX;
-            let mut pkVal1: f64 = 0.0_f64;
             if sp.optInTimePeriod == 1 {
                 (*outReal) = inReal;
                 return Ok((*outReal));
-            }
-            if sp.ringCap_trailingIdx == 0 {
-                pkSlot0 = 0;
-                pkVal0 = inReal;
-                pkSlot1 = 0;
-                pkVal1 = inVolume;
             }
             tempReal = inReal * inVolume;
             sumPV += tempReal;
@@ -815,8 +803,8 @@ impl VwmaStream {
             zeroCount += (if (inVolume).abs() <= 0.0 { 1 } else { 0 });
             // Read the trailing values before writing the output, since the caller
             // may pass the same buffer for an input and the output.
-            trailingVolume = (if (sp.ringPos_trailingIdx as usize) != pkSlot1 { sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx] } else { pkVal1 });
-            tempReal = (if (sp.ringPos_trailingIdx as usize) != pkSlot0 { sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] } else { pkVal0 }) * trailingVolume;
+            trailingVolume = sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx];
+            tempReal = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] * trailingVolume;
             // Each branch writes its own output: a branch that only zeroes the sums
             // is if-converted into a mask on their dependency chain.
             if zeroCount >= ((sp.optInTimePeriod) as usize) {

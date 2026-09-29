@@ -688,20 +688,6 @@ public partial class Core
          double periodTotalLower = sp.periodTotalLower;
          double periodTotalMiddle = sp.periodTotalMiddle;
          double periodTotalUpper = sp.periodTotalUpper;
-         int pkSlot0 = -1;
-         double pkVal0 = 0.0;
-         int pkSlot1 = -1;
-         double pkVal1 = 0.0;
-         int pkSlot2 = -1;
-         double pkVal2 = 0.0;
-         if( sp.ringCap_trailingIdx == 0 ) {
-            pkSlot0 = 0;
-            pkVal0 = inHigh;
-            pkSlot1 = 0;
-            pkVal1 = inLow;
-            pkSlot2 = 0;
-            pkVal2 = inClose;
-         }
          /* Add the incoming bar to each running sum. */
          tempReal = inHigh + inLow;
          if( !(Math.Abs(tempReal) <= 0.00000000000001 * (Math.Abs(inHigh) + Math.Abs(inLow))) ) {
@@ -718,16 +704,16 @@ public partial class Core
          tempMiddle = periodTotalMiddle;
          tempLower = periodTotalLower;
          /* Remove the trailing bar from each running sum. */
-         tempReal = ((sp.ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] : pkVal0) + ((sp.ringPos_trailingIdx != pkSlot1) ? sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx] : pkVal1);
-         if( !(Math.Abs(tempReal) <= 0.00000000000001 * (Math.Abs((sp.ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] : pkVal0) + Math.Abs((sp.ringPos_trailingIdx != pkSlot1) ? sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx] : pkVal1))) ) {
-            tempReal = 4 * (((sp.ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] : pkVal0) - ((sp.ringPos_trailingIdx != pkSlot1) ? sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx] : pkVal1)) / tempReal;
-            periodTotalUpper -= ((sp.ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] : pkVal0) * (1 + tempReal);
-            periodTotalLower -= ((sp.ringPos_trailingIdx != pkSlot1) ? sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx] : pkVal1) * (1 - tempReal);
+         tempReal = sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] + sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx];
+         if( !(Math.Abs(tempReal) <= 0.00000000000001 * (Math.Abs(sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx]) + Math.Abs(sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx]))) ) {
+            tempReal = 4 * (sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] - sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx]) / tempReal;
+            periodTotalUpper -= sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] * (1 + tempReal);
+            periodTotalLower -= sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx] * (1 - tempReal);
          } else {
-            periodTotalUpper -= (sp.ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] : pkVal0;
-            periodTotalLower -= (sp.ringPos_trailingIdx != pkSlot1) ? sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx] : pkVal1;
+            periodTotalUpper -= sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx];
+            periodTotalLower -= sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx];
          }
-         periodTotalMiddle -= (sp.ringPos_trailingIdx != pkSlot2) ? sp.ring_trailingIdx_inClose[sp.ringPos_trailingIdx] : pkVal2;
+         periodTotalMiddle -= sp.ring_trailingIdx_inClose[sp.ringPos_trailingIdx];
          /* Write the three bands. */
          cur_outRealUpperBand = tempUpper / (double)sp.optInTimePeriod;
          cur_outRealMiddleBand = tempMiddle / (double)sp.optInTimePeriod;
@@ -758,11 +744,7 @@ public partial class Core
       double tempMiddle = 0.0;
       double tempLower = 0.0;
       double tempReal = 0.0;
-      if( sp.ringCap_trailingIdx == 0 ) {
-         sp.ring_trailingIdx_inHigh[0] = inHigh;
-         sp.ring_trailingIdx_inLow[0] = inLow;
-         sp.ring_trailingIdx_inClose[0] = inClose;
-      }
+      int ringCapL_trailingIdx = 0;
       /* Add the incoming bar to each running sum. */
       tempReal = inHigh + inLow;
       if( !(Math.Abs(tempReal) <= 0.00000000000001 * (Math.Abs(inHigh) + Math.Abs(inLow))) ) {
@@ -793,11 +775,12 @@ public partial class Core
       sp.cur_outRealUpperBand = tempUpper / (double)sp.optInTimePeriod;
       sp.cur_outRealMiddleBand = tempMiddle / (double)sp.optInTimePeriod;
       sp.cur_outRealLowerBand = tempLower / (double)sp.optInTimePeriod;
+      ringCapL_trailingIdx = sp.ringCap_trailingIdx;
       sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] = inHigh;
       sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx] = inLow;
       sp.ring_trailingIdx_inClose[sp.ringPos_trailingIdx] = inClose;
       sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
-      if( sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
+      if( sp.ringPos_trailingIdx >= ringCapL_trailingIdx ) {
          sp.ringPos_trailingIdx = 0;
       }
    }
@@ -940,7 +923,7 @@ public partial class Core
       outNBElement = outIdx;
       /* Capture the live batch state into the handle. */
       int cap_trailingIdx = i - trailingIdx;
-      if( cap_trailingIdx < 0 || cap_trailingIdx > historyLen ) {
+      if( cap_trailingIdx < 1 || cap_trailingIdx > historyLen ) {
          return RetCode.InternalError;
       }
       int allocN_trailingIdx = (cap_trailingIdx > 0)? cap_trailingIdx : 1;

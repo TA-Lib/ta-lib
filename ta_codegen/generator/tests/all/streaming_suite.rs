@@ -211,14 +211,6 @@ fn t3_identity_path_recognized() {
 }
 
 #[test]
-fn rsi_memmove_identity() {
-    // RSI's period==1 memmove path is recognized as the identity fast path.
-    let f = load("rsi");
-    let m = streaming::analyze(&f).expect("RSI analyzes");
-    assert!(m.identity.is_some(), "memmove identity path");
-}
-
-#[test]
 fn bbands_composed_rejected() {
     assert!(streaming::analyze(&load("bbands")).is_err());
 }

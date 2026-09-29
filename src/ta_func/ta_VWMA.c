@@ -370,17 +370,13 @@ static void TA_VWMA_StepImpl( struct TA_VWMA_Stream *sp, double inReal, double i
    double tempV;
    double tempReal;
    double trailingVolume;
+   int ringCapL_trailingIdx;
 
    if( sp->optInTimePeriod == 1 )
    {
       *outReal= inReal;
       sp->cur_outReal = *outReal;
       return;
-   }
-   if( sp->ringCap_trailingIdx == 0 )
-   {
-      sp->ring_trailingIdx_inReal[0] = inReal;
-      sp->ring_trailingIdx_inVolume[0] = inVolume;
    }
    tempReal = inReal * inVolume;
    sp->sumPV += tempReal;
@@ -419,10 +415,11 @@ static void TA_VWMA_StepImpl( struct TA_VWMA_Stream *sp, double inReal, double i
    }
    sp->zeroCount -= (fabs(trailingVolume) <= 0.0) ? 1 : 0;
    sp->cur_outReal = *outReal;
+   ringCapL_trailingIdx = sp->ringCap_trailingIdx;
    sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx] = inReal;
    sp->ring_trailingIdx_inVolume[sp->ringPos_trailingIdx] = inVolume;
    sp->ringPos_trailingIdx = sp->ringPos_trailingIdx + 1;
-   if( sp->ringPos_trailingIdx >= sp->ringCap_trailingIdx )
+   if( sp->ringPos_trailingIdx >= ringCapL_trailingIdx )
    {
       sp->ringPos_trailingIdx = 0;
    }
@@ -616,7 +613,7 @@ static TA_RetCode TA_VWMA_OpenImpl( struct TA_VWMA_Stream **stream, const double
       sp->sumV = sumV;
       sp->zeroCount = zeroCount;
       sp->ringCap_trailingIdx = (int)(i - trailingIdx);
-      if( sp->ringCap_trailingIdx < 0 || sp->ringCap_trailingIdx > historyLen ) { TA_VWMA_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(395); }
+      if( sp->ringCap_trailingIdx < 1 || sp->ringCap_trailingIdx > historyLen ) { TA_VWMA_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(395); }
       { size_t allocN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);
         sp->ring_trailingIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_trailingIdx_inReal ) { TA_VWMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
@@ -700,10 +697,6 @@ TA_LIB_API TA_RetCode TA_VWMA_Peek( const TA_VWMA_Stream *stream, double inReal,
    int zeroCount;
    double *ring_trailingIdx_inReal;
    double *ring_trailingIdx_inVolume;
-   int pkSlot0 = -1;
-   double pkVal0 = 0.0;
-   int pkSlot1 = -1;
-   double pkVal1 = 0.0;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) || !TA_IS_FINITE( inVolume ) ) return TA_BAD_PARAM;
@@ -717,13 +710,6 @@ TA_LIB_API TA_RetCode TA_VWMA_Peek( const TA_VWMA_Stream *stream, double inReal,
       *outReal= inReal;
       return TA_SUCCESS;
    }
-   if( sp->ringCap_trailingIdx == 0 )
-   {
-      pkSlot0 = 0;
-      pkVal0 = inReal;
-      pkSlot1 = 0;
-      pkVal1 = inVolume;
-   }
    tempReal = inReal * inVolume;
    sumPV += tempReal;
    sumV += inVolume;
@@ -731,8 +717,8 @@ TA_LIB_API TA_RetCode TA_VWMA_Peek( const TA_VWMA_Stream *stream, double inReal,
    /* Read the trailing values before writing the output, since the caller
     * may pass the same buffer for an input and the output.
     */
-   trailingVolume = (sp->ringPos_trailingIdx != pkSlot1) ? ring_trailingIdx_inVolume[sp->ringPos_trailingIdx] : pkVal1;
-   tempReal = ((sp->ringPos_trailingIdx != pkSlot0) ? ring_trailingIdx_inReal[sp->ringPos_trailingIdx] : pkVal0) * trailingVolume;
+   trailingVolume = ring_trailingIdx_inVolume[sp->ringPos_trailingIdx];
+   tempReal = ring_trailingIdx_inReal[sp->ringPos_trailingIdx] * trailingVolume;
    /* Each branch writes its own output: a branch that only zeroes the sums
     * is if-converted into a mask on their dependency chain.
     */

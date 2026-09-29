@@ -812,18 +812,12 @@ public partial class Core
          double prevKAMA = sp.prevKAMA;
          double sumROC1 = sp.sumROC1;
          double trailingValue = sp.trailingValue;
-         int pkSlot0 = -1;
-         double pkVal0 = 0.0;
          if( sp.optInTimePeriod == 1 ) {
             cur_outReal = inReal;
             return cur_outReal ;
          }
-         if( sp.ringCap_trailingIdx == 0 ) {
-            pkSlot0 = 0;
-            pkVal0 = inReal;
-         }
          tempReal = inReal;
-         tempReal2 = (sp.ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] : pkVal0;
+         tempReal2 = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
          periodROC = tempReal - tempReal2;
          /* Adjust sumROC1:
           *  - Remove trailing ROC1
@@ -890,12 +884,10 @@ public partial class Core
       double tempReal = 0.0;
       double tempReal2 = 0.0;
       double periodROC = 0.0;
+      int ringCapL_trailingIdx = 0;
       if( sp.optInTimePeriod == 1 ) {
          sp.cur_outReal = inReal;
          return ;
-      }
-      if( sp.ringCap_trailingIdx == 0 ) {
-         sp.ring_trailingIdx_inReal[0] = inReal;
       }
       tempReal = inReal;
       tempReal2 = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
@@ -941,9 +933,10 @@ public partial class Core
       sp.prevKAMA = Math.FusedMultiplyAdd(inReal - sp.prevKAMA, tempReal, sp.prevKAMA);
       sp.cur_outReal = sp.prevKAMA;
       sp.lag1_inReal = inReal;
+      ringCapL_trailingIdx = sp.ringCap_trailingIdx;
       sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
       sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
-      if( sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
+      if( sp.ringPos_trailingIdx >= ringCapL_trailingIdx ) {
          sp.ringPos_trailingIdx = 0;
       }
    }
@@ -1200,7 +1193,7 @@ public partial class Core
       outNBElement = outIdx;
       /* Capture the live batch state into the handle. */
       int cap_trailingIdx = today - trailingIdx;
-      if( cap_trailingIdx < 0 || cap_trailingIdx > historyLen ) {
+      if( cap_trailingIdx < 1 || cap_trailingIdx > historyLen ) {
          return RetCode.InternalError;
       }
       int allocN_trailingIdx = (cap_trailingIdx > 0)? cap_trailingIdx : 1;

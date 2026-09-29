@@ -714,9 +714,7 @@ impl Core {
         let mut c: f64 = 0.0_f64;
         let mut q: f64 = 0.0_f64;
         let mut t: f64 = 0.0_f64;
-        if sp.ringCap_trailingIdx == 0 {
-            sp.ring_trailingIdx_inReal[0] = inReal;
-        }
+        let mut ringCapL_trailingIdx: usize = 0_usize;
         sp.win_j_inReal[sp.winPos_j] = inReal;
         // Between bars the sums hold the window less its oldest value.
         fits = 0;
@@ -1014,9 +1012,10 @@ impl Core {
         // After the trailing value is read: outReal may be inReal.
         (*outReal) = value;
         sp.cur_outReal = (*outReal);
+        ringCapL_trailingIdx = sp.ringCap_trailingIdx;
         sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
         sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
-        if sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx {
+        if sp.ringPos_trailingIdx >= ringCapL_trailingIdx {
             sp.ringPos_trailingIdx = 0;
         }
         sp.winPos_j = sp.winPos_j + 1;
@@ -1460,7 +1459,7 @@ impl Core {
 
         // Capture the live batch state into the handle.
         let cap_trailingIdx: i64 = (today as i64) - (trailingIdx as i64);
-        if cap_trailingIdx < 0 || cap_trailingIdx > historyLen as i64 {
+        if cap_trailingIdx < 1 || cap_trailingIdx > historyLen as i64 {
             return Err(RetCode::InternalError);
         }
         let allocN_trailingIdx: usize = if cap_trailingIdx > 0 { cap_trailingIdx as usize } else { 1 };
@@ -1714,14 +1713,8 @@ impl CgStream {
             let mut ylim = sp.ylim;
             let mut pkSlot0: usize = usize::MAX;
             let mut pkVal0: f64 = 0.0_f64;
-            let mut pkSlot1: usize = usize::MAX;
-            let mut pkVal1: f64 = 0.0_f64;
-            if sp.ringCap_trailingIdx == 0 {
-                pkSlot0 = 0;
-                pkVal0 = inReal;
-            }
-            pkSlot1 = sp.winPos_j as usize;
-            pkVal1 = inReal;
+            pkSlot0 = sp.winPos_j as usize;
+            pkVal0 = inReal;
             // Between bars the sums hold the window less its oldest value.
             fits = 0;
             x = inReal;
@@ -1771,7 +1764,7 @@ impl CgStream {
                 // for( j = sp.lookbackTotal; j >= 0; j -= 1 )
                 j = sp.lookbackTotal;
                 loop {
-                    den += (if ((if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j }) as usize) != pkSlot1 { sp.win_j_inReal[((if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j })) as usize] } else { pkVal1 });
+                    den += (if ((if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j }) as usize) != pkSlot0 { sp.win_j_inReal[((if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j })) as usize] } else { pkVal0 });
                     num += den;
                     if j == 0 { break; }
                     j -= 1;
@@ -1785,7 +1778,7 @@ impl CgStream {
                 // for( j = sp.lookbackTotal; j >= 0; j -= 1 )
                 j = sp.lookbackTotal;
                 loop {
-                    x = ((if ((if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j }) as usize) != pkSlot1 { sp.win_j_inReal[((if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j })) as usize] } else { pkVal1 })).abs();
+                    x = ((if ((if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j }) as usize) != pkSlot0 { sp.win_j_inReal[((if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j })) as usize] } else { pkVal0 })).abs();
                     if x >= maxAbs {
                         maxAbs = x;
                         maxAt = k;
@@ -1842,7 +1835,7 @@ impl CgStream {
                 // for( j = sp.lookbackTotal; j >= 0; j -= 1 )
                 j = sp.lookbackTotal;
                 loop {
-                    x = (if ((if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j }) as usize) != pkSlot1 { sp.win_j_inReal[((if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j })) as usize] } else { pkVal1 });
+                    x = (if ((if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j }) as usize) != pkSlot0 { sp.win_j_inReal[((if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j })) as usize] } else { pkVal0 });
                     den += x;
                     num += den;
                     y = (x * scale2Mid).abs();
@@ -1905,7 +1898,7 @@ impl CgStream {
                         // for( j = sp.lookbackTotal; j >= 0; j -= 1 )
                         j = sp.lookbackTotal;
                         loop {
-                            y = (if ((if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j }) as usize) != pkSlot1 { sp.win_j_inReal[((if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j })) as usize] } else { pkVal1 }) * scale;
+                            y = (if ((if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j }) as usize) != pkSlot0 { sp.win_j_inReal[((if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j })) as usize] } else { pkVal0 }) * scale;
                             t = y * invWidth;
                             a = t + 6.755399441055744e15 - 6.755399441055744e15;
                             t = a * width;
@@ -1921,7 +1914,7 @@ impl CgStream {
                         // for( j = sp.lookbackTotal; j >= 0; j -= 1 )
                         j = sp.lookbackTotal;
                         loop {
-                            y = (if ((if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j }) as usize) != pkSlot1 { sp.win_j_inReal[((if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j })) as usize] } else { pkVal1 }) * scale;
+                            y = (if ((if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j }) as usize) != pkSlot0 { sp.win_j_inReal[((if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j })) as usize] } else { pkVal0 }) * scale;
                             t = y * invWidthSq;
                             a = t + 6.755399441055744e15 - 6.755399441055744e15;
                             t = a * widthSq;
@@ -1989,7 +1982,7 @@ impl CgStream {
                 value = sp.flatValue;
             }
             if limbs == 2 {
-                y = (if (sp.ringPos_trailingIdx as usize) != pkSlot0 { sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] } else { pkVal0 }) * scale;
+                y = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] * scale;
                 t = y * invWidth;
                 a = t + 6.755399441055744e15 - 6.755399441055744e15;
                 t = a * width;
@@ -1999,7 +1992,7 @@ impl CgStream {
                 numA -= sp.periodDouble * a;
                 numC -= sp.periodDouble * c;
             } else if limbs == 3 {
-                y = (if (sp.ringPos_trailingIdx as usize) != pkSlot0 { sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] } else { pkVal0 }) * scale;
+                y = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] * scale;
                 t = y * invWidthSq;
                 a = t + 6.755399441055744e15 - 6.755399441055744e15;
                 t = a * widthSq;

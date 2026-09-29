@@ -722,9 +722,7 @@ impl Core {
         let mut DCPeriod: f64 = 0.0_f64;
         let mut imagPart: f64 = 0.0_f64;
         let mut realPart: f64 = 0.0_f64;
-        if sp.ringCap_trailingWMAIdx == 0 {
-            sp.ring_trailingWMAIdx_inReal[0] = inReal;
-        }
+        let mut ringCapL_trailingWMAIdx: usize = 0_usize;
         adjustedPrevPeriod = (0.075 as f64).mul_add(sp.period, 0.54);
         todayValue = inReal;
         sp.periodWMASub += todayValue;
@@ -906,9 +904,10 @@ impl Core {
             sp.smoothPrice_Idx = 0;
         }
         sp.cur_outReal = (*outReal);
+        ringCapL_trailingWMAIdx = sp.ringCap_trailingWMAIdx;
         sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx] = inReal;
         sp.ringPos_trailingWMAIdx = sp.ringPos_trailingWMAIdx + 1;
-        if sp.ringPos_trailingWMAIdx >= sp.ringCap_trailingWMAIdx {
+        if sp.ringPos_trailingWMAIdx >= ringCapL_trailingWMAIdx {
             sp.ringPos_trailingWMAIdx = 0;
         }
         sp.streamParity = 1 - sp.streamParity;
@@ -1327,7 +1326,7 @@ impl Core {
 
         // Capture the live batch state into the handle.
         let cap_trailingWMAIdx: i64 = (today as i64) - (trailingWMAIdx as i64);
-        if cap_trailingWMAIdx < 0 || cap_trailingWMAIdx > historyLen as i64 {
+        if cap_trailingWMAIdx < 1 || cap_trailingWMAIdx > historyLen as i64 {
             return Err(RetCode::InternalError);
         }
         let allocN_trailingWMAIdx: usize = if cap_trailingWMAIdx > 0 { cap_trailingWMAIdx as usize } else { 1 };
@@ -1608,24 +1607,18 @@ impl HtDcphaseStream {
             let mut trailingWMAValue = sp.trailingWMAValue;
             let mut pkSlot0: usize = usize::MAX;
             let mut pkVal0: f64 = 0.0_f64;
-            let mut pkSlot1: usize = usize::MAX;
-            let mut pkVal1: f64 = 0.0_f64;
-            if sp.ringCap_trailingWMAIdx == 0 {
-                pkSlot0 = 0;
-                pkVal0 = inReal;
-            }
             adjustedPrevPeriod = (0.075 as f64).mul_add(period, 0.54);
             todayValue = inReal;
             periodWMASub += todayValue;
             periodWMASub -= trailingWMAValue;
             periodWMASum += todayValue * 4.0;
-            trailingWMAValue = (if (sp.ringPos_trailingWMAIdx as usize) != pkSlot0 { sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx] } else { pkVal0 });
+            trailingWMAValue = sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx];
             smoothedValue = periodWMASum * 0.1;
             periodWMASum -= periodWMASub;
             // Remember the smoothedValue into the smoothPrice
             // circular buffer.
-            pkSlot1 = sp.smoothPrice_Idx as usize;
-            pkVal1 = smoothedValue;
+            pkSlot0 = sp.smoothPrice_Idx as usize;
+            pkVal0 = smoothedValue;
             if sp.streamParity == 0 {
                 // Do the Hilbert Transforms for even price bar
                 hilbertTempReal = sp.a * smoothedValue;
@@ -1752,7 +1745,7 @@ impl HtDcphaseStream {
             i = 0;
             while ((i) as i32) < DCPeriodInt {
                 tempReal = (i as f64) * sp.constDeg2RadBy360 / (DCPeriodInt as f64);
-                tempReal2 = (if (idx as usize) != pkSlot1 { sp.cb_smoothPrice[idx] } else { pkVal1 });
+                tempReal2 = (if (idx as usize) != pkSlot0 { sp.cb_smoothPrice[idx] } else { pkVal0 });
                 realPart += (tempReal).sin() * tempReal2;
                 imagPart += (tempReal).cos() * tempReal2;
                 if idx == 0 {

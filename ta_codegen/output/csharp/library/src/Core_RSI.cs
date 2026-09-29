@@ -62,6 +62,7 @@ public partial class Core
     *  090926 MF,CC #410 Scale the Wilder step by a hoisted 1/period and split the
     *               gain/loss without a branch; the loop-carried chain keeps
     *               neither a divide nor a 50/50 mispredict.
+    *  092826 MF,CC #466 Drop the period-1 copy-through; the range starts at 2.
     */
    /// <summary>
    /// Number of leading input bars <c>Rsi</c> consumes before it can produce its
@@ -143,24 +144,6 @@ public partial class Core
       }
       outIdx = 0;
       /* Index into the output. */
-      /* Trap special case where the period is '1'.
-       * In that case, just copy the input into the
-       * output for the requested range (as-is !)
-       */
-      if( optInTimePeriod == 1 ) {
-         outBegIdx = startIdx;
-         i = (int)(endIdx - startIdx + 1);
-         outNBElement = (int)i;
-         /* Element loop, not a block copy: the C single-precision variant reads a
-          * float array, so a double-sized byte copy would reinterpret and
-          * over-read it (#137). Forward order keeps the in-place case correct (#94).
-          */
-         today = (int)startIdx;
-         for( outIdx = 0; outIdx < (int)i; outIdx += 1 ) {
-            outReal[outIdx] = inReal[today++];
-         }
-         return RetCode.Success ;
-      }
       invPeriod = 1.0 / (double)optInTimePeriod;
       /* Accumulate Wilder's "Average Gain" and "Average Loss"
        * among the initial period.
@@ -303,16 +286,6 @@ public partial class Core
          return RetCode.Success ;
       }
       outIdx = 0;
-      if( optInTimePeriod == 1 ) {
-         outBegIdx = startIdx;
-         i = (int)(endIdx - startIdx + 1);
-         outNBElement = (int)i;
-         today = (int)startIdx;
-         for( outIdx = 0; outIdx < (int)i; outIdx += 1 ) {
-            outReal[outIdx] = (double)inReal[today++];
-         }
-         return RetCode.Success ;
-      }
       invPeriod = 1.0 / (double)optInTimePeriod;
       today = startIdx - lookbackTotal;
       prevValue = (double)inReal[today];
@@ -661,10 +634,6 @@ public partial class Core
          double prevGain = sp.prevGain;
          double prevLoss = sp.prevLoss;
          double prevValue = sp.prevValue;
-         if( sp.optInTimePeriod == 1 ) {
-            cur_outReal = inReal;
-            return cur_outReal ;
-         }
          tempValue1 = (double)inReal;
          tempValue2 = tempValue1 - prevValue;
          prevValue = tempValue1;
@@ -706,10 +675,6 @@ public partial class Core
       double gainDelta = 0.0;
       double tempValue1 = 0.0;
       double tempValue2 = 0.0;
-      if( sp.optInTimePeriod == 1 ) {
-         sp.cur_outReal = inReal;
-         return ;
-      }
       tempValue1 = (double)inReal;
       tempValue2 = tempValue1 - sp.prevValue;
       sp.prevValue = tempValue1;
@@ -760,29 +725,6 @@ public partial class Core
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
-      }
-      if( optInTimePeriod == 1 ) {
-         int fillLb = RsiLookback(optInTimePeriod);
-         if( startIdx > fillLb ) fillLb = startIdx;
-         if( historyLen < fillLb + 1 ) {
-            return RetCode.InsufficientHistory;
-         }
-         sp.optInTimePeriod = optInTimePeriod;
-         sp.invPeriod = 0.0;
-         sp.prevGain = 0.0;
-         sp.prevLoss = 0.0;
-         sp.prevValue = 0.0;
-         outBegIdx = fillLb;
-         outNBElement = historyLen - fillLb;
-         if( outStride == 0 ) {
-            outReal[0] = inReal[historyLen - 1];
-         } else {
-            for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
-               outReal[fillIdx] = inReal[fillLb + fillIdx];
-            }
-         }
-         sp.cur_outReal = outReal[(outNBElement - 1) * outStride];
-         return RetCode.Success;
       }
       /* The following algorithm is base on the original
        * work from Wilder's and shall represent the

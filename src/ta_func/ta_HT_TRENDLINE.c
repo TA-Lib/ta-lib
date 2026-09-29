@@ -914,11 +914,8 @@ static TA_FMA_STEP_INLINE void TA_HT_TRENDLINE_StepImpl( struct TA_HT_TRENDLINE_
    double todayValue;
    int DCPeriodInt;
    double DCPeriod;
+   int ringCapL_trailingWMAIdx;
 
-   if( sp->ringCap_trailingWMAIdx == 0 )
-   {
-      sp->ring_trailingWMAIdx_inReal[0] = inReal;
-   }
    sp->win_i_inReal[sp->winPos_i] = inReal;
    adjustedPrevPeriod = fma(0.075, sp->period, 0.54);
    todayValue = inReal;
@@ -1094,9 +1091,10 @@ static TA_FMA_STEP_INLINE void TA_HT_TRENDLINE_StepImpl( struct TA_HT_TRENDLINE_
    *outReal= tempReal2;
    /* Ooof... let's do the next price bar now! */
    sp->cur_outReal = *outReal;
+   ringCapL_trailingWMAIdx = sp->ringCap_trailingWMAIdx;
    sp->ring_trailingWMAIdx_inReal[sp->ringPos_trailingWMAIdx] = inReal;
    sp->ringPos_trailingWMAIdx = sp->ringPos_trailingWMAIdx + 1;
-   if( sp->ringPos_trailingWMAIdx >= sp->ringCap_trailingWMAIdx )
+   if( sp->ringPos_trailingWMAIdx >= ringCapL_trailingWMAIdx )
    {
       sp->ringPos_trailingWMAIdx = 0;
    }
@@ -1558,7 +1556,7 @@ static TA_RetCode TA_HT_TRENDLINE_OpenImpl( struct TA_HT_TRENDLINE_Stream **stre
       sp->smoothPeriod = smoothPeriod;
       sp->streamParity = historyLen % 2;
       sp->ringCap_trailingWMAIdx = (int)(today - trailingWMAIdx);
-      if( sp->ringCap_trailingWMAIdx < 0 || sp->ringCap_trailingWMAIdx > historyLen ) { TA_HT_TRENDLINE_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(332); }
+      if( sp->ringCap_trailingWMAIdx < 1 || sp->ringCap_trailingWMAIdx > historyLen ) { TA_HT_TRENDLINE_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(332); }
       { size_t allocN = (size_t)(sp->ringCap_trailingWMAIdx > 0 ? sp->ringCap_trailingWMAIdx : 1);
         sp->ring_trailingWMAIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_trailingWMAIdx_inReal ) { TA_HT_TRENDLINE_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
@@ -1690,8 +1688,6 @@ TA_LIB_API TA_RetCode TA_HT_TRENDLINE_Peek( const TA_HT_TRENDLINE_Stream *stream
    double *win_i_inReal;
    int pkSlot0 = -1;
    double pkVal0 = 0.0;
-   int pkSlot1 = -1;
-   double pkVal1 = 0.0;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
@@ -1730,19 +1726,14 @@ TA_LIB_API TA_RetCode TA_HT_TRENDLINE_Peek( const TA_HT_TRENDLINE_Stream *stream
    trailingWMAValue = sp->trailingWMAValue;
    ring_trailingWMAIdx_inReal = sp->ring_trailingWMAIdx_inReal;
    win_i_inReal = sp->win_i_inReal;
-   if( sp->ringCap_trailingWMAIdx == 0 )
-   {
-      pkSlot0 = 0;
-      pkVal0 = inReal;
-   }
-   pkSlot1 = sp->winPos_i;
-   pkVal1 = inReal;
+   pkSlot0 = sp->winPos_i;
+   pkVal0 = inReal;
    adjustedPrevPeriod = fma(0.075, period, 0.54);
    todayValue = inReal;
    periodWMASub += todayValue;
    periodWMASub -= trailingWMAValue;
    periodWMASum += todayValue * 4.0;
-   trailingWMAValue = (sp->ringPos_trailingWMAIdx != pkSlot0) ? ring_trailingWMAIdx_inReal[sp->ringPos_trailingWMAIdx] : pkVal0;
+   trailingWMAValue = ring_trailingWMAIdx_inReal[sp->ringPos_trailingWMAIdx];
    smoothedValue = periodWMASum * 0.1;
    periodWMASum -= periodWMASub;
    if( sp->streamParity == 0 )
@@ -1889,7 +1880,7 @@ TA_LIB_API TA_RetCode TA_HT_TRENDLINE_Peek( const TA_HT_TRENDLINE_Stream *stream
    {
       if( i < DCPeriodInt )
       {
-         tempReal += (((sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i) != pkSlot1) ? win_i_inReal[(sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i] : pkVal1;
+         tempReal += (((sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i) != pkSlot0) ? win_i_inReal[(sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i] : pkVal0;
       }
    }
    if( DCPeriodInt > 0 )

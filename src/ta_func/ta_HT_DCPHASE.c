@@ -984,11 +984,8 @@ static TA_FMA_STEP_INLINE void TA_HT_DCPHASE_StepImpl( struct TA_HT_DCPHASE_Stre
    double DCPeriod;
    double imagPart;
    double realPart;
+   int ringCapL_trailingWMAIdx;
 
-   if( sp->ringCap_trailingWMAIdx == 0 )
-   {
-      sp->ring_trailingWMAIdx_inReal[0] = inReal;
-   }
    adjustedPrevPeriod = fma(0.075, sp->period, 0.54);
    todayValue = inReal;
    sp->periodWMASub += todayValue;
@@ -1189,9 +1186,10 @@ static TA_FMA_STEP_INLINE void TA_HT_DCPHASE_StepImpl( struct TA_HT_DCPHASE_Stre
       sp->smoothPrice_Idx = 0;
    }
    sp->cur_outReal = *outReal;
+   ringCapL_trailingWMAIdx = sp->ringCap_trailingWMAIdx;
    sp->ring_trailingWMAIdx_inReal[sp->ringPos_trailingWMAIdx] = inReal;
    sp->ringPos_trailingWMAIdx = sp->ringPos_trailingWMAIdx + 1;
-   if( sp->ringPos_trailingWMAIdx >= sp->ringCap_trailingWMAIdx )
+   if( sp->ringPos_trailingWMAIdx >= ringCapL_trailingWMAIdx )
    {
       sp->ringPos_trailingWMAIdx = 0;
    }
@@ -1687,7 +1685,7 @@ static TA_RetCode TA_HT_DCPHASE_OpenImpl( struct TA_HT_DCPHASE_Stream **stream, 
       sp->maxIdx_smoothPrice = maxIdx_smoothPrice;
       sp->streamParity = historyLen % 2;
       sp->ringCap_trailingWMAIdx = (int)(today - trailingWMAIdx);
-      if( sp->ringCap_trailingWMAIdx < 0 || sp->ringCap_trailingWMAIdx > historyLen ) { TA_HT_DCPHASE_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(327); }
+      if( sp->ringCap_trailingWMAIdx < 1 || sp->ringCap_trailingWMAIdx > historyLen ) { TA_HT_DCPHASE_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(327); }
       { size_t allocN = (size_t)(sp->ringCap_trailingWMAIdx > 0 ? sp->ringCap_trailingWMAIdx : 1);
         sp->ring_trailingWMAIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_trailingWMAIdx_inReal ) { TA_HT_DCPHASE_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
@@ -1820,8 +1818,6 @@ TA_LIB_API TA_RetCode TA_HT_DCPHASE_Peek( const TA_HT_DCPHASE_Stream *stream, do
    double *ring_trailingWMAIdx_inReal;
    int pkSlot0 = -1;
    double pkVal0 = 0.0;
-   int pkSlot1 = -1;
-   double pkVal1 = 0.0;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
@@ -1858,24 +1854,19 @@ TA_LIB_API TA_RetCode TA_HT_DCPHASE_Peek( const TA_HT_DCPHASE_Stream *stream, do
    trailingWMAValue = sp->trailingWMAValue;
    cb_smoothPrice = sp->cb_smoothPrice;
    ring_trailingWMAIdx_inReal = sp->ring_trailingWMAIdx_inReal;
-   if( sp->ringCap_trailingWMAIdx == 0 )
-   {
-      pkSlot0 = 0;
-      pkVal0 = inReal;
-   }
    adjustedPrevPeriod = fma(0.075, period, 0.54);
    todayValue = inReal;
    periodWMASub += todayValue;
    periodWMASub -= trailingWMAValue;
    periodWMASum += todayValue * 4.0;
-   trailingWMAValue = (sp->ringPos_trailingWMAIdx != pkSlot0) ? ring_trailingWMAIdx_inReal[sp->ringPos_trailingWMAIdx] : pkVal0;
+   trailingWMAValue = ring_trailingWMAIdx_inReal[sp->ringPos_trailingWMAIdx];
    smoothedValue = periodWMASum * 0.1;
    periodWMASum -= periodWMASub;
    /* Remember the smoothedValue into the smoothPrice
     * circular buffer.
     */
-   pkSlot1 = sp->smoothPrice_Idx;
-   pkVal1 = smoothedValue;
+   pkSlot0 = sp->smoothPrice_Idx;
+   pkVal0 = smoothedValue;
    if( sp->streamParity == 0 )
    {
       /* Do the Hilbert Transforms for even price bar */
@@ -2012,7 +2003,7 @@ TA_LIB_API TA_RetCode TA_HT_DCPHASE_Peek( const TA_HT_DCPHASE_Stream *stream, do
    for( i = 0; i < DCPeriodInt; i += 1 )
    {
       tempReal = (double)i * sp->constDeg2RadBy360 / (double)DCPeriodInt;
-      tempReal2 = (idx != pkSlot1) ? cb_smoothPrice[idx] : pkVal1;
+      tempReal2 = (idx != pkSlot0) ? cb_smoothPrice[idx] : pkVal0;
       realPart += sin(tempReal) * tempReal2;
       imagPart += cos(tempReal) * tempReal2;
       if( idx == 0 )

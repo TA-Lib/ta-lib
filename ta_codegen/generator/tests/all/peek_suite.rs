@@ -1145,6 +1145,33 @@ fn sma_shadows_the_store_its_own_bar_reads_and_deletes_the_one_it_does_not() {
     );
 }
 
+/// A ring proved to lag by at least one bar never holds the current bar: no
+/// guard in update, no shadow in Peek, and Open rejects a capacity below 1.
+#[test]
+fn a_ring_proved_to_lag_takes_no_guard_and_no_select() {
+    let (func, enums) = load("mom").expect("MOM streams");
+    let src = stream_c(&func, &enums);
+    let peek = body_of(&src, "TA_RetCode TA_MOM_Peek(").expect("MOM has a Peek");
+    let step = body_of(&src, "TA_MOM_StepImpl(").expect("MOM has an update frame");
+    assert!(!step.contains("sp->ringCap_trailingIdx == 0"), "{step}");
+    assert!(!peek.contains("pkSlot"), "{peek}");
+    assert!(src.contains("sp->ringCap_trailingIdx < 1 ||"), "Open keeps the proof honest");
+}
+
+/// The proof is per mode: TRIMA's even arm lags by at least one bar, its odd
+/// arm reaches a lag of 0 at a period of 1.
+#[test]
+fn trima_drops_the_guard_in_its_even_arm_only() {
+    let (func, enums) = load("trima").expect("TRIMA streams");
+    let src = stream_c(&func, &enums);
+    let step = body_of(&src, "TA_TRIMA_StepImpl(").expect("TRIMA has an update frame");
+    for v in ["trailingIdx", "middleIdx"] {
+        assert_eq!(step.matches(&format!("sp->ringCap_{v} == 0")).count(), 1, "{v}: {step}");
+        assert_eq!(src.matches(&format!("sp->ringCap_{v} < 0 ||")).count(), 1, "{v}");
+        assert_eq!(src.matches(&format!("sp->ringCap_{v} < 1 ||")).count(), 1, "{v}");
+    }
+}
+
 /// The handle's fixed-size REAL accumulator fields — the set
 /// `transition_buffers_with_state_arrays` offers. `handle_buffers` above cannot
 /// see them: it keys on `*`, and these are in the struct.

@@ -697,9 +697,7 @@ impl Core {
         let mut todayValue: f64 = 0.0_f64;
         let mut DCPeriodInt: i32 = 0_i32;
         let mut DCPeriod: f64 = 0.0_f64;
-        if sp.ringCap_trailingWMAIdx == 0 {
-            sp.ring_trailingWMAIdx_inReal[0] = inReal;
-        }
+        let mut ringCapL_trailingWMAIdx: usize = 0_usize;
         sp.win_i_inReal[sp.winPos_i] = inReal;
         adjustedPrevPeriod = (0.075 as f64).mul_add(sp.period, 0.54);
         todayValue = inReal;
@@ -865,9 +863,10 @@ impl Core {
         (*outReal) = tempReal2;
         // Ooof... let's do the next price bar now!
         sp.cur_outReal = (*outReal);
+        ringCapL_trailingWMAIdx = sp.ringCap_trailingWMAIdx;
         sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx] = inReal;
         sp.ringPos_trailingWMAIdx = sp.ringPos_trailingWMAIdx + 1;
-        if sp.ringPos_trailingWMAIdx >= sp.ringCap_trailingWMAIdx {
+        if sp.ringPos_trailingWMAIdx >= ringCapL_trailingWMAIdx {
             sp.ringPos_trailingWMAIdx = 0;
         }
         sp.winPos_i = sp.winPos_i + 1;
@@ -1261,7 +1260,7 @@ impl Core {
 
         // Capture the live batch state into the handle.
         let cap_trailingWMAIdx: i64 = (today as i64) - (trailingWMAIdx as i64);
-        if cap_trailingWMAIdx < 0 || cap_trailingWMAIdx > historyLen as i64 {
+        if cap_trailingWMAIdx < 1 || cap_trailingWMAIdx > historyLen as i64 {
             return Err(RetCode::InternalError);
         }
         let allocN_trailingWMAIdx: usize = if cap_trailingWMAIdx > 0 { cap_trailingWMAIdx as usize } else { 1 };
@@ -1543,20 +1542,14 @@ impl HtTrendlineStream {
             let mut trailingWMAValue = sp.trailingWMAValue;
             let mut pkSlot0: usize = usize::MAX;
             let mut pkVal0: f64 = 0.0_f64;
-            let mut pkSlot1: usize = usize::MAX;
-            let mut pkVal1: f64 = 0.0_f64;
-            if sp.ringCap_trailingWMAIdx == 0 {
-                pkSlot0 = 0;
-                pkVal0 = inReal;
-            }
-            pkSlot1 = sp.winPos_i as usize;
-            pkVal1 = inReal;
+            pkSlot0 = sp.winPos_i as usize;
+            pkVal0 = inReal;
             adjustedPrevPeriod = (0.075 as f64).mul_add(period, 0.54);
             todayValue = inReal;
             periodWMASub += todayValue;
             periodWMASub -= trailingWMAValue;
             periodWMASum += todayValue * 4.0;
-            trailingWMAValue = (if (sp.ringPos_trailingWMAIdx as usize) != pkSlot0 { sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx] } else { pkVal0 });
+            trailingWMAValue = sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx];
             smoothedValue = periodWMASum * 0.1;
             periodWMASum -= periodWMASub;
             if sp.streamParity == 0 {
@@ -1691,7 +1684,7 @@ impl HtTrendlineStream {
             i = 0;
             while i < 50 {
                 if ((i) as i32) < DCPeriodInt {
-                    tempReal += (if ((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize) != pkSlot1 { sp.win_i_inReal[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize] } else { pkVal1 });
+                    tempReal += (if ((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize) != pkSlot0 { sp.win_i_inReal[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize] } else { pkVal0 });
                 }
                 i += 1;
             }

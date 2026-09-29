@@ -1016,18 +1016,12 @@
          double prev_jQ_input_Odd = sp.prev_jQ_input_Odd;
          double smoothPeriod = sp.smoothPeriod;
          double trailingWMAValue = sp.trailingWMAValue;
-         int pkSlot0 = -1;
-         double pkVal0 = 0.0;
-         if( sp.ringCap_trailingWMAIdx == 0 ) {
-            pkSlot0 = 0;
-            pkVal0 = inReal;
-         }
          adjustedPrevPeriod = Math.fma(0.075, period, 0.54);
          todayValue = inReal;
          periodWMASub += todayValue;
          periodWMASub -= trailingWMAValue;
          periodWMASum += todayValue * 4.0;
-         trailingWMAValue = (sp.ringPos_trailingWMAIdx != pkSlot0) ? sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx] : pkVal0;
+         trailingWMAValue = sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx];
          smoothedValue = periodWMASum * 0.1;
          periodWMASum -= periodWMASub;
          if( sp.streamParity == 0 ) {
@@ -1190,9 +1184,7 @@
       double Q2 = 0.0;
       double I2 = 0.0;
       double todayValue = 0.0;
-      if( sp.ringCap_trailingWMAIdx == 0 ) {
-         sp.ring_trailingWMAIdx_inReal[0] = inReal;
-      }
+      int ringCapL_trailingWMAIdx = 0;
       adjustedPrevPeriod = Math.fma(0.075, sp.period, 0.54);
       todayValue = inReal;
       sp.periodWMASub += todayValue;
@@ -1327,9 +1319,10 @@
       sp.smoothPeriod = Math.fma(0.67, sp.smoothPeriod, 0.33 * sp.period);
       sp.cur_outReal = sp.smoothPeriod;
       /* Ooof... let's do the next price bar now! */
+      ringCapL_trailingWMAIdx = sp.ringCap_trailingWMAIdx;
       sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx] = inReal;
       sp.ringPos_trailingWMAIdx = sp.ringPos_trailingWMAIdx + 1;
-      if( sp.ringPos_trailingWMAIdx >= sp.ringCap_trailingWMAIdx ) {
+      if( sp.ringPos_trailingWMAIdx >= ringCapL_trailingWMAIdx ) {
          sp.ringPos_trailingWMAIdx = 0;
       }
       sp.streamParity = 1 - sp.streamParity;
@@ -1676,7 +1669,7 @@
       outNBElement.value = outIdx;
       /* Capture the live batch state into the handle. */
       int cap_trailingWMAIdx = today - trailingWMAIdx;
-      if( cap_trailingWMAIdx < 0 || cap_trailingWMAIdx > historyLen ) {
+      if( cap_trailingWMAIdx < 1 || cap_trailingWMAIdx > historyLen ) {
          return RetCode.INTERNAL_ERROR;
       }
       int allocN_trailingWMAIdx = (cap_trailingWMAIdx > 0)? cap_trailingWMAIdx : 1;

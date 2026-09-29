@@ -599,18 +599,12 @@
          double trailingValue = sp.trailingValue;
          int pkSlot0 = -1;
          double pkVal0 = 0.0;
-         int pkSlot1 = -1;
-         double pkVal1 = 0.0;
          if( sp.optInTimePeriod == 1 ) {
             cur_outReal = inReal;
             return cur_outReal ;
          }
-         if( sp.ringCap_trailingIdx == 0 ) {
-            pkSlot0 = 0;
-            pkVal0 = inReal;
-         }
-         pkSlot1 = sp.winPos_j;
-         pkVal1 = inReal;
+         pkSlot0 = sp.winPos_j;
+         pkVal0 = inReal;
          /* Add the current price bar to the sum
           * who are carried through the iterations.
           */
@@ -668,7 +662,7 @@
             periodSum = (double)0.0;
             rw = 1;
             for( j = sp.lookbackWin; j >= 0; j -= 1 ) {
-               tempReal = (((sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j) != pkSlot1) ? sp.win_j_inReal[(sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j] : pkVal1;
+               tempReal = (((sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j) != pkSlot0) ? sp.win_j_inReal[(sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j] : pkVal0;
                periodSub += tempReal;
                periodSum += tempReal * rw;
                rw += 1;
@@ -679,7 +673,7 @@
           * (must be saved here just in case outReal and
           *  inReal are the same buffer).
           */
-         trailingValue = (sp.ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] : pkVal0;
+         trailingValue = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
          /* Calculate the WMA for this price bar. */
          cur_outReal = periodSum / sp.divider;
          return cur_outReal;
@@ -716,12 +710,10 @@
       int j = 0;
       int rw = 0;
       double tempReal = 0.0;
+      int ringCapL_trailingIdx = 0;
       if( sp.optInTimePeriod == 1 ) {
          sp.cur_outReal = inReal;
          return ;
-      }
-      if( sp.ringCap_trailingIdx == 0 ) {
-         sp.ring_trailingIdx_inReal[0] = inReal;
       }
       sp.win_j_inReal[sp.winPos_j] = inReal;
       /* Add the current price bar to the sum
@@ -797,9 +789,10 @@
       sp.cur_outReal = sp.periodSum / sp.divider;
       /* Prepare the periodSum for the next iteration. */
       sp.periodSum -= sp.periodSub;
+      ringCapL_trailingIdx = sp.ringCap_trailingIdx;
       sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
       sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
-      if( sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
+      if( sp.ringPos_trailingIdx >= ringCapL_trailingIdx ) {
          sp.ringPos_trailingIdx = 0;
       }
       sp.winPos_j = sp.winPos_j + 1;
@@ -1016,7 +1009,7 @@
       outBegIdx.value = startIdx;
       /* Capture the live batch state into the handle. */
       int cap_trailingIdx = inIdx - trailingIdx;
-      if( cap_trailingIdx < 0 || cap_trailingIdx > historyLen ) {
+      if( cap_trailingIdx < 1 || cap_trailingIdx > historyLen ) {
          return RetCode.INTERNAL_ERROR;
       }
       int allocN_trailingIdx = (cap_trailingIdx > 0)? cap_trailingIdx : 1;

@@ -221,12 +221,10 @@ that is deliberately *not* this flag: only their signal stage degenerates at
 `signalPeriod == 1`, the MACD line is still computed, so their output is not a
 copy of anything.
 
-The flag states what the **public domain** offers, not what the body contains, and
-the two can differ: `RSI` and `CMO` carry the arm but declare `range: [2, …]`, so a
-period of 1 is rejected before any of it runs. They are therefore unflagged and
-outside the sweep, and the arm gate pins that (`UNREACHABLE_ARM`) rather than
-leaving it to be rediscovered — flagging them would have the metadata promise a
-call that returns `TA_BAD_PARAM`.
+The flag states what the **public domain** offers, so an arm behind a range that
+starts above 1 is dead code: every tier rejects the period before the arm runs.
+The arm gate fails on one; delete the arm rather than flag the function, which
+would have the metadata promise a call that returns `TA_BAD_PARAM`.
 
 ### Optional Input Flags
 

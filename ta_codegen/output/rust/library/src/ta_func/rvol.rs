@@ -330,9 +330,7 @@ impl Core {
         let mut trailingVolume: f64 = 0.0_f64;
         let mut zeroIn: usize = 0_usize;
         let mut zeroOut: usize = 0_usize;
-        if sp.ringCap_trailingIdx == 0 {
-            sp.ring_trailingIdx_inVolume[0] = inVolume;
-        }
+        let mut ringCapL_trailingIdx: usize = 0_usize;
         // Drop the trailing bar BEFORE adding today's. Up to the first dead
         // window, that order makes each baseline bit-identical to the moving
         // average of the same period at the previous bar; the reverse order
@@ -350,9 +348,10 @@ impl Core {
         }
         (*outReal) = todayVolume / baseline;
         sp.cur_outReal = (*outReal);
+        ringCapL_trailingIdx = sp.ringCap_trailingIdx;
         sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx] = inVolume;
         sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
-        if sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx {
+        if sp.ringPos_trailingIdx >= ringCapL_trailingIdx {
             sp.ringPos_trailingIdx = 0;
         }
     }
@@ -445,7 +444,7 @@ impl Core {
 
         // Capture the live batch state into the handle.
         let cap_trailingIdx: i64 = (i as i64) - (trailingIdx as i64);
-        if cap_trailingIdx < 0 || cap_trailingIdx > historyLen as i64 {
+        if cap_trailingIdx < 1 || cap_trailingIdx > historyLen as i64 {
             return Err(RetCode::InternalError);
         }
         let allocN_trailingIdx: usize = if cap_trailingIdx > 0 { cap_trailingIdx as usize } else { 1 };
@@ -637,18 +636,12 @@ impl RvolStream {
             let mut zeroOut: usize = 0_usize;
             let mut periodTotal = sp.periodTotal;
             let mut zeroCount = sp.zeroCount;
-            let mut pkSlot0: usize = usize::MAX;
-            let mut pkVal0: f64 = 0.0_f64;
-            if sp.ringCap_trailingIdx == 0 {
-                pkSlot0 = 0;
-                pkVal0 = inVolume;
-            }
             // Drop the trailing bar BEFORE adding today's. Up to the first dead
             // window, that order makes each baseline bit-identical to the moving
             // average of the same period at the previous bar; the reverse order
             // differs only in the last ulp, so no tolerance can tell the two apart.
             baseline = periodTotal / (sp.optInTimePeriod as f64);
-            trailingVolume = (if (sp.ringPos_trailingIdx as usize) != pkSlot0 { sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx] } else { pkVal0 }) as f64;
+            trailingVolume = sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx] as f64;
             periodTotal -= trailingVolume;
             zeroOut = (if (trailingVolume).abs() <= 0.0 { 1 } else { 0 });
             todayVolume = inVolume as f64;

@@ -139,39 +139,12 @@ fn exempt_reason(name: &str) -> Option<&'static str> {
     MATYPE_EXEMPT.iter().find(|(n, _)| *n == name).map(|(_, why)| *why)
 }
 
-/// Functions carrying an identity arm their own declared range makes
-/// unreachable, so they cannot carry the flag: the guarded call rejects a period
-/// of 1 before the arm can run. Not a defect — dead defensive code behind a
-/// narrower domain — but not something to discover twice either, which is what
-/// listing it here prevents.
-const UNREACHABLE_ARM: &[(&str, &str)] = &[
-    (
-        "RSI",
-        "range starts at 2, so TA_RSI(period=1) is TA_BAD_PARAM before the arm can run. The arm \
-         itself is original TA-Lib (f2249ff2f, 2003) and #137 only reshaped it from a memmove \
-         into an element loop, so it has outlived whatever reached it; released v0.6.4 rejects a \
-         period of 1 here too, which makes widening the range a behaviour change rather than a \
-         fix, and not this issue's call to make.",
-    ),
-    (
-        "CMO",
-        "range starts at 2, same arm and same lineage as RSI (they share the Wilder body).",
-    ),
-];
-
-fn unreachable_arm_reason(name: &str) -> Option<&'static str> {
-    UNREACHABLE_ARM.iter().find(|(n, _)| *n == name).map(|(_, why)| *why)
-}
-
 /// A flagged function must have a period a caller can set to 1. Trivial to state
 /// and the only gate that can see the mis-declaration, because the runtime sweep
 /// cannot: it skips a flagged name that is also a `MAType` label (the enum walk
 /// owns those), and the enum walk *exempts* a member with no period. So flagging
 /// `MAMA` — which promises nothing, its parameters being the real fast/slow
 /// limits — would leave it flagged, unswept and unnoticed at run time.
-///
-/// This also subsumes the `RSI`/`CMO` case from the other direction: a range
-/// starting at 2 cannot carry the flag, whatever the body contains.
 #[test]
 fn every_flagged_function_can_be_driven_to_period_one() {
     let funcs = load();
@@ -286,7 +259,6 @@ fn a_reachable_identity_arm_declares_period1_identity() {
     let funcs = load();
     let mut missing = Vec::new();
     let mut detected = Vec::new();
-    let mut unreachable = Vec::new();
 
     for f in &funcs {
         if streaming::identity_path(f).is_none() {
@@ -294,24 +266,13 @@ fn a_reachable_identity_arm_declares_period1_identity() {
         }
         let name = f.name.to_uppercase();
         detected.push(name.clone());
-        if !admits_period_one(f) {
-            // The arm exists but the declared range forbids the value that
-            // selects it, so the flag would promise a call that returns
-            // TA_BAD_PARAM. Pinned rather than failed: a defensive arm behind a
-            // narrower domain is dead code, not a defect. Asserted both ways
-            // below, so neither the list nor the reason can go stale quietly.
-            #[allow(clippy::cast_possible_truncation)]
-            let min = period_range(f).map_or(0, |(min, _)| min as i64);
-            unreachable.push((name.clone(), min));
-            assert!(
-                unreachable_arm_reason(&name).is_some(),
-                "{name} carries a period-1 identity arm its own range {:?} makes unreachable, and \
-                 is not listed in UNREACHABLE_ARM. Either widen the range (making the promise \
-                 real, and the flag required) or record why the arm stays.",
-                period_range(f)
-            );
-            continue;
-        }
+        assert!(
+            admits_period_one(f),
+            "{name} carries a period-1 identity arm its own range {:?} makes unreachable: every \
+             tier rejects the period first, so the arm is dead code in every backend. Delete it, \
+             or widen the range (a behaviour change that makes the flag required).",
+            period_range(f)
+        );
         if !has_flag(f) {
             missing.push(name);
         }
@@ -326,10 +287,8 @@ fn a_reachable_identity_arm_declares_period1_identity() {
          to notice. This is how VWMA's (P*V)/V shipped."
     );
     detected.sort();
-    unreachable.sort();
     println!(
-        "period1_identity: identity arm detected in {}: {detected:?}\n\
-         period1_identity: unreachable arm(s) (range forbids a period of 1): {unreachable:?}",
+        "period1_identity: identity arm detected in {}: {detected:?}",
         detected.len()
     );
     assert!(
@@ -338,17 +297,6 @@ fn a_reachable_identity_arm_declares_period1_identity() {
          the arms are being deleted or the detector stopped recognising them",
         detected.len()
     );
-    // The other direction: a name whose arm became reachable (or whose arm was
-    // deleted) must leave the list rather than sit there stating something that
-    // stopped being true.
-    for (name, _) in UNREACHABLE_ARM {
-        assert!(
-            unreachable.iter().any(|(n, _)| n == name),
-            "UNREACHABLE_ARM lists `{name}`, but it no longer has an arm its range forbids. If \
-             the range was widened, the flag is now required; drop the entry either way."
-        );
-    }
-
     // MACD/MACDFIX degenerate their signal stage only. If the detector ever
     // starts claiming them, the flag's meaning has drifted and the runtime sweep
     // would compare a 3-output function against its own input.

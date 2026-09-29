@@ -247,11 +247,8 @@ static void TA_ROCP_ReleaseImpl( struct TA_ROCP_Stream *sp )
 static void TA_ROCP_StepImpl( struct TA_ROCP_Stream *sp, double inReal, double *outReal )
 {
    double tempReal;
+   int ringCapL_trailingIdx;
 
-   if( sp->ringCap_trailingIdx == 0 )
-   {
-      sp->ring_trailingIdx_inReal[0] = inReal;
-   }
    tempReal = sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx];
    if( tempReal != 0.0 )
    {
@@ -261,9 +258,10 @@ static void TA_ROCP_StepImpl( struct TA_ROCP_Stream *sp, double inReal, double *
       *outReal= 0.0;
    }
    sp->cur_outReal = *outReal;
+   ringCapL_trailingIdx = sp->ringCap_trailingIdx;
    sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx] = inReal;
    sp->ringPos_trailingIdx = sp->ringPos_trailingIdx + 1;
-   if( sp->ringPos_trailingIdx >= sp->ringCap_trailingIdx )
+   if( sp->ringPos_trailingIdx >= ringCapL_trailingIdx )
    {
       sp->ringPos_trailingIdx = 0;
    }
@@ -368,7 +366,7 @@ static TA_RetCode TA_ROCP_OpenImpl( struct TA_ROCP_Stream **stream, const double
       memset( sp, 0, sizeof(*sp) );
       sp->optInTimePeriod = optInTimePeriod;
       sp->ringCap_trailingIdx = (int)(inIdx - trailingIdx);
-      if( sp->ringCap_trailingIdx < 0 || sp->ringCap_trailingIdx > historyLen ) { TA_ROCP_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(380); }
+      if( sp->ringCap_trailingIdx < 1 || sp->ringCap_trailingIdx > historyLen ) { TA_ROCP_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(380); }
       { size_t allocN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);
         sp->ring_trailingIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_trailingIdx_inReal ) { TA_ROCP_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
@@ -442,18 +440,11 @@ TA_LIB_API TA_RetCode TA_ROCP_Peek( const TA_ROCP_Stream *stream, double inReal,
    const struct TA_ROCP_Stream *sp = stream;
    double tempReal;
    double *ring_trailingIdx_inReal;
-   int pkSlot0 = -1;
-   double pkVal0 = 0.0;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    ring_trailingIdx_inReal = sp->ring_trailingIdx_inReal;
-   if( sp->ringCap_trailingIdx == 0 )
-   {
-      pkSlot0 = 0;
-      pkVal0 = inReal;
-   }
-   tempReal = (sp->ringPos_trailingIdx != pkSlot0) ? ring_trailingIdx_inReal[sp->ringPos_trailingIdx] : pkVal0;
+   tempReal = ring_trailingIdx_inReal[sp->ringPos_trailingIdx];
    if( tempReal != 0.0 )
    {
       *outReal= (inReal - tempReal) / tempReal;

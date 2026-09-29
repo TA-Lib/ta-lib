@@ -682,18 +682,6 @@
          double sumSlow = sp.sumSlow;
          int pkSlot0 = -1;
          double pkVal0 = 0.0;
-         int pkSlot1 = -1;
-         double pkVal1 = 0.0;
-         int pkSlot2 = -1;
-         double pkVal2 = 0.0;
-         if( sp.ringCap_trailingFastIdx == 0 ) {
-            pkSlot0 = 0;
-            pkVal0 = (inHigh + inLow) / 2.0;
-         }
-         if( sp.ringCap_trailingSlowIdx == 0 ) {
-            pkSlot1 = 0;
-            pkVal1 = (inHigh + inLow) / 2.0;
-         }
          medianPrice = (inHigh + inLow) / 2.0;
          sumFast += medianPrice;
          sumSlow += medianPrice;
@@ -701,22 +689,22 @@
           * mirroring the add-new / snapshot / subtract-old order of TA_SMA.
           */
          osc = sumFast / (double)sp.optInFastPeriod - sumSlow / (double)sp.optInSlowPeriod;
-         sumFast -= (sp.ringPos_trailingFastIdx != pkSlot0) ? sp.ring_trailingFastIdx_derived[sp.ringPos_trailingFastIdx] : pkVal0;
-         sumSlow -= (sp.ringPos_trailingSlowIdx != pkSlot1) ? sp.ring_trailingSlowIdx_derived[sp.ringPos_trailingSlowIdx] : pkVal1;
+         sumFast -= sp.ring_trailingFastIdx_derived[sp.ringPos_trailingFastIdx];
+         sumSlow -= sp.ring_trailingSlowIdx_derived[sp.ringPos_trailingSlowIdx];
          /* Today's oscillator enters the signal window at its own slot, and the
           * bar leaving that window is read only after the ring has advanced onto
           * it -- writing first is what makes the slot the loop is about to
           * overwrite the newest value rather than the oldest one.
           */
-         pkSlot2 = oscBuffer_Idx;
-         pkVal2 = osc;
+         pkSlot0 = oscBuffer_Idx;
+         pkVal0 = osc;
          sumSignal += osc;
          tempReal = osc - sumSignal / (double)sp.optInSignalPeriod;
          oscBuffer_Idx = oscBuffer_Idx + 1;
          if( oscBuffer_Idx > sp.maxIdx_oscBuffer ) {
             oscBuffer_Idx = 0;
          }
-         sumSignal -= (oscBuffer_Idx != pkSlot2) ? sp.cb_oscBuffer[oscBuffer_Idx] : pkVal2;
+         sumSignal -= (oscBuffer_Idx != pkSlot0) ? sp.cb_oscBuffer[oscBuffer_Idx] : pkVal0;
          /* Every input read for this bar is done above, so the store is safe
           * when the caller aliases outReal over inHigh or inLow. Unlike ao.c
           * there is slack here -- the signal window puts both trailing indices
@@ -760,12 +748,8 @@
       double medianPrice = 0.0;
       double osc = 0.0;
       double tempReal = 0.0;
-      if( sp.ringCap_trailingFastIdx == 0 ) {
-         sp.ring_trailingFastIdx_derived[0] = (inHigh + inLow) / 2.0;
-      }
-      if( sp.ringCap_trailingSlowIdx == 0 ) {
-         sp.ring_trailingSlowIdx_derived[0] = (inHigh + inLow) / 2.0;
-      }
+      int ringCapL_trailingFastIdx = 0;
+      int ringCapL_trailingSlowIdx = 0;
       medianPrice = (inHigh + inLow) / 2.0;
       sp.sumFast += medianPrice;
       sp.sumSlow += medianPrice;
@@ -797,14 +781,16 @@
        * the collision ao.c has to guard against.
        */
       sp.cur_outReal = tempReal;
+      ringCapL_trailingFastIdx = sp.ringCap_trailingFastIdx;
       sp.ring_trailingFastIdx_derived[sp.ringPos_trailingFastIdx] = (inHigh + inLow) / 2.0;
       sp.ringPos_trailingFastIdx = sp.ringPos_trailingFastIdx + 1;
-      if( sp.ringPos_trailingFastIdx >= sp.ringCap_trailingFastIdx ) {
+      if( sp.ringPos_trailingFastIdx >= ringCapL_trailingFastIdx ) {
          sp.ringPos_trailingFastIdx = 0;
       }
+      ringCapL_trailingSlowIdx = sp.ringCap_trailingSlowIdx;
       sp.ring_trailingSlowIdx_derived[sp.ringPos_trailingSlowIdx] = (inHigh + inLow) / 2.0;
       sp.ringPos_trailingSlowIdx = sp.ringPos_trailingSlowIdx + 1;
-      if( sp.ringPos_trailingSlowIdx >= sp.ringCap_trailingSlowIdx ) {
+      if( sp.ringPos_trailingSlowIdx >= ringCapL_trailingSlowIdx ) {
          sp.ringPos_trailingSlowIdx = 0;
       }
    }
@@ -997,7 +983,7 @@
       outBegIdx.value = startIdx;
       /* Capture the live batch state into the handle. */
       int cap_trailingFastIdx = i - trailingFastIdx;
-      if( cap_trailingFastIdx < 0 || cap_trailingFastIdx > historyLen ) {
+      if( cap_trailingFastIdx < 1 || cap_trailingFastIdx > historyLen ) {
          return RetCode.INTERNAL_ERROR;
       }
       int allocN_trailingFastIdx = (cap_trailingFastIdx > 0)? cap_trailingFastIdx : 1;
@@ -1006,7 +992,7 @@
          capRing_trailingFastIdx_derived[fillJ - (historyLen - cap_trailingFastIdx)] = (inHigh[fillJ] + inLow[fillJ]) / 2.0;
       }
       int cap_trailingSlowIdx = i - trailingSlowIdx;
-      if( cap_trailingSlowIdx < 0 || cap_trailingSlowIdx > historyLen ) {
+      if( cap_trailingSlowIdx < 1 || cap_trailingSlowIdx > historyLen ) {
          return RetCode.INTERNAL_ERROR;
       }
       int allocN_trailingSlowIdx = (cap_trailingSlowIdx > 0)? cap_trailingSlowIdx : 1;

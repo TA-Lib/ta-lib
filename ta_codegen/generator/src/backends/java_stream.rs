@@ -353,8 +353,8 @@ fn state_fields_from(
     for ring in model.rings() {
         let v = &ring.var;
         fields.push((format!("ringPos_{v}"), "int".into(), "0".into()));
-        // Identity path: cap 0 (back==0) / back+1 (back>0) with 1-slot buffers,
-        // keeping the transition's cap-0 guard and any read well-defined.
+        // Identity path: cap 0 (back==0) / back+1 (back>0); a 1-slot buffer
+        // keeps any read in bounds.
         let id_cap = if ring.back > 0 {
             format!("{}", ring.back + 1)
         } else {
@@ -1568,7 +1568,7 @@ fn emit_step_body(
     tape: Option<&streaming::TapeNames>,
 ) {
     let pad = " ".repeat(indent);
-    for (name, ty) in &model.temps {
+    for (name, ty) in &streaming::step_temps(model, tape) {
         let (jty, default) = field_type_and_default(ty);
         let _ = writeln!(o, "{pad}{jty} {name} = {default};");
     }
@@ -2245,7 +2245,7 @@ fn emit_identity_fast_path(
     let _ = writeln!(o, "            return RetCode.INSUFFICIENT_HISTORY;");
     let _ = writeln!(o, "         }}");
     // Identity state: params captured, everything else deterministic defaults
-    // (1-slot buffers keep the transition's cap-0 guard well-defined).
+    // (a 1-slot buffer keeps any read in bounds).
     for (name, _, default) in fields {
         if name.starts_with("cur_") {
             continue;
@@ -2335,7 +2335,11 @@ fn emit_capture(
             let _ = writeln!(o, "      }}");
         } else {
             let _ = writeln!(o, "      int cap_{v} = {c} - {v};");
-            let _ = writeln!(o, "      if( cap_{v} < 0 || cap_{v} > historyLen ) {{");
+            let _ = writeln!(
+                o,
+                "      if( cap_{v} < {min} || cap_{v} > historyLen ) {{",
+                min = i32::from(ring.lag_ge1)
+            );
             let _ = writeln!(o, "         return RetCode.INTERNAL_ERROR;");
             let _ = writeln!(o, "      }}");
         }

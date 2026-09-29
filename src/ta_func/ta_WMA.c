@@ -428,6 +428,7 @@ static void TA_WMA_StepImpl( struct TA_WMA_Stream *sp, double inReal, double *ou
    int j;
    int rw;
    double tempReal;
+   int ringCapL_trailingIdx;
    double periodSum;
    double periodSub;
 
@@ -440,10 +441,6 @@ static void TA_WMA_StepImpl( struct TA_WMA_Stream *sp, double inReal, double *ou
       sp->periodSum = periodSum;
       sp->periodSub = periodSub;
       return;
-   }
-   if( sp->ringCap_trailingIdx == 0 )
-   {
-      sp->ring_trailingIdx_inReal[0] = inReal;
    }
    sp->win_j_inReal[sp->winPos_j] = inReal;
    /* Add the current price bar to the sum
@@ -522,9 +519,10 @@ static void TA_WMA_StepImpl( struct TA_WMA_Stream *sp, double inReal, double *ou
    /* Prepare the periodSum for the next iteration. */
    periodSum -= periodSub;
    sp->cur_outReal = *outReal;
+   ringCapL_trailingIdx = sp->ringCap_trailingIdx;
    sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx] = inReal;
    sp->ringPos_trailingIdx = sp->ringPos_trailingIdx + 1;
-   if( sp->ringPos_trailingIdx >= sp->ringCap_trailingIdx )
+   if( sp->ringPos_trailingIdx >= ringCapL_trailingIdx )
    {
       sp->ringPos_trailingIdx = 0;
    }
@@ -786,7 +784,7 @@ static TA_RetCode TA_WMA_OpenImpl( struct TA_WMA_Stream **stream, const double i
       sp->trailingValue = trailingValue;
       sp->divider = divider;
       sp->ringCap_trailingIdx = (int)(inIdx - trailingIdx);
-      if( sp->ringCap_trailingIdx < 0 || sp->ringCap_trailingIdx > historyLen ) { TA_WMA_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(402); }
+      if( sp->ringCap_trailingIdx < 1 || sp->ringCap_trailingIdx > historyLen ) { TA_WMA_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(402); }
       { size_t allocN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);
         sp->ring_trailingIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_trailingIdx_inReal ) { TA_WMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
@@ -870,8 +868,8 @@ TA_LIB_API TA_RetCode TA_WMA_Peek( const TA_WMA_Stream *stream, double inReal, d
    int barsSinceReseed;
    double periodSum;
    double *win_j_inReal;
-   int pkSlot1 = -1;
-   double pkVal1 = 0.0;
+   int pkSlot0 = -1;
+   double pkVal0 = 0.0;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
@@ -883,8 +881,8 @@ TA_LIB_API TA_RetCode TA_WMA_Peek( const TA_WMA_Stream *stream, double inReal, d
       *outReal= inReal;
       return TA_SUCCESS;
    }
-   pkSlot1 = sp->winPos_j;
-   pkVal1 = inReal;
+   pkSlot0 = sp->winPos_j;
+   pkVal0 = inReal;
    /* Add the current price bar to the sum
     * who are carried through the iterations.
     */
@@ -941,7 +939,7 @@ TA_LIB_API TA_RetCode TA_WMA_Peek( const TA_WMA_Stream *stream, double inReal, d
       rw = 1;
       for( j = sp->lookbackWin; j >= 0; j -= 1 )
       {
-         tempReal = (((sp->winPos_j + sp->winCap_j - j >= sp->winCap_j) ? sp->winPos_j + sp->winCap_j - j - sp->winCap_j : sp->winPos_j + sp->winCap_j - j) != pkSlot1) ? win_j_inReal[(sp->winPos_j + sp->winCap_j - j >= sp->winCap_j) ? sp->winPos_j + sp->winCap_j - j - sp->winCap_j : sp->winPos_j + sp->winCap_j - j] : pkVal1;
+         tempReal = (((sp->winPos_j + sp->winCap_j - j >= sp->winCap_j) ? sp->winPos_j + sp->winCap_j - j - sp->winCap_j : sp->winPos_j + sp->winCap_j - j) != pkSlot0) ? win_j_inReal[(sp->winPos_j + sp->winCap_j - j >= sp->winCap_j) ? sp->winPos_j + sp->winCap_j - j - sp->winCap_j : sp->winPos_j + sp->winCap_j - j] : pkVal0;
          periodSum += tempReal * rw;
          rw += 1;
       }

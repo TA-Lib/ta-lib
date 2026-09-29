@@ -1205,18 +1205,6 @@ public final class Core {
          double sumSlow = sp.sumSlow;
          int pkSlot0 = -1;
          double pkVal0 = 0.0;
-         int pkSlot1 = -1;
-         double pkVal1 = 0.0;
-         int pkSlot2 = -1;
-         double pkVal2 = 0.0;
-         if( sp.ringCap_trailingFastIdx == 0 ) {
-            pkSlot0 = 0;
-            pkVal0 = (inHigh + inLow) / 2.0;
-         }
-         if( sp.ringCap_trailingSlowIdx == 0 ) {
-            pkSlot1 = 0;
-            pkVal1 = (inHigh + inLow) / 2.0;
-         }
          medianPrice = (inHigh + inLow) / 2.0;
          sumFast += medianPrice;
          sumSlow += medianPrice;
@@ -1224,22 +1212,22 @@ public final class Core {
           * mirroring the add-new / snapshot / subtract-old order of TA_SMA.
           */
          osc = sumFast / (double)sp.optInFastPeriod - sumSlow / (double)sp.optInSlowPeriod;
-         sumFast -= (sp.ringPos_trailingFastIdx != pkSlot0) ? sp.ring_trailingFastIdx_derived[sp.ringPos_trailingFastIdx] : pkVal0;
-         sumSlow -= (sp.ringPos_trailingSlowIdx != pkSlot1) ? sp.ring_trailingSlowIdx_derived[sp.ringPos_trailingSlowIdx] : pkVal1;
+         sumFast -= sp.ring_trailingFastIdx_derived[sp.ringPos_trailingFastIdx];
+         sumSlow -= sp.ring_trailingSlowIdx_derived[sp.ringPos_trailingSlowIdx];
          /* Today's oscillator enters the signal window at its own slot, and the
           * bar leaving that window is read only after the ring has advanced onto
           * it -- writing first is what makes the slot the loop is about to
           * overwrite the newest value rather than the oldest one.
           */
-         pkSlot2 = oscBuffer_Idx;
-         pkVal2 = osc;
+         pkSlot0 = oscBuffer_Idx;
+         pkVal0 = osc;
          sumSignal += osc;
          tempReal = osc - sumSignal / (double)sp.optInSignalPeriod;
          oscBuffer_Idx = oscBuffer_Idx + 1;
          if( oscBuffer_Idx > sp.maxIdx_oscBuffer ) {
             oscBuffer_Idx = 0;
          }
-         sumSignal -= (oscBuffer_Idx != pkSlot2) ? sp.cb_oscBuffer[oscBuffer_Idx] : pkVal2;
+         sumSignal -= (oscBuffer_Idx != pkSlot0) ? sp.cb_oscBuffer[oscBuffer_Idx] : pkVal0;
          /* Every input read for this bar is done above, so the store is safe
           * when the caller aliases outReal over inHigh or inLow. Unlike ao.c
           * there is slack here -- the signal window puts both trailing indices
@@ -1283,12 +1271,8 @@ public final class Core {
       double medianPrice = 0.0;
       double osc = 0.0;
       double tempReal = 0.0;
-      if( sp.ringCap_trailingFastIdx == 0 ) {
-         sp.ring_trailingFastIdx_derived[0] = (inHigh + inLow) / 2.0;
-      }
-      if( sp.ringCap_trailingSlowIdx == 0 ) {
-         sp.ring_trailingSlowIdx_derived[0] = (inHigh + inLow) / 2.0;
-      }
+      int ringCapL_trailingFastIdx = 0;
+      int ringCapL_trailingSlowIdx = 0;
       medianPrice = (inHigh + inLow) / 2.0;
       sp.sumFast += medianPrice;
       sp.sumSlow += medianPrice;
@@ -1320,14 +1304,16 @@ public final class Core {
        * the collision ao.c has to guard against.
        */
       sp.cur_outReal = tempReal;
+      ringCapL_trailingFastIdx = sp.ringCap_trailingFastIdx;
       sp.ring_trailingFastIdx_derived[sp.ringPos_trailingFastIdx] = (inHigh + inLow) / 2.0;
       sp.ringPos_trailingFastIdx = sp.ringPos_trailingFastIdx + 1;
-      if( sp.ringPos_trailingFastIdx >= sp.ringCap_trailingFastIdx ) {
+      if( sp.ringPos_trailingFastIdx >= ringCapL_trailingFastIdx ) {
          sp.ringPos_trailingFastIdx = 0;
       }
+      ringCapL_trailingSlowIdx = sp.ringCap_trailingSlowIdx;
       sp.ring_trailingSlowIdx_derived[sp.ringPos_trailingSlowIdx] = (inHigh + inLow) / 2.0;
       sp.ringPos_trailingSlowIdx = sp.ringPos_trailingSlowIdx + 1;
-      if( sp.ringPos_trailingSlowIdx >= sp.ringCap_trailingSlowIdx ) {
+      if( sp.ringPos_trailingSlowIdx >= ringCapL_trailingSlowIdx ) {
          sp.ringPos_trailingSlowIdx = 0;
       }
    }
@@ -1520,7 +1506,7 @@ public final class Core {
       outBegIdx.value = startIdx;
       /* Capture the live batch state into the handle. */
       int cap_trailingFastIdx = i - trailingFastIdx;
-      if( cap_trailingFastIdx < 0 || cap_trailingFastIdx > historyLen ) {
+      if( cap_trailingFastIdx < 1 || cap_trailingFastIdx > historyLen ) {
          return RetCode.INTERNAL_ERROR;
       }
       int allocN_trailingFastIdx = (cap_trailingFastIdx > 0)? cap_trailingFastIdx : 1;
@@ -1529,7 +1515,7 @@ public final class Core {
          capRing_trailingFastIdx_derived[fillJ - (historyLen - cap_trailingFastIdx)] = (inHigh[fillJ] + inLow[fillJ]) / 2.0;
       }
       int cap_trailingSlowIdx = i - trailingSlowIdx;
-      if( cap_trailingSlowIdx < 0 || cap_trailingSlowIdx > historyLen ) {
+      if( cap_trailingSlowIdx < 1 || cap_trailingSlowIdx > historyLen ) {
          return RetCode.INTERNAL_ERROR;
       }
       int allocN_trailingSlowIdx = (cap_trailingSlowIdx > 0)? cap_trailingSlowIdx : 1;
@@ -2216,20 +2202,6 @@ public final class Core {
          double periodTotalLower = sp.periodTotalLower;
          double periodTotalMiddle = sp.periodTotalMiddle;
          double periodTotalUpper = sp.periodTotalUpper;
-         int pkSlot0 = -1;
-         double pkVal0 = 0.0;
-         int pkSlot1 = -1;
-         double pkVal1 = 0.0;
-         int pkSlot2 = -1;
-         double pkVal2 = 0.0;
-         if( sp.ringCap_trailingIdx == 0 ) {
-            pkSlot0 = 0;
-            pkVal0 = inHigh;
-            pkSlot1 = 0;
-            pkVal1 = inLow;
-            pkSlot2 = 0;
-            pkVal2 = inClose;
-         }
          /* Add the incoming bar to each running sum. */
          tempReal = inHigh + inLow;
          if( !(Math.abs(tempReal) <= 0.00000000000001 * (Math.abs(inHigh) + Math.abs(inLow))) ) {
@@ -2246,16 +2218,16 @@ public final class Core {
          tempMiddle = periodTotalMiddle;
          tempLower = periodTotalLower;
          /* Remove the trailing bar from each running sum. */
-         tempReal = ((sp.ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] : pkVal0) + ((sp.ringPos_trailingIdx != pkSlot1) ? sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx] : pkVal1);
-         if( !(Math.abs(tempReal) <= 0.00000000000001 * (Math.abs((sp.ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] : pkVal0) + Math.abs((sp.ringPos_trailingIdx != pkSlot1) ? sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx] : pkVal1))) ) {
-            tempReal = 4 * (((sp.ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] : pkVal0) - ((sp.ringPos_trailingIdx != pkSlot1) ? sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx] : pkVal1)) / tempReal;
-            periodTotalUpper -= ((sp.ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] : pkVal0) * (1 + tempReal);
-            periodTotalLower -= ((sp.ringPos_trailingIdx != pkSlot1) ? sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx] : pkVal1) * (1 - tempReal);
+         tempReal = sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] + sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx];
+         if( !(Math.abs(tempReal) <= 0.00000000000001 * (Math.abs(sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx]) + Math.abs(sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx]))) ) {
+            tempReal = 4 * (sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] - sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx]) / tempReal;
+            periodTotalUpper -= sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] * (1 + tempReal);
+            periodTotalLower -= sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx] * (1 - tempReal);
          } else {
-            periodTotalUpper -= (sp.ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] : pkVal0;
-            periodTotalLower -= (sp.ringPos_trailingIdx != pkSlot1) ? sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx] : pkVal1;
+            periodTotalUpper -= sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx];
+            periodTotalLower -= sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx];
          }
-         periodTotalMiddle -= (sp.ringPos_trailingIdx != pkSlot2) ? sp.ring_trailingIdx_inClose[sp.ringPos_trailingIdx] : pkVal2;
+         periodTotalMiddle -= sp.ring_trailingIdx_inClose[sp.ringPos_trailingIdx];
          /* Write the three bands. */
          cur_outRealUpperBand = tempUpper / (double)sp.optInTimePeriod;
          cur_outRealMiddleBand = tempMiddle / (double)sp.optInTimePeriod;
@@ -2324,11 +2296,7 @@ public final class Core {
       double tempMiddle = 0.0;
       double tempLower = 0.0;
       double tempReal = 0.0;
-      if( sp.ringCap_trailingIdx == 0 ) {
-         sp.ring_trailingIdx_inHigh[0] = inHigh;
-         sp.ring_trailingIdx_inLow[0] = inLow;
-         sp.ring_trailingIdx_inClose[0] = inClose;
-      }
+      int ringCapL_trailingIdx = 0;
       /* Add the incoming bar to each running sum. */
       tempReal = inHigh + inLow;
       if( !(Math.abs(tempReal) <= 0.00000000000001 * (Math.abs(inHigh) + Math.abs(inLow))) ) {
@@ -2359,11 +2327,12 @@ public final class Core {
       sp.cur_outRealUpperBand = tempUpper / (double)sp.optInTimePeriod;
       sp.cur_outRealMiddleBand = tempMiddle / (double)sp.optInTimePeriod;
       sp.cur_outRealLowerBand = tempLower / (double)sp.optInTimePeriod;
+      ringCapL_trailingIdx = sp.ringCap_trailingIdx;
       sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] = inHigh;
       sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx] = inLow;
       sp.ring_trailingIdx_inClose[sp.ringPos_trailingIdx] = inClose;
       sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
-      if( sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
+      if( sp.ringPos_trailingIdx >= ringCapL_trailingIdx ) {
          sp.ringPos_trailingIdx = 0;
       }
    }
@@ -2503,7 +2472,7 @@ public final class Core {
       outNBElement.value = outIdx;
       /* Capture the live batch state into the handle. */
       int cap_trailingIdx = i - trailingIdx;
-      if( cap_trailingIdx < 0 || cap_trailingIdx > historyLen ) {
+      if( cap_trailingIdx < 1 || cap_trailingIdx > historyLen ) {
          return RetCode.INTERNAL_ERROR;
       }
       int allocN_trailingIdx = (cap_trailingIdx > 0)? cap_trailingIdx : 1;
@@ -8400,18 +8369,6 @@ public final class Core {
          double cur_outReal = 0.0;
          double sumFast = sp.sumFast;
          double sumSlow = sp.sumSlow;
-         int pkSlot0 = -1;
-         double pkVal0 = 0.0;
-         int pkSlot1 = -1;
-         double pkVal1 = 0.0;
-         if( sp.ringCap_trailingFastIdx == 0 ) {
-            pkSlot0 = 0;
-            pkVal0 = (inHigh + inLow) / 2.0;
-         }
-         if( sp.ringCap_trailingSlowIdx == 0 ) {
-            pkSlot1 = 0;
-            pkVal1 = (inHigh + inLow) / 2.0;
-         }
          medianPrice = (inHigh + inLow) / 2.0;
          sumFast += medianPrice;
          sumSlow += medianPrice;
@@ -8425,8 +8382,8 @@ public final class Core {
           * value it had just overwritten whenever the caller aliases outReal
           * over inHigh or inLow.
           */
-         sumFast -= (sp.ringPos_trailingFastIdx != pkSlot0) ? sp.ring_trailingFastIdx_derived[sp.ringPos_trailingFastIdx] : pkVal0;
-         sumSlow -= (sp.ringPos_trailingSlowIdx != pkSlot1) ? sp.ring_trailingSlowIdx_derived[sp.ringPos_trailingSlowIdx] : pkVal1;
+         sumFast -= sp.ring_trailingFastIdx_derived[sp.ringPos_trailingFastIdx];
+         sumSlow -= sp.ring_trailingSlowIdx_derived[sp.ringPos_trailingSlowIdx];
          cur_outReal = tempReal;
          return cur_outReal;
       }
@@ -8461,12 +8418,8 @@ public final class Core {
    {
       double medianPrice = 0.0;
       double tempReal = 0.0;
-      if( sp.ringCap_trailingFastIdx == 0 ) {
-         sp.ring_trailingFastIdx_derived[0] = (inHigh + inLow) / 2.0;
-      }
-      if( sp.ringCap_trailingSlowIdx == 0 ) {
-         sp.ring_trailingSlowIdx_derived[0] = (inHigh + inLow) / 2.0;
-      }
+      int ringCapL_trailingFastIdx = 0;
+      int ringCapL_trailingSlowIdx = 0;
       medianPrice = (inHigh + inLow) / 2.0;
       sp.sumFast += medianPrice;
       sp.sumSlow += medianPrice;
@@ -8483,14 +8436,16 @@ public final class Core {
       sp.sumFast -= sp.ring_trailingFastIdx_derived[sp.ringPos_trailingFastIdx];
       sp.sumSlow -= sp.ring_trailingSlowIdx_derived[sp.ringPos_trailingSlowIdx];
       sp.cur_outReal = tempReal;
+      ringCapL_trailingFastIdx = sp.ringCap_trailingFastIdx;
       sp.ring_trailingFastIdx_derived[sp.ringPos_trailingFastIdx] = (inHigh + inLow) / 2.0;
       sp.ringPos_trailingFastIdx = sp.ringPos_trailingFastIdx + 1;
-      if( sp.ringPos_trailingFastIdx >= sp.ringCap_trailingFastIdx ) {
+      if( sp.ringPos_trailingFastIdx >= ringCapL_trailingFastIdx ) {
          sp.ringPos_trailingFastIdx = 0;
       }
+      ringCapL_trailingSlowIdx = sp.ringCap_trailingSlowIdx;
       sp.ring_trailingSlowIdx_derived[sp.ringPos_trailingSlowIdx] = (inHigh + inLow) / 2.0;
       sp.ringPos_trailingSlowIdx = sp.ringPos_trailingSlowIdx + 1;
-      if( sp.ringPos_trailingSlowIdx >= sp.ringCap_trailingSlowIdx ) {
+      if( sp.ringPos_trailingSlowIdx >= ringCapL_trailingSlowIdx ) {
          sp.ringPos_trailingSlowIdx = 0;
       }
    }
@@ -8629,7 +8584,7 @@ public final class Core {
       outBegIdx.value = startIdx;
       /* Capture the live batch state into the handle. */
       int cap_trailingFastIdx = i - trailingFastIdx;
-      if( cap_trailingFastIdx < 0 || cap_trailingFastIdx > historyLen ) {
+      if( cap_trailingFastIdx < 1 || cap_trailingFastIdx > historyLen ) {
          return RetCode.INTERNAL_ERROR;
       }
       int allocN_trailingFastIdx = (cap_trailingFastIdx > 0)? cap_trailingFastIdx : 1;
@@ -8638,7 +8593,7 @@ public final class Core {
          capRing_trailingFastIdx_derived[fillJ - (historyLen - cap_trailingFastIdx)] = (inHigh[fillJ] + inLow[fillJ]) / 2.0;
       }
       int cap_trailingSlowIdx = i - trailingSlowIdx;
-      if( cap_trailingSlowIdx < 0 || cap_trailingSlowIdx > historyLen ) {
+      if( cap_trailingSlowIdx < 1 || cap_trailingSlowIdx > historyLen ) {
          return RetCode.INTERNAL_ERROR;
       }
       int allocN_trailingSlowIdx = (cap_trailingSlowIdx > 0)? cap_trailingSlowIdx : 1;
@@ -73267,14 +73222,8 @@ public final class Core {
          double ylim = sp.ylim;
          int pkSlot0 = -1;
          double pkVal0 = 0.0;
-         int pkSlot1 = -1;
-         double pkVal1 = 0.0;
-         if( sp.ringCap_trailingIdx == 0 ) {
-            pkSlot0 = 0;
-            pkVal0 = inReal;
-         }
-         pkSlot1 = sp.winPos_j;
-         pkVal1 = inReal;
+         pkSlot0 = sp.winPos_j;
+         pkVal0 = inReal;
          /* Between bars the sums hold the window less its oldest value. */
          fits = 0;
          x = inReal;
@@ -73323,7 +73272,7 @@ public final class Core {
             num = 0.0;
             den = 0.0;
             for( j = sp.lookbackTotal; j >= 0; j -= 1 ) {
-               den += (((sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j) != pkSlot1) ? sp.win_j_inReal[(sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j] : pkVal1;
+               den += (((sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j) != pkSlot0) ? sp.win_j_inReal[(sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j] : pkVal0;
                num += den;
             }
          } else if( fits == 0 ) {
@@ -73334,7 +73283,7 @@ public final class Core {
             maxAt = 0;
             k = 0;
             for( j = sp.lookbackTotal; j >= 0; j -= 1 ) {
-               x = Math.abs((((sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j) != pkSlot1) ? sp.win_j_inReal[(sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j] : pkVal1);
+               x = Math.abs((((sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j) != pkSlot0) ? sp.win_j_inReal[(sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j] : pkVal0);
                if( x >= maxAbs ) {
                   maxAbs = x;
                   maxAt = k;
@@ -73390,7 +73339,7 @@ public final class Core {
             den = 0.0;
             k = 0;
             for( j = sp.lookbackTotal; j >= 0; j -= 1 ) {
-               x = (((sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j) != pkSlot1) ? sp.win_j_inReal[(sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j] : pkVal1;
+               x = (((sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j) != pkSlot0) ? sp.win_j_inReal[(sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j] : pkVal0;
                den += x;
                num += den;
                y = Math.abs(x * scale2Mid);
@@ -73449,7 +73398,7 @@ public final class Core {
                numC = 0.0;
                if( limbs == 2 ) {
                   for( j = sp.lookbackTotal; j >= 0; j -= 1 ) {
-                     y = ((((sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j) != pkSlot1) ? sp.win_j_inReal[(sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j] : pkVal1) * scale;
+                     y = ((((sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j) != pkSlot0) ? sp.win_j_inReal[(sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j] : pkVal0) * scale;
                      t = y * invWidth;
                      a = t + 6.755399441055744e15 - 6.755399441055744e15;
                      t = a * width;
@@ -73461,7 +73410,7 @@ public final class Core {
                   }
                } else {
                   for( j = sp.lookbackTotal; j >= 0; j -= 1 ) {
-                     y = ((((sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j) != pkSlot1) ? sp.win_j_inReal[(sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j] : pkVal1) * scale;
+                     y = ((((sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j) != pkSlot0) ? sp.win_j_inReal[(sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j] : pkVal0) * scale;
                      t = y * invWidthSq;
                      a = t + 6.755399441055744e15 - 6.755399441055744e15;
                      t = a * widthSq;
@@ -73529,7 +73478,7 @@ public final class Core {
             value = sp.flatValue;
          }
          if( limbs == 2 ) {
-            y = ((sp.ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] : pkVal0) * scale;
+            y = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] * scale;
             t = y * invWidth;
             a = t + 6.755399441055744e15 - 6.755399441055744e15;
             t = a * width;
@@ -73539,7 +73488,7 @@ public final class Core {
             numA -= sp.periodDouble * a;
             numC -= sp.periodDouble * c;
          } else if( limbs == 3 ) {
-            y = ((sp.ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] : pkVal0) * scale;
+            y = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] * scale;
             t = y * invWidthSq;
             a = t + 6.755399441055744e15 - 6.755399441055744e15;
             t = a * widthSq;
@@ -73609,9 +73558,7 @@ public final class Core {
       double c = 0.0;
       double q = 0.0;
       double t = 0.0;
-      if( sp.ringCap_trailingIdx == 0 ) {
-         sp.ring_trailingIdx_inReal[0] = inReal;
-      }
+      int ringCapL_trailingIdx = 0;
       sp.win_j_inReal[sp.winPos_j] = inReal;
       /* Between bars the sums hold the window less its oldest value. */
       fits = 0;
@@ -73895,9 +73842,10 @@ public final class Core {
       }
       /* After the trailing value is read: outReal may be inReal. */
       sp.cur_outReal = value;
+      ringCapL_trailingIdx = sp.ringCap_trailingIdx;
       sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
       sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
-      if( sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
+      if( sp.ringPos_trailingIdx >= ringCapL_trailingIdx ) {
          sp.ringPos_trailingIdx = 0;
       }
       sp.winPos_j = sp.winPos_j + 1;
@@ -74337,7 +74285,7 @@ public final class Core {
       outNBElement.value = outIdx;
       /* Capture the live batch state into the handle. */
       int cap_trailingIdx = today - trailingIdx;
-      if( cap_trailingIdx < 0 || cap_trailingIdx > historyLen ) {
+      if( cap_trailingIdx < 1 || cap_trailingIdx > historyLen ) {
          return RetCode.INTERNAL_ERROR;
       }
       int allocN_trailingIdx = (cap_trailingIdx > 0)? cap_trailingIdx : 1;
@@ -75465,6 +75413,7 @@ public final class Core {
  *                 the fixed TA_IS_ZERO band, which zeroed the oscillator for any
  *                 instrument quoted small enough to fall under it.
  *  091326 MF,CC   #411 Wilder step without a divide or a branch.
+ *  092826 MF,CC   #466 Drop the period-1 copy-through; the range starts at 2.
  */
 
    /**
@@ -75536,24 +75485,6 @@ public final class Core {
       }
       outIdx = 0;
       /* Index into the output. */
-      /* Trap special case where the period is '1'.
-       * In that case, just copy the input into the
-       * output for the requested range (as-is !)
-       */
-      if( optInTimePeriod == 1 ) {
-         outBegIdx.value = startIdx;
-         i = endIdx - startIdx + 1;
-         outNBElement.value = i;
-         /* Element loop, not a block copy: the C single-precision variant reads a
-          * float array, so a double-sized byte copy would reinterpret and
-          * over-read it (#137). Forward order keeps the in-place case correct (#94).
-          */
-         today = startIdx;
-         for( outIdx = 0; outIdx < i; outIdx += 1 ) {
-            outReal[outIdx] = inReal[today++];
-         }
-         return RetCode.SUCCESS ;
-      }
       /* The declaration order above sets invPeriod's place in the stream state,
        * and that place is load-bearing: a layout that lets Update load it paired
        * with a field the previous bar stored stalls every call. Re-measure Update
@@ -75683,16 +75614,6 @@ public final class Core {
          return RetCode.SUCCESS ;
       }
       outIdx = 0;
-      if( optInTimePeriod == 1 ) {
-         outBegIdx.value = startIdx;
-         i = endIdx - startIdx + 1;
-         outNBElement.value = i;
-         today = startIdx;
-         for( outIdx = 0; outIdx < i; outIdx += 1 ) {
-            outReal[outIdx] = (double)inReal[today++];
-         }
-         return RetCode.SUCCESS ;
-      }
       invPeriod = 1.0 / (double)optInTimePeriod;
       today = startIdx - lookbackTotal;
       prevValue = (double)inReal[today];
@@ -75992,10 +75913,6 @@ public final class Core {
          double prevGain = sp.prevGain;
          double prevLoss = sp.prevLoss;
          double prevValue = sp.prevValue;
-         if( sp.optInTimePeriod == 1 ) {
-            cur_outReal = inReal;
-            return cur_outReal ;
-         }
          tempValue1 = inReal;
          tempValue2 = tempValue1 - prevValue;
          prevValue = tempValue1;
@@ -76042,10 +75959,6 @@ public final class Core {
       double gainDelta = 0.0;
       double tempValue1 = 0.0;
       double tempValue2 = 0.0;
-      if( sp.optInTimePeriod == 1 ) {
-         sp.cur_outReal = inReal;
-         return ;
-      }
       tempValue1 = inReal;
       tempValue2 = tempValue1 - sp.prevValue;
       sp.prevValue = tempValue1;
@@ -76089,29 +76002,6 @@ public final class Core {
          outBegIdx.value = 0;
          outNBElement.value = 0;
          return RetCode.INSUFFICIENT_HISTORY;
-      }
-      if( optInTimePeriod == 1 ) {
-         int fillLb = cmoLookback(optInTimePeriod);
-         if( startIdx > fillLb ) fillLb = startIdx;
-         if( historyLen < fillLb + 1 ) {
-            return RetCode.INSUFFICIENT_HISTORY;
-         }
-         sp.optInTimePeriod = optInTimePeriod;
-         sp.prevGain = 0.0;
-         sp.prevLoss = 0.0;
-         sp.invPeriod = 0.0;
-         sp.prevValue = 0.0;
-         outBegIdx.value = fillLb;
-         outNBElement.value = historyLen - fillLb;
-         if( outStride == 0 ) {
-            outReal[0] = inReal[historyLen - 1];
-         } else {
-            for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
-               outReal[fillIdx] = inReal[fillLb + fillIdx];
-            }
-         }
-         sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
-         return RetCode.SUCCESS;
       }
       outBegIdx.value = 0;
       outNBElement.value = 0;
@@ -76872,18 +76762,12 @@ public final class Core {
          double prevValue = sp.prevValue;
          double trailingValue = sp.trailingValue;
          double upSum = sp.upSum;
-         int pkSlot0 = -1;
-         double pkVal0 = 0.0;
-         if( sp.ringCap_trailingIdx == 0 ) {
-            pkSlot0 = 0;
-            pkVal0 = inReal;
-         }
          /* Drop the oldest change: inReal[trailingIdx] - inReal[trailingIdx-1].
           * inReal[trailingIdx-1] comes from the cache (already overwritten when
           * outReal == inReal); inReal[trailingIdx] is read here, before this
           * iteration writes outReal[outIdx], so it is still the original price.
           */
-         tempReal = (sp.ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] : pkVal0;
+         tempReal = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
          diff = tempReal - trailingValue;
          trailingValue = tempReal;
          if( diff > 0.0 ) {
@@ -76954,9 +76838,7 @@ public final class Core {
       double sum = 0.0;
       double diff = 0.0;
       double tempReal = 0.0;
-      if( sp.ringCap_trailingIdx == 0 ) {
-         sp.ring_trailingIdx_inReal[0] = inReal;
-      }
+      int ringCapL_trailingIdx = 0;
       /* Drop the oldest change: inReal[trailingIdx] - inReal[trailingIdx-1].
        * inReal[trailingIdx-1] comes from the cache (already overwritten when
        * outReal == inReal); inReal[trailingIdx] is read here, before this
@@ -76999,9 +76881,10 @@ public final class Core {
       } else {
          sp.cur_outReal = 0.0;
       }
+      ringCapL_trailingIdx = sp.ringCap_trailingIdx;
       sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
       sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
-      if( sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
+      if( sp.ringPos_trailingIdx >= ringCapL_trailingIdx ) {
          sp.ringPos_trailingIdx = 0;
       }
    }
@@ -77164,7 +77047,7 @@ public final class Core {
       outNBElement.value = outIdx;
       /* Capture the live batch state into the handle. */
       int cap_trailingIdx = today - trailingIdx;
-      if( cap_trailingIdx < 0 || cap_trailingIdx > historyLen ) {
+      if( cap_trailingIdx < 1 || cap_trailingIdx > historyLen ) {
          return RetCode.INTERNAL_ERROR;
       }
       int allocN_trailingIdx = (cap_trailingIdx > 0)? cap_trailingIdx : 1;
@@ -77967,20 +77850,8 @@ public final class Core {
          double periodSum = sp.periodSum;
          int sRing_Idx = sp.sRing_Idx;
          double trailingValue = sp.trailingValue;
-         int pkSlot0 = -1;
-         double pkVal0 = 0.0;
-         int pkSlot1 = -1;
-         double pkVal1 = 0.0;
-         if( sp.ringCap_roc1Idx == 0 ) {
-            pkSlot0 = 0;
-            pkVal0 = inReal;
-         }
-         if( sp.ringCap_roc2Idx == 0 ) {
-            pkSlot1 = 0;
-            pkVal1 = inReal;
-         }
-         base1 = (sp.ringPos_roc1Idx != pkSlot0) ? sp.ring_roc1Idx_inReal[sp.ringPos_roc1Idx] : pkVal0;
-         base2 = (sp.ringPos_roc2Idx != pkSlot1) ? sp.ring_roc2Idx_inReal[sp.ringPos_roc2Idx] : pkVal1;
+         base1 = sp.ring_roc1Idx_inReal[sp.ringPos_roc1Idx];
+         base2 = sp.ring_roc2Idx_inReal[sp.ringPos_roc2Idx];
          roc1 = (base1 != 0.0) ? (inReal / base1 - 1.0) * 100.0 : 0.0;
          roc2 = (base2 != 0.0) ? (inReal / base2 - 1.0) * 100.0 : 0.0;
          tempReal = roc1 + roc2;
@@ -78073,12 +77944,8 @@ public final class Core {
       double base2 = 0.0;
       double roc1 = 0.0;
       double roc2 = 0.0;
-      if( sp.ringCap_roc1Idx == 0 ) {
-         sp.ring_roc1Idx_inReal[0] = inReal;
-      }
-      if( sp.ringCap_roc2Idx == 0 ) {
-         sp.ring_roc2Idx_inReal[0] = inReal;
-      }
+      int ringCapL_roc1Idx = 0;
+      int ringCapL_roc2Idx = 0;
       base1 = sp.ring_roc1Idx_inReal[sp.ringPos_roc1Idx];
       base2 = sp.ring_roc2Idx_inReal[sp.ringPos_roc2Idx];
       roc1 = (base1 != 0.0) ? (inReal / base1 - 1.0) * 100.0 : 0.0;
@@ -78135,14 +78002,16 @@ public final class Core {
          sp.cur_outReal = sp.periodSum / sp.divider;
       }
       sp.periodSum -= sp.periodSub;
+      ringCapL_roc1Idx = sp.ringCap_roc1Idx;
       sp.ring_roc1Idx_inReal[sp.ringPos_roc1Idx] = inReal;
       sp.ringPos_roc1Idx = sp.ringPos_roc1Idx + 1;
-      if( sp.ringPos_roc1Idx >= sp.ringCap_roc1Idx ) {
+      if( sp.ringPos_roc1Idx >= ringCapL_roc1Idx ) {
          sp.ringPos_roc1Idx = 0;
       }
+      ringCapL_roc2Idx = sp.ringCap_roc2Idx;
       sp.ring_roc2Idx_inReal[sp.ringPos_roc2Idx] = inReal;
       sp.ringPos_roc2Idx = sp.ringPos_roc2Idx + 1;
-      if( sp.ringPos_roc2Idx >= sp.ringCap_roc2Idx ) {
+      if( sp.ringPos_roc2Idx >= ringCapL_roc2Idx ) {
          sp.ringPos_roc2Idx = 0;
       }
    }
@@ -78355,14 +78224,14 @@ public final class Core {
       outNBElement.value = outIdx;
       /* Capture the live batch state into the handle. */
       int cap_roc1Idx = inIdx - roc1Idx;
-      if( cap_roc1Idx < 0 || cap_roc1Idx > historyLen ) {
+      if( cap_roc1Idx < 1 || cap_roc1Idx > historyLen ) {
          return RetCode.INTERNAL_ERROR;
       }
       int allocN_roc1Idx = (cap_roc1Idx > 0)? cap_roc1Idx : 1;
       double[] capRing_roc1Idx_inReal = new double[allocN_roc1Idx];
       System.arraycopy(inReal, historyLen - cap_roc1Idx, capRing_roc1Idx_inReal, 0, cap_roc1Idx);
       int cap_roc2Idx = inIdx - roc2Idx;
-      if( cap_roc2Idx < 0 || cap_roc2Idx > historyLen ) {
+      if( cap_roc2Idx < 1 || cap_roc2Idx > historyLen ) {
          return RetCode.INTERNAL_ERROR;
       }
       int allocN_roc2Idx = (cap_roc2Idx > 0)? cap_roc2Idx : 1;
@@ -86872,28 +86741,16 @@ public final class Core {
          double dispVal = 0.0;
          double cur_outReal = 0.0;
          double periodTotal = sp.periodTotal;
-         int pkSlot0 = -1;
-         double pkVal0 = 0.0;
-         int pkSlot1 = -1;
-         double pkVal1 = 0.0;
-         if( sp.ringCap_dispIdx == 0 ) {
-            pkSlot0 = 0;
-            pkVal0 = inReal;
-         }
-         if( sp.ringCap_trailingIdx == 0 ) {
-            pkSlot1 = 0;
-            pkVal1 = inReal;
-         }
          periodTotal += inReal;
          tempReal = periodTotal;
-         periodTotal -= (sp.ringPos_trailingIdx != pkSlot1) ? sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] : pkVal1;
+         periodTotal -= sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
          /* Both reads precede the store. Either cursor can EQUAL outIdx -- the
           * displaced one whenever startIdx equals the displacement, the trailing
           * one whenever startIdx sits at the lookback -- so a store hoisted above
           * them would read back what it had just overwritten when the caller
           * aliases outReal over inReal.
           */
-         dispVal = (sp.ringPos_dispIdx != pkSlot0) ? sp.ring_dispIdx_inReal[sp.ringPos_dispIdx] : pkVal0;
+         dispVal = sp.ring_dispIdx_inReal[sp.ringPos_dispIdx];
          cur_outReal = dispVal - tempReal / (double)sp.optInTimePeriod;
          return cur_outReal;
       }
@@ -86928,12 +86785,8 @@ public final class Core {
    {
       double tempReal = 0.0;
       double dispVal = 0.0;
-      if( sp.ringCap_dispIdx == 0 ) {
-         sp.ring_dispIdx_inReal[0] = inReal;
-      }
-      if( sp.ringCap_trailingIdx == 0 ) {
-         sp.ring_trailingIdx_inReal[0] = inReal;
-      }
+      int ringCapL_dispIdx = 0;
+      int ringCapL_trailingIdx = 0;
       sp.periodTotal += inReal;
       tempReal = sp.periodTotal;
       sp.periodTotal -= sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
@@ -86945,14 +86798,16 @@ public final class Core {
        */
       dispVal = sp.ring_dispIdx_inReal[sp.ringPos_dispIdx];
       sp.cur_outReal = dispVal - tempReal / (double)sp.optInTimePeriod;
+      ringCapL_dispIdx = sp.ringCap_dispIdx;
       sp.ring_dispIdx_inReal[sp.ringPos_dispIdx] = inReal;
       sp.ringPos_dispIdx = sp.ringPos_dispIdx + 1;
-      if( sp.ringPos_dispIdx >= sp.ringCap_dispIdx ) {
+      if( sp.ringPos_dispIdx >= ringCapL_dispIdx ) {
          sp.ringPos_dispIdx = 0;
       }
+      ringCapL_trailingIdx = sp.ringCap_trailingIdx;
       sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
       sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
-      if( sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
+      if( sp.ringPos_trailingIdx >= ringCapL_trailingIdx ) {
          sp.ringPos_trailingIdx = 0;
       }
    }
@@ -87031,14 +86886,14 @@ public final class Core {
       outBegIdx.value = startIdx;
       /* Capture the live batch state into the handle. */
       int cap_dispIdx = i - dispIdx;
-      if( cap_dispIdx < 0 || cap_dispIdx > historyLen ) {
+      if( cap_dispIdx < 1 || cap_dispIdx > historyLen ) {
          return RetCode.INTERNAL_ERROR;
       }
       int allocN_dispIdx = (cap_dispIdx > 0)? cap_dispIdx : 1;
       double[] capRing_dispIdx_inReal = new double[allocN_dispIdx];
       System.arraycopy(inReal, historyLen - cap_dispIdx, capRing_dispIdx_inReal, 0, cap_dispIdx);
       int cap_trailingIdx = i - trailingIdx;
-      if( cap_trailingIdx < 0 || cap_trailingIdx > historyLen ) {
+      if( cap_trailingIdx < 1 || cap_trailingIdx > historyLen ) {
          return RetCode.INTERNAL_ERROR;
       }
       int allocN_trailingIdx = (cap_trailingIdx > 0)? cap_trailingIdx : 1;
@@ -91477,14 +91332,8 @@ public final class Core {
          int nullRun = sp.nullRun;
          double sumROC1 = sp.sumROC1;
          double trailingValue = sp.trailingValue;
-         int pkSlot0 = -1;
-         double pkVal0 = 0.0;
-         if( sp.ringCap_trailingIdx == 0 ) {
-            pkSlot0 = 0;
-            pkVal0 = inReal;
-         }
          tempReal = inReal;
-         tempReal2 = (sp.ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] : pkVal0;
+         tempReal2 = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
          periodROC = tempReal - tempReal2;
          /* Subtract-then-add, TA_SUM's own order. */
          sumROC1 -= Math.abs(trailingValue - tempReal2);
@@ -91550,9 +91399,7 @@ public final class Core {
       double periodROC = 0.0;
       double tempReal = 0.0;
       double tempReal2 = 0.0;
-      if( sp.ringCap_trailingIdx == 0 ) {
-         sp.ring_trailingIdx_inReal[0] = inReal;
-      }
+      int ringCapL_trailingIdx = 0;
       tempReal = inReal;
       tempReal2 = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
       periodROC = tempReal - tempReal2;
@@ -91587,9 +91434,10 @@ public final class Core {
          sp.cur_outReal = tempReal;
       }
       sp.lag1_inReal = inReal;
+      ringCapL_trailingIdx = sp.ringCap_trailingIdx;
       sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
       sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
-      if( sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
+      if( sp.ringPos_trailingIdx >= ringCapL_trailingIdx ) {
          sp.ringPos_trailingIdx = 0;
       }
    }
@@ -91751,7 +91599,7 @@ public final class Core {
       outNBElement.value = outIdx;
       /* Capture the live batch state into the handle. */
       int cap_trailingIdx = today - trailingIdx;
-      if( cap_trailingIdx < 0 || cap_trailingIdx > historyLen ) {
+      if( cap_trailingIdx < 1 || cap_trailingIdx > historyLen ) {
          return RetCode.INTERNAL_ERROR;
       }
       int allocN_trailingIdx = (cap_trailingIdx > 0)? cap_trailingIdx : 1;
@@ -98522,14 +98370,8 @@ public final class Core {
             double trailingFull = sp.trailingFull;
             int pkSlot0 = -1;
             double pkVal0 = 0.0;
-            int pkSlot1 = -1;
-            double pkVal1 = 0.0;
-            if( sp.ringCap_trailingIdxFull == 0 ) {
-               pkSlot0 = 0;
-               pkVal0 = inReal;
-            }
-            pkSlot1 = sp.winPos_jFull;
-            pkVal1 = inReal;
+            pkSlot0 = sp.winPos_jFull;
+            pkVal0 = inReal;
             tempReal = inReal;
             periodSubFull += tempReal;
             periodSubFull -= trailingFull;
@@ -98541,13 +98383,13 @@ public final class Core {
                periodSumFull = 0.0;
                rw = 1;
                for( jFull = sp.lookbackFull; jFull >= 0; jFull -= 1 ) {
-                  tempReal2 = (((sp.winPos_jFull + sp.winCap_jFull - jFull >= sp.winCap_jFull) ? sp.winPos_jFull + sp.winCap_jFull - jFull - sp.winCap_jFull : sp.winPos_jFull + sp.winCap_jFull - jFull) != pkSlot1) ? sp.win_jFull_inReal[(sp.winPos_jFull + sp.winCap_jFull - jFull >= sp.winCap_jFull) ? sp.winPos_jFull + sp.winCap_jFull - jFull - sp.winCap_jFull : sp.winPos_jFull + sp.winCap_jFull - jFull] : pkVal1;
+                  tempReal2 = (((sp.winPos_jFull + sp.winCap_jFull - jFull >= sp.winCap_jFull) ? sp.winPos_jFull + sp.winCap_jFull - jFull - sp.winCap_jFull : sp.winPos_jFull + sp.winCap_jFull - jFull) != pkSlot0) ? sp.win_jFull_inReal[(sp.winPos_jFull + sp.winCap_jFull - jFull >= sp.winCap_jFull) ? sp.winPos_jFull + sp.winCap_jFull - jFull - sp.winCap_jFull : sp.winPos_jFull + sp.winCap_jFull - jFull] : pkVal0;
                   periodSubFull += tempReal2;
                   periodSumFull += tempReal2 * rw;
                   rw += 1;
                }
             }
-            trailingFull = (sp.ringPos_trailingIdxFull != pkSlot0) ? sp.ring_trailingIdxFull_inReal[sp.ringPos_trailingIdxFull] : pkVal0;
+            trailingFull = sp.ring_trailingIdxFull_inReal[sp.ringPos_trailingIdxFull];
             fullOut = periodSumFull / sp.dividerFull;
             periodSumFull -= periodSubFull;
             cur_outReal = 2.0 * tempReal - fullOut;
@@ -98579,22 +98421,10 @@ public final class Core {
             double pkVal0 = 0.0;
             int pkSlot1 = -1;
             double pkVal1 = 0.0;
-            int pkSlot2 = -1;
-            double pkVal2 = 0.0;
-            int pkSlot3 = -1;
-            double pkVal3 = 0.0;
-            if( sp.ringCap_trailingIdxFull == 0 ) {
-               pkSlot0 = 0;
-               pkVal0 = inReal;
-            }
-            if( sp.ringCap_trailingIdxHalf == 0 ) {
-               pkSlot1 = 0;
-               pkVal1 = inReal;
-            }
-            pkSlot2 = sp.winPos_jFull;
-            pkVal2 = inReal;
-            pkSlot3 = sp.winPos_jHalf;
-            pkVal3 = inReal;
+            pkSlot0 = sp.winPos_jFull;
+            pkVal0 = inReal;
+            pkSlot1 = sp.winPos_jHalf;
+            pkVal1 = inReal;
             tempReal = inReal;
             periodSubFull += tempReal;
             periodSubFull -= trailingFull;
@@ -98606,13 +98436,13 @@ public final class Core {
                periodSumFull = 0.0;
                rw = 1;
                for( jFull = sp.lookbackFull; jFull >= 0; jFull -= 1 ) {
-                  tempReal2 = (((sp.winPos_jFull + sp.winCap_jFull - jFull >= sp.winCap_jFull) ? sp.winPos_jFull + sp.winCap_jFull - jFull - sp.winCap_jFull : sp.winPos_jFull + sp.winCap_jFull - jFull) != pkSlot2) ? sp.win_jFull_inReal[(sp.winPos_jFull + sp.winCap_jFull - jFull >= sp.winCap_jFull) ? sp.winPos_jFull + sp.winCap_jFull - jFull - sp.winCap_jFull : sp.winPos_jFull + sp.winCap_jFull - jFull] : pkVal2;
+                  tempReal2 = (((sp.winPos_jFull + sp.winCap_jFull - jFull >= sp.winCap_jFull) ? sp.winPos_jFull + sp.winCap_jFull - jFull - sp.winCap_jFull : sp.winPos_jFull + sp.winCap_jFull - jFull) != pkSlot0) ? sp.win_jFull_inReal[(sp.winPos_jFull + sp.winCap_jFull - jFull >= sp.winCap_jFull) ? sp.winPos_jFull + sp.winCap_jFull - jFull - sp.winCap_jFull : sp.winPos_jFull + sp.winCap_jFull - jFull] : pkVal0;
                   periodSubFull += tempReal2;
                   periodSumFull += tempReal2 * rw;
                   rw += 1;
                }
             }
-            trailingFull = (sp.ringPos_trailingIdxFull != pkSlot0) ? sp.ring_trailingIdxFull_inReal[sp.ringPos_trailingIdxFull] : pkVal0;
+            trailingFull = sp.ring_trailingIdxFull_inReal[sp.ringPos_trailingIdxFull];
             fullOut = periodSumFull / sp.dividerFull;
             periodSumFull -= periodSubFull;
             periodSubHalf += tempReal;
@@ -98625,13 +98455,13 @@ public final class Core {
                periodSumHalf = 0.0;
                rw = 1;
                for( jHalf = sp.lookbackHalf; jHalf >= 0; jHalf -= 1 ) {
-                  tempReal2 = (((sp.winPos_jHalf + sp.winCap_jHalf - jHalf >= sp.winCap_jHalf) ? sp.winPos_jHalf + sp.winCap_jHalf - jHalf - sp.winCap_jHalf : sp.winPos_jHalf + sp.winCap_jHalf - jHalf) != pkSlot3) ? sp.win_jHalf_inReal[(sp.winPos_jHalf + sp.winCap_jHalf - jHalf >= sp.winCap_jHalf) ? sp.winPos_jHalf + sp.winCap_jHalf - jHalf - sp.winCap_jHalf : sp.winPos_jHalf + sp.winCap_jHalf - jHalf] : pkVal3;
+                  tempReal2 = (((sp.winPos_jHalf + sp.winCap_jHalf - jHalf >= sp.winCap_jHalf) ? sp.winPos_jHalf + sp.winCap_jHalf - jHalf - sp.winCap_jHalf : sp.winPos_jHalf + sp.winCap_jHalf - jHalf) != pkSlot1) ? sp.win_jHalf_inReal[(sp.winPos_jHalf + sp.winCap_jHalf - jHalf >= sp.winCap_jHalf) ? sp.winPos_jHalf + sp.winCap_jHalf - jHalf - sp.winCap_jHalf : sp.winPos_jHalf + sp.winCap_jHalf - jHalf] : pkVal1;
                   periodSubHalf += tempReal2;
                   periodSumHalf += tempReal2 * rw;
                   rw += 1;
                }
             }
-            trailingHalf = (sp.ringPos_trailingIdxHalf != pkSlot1) ? sp.ring_trailingIdxHalf_inReal[sp.ringPos_trailingIdxHalf] : pkVal1;
+            trailingHalf = sp.ring_trailingIdxHalf_inReal[sp.ringPos_trailingIdxHalf];
             halfOut = periodSumHalf / sp.dividerHalf;
             periodSumHalf -= periodSubHalf;
             diffReal = 2.0 * halfOut - fullOut;
@@ -98712,9 +98542,7 @@ public final class Core {
          int jFull = 0;
          int rw = 0;
          double tempReal2 = 0.0;
-         if( sp.ringCap_trailingIdxFull == 0 ) {
-            sp.ring_trailingIdxFull_inReal[0] = inReal;
-         }
+         int ringCapL_trailingIdxFull = 0;
          sp.win_jFull_inReal[sp.winPos_jFull] = inReal;
          tempReal = inReal;
          sp.periodSubFull += tempReal;
@@ -98737,9 +98565,10 @@ public final class Core {
          fullOut = sp.periodSumFull / sp.dividerFull;
          sp.periodSumFull -= sp.periodSubFull;
          sp.cur_outReal = 2.0 * tempReal - fullOut;
+         ringCapL_trailingIdxFull = sp.ringCap_trailingIdxFull;
          sp.ring_trailingIdxFull_inReal[sp.ringPos_trailingIdxFull] = inReal;
          sp.ringPos_trailingIdxFull = sp.ringPos_trailingIdxFull + 1;
-         if( sp.ringPos_trailingIdxFull >= sp.ringCap_trailingIdxFull ) {
+         if( sp.ringPos_trailingIdxFull >= ringCapL_trailingIdxFull ) {
             sp.ringPos_trailingIdxFull = 0;
          }
          sp.winPos_jFull = sp.winPos_jFull + 1;
@@ -98757,12 +98586,8 @@ public final class Core {
          int rw = 0;
          int ringWalk = 0;
          double tempReal2 = 0.0;
-         if( sp.ringCap_trailingIdxFull == 0 ) {
-            sp.ring_trailingIdxFull_inReal[0] = inReal;
-         }
-         if( sp.ringCap_trailingIdxHalf == 0 ) {
-            sp.ring_trailingIdxHalf_inReal[0] = inReal;
-         }
+         int ringCapL_trailingIdxFull = 0;
+         int ringCapL_trailingIdxHalf = 0;
          sp.win_jFull_inReal[sp.winPos_jFull] = inReal;
          sp.win_jHalf_inReal[sp.winPos_jHalf] = inReal;
          tempReal = inReal;
@@ -98842,14 +98667,16 @@ public final class Core {
          }
          sp.cur_outReal = sp.periodSumSqrt / sp.dividerSqrt;
          sp.periodSumSqrt -= sp.periodSubSqrt;
+         ringCapL_trailingIdxFull = sp.ringCap_trailingIdxFull;
          sp.ring_trailingIdxFull_inReal[sp.ringPos_trailingIdxFull] = inReal;
          sp.ringPos_trailingIdxFull = sp.ringPos_trailingIdxFull + 1;
-         if( sp.ringPos_trailingIdxFull >= sp.ringCap_trailingIdxFull ) {
+         if( sp.ringPos_trailingIdxFull >= ringCapL_trailingIdxFull ) {
             sp.ringPos_trailingIdxFull = 0;
          }
+         ringCapL_trailingIdxHalf = sp.ringCap_trailingIdxHalf;
          sp.ring_trailingIdxHalf_inReal[sp.ringPos_trailingIdxHalf] = inReal;
          sp.ringPos_trailingIdxHalf = sp.ringPos_trailingIdxHalf + 1;
-         if( sp.ringPos_trailingIdxHalf >= sp.ringCap_trailingIdxHalf ) {
+         if( sp.ringPos_trailingIdxHalf >= ringCapL_trailingIdxHalf ) {
             sp.ringPos_trailingIdxHalf = 0;
          }
          sp.winPos_jFull = sp.winPos_jFull + 1;
@@ -99074,7 +98901,7 @@ public final class Core {
          outNBElement.value = outIdx;
          /* Capture the live batch state into the handle. */
          int cap_trailingIdxFull = today - trailingIdxFull;
-         if( cap_trailingIdxFull < 0 || cap_trailingIdxFull > historyLen ) {
+         if( cap_trailingIdxFull < 1 || cap_trailingIdxFull > historyLen ) {
             return RetCode.INTERNAL_ERROR;
          }
          int allocN_trailingIdxFull = (cap_trailingIdxFull > 0)? cap_trailingIdxFull : 1;
@@ -99402,14 +99229,14 @@ public final class Core {
          outNBElement.value = outIdx;
          /* Capture the live batch state into the handle. */
          int cap_trailingIdxFull = today - trailingIdxFull;
-         if( cap_trailingIdxFull < 0 || cap_trailingIdxFull > historyLen ) {
+         if( cap_trailingIdxFull < 1 || cap_trailingIdxFull > historyLen ) {
             return RetCode.INTERNAL_ERROR;
          }
          int allocN_trailingIdxFull = (cap_trailingIdxFull > 0)? cap_trailingIdxFull : 1;
          double[] capRing_trailingIdxFull_inReal = new double[allocN_trailingIdxFull];
          System.arraycopy(inReal, historyLen - cap_trailingIdxFull, capRing_trailingIdxFull_inReal, 0, cap_trailingIdxFull);
          int cap_trailingIdxHalf = today - trailingIdxHalf;
-         if( cap_trailingIdxHalf < 0 || cap_trailingIdxHalf > historyLen ) {
+         if( cap_trailingIdxHalf < 1 || cap_trailingIdxHalf > historyLen ) {
             return RetCode.INTERNAL_ERROR;
          }
          int allocN_trailingIdxHalf = (cap_trailingIdxHalf > 0)? cap_trailingIdxHalf : 1;
@@ -100852,18 +100679,12 @@ public final class Core {
          double prev_jQ_input_Odd = sp.prev_jQ_input_Odd;
          double smoothPeriod = sp.smoothPeriod;
          double trailingWMAValue = sp.trailingWMAValue;
-         int pkSlot0 = -1;
-         double pkVal0 = 0.0;
-         if( sp.ringCap_trailingWMAIdx == 0 ) {
-            pkSlot0 = 0;
-            pkVal0 = inReal;
-         }
          adjustedPrevPeriod = Math.fma(0.075, period, 0.54);
          todayValue = inReal;
          periodWMASub += todayValue;
          periodWMASub -= trailingWMAValue;
          periodWMASum += todayValue * 4.0;
-         trailingWMAValue = (sp.ringPos_trailingWMAIdx != pkSlot0) ? sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx] : pkVal0;
+         trailingWMAValue = sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx];
          smoothedValue = periodWMASum * 0.1;
          periodWMASum -= periodWMASub;
          if( sp.streamParity == 0 ) {
@@ -101026,9 +100847,7 @@ public final class Core {
       double Q2 = 0.0;
       double I2 = 0.0;
       double todayValue = 0.0;
-      if( sp.ringCap_trailingWMAIdx == 0 ) {
-         sp.ring_trailingWMAIdx_inReal[0] = inReal;
-      }
+      int ringCapL_trailingWMAIdx = 0;
       adjustedPrevPeriod = Math.fma(0.075, sp.period, 0.54);
       todayValue = inReal;
       sp.periodWMASub += todayValue;
@@ -101163,9 +100982,10 @@ public final class Core {
       sp.smoothPeriod = Math.fma(0.67, sp.smoothPeriod, 0.33 * sp.period);
       sp.cur_outReal = sp.smoothPeriod;
       /* Ooof... let's do the next price bar now! */
+      ringCapL_trailingWMAIdx = sp.ringCap_trailingWMAIdx;
       sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx] = inReal;
       sp.ringPos_trailingWMAIdx = sp.ringPos_trailingWMAIdx + 1;
-      if( sp.ringPos_trailingWMAIdx >= sp.ringCap_trailingWMAIdx ) {
+      if( sp.ringPos_trailingWMAIdx >= ringCapL_trailingWMAIdx ) {
          sp.ringPos_trailingWMAIdx = 0;
       }
       sp.streamParity = 1 - sp.streamParity;
@@ -101512,7 +101332,7 @@ public final class Core {
       outNBElement.value = outIdx;
       /* Capture the live batch state into the handle. */
       int cap_trailingWMAIdx = today - trailingWMAIdx;
-      if( cap_trailingWMAIdx < 0 || cap_trailingWMAIdx > historyLen ) {
+      if( cap_trailingWMAIdx < 1 || cap_trailingWMAIdx > historyLen ) {
          return RetCode.INTERNAL_ERROR;
       }
       int allocN_trailingWMAIdx = (cap_trailingWMAIdx > 0)? cap_trailingWMAIdx : 1;
@@ -102812,25 +102632,19 @@ public final class Core {
          double trailingWMAValue = sp.trailingWMAValue;
          int pkSlot0 = -1;
          double pkVal0 = 0.0;
-         int pkSlot1 = -1;
-         double pkVal1 = 0.0;
-         if( sp.ringCap_trailingWMAIdx == 0 ) {
-            pkSlot0 = 0;
-            pkVal0 = inReal;
-         }
          adjustedPrevPeriod = Math.fma(0.075, period, 0.54);
          todayValue = inReal;
          periodWMASub += todayValue;
          periodWMASub -= trailingWMAValue;
          periodWMASum += todayValue * 4.0;
-         trailingWMAValue = (sp.ringPos_trailingWMAIdx != pkSlot0) ? sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx] : pkVal0;
+         trailingWMAValue = sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx];
          smoothedValue = periodWMASum * 0.1;
          periodWMASum -= periodWMASub;
          /* Remember the smoothedValue into the smoothPrice
           * circular buffer.
           */
-         pkSlot1 = sp.smoothPrice_Idx;
-         pkVal1 = smoothedValue;
+         pkSlot0 = sp.smoothPrice_Idx;
+         pkVal0 = smoothedValue;
          if( sp.streamParity == 0 ) {
             /* Do the Hilbert Transforms for even price bar */
             hilbertTempReal = sp.a * smoothedValue;
@@ -102958,7 +102772,7 @@ public final class Core {
          idx = sp.smoothPrice_Idx;
          for( i = 0; i < DCPeriodInt; i += 1 ) {
             tempReal = (double)i * sp.constDeg2RadBy360 / (double)DCPeriodInt;
-            tempReal2 = (idx != pkSlot1) ? sp.cb_smoothPrice[idx] : pkVal1;
+            tempReal2 = (idx != pkSlot0) ? sp.cb_smoothPrice[idx] : pkVal0;
             realPart += Math.sin(tempReal) * tempReal2;
             imagPart += Math.cos(tempReal) * tempReal2;
             if( idx == 0 ) {
@@ -103036,9 +102850,7 @@ public final class Core {
       double DCPeriod = 0.0;
       double imagPart = 0.0;
       double realPart = 0.0;
-      if( sp.ringCap_trailingWMAIdx == 0 ) {
-         sp.ring_trailingWMAIdx_inReal[0] = inReal;
-      }
+      int ringCapL_trailingWMAIdx = 0;
       adjustedPrevPeriod = Math.fma(0.075, sp.period, 0.54);
       todayValue = inReal;
       sp.periodWMASub += todayValue;
@@ -103220,9 +103032,10 @@ public final class Core {
       if( sp.smoothPrice_Idx > sp.maxIdx_smoothPrice ) {
          sp.smoothPrice_Idx = 0;
       }
+      ringCapL_trailingWMAIdx = sp.ringCap_trailingWMAIdx;
       sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx] = inReal;
       sp.ringPos_trailingWMAIdx = sp.ringPos_trailingWMAIdx + 1;
-      if( sp.ringPos_trailingWMAIdx >= sp.ringCap_trailingWMAIdx ) {
+      if( sp.ringPos_trailingWMAIdx >= ringCapL_trailingWMAIdx ) {
          sp.ringPos_trailingWMAIdx = 0;
       }
       sp.streamParity = 1 - sp.streamParity;
@@ -103637,7 +103450,7 @@ public final class Core {
       outNBElement.value = outIdx;
       /* Capture the live batch state into the handle. */
       int cap_trailingWMAIdx = today - trailingWMAIdx;
-      if( cap_trailingWMAIdx < 0 || cap_trailingWMAIdx > historyLen ) {
+      if( cap_trailingWMAIdx < 1 || cap_trailingWMAIdx > historyLen ) {
          return RetCode.INTERNAL_ERROR;
       }
       int allocN_trailingWMAIdx = (cap_trailingWMAIdx > 0)? cap_trailingWMAIdx : 1;
@@ -104814,18 +104627,12 @@ public final class Core {
          double prev_jQ_input_Even = sp.prev_jQ_input_Even;
          double prev_jQ_input_Odd = sp.prev_jQ_input_Odd;
          double trailingWMAValue = sp.trailingWMAValue;
-         int pkSlot0 = -1;
-         double pkVal0 = 0.0;
-         if( sp.ringCap_trailingWMAIdx == 0 ) {
-            pkSlot0 = 0;
-            pkVal0 = inReal;
-         }
          adjustedPrevPeriod = Math.fma(0.075, sp.period, 0.54);
          todayValue = inReal;
          periodWMASub += todayValue;
          periodWMASub -= trailingWMAValue;
          periodWMASum += todayValue * 4.0;
-         trailingWMAValue = (sp.ringPos_trailingWMAIdx != pkSlot0) ? sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx] : pkVal0;
+         trailingWMAValue = sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx];
          smoothedValue = periodWMASum * 0.1;
          periodWMASum -= periodWMASub;
          if( sp.streamParity == 0 ) {
@@ -104968,9 +104775,7 @@ public final class Core {
       double Q2 = 0.0;
       double I2 = 0.0;
       double todayValue = 0.0;
-      if( sp.ringCap_trailingWMAIdx == 0 ) {
-         sp.ring_trailingWMAIdx_inReal[0] = inReal;
-      }
+      int ringCapL_trailingWMAIdx = 0;
       adjustedPrevPeriod = Math.fma(0.075, sp.period, 0.54);
       todayValue = inReal;
       sp.periodWMASub += todayValue;
@@ -105107,9 +104912,10 @@ public final class Core {
       }
       sp.period = Math.fma(0.2, sp.period, 0.8 * tempReal);
       /* Ooof... let's do the next price bar now! */
+      ringCapL_trailingWMAIdx = sp.ringCap_trailingWMAIdx;
       sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx] = inReal;
       sp.ringPos_trailingWMAIdx = sp.ringPos_trailingWMAIdx + 1;
-      if( sp.ringPos_trailingWMAIdx >= sp.ringCap_trailingWMAIdx ) {
+      if( sp.ringPos_trailingWMAIdx >= ringCapL_trailingWMAIdx ) {
          sp.ringPos_trailingWMAIdx = 0;
       }
       sp.streamParity = 1 - sp.streamParity;
@@ -105459,7 +105265,7 @@ public final class Core {
       outNBElement.value = outIdx;
       /* Capture the live batch state into the handle. */
       int cap_trailingWMAIdx = today - trailingWMAIdx;
-      if( cap_trailingWMAIdx < 0 || cap_trailingWMAIdx > historyLen ) {
+      if( cap_trailingWMAIdx < 1 || cap_trailingWMAIdx > historyLen ) {
          return RetCode.INTERNAL_ERROR;
       }
       int allocN_trailingWMAIdx = (cap_trailingWMAIdx > 0)? cap_trailingWMAIdx : 1;
@@ -106789,25 +106595,19 @@ public final class Core {
          double trailingWMAValue = sp.trailingWMAValue;
          int pkSlot0 = -1;
          double pkVal0 = 0.0;
-         int pkSlot1 = -1;
-         double pkVal1 = 0.0;
-         if( sp.ringCap_trailingWMAIdx == 0 ) {
-            pkSlot0 = 0;
-            pkVal0 = inReal;
-         }
          adjustedPrevPeriod = Math.fma(0.075, period, 0.54);
          todayValue = inReal;
          periodWMASub += todayValue;
          periodWMASub -= trailingWMAValue;
          periodWMASum += todayValue * 4.0;
-         trailingWMAValue = (sp.ringPos_trailingWMAIdx != pkSlot0) ? sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx] : pkVal0;
+         trailingWMAValue = sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx];
          smoothedValue = periodWMASum * 0.1;
          periodWMASum -= periodWMASub;
          /* Remember the smoothedValue into the smoothPrice
           * circular buffer.
           */
-         pkSlot1 = sp.smoothPrice_Idx;
-         pkVal1 = smoothedValue;
+         pkSlot0 = sp.smoothPrice_Idx;
+         pkVal0 = smoothedValue;
          if( sp.streamParity == 0 ) {
             /* Do the Hilbert Transforms for even price bar */
             hilbertTempReal = sp.a * smoothedValue;
@@ -106935,7 +106735,7 @@ public final class Core {
          idx = sp.smoothPrice_Idx;
          for( i = 0; i < DCPeriodInt; i += 1 ) {
             tempReal = (double)i * sp.constDeg2RadBy360 / (double)DCPeriodInt;
-            tempReal2 = (idx != pkSlot1) ? sp.cb_smoothPrice[idx] : pkVal1;
+            tempReal2 = (idx != pkSlot0) ? sp.cb_smoothPrice[idx] : pkVal0;
             realPart += Math.sin(tempReal) * tempReal2;
             imagPart += Math.cos(tempReal) * tempReal2;
             if( idx == 0 ) {
@@ -107039,9 +106839,7 @@ public final class Core {
       double DCPeriod = 0.0;
       double imagPart = 0.0;
       double realPart = 0.0;
-      if( sp.ringCap_trailingWMAIdx == 0 ) {
-         sp.ring_trailingWMAIdx_inReal[0] = inReal;
-      }
+      int ringCapL_trailingWMAIdx = 0;
       adjustedPrevPeriod = Math.fma(0.075, sp.period, 0.54);
       todayValue = inReal;
       sp.periodWMASub += todayValue;
@@ -107224,9 +107022,10 @@ public final class Core {
       if( sp.smoothPrice_Idx > sp.maxIdx_smoothPrice ) {
          sp.smoothPrice_Idx = 0;
       }
+      ringCapL_trailingWMAIdx = sp.ringCap_trailingWMAIdx;
       sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx] = inReal;
       sp.ringPos_trailingWMAIdx = sp.ringPos_trailingWMAIdx + 1;
-      if( sp.ringPos_trailingWMAIdx >= sp.ringCap_trailingWMAIdx ) {
+      if( sp.ringPos_trailingWMAIdx >= ringCapL_trailingWMAIdx ) {
          sp.ringPos_trailingWMAIdx = 0;
       }
       sp.streamParity = 1 - sp.streamParity;
@@ -107644,7 +107443,7 @@ public final class Core {
       outNBElement.value = outIdx;
       /* Capture the live batch state into the handle. */
       int cap_trailingWMAIdx = today - trailingWMAIdx;
-      if( cap_trailingWMAIdx < 0 || cap_trailingWMAIdx > historyLen ) {
+      if( cap_trailingWMAIdx < 1 || cap_trailingWMAIdx > historyLen ) {
          return RetCode.INTERNAL_ERROR;
       }
       int allocN_trailingWMAIdx = (cap_trailingWMAIdx > 0)? cap_trailingWMAIdx : 1;
@@ -108902,20 +108701,14 @@ public final class Core {
          double trailingWMAValue = sp.trailingWMAValue;
          int pkSlot0 = -1;
          double pkVal0 = 0.0;
-         int pkSlot1 = -1;
-         double pkVal1 = 0.0;
-         if( sp.ringCap_trailingWMAIdx == 0 ) {
-            pkSlot0 = 0;
-            pkVal0 = inReal;
-         }
-         pkSlot1 = sp.winPos_i;
-         pkVal1 = inReal;
+         pkSlot0 = sp.winPos_i;
+         pkVal0 = inReal;
          adjustedPrevPeriod = Math.fma(0.075, period, 0.54);
          todayValue = inReal;
          periodWMASub += todayValue;
          periodWMASub -= trailingWMAValue;
          periodWMASum += todayValue * 4.0;
-         trailingWMAValue = (sp.ringPos_trailingWMAIdx != pkSlot0) ? sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx] : pkVal0;
+         trailingWMAValue = sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx];
          smoothedValue = periodWMASum * 0.1;
          periodWMASum -= periodWMASub;
          if( sp.streamParity == 0 ) {
@@ -109052,7 +108845,7 @@ public final class Core {
          tempReal = 0.0;
          for( i = 0; i < 50; i += 1 ) {
             if( i < DCPeriodInt ) {
-               tempReal += (((sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i) != pkSlot1) ? sp.win_i_inReal[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i] : pkVal1;
+               tempReal += (((sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i) != pkSlot0) ? sp.win_i_inReal[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i] : pkVal0;
             }
          }
          if( DCPeriodInt > 0 ) {
@@ -109109,9 +108902,7 @@ public final class Core {
       double todayValue = 0.0;
       int DCPeriodInt = 0;
       double DCPeriod = 0.0;
-      if( sp.ringCap_trailingWMAIdx == 0 ) {
-         sp.ring_trailingWMAIdx_inReal[0] = inReal;
-      }
+      int ringCapL_trailingWMAIdx = 0;
       sp.win_i_inReal[sp.winPos_i] = inReal;
       adjustedPrevPeriod = Math.fma(0.075, sp.period, 0.54);
       todayValue = inReal;
@@ -109275,9 +109066,10 @@ public final class Core {
       sp.iTrend1 = tempReal;
       sp.cur_outReal = tempReal2;
       /* Ooof... let's do the next price bar now! */
+      ringCapL_trailingWMAIdx = sp.ringCap_trailingWMAIdx;
       sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx] = inReal;
       sp.ringPos_trailingWMAIdx = sp.ringPos_trailingWMAIdx + 1;
-      if( sp.ringPos_trailingWMAIdx >= sp.ringCap_trailingWMAIdx ) {
+      if( sp.ringPos_trailingWMAIdx >= ringCapL_trailingWMAIdx ) {
          sp.ringPos_trailingWMAIdx = 0;
       }
       sp.winPos_i = sp.winPos_i + 1;
@@ -109668,7 +109460,7 @@ public final class Core {
       outNBElement.value = outIdx;
       /* Capture the live batch state into the handle. */
       int cap_trailingWMAIdx = today - trailingWMAIdx;
-      if( cap_trailingWMAIdx < 0 || cap_trailingWMAIdx > historyLen ) {
+      if( cap_trailingWMAIdx < 1 || cap_trailingWMAIdx > historyLen ) {
          return RetCode.INTERNAL_ERROR;
       }
       int allocN_trailingWMAIdx = (cap_trailingWMAIdx > 0)? cap_trailingWMAIdx : 1;
@@ -111158,27 +110950,21 @@ public final class Core {
          double pkVal0 = 0.0;
          int pkSlot1 = -1;
          double pkVal1 = 0.0;
-         int pkSlot2 = -1;
-         double pkVal2 = 0.0;
-         if( sp.ringCap_trailingWMAIdx == 0 ) {
-            pkSlot0 = 0;
-            pkVal0 = inReal;
-         }
-         pkSlot1 = sp.winPos_j;
-         pkVal1 = inReal;
+         pkSlot0 = sp.winPos_j;
+         pkVal0 = inReal;
          adjustedPrevPeriod = Math.fma(0.075, period, 0.54);
          todayValue = inReal;
          periodWMASub += todayValue;
          periodWMASub -= trailingWMAValue;
          periodWMASum += todayValue * 4.0;
-         trailingWMAValue = (sp.ringPos_trailingWMAIdx != pkSlot0) ? sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx] : pkVal0;
+         trailingWMAValue = sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx];
          smoothedValue = periodWMASum * 0.1;
          periodWMASum -= periodWMASub;
          /* Remember the smoothedValue into the smoothPrice
           * circular buffer.
           */
-         pkSlot2 = sp.smoothPrice_Idx;
-         pkVal2 = smoothedValue;
+         pkSlot1 = sp.smoothPrice_Idx;
+         pkVal1 = smoothedValue;
          if( sp.streamParity == 0 ) {
             /* Do the Hilbert Transforms for even price bar */
             hilbertTempReal = sp.a * smoothedValue;
@@ -111307,7 +111093,7 @@ public final class Core {
          idx = sp.smoothPrice_Idx;
          for( i = 0; i < DCPeriodInt; i += 1 ) {
             tempReal = (double)i * sp.constDeg2RadBy360 / (double)DCPeriodInt;
-            tempReal2 = (idx != pkSlot2) ? sp.cb_smoothPrice[idx] : pkVal2;
+            tempReal2 = (idx != pkSlot1) ? sp.cb_smoothPrice[idx] : pkVal1;
             realPart += Math.sin(tempReal) * tempReal2;
             imagPart += Math.cos(tempReal) * tempReal2;
             if( idx == 0 ) {
@@ -111358,7 +111144,7 @@ public final class Core {
          tempReal = 0.0;
          for( j = 0; j < 50; j += 1 ) {
             if( j < DCPeriodInt ) {
-               tempReal += (((sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j) != pkSlot1) ? sp.win_j_inReal[(sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j] : pkVal1;
+               tempReal += (((sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j) != pkSlot0) ? sp.win_j_inReal[(sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j] : pkVal0;
             }
          }
          if( DCPeriodInt > 0 ) {
@@ -111383,7 +111169,7 @@ public final class Core {
          if( smoothPeriod != 0.0 && (tempReal > 0.67 * 360.0 / smoothPeriod && tempReal < 1.5 * 360.0 / smoothPeriod) ) {
             trend = 0;
          }
-         tempReal = (sp.smoothPrice_Idx != pkSlot2) ? sp.cb_smoothPrice[sp.smoothPrice_Idx] : pkVal2;
+         tempReal = (sp.smoothPrice_Idx != pkSlot1) ? sp.cb_smoothPrice[sp.smoothPrice_Idx] : pkVal1;
          if( trendline != 0.0 && Math.abs((tempReal - trendline) / trendline) >= 0.015 ) {
             trend = 1;
          }
@@ -111443,9 +111229,7 @@ public final class Core {
       double trendline = 0.0;
       double prevSine = 0.0;
       double prevLeadSine = 0.0;
-      if( sp.ringCap_trailingWMAIdx == 0 ) {
-         sp.ring_trailingWMAIdx_inReal[0] = inReal;
-      }
+      int ringCapL_trailingWMAIdx = 0;
       sp.win_j_inReal[sp.winPos_j] = inReal;
       adjustedPrevPeriod = Math.fma(0.075, sp.period, 0.54);
       todayValue = inReal;
@@ -111681,9 +111465,10 @@ public final class Core {
       if( sp.smoothPrice_Idx > sp.maxIdx_smoothPrice ) {
          sp.smoothPrice_Idx = 0;
       }
+      ringCapL_trailingWMAIdx = sp.ringCap_trailingWMAIdx;
       sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx] = inReal;
       sp.ringPos_trailingWMAIdx = sp.ringPos_trailingWMAIdx + 1;
-      if( sp.ringPos_trailingWMAIdx >= sp.ringCap_trailingWMAIdx ) {
+      if( sp.ringPos_trailingWMAIdx >= ringCapL_trailingWMAIdx ) {
          sp.ringPos_trailingWMAIdx = 0;
       }
       sp.winPos_j = sp.winPos_j + 1;
@@ -112181,7 +111966,7 @@ public final class Core {
       outNBElement.value = outIdx;
       /* Capture the live batch state into the handle. */
       int cap_trailingWMAIdx = today - trailingWMAIdx;
-      if( cap_trailingWMAIdx < 0 || cap_trailingWMAIdx > historyLen ) {
+      if( cap_trailingWMAIdx < 1 || cap_trailingWMAIdx > historyLen ) {
          return RetCode.INTERNAL_ERROR;
       }
       int allocN_trailingWMAIdx = (cap_trailingWMAIdx > 0)? cap_trailingWMAIdx : 1;
@@ -113705,18 +113490,12 @@ public final class Core {
          double prevKAMA = sp.prevKAMA;
          double sumROC1 = sp.sumROC1;
          double trailingValue = sp.trailingValue;
-         int pkSlot0 = -1;
-         double pkVal0 = 0.0;
          if( sp.optInTimePeriod == 1 ) {
             cur_outReal = inReal;
             return cur_outReal ;
          }
-         if( sp.ringCap_trailingIdx == 0 ) {
-            pkSlot0 = 0;
-            pkVal0 = inReal;
-         }
          tempReal = inReal;
-         tempReal2 = (sp.ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] : pkVal0;
+         tempReal2 = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
          periodROC = tempReal - tempReal2;
          /* Adjust sumROC1:
           *  - Remove trailing ROC1
@@ -113794,12 +113573,10 @@ public final class Core {
       double tempReal = 0.0;
       double tempReal2 = 0.0;
       double periodROC = 0.0;
+      int ringCapL_trailingIdx = 0;
       if( sp.optInTimePeriod == 1 ) {
          sp.cur_outReal = inReal;
          return ;
-      }
-      if( sp.ringCap_trailingIdx == 0 ) {
-         sp.ring_trailingIdx_inReal[0] = inReal;
       }
       tempReal = inReal;
       tempReal2 = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
@@ -113847,9 +113624,10 @@ public final class Core {
       sp.prevKAMA = Math.fma(inReal - sp.prevKAMA, tempReal, sp.prevKAMA);
       sp.cur_outReal = sp.prevKAMA;
       sp.lag1_inReal = inReal;
+      ringCapL_trailingIdx = sp.ringCap_trailingIdx;
       sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
       sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
-      if( sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
+      if( sp.ringPos_trailingIdx >= ringCapL_trailingIdx ) {
          sp.ringPos_trailingIdx = 0;
       }
    }
@@ -114109,7 +113887,7 @@ public final class Core {
       outNBElement.value = outIdx;
       /* Capture the live batch state into the handle. */
       int cap_trailingIdx = today - trailingIdx;
-      if( cap_trailingIdx < 0 || cap_trailingIdx > historyLen ) {
+      if( cap_trailingIdx < 1 || cap_trailingIdx > historyLen ) {
          return RetCode.INTERNAL_ERROR;
       }
       int allocN_trailingIdx = (cap_trailingIdx > 0)? cap_trailingIdx : 1;
@@ -128278,18 +128056,12 @@ public final class Core {
          double prev_jQ_input_Even = sp.prev_jQ_input_Even;
          double prev_jQ_input_Odd = sp.prev_jQ_input_Odd;
          double trailingWMAValue = sp.trailingWMAValue;
-         int pkSlot0 = -1;
-         double pkVal0 = 0.0;
-         if( sp.ringCap_trailingWMAIdx == 0 ) {
-            pkSlot0 = 0;
-            pkVal0 = inReal;
-         }
          adjustedPrevPeriod = Math.fma(0.075, sp.period, 0.54);
          todayValue = inReal;
          periodWMASub += todayValue;
          periodWMASub -= trailingWMAValue;
          periodWMASum += todayValue * 4.0;
-         trailingWMAValue = (sp.ringPos_trailingWMAIdx != pkSlot0) ? sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx] : pkVal0;
+         trailingWMAValue = sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx];
          smoothedValue = periodWMASum * 0.1;
          periodWMASum -= periodWMASub;
          if( sp.streamParity == 0 ) {
@@ -128464,9 +128236,7 @@ public final class Core {
       double Q2 = 0.0;
       double I2 = 0.0;
       double todayValue = 0.0;
-      if( sp.ringCap_trailingWMAIdx == 0 ) {
-         sp.ring_trailingWMAIdx_inReal[0] = inReal;
-      }
+      int ringCapL_trailingWMAIdx = 0;
       adjustedPrevPeriod = Math.fma(0.075, sp.period, 0.54);
       todayValue = inReal;
       sp.periodWMASub += todayValue;
@@ -128635,9 +128405,10 @@ public final class Core {
       }
       sp.period = Math.fma(0.2, sp.period, 0.8 * tempReal);
       /* Ooof... let's do the next price bar now! */
+      ringCapL_trailingWMAIdx = sp.ringCap_trailingWMAIdx;
       sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx] = inReal;
       sp.ringPos_trailingWMAIdx = sp.ringPos_trailingWMAIdx + 1;
-      if( sp.ringPos_trailingWMAIdx >= sp.ringCap_trailingWMAIdx ) {
+      if( sp.ringPos_trailingWMAIdx >= ringCapL_trailingWMAIdx ) {
          sp.ringPos_trailingWMAIdx = 0;
       }
       sp.streamParity = 1 - sp.streamParity;
@@ -129036,7 +128807,7 @@ public final class Core {
       outNBElement.value = outIdx;
       /* Capture the live batch state into the handle. */
       int cap_trailingWMAIdx = today - trailingWMAIdx;
-      if( cap_trailingWMAIdx < 0 || cap_trailingWMAIdx > historyLen ) {
+      if( cap_trailingWMAIdx < 1 || cap_trailingWMAIdx > historyLen ) {
          return RetCode.INTERNAL_ERROR;
       }
       int allocN_trailingWMAIdx = (cap_trailingWMAIdx > 0)? cap_trailingWMAIdx : 1;
@@ -144746,13 +144517,7 @@ public final class Core {
             throw nonFiniteBar("MOM peek", "inReal");
          MomStream sp = this;
          double cur_outReal = 0.0;
-         int pkSlot0 = -1;
-         double pkVal0 = 0.0;
-         if( sp.ringCap_trailingIdx == 0 ) {
-            pkSlot0 = 0;
-            pkVal0 = inReal;
-         }
-         cur_outReal = inReal - ((sp.ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] : pkVal0);
+         cur_outReal = inReal - sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
          return cur_outReal;
       }
 
@@ -144784,13 +144549,12 @@ public final class Core {
    }
    private void momStepImpl( MomStream sp, double inReal )
    {
-      if( sp.ringCap_trailingIdx == 0 ) {
-         sp.ring_trailingIdx_inReal[0] = inReal;
-      }
+      int ringCapL_trailingIdx = 0;
       sp.cur_outReal = inReal - sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
+      ringCapL_trailingIdx = sp.ringCap_trailingIdx;
       sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
       sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
-      if( sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
+      if( sp.ringPos_trailingIdx >= ringCapL_trailingIdx ) {
          sp.ringPos_trailingIdx = 0;
       }
    }
@@ -144875,7 +144639,7 @@ public final class Core {
       outBegIdx.value = startIdx;
       /* Capture the live batch state into the handle. */
       int cap_trailingIdx = inIdx - trailingIdx;
-      if( cap_trailingIdx < 0 || cap_trailingIdx > historyLen ) {
+      if( cap_trailingIdx < 1 || cap_trailingIdx > historyLen ) {
          return RetCode.INTERNAL_ERROR;
       }
       int allocN_trailingIdx = (cap_trailingIdx > 0)? cap_trailingIdx : 1;
@@ -158519,13 +158283,7 @@ public final class Core {
          RocStream sp = this;
          double tempReal = 0.0;
          double cur_outReal = 0.0;
-         int pkSlot0 = -1;
-         double pkVal0 = 0.0;
-         if( sp.ringCap_trailingIdx == 0 ) {
-            pkSlot0 = 0;
-            pkVal0 = inReal;
-         }
-         tempReal = (sp.ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] : pkVal0;
+         tempReal = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
          if( tempReal != 0.0 ) {
             cur_outReal = (inReal / tempReal - 1.0) * 100.0;
          } else {
@@ -158563,18 +158321,17 @@ public final class Core {
    private void rocStepImpl( RocStream sp, double inReal )
    {
       double tempReal = 0.0;
-      if( sp.ringCap_trailingIdx == 0 ) {
-         sp.ring_trailingIdx_inReal[0] = inReal;
-      }
+      int ringCapL_trailingIdx = 0;
       tempReal = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
       if( tempReal != 0.0 ) {
          sp.cur_outReal = (inReal / tempReal - 1.0) * 100.0;
       } else {
          sp.cur_outReal = 0.0;
       }
+      ringCapL_trailingIdx = sp.ringCap_trailingIdx;
       sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
       sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
-      if( sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
+      if( sp.ringPos_trailingIdx >= ringCapL_trailingIdx ) {
          sp.ringPos_trailingIdx = 0;
       }
    }
@@ -158663,7 +158420,7 @@ public final class Core {
       outBegIdx.value = startIdx;
       /* Capture the live batch state into the handle. */
       int cap_trailingIdx = inIdx - trailingIdx;
-      if( cap_trailingIdx < 0 || cap_trailingIdx > historyLen ) {
+      if( cap_trailingIdx < 1 || cap_trailingIdx > historyLen ) {
          return RetCode.INTERNAL_ERROR;
       }
       int allocN_trailingIdx = (cap_trailingIdx > 0)? cap_trailingIdx : 1;
@@ -159157,13 +158914,7 @@ public final class Core {
          RocpStream sp = this;
          double tempReal = 0.0;
          double cur_outReal = 0.0;
-         int pkSlot0 = -1;
-         double pkVal0 = 0.0;
-         if( sp.ringCap_trailingIdx == 0 ) {
-            pkSlot0 = 0;
-            pkVal0 = inReal;
-         }
-         tempReal = (sp.ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] : pkVal0;
+         tempReal = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
          if( tempReal != 0.0 ) {
             cur_outReal = (inReal - tempReal) / tempReal;
          } else {
@@ -159201,18 +158952,17 @@ public final class Core {
    private void rocpStepImpl( RocpStream sp, double inReal )
    {
       double tempReal = 0.0;
-      if( sp.ringCap_trailingIdx == 0 ) {
-         sp.ring_trailingIdx_inReal[0] = inReal;
-      }
+      int ringCapL_trailingIdx = 0;
       tempReal = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
       if( tempReal != 0.0 ) {
          sp.cur_outReal = (inReal - tempReal) / tempReal;
       } else {
          sp.cur_outReal = 0.0;
       }
+      ringCapL_trailingIdx = sp.ringCap_trailingIdx;
       sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
       sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
-      if( sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
+      if( sp.ringPos_trailingIdx >= ringCapL_trailingIdx ) {
          sp.ringPos_trailingIdx = 0;
       }
    }
@@ -159301,7 +159051,7 @@ public final class Core {
       outBegIdx.value = startIdx;
       /* Capture the live batch state into the handle. */
       int cap_trailingIdx = inIdx - trailingIdx;
-      if( cap_trailingIdx < 0 || cap_trailingIdx > historyLen ) {
+      if( cap_trailingIdx < 1 || cap_trailingIdx > historyLen ) {
          return RetCode.INTERNAL_ERROR;
       }
       int allocN_trailingIdx = (cap_trailingIdx > 0)? cap_trailingIdx : 1;
@@ -159796,13 +159546,7 @@ public final class Core {
          RocrStream sp = this;
          double tempReal = 0.0;
          double cur_outReal = 0.0;
-         int pkSlot0 = -1;
-         double pkVal0 = 0.0;
-         if( sp.ringCap_trailingIdx == 0 ) {
-            pkSlot0 = 0;
-            pkVal0 = inReal;
-         }
-         tempReal = (sp.ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] : pkVal0;
+         tempReal = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
          if( tempReal != 0.0 ) {
             cur_outReal = inReal / tempReal;
          } else {
@@ -159840,18 +159584,17 @@ public final class Core {
    private void rocrStepImpl( RocrStream sp, double inReal )
    {
       double tempReal = 0.0;
-      if( sp.ringCap_trailingIdx == 0 ) {
-         sp.ring_trailingIdx_inReal[0] = inReal;
-      }
+      int ringCapL_trailingIdx = 0;
       tempReal = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
       if( tempReal != 0.0 ) {
          sp.cur_outReal = inReal / tempReal;
       } else {
          sp.cur_outReal = 0.0;
       }
+      ringCapL_trailingIdx = sp.ringCap_trailingIdx;
       sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
       sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
-      if( sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
+      if( sp.ringPos_trailingIdx >= ringCapL_trailingIdx ) {
          sp.ringPos_trailingIdx = 0;
       }
    }
@@ -159940,7 +159683,7 @@ public final class Core {
       outBegIdx.value = startIdx;
       /* Capture the live batch state into the handle. */
       int cap_trailingIdx = inIdx - trailingIdx;
-      if( cap_trailingIdx < 0 || cap_trailingIdx > historyLen ) {
+      if( cap_trailingIdx < 1 || cap_trailingIdx > historyLen ) {
          return RetCode.INTERNAL_ERROR;
       }
       int allocN_trailingIdx = (cap_trailingIdx > 0)? cap_trailingIdx : 1;
@@ -160437,13 +160180,7 @@ public final class Core {
          Rocr100Stream sp = this;
          double tempReal = 0.0;
          double cur_outReal = 0.0;
-         int pkSlot0 = -1;
-         double pkVal0 = 0.0;
-         if( sp.ringCap_trailingIdx == 0 ) {
-            pkSlot0 = 0;
-            pkVal0 = inReal;
-         }
-         tempReal = (sp.ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] : pkVal0;
+         tempReal = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
          if( tempReal != 0.0 ) {
             cur_outReal = inReal / tempReal * 100.0;
          } else {
@@ -160481,18 +160218,17 @@ public final class Core {
    private void rocr100StepImpl( Rocr100Stream sp, double inReal )
    {
       double tempReal = 0.0;
-      if( sp.ringCap_trailingIdx == 0 ) {
-         sp.ring_trailingIdx_inReal[0] = inReal;
-      }
+      int ringCapL_trailingIdx = 0;
       tempReal = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
       if( tempReal != 0.0 ) {
          sp.cur_outReal = inReal / tempReal * 100.0;
       } else {
          sp.cur_outReal = 0.0;
       }
+      ringCapL_trailingIdx = sp.ringCap_trailingIdx;
       sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
       sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
-      if( sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
+      if( sp.ringPos_trailingIdx >= ringCapL_trailingIdx ) {
          sp.ringPos_trailingIdx = 0;
       }
    }
@@ -160581,7 +160317,7 @@ public final class Core {
       outBegIdx.value = startIdx;
       /* Capture the live batch state into the handle. */
       int cap_trailingIdx = inIdx - trailingIdx;
-      if( cap_trailingIdx < 0 || cap_trailingIdx > historyLen ) {
+      if( cap_trailingIdx < 1 || cap_trailingIdx > historyLen ) {
          return RetCode.INTERNAL_ERROR;
       }
       int allocN_trailingIdx = (cap_trailingIdx > 0)? cap_trailingIdx : 1;
@@ -160690,6 +160426,7 @@ public final class Core {
  *  090926 MF,CC #410 Scale the Wilder step by a hoisted 1/period and split the
  *               gain/loss without a branch; the loop-carried chain keeps
  *               neither a divide nor a 50/50 mispredict.
+ *  092826 MF,CC #466 Drop the period-1 copy-through; the range starts at 2.
  */
 
    /**
@@ -160765,24 +160502,6 @@ public final class Core {
       }
       outIdx = 0;
       /* Index into the output. */
-      /* Trap special case where the period is '1'.
-       * In that case, just copy the input into the
-       * output for the requested range (as-is !)
-       */
-      if( optInTimePeriod == 1 ) {
-         outBegIdx.value = startIdx;
-         i = (int)(endIdx - startIdx + 1);
-         outNBElement.value = (int)i;
-         /* Element loop, not a block copy: the C single-precision variant reads a
-          * float array, so a double-sized byte copy would reinterpret and
-          * over-read it (#137). Forward order keeps the in-place case correct (#94).
-          */
-         today = (int)startIdx;
-         for( outIdx = 0; outIdx < (int)i; outIdx += 1 ) {
-            outReal[outIdx] = inReal[today++];
-         }
-         return RetCode.SUCCESS ;
-      }
       invPeriod = 1.0 / (double)optInTimePeriod;
       /* Accumulate Wilder's "Average Gain" and "Average Loss"
        * among the initial period.
@@ -160920,16 +160639,6 @@ public final class Core {
          return RetCode.SUCCESS ;
       }
       outIdx = 0;
-      if( optInTimePeriod == 1 ) {
-         outBegIdx.value = startIdx;
-         i = (int)(endIdx - startIdx + 1);
-         outNBElement.value = (int)i;
-         today = (int)startIdx;
-         for( outIdx = 0; outIdx < (int)i; outIdx += 1 ) {
-            outReal[outIdx] = (double)inReal[today++];
-         }
-         return RetCode.SUCCESS ;
-      }
       invPeriod = 1.0 / (double)optInTimePeriod;
       today = startIdx - lookbackTotal;
       prevValue = (double)inReal[today];
@@ -161235,10 +160944,6 @@ public final class Core {
          double prevGain = sp.prevGain;
          double prevLoss = sp.prevLoss;
          double prevValue = sp.prevValue;
-         if( sp.optInTimePeriod == 1 ) {
-            cur_outReal = inReal;
-            return cur_outReal ;
-         }
          tempValue1 = (double)inReal;
          tempValue2 = tempValue1 - prevValue;
          prevValue = tempValue1;
@@ -161289,10 +160994,6 @@ public final class Core {
       double gainDelta = 0.0;
       double tempValue1 = 0.0;
       double tempValue2 = 0.0;
-      if( sp.optInTimePeriod == 1 ) {
-         sp.cur_outReal = inReal;
-         return ;
-      }
       tempValue1 = (double)inReal;
       tempValue2 = tempValue1 - sp.prevValue;
       sp.prevValue = tempValue1;
@@ -161340,29 +161041,6 @@ public final class Core {
          outBegIdx.value = 0;
          outNBElement.value = 0;
          return RetCode.INSUFFICIENT_HISTORY;
-      }
-      if( optInTimePeriod == 1 ) {
-         int fillLb = rsiLookback(optInTimePeriod);
-         if( startIdx > fillLb ) fillLb = startIdx;
-         if( historyLen < fillLb + 1 ) {
-            return RetCode.INSUFFICIENT_HISTORY;
-         }
-         sp.optInTimePeriod = optInTimePeriod;
-         sp.invPeriod = 0.0;
-         sp.prevGain = 0.0;
-         sp.prevLoss = 0.0;
-         sp.prevValue = 0.0;
-         outBegIdx.value = fillLb;
-         outNBElement.value = historyLen - fillLb;
-         if( outStride == 0 ) {
-            outReal[0] = inReal[historyLen - 1];
-         } else {
-            for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
-               outReal[fillIdx] = inReal[fillLb + fillIdx];
-            }
-         }
-         sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
-         return RetCode.SUCCESS;
       }
       /* The following algorithm is base on the original
        * work from Wilder's and shall represent the
@@ -164287,19 +163965,13 @@ public final class Core {
          double cur_outReal = 0.0;
          double periodTotal = sp.periodTotal;
          int zeroCount = sp.zeroCount;
-         int pkSlot0 = -1;
-         double pkVal0 = 0.0;
-         if( sp.ringCap_trailingIdx == 0 ) {
-            pkSlot0 = 0;
-            pkVal0 = inVolume;
-         }
          /* Drop the trailing bar BEFORE adding today's. Up to the first dead
           * window, that order makes each baseline bit-identical to the moving
           * average of the same period at the previous bar; the reverse order
           * differs only in the last ulp, so no tolerance can tell the two apart.
           */
          baseline = periodTotal / (double)sp.optInTimePeriod;
-         trailingVolume = (double)((sp.ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx] : pkVal0);
+         trailingVolume = (double)sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx];
          periodTotal -= trailingVolume;
          zeroOut = (Math.abs(trailingVolume) <= 0.0) ? 1 : 0;
          todayVolume = (double)inVolume;
@@ -164346,9 +164018,7 @@ public final class Core {
       double trailingVolume = 0.0;
       int zeroIn = 0;
       int zeroOut = 0;
-      if( sp.ringCap_trailingIdx == 0 ) {
-         sp.ring_trailingIdx_inVolume[0] = inVolume;
-      }
+      int ringCapL_trailingIdx = 0;
       /* Drop the trailing bar BEFORE adding today's. Up to the first dead
        * window, that order makes each baseline bit-identical to the moving
        * average of the same period at the previous bar; the reverse order
@@ -164366,9 +164036,10 @@ public final class Core {
          sp.periodTotal = 0.0;
       }
       sp.cur_outReal = todayVolume / baseline;
+      ringCapL_trailingIdx = sp.ringCap_trailingIdx;
       sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx] = inVolume;
       sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
-      if( sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
+      if( sp.ringPos_trailingIdx >= ringCapL_trailingIdx ) {
          sp.ringPos_trailingIdx = 0;
       }
    }
@@ -164456,7 +164127,7 @@ public final class Core {
       outBegIdx.value = startIdx;
       /* Capture the live batch state into the handle. */
       int cap_trailingIdx = i - trailingIdx;
-      if( cap_trailingIdx < 0 || cap_trailingIdx > historyLen ) {
+      if( cap_trailingIdx < 1 || cap_trailingIdx > historyLen ) {
          return RetCode.INTERNAL_ERROR;
       }
       int allocN_trailingIdx = (cap_trailingIdx > 0)? cap_trailingIdx : 1;
@@ -176767,15 +176438,9 @@ public final class Core {
          double tempReal = 0.0;
          double cur_outReal = 0.0;
          double periodTotal = sp.periodTotal;
-         int pkSlot0 = -1;
-         double pkVal0 = 0.0;
-         if( sp.ringCap_trailingIdx == 0 ) {
-            pkSlot0 = 0;
-            pkVal0 = inReal;
-         }
          periodTotal += inReal;
          tempReal = periodTotal;
-         periodTotal -= (sp.ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] : pkVal0;
+         periodTotal -= sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
          cur_outReal = tempReal;
          return cur_outReal;
       }
@@ -176809,16 +176474,15 @@ public final class Core {
    private void sumStepImpl( SumStream sp, double inReal )
    {
       double tempReal = 0.0;
-      if( sp.ringCap_trailingIdx == 0 ) {
-         sp.ring_trailingIdx_inReal[0] = inReal;
-      }
+      int ringCapL_trailingIdx = 0;
       sp.periodTotal += inReal;
       tempReal = sp.periodTotal;
       sp.periodTotal -= sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
       sp.cur_outReal = tempReal;
+      ringCapL_trailingIdx = sp.ringCap_trailingIdx;
       sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
       sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
-      if( sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
+      if( sp.ringPos_trailingIdx >= ringCapL_trailingIdx ) {
          sp.ringPos_trailingIdx = 0;
       }
    }
@@ -176890,7 +176554,7 @@ public final class Core {
       outBegIdx.value = startIdx;
       /* Capture the live batch state into the handle. */
       int cap_trailingIdx = i - trailingIdx;
-      if( cap_trailingIdx < 0 || cap_trailingIdx > historyLen ) {
+      if( cap_trailingIdx < 1 || cap_trailingIdx > historyLen ) {
          return RetCode.INTERNAL_ERROR;
       }
       int allocN_trailingIdx = (cap_trailingIdx > 0)? cap_trailingIdx : 1;
@@ -182269,22 +181933,10 @@ public final class Core {
             double numeratorAdd = sp.numeratorAdd;
             double numeratorSub = sp.numeratorSub;
             double tempReal = sp.tempReal;
-            int pkSlot0 = -1;
-            double pkVal0 = 0.0;
-            int pkSlot1 = -1;
-            double pkVal1 = 0.0;
-            if( sp.ringCap_middleIdx == 0 ) {
-               pkSlot0 = 0;
-               pkVal0 = inReal;
-            }
-            if( sp.ringCap_trailingIdx == 0 ) {
-               pkSlot1 = 0;
-               pkVal1 = inReal;
-            }
             /* Step (1) */
             numerator -= numeratorSub;
             numeratorSub -= tempReal;
-            tempReal = (sp.ringPos_middleIdx != pkSlot0) ? sp.ring_middleIdx_inReal[sp.ringPos_middleIdx] : pkVal0;
+            tempReal = sp.ring_middleIdx_inReal[sp.ringPos_middleIdx];
             numeratorSub += tempReal;
             /* Step (2) */
             numeratorAdd -= tempReal;
@@ -182294,7 +181946,7 @@ public final class Core {
             /* Step (3) */
             numerator += tempReal;
             /* Step (4) */
-            tempReal = (sp.ringPos_trailingIdx != pkSlot1) ? sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] : pkVal1;
+            tempReal = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
             cur_outReal = numerator * sp.factor;
          }
          return cur_outReal;
@@ -182361,12 +182013,8 @@ public final class Core {
             sp.ringPos_trailingIdx = 0;
          }
       } else {
-         if( sp.ringCap_middleIdx == 0 ) {
-            sp.ring_middleIdx_inReal[0] = inReal;
-         }
-         if( sp.ringCap_trailingIdx == 0 ) {
-            sp.ring_trailingIdx_inReal[0] = inReal;
-         }
+         int ringCapL_middleIdx = 0;
+         int ringCapL_trailingIdx = 0;
          /* Step (1) */
          sp.numerator -= sp.numeratorSub;
          sp.numeratorSub -= sp.tempReal;
@@ -182382,14 +182030,16 @@ public final class Core {
          /* Step (4) */
          sp.tempReal = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
          sp.cur_outReal = sp.numerator * sp.factor;
+         ringCapL_middleIdx = sp.ringCap_middleIdx;
          sp.ring_middleIdx_inReal[sp.ringPos_middleIdx] = inReal;
          sp.ringPos_middleIdx = sp.ringPos_middleIdx + 1;
-         if( sp.ringPos_middleIdx >= sp.ringCap_middleIdx ) {
+         if( sp.ringPos_middleIdx >= ringCapL_middleIdx ) {
             sp.ringPos_middleIdx = 0;
          }
+         ringCapL_trailingIdx = sp.ringCap_trailingIdx;
          sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
          sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
-         if( sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
+         if( sp.ringPos_trailingIdx >= ringCapL_trailingIdx ) {
             sp.ringPos_trailingIdx = 0;
          }
       }
@@ -182814,14 +182464,14 @@ public final class Core {
          outBegIdx.value = startIdx;
          /* Capture the live batch state into the handle. */
          int cap_middleIdx = todayIdx - middleIdx;
-         if( cap_middleIdx < 0 || cap_middleIdx > historyLen ) {
+         if( cap_middleIdx < 1 || cap_middleIdx > historyLen ) {
             return RetCode.INTERNAL_ERROR;
          }
          int allocN_middleIdx = (cap_middleIdx > 0)? cap_middleIdx : 1;
          double[] capRing_middleIdx_inReal = new double[allocN_middleIdx];
          System.arraycopy(inReal, historyLen - cap_middleIdx, capRing_middleIdx_inReal, 0, cap_middleIdx);
          int cap_trailingIdx = todayIdx - trailingIdx;
-         if( cap_trailingIdx < 0 || cap_trailingIdx > historyLen ) {
+         if( cap_trailingIdx < 1 || cap_trailingIdx > historyLen ) {
             return RetCode.INTERNAL_ERROR;
          }
          int allocN_trailingIdx = (cap_trailingIdx > 0)? cap_trailingIdx : 1;
@@ -192403,19 +192053,9 @@ public final class Core {
          double sumPV = sp.sumPV;
          double sumV = sp.sumV;
          int zeroCount = sp.zeroCount;
-         int pkSlot0 = -1;
-         double pkVal0 = 0.0;
-         int pkSlot1 = -1;
-         double pkVal1 = 0.0;
          if( sp.optInTimePeriod == 1 ) {
             cur_outReal = inReal;
             return cur_outReal ;
-         }
-         if( sp.ringCap_trailingIdx == 0 ) {
-            pkSlot0 = 0;
-            pkVal0 = inReal;
-            pkSlot1 = 0;
-            pkVal1 = inVolume;
          }
          tempReal = inReal * inVolume;
          sumPV += tempReal;
@@ -192424,8 +192064,8 @@ public final class Core {
          /* Read the trailing values before writing the output, since the caller
           * may pass the same buffer for an input and the output.
           */
-         trailingVolume = (sp.ringPos_trailingIdx != pkSlot1) ? sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx] : pkVal1;
-         tempReal = ((sp.ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] : pkVal0) * trailingVolume;
+         trailingVolume = sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx];
+         tempReal = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] * trailingVolume;
          /* Each branch writes its own output: a branch that only zeroes the sums
           * is if-converted into a mask on their dependency chain.
           */
@@ -192485,13 +192125,10 @@ public final class Core {
       double tempV = 0.0;
       double tempReal = 0.0;
       double trailingVolume = 0.0;
+      int ringCapL_trailingIdx = 0;
       if( sp.optInTimePeriod == 1 ) {
          sp.cur_outReal = inReal;
          return ;
-      }
-      if( sp.ringCap_trailingIdx == 0 ) {
-         sp.ring_trailingIdx_inReal[0] = inReal;
-         sp.ring_trailingIdx_inVolume[0] = inVolume;
       }
       tempReal = inReal * inVolume;
       sp.sumPV += tempReal;
@@ -192527,10 +192164,11 @@ public final class Core {
          sp.cur_outReal = tempPV / (double)sp.optInTimePeriod / (tempV / (double)sp.optInTimePeriod);
       }
       sp.zeroCount -= (Math.abs(trailingVolume) <= 0.0) ? 1 : 0;
+      ringCapL_trailingIdx = sp.ringCap_trailingIdx;
       sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
       sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx] = inVolume;
       sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
-      if( sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
+      if( sp.ringPos_trailingIdx >= ringCapL_trailingIdx ) {
          sp.ringPos_trailingIdx = 0;
       }
    }
@@ -192685,7 +192323,7 @@ public final class Core {
       outBegIdx.value = startIdx;
       /* Capture the live batch state into the handle. */
       int cap_trailingIdx = i - trailingIdx;
-      if( cap_trailingIdx < 0 || cap_trailingIdx > historyLen ) {
+      if( cap_trailingIdx < 1 || cap_trailingIdx > historyLen ) {
          return RetCode.INTERNAL_ERROR;
       }
       int allocN_trailingIdx = (cap_trailingIdx > 0)? cap_trailingIdx : 1;
@@ -195611,18 +195249,12 @@ public final class Core {
          double trailingValue = sp.trailingValue;
          int pkSlot0 = -1;
          double pkVal0 = 0.0;
-         int pkSlot1 = -1;
-         double pkVal1 = 0.0;
          if( sp.optInTimePeriod == 1 ) {
             cur_outReal = inReal;
             return cur_outReal ;
          }
-         if( sp.ringCap_trailingIdx == 0 ) {
-            pkSlot0 = 0;
-            pkVal0 = inReal;
-         }
-         pkSlot1 = sp.winPos_j;
-         pkVal1 = inReal;
+         pkSlot0 = sp.winPos_j;
+         pkVal0 = inReal;
          /* Add the current price bar to the sum
           * who are carried through the iterations.
           */
@@ -195680,7 +195312,7 @@ public final class Core {
             periodSum = (double)0.0;
             rw = 1;
             for( j = sp.lookbackWin; j >= 0; j -= 1 ) {
-               tempReal = (((sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j) != pkSlot1) ? sp.win_j_inReal[(sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j] : pkVal1;
+               tempReal = (((sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j) != pkSlot0) ? sp.win_j_inReal[(sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j] : pkVal0;
                periodSub += tempReal;
                periodSum += tempReal * rw;
                rw += 1;
@@ -195691,7 +195323,7 @@ public final class Core {
           * (must be saved here just in case outReal and
           *  inReal are the same buffer).
           */
-         trailingValue = (sp.ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] : pkVal0;
+         trailingValue = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
          /* Calculate the WMA for this price bar. */
          cur_outReal = periodSum / sp.divider;
          return cur_outReal;
@@ -195728,12 +195360,10 @@ public final class Core {
       int j = 0;
       int rw = 0;
       double tempReal = 0.0;
+      int ringCapL_trailingIdx = 0;
       if( sp.optInTimePeriod == 1 ) {
          sp.cur_outReal = inReal;
          return ;
-      }
-      if( sp.ringCap_trailingIdx == 0 ) {
-         sp.ring_trailingIdx_inReal[0] = inReal;
       }
       sp.win_j_inReal[sp.winPos_j] = inReal;
       /* Add the current price bar to the sum
@@ -195809,9 +195439,10 @@ public final class Core {
       sp.cur_outReal = sp.periodSum / sp.divider;
       /* Prepare the periodSum for the next iteration. */
       sp.periodSum -= sp.periodSub;
+      ringCapL_trailingIdx = sp.ringCap_trailingIdx;
       sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
       sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
-      if( sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
+      if( sp.ringPos_trailingIdx >= ringCapL_trailingIdx ) {
          sp.ringPos_trailingIdx = 0;
       }
       sp.winPos_j = sp.winPos_j + 1;
@@ -196028,7 +195659,7 @@ public final class Core {
       outBegIdx.value = startIdx;
       /* Capture the live batch state into the handle. */
       int cap_trailingIdx = inIdx - trailingIdx;
-      if( cap_trailingIdx < 0 || cap_trailingIdx > historyLen ) {
+      if( cap_trailingIdx < 1 || cap_trailingIdx > historyLen ) {
          return RetCode.INTERNAL_ERROR;
       }
       int allocN_trailingIdx = (cap_trailingIdx > 0)? cap_trailingIdx : 1;

@@ -582,12 +582,8 @@ impl Core {
                 sp.ringPos_trailingIdx = 0;
             }
         } else {
-            if sp.ringCap_middleIdx == 0 {
-                sp.ring_middleIdx_inReal[0] = inReal;
-            }
-            if sp.ringCap_trailingIdx == 0 {
-                sp.ring_trailingIdx_inReal[0] = inReal;
-            }
+            let mut ringCapL_middleIdx: usize = 0_usize;
+            let mut ringCapL_trailingIdx: usize = 0_usize;
             // Step (1)
             sp.numerator -= sp.numeratorSub;
             sp.numeratorSub -= sp.tempReal;
@@ -604,14 +600,16 @@ impl Core {
             sp.tempReal = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
             (*outReal) = sp.numerator * sp.factor;
             sp.cur_outReal = (*outReal);
+            ringCapL_middleIdx = sp.ringCap_middleIdx;
             sp.ring_middleIdx_inReal[sp.ringPos_middleIdx] = inReal;
             sp.ringPos_middleIdx = sp.ringPos_middleIdx + 1;
-            if sp.ringPos_middleIdx >= sp.ringCap_middleIdx {
+            if sp.ringPos_middleIdx >= ringCapL_middleIdx {
                 sp.ringPos_middleIdx = 0;
             }
+            ringCapL_trailingIdx = sp.ringCap_trailingIdx;
             sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
             sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
-            if sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx {
+            if sp.ringPos_trailingIdx >= ringCapL_trailingIdx {
                 sp.ringPos_trailingIdx = 0;
             }
         }
@@ -1089,7 +1087,7 @@ impl Core {
 
             // Capture the live batch state into the handle.
             let cap_middleIdx: i64 = (todayIdx as i64) - (middleIdx as i64);
-            if cap_middleIdx < 0 || cap_middleIdx > historyLen as i64 {
+            if cap_middleIdx < 1 || cap_middleIdx > historyLen as i64 {
                 return Err(RetCode::InternalError);
             }
             let allocN_middleIdx: usize = if cap_middleIdx > 0 { cap_middleIdx as usize } else { 1 };
@@ -1097,7 +1095,7 @@ impl Core {
             ring_middleIdx_inReal[..cap_middleIdx as usize]
                 .copy_from_slice(&inReal[historyLen - cap_middleIdx as usize..]);
             let cap_trailingIdx: i64 = (todayIdx as i64) - (trailingIdx as i64);
-            if cap_trailingIdx < 0 || cap_trailingIdx > historyLen as i64 {
+            if cap_trailingIdx < 1 || cap_trailingIdx > historyLen as i64 {
                 return Err(RetCode::InternalError);
             }
             let allocN_trailingIdx: usize = if cap_trailingIdx > 0 { cap_trailingIdx as usize } else { 1 };
@@ -1322,22 +1320,10 @@ impl TrimaStream {
                 let mut numeratorAdd = sp.numeratorAdd;
                 let mut numeratorSub = sp.numeratorSub;
                 let mut tempReal = sp.tempReal;
-                let mut pkSlot0: usize = usize::MAX;
-                let mut pkVal0: f64 = 0.0_f64;
-                let mut pkSlot1: usize = usize::MAX;
-                let mut pkVal1: f64 = 0.0_f64;
-                if sp.ringCap_middleIdx == 0 {
-                    pkSlot0 = 0;
-                    pkVal0 = inReal;
-                }
-                if sp.ringCap_trailingIdx == 0 {
-                    pkSlot1 = 0;
-                    pkVal1 = inReal;
-                }
                 // Step (1)
                 numerator -= numeratorSub;
                 numeratorSub -= tempReal;
-                tempReal = (if (sp.ringPos_middleIdx as usize) != pkSlot0 { sp.ring_middleIdx_inReal[sp.ringPos_middleIdx] } else { pkVal0 });
+                tempReal = sp.ring_middleIdx_inReal[sp.ringPos_middleIdx];
                 numeratorSub += tempReal;
                 // Step (2)
                 numeratorAdd -= tempReal;
@@ -1347,7 +1333,7 @@ impl TrimaStream {
                 // Step (3)
                 numerator += tempReal;
                 // Step (4)
-                tempReal = (if (sp.ringPos_trailingIdx as usize) != pkSlot1 { sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] } else { pkVal1 });
+                tempReal = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
                 (*outReal) = numerator * sp.factor;
             }
         }

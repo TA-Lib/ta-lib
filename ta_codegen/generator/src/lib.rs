@@ -26,6 +26,7 @@ pub mod ir;
 pub mod naming;
 pub mod parser;
 pub mod registry;
+pub mod ring_lag;
 pub mod ride_gen;
 pub mod server_gen;
 pub mod stability;

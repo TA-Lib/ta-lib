@@ -430,11 +430,8 @@ static void TA_CMOU_StepImpl( struct TA_CMOU_Stream *sp, double inReal, double *
    double sum;
    double diff;
    double tempReal;
+   int ringCapL_trailingIdx;
 
-   if( sp->ringCap_trailingIdx == 0 )
-   {
-      sp->ring_trailingIdx_inReal[0] = inReal;
-   }
    /* Drop the oldest change: inReal[trailingIdx] - inReal[trailingIdx-1].
     * inReal[trailingIdx-1] comes from the cache (already overwritten when
     * outReal == inReal); inReal[trailingIdx] is read here, before this
@@ -487,9 +484,10 @@ static void TA_CMOU_StepImpl( struct TA_CMOU_Stream *sp, double inReal, double *
       *outReal= 0.0;
    }
    sp->cur_outReal = *outReal;
+   ringCapL_trailingIdx = sp->ringCap_trailingIdx;
    sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx] = inReal;
    sp->ringPos_trailingIdx = sp->ringPos_trailingIdx + 1;
-   if( sp->ringPos_trailingIdx >= sp->ringCap_trailingIdx )
+   if( sp->ringPos_trailingIdx >= ringCapL_trailingIdx )
    {
       sp->ringPos_trailingIdx = 0;
    }
@@ -687,7 +685,7 @@ static TA_RetCode TA_CMOU_OpenImpl( struct TA_CMOU_Stream **stream, const double
       sp->prevValue = prevValue;
       sp->trailingValue = trailingValue;
       sp->ringCap_trailingIdx = (int)(today - trailingIdx);
-      if( sp->ringCap_trailingIdx < 0 || sp->ringCap_trailingIdx > historyLen ) { TA_CMOU_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(316); }
+      if( sp->ringCap_trailingIdx < 1 || sp->ringCap_trailingIdx > historyLen ) { TA_CMOU_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(316); }
       { size_t allocN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);
         sp->ring_trailingIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_trailingIdx_inReal ) { TA_CMOU_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
@@ -768,8 +766,6 @@ TA_LIB_API TA_RetCode TA_CMOU_Peek( const TA_CMOU_Stream *stream, double inReal,
    double trailingValue;
    double upSum;
    double *ring_trailingIdx_inReal;
-   int pkSlot0 = -1;
-   double pkVal0 = 0.0;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
@@ -779,17 +775,12 @@ TA_LIB_API TA_RetCode TA_CMOU_Peek( const TA_CMOU_Stream *stream, double inReal,
    trailingValue = sp->trailingValue;
    upSum = sp->upSum;
    ring_trailingIdx_inReal = sp->ring_trailingIdx_inReal;
-   if( sp->ringCap_trailingIdx == 0 )
-   {
-      pkSlot0 = 0;
-      pkVal0 = inReal;
-   }
    /* Drop the oldest change: inReal[trailingIdx] - inReal[trailingIdx-1].
     * inReal[trailingIdx-1] comes from the cache (already overwritten when
     * outReal == inReal); inReal[trailingIdx] is read here, before this
     * iteration writes outReal[outIdx], so it is still the original price.
     */
-   tempReal = (sp->ringPos_trailingIdx != pkSlot0) ? ring_trailingIdx_inReal[sp->ringPos_trailingIdx] : pkVal0;
+   tempReal = ring_trailingIdx_inReal[sp->ringPos_trailingIdx];
    diff = tempReal - trailingValue;
    trailingValue = tempReal;
    if( diff > 0.0 )

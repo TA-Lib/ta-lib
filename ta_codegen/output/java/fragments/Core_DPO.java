@@ -439,28 +439,16 @@
          double dispVal = 0.0;
          double cur_outReal = 0.0;
          double periodTotal = sp.periodTotal;
-         int pkSlot0 = -1;
-         double pkVal0 = 0.0;
-         int pkSlot1 = -1;
-         double pkVal1 = 0.0;
-         if( sp.ringCap_dispIdx == 0 ) {
-            pkSlot0 = 0;
-            pkVal0 = inReal;
-         }
-         if( sp.ringCap_trailingIdx == 0 ) {
-            pkSlot1 = 0;
-            pkVal1 = inReal;
-         }
          periodTotal += inReal;
          tempReal = periodTotal;
-         periodTotal -= (sp.ringPos_trailingIdx != pkSlot1) ? sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] : pkVal1;
+         periodTotal -= sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
          /* Both reads precede the store. Either cursor can EQUAL outIdx -- the
           * displaced one whenever startIdx equals the displacement, the trailing
           * one whenever startIdx sits at the lookback -- so a store hoisted above
           * them would read back what it had just overwritten when the caller
           * aliases outReal over inReal.
           */
-         dispVal = (sp.ringPos_dispIdx != pkSlot0) ? sp.ring_dispIdx_inReal[sp.ringPos_dispIdx] : pkVal0;
+         dispVal = sp.ring_dispIdx_inReal[sp.ringPos_dispIdx];
          cur_outReal = dispVal - tempReal / (double)sp.optInTimePeriod;
          return cur_outReal;
       }
@@ -495,12 +483,8 @@
    {
       double tempReal = 0.0;
       double dispVal = 0.0;
-      if( sp.ringCap_dispIdx == 0 ) {
-         sp.ring_dispIdx_inReal[0] = inReal;
-      }
-      if( sp.ringCap_trailingIdx == 0 ) {
-         sp.ring_trailingIdx_inReal[0] = inReal;
-      }
+      int ringCapL_dispIdx = 0;
+      int ringCapL_trailingIdx = 0;
       sp.periodTotal += inReal;
       tempReal = sp.periodTotal;
       sp.periodTotal -= sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
@@ -512,14 +496,16 @@
        */
       dispVal = sp.ring_dispIdx_inReal[sp.ringPos_dispIdx];
       sp.cur_outReal = dispVal - tempReal / (double)sp.optInTimePeriod;
+      ringCapL_dispIdx = sp.ringCap_dispIdx;
       sp.ring_dispIdx_inReal[sp.ringPos_dispIdx] = inReal;
       sp.ringPos_dispIdx = sp.ringPos_dispIdx + 1;
-      if( sp.ringPos_dispIdx >= sp.ringCap_dispIdx ) {
+      if( sp.ringPos_dispIdx >= ringCapL_dispIdx ) {
          sp.ringPos_dispIdx = 0;
       }
+      ringCapL_trailingIdx = sp.ringCap_trailingIdx;
       sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
       sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
-      if( sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
+      if( sp.ringPos_trailingIdx >= ringCapL_trailingIdx ) {
          sp.ringPos_trailingIdx = 0;
       }
    }
@@ -598,14 +584,14 @@
       outBegIdx.value = startIdx;
       /* Capture the live batch state into the handle. */
       int cap_dispIdx = i - dispIdx;
-      if( cap_dispIdx < 0 || cap_dispIdx > historyLen ) {
+      if( cap_dispIdx < 1 || cap_dispIdx > historyLen ) {
          return RetCode.INTERNAL_ERROR;
       }
       int allocN_dispIdx = (cap_dispIdx > 0)? cap_dispIdx : 1;
       double[] capRing_dispIdx_inReal = new double[allocN_dispIdx];
       System.arraycopy(inReal, historyLen - cap_dispIdx, capRing_dispIdx_inReal, 0, cap_dispIdx);
       int cap_trailingIdx = i - trailingIdx;
-      if( cap_trailingIdx < 0 || cap_trailingIdx > historyLen ) {
+      if( cap_trailingIdx < 1 || cap_trailingIdx > historyLen ) {
          return RetCode.INTERNAL_ERROR;
       }
       int allocN_trailingIdx = (cap_trailingIdx > 0)? cap_trailingIdx : 1;

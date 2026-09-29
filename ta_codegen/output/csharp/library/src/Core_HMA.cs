@@ -1129,14 +1129,8 @@ public partial class Core
             double trailingFull = sp.trailingFull;
             int pkSlot0 = -1;
             double pkVal0 = 0.0;
-            int pkSlot1 = -1;
-            double pkVal1 = 0.0;
-            if( sp.ringCap_trailingIdxFull == 0 ) {
-               pkSlot0 = 0;
-               pkVal0 = inReal;
-            }
-            pkSlot1 = sp.winPos_jFull;
-            pkVal1 = inReal;
+            pkSlot0 = sp.winPos_jFull;
+            pkVal0 = inReal;
             tempReal = inReal;
             periodSubFull += tempReal;
             periodSubFull -= trailingFull;
@@ -1148,13 +1142,13 @@ public partial class Core
                periodSumFull = 0.0;
                rw = 1;
                for( jFull = sp.lookbackFull; jFull >= 0; jFull -= 1 ) {
-                  tempReal2 = (((sp.winPos_jFull + sp.winCap_jFull - jFull >= sp.winCap_jFull) ? sp.winPos_jFull + sp.winCap_jFull - jFull - sp.winCap_jFull : sp.winPos_jFull + sp.winCap_jFull - jFull) != pkSlot1) ? sp.win_jFull_inReal[(sp.winPos_jFull + sp.winCap_jFull - jFull >= sp.winCap_jFull) ? sp.winPos_jFull + sp.winCap_jFull - jFull - sp.winCap_jFull : sp.winPos_jFull + sp.winCap_jFull - jFull] : pkVal1;
+                  tempReal2 = (((sp.winPos_jFull + sp.winCap_jFull - jFull >= sp.winCap_jFull) ? sp.winPos_jFull + sp.winCap_jFull - jFull - sp.winCap_jFull : sp.winPos_jFull + sp.winCap_jFull - jFull) != pkSlot0) ? sp.win_jFull_inReal[(sp.winPos_jFull + sp.winCap_jFull - jFull >= sp.winCap_jFull) ? sp.winPos_jFull + sp.winCap_jFull - jFull - sp.winCap_jFull : sp.winPos_jFull + sp.winCap_jFull - jFull] : pkVal0;
                   periodSubFull += tempReal2;
                   periodSumFull += tempReal2 * rw;
                   rw += 1;
                }
             }
-            trailingFull = (sp.ringPos_trailingIdxFull != pkSlot0) ? sp.ring_trailingIdxFull_inReal[sp.ringPos_trailingIdxFull] : pkVal0;
+            trailingFull = sp.ring_trailingIdxFull_inReal[sp.ringPos_trailingIdxFull];
             fullOut = periodSumFull / sp.dividerFull;
             periodSumFull -= periodSubFull;
             cur_outReal = 2.0 * tempReal - fullOut;
@@ -1186,22 +1180,10 @@ public partial class Core
             double pkVal0 = 0.0;
             int pkSlot1 = -1;
             double pkVal1 = 0.0;
-            int pkSlot2 = -1;
-            double pkVal2 = 0.0;
-            int pkSlot3 = -1;
-            double pkVal3 = 0.0;
-            if( sp.ringCap_trailingIdxFull == 0 ) {
-               pkSlot0 = 0;
-               pkVal0 = inReal;
-            }
-            if( sp.ringCap_trailingIdxHalf == 0 ) {
-               pkSlot1 = 0;
-               pkVal1 = inReal;
-            }
-            pkSlot2 = sp.winPos_jFull;
-            pkVal2 = inReal;
-            pkSlot3 = sp.winPos_jHalf;
-            pkVal3 = inReal;
+            pkSlot0 = sp.winPos_jFull;
+            pkVal0 = inReal;
+            pkSlot1 = sp.winPos_jHalf;
+            pkVal1 = inReal;
             tempReal = inReal;
             periodSubFull += tempReal;
             periodSubFull -= trailingFull;
@@ -1213,13 +1195,13 @@ public partial class Core
                periodSumFull = 0.0;
                rw = 1;
                for( jFull = sp.lookbackFull; jFull >= 0; jFull -= 1 ) {
-                  tempReal2 = (((sp.winPos_jFull + sp.winCap_jFull - jFull >= sp.winCap_jFull) ? sp.winPos_jFull + sp.winCap_jFull - jFull - sp.winCap_jFull : sp.winPos_jFull + sp.winCap_jFull - jFull) != pkSlot2) ? sp.win_jFull_inReal[(sp.winPos_jFull + sp.winCap_jFull - jFull >= sp.winCap_jFull) ? sp.winPos_jFull + sp.winCap_jFull - jFull - sp.winCap_jFull : sp.winPos_jFull + sp.winCap_jFull - jFull] : pkVal2;
+                  tempReal2 = (((sp.winPos_jFull + sp.winCap_jFull - jFull >= sp.winCap_jFull) ? sp.winPos_jFull + sp.winCap_jFull - jFull - sp.winCap_jFull : sp.winPos_jFull + sp.winCap_jFull - jFull) != pkSlot0) ? sp.win_jFull_inReal[(sp.winPos_jFull + sp.winCap_jFull - jFull >= sp.winCap_jFull) ? sp.winPos_jFull + sp.winCap_jFull - jFull - sp.winCap_jFull : sp.winPos_jFull + sp.winCap_jFull - jFull] : pkVal0;
                   periodSubFull += tempReal2;
                   periodSumFull += tempReal2 * rw;
                   rw += 1;
                }
             }
-            trailingFull = (sp.ringPos_trailingIdxFull != pkSlot0) ? sp.ring_trailingIdxFull_inReal[sp.ringPos_trailingIdxFull] : pkVal0;
+            trailingFull = sp.ring_trailingIdxFull_inReal[sp.ringPos_trailingIdxFull];
             fullOut = periodSumFull / sp.dividerFull;
             periodSumFull -= periodSubFull;
             periodSubHalf += tempReal;
@@ -1232,13 +1214,13 @@ public partial class Core
                periodSumHalf = 0.0;
                rw = 1;
                for( jHalf = sp.lookbackHalf; jHalf >= 0; jHalf -= 1 ) {
-                  tempReal2 = (((sp.winPos_jHalf + sp.winCap_jHalf - jHalf >= sp.winCap_jHalf) ? sp.winPos_jHalf + sp.winCap_jHalf - jHalf - sp.winCap_jHalf : sp.winPos_jHalf + sp.winCap_jHalf - jHalf) != pkSlot3) ? sp.win_jHalf_inReal[(sp.winPos_jHalf + sp.winCap_jHalf - jHalf >= sp.winCap_jHalf) ? sp.winPos_jHalf + sp.winCap_jHalf - jHalf - sp.winCap_jHalf : sp.winPos_jHalf + sp.winCap_jHalf - jHalf] : pkVal3;
+                  tempReal2 = (((sp.winPos_jHalf + sp.winCap_jHalf - jHalf >= sp.winCap_jHalf) ? sp.winPos_jHalf + sp.winCap_jHalf - jHalf - sp.winCap_jHalf : sp.winPos_jHalf + sp.winCap_jHalf - jHalf) != pkSlot1) ? sp.win_jHalf_inReal[(sp.winPos_jHalf + sp.winCap_jHalf - jHalf >= sp.winCap_jHalf) ? sp.winPos_jHalf + sp.winCap_jHalf - jHalf - sp.winCap_jHalf : sp.winPos_jHalf + sp.winCap_jHalf - jHalf] : pkVal1;
                   periodSubHalf += tempReal2;
                   periodSumHalf += tempReal2 * rw;
                   rw += 1;
                }
             }
-            trailingHalf = (sp.ringPos_trailingIdxHalf != pkSlot1) ? sp.ring_trailingIdxHalf_inReal[sp.ringPos_trailingIdxHalf] : pkVal1;
+            trailingHalf = sp.ring_trailingIdxHalf_inReal[sp.ringPos_trailingIdxHalf];
             halfOut = periodSumHalf / sp.dividerHalf;
             periodSumHalf -= periodSubHalf;
             diffReal = 2.0 * halfOut - fullOut;
@@ -1310,9 +1292,7 @@ public partial class Core
          int jFull = 0;
          int rw = 0;
          double tempReal2 = 0.0;
-         if( sp.ringCap_trailingIdxFull == 0 ) {
-            sp.ring_trailingIdxFull_inReal[0] = inReal;
-         }
+         int ringCapL_trailingIdxFull = 0;
          sp.win_jFull_inReal[sp.winPos_jFull] = inReal;
          tempReal = inReal;
          sp.periodSubFull += tempReal;
@@ -1335,9 +1315,10 @@ public partial class Core
          fullOut = sp.periodSumFull / sp.dividerFull;
          sp.periodSumFull -= sp.periodSubFull;
          sp.cur_outReal = 2.0 * tempReal - fullOut;
+         ringCapL_trailingIdxFull = sp.ringCap_trailingIdxFull;
          sp.ring_trailingIdxFull_inReal[sp.ringPos_trailingIdxFull] = inReal;
          sp.ringPos_trailingIdxFull = sp.ringPos_trailingIdxFull + 1;
-         if( sp.ringPos_trailingIdxFull >= sp.ringCap_trailingIdxFull ) {
+         if( sp.ringPos_trailingIdxFull >= ringCapL_trailingIdxFull ) {
             sp.ringPos_trailingIdxFull = 0;
          }
          sp.winPos_jFull = sp.winPos_jFull + 1;
@@ -1355,12 +1336,8 @@ public partial class Core
          int rw = 0;
          int ringWalk = 0;
          double tempReal2 = 0.0;
-         if( sp.ringCap_trailingIdxFull == 0 ) {
-            sp.ring_trailingIdxFull_inReal[0] = inReal;
-         }
-         if( sp.ringCap_trailingIdxHalf == 0 ) {
-            sp.ring_trailingIdxHalf_inReal[0] = inReal;
-         }
+         int ringCapL_trailingIdxFull = 0;
+         int ringCapL_trailingIdxHalf = 0;
          sp.win_jFull_inReal[sp.winPos_jFull] = inReal;
          sp.win_jHalf_inReal[sp.winPos_jHalf] = inReal;
          tempReal = inReal;
@@ -1440,14 +1417,16 @@ public partial class Core
          }
          sp.cur_outReal = sp.periodSumSqrt / sp.dividerSqrt;
          sp.periodSumSqrt -= sp.periodSubSqrt;
+         ringCapL_trailingIdxFull = sp.ringCap_trailingIdxFull;
          sp.ring_trailingIdxFull_inReal[sp.ringPos_trailingIdxFull] = inReal;
          sp.ringPos_trailingIdxFull = sp.ringPos_trailingIdxFull + 1;
-         if( sp.ringPos_trailingIdxFull >= sp.ringCap_trailingIdxFull ) {
+         if( sp.ringPos_trailingIdxFull >= ringCapL_trailingIdxFull ) {
             sp.ringPos_trailingIdxFull = 0;
          }
+         ringCapL_trailingIdxHalf = sp.ringCap_trailingIdxHalf;
          sp.ring_trailingIdxHalf_inReal[sp.ringPos_trailingIdxHalf] = inReal;
          sp.ringPos_trailingIdxHalf = sp.ringPos_trailingIdxHalf + 1;
-         if( sp.ringPos_trailingIdxHalf >= sp.ringCap_trailingIdxHalf ) {
+         if( sp.ringPos_trailingIdxHalf >= ringCapL_trailingIdxHalf ) {
             sp.ringPos_trailingIdxHalf = 0;
          }
          sp.winPos_jFull = sp.winPos_jFull + 1;
@@ -1675,7 +1654,7 @@ public partial class Core
          outNBElement = outIdx;
          /* Capture the live batch state into the handle. */
          int cap_trailingIdxFull = today - trailingIdxFull;
-         if( cap_trailingIdxFull < 0 || cap_trailingIdxFull > historyLen ) {
+         if( cap_trailingIdxFull < 1 || cap_trailingIdxFull > historyLen ) {
             return RetCode.InternalError;
          }
          int allocN_trailingIdxFull = (cap_trailingIdxFull > 0)? cap_trailingIdxFull : 1;
@@ -2003,14 +1982,14 @@ public partial class Core
          outNBElement = outIdx;
          /* Capture the live batch state into the handle. */
          int cap_trailingIdxFull = today - trailingIdxFull;
-         if( cap_trailingIdxFull < 0 || cap_trailingIdxFull > historyLen ) {
+         if( cap_trailingIdxFull < 1 || cap_trailingIdxFull > historyLen ) {
             return RetCode.InternalError;
          }
          int allocN_trailingIdxFull = (cap_trailingIdxFull > 0)? cap_trailingIdxFull : 1;
          double[] capRing_trailingIdxFull_inReal = new double[allocN_trailingIdxFull];
          inReal.Slice(historyLen - cap_trailingIdxFull, cap_trailingIdxFull).CopyTo(capRing_trailingIdxFull_inReal);
          int cap_trailingIdxHalf = today - trailingIdxHalf;
-         if( cap_trailingIdxHalf < 0 || cap_trailingIdxHalf > historyLen ) {
+         if( cap_trailingIdxHalf < 1 || cap_trailingIdxHalf > historyLen ) {
             return RetCode.InternalError;
          }
          int allocN_trailingIdxHalf = (cap_trailingIdxHalf > 0)? cap_trailingIdxHalf : 1;

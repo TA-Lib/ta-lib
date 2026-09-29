@@ -18,6 +18,7 @@
  *  090926 MF,CC #410 Scale the Wilder step by a hoisted 1/period and split the
  *               gain/loss without a branch; the loop-carried chain keeps
  *               neither a divide nor a 50/50 mispredict.
+ *  092826 MF,CC #466 Drop the period-1 copy-through; the range starts at 2.
  */
 
 int rsi_lookback(int optInTimePeriod)
@@ -70,24 +71,6 @@ TA_RetCode rsi(int startIdx, int endIdx,
    }
 
    outIdx = 0; /* Index into the output. */
-
-   /* Trap special case where the period is '1'.
-    * In that case, just copy the input into the
-    * output for the requested range (as-is !)
-    */
-   if( optInTimePeriod == 1 )
-   {
-      *outBegIdx = startIdx;
-      i = (int)((endIdx-startIdx)+1);
-      *outNBElement = (size_t)i;
-      /* Element loop, not a block copy: the C single-precision variant reads a
-       * float array, so a double-sized byte copy would reinterpret and
-       * over-read it (#137). Forward order keeps the in-place case correct (#94). */
-      today = (size_t)startIdx;
-      for( outIdx = 0; outIdx < (size_t)i; outIdx++ )
-         outReal[outIdx] = inReal[today++];
-      return TA_SUCCESS;
-   }
 
    invPeriod = 1.0 / (double)optInTimePeriod;
 

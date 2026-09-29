@@ -670,18 +670,12 @@ public partial class Core
          double prevValue = sp.prevValue;
          double trailingValue = sp.trailingValue;
          double upSum = sp.upSum;
-         int pkSlot0 = -1;
-         double pkVal0 = 0.0;
-         if( sp.ringCap_trailingIdx == 0 ) {
-            pkSlot0 = 0;
-            pkVal0 = inReal;
-         }
          /* Drop the oldest change: inReal[trailingIdx] - inReal[trailingIdx-1].
           * inReal[trailingIdx-1] comes from the cache (already overwritten when
           * outReal == inReal); inReal[trailingIdx] is read here, before this
           * iteration writes outReal[outIdx], so it is still the original price.
           */
-         tempReal = (sp.ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] : pkVal0;
+         tempReal = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
          diff = tempReal - trailingValue;
          trailingValue = tempReal;
          if( diff > 0.0 ) {
@@ -743,9 +737,7 @@ public partial class Core
       double sum = 0.0;
       double diff = 0.0;
       double tempReal = 0.0;
-      if( sp.ringCap_trailingIdx == 0 ) {
-         sp.ring_trailingIdx_inReal[0] = inReal;
-      }
+      int ringCapL_trailingIdx = 0;
       /* Drop the oldest change: inReal[trailingIdx] - inReal[trailingIdx-1].
        * inReal[trailingIdx-1] comes from the cache (already overwritten when
        * outReal == inReal); inReal[trailingIdx] is read here, before this
@@ -788,9 +780,10 @@ public partial class Core
       } else {
          sp.cur_outReal = 0.0;
       }
+      ringCapL_trailingIdx = sp.ringCap_trailingIdx;
       sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
       sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
-      if( sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
+      if( sp.ringPos_trailingIdx >= ringCapL_trailingIdx ) {
          sp.ringPos_trailingIdx = 0;
       }
    }
@@ -956,7 +949,7 @@ public partial class Core
       outNBElement = outIdx;
       /* Capture the live batch state into the handle. */
       int cap_trailingIdx = today - trailingIdx;
-      if( cap_trailingIdx < 0 || cap_trailingIdx > historyLen ) {
+      if( cap_trailingIdx < 1 || cap_trailingIdx > historyLen ) {
          return RetCode.InternalError;
       }
       int allocN_trailingIdx = (cap_trailingIdx > 0)? cap_trailingIdx : 1;

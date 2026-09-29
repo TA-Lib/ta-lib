@@ -83,7 +83,8 @@ pub struct SubLagRing {
 /// stream keeps one position/capacity per index variable and one buffer per
 /// input array it reads (CDL-style windows read several arrays through the
 /// same trailing index). The capacity (`cursor - var`, loop-invariant) is
-/// captured NUMERICALLY at the end of open — no symbolic analysis.
+/// captured numerically at the end of open; [`RingSpec::lag_ge1`] is the only
+/// symbolic fact about it.
 ///
 /// Phase-free only: the transition reads exactly `ring[pos]` (the oldest
 /// slot). Batch code that iterates a buffer in storage order (CCI-class
@@ -110,6 +111,10 @@ pub struct RingSpec {
     /// expression to evaluate per bar; `raw_arrays` keeps the columns it reads
     /// so `open` can still backfill from history.
     pub derived: Option<DerivedRing>,
+    /// A `back == 0` ring whose lag is proved >= 1 on every path reaching its
+    /// transition ([`crate::ring_lag`]): it never holds the current bar, so it
+    /// takes no zero-capacity guard, and Open rejects a capacity below 1.
+    pub lag_ge1: bool,
 }
 
 /// One trailing index collapsed to a single derived scalar per bar.
@@ -270,6 +275,40 @@ pub struct CalleeSig {
 /// server generation, tests).
 pub trait CalleeLookup {
     fn callee(&self, name: &str) -> Option<CalleeSig>;
+    /// `name`'s lookback, for the ring-lag proof. `None` leaves every call to
+    /// it opaque, which can only leave a ring unproven.
+    fn lookback(&self, _name: &str) -> Option<CalleeLookback> {
+        None
+    }
+}
+
+/// A lookback as the generated `TA_<N>_Lookback` evaluates it: the YAML
+/// parameters, whose order is the order a call binds, and the body.
+#[derive(Debug, Clone)]
+pub struct CalleeLookback {
+    pub params: Vec<crate::ir::OptInput>,
+    pub body: Vec<Statement>,
+}
+
+/// The lookback of a fully loaded [`FuncDef`].
+#[must_use]
+pub fn lookback_of(f: &FuncDef) -> Option<CalleeLookback> {
+    match &f.lookback {
+        Some(crate::ir::LookbackExpr::Code(body)) => Some(CalleeLookback {
+            params: f.optional_inputs.clone(),
+            body: body.clone(),
+        }),
+        _ => None,
+    }
+}
+
+/// A lookup that knows no other function.
+struct NoCallees;
+
+impl CalleeLookup for NoCallees {
+    fn callee(&self, _name: &str) -> Option<CalleeSig> {
+        None
+    }
 }
 
 /// Signature facts derived from one [`FuncDef`] (shared by every
@@ -295,6 +334,12 @@ impl CalleeLookup for FuncsLookup<'_> {
             .iter()
             .find(|f| f.name.eq_ignore_ascii_case(name))
             .map(callee_sig_of)
+    }
+    fn lookback(&self, name: &str) -> Option<CalleeLookback> {
+        self.0
+            .iter()
+            .find(|f| f.name.eq_ignore_ascii_case(name))
+            .and_then(lookback_of)
     }
 }
 
@@ -1568,25 +1613,7 @@ fn countdown_counter(cond: &Expr) -> Option<String> {
 }
 
 fn find_steady_loop(body: &[Statement]) -> Result<SteadyLoop<'_>, StreamError> {
-    // Prefer the LAST top-level loop over endIdx; fall back to the last
-    // countdown loop (AD-style `while (nbBar != 0)`).
-    let is_endidx = |s: &Statement| match s {
-        Statement::While { condition, .. }
-        | Statement::DoWhile { condition, .. }
-        | Statement::ForC { condition, .. } => endidx_cursor(condition).is_some(),
-        _ => false,
-    };
-    let is_countdown = |s: &Statement| match s {
-        Statement::While { condition, .. } | Statement::DoWhile { condition, .. } => {
-            countdown_counter(condition).is_some()
-        }
-        _ => false,
-    };
-    let idx = body
-        .iter()
-        .rposition(is_endidx)
-        .or_else(|| body.iter().rposition(is_countdown))
-        .ok_or(StreamError::NoSteadyLoop)?;
+    let idx = steady_loop_index(body).ok_or(StreamError::NoSteadyLoop)?;
 
     Ok(match &body[idx] {
         Statement::While { condition, body } => SteadyLoop {
@@ -1622,6 +1649,27 @@ fn find_steady_loop(body: &[Statement]) -> Result<SteadyLoop<'_>, StreamError> {
         },
         _ => unreachable!(),
     })
+}
+
+/// Index of the steady loop in `body`'s top level.
+pub(crate) fn steady_loop_index(body: &[Statement]) -> Option<usize> {
+    // Prefer the LAST top-level loop over endIdx; fall back to the last
+    // countdown loop (AD-style `while (nbBar != 0)`).
+    let is_endidx = |s: &Statement| match s {
+        Statement::While { condition, .. }
+        | Statement::DoWhile { condition, .. }
+        | Statement::ForC { condition, .. } => endidx_cursor(condition).is_some(),
+        _ => false,
+    };
+    let is_countdown = |s: &Statement| match s {
+        Statement::While { condition, .. } | Statement::DoWhile { condition, .. } => {
+            countdown_counter(condition).is_some()
+        }
+        _ => false,
+    };
+    body.iter()
+        .rposition(is_endidx)
+        .or_else(|| body.iter().rposition(is_countdown))
 }
 
 // ---------------------------------------------------------------------------
@@ -1675,6 +1723,14 @@ pub fn identity_path(func: &FuncDef) -> Option<IdentityPath> {
 /// composed body, non-scalar state, ...), which drives both the YAML
 /// validation and the census.
 pub fn analyze(func: &FuncDef) -> Result<StreamModel<'_>, StreamError> {
+    analyze_with(func, &NoCallees)
+}
+
+/// [`analyze`], resolving other functions' lookbacks through `lookup`.
+pub fn analyze_with<'a>(
+    func: &'a FuncDef,
+    lookup: &dyn CalleeLookup,
+) -> Result<StreamModel<'a>, StreamError> {
     let body: &[Statement] = func.stream_source();
     let outputs: Vec<String> = func.outputs.iter().map(|o| o.name.clone()).collect();
     for o in &func.outputs {
@@ -1685,7 +1741,80 @@ pub fn analyze(func: &FuncDef) -> Result<StreamModel<'_>, StreamError> {
             )));
         }
     }
-    analyze_region(func, body, outputs)
+    let mut model = analyze_region(func, body, outputs)?;
+    prove_ring_lags(&mut model, &[], &[], vec![], lookup);
+    Ok(model)
+}
+
+/// The step local a proven ring's capacity is read into.
+#[must_use]
+pub fn ring_cap_local(var: &str) -> String {
+    format!("ringCapL_{var}")
+}
+
+/// `model.temps` for a commit frame, `tape` its tape if it has one. A taped
+/// ring never advances, so its capacity local would be declared and never used.
+#[must_use]
+pub fn step_temps(model: &StreamModel, tape: Option<&TapeNames>) -> Vec<(String, VarType)> {
+    let unused: BTreeSet<String> = model
+        .rings()
+        .iter()
+        .filter(|r| tape.is_some_and(|t| r.arrays.contains(&t.input)))
+        .map(|r| ring_cap_local(&r.var))
+        .collect();
+    model
+        .temps
+        .iter()
+        .filter(|(n, _)| !unused.contains(n))
+        .cloned()
+        .collect()
+}
+
+/// Sets [`RingSpec::lag_ge1`] on each `back == 0` ring the body Open
+/// transcribes (`prologue ++ model.body ++ epilogue`) proves. `facts` hold on
+/// every path into the model's transition; the identity branch, which every
+/// step tests above the ring code, adds its negation.
+fn prove_ring_lags(
+    model: &mut StreamModel,
+    prologue: &[Statement],
+    epilogue: &[Statement],
+    mut facts: Vec<Expr>,
+    lookup: &dyn CalleeLookup,
+) {
+    let vars: Vec<String> = model
+        .rings()
+        .iter()
+        .filter(|r| r.back == 0)
+        .map(|r| r.var.clone())
+        .collect();
+    if vars.is_empty() {
+        return;
+    }
+    if let Some(id) = &model.identity {
+        facts.push(Expr::Not(Box::new(id.condition.clone())));
+    }
+    let input = crate::ring_lag::LagProofInput {
+        prologue,
+        region: model.body,
+        epilogue,
+        cursor: &model.cursor,
+        facts,
+        lookup,
+    };
+    let refs: Vec<&str> = vars.iter().map(String::as_str).collect();
+    let bounds = crate::ring_lag::ring_lag_lower_bounds(model.func, &input, &refs);
+    let mut locals = Vec::new();
+    if let Steady::Batch { rings, .. } = &mut model.steady {
+        for r in rings.iter_mut() {
+            if let Some(i) = vars.iter().position(|v| *v == r.var) {
+                r.lag_ge1 = bounds[i].is_some_and(|lb| lb >= 1);
+                if r.lag_ge1 {
+                    locals.push((ring_cap_local(&r.var), VarType::Integer));
+                }
+            }
+        }
+    }
+    model.temps.extend(locals);
 }
 
 /// [`analyze`] over an explicit body region with an outputs override. The
@@ -1941,6 +2070,14 @@ pub fn analyze_region_scoped<'a>(
 /// dual-mode body may carry one too (HMA): it is recognized, excluded from the
 /// arm scan, and attached to BOTH modes.
 pub fn analyze_dual_mode(func: &FuncDef) -> Result<DualModePlan<'_>, StreamError> {
+    analyze_dual_mode_with(func, &NoCallees)
+}
+
+/// [`analyze_dual_mode`], resolving other functions' lookbacks through `lookup`.
+pub fn analyze_dual_mode_with<'a>(
+    func: &'a FuncDef,
+    lookup: &dyn CalleeLookup,
+) -> Result<DualModePlan<'a>, StreamError> {
     let body: &[Statement] = func.stream_source();
     let params: BTreeSet<String> = func.optional_inputs.iter().map(|p| p.name.clone()).collect();
     let outputs: Vec<String> = func.outputs.iter().map(|o| o.name.clone()).collect();
@@ -2063,6 +2200,14 @@ pub fn analyze_dual_mode(func: &FuncDef) -> Result<DualModePlan<'_>, StreamError
     mode_b.identity = identity;
     mode_a.identity_hoisted = true;
     mode_b.identity_hoisted = true;
+    prove_ring_lags(&mut mode_a, prologue, epilogue, vec![condition.clone()], lookup);
+    prove_ring_lags(
+        &mut mode_b,
+        prologue,
+        epilogue,
+        vec![Expr::Not(Box::new(condition.clone()))],
+        lookup,
+    );
 
     Ok(DualModePlan {
         func,
@@ -4391,7 +4536,7 @@ fn derive_stream_plan<'a>(
     // Loop tier first (the established 131), dispatch second: a body with a
     // steady loop is never a dispatch, so the order only decides which error
     // is reported when both fail.
-    let loop_err = match analyze(func) {
+    let loop_err = match analyze_with(func, lookup) {
         Ok(model) => {
             // The transition must BUILD, too — analysis success alone would
             // let a seeded function pass the gate and then panic in the
@@ -4411,7 +4556,7 @@ fn derive_stream_plan<'a>(
     // Loop), before dispatch/composed (DI/DM are neither). NoSteadyLoop = "not
     // dual-mode-shaped": fall through. Any other error means the shape matched
     // but an arm is unstreamable — surface it loudly (dispatch-strictness parity).
-    match analyze_dual_mode(func) {
+    match analyze_dual_mode_with(func, lookup) {
         Ok(plan) => {
             build_transition(&plan.mode_a, &GateNames).map_err(|e| {
                 format!(
@@ -5797,6 +5942,7 @@ fn assemble_rings(
         .into_iter()
         .map(|(var, arrs)| RingSpec {
             derived: None,
+            lag_ge1: false,
             back: ring_back
                 .get(&var)
                 .copied()
@@ -7097,7 +7243,7 @@ fn insert_transition_prologue(
                     },
                 );
             }
-        } else {
+        } else if !ring.lag_ge1 {
             out.insert(0, ring_cap0_guard(ring, names));
         }
     }
@@ -7674,8 +7820,8 @@ pub fn derived_fill_value(dr: &DerivedRing, idx_var: &str) -> Expr {
     })
 }
 
-/// `if (cap == 0) ring[0] = bar;` for every array of a ring — makes the
-/// zero-lag degenerate case read the current bar through the same slot.
+/// `if (cap == 0) ring[0] = bar;` for every array of a ring whose lag may be
+/// 0, so that case reads the current bar through the same slot.
 fn ring_cap0_guard(ring: &RingSpec, names: &dyn NameMap) -> Statement {
     let then_body = ring
         .arrays
@@ -7721,6 +7867,16 @@ fn push_ring_advance(out: &mut Vec<Statement>, ring: &RingSpec, names: &dyn Name
     // The dead-store elision above is orthogonal to what gets stored: a derived
     // ring holds f(bar) rather than a raw column, so the value still comes from
     // the expression when there is one.
+    let proven = ring.lag_ge1 && ring.back == 0;
+    if proven {
+        // Keep this read ahead of the ring store: read after it, the wrap
+        // compiles to a branch instead of a cmov.
+        out.push(Statement::Assign {
+            target: Expr::Var(ring_cap_local(&ring.var)),
+            value: Expr::Var(names.ring_cap(&ring.var)),
+            compound: false,
+        });
+    }
     if ring.back == 0 {
         for arr in &ring.arrays {
             out.push(Statement::Assign {
@@ -7745,11 +7901,16 @@ fn push_ring_advance(out: &mut Vec<Statement>, ring: &RingSpec, names: &dyn Name
         ),
         compound: false,
     });
+    let cap = if proven {
+        ring_cap_local(&ring.var)
+    } else {
+        names.ring_cap(&ring.var)
+    };
     out.push(Statement::If {
         condition: Expr::BinOp(
             Box::new(Expr::Var(names.ring_pos(&ring.var))),
             BinOp::GreaterEq,
-            Box::new(Expr::Var(names.ring_cap(&ring.var))),
+            Box::new(Expr::Var(cap)),
         ),
         then_body: vec![Statement::Assign {
             target: Expr::Var(names.ring_pos(&ring.var)),
@@ -10274,14 +10435,6 @@ mod tests {
         assert!(matches!(analyze(&f), Err(StreamError::UnsupportedCall(_))));
     }
 
-    /// A lookup that knows no indicators (loop-tier unit tests).
-    struct NoCallees;
-    impl CalleeLookup for NoCallees {
-        fn callee(&self, _name: &str) -> Option<CalleeSig> {
-            None
-        }
-    }
-
     #[test]
     fn unanalyzable_declared_function_is_an_error() {
         let ok = func_with_body(t1_body());
@@ -10805,6 +10958,7 @@ mod tests {
             arrays: vec!["derived".into()],
             back,
             fwd: 0,
+            lag_ge1: false,
             derived: Some(DerivedRing {
                 slot: "derived".into(),
                 expr: hlr(trail_minus("w")),
@@ -10922,6 +11076,7 @@ mod tests {
                 arrays: vec!["derived".into()],
                 back: 2,
                 fwd: 0,
+                lag_ge1: false,
                 derived: Some(DerivedRing {
                     slot: "derived".into(),
                     expr: outer(trail_minus("w"), trail_minus("w")),

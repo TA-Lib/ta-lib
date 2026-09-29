@@ -1316,25 +1316,19 @@ public partial class Core
          double trailingWMAValue = sp.trailingWMAValue;
          int pkSlot0 = -1;
          double pkVal0 = 0.0;
-         int pkSlot1 = -1;
-         double pkVal1 = 0.0;
-         if( sp.ringCap_trailingWMAIdx == 0 ) {
-            pkSlot0 = 0;
-            pkVal0 = inReal;
-         }
          adjustedPrevPeriod = Math.FusedMultiplyAdd(0.075, period, 0.54);
          todayValue = inReal;
          periodWMASub += todayValue;
          periodWMASub -= trailingWMAValue;
          periodWMASum += todayValue * 4.0;
-         trailingWMAValue = (sp.ringPos_trailingWMAIdx != pkSlot0) ? sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx] : pkVal0;
+         trailingWMAValue = sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx];
          smoothedValue = periodWMASum * 0.1;
          periodWMASum -= periodWMASub;
          /* Remember the smoothedValue into the smoothPrice
           * circular buffer.
           */
-         pkSlot1 = sp.smoothPrice_Idx;
-         pkVal1 = smoothedValue;
+         pkSlot0 = sp.smoothPrice_Idx;
+         pkVal0 = smoothedValue;
          if( sp.streamParity == 0 ) {
             /* Do the Hilbert Transforms for even price bar */
             hilbertTempReal = sp.a * smoothedValue;
@@ -1462,7 +1456,7 @@ public partial class Core
          idx = sp.smoothPrice_Idx;
          for( i = 0; i < DCPeriodInt; i += 1 ) {
             tempReal = (double)i * sp.constDeg2RadBy360 / (double)DCPeriodInt;
-            tempReal2 = (idx != pkSlot1) ? sp.cb_smoothPrice[idx] : pkVal1;
+            tempReal2 = (idx != pkSlot0) ? sp.cb_smoothPrice[idx] : pkVal0;
             realPart += Math.Sin(tempReal) * tempReal2;
             imagPart += Math.Cos(tempReal) * tempReal2;
             if( idx == 0 ) {
@@ -1532,9 +1526,7 @@ public partial class Core
       double DCPeriod = 0.0;
       double imagPart = 0.0;
       double realPart = 0.0;
-      if( sp.ringCap_trailingWMAIdx == 0 ) {
-         sp.ring_trailingWMAIdx_inReal[0] = inReal;
-      }
+      int ringCapL_trailingWMAIdx = 0;
       adjustedPrevPeriod = Math.FusedMultiplyAdd(0.075, sp.period, 0.54);
       todayValue = inReal;
       sp.periodWMASub += todayValue;
@@ -1717,9 +1709,10 @@ public partial class Core
       if( sp.smoothPrice_Idx > sp.maxIdx_smoothPrice ) {
          sp.smoothPrice_Idx = 0;
       }
+      ringCapL_trailingWMAIdx = sp.ringCap_trailingWMAIdx;
       sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx] = inReal;
       sp.ringPos_trailingWMAIdx = sp.ringPos_trailingWMAIdx + 1;
-      if( sp.ringPos_trailingWMAIdx >= sp.ringCap_trailingWMAIdx ) {
+      if( sp.ringPos_trailingWMAIdx >= ringCapL_trailingWMAIdx ) {
          sp.ringPos_trailingWMAIdx = 0;
       }
       sp.streamParity = 1 - sp.streamParity;
@@ -2140,7 +2133,7 @@ public partial class Core
       outNBElement = outIdx;
       /* Capture the live batch state into the handle. */
       int cap_trailingWMAIdx = today - trailingWMAIdx;
-      if( cap_trailingWMAIdx < 0 || cap_trailingWMAIdx > historyLen ) {
+      if( cap_trailingWMAIdx < 1 || cap_trailingWMAIdx > historyLen ) {
          return RetCode.InternalError;
       }
       int allocN_trailingWMAIdx = (cap_trailingWMAIdx > 0)? cap_trailingWMAIdx : 1;

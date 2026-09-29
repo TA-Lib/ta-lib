@@ -649,9 +649,7 @@ impl Core {
             let mut jFull: usize = 0_usize;
             let mut rw: usize = 0_usize;
             let mut tempReal2: f64 = 0.0_f64;
-            if sp.ringCap_trailingIdxFull == 0 {
-                sp.ring_trailingIdxFull_inReal[0] = inReal;
-            }
+            let mut ringCapL_trailingIdxFull: usize = 0_usize;
             sp.win_jFull_inReal[sp.winPos_jFull] = inReal;
             tempReal = inReal;
             sp.periodSubFull += tempReal;
@@ -679,9 +677,10 @@ impl Core {
             sp.periodSumFull -= sp.periodSubFull;
             (*outReal) = 2.0 * tempReal - fullOut;
             sp.cur_outReal = (*outReal);
+            ringCapL_trailingIdxFull = sp.ringCap_trailingIdxFull;
             sp.ring_trailingIdxFull_inReal[sp.ringPos_trailingIdxFull] = inReal;
             sp.ringPos_trailingIdxFull = sp.ringPos_trailingIdxFull + 1;
-            if sp.ringPos_trailingIdxFull >= sp.ringCap_trailingIdxFull {
+            if sp.ringPos_trailingIdxFull >= ringCapL_trailingIdxFull {
                 sp.ringPos_trailingIdxFull = 0;
             }
             sp.winPos_jFull = sp.winPos_jFull + 1;
@@ -699,12 +698,8 @@ impl Core {
             let mut rw: usize = 0_usize;
             let mut ringWalk: usize = 0_usize;
             let mut tempReal2: f64 = 0.0_f64;
-            if sp.ringCap_trailingIdxFull == 0 {
-                sp.ring_trailingIdxFull_inReal[0] = inReal;
-            }
-            if sp.ringCap_trailingIdxHalf == 0 {
-                sp.ring_trailingIdxHalf_inReal[0] = inReal;
-            }
+            let mut ringCapL_trailingIdxFull: usize = 0_usize;
+            let mut ringCapL_trailingIdxHalf: usize = 0_usize;
             sp.win_jFull_inReal[sp.winPos_jFull] = inReal;
             sp.win_jHalf_inReal[sp.winPos_jHalf] = inReal;
             tempReal = inReal;
@@ -795,14 +790,16 @@ impl Core {
             (*outReal) = sp.periodSumSqrt / sp.dividerSqrt;
             sp.periodSumSqrt -= sp.periodSubSqrt;
             sp.cur_outReal = (*outReal);
+            ringCapL_trailingIdxFull = sp.ringCap_trailingIdxFull;
             sp.ring_trailingIdxFull_inReal[sp.ringPos_trailingIdxFull] = inReal;
             sp.ringPos_trailingIdxFull = sp.ringPos_trailingIdxFull + 1;
-            if sp.ringPos_trailingIdxFull >= sp.ringCap_trailingIdxFull {
+            if sp.ringPos_trailingIdxFull >= ringCapL_trailingIdxFull {
                 sp.ringPos_trailingIdxFull = 0;
             }
+            ringCapL_trailingIdxHalf = sp.ringCap_trailingIdxHalf;
             sp.ring_trailingIdxHalf_inReal[sp.ringPos_trailingIdxHalf] = inReal;
             sp.ringPos_trailingIdxHalf = sp.ringPos_trailingIdxHalf + 1;
-            if sp.ringPos_trailingIdxHalf >= sp.ringCap_trailingIdxHalf {
+            if sp.ringPos_trailingIdxHalf >= ringCapL_trailingIdxHalf {
                 sp.ringPos_trailingIdxHalf = 0;
             }
             sp.winPos_jFull = sp.winPos_jFull + 1;
@@ -1174,7 +1171,7 @@ impl Core {
 
             // Capture the live batch state into the handle.
             let cap_trailingIdxFull: i64 = (today as i64) - (trailingIdxFull as i64);
-            if cap_trailingIdxFull < 0 || cap_trailingIdxFull > historyLen as i64 {
+            if cap_trailingIdxFull < 1 || cap_trailingIdxFull > historyLen as i64 {
                 return Err(RetCode::InternalError);
             }
             let allocN_trailingIdxFull: usize = if cap_trailingIdxFull > 0 { cap_trailingIdxFull as usize } else { 1 };
@@ -1511,7 +1508,7 @@ impl Core {
 
             // Capture the live batch state into the handle.
             let cap_trailingIdxFull: i64 = (today as i64) - (trailingIdxFull as i64);
-            if cap_trailingIdxFull < 0 || cap_trailingIdxFull > historyLen as i64 {
+            if cap_trailingIdxFull < 1 || cap_trailingIdxFull > historyLen as i64 {
                 return Err(RetCode::InternalError);
             }
             let allocN_trailingIdxFull: usize = if cap_trailingIdxFull > 0 { cap_trailingIdxFull as usize } else { 1 };
@@ -1519,7 +1516,7 @@ impl Core {
             ring_trailingIdxFull_inReal[..cap_trailingIdxFull as usize]
                 .copy_from_slice(&inReal[historyLen - cap_trailingIdxFull as usize..]);
             let cap_trailingIdxHalf: i64 = (today as i64) - (trailingIdxHalf as i64);
-            if cap_trailingIdxHalf < 0 || cap_trailingIdxHalf > historyLen as i64 {
+            if cap_trailingIdxHalf < 1 || cap_trailingIdxHalf > historyLen as i64 {
                 return Err(RetCode::InternalError);
             }
             let allocN_trailingIdxHalf: usize = if cap_trailingIdxHalf > 0 { cap_trailingIdxHalf as usize } else { 1 };
@@ -1764,14 +1761,8 @@ impl HmaStream {
                 let mut trailingFull = sp.trailingFull;
                 let mut pkSlot0: usize = usize::MAX;
                 let mut pkVal0: f64 = 0.0_f64;
-                let mut pkSlot1: usize = usize::MAX;
-                let mut pkVal1: f64 = 0.0_f64;
-                if sp.ringCap_trailingIdxFull == 0 {
-                    pkSlot0 = 0;
-                    pkVal0 = inReal;
-                }
-                pkSlot1 = sp.winPos_jFull as usize;
-                pkVal1 = inReal;
+                pkSlot0 = sp.winPos_jFull as usize;
+                pkVal0 = inReal;
                 tempReal = inReal;
                 periodSubFull += tempReal;
                 periodSubFull -= trailingFull;
@@ -1785,7 +1776,7 @@ impl HmaStream {
                     // for( jFull = sp.lookbackFull; jFull >= 0; jFull -= 1 )
                     jFull = sp.lookbackFull;
                     loop {
-                        tempReal2 = (if ((if sp.winPos_jFull + sp.winCap_jFull - jFull >= sp.winCap_jFull { sp.winPos_jFull + sp.winCap_jFull - jFull - sp.winCap_jFull } else { sp.winPos_jFull + sp.winCap_jFull - jFull }) as usize) != pkSlot1 { sp.win_jFull_inReal[((if sp.winPos_jFull + sp.winCap_jFull - jFull >= sp.winCap_jFull { sp.winPos_jFull + sp.winCap_jFull - jFull - sp.winCap_jFull } else { sp.winPos_jFull + sp.winCap_jFull - jFull })) as usize] } else { pkVal1 });
+                        tempReal2 = (if ((if sp.winPos_jFull + sp.winCap_jFull - jFull >= sp.winCap_jFull { sp.winPos_jFull + sp.winCap_jFull - jFull - sp.winCap_jFull } else { sp.winPos_jFull + sp.winCap_jFull - jFull }) as usize) != pkSlot0 { sp.win_jFull_inReal[((if sp.winPos_jFull + sp.winCap_jFull - jFull >= sp.winCap_jFull { sp.winPos_jFull + sp.winCap_jFull - jFull - sp.winCap_jFull } else { sp.winPos_jFull + sp.winCap_jFull - jFull })) as usize] } else { pkVal0 });
                         periodSubFull += tempReal2;
                         periodSumFull += tempReal2 * ((rw) as f64);
                         rw += 1;
@@ -1793,7 +1784,7 @@ impl HmaStream {
                         jFull -= 1;
                     }
                 }
-                trailingFull = (if (sp.ringPos_trailingIdxFull as usize) != pkSlot0 { sp.ring_trailingIdxFull_inReal[sp.ringPos_trailingIdxFull] } else { pkVal0 });
+                trailingFull = sp.ring_trailingIdxFull_inReal[sp.ringPos_trailingIdxFull];
                 fullOut = periodSumFull / sp.dividerFull;
                 periodSumFull -= periodSubFull;
                 (*outReal) = 2.0 * tempReal - fullOut;
@@ -1825,22 +1816,10 @@ impl HmaStream {
                 let mut pkVal0: f64 = 0.0_f64;
                 let mut pkSlot1: usize = usize::MAX;
                 let mut pkVal1: f64 = 0.0_f64;
-                let mut pkSlot2: usize = usize::MAX;
-                let mut pkVal2: f64 = 0.0_f64;
-                let mut pkSlot3: usize = usize::MAX;
-                let mut pkVal3: f64 = 0.0_f64;
-                if sp.ringCap_trailingIdxFull == 0 {
-                    pkSlot0 = 0;
-                    pkVal0 = inReal;
-                }
-                if sp.ringCap_trailingIdxHalf == 0 {
-                    pkSlot1 = 0;
-                    pkVal1 = inReal;
-                }
-                pkSlot2 = sp.winPos_jFull as usize;
-                pkVal2 = inReal;
-                pkSlot3 = sp.winPos_jHalf as usize;
-                pkVal3 = inReal;
+                pkSlot0 = sp.winPos_jFull as usize;
+                pkVal0 = inReal;
+                pkSlot1 = sp.winPos_jHalf as usize;
+                pkVal1 = inReal;
                 tempReal = inReal;
                 periodSubFull += tempReal;
                 periodSubFull -= trailingFull;
@@ -1854,7 +1833,7 @@ impl HmaStream {
                     // for( jFull = sp.lookbackFull; jFull >= 0; jFull -= 1 )
                     jFull = sp.lookbackFull;
                     loop {
-                        tempReal2 = (if ((if sp.winPos_jFull + sp.winCap_jFull - jFull >= sp.winCap_jFull { sp.winPos_jFull + sp.winCap_jFull - jFull - sp.winCap_jFull } else { sp.winPos_jFull + sp.winCap_jFull - jFull }) as usize) != pkSlot2 { sp.win_jFull_inReal[((if sp.winPos_jFull + sp.winCap_jFull - jFull >= sp.winCap_jFull { sp.winPos_jFull + sp.winCap_jFull - jFull - sp.winCap_jFull } else { sp.winPos_jFull + sp.winCap_jFull - jFull })) as usize] } else { pkVal2 });
+                        tempReal2 = (if ((if sp.winPos_jFull + sp.winCap_jFull - jFull >= sp.winCap_jFull { sp.winPos_jFull + sp.winCap_jFull - jFull - sp.winCap_jFull } else { sp.winPos_jFull + sp.winCap_jFull - jFull }) as usize) != pkSlot0 { sp.win_jFull_inReal[((if sp.winPos_jFull + sp.winCap_jFull - jFull >= sp.winCap_jFull { sp.winPos_jFull + sp.winCap_jFull - jFull - sp.winCap_jFull } else { sp.winPos_jFull + sp.winCap_jFull - jFull })) as usize] } else { pkVal0 });
                         periodSubFull += tempReal2;
                         periodSumFull += tempReal2 * ((rw) as f64);
                         rw += 1;
@@ -1862,7 +1841,7 @@ impl HmaStream {
                         jFull -= 1;
                     }
                 }
-                trailingFull = (if (sp.ringPos_trailingIdxFull as usize) != pkSlot0 { sp.ring_trailingIdxFull_inReal[sp.ringPos_trailingIdxFull] } else { pkVal0 });
+                trailingFull = sp.ring_trailingIdxFull_inReal[sp.ringPos_trailingIdxFull];
                 fullOut = periodSumFull / sp.dividerFull;
                 periodSumFull -= periodSubFull;
                 periodSubHalf += tempReal;
@@ -1877,7 +1856,7 @@ impl HmaStream {
                     // for( jHalf = sp.lookbackHalf; jHalf >= 0; jHalf -= 1 )
                     jHalf = sp.lookbackHalf;
                     loop {
-                        tempReal2 = (if ((if sp.winPos_jHalf + sp.winCap_jHalf - jHalf >= sp.winCap_jHalf { sp.winPos_jHalf + sp.winCap_jHalf - jHalf - sp.winCap_jHalf } else { sp.winPos_jHalf + sp.winCap_jHalf - jHalf }) as usize) != pkSlot3 { sp.win_jHalf_inReal[((if sp.winPos_jHalf + sp.winCap_jHalf - jHalf >= sp.winCap_jHalf { sp.winPos_jHalf + sp.winCap_jHalf - jHalf - sp.winCap_jHalf } else { sp.winPos_jHalf + sp.winCap_jHalf - jHalf })) as usize] } else { pkVal3 });
+                        tempReal2 = (if ((if sp.winPos_jHalf + sp.winCap_jHalf - jHalf >= sp.winCap_jHalf { sp.winPos_jHalf + sp.winCap_jHalf - jHalf - sp.winCap_jHalf } else { sp.winPos_jHalf + sp.winCap_jHalf - jHalf }) as usize) != pkSlot1 { sp.win_jHalf_inReal[((if sp.winPos_jHalf + sp.winCap_jHalf - jHalf >= sp.winCap_jHalf { sp.winPos_jHalf + sp.winCap_jHalf - jHalf - sp.winCap_jHalf } else { sp.winPos_jHalf + sp.winCap_jHalf - jHalf })) as usize] } else { pkVal1 });
                         periodSubHalf += tempReal2;
                         periodSumHalf += tempReal2 * ((rw) as f64);
                         rw += 1;
@@ -1885,7 +1864,7 @@ impl HmaStream {
                         jHalf -= 1;
                     }
                 }
-                trailingHalf = (if (sp.ringPos_trailingIdxHalf as usize) != pkSlot1 { sp.ring_trailingIdxHalf_inReal[sp.ringPos_trailingIdxHalf] } else { pkVal1 });
+                trailingHalf = sp.ring_trailingIdxHalf_inReal[sp.ringPos_trailingIdxHalf];
                 halfOut = periodSumHalf / sp.dividerHalf;
                 periodSumHalf -= periodSubHalf;
                 diffReal = 2.0 * halfOut - fullOut;

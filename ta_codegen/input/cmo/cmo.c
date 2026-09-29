@@ -16,6 +16,7 @@
  *                 the fixed TA_IS_ZERO band, which zeroed the oscillator for any
  *                 instrument quoted small enough to fall under it.
  *  091326 MF,CC   #411 Wilder step without a divide or a branch.
+ *  092826 MF,CC   #466 Drop the period-1 copy-through; the range starts at 2.
  */
 
 int cmo_lookback(int optInTimePeriod)
@@ -54,24 +55,6 @@ TA_RetCode cmo(int startIdx, int endIdx,
       return TA_SUCCESS;
 
    outIdx = 0; /* Index into the output. */
-
-   /* Trap special case where the period is '1'.
-    * In that case, just copy the input into the
-    * output for the requested range (as-is !)
-    */
-   if( optInTimePeriod == 1 )
-   {
-      *outBegIdx = startIdx;
-      i = (endIdx-startIdx)+1;
-      *outNBElement = i;
-      /* Element loop, not a block copy: the C single-precision variant reads a
-       * float array, so a double-sized byte copy would reinterpret and
-       * over-read it (#137). Forward order keeps the in-place case correct (#94). */
-      today = startIdx;
-      for( outIdx = 0; outIdx < i; outIdx++ )
-         outReal[outIdx] = inReal[today++];
-      return TA_SUCCESS;
-   }
 
    /* The declaration order above sets invPeriod's place in the stream state,
     * and that place is load-bearing: a layout that lets Update load it paired

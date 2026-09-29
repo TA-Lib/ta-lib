@@ -58,6 +58,7 @@
  *                 the fixed TA_IS_ZERO band, which zeroed the oscillator for any
  *                 instrument quoted small enough to fall under it.
  *  091326 MF,CC   #411 Wilder step without a divide or a branch.
+ *  092826 MF,CC   #466 Drop the period-1 copy-through; the range starts at 2.
  */
 
 // Import types from parent module
@@ -148,30 +149,6 @@ impl Core {
         let inReal = &inReal[..=endIdx];
         outIdx = 0;
         // Index into the output.
-        // Trap special case where the period is '1'.
-        // In that case, just copy the input into the
-        // output for the requested range (as-is !)
-        if optInTimePeriod == 1 {
-            (*outBegIdx) = startIdx;
-            i = endIdx - startIdx + 1;
-            (*outNBElement) = i;
-            // Element loop, not a block copy: the C single-precision variant reads a
-            // float array, so a double-sized byte copy would reinterpret and
-            // over-read it (#137). Forward order keeps the in-place case correct (#94).
-            today = startIdx;
-            outIdx = 0;
-            if outIdx < i {
-                let _wn: usize = i - outIdx;
-                let _w0 = &inReal[today..][.._wn];
-                let _w1 = &mut outReal[outIdx..][.._wn];
-                for _wk in 0.._wn {
-                    _w1[_wk] = ((_w0[_wk]) as f64);
-                    today += 1;
-                    outIdx += 1;
-                }
-            }
-            return RetCode::Success;
-        }
         // The declaration order above sets invPeriod's place in the stream state,
         // and that place is load-bearing: a layout that lets Update load it paired
         // with a field the previous bar stored stalls every call. Re-measure Update
@@ -404,11 +381,6 @@ impl Core {
         let mut gainDelta: f64 = 0.0_f64;
         let mut tempValue1: f64 = 0.0_f64;
         let mut tempValue2: f64 = 0.0_f64;
-        if sp.optInTimePeriod == 1 {
-            (*outReal) = inReal;
-            sp.cur_outReal = (*outReal);
-            return;
-        }
         tempValue1 = inReal;
         tempValue2 = tempValue1 - sp.prevValue;
         sp.prevValue = tempValue1;
@@ -450,33 +422,6 @@ impl Core {
         }
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
-        if optInTimePeriod == 1 {
-            let fillLb: usize = self.cmo_lookback(optInTimePeriod)?;
-            let fillLb = if startIdx > fillLb { startIdx } else { fillLb };
-            if historyLen < fillLb + 1 {
-                return Err(RetCode::InsufficientHistory);
-            }
-            let state = CmoStreamState {
-                cur_outReal: inReal[historyLen - 1],
-                optInTimePeriod: optInTimePeriod,
-                prevGain: 0.0_f64,
-                prevLoss: 0.0_f64,
-                invPeriod: 0.0_f64,
-                prevValue: 0.0_f64,
-            };
-            (*outBegIdx) = fillLb;
-            (*outNBElement) = historyLen - fillLb;
-            if outStride == 0 {
-                outReal[0] = inReal[historyLen - 1];
-            } else {
-                let mut fillIdx: usize = 0;
-                while fillIdx < historyLen - fillLb {
-                    outReal[fillIdx] = inReal[fillLb + fillIdx];
-                    fillIdx += 1;
-                }
-            }
-            return Ok(CmoStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } });
-        }
         let mut outIdx: usize = 0_usize;
         let mut today: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
@@ -766,10 +711,6 @@ impl CmoStream {
             let mut prevGain = sp.prevGain;
             let mut prevLoss = sp.prevLoss;
             let mut prevValue = sp.prevValue;
-            if sp.optInTimePeriod == 1 {
-                (*outReal) = inReal;
-                return Ok((*outReal));
-            }
             tempValue1 = inReal;
             tempValue2 = tempValue1 - prevValue;
             prevValue = tempValue1;
