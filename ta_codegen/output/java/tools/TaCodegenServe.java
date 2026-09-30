@@ -127803,6 +127803,15 @@ class Core {
              sp.cur_outReal = ((KamaStream) sp.sub).update(inReal);
              return;
           }
+          default:
+             maStepImplRest(sp, inReal);
+             return;
+          }
+       }
+       private void maStepImplRest( MaStream sp, double inReal )
+       {
+          switch( sp.optInMAType )
+          {
           case MAMA: {
              MamaOut subOut = new MamaOut();
              ((MamaStream) sp.sub).update(inReal, subOut);
@@ -205488,7 +205497,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "3d9da1e99ffbb3cc";
+    static final String SPLICED_GENCODE_DIGEST = "2e7ed3a306e6acbb";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];

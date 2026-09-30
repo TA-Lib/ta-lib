@@ -847,6 +847,15 @@
          sp.cur_outReal = ((KamaStream) sp.sub).update(inReal);
          return;
       }
+      default:
+         maStepImplRest(sp, inReal);
+         return;
+      }
+   }
+   private void maStepImplRest( MaStream sp, double inReal )
+   {
+      switch( sp.optInMAType )
+      {
       case MAMA: {
          MamaOut subOut = new MamaOut();
          ((MamaStream) sp.sub).update(inReal, subOut);
