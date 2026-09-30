@@ -15,7 +15,7 @@
 //! (which delegates to MACD only when all three MA types are EMA) before the analysis was
 //! narrowed to predicated lookback calls.
 
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashSet};
 use std::path::Path;
 
 use ta_codegen_lib::{ir::FuncDef, parser, stability};
@@ -57,6 +57,7 @@ const INHERITED: &[(&str, &str)] = &[
     ("CRSI", "RSI"),
     ("CVI", "EMA"),
     ("DEMA", "EMA"),
+    ("EFI", "EMA"),
     ("ERI", "EMA"),
     ("KC", "ATR"),
     ("MACD", "EMA"),
@@ -160,3 +161,68 @@ fn ma_types_split_into_recursive_and_windowed() {
         assert!(!st[name].unconditional(), "{name} is a windowed average");
     }
 }
+
+/// ta_regtest's nightly range sweep fails a function that moves across `startIdx` without
+/// an `UNSTABLE_MAP` row, so the map is a measured list. The static derivation, which is
+/// what the website publishes, must explain every row and give each function it derives a
+/// row.
+///
+/// Two classes are not held to it. The range sweep skips path-dependent functions before
+/// it reads the map, so their rows are optional. A MAType-dependent function's row follows
+/// its default MA type, which the call graph cannot see, so its rows are allowed, not
+/// required.
+#[test]
+fn derivation_agrees_with_ta_regtest_unstable_map() {
+    let funcs = load();
+    let st = stability::classify(&funcs);
+    let src_path =
+        Path::new(env!("CARGO_MANIFEST_DIR")).join("../../src/tools/ta_regtest/test_codegen.c");
+    let src = std::fs::read_to_string(&src_path).expect("read test_codegen.c");
+    let start = src
+        .find("static const UnstableLookup UNSTABLE_MAP[] = {")
+        .expect("UNSTABLE_MAP not found in test_codegen.c");
+    let body = &src[start..start + src[start..].find("\n};").expect("UNSTABLE_MAP end")];
+    let map: BTreeSet<(String, String)> = body
+        .lines()
+        .filter_map(|l| {
+            let row = l.trim().strip_prefix("{\"")?;
+            let (name, rest) = row.split_once('"')?;
+            let id = rest.split("TA_FUNC_UNST_").nth(1)?.split('}').next()?.trim();
+            Some((name.to_string(), id.to_string()))
+        })
+        .collect();
+    assert!(
+        map.contains(&("EMA".to_string(), "EMA".to_string())) && map.len() >= 27,
+        "UNSTABLE_MAP parse found {} rows; the row format changed",
+        map.len()
+    );
+
+    let mut required = BTreeSet::new();
+    let mut allowed = BTreeSet::new();
+    for f in &funcs {
+        let s = &st[&f.name];
+        let mut ids: Vec<String> = s.inherited_from.clone();
+        if s.intrinsic {
+            ids.push(f.name.clone());
+        }
+        for id in ids {
+            let row = (f.name.clone(), id);
+            if s.path_dependent {
+                allowed.insert(row);
+            } else {
+                required.insert(row);
+            }
+        }
+    }
+    let missing: Vec<_> = required.difference(&map).collect();
+    assert!(missing.is_empty(), "derived unstable, but no UNSTABLE_MAP row: {missing:?}");
+    let unexplained: Vec<_> = map
+        .difference(&required)
+        .filter(|r| !allowed.contains(*r) && !st[&r.0].matype_dependent)
+        .collect();
+    assert!(
+        unexplained.is_empty(),
+        "UNSTABLE_MAP rows the derivation calls start-independent: {unexplained:?}"
+    );
+}
+

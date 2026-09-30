@@ -22,6 +22,7 @@
 
 use std::collections::{BTreeSet, HashMap, HashSet};
 
+use crate::backends::builtins::SpecialBuiltin;
 use crate::ir::{Expr, FuncDef, LookbackExpr, ParamType, Statement};
 
 /// The dynamic moving-average dispatcher. Calls into it are MA-type-conditional.
@@ -299,10 +300,18 @@ fn walk_stmt(stmt: &Statement, out: &mut BTreeSet<String>) {
 }
 
 /// Collect every `FuncCall` name reachable from an expression.
+///
+/// A direct `TA_GetUnstablePeriod(TA_FUNC_UNST_<X>)` also yields `<x>`: a lookback that
+/// reads another function's id grows with that id exactly as one that calls its lookback.
 fn walk_expr(expr: &Expr, out: &mut BTreeSet<String>) {
     match expr {
         Expr::FuncCall(name, args) => {
             out.insert(name.clone());
+            if matches!(SpecialBuiltin::from_name(name), Some(SpecialBuiltin::UnstablePeriod)) {
+                if let Some(Expr::Var(id)) = args.first() {
+                    out.insert(id.strip_prefix("FUNC_UNST_").unwrap_or(id).to_lowercase());
+                }
+            }
             for a in args {
                 walk_expr(a, out);
             }

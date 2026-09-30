@@ -32,7 +32,7 @@ The EMA is TA-Lib's, seeded with a simple average of the first `optInTimePeriod`
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
+**Numerical Stability:** [Initial Unstable Period](/functions/stability.md#initial-unstable-period) — Inherited from EMA, which EFI computes internally; tunable via EMA's unstable period.
 
 <div class="flag-table">
 
