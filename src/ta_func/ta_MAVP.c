@@ -752,10 +752,67 @@ static TA_RetCode TA_MAVP_TapeOpen( struct TA_MAVP_Stream *sp, const double inRe
 }
 
 /* Private function, not in public API. */
+static int TA_MAVP_WindowMode( int maType )
+{
+   switch( maType )
+   {
+   case TA_MAType_ALMA:
+   case TA_MAType_DISABLED:
+      return 1;
+   default:
+      return 0;
+   }
+}
+
+/* Private function, not in public API. */
+static TA_RetCode TA_MAVP_EvalWindow( const struct TA_MAVP_Stream *sp, double inReal, int cp, double *outReal )
+{
+   double localWin[32];
+   double *win = localWin;
+   int lb, i, wBeg, wNb;
+   TA_RetCode retCode;
+
+   lb = TA_MA_Lookback( cp, sp->optInMAType );
+   if( lb + 1 > 32 )
+   {
+      win = (double *)TA_Malloc( sizeof(double) * (size_t)(lb + 1) );
+      if( !win ) return TA_ALLOC_ERR;
+   }
+   for( i = 0; i < lb; i++ )
+      win[i] = sp->tape[(sp->tapePos + sp->tapeMask + 2 - lb + i) & sp->tapeMask];
+   win[lb] = inReal;
+   retCode = TA_MA( lb, lb, win, cp, sp->optInMAType, &wBeg, &wNb, outReal );
+   if( win != localWin ) TA_Free( win );
+   return retCode;
+}
+
+/* Private function, not in public API. */
+static TA_RetCode TA_MAVP_UpdateWindow( struct TA_MAVP_Stream *stream, double inReal, double inPeriods, double *outReal )
+{
+   int cp;
+   double cpReal, v;
+   TA_RetCode retCode;
+
+   cpReal = inPeriods;
+   if( !(cpReal >= stream->optInMinPeriod) ) cp = stream->optInMinPeriod;
+   else if( cpReal > stream->optInMaxPeriod ) cp = stream->optInMaxPeriod;
+   else cp = (int)cpReal;
+   retCode = TA_MAVP_EvalWindow( stream, inReal, cp, &v );
+   if( retCode != TA_SUCCESS ) return retCode;
+   stream->tapePos = (stream->tapePos + 1) & stream->tapeMask;
+   stream->tape[stream->tapePos] = inReal;
+   *outReal = v;
+   stream->cur_outReal = *outReal;
+   stream->outRangeCount++;
+   return TA_SUCCESS;
+}
+
+/* Private function, not in public API. */
 TA_RetCode TA_MAVP_OpenInternal( struct TA_MAVP_Stream **stream, const double inReal[], const double inPeriods[], int startIdx, int historyLen, int optInMinPeriod, int optInMaxPeriod, TA_MAType optInMAType, double *outReal )
 {
    struct TA_MAVP_Stream *sp;
    int k, cp, lookbackTotal, subStart, reach, slotReach;
+   int window, wBeg, wNb;
    double cpReal;
    TA_RetCode retCode;
 
@@ -788,6 +845,24 @@ TA_RetCode TA_MAVP_OpenInternal( struct TA_MAVP_Stream **stream, const double in
    sp->optInMaxPeriod = optInMaxPeriod;
    sp->optInMAType = optInMAType;
    sp->nBank = optInMaxPeriod - optInMinPeriod + 1;
+   window = TA_MAVP_WindowMode( optInMAType );
+   if( optInMaxPeriod - optInMinPeriod + 1 < 12 ) window = 0;
+   if( window )
+      for( k = 0; k < optInMaxPeriod - optInMinPeriod + 1; k++ )
+         if( TA_MA_Lookback( optInMinPeriod + k, optInMAType ) > lookbackTotal ) { window = 0; break; }
+   if( window )
+   {
+      retCode = TA_MAVP_TapeOpen( sp, inReal, historyLen, lookbackTotal );
+      if( retCode != TA_SUCCESS ) { TA_MAVP_Close( sp ); return retCode; }
+      cpReal = inPeriods[historyLen - 1];
+      if( !(cpReal >= optInMinPeriod) ) cp = optInMinPeriod;
+      else if( cpReal > optInMaxPeriod ) cp = optInMaxPeriod;
+      else cp = (int)cpReal;
+      retCode = TA_MA( historyLen - 1, historyLen - 1, inReal, cp, optInMAType, &wBeg, &wNb, outReal );
+      if( retCode != TA_SUCCESS ) { TA_MAVP_Close( sp ); return retCode; }
+   }
+   else
+   {
    sp->bank = (struct TA_MA_Stream **)TA_Malloc( sizeof(struct TA_MA_Stream *) * (size_t)sp->nBank );
    if( !sp->bank ) { TA_Free( sp ); return TA_ALLOC_ERR; }
    memset( sp->bank, 0, sizeof(struct TA_MA_Stream *) * (size_t)sp->nBank );
@@ -810,6 +885,7 @@ TA_RetCode TA_MAVP_OpenInternal( struct TA_MAVP_Stream **stream, const double in
    else if( cpReal > optInMaxPeriod ) cp = optInMaxPeriod;
    else cp = (int)cpReal;
    *outReal = sp->scratch[cp - optInMinPeriod];
+   }
 
    sp->outRangeBegIdx = subStart;
    sp->outRangeCount = historyLen - subStart;
@@ -833,6 +909,7 @@ TA_LIB_API TA_RetCode TA_MAVP_OpenAndFill( TA_MAVP_Stream **stream, const double
 {
    struct TA_MAVP_Stream *sp;
    int k, cp, lookbackTotal, t, reach, slotReach, tapeBase;
+   int window, t1, cp2, wBeg, wNb;
    double cpReal;
    TA_RetCode retCode;
 
@@ -870,6 +947,36 @@ TA_LIB_API TA_RetCode TA_MAVP_OpenAndFill( TA_MAVP_Stream **stream, const double
    sp->optInMaxPeriod = optInMaxPeriod;
    sp->optInMAType = optInMAType;
    sp->nBank = optInMaxPeriod - optInMinPeriod + 1;
+   window = TA_MAVP_WindowMode( optInMAType );
+   if( optInMaxPeriod - optInMinPeriod + 1 < 12 ) window = 0;
+   if( window )
+      for( k = 0; k < optInMaxPeriod - optInMinPeriod + 1; k++ )
+         if( TA_MA_Lookback( optInMinPeriod + k, optInMAType ) > lookbackTotal ) { window = 0; break; }
+   if( window )
+   {
+      for( t = lookbackTotal; t < historyLen; t = t1 + 1 )
+      {
+         cpReal = inPeriods[t];
+         if( !(cpReal >= optInMinPeriod) ) cp = optInMinPeriod;
+         else if( cpReal > optInMaxPeriod ) cp = optInMaxPeriod;
+         else cp = (int)cpReal;
+         for( t1 = t; t1 + 1 < historyLen; t1++ )
+         {
+            cp2 = cp;
+            cpReal = inPeriods[t1 + 1];
+            if( !(cpReal >= optInMinPeriod) ) cp = optInMinPeriod;
+            else if( cpReal > optInMaxPeriod ) cp = optInMaxPeriod;
+            else cp = (int)cpReal;
+            if( cp != cp2 ) { cp = cp2; break; }
+         }
+         retCode = TA_MA( t, t1, inReal, cp, optInMAType, &wBeg, &wNb, &outReal[t - lookbackTotal] );
+         if( retCode != TA_SUCCESS ) { TA_MAVP_Close( sp ); return retCode; }
+      }
+      retCode = TA_MAVP_TapeOpen( sp, inReal, historyLen, lookbackTotal );
+      if( retCode != TA_SUCCESS ) { TA_MAVP_Close( sp ); return retCode; }
+   }
+   else
+   {
    sp->bank = (struct TA_MA_Stream **)TA_Malloc( sizeof(struct TA_MA_Stream *) * (size_t)sp->nBank );
    if( !sp->bank ) { TA_Free( sp ); return TA_ALLOC_ERR; }
    memset( sp->bank, 0, sizeof(struct TA_MA_Stream *) * (size_t)sp->nBank );
@@ -906,6 +1013,7 @@ TA_LIB_API TA_RetCode TA_MAVP_OpenAndFill( TA_MAVP_Stream **stream, const double
       else cp = (int)cpReal;
       outReal[t - lookbackTotal] = sp->scratch[cp - optInMinPeriod];
    }
+   }
 
    *outBegIdx = lookbackTotal;
    *outNBElement = historyLen - lookbackTotal;
@@ -925,6 +1033,7 @@ TA_LIB_API TA_RetCode TA_MAVP_Update( TA_MAVP_Stream *stream, double inReal, dou
       return TA_OUT_OF_RANGE_END_INDEX;
    if( !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) || !TA_IS_FINITE( inPeriods ) ) return TA_BAD_PARAM;
+   if( !stream->bank ) return TA_MAVP_UpdateWindow( stream, inReal, inPeriods, outReal );
    stream->tapePos = (stream->tapePos + 1) & stream->tapeMask;
    stream->tape[stream->tapePos] = inReal;
    tapeBase = stream->tapePos + stream->tapeMask + 1;
@@ -950,6 +1059,7 @@ TA_LIB_API TA_RetCode TA_MAVP_Peek( const TA_MAVP_Stream *stream, double inReal,
    if( !(cpReal >= stream->optInMinPeriod) ) cp = stream->optInMinPeriod;
    else if( cpReal > stream->optInMaxPeriod ) cp = stream->optInMaxPeriod;
    else cp = (int)cpReal;
+   if( !stream->bank ) return TA_MAVP_EvalWindow( stream, inReal, cp, outReal );
    TA_MA_PeekTape( stream->bank[cp - stream->optInMinPeriod], stream->tape, ((stream->tapePos + 1) & stream->tapeMask) + stream->tapeMask + 1, stream->tapeMask, inReal, outReal );
    return TA_SUCCESS;
 }
@@ -1009,6 +1119,7 @@ TA_LIB_API TA_RetCode TA_MAVP_Clone( const TA_MAVP_Stream *stream, TA_MAVP_Strea
    sp->bank = NULL;
    sp->scratch = NULL;
    sp->tape = NULL;
+   if( stream->bank )
    { int k;
      sp->bank = (struct TA_MA_Stream **)TA_Malloc( sizeof(struct TA_MA_Stream *) * (size_t)sp->nBank );
      if( !sp->bank ) { TA_MAVP_Close( sp ); return TA_ALLOC_ERR; }

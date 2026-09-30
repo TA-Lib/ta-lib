@@ -3733,13 +3733,54 @@ fn emit_period_bank(
     };
     let lb_args = opts_of(max);
     let open_opts = opts_of(&format!("{min} + bankIdx"));
-    let clamp = |o: &mut String, pad: &str, x: &str, h: &str| {
-        let _ = writeln!(o, "{pad}int cp = (int){x};");
-        let _ = writeln!(o, "{pad}if( cp < {h}{min} ) {{");
-        let _ = writeln!(o, "{pad}   cp = {h}{min};");
-        let _ = writeln!(o, "{pad}}} else if( cp > {h}{max} ) {{");
-        let _ = writeln!(o, "{pad}   cp = {h}{max};");
+    let clamp_to = |o: &mut String, pad: &str, var: &str, x: &str, h: &str| {
+        let _ = writeln!(o, "{pad}int {var} = (int){x};");
+        let _ = writeln!(o, "{pad}if( {var} < {h}{min} ) {{");
+        let _ = writeln!(o, "{pad}   {var} = {h}{min};");
+        let _ = writeln!(o, "{pad}}} else if( {var} > {h}{max} ) {{");
+        let _ = writeln!(o, "{pad}   {var} = {h}{max};");
         let _ = writeln!(o, "{pad}}}");
+    };
+    let clamp = |o: &mut String, pad: &str, x: &str, h: &str| clamp_to(o, pad, "cp", x, h);
+    // MATypes whose value is the callee's batch over the tape tail keep no
+    // bank: see streaming::window_evaluable.
+    let window_labels = registry.window_labels(&func.name.to_lowercase());
+    let windowed = !window_labels.is_empty();
+    let matype = plan.matype_param.as_str();
+    let callee_args = |per: &str, ty: &str| -> String {
+        plan.callee_opts
+            .iter()
+            .map(|a| match a {
+                streaming::PeriodBankArg::Period => per.to_string(),
+                streaming::PeriodBankArg::MAType => ty.to_string(),
+            })
+            .collect::<Vec<_>>()
+            .join(", ")
+    };
+    // A window-mode open starts from Lookback(max) like the bank does, so every
+    // selected period's window must fit inside it; a band where one does not
+    // falls back to the bank.
+    let window_gate = |o: &mut String| {
+        let _ = writeln!(o, "      boolean window = {base}WindowMode({matype});");
+        let _ = writeln!(o, "      if( {max} - {min} + 1 < {} ) window = false;", crate::streaming::WINDOW_MIN_BAND);
+        let _ = writeln!(o, "      if( window ) {{");
+        let _ = writeln!(o, "         for( int bankIdx = 0; bankIdx < nBank; bankIdx++ ) {{");
+        let _ = writeln!(
+            o,
+            "            if( {callee_camel}Lookback({}) > lookbackTotal ) {{",
+            callee_args(&format!("{min} + bankIdx"), matype)
+        );
+        let _ = writeln!(o, "               window = false;");
+        let _ = writeln!(o, "               break;");
+        let _ = writeln!(o, "            }}");
+        let _ = writeln!(o, "         }}");
+        let _ = writeln!(o, "      }}");
+    };
+    let store_window_handle = |o: &mut String| {
+        for p in &func.optional_inputs {
+            let _ = writeln!(o, "         sp.{0} = {0};", p.name);
+        }
+        let _ = writeln!(o, "         sp.bank = new {subty}[0];");
     };
     // Every slot opened, then detached from its own history at once, so the
     // opener never holds more than one slot's copy; the tape is sized by the
@@ -3768,7 +3809,8 @@ fn emit_period_bank(
     fields.push(("tapePos".into(), "int".into(), "0".into()));
     fields.push(("tape".into(), "double[]".into(), "new double[0]".into()));
     let extra_members = format!(
-        "      // One sub-{} stream per period in [{min}, {max}], advanced in lockstep.\n      private {subty}[] bank;\n",
+        "      // {}ne sub-{} stream per period in [{min}, {max}], advanced in lockstep.\n      private {subty}[] bank;\n",
+        if windowed { "Empty in window mode; otherwise o" } else { "O" },
         callee.to_uppercase()
     );
     // Object-array clone is SHALLOW: the bank must copy element-wise or a peek
@@ -3786,9 +3828,14 @@ fn emit_period_bank(
     let mut bank_frame = String::new();
     clamp(&mut bank_frame, "         ", period, "sp.");
     let _ = writeln!(bank_frame, "         int slot = cp - sp.{min};");
+    let window_peek = if windowed {
+        format!("sp.bank.length == 0 ? core.{base}EvalWindow(sp, {price}, cp) : ")
+    } else {
+        String::new()
+    };
     let _ = writeln!(
         bank_frame,
-        "         double cur_{out} = core.{callee_camel}PeekTape(sp.bank[slot], sp.tape, ((sp.tapePos + 1) & sp.tapeMask) + sp.tapeMask + 1, sp.tapeMask, {price});"
+        "         double cur_{out} = {window_peek}core.{callee_camel}PeekTape(sp.bank[slot], sp.tape, ((sp.tapePos + 1) & sp.tapeMask) + sp.tapeMask + 1, sp.tapeMask, {price});"
     );
     let bank_frame = PeekFrame::falls_through(bank_frame);
     emit_handle_class_with_members(o, func, &fields, &subs, &extra_members, Some(&bank_frame));
@@ -3796,6 +3843,18 @@ fn emit_period_bank(
     // --- step: the bar into the tape, then ALL slots; output the clamped-period
     // slot --------------------------------------------------------------------
     emit_step_sig(o, func);
+    if windowed {
+        // The tape takes the bar only once the value exists: a failure changes
+        // nothing.
+        let _ = writeln!(o, "      if( sp.bank.length == 0 ) {{");
+        clamp(o, "         ", period, "sp.");
+        let _ = writeln!(o, "         double v = {base}EvalWindow(sp, {price}, cp);");
+        let _ = writeln!(o, "         sp.tapePos = (sp.tapePos + 1) & sp.tapeMask;");
+        let _ = writeln!(o, "         sp.tape[sp.tapePos] = {price};");
+        let _ = writeln!(o, "         sp.cur_{out} = v;");
+        let _ = writeln!(o, "         return;");
+        let _ = writeln!(o, "      }}");
+    }
     clamp(o, "      ", period, "sp.");
     let _ = writeln!(o, "      int slot = cp - sp.{min};");
     let _ = writeln!(o, "      sp.tapePos = (sp.tapePos + 1) & sp.tapeMask;");
@@ -3831,6 +3890,50 @@ fn emit_period_bank(
     let _ = writeln!(o, "      sp.tapePos = (historyLen - 1) & sp.tapeMask;");
     let _ = writeln!(o, "   }}");
 
+    if windowed {
+        let enum_ty = func
+            .optional_inputs
+            .iter()
+            .find_map(|p| match &p.param_type {
+                ParamType::Enum(n) if p.name == matype => Some(n.as_str()),
+                _ => None,
+            })
+            .expect("a period bank's type selector is an enum parameter");
+        let _ = writeln!(o, "   private static boolean {base}WindowMode( {enum_ty} t )\n   {{");
+        if window_labels.iter().any(|l| l == "*") {
+            let _ = writeln!(o, "      return true;");
+        } else {
+            let _ = writeln!(o, "      switch( t )\n      {{");
+            for label in window_labels {
+                let _ = writeln!(o, "      case {}:", super::java::render_java_switch_label(label, enums));
+            }
+            let _ = writeln!(o, "         return true;");
+            let _ = writeln!(o, "      default:");
+            let _ = writeln!(o, "         return false;");
+            let _ = writeln!(o, "      }}");
+        }
+        let _ = writeln!(o, "   }}");
+
+        // The window is the `lb` committed bars before the incoming one, read
+        // from the tape, then that bar: the same values, in the same order, as
+        // the batch reads for it.
+        let _ = writeln!(o, "   private double {base}EvalWindow( {class} sp, double {price}, int cp )\n   {{");
+        let _ = writeln!(o, "      int lb = {callee_camel}Lookback({});", callee_args("cp", &format!("sp.{matype}")));
+        let _ = writeln!(o, "      double[] win = new double[lb + 1];");
+        let _ = writeln!(o, "      for( int i = 0; i < lb; i++ ) {{");
+        let _ = writeln!(o, "         win[i] = sp.tape[(sp.tapePos + sp.tapeMask + 2 - lb + i) & sp.tapeMask];");
+        let _ = writeln!(o, "      }}");
+        let _ = writeln!(o, "      win[lb] = {price};");
+        let _ = writeln!(o, "      double[] out1 = new double[1];");
+        let _ = writeln!(
+            o,
+            "      {callee_camel}(lb, lb, win, {}, out1);",
+            callee_args("cp", &format!("sp.{matype}"))
+        );
+        let _ = writeln!(o, "      return out1[0];");
+        let _ = writeln!(o, "   }}");
+    }
+
     // --- open body (Scalar) -------------------------------------------------
     let own_lb_args: Vec<String> = func.optional_inputs.iter().map(|p| p.name.clone()).collect();
     let own_lb_call = format!("{}Lookback({})", method_base(func), own_lb_args.join(", "));
@@ -3862,6 +3965,24 @@ fn emit_period_bank(
     let _ = writeln!(o, "         return RetCode.INSUFFICIENT_HISTORY;");
     let _ = writeln!(o, "      }}");
     let _ = writeln!(o, "      int nBank = {max} - {min} + 1;");
+    if windowed {
+        window_gate(o);
+        let _ = writeln!(o, "      if( window ) {{");
+        clamp(o, "         ", &format!("{period}[historyLen - 1]"), "");
+        store_window_handle(o);
+        let _ = writeln!(o, "         {base}TapeOpen(sp, {price}, historyLen, lookbackTotal);");
+        let _ = writeln!(o, "         double[] out1 = new double[1];");
+        let _ = writeln!(
+            o,
+            "         {callee_camel}(historyLen - 1, historyLen - 1, {price}, {}, out1);",
+            callee_args("cp", matype)
+        );
+        let _ = writeln!(o, "         sp.cur_{out} = out1[0];");
+        let _ = writeln!(o, "         sp.outRangeBegIdx = subStart;");
+        let _ = writeln!(o, "         sp.outRangeCount = historyLen - subStart;");
+        let _ = writeln!(o, "         return RetCode.SUCCESS;");
+        let _ = writeln!(o, "      }}");
+    }
     open_bank(o, price, "subStart");
     clamp(o, "      ", &format!("{period}[historyLen - 1]"), "");
     store_handle(o);
@@ -3890,6 +4011,31 @@ fn emit_period_bank(
     let _ = writeln!(o, "         return RetCode.INSUFFICIENT_HISTORY;");
     let _ = writeln!(o, "      }}");
     let _ = writeln!(o, "      int nBank = {max} - {min} + 1;");
+    if windowed {
+        // One batch call per run of equal clamped periods.
+        window_gate(o);
+        let _ = writeln!(o, "      if( window ) {{");
+        let _ = writeln!(o, "         double[] run = new double[historyLen - lookbackTotal];");
+        let _ = writeln!(o, "         int t1;");
+        let _ = writeln!(o, "         for( int t = lookbackTotal; t < historyLen; t = t1 + 1 ) {{");
+        clamp(o, "            ", &format!("{period}[t]"), "");
+        let _ = writeln!(o, "            for( t1 = t; t1 + 1 < historyLen; t1++ ) {{");
+        clamp_to(o, "               ", "cp2", &format!("{period}[t1 + 1]"), "");
+        let _ = writeln!(o, "               if( cp2 != cp ) {{");
+        let _ = writeln!(o, "                  break;");
+        let _ = writeln!(o, "               }}");
+        let _ = writeln!(o, "            }}");
+        let _ = writeln!(o, "            {callee_camel}(t, t1, {price}, {}, run);", callee_args("cp", matype));
+        let _ = writeln!(o, "            System.arraycopy(run, 0, {out}, t - lookbackTotal, t1 - t + 1);");
+        let _ = writeln!(o, "         }}");
+        store_window_handle(o);
+        let _ = writeln!(o, "         {base}TapeOpen(sp, {price}, historyLen, lookbackTotal);");
+        let _ = writeln!(o, "         outBegIdx.value = lookbackTotal;");
+        let _ = writeln!(o, "         outNBElement.value = historyLen - lookbackTotal;");
+        let _ = writeln!(o, "         sp.cur_{out} = {out}[outNBElement.value - 1];");
+        let _ = writeln!(o, "         return RetCode.SUCCESS;");
+        let _ = writeln!(o, "      }}");
+    }
     let _ = writeln!(o, "      /* Seed each sub at the first output bar (lookbackTotal), NOT the last. */");
     let _ = writeln!(
         o,

@@ -333,14 +333,22 @@ fn test_java_mavp_period_bank() {
     assert!(s.contains("while( size <= reach ) {"));
     let step = &s[s.find("private void mavpStepImpl(").unwrap()..];
     let step = &step[..step.find("private void mavpTapeOpen(").unwrap()];
-    let write = step.find("sp.tape[sp.tapePos] = inReal;").expect("the step writes the bar into the tape");
-    assert!(write < step.find("maStepTape(sp.bank[bankIdx], sp.tape, tapeBase, sp.tapeMask, inReal)").unwrap());
+    // The window arm writes the bar too; the bank arm's is the last one.
+    let bank_write = step.rfind("sp.tape[sp.tapePos] = inReal;").expect("the step writes the bar into the tape");
+    assert!(bank_write < step.find("maStepTape(sp.bank[bankIdx], sp.tape, tapeBase, sp.tapeMask, inReal)").unwrap());
+    let write = step.find("sp.tape[sp.tapePos] = inReal;").unwrap();
     assert!(s.contains("this.tape = other.tape.clone();"));
     // Peek reads the selected slot through the tape and never writes it.
     let peek = &s[s.find("public double peek(").unwrap()..];
     let peek = &peek[..peek.find("public double value(").unwrap()];
     assert!(peek.contains("core.maPeekTape(sp.bank[slot], sp.tape,"));
     assert!(!peek.contains(".update(") && !peek.contains("StepTape") && !peek.contains("tape[sp."));
+    // Window mode: nothing provokes a failure inside the evaluation, so a tape
+    // committed before it would pass every runtime gate.
+    let narrow = format!("if( optInMaxPeriod - optInMinPeriod + 1 < {} ) window = false;", ta_codegen_lib::streaming::WINDOW_MIN_BAND);
+    assert_eq!(s.matches(&narrow).count(), 2, "both opens keep the bank for a narrow band");
+    let eval = step.find("double v = mavpEvalWindow(sp, inReal, cp);").expect("the window step");
+    assert!(eval < write, "the window step commits the bar only after evaluating it");
 }
 
 /// The arms' tape entries (#445): the step reads the history from the tape and

@@ -763,7 +763,7 @@ public partial class Core
       internal int tapeMask;
       internal int tapePos;
       internal double[] tape = [];
-      // One sub-MA stream per period in [optInMinPeriod, optInMaxPeriod], advanced in lockstep.
+      // Empty in window mode; otherwise one sub-MA stream per period in [optInMinPeriod, optInMaxPeriod], advanced in lockstep.
       internal MaStream[] bank = [];
       internal int outRangeBegIdx;
       internal int outRangeCount;
@@ -824,7 +824,6 @@ public partial class Core
 
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
-      /// <para>Allocates nothing — neither handle state nor a return value.</para>
       /// <para>Throws <see cref="System.ArgumentException"/> if any bar value is not
       /// finite (NaN or an infinity). That check runs before anything is written,
       /// so nothing moves — <see cref="OutRange"/> included — and
@@ -876,7 +875,7 @@ public partial class Core
             cp = sp.optInMaxPeriod;
          }
          int slot = cp - sp.optInMinPeriod;
-         double cur_outReal = sp.core.MaPeekTape(sp.bank[slot], sp.tape, ((sp.tapePos + 1) & sp.tapeMask) + sp.tapeMask + 1, sp.tapeMask, inReal);
+         double cur_outReal = sp.bank.Length == 0 ? sp.core.MavpEvalWindow(sp, inReal, cp) : sp.core.MaPeekTape(sp.bank[slot], sp.tape, ((sp.tapePos + 1) & sp.tapeMask) + sp.tapeMask + 1, sp.tapeMask, inReal);
          return cur_outReal;
       }
 
@@ -905,6 +904,13 @@ public partial class Core
       } else if( cp > sp.optInMaxPeriod ) {
          cp = sp.optInMaxPeriod;
       }
+      if( sp.bank.Length == 0 ) {
+         double v = MavpEvalWindow(sp, inReal, cp);
+         sp.tapePos = (sp.tapePos + 1) & sp.tapeMask;
+         sp.tape[sp.tapePos] = inReal;
+         sp.cur_outReal = v;
+         return;
+      }
       int slot = cp - sp.optInMinPeriod;
       sp.tapePos = (sp.tapePos + 1) & sp.tapeMask;
       sp.tape[sp.tapePos] = inReal;
@@ -931,6 +937,31 @@ public partial class Core
          sp.tape[b & sp.tapeMask] = inReal[b];
       }
       sp.tapePos = (historyLen - 1) & sp.tapeMask;
+   }
+
+   private static bool MavpWindowMode( MAType maType )
+   {
+      switch( maType )
+      {
+      case MAType.ALMA:
+      case MAType.DISABLED:
+         return true;
+      default:
+         return false;
+      }
+   }
+
+   internal double MavpEvalWindow( MavpStream sp, double inReal, int cp )
+   {
+      int lb = MaLookback(cp, sp.optInMAType);
+      Span<double> win = lb + 1 <= 128 ? stackalloc double[lb + 1] : new double[lb + 1];
+      for( int i = 0; i < lb; i++ ) {
+         win[i] = sp.tape[(sp.tapePos + sp.tapeMask + 2 - lb + i) & sp.tapeMask];
+      }
+      win[lb] = inReal;
+      Span<double> wOut = stackalloc double[1];
+      Ma(lb, lb, win, cp, sp.optInMAType, wOut);
+      return wOut[0];
    }
 
    private RetCode MavpOpenImpl( MavpStream sp, ReadOnlySpan<double> inReal, ReadOnlySpan<double> inPeriods, int startIdx, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
@@ -978,6 +1009,34 @@ public partial class Core
          return RetCode.InsufficientHistory;
       }
       int nBank = optInMaxPeriod - optInMinPeriod + 1;
+      bool window = MavpWindowMode(optInMAType);
+      if( optInMaxPeriod - optInMinPeriod + 1 < 12 ) window = false;
+      if( window ) {
+         for( int wk = 0; wk < optInMaxPeriod - optInMinPeriod + 1; wk++ ) {
+            if( MaLookback(optInMinPeriod + wk, optInMAType) > lookbackTotal ) {
+               window = false;
+               break;
+            }
+         }
+      }
+      if( window ) {
+         MavpTapeOpen(sp, inReal, lookbackTotal);
+         int wcp = (int)inPeriods[historyLen - 1];
+         if( wcp < optInMinPeriod ) {
+            wcp = optInMinPeriod;
+         } else if( wcp > optInMaxPeriod ) {
+            wcp = optInMaxPeriod;
+         }
+         Span<double> wOut = stackalloc double[1];
+         Ma(historyLen - 1, historyLen - 1, inReal, wcp, optInMAType, wOut);
+         sp.optInMinPeriod = optInMinPeriod;
+         sp.optInMaxPeriod = optInMaxPeriod;
+         sp.optInMAType = optInMAType;
+         sp.cur_outReal = wOut[0];
+         sp.outRangeBegIdx = subStart;
+         sp.outRangeCount = historyLen - subStart;
+         return RetCode.Success;
+      }
       MaStream[] bank = new MaStream[nBank];
       int reach = 0;
       for( int bankIdx = 0; bankIdx < nBank; bankIdx++ ) {
@@ -1045,6 +1104,46 @@ public partial class Core
          return RetCode.InsufficientHistory;
       }
       int nBank = optInMaxPeriod - optInMinPeriod + 1;
+      bool window = MavpWindowMode(optInMAType);
+      if( optInMaxPeriod - optInMinPeriod + 1 < 12 ) window = false;
+      if( window ) {
+         for( int wk = 0; wk < optInMaxPeriod - optInMinPeriod + 1; wk++ ) {
+            if( MaLookback(optInMinPeriod + wk, optInMAType) > lookbackTotal ) {
+               window = false;
+               break;
+            }
+         }
+      }
+      if( window ) {
+         for( int wt = lookbackTotal, wt1; wt < historyLen; wt = wt1 + 1 ) {
+            int wcp = (int)inPeriods[wt];
+            if( wcp < optInMinPeriod ) {
+               wcp = optInMinPeriod;
+            } else if( wcp > optInMaxPeriod ) {
+               wcp = optInMaxPeriod;
+            }
+            for( wt1 = wt; wt1 + 1 < historyLen; wt1++ ) {
+               int wcp2 = (int)inPeriods[wt1 + 1];
+               if( wcp2 < optInMinPeriod ) {
+                  wcp2 = optInMinPeriod;
+               } else if( wcp2 > optInMaxPeriod ) {
+                  wcp2 = optInMaxPeriod;
+               }
+               if( wcp2 != wcp ) {
+                  break;
+               }
+            }
+            Ma(wt, wt1, inReal, wcp, optInMAType, outReal.Slice(wt - lookbackTotal, wt1 - wt + 1));
+         }
+         MavpTapeOpen(sp, inReal, lookbackTotal);
+         outBegIdx = lookbackTotal;
+         outNBElement = historyLen - lookbackTotal;
+         sp.optInMinPeriod = optInMinPeriod;
+         sp.optInMaxPeriod = optInMaxPeriod;
+         sp.optInMAType = optInMAType;
+         sp.cur_outReal = outReal[outNBElement - 1];
+         return RetCode.Success;
+      }
       /* Seed each sub at the first output bar (lookbackTotal), NOT the last. */
       MaStream[] bank = new MaStream[nBank];
       double[] scratch = new double[nBank];

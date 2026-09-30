@@ -682,7 +682,7 @@ fn emit_loop(
 
     let ctx = build_step_ctx(func, &[model], &typing);
     let frame = build_peek_frame(func, model, &split.names(), &typing, &split, &ctx, enums, registry, helpers, counter);
-    emit_update_and_peek(o, func, &split, false, frame.as_deref());
+    emit_update_and_peek(o, func, &split, false, frame.as_deref(), None);
     if taped {
         emit_tape_methods(o, func, &[model], None, &typing, &split, enums, registry, helpers, counter);
     }
@@ -3151,6 +3151,7 @@ fn emit_update_and_peek(
     split: &StateSplit,
     step_fallible: bool,
     peek_frame: Option<&str>,
+    update_branch: Option<&str>,
 ) {
     let sn = snake(func);
     let cs_args = cs_step_args(&handle_candle_settings(func));
@@ -3177,7 +3178,7 @@ fn emit_update_and_peek(
     );
     let _ = writeln!(
         o,
-        "    /// Commit one closed bar. Never allocates.\n\
+        "    /// Commit one closed bar.{}\n\
          \x20   ///\n\
          \x20   /// # Errors\n\
          \x20   ///\n\
@@ -3196,7 +3197,8 @@ fn emit_update_and_peek(
          \x20   ///\n\
          \x20   /// [`RetCode::OutOfRangeEndIndex`] once [`Self::out_range`] has reached\n\
          \x20   /// bar [`Core::INDEX_MAX`], which no re-feed clears: the handle has run\n\
-         \x20   /// out of index domain and only a shorter history can start a new one."
+         \x20   /// out of index domain and only a shorter history can start a new one.",
+        if update_branch.is_some() { "" } else { " Never allocates." }
     );
     let _ = writeln!(o, "    #[doc(alias = \"TA_{n}_Update\")]");
     let _ = writeln!(
@@ -3221,6 +3223,11 @@ fn emit_update_and_peek(
         t
     };
     o.push_str(&out_decls);
+    // A bank-less period bank answers from its own fallible step, ahead of the
+    // infallible one.
+    if let Some(b) = update_branch {
+        o.push_str(b);
+    }
     let _ = writeln!(
         o,
         "        Core::{sn}_step_impl({}, {cs_args}{fwd_bars}{out_refs}){step_try};",
@@ -3752,7 +3759,7 @@ fn emit_dual_mode(
     let frame = build_peek_frame_dual(
         func, dmp, &split.names(), &typing, &split, &ctx, &opt_real_params, enums, registry, helpers, counter,
     );
-    emit_update_and_peek(o, func, &split, false, frame.as_deref());
+    emit_update_and_peek(o, func, &split, false, frame.as_deref(), None);
     if taped {
         emit_tape_methods(o, func, &[ma, mb], Some(dmp), &typing, &split, enums, registry, helpers, counter);
     }
@@ -4317,7 +4324,7 @@ fn emit_dispatch(
     }
     let _ = writeln!(o, "}}\n");
 
-    emit_update_and_peek(o, func, &split, true, dispatch_frame.as_deref());
+    emit_update_and_peek(o, func, &split, true, dispatch_frame.as_deref(), None);
     if taped {
         emit_dispatch_tape_methods(o, func, dp, &split, &ctx, registry, helpers);
     }
@@ -4501,16 +4508,17 @@ fn emit_period_bank(
 
     // Callee opt args in the callee's signature order (from the plan; the
     // lookback binds the period slot to the MAX param — the shared anchor).
-    let opts_of = |period_arg: &str| -> String {
+    let opts_of_with = |period_arg: &str, ty: &str| -> String {
         plan.callee_opts
             .iter()
             .map(|a| match a {
                 streaming::PeriodBankArg::Period => period_arg.to_string(),
-                streaming::PeriodBankArg::MAType => plan.matype_param.clone(),
+                streaming::PeriodBankArg::MAType => ty.to_string(),
             })
             .collect::<Vec<_>>()
             .join(", ")
     };
+    let opts_of = |period_arg: &str| opts_of_with(period_arg, &plan.matype_param);
     let lb_args = opts_of(max);
     let open_opts = opts_of(&format!("{min} + (bankIdx as i32)"));
 
@@ -4531,10 +4539,14 @@ fn emit_period_bank(
     state_fields.push(("tapeMask".into(), "usize".into(), String::new()));
     state_fields.push(("tapePos".into(), "usize".into(), String::new()));
     state_fields.push(("tape".into(), "Vec<f64>".into(), String::new()));
-    let bank_note = format!(
-        "One sub-{} stream per period in [{min}, {max}], advanced in lockstep.",
-        callee.to_uppercase()
-    );
+    let bank_note = if registry.window_labels(&func.name.to_lowercase()).is_empty() {
+        format!("One sub-{} stream per period in [{min}, {max}], advanced in lockstep.", callee.to_uppercase())
+    } else {
+        format!(
+            "Empty in window mode; otherwise one sub-{} stream per period in [{min}, {max}], advanced in lockstep.",
+            callee.to_uppercase()
+        )
+    };
     let split = StateSplit::of(func, &state_fields, &[]);
     emit_state_struct_decl(o, func, &state, &state_fields, &split, &[("bank", bank_note)]);
 
@@ -4576,6 +4588,86 @@ fn emit_period_bank(
     let _ = writeln!(o, "        }}");
     let _ = writeln!(o, "        (tape, tapeMask, (historyLen - 1) & tapeMask)");
     let _ = writeln!(o, "    }}\n");
+
+    // MATypes whose value is the callee's batch over the tape tail keep no
+    // bank: see streaming::window_evaluable.
+    let window_labels = registry.window_labels(&func.name.to_lowercase());
+    let windowed = !window_labels.is_empty();
+    let fn_sn = snake(func);
+    let matype = plan.matype_param.as_str();
+    let clamp_to = |o: &mut String, pad: &str, var: &str, x: &str, h: &str| {
+        let _ = writeln!(o, "{pad}let mut {var}: i32 = {x} as i32;");
+        let _ = writeln!(o, "{pad}if {var} < {h}{min} {{\n{pad}    {var} = {h}{min};\n{pad}}} else if {var} > {h}{max} {{\n{pad}    {var} = {h}{max};\n{pad}}}");
+    };
+    if windowed {
+        let mode = if window_labels.iter().any(|l| l == "*") {
+            "true".to_string()
+        } else {
+            let arms: Vec<String> = window_labels.iter().map(|l| dispatch_case_label(l, enums)).collect();
+            format!("matches!(t, {})", arms.join(" | "))
+        };
+        let _ = writeln!(o, "    fn {fn_sn}_window_mode(t: MAType) -> bool {{\n        {mode}\n    }}\n");
+
+        // The window is the `lb` committed bars before the incoming one, read
+        // from the tape, then that bar: the same values, in the same order, as
+        // the batch reads for it. A fresh `Core` equals the opener's because a
+        // window-evaluable arm reads no setting.
+        let _ = writeln!(
+            o,
+            "    fn {fn_sn}_eval_window(sp: &{state}, {price}: f64, cp: i32) -> Result<f64, RetCode> {{"
+        );
+        let _ = writeln!(o, "        let core = Core::new();");
+        let _ = writeln!(
+            o,
+            "        let lb: usize = core.{callee_sn}_lookback({})?;",
+            opts_of_with("cp", &format!("sp.{matype}"))
+        );
+        let _ = writeln!(o, "        let mut small = [0.0_f64; 32];");
+        let _ = writeln!(o, "        let mut heap: Vec<f64>;");
+        let _ = writeln!(o, "        let win: &mut [f64] = if lb < 32 {{\n            &mut small[..=lb]\n        }} else {{\n            heap = vec![0.0_f64; lb + 1];\n            &mut heap\n        }};");
+        let _ = writeln!(o, "        for (i, w) in win[..lb].iter_mut().enumerate() {{");
+        let _ = writeln!(o, "            *w = sp.tape[(sp.tapePos + sp.tapeMask + 2 - lb + i) & sp.tapeMask];");
+        let _ = writeln!(o, "        }}");
+        let _ = writeln!(o, "        win[lb] = {price};");
+        let _ = writeln!(o, "        let mut out1 = [0.0_f64; 1];");
+        let _ = writeln!(
+            o,
+            "        core.{callee_sn}(lb, lb, win, {}, &mut out1)?;",
+            opts_of_with("cp", &format!("sp.{matype}"))
+        );
+        let _ = writeln!(o, "        Ok(out1[0])");
+        let _ = writeln!(o, "    }}\n");
+
+        // Apart from the bank step, which stays infallible. The tape takes the
+        // bar only once the value exists: a failure changes nothing.
+        let _ = writeln!(
+            o,
+            "    fn {fn_sn}_update_window(sp: &mut {state}, {price}: f64, {period}: f64, {out}: &mut f64) -> Result<(), RetCode> {{"
+        );
+        clamp_to(o, "        ", "cp", period, "sp.");
+        let _ = writeln!(o, "        let v = Core::{fn_sn}_eval_window(sp, {price}, cp)?;");
+        let _ = writeln!(o, "        sp.tapePos = (sp.tapePos + 1) & sp.tapeMask;");
+        let _ = writeln!(o, "        sp.tape[sp.tapePos] = {price};");
+        let _ = writeln!(o, "        (*{out}) = v;");
+        let _ = writeln!(o, "        sp.cur_{out} = v;");
+        let _ = writeln!(o, "        Ok(())");
+        let _ = writeln!(o, "    }}\n");
+    }
+    // A window-mode open starts from Lookback(max) like the bank does, so every
+    // selected period's window must fit inside it; a band where one does not
+    // falls back to the bank.
+    let window_gate = |o: &mut String| {
+        let _ = writeln!(o, "        let mut window: bool = Core::{fn_sn}_window_mode({matype});");
+        let _ = writeln!(o, "        if ({max} - {min} + 1) < {} {{\n            window = false;\n        }}", crate::streaming::WINDOW_MIN_BAND);
+        let _ = writeln!(o, "        if window {{");
+        let _ = writeln!(o, "            for bankIdx in 0..nBank {{");
+        let _ = writeln!(
+            o,
+            "                if self.{callee_sn}_lookback({open_opts})? > lookbackTotal {{\n                    window = false;\n                    break;\n                }}"
+        );
+        let _ = writeln!(o, "            }}");
+        let _ = writeln!(o, "        }}");
+    };
     // Every slot opened, then detached from its own history before the next
     // opens, so the peak is one slot's buffers.
     let open_bank = |o: &mut String, hist: &str, anchor: &str| {
@@ -4606,6 +4698,9 @@ fn emit_period_bank(
     let _ = writeln!(bank_frame, "            }} else if cp > sp.{max} {{");
     let _ = writeln!(bank_frame, "                cp = sp.{max};");
     let _ = writeln!(bank_frame, "            }}");
+    if windowed {
+        let _ = writeln!(bank_frame, "            if sp.bank.is_empty() {{\n                return Core::{fn_sn}_eval_window(sp, {price}, cp);\n            }}");
+    }
     let _ = writeln!(bank_frame, "            let slot: usize = (cp - sp.{min}) as usize;");
     let _ = writeln!(bank_frame, "            let tapeBase: usize = ((sp.tapePos + 1) & sp.tapeMask) + sp.tapeMask + 1;");
     let _ = writeln!(bank_frame, "            {out} = sp.bank[slot].peek_tape(&sp.tape, tapeBase, sp.tapeMask, {price})?;");
@@ -4634,6 +4729,24 @@ fn emit_period_bank(
         "        if historyLen < subStart + 1 {{\n            return Err(RetCode::InsufficientHistory);\n        }}"
     );
     let _ = writeln!(o, "        let nBank: usize = ({max} - {min} + 1) as usize;");
+    if windowed {
+        window_gate(o);
+        let _ = writeln!(o, "        if window {{");
+        let _ = writeln!(o, "            let (tape, tapeMask, tapePos) = Core::{fn_sn}_tape_open({price}, lookbackTotal);");
+        clamp_to(o, "            ", "cp", &format!("{period}[historyLen - 1]"), "");
+        let _ = writeln!(o, "            let mut out1 = [0.0_f64; 1];");
+        let _ = writeln!(
+            o,
+            "            self.{callee_sn}(historyLen - 1, historyLen - 1, {price}, {}, &mut out1)?;",
+            opts_of("cp")
+        );
+        let _ = writeln!(o, "            let state = {state} {{ {params_join}, bank: Vec::new(), tapeMask, tapePos, tape, cur_{out}: out1[0] }};");
+        let _ = writeln!(
+            o,
+            "            return Ok(({handle} {{ {cs_ctor}state, out: OutRange {{ beg_idx: subStart, count: historyLen - subStart }} }}, out1[0]));"
+        );
+        let _ = writeln!(o, "        }}");
+    }
     open_bank(o, price, "subStart");
     let _ = writeln!(o, "        let mut cp: i32 = {period}[historyLen - 1] as i32;");
     let _ = writeln!(o, "        if cp < {min} {{\n            cp = {min};\n        }} else if cp > {max} {{\n            cp = {max};\n        }}");
@@ -4663,6 +4776,34 @@ fn emit_period_bank(
         "        if historyLen < lookbackTotal + 1 {{\n            return Err(RetCode::InsufficientHistory);\n        }}"
     );
     let _ = writeln!(o, "        let nBank: usize = ({max} - {min} + 1) as usize;");
+    if windowed {
+        // One batch call per run of equal clamped periods; nothing to replay.
+        window_gate(o);
+        let _ = writeln!(o, "        if window {{");
+        let _ = writeln!(o, "            let mut t: usize = lookbackTotal;");
+        let _ = writeln!(o, "            while t < historyLen {{");
+        clamp_to(o, "                ", "cp", &format!("{period}[t]"), "");
+        let _ = writeln!(o, "                let mut t1: usize = t;");
+        let _ = writeln!(o, "                while t1 + 1 < historyLen {{");
+        clamp_to(o, "                    ", "cp2", &format!("{period}[t1 + 1]"), "");
+        let _ = writeln!(o, "                    if cp2 != cp {{\n                        break;\n                    }}");
+        let _ = writeln!(o, "                    t1 += 1;");
+        let _ = writeln!(o, "                }}");
+        let _ = writeln!(
+            o,
+            "                self.{callee_sn}(t, t1, {price}, {}, &mut {out}[t - lookbackTotal..=t1 - lookbackTotal])?;",
+            opts_of("cp")
+        );
+        let _ = writeln!(o, "                t = t1 + 1;");
+        let _ = writeln!(o, "            }}");
+        let _ = writeln!(o, "            let (tape, tapeMask, tapePos) = Core::{fn_sn}_tape_open({price}, lookbackTotal);");
+        let _ = writeln!(o, "            let state = {state} {{ {params_join}, bank: Vec::new(), tapeMask, tapePos, tape, cur_{out}: {out}[historyLen - 1 - lookbackTotal] }};");
+        let _ = writeln!(
+            o,
+            "            return Ok(({handle} {{ {cs_ctor}state, out: OutRange {{ beg_idx: lookbackTotal, count: historyLen - lookbackTotal }} }}, OutRange {{ beg_idx: lookbackTotal, count: historyLen - lookbackTotal }}));"
+        );
+        let _ = writeln!(o, "        }}");
+    }
     let _ = writeln!(o, "        // Seed each sub-MA at the first output bar (lookbackTotal), NOT the last.");
     open_bank(o, &format!("&{price}[..lookbackTotal + 1]"), "lookbackTotal");
     let _ = writeln!(o, "        // First output bar (lookbackTotal), then replay the remaining history.");
@@ -4682,7 +4823,17 @@ fn emit_period_bank(
     let _ = writeln!(o, "    }}\n");
     let _ = writeln!(o, "}}\n");
 
-    emit_update_and_peek(o, func, &split, false, Some(&bank_frame));
+    let window_branch = windowed.then(|| {
+        let args = streaming::input_array_names(func).iter().fold(String::new(), |mut acc, a| {
+            let _ = write!(acc, "{a}, ");
+            acc
+        });
+        format!(
+            "        if self.state.bank.is_empty() {{\n            Core::{fn_sn}_update_window(&mut self.state, {args}&mut {out})?;\n{}            return Ok({out});\n        }}\n",
+            advance_out_count("            ")
+        )
+    });
+    emit_update_and_peek(o, func, &split, false, Some(&bank_frame), window_branch.as_deref());
     emit_trait_pin(o, func);
 }
 
@@ -5668,6 +5819,6 @@ fn emit_composed(
             f
         })
     };
-    emit_update_and_peek(o, func, &split, true, frame.as_deref());
+    emit_update_and_peek(o, func, &split, true, frame.as_deref(), None);
     emit_trait_pin(o, func);
 }

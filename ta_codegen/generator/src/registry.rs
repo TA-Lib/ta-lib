@@ -32,7 +32,7 @@ pub struct Registry {
     defs: HashMap<String, crate::ir::FuncDef>,
     /// The functions a period bank steps through a tape frame (#445), by dir-name;
     /// see [`crate::streaming::tape_set`].
-    tape_set: std::collections::BTreeSet<String>,
+    tape_set: crate::streaming::TapeSet,
     /// The input tree the definitions came from.
     base_dir: std::path::PathBuf,
     /// Lookbacks parsed on first request, by dir-name.
@@ -88,7 +88,7 @@ impl Registry {
             callee_sigs,
             callee_out_names,
             defs,
-            tape_set: std::collections::BTreeSet::new(),
+            tape_set: crate::streaming::TapeSet::default(),
             base_dir: base_dir.to_path_buf(),
             lookbacks: std::sync::Mutex::new(HashMap::new()),
         };
@@ -99,7 +99,13 @@ impl Registry {
 
     /// Whether a period bank steps `key` (a dir-name) through a tape frame.
     pub fn in_tape_set(&self, key: &str) -> bool {
-        self.tape_set.contains(key)
+        self.tape_set.members.contains(key)
+    }
+
+    /// The MAType labels the period bank `bank_dir` evaluates in window mode;
+    /// see [`crate::streaming::window_evaluable`].
+    pub fn window_labels(&self, bank_dir: &str) -> &[String] {
+        self.tape_set.window_labels.get(bank_dir).map_or(&[], Vec::as_slice)
     }
 
     /// The YAML-level definition of an indicator dir-name, if known.

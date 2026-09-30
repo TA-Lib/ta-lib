@@ -184,3 +184,22 @@ fn csharp_identity_fast_path_short_circuits_at_stride_zero() {
         "fill arm indexes plainly"
     );
 }
+
+/// Nothing provokes a failure inside the window evaluation, so a step that
+/// commits the bar first passes every runtime gate while breaking "a throw
+/// changes nothing".
+#[test]
+fn csharp_mavp_window_step_evaluates_before_it_commits() {
+    let s = section("mavp");
+    let step = body_of(&s, "private void MavpStepImpl(");
+    let eval = step.find("MavpEvalWindow(").expect("the step has a window arm");
+    let commit = step.find("sp.tape[sp.tapePos] =").expect("the step commits the bar");
+    assert!(eval < commit, "the window value is computed before the tape takes the bar:\n{step}");
+    let narrow = format!("if( optInMaxPeriod - optInMinPeriod + 1 < {} ) window = false;", ta_codegen_lib::streaming::WINDOW_MIN_BAND);
+    assert_eq!(s.matches(&narrow).count(), 2, "both opens keep the bank for a narrow band");
+    let mode = body_of(&s, "private static bool MavpWindowMode(");
+    assert!(
+        mode.contains("case MAType.ALMA:") && mode.contains("case MAType.DISABLED:"),
+        "the window labels reach the C# switch:\n{mode}"
+    );
+}

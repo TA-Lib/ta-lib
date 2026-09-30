@@ -331,6 +331,8 @@ fn no_managed_tape_peek_writes_the_handle_or_the_tape() {
         "if( sp.x == 2 ) {",
         "y = sp.x <= 3;",
         "double v = core.maPeekTape(sp.bank[slot], sp.tape, 1, sp.tapeMask, x);",
+        "double v = sp.bank.length == 0 ? core.mavpEvalWindow(sp, x, cp) : core.maPeekTape(sp.bank[slot], sp.tape, 1, sp.tapeMask, x);",
+        "win[i] = sp.tape[(sp.tapePos + sp.tapeMask + 2 - lb + i) & sp.tapeMask];",
     ] {
         assert!(!handle_or_tape_store(read), "a read taken for a store: {read}");
     }
@@ -369,6 +371,14 @@ fn no_managed_tape_peek_writes_the_handle_or_the_tape() {
         for l in peek.lines() {
             if handle_or_tape_store(l) {
                 offenders.push(format!("{lang} mavp: {}", l.trim()));
+            }
+        }
+        // A window-mode peek evaluates through this helper.
+        let eval = if lang == "java" { "private double mavpEvalWindow(" } else { "internal double MavpEvalWindow(" };
+        assert!(bank.contains(eval), "{lang}: MAVP's window evaluation not found");
+        for l in body_of(&bank, eval).lines() {
+            if handle_or_tape_store(l) {
+                offenders.push(format!("{lang} mavp window: {}", l.trim()));
             }
         }
     }

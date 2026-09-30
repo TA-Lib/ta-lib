@@ -136621,7 +136621,7 @@ public final class Core {
       private int tapeMask;
       private int tapePos;
       private double[] tape;
-      // One sub-MA stream per period in [optInMinPeriod, optInMaxPeriod], advanced in lockstep.
+      // Empty in window mode; otherwise one sub-MA stream per period in [optInMinPeriod, optInMaxPeriod], advanced in lockstep.
       private MaStream[] bank;
       private int outRangeBegIdx;
       private int outRangeCount;
@@ -136726,7 +136726,7 @@ public final class Core {
             cp = sp.optInMaxPeriod;
          }
          int slot = cp - sp.optInMinPeriod;
-         double cur_outReal = core.maPeekTape(sp.bank[slot], sp.tape, ((sp.tapePos + 1) & sp.tapeMask) + sp.tapeMask + 1, sp.tapeMask, inReal);
+         double cur_outReal = sp.bank.length == 0 ? core.mavpEvalWindow(sp, inReal, cp) : core.maPeekTape(sp.bank[slot], sp.tape, ((sp.tapePos + 1) & sp.tapeMask) + sp.tapeMask + 1, sp.tapeMask, inReal);
          return cur_outReal;
       }
 
@@ -136758,6 +136758,19 @@ public final class Core {
    }
    private void mavpStepImpl( MavpStream sp, double inReal, double inPeriods )
    {
+      if( sp.bank.length == 0 ) {
+         int cp = (int)inPeriods;
+         if( cp < sp.optInMinPeriod ) {
+            cp = sp.optInMinPeriod;
+         } else if( cp > sp.optInMaxPeriod ) {
+            cp = sp.optInMaxPeriod;
+         }
+         double v = mavpEvalWindow(sp, inReal, cp);
+         sp.tapePos = (sp.tapePos + 1) & sp.tapeMask;
+         sp.tape[sp.tapePos] = inReal;
+         sp.cur_outReal = v;
+         return;
+      }
       int cp = (int)inPeriods;
       if( cp < sp.optInMinPeriod ) {
          cp = sp.optInMinPeriod;
@@ -136787,6 +136800,29 @@ public final class Core {
          sp.tape[b & sp.tapeMask] = inReal[b];
       }
       sp.tapePos = (historyLen - 1) & sp.tapeMask;
+   }
+   private static boolean mavpWindowMode( MAType t )
+   {
+      switch( t )
+      {
+      case ALMA:
+      case DISABLED:
+         return true;
+      default:
+         return false;
+      }
+   }
+   private double mavpEvalWindow( MavpStream sp, double inReal, int cp )
+   {
+      int lb = maLookback(cp, sp.optInMAType);
+      double[] win = new double[lb + 1];
+      for( int i = 0; i < lb; i++ ) {
+         win[i] = sp.tape[(sp.tapePos + sp.tapeMask + 2 - lb + i) & sp.tapeMask];
+      }
+      win[lb] = inReal;
+      double[] out1 = new double[1];
+      ma(lb, lb, win, cp, sp.optInMAType, out1);
+      return out1[0];
    }
    private RetCode mavpOpenImpl( MavpStream sp, double inReal[], double inPeriods[], int startIdx, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
    {
@@ -136831,6 +136867,35 @@ public final class Core {
          return RetCode.INSUFFICIENT_HISTORY;
       }
       int nBank = optInMaxPeriod - optInMinPeriod + 1;
+      boolean window = mavpWindowMode(optInMAType);
+      if( optInMaxPeriod - optInMinPeriod + 1 < 12 ) window = false;
+      if( window ) {
+         for( int bankIdx = 0; bankIdx < nBank; bankIdx++ ) {
+            if( maLookback(optInMinPeriod + bankIdx, optInMAType) > lookbackTotal ) {
+               window = false;
+               break;
+            }
+         }
+      }
+      if( window ) {
+         int cp = (int)inPeriods[historyLen - 1];
+         if( cp < optInMinPeriod ) {
+            cp = optInMinPeriod;
+         } else if( cp > optInMaxPeriod ) {
+            cp = optInMaxPeriod;
+         }
+         sp.optInMinPeriod = optInMinPeriod;
+         sp.optInMaxPeriod = optInMaxPeriod;
+         sp.optInMAType = optInMAType;
+         sp.bank = new MaStream[0];
+         mavpTapeOpen(sp, inReal, historyLen, lookbackTotal);
+         double[] out1 = new double[1];
+         ma(historyLen - 1, historyLen - 1, inReal, cp, optInMAType, out1);
+         sp.cur_outReal = out1[0];
+         sp.outRangeBegIdx = subStart;
+         sp.outRangeCount = historyLen - subStart;
+         return RetCode.SUCCESS;
+      }
       MaStream[] bank = new MaStream[nBank];
       int reach = 0;
       for( int bankIdx = 0; bankIdx < nBank; bankIdx++ ) {
@@ -136893,6 +136958,50 @@ public final class Core {
          return RetCode.INSUFFICIENT_HISTORY;
       }
       int nBank = optInMaxPeriod - optInMinPeriod + 1;
+      boolean window = mavpWindowMode(optInMAType);
+      if( optInMaxPeriod - optInMinPeriod + 1 < 12 ) window = false;
+      if( window ) {
+         for( int bankIdx = 0; bankIdx < nBank; bankIdx++ ) {
+            if( maLookback(optInMinPeriod + bankIdx, optInMAType) > lookbackTotal ) {
+               window = false;
+               break;
+            }
+         }
+      }
+      if( window ) {
+         double[] run = new double[historyLen - lookbackTotal];
+         int t1;
+         for( int t = lookbackTotal; t < historyLen; t = t1 + 1 ) {
+            int cp = (int)inPeriods[t];
+            if( cp < optInMinPeriod ) {
+               cp = optInMinPeriod;
+            } else if( cp > optInMaxPeriod ) {
+               cp = optInMaxPeriod;
+            }
+            for( t1 = t; t1 + 1 < historyLen; t1++ ) {
+               int cp2 = (int)inPeriods[t1 + 1];
+               if( cp2 < optInMinPeriod ) {
+                  cp2 = optInMinPeriod;
+               } else if( cp2 > optInMaxPeriod ) {
+                  cp2 = optInMaxPeriod;
+               }
+               if( cp2 != cp ) {
+                  break;
+               }
+            }
+            ma(t, t1, inReal, cp, optInMAType, run);
+            System.arraycopy(run, 0, outReal, t - lookbackTotal, t1 - t + 1);
+         }
+         sp.optInMinPeriod = optInMinPeriod;
+         sp.optInMaxPeriod = optInMaxPeriod;
+         sp.optInMAType = optInMAType;
+         sp.bank = new MaStream[0];
+         mavpTapeOpen(sp, inReal, historyLen, lookbackTotal);
+         outBegIdx.value = lookbackTotal;
+         outNBElement.value = historyLen - lookbackTotal;
+         sp.cur_outReal = outReal[outNBElement.value - 1];
+         return RetCode.SUCCESS;
+      }
       /* Seed each sub at the first output bar (lookbackTotal), NOT the last. */
       double[] seedPrefix = java.util.Arrays.copyOfRange(inReal, 0, lookbackTotal + 1);
       MaStream[] bank = new MaStream[nBank];

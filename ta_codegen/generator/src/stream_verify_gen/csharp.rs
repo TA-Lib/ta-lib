@@ -857,7 +857,44 @@ fn emit_csharp_sv_func(
     s.push_str("                        long ad = GC.GetAllocatedBytesForCurrentThread() - a0;\n");
     s.push_str("                        svUpdSink += sink;\n");
     s.push_str("                        if (ad > updAlloc) updAlloc = ad;\n");
-    s.push_str("                        if (ad != 0) { allOk = false; if (diag.Length == 0) diag = \",\\\"updAllocBytes\\\":\" + ad; }\n");
+    // A window-mode period bank evaluates each bar with the callee's batch, which
+    // may allocate; every other function, MAType and the identity types are held
+    // to zero.
+    let window_skip = {
+        let lookup = crate::streaming::FuncsLookup(funcs);
+        match crate::streaming::validate_streamable(func, &lookup) {
+            Ok(crate::streaming::StreamPlan::PeriodBank(pb)) => {
+                let labels = crate::streaming::window_batch_labels_of(funcs, &func.name.to_lowercase());
+                if labels.iter().any(|l| l == "*") {
+                    format!(
+                        " && !({} - {} + 1 >= {})",
+                        pb.max_param,
+                        pb.min_param,
+                        crate::streaming::WINDOW_MIN_BAND
+                    )
+                } else if labels.is_empty() {
+                    String::new()
+                } else {
+                    let cases: Vec<String> = labels
+                        .iter()
+                        .map(|l| format!("{} == {}", pb.matype_param, crate::backends::csharp::render_csharp_switch_label(l, enums)))
+                        .collect();
+                    format!(
+                        " && !(({}) && {} - {} + 1 >= {})",
+                        cases.join(" || "),
+                        pb.max_param,
+                        pb.min_param,
+                        crate::streaming::WINDOW_MIN_BAND
+                    )
+                }
+            }
+            _ => String::new(),
+        }
+    };
+    let _ = writeln!(
+        s,
+        "                        if (ad != 0{window_skip}) {{ allOk = false; if (diag.Length == 0) diag = \",\\\"updAllocBytes\\\":\" + ad; }}"
+    );
     s.push_str("                    } catch (ArgumentException) { /* open rejects here -- nothing to measure */ }\n");
     s.push_str("                }\n");
     s.push_str("            }\n");

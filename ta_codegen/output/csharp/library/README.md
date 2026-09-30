@@ -46,7 +46,7 @@ Core tuned = Core.Builder()
 
 For a feed that arrives one bar at a time, each indicator also has a streaming form: open it
 on the history you already have, then each closed bar in gives that bar's value out,
-allocation-free and bit-identical to the batch call.
+bit-identical to the batch call.
 
 ```csharp
 Core.SmaStream s = core.SmaOpen(close, 30);

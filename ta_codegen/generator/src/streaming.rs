@@ -4281,11 +4281,11 @@ pub fn tape_set(
     base_dir: &std::path::Path,
     dirs: &[String],
     lookup: &dyn CalleeLookup,
-) -> BTreeSet<String> {
+) -> TapeSet {
     // Every Registry built in a process asks, and the input tree does not change
     // under a running generator.
     static CACHE: std::sync::OnceLock<
-        std::sync::Mutex<std::collections::HashMap<std::path::PathBuf, BTreeSet<String>>>,
+        std::sync::Mutex<std::collections::HashMap<std::path::PathBuf, TapeSet>>,
     > = std::sync::OnceLock::new();
     let key = base_dir.canonicalize().unwrap_or_else(|_| base_dir.to_path_buf());
     let cache = CACHE.get_or_init(Default::default);
@@ -4314,14 +4314,63 @@ pub fn tape_set_of(funcs: &[FuncDef]) -> BTreeSet<String> {
     tape_set_with(&dirs, &FuncsLookup(funcs), &|dir: &str| {
         funcs.iter().find(|f| f.name.eq_ignore_ascii_case(dir)).cloned()
     })
+    .members
+}
+
+/// The narrowest band a period bank evaluates in window mode. One window
+/// evaluation costs about as much as 10 to 13 of the bank's per-period steps at
+/// any period level, so a narrower band is cheaper stepping its bank.
+pub const WINDOW_MIN_BAND: usize = 12;
+
+/// [`TapeSet::window_labels`] of `bank_dir` over already-loaded definitions.
+#[must_use]
+pub fn window_labels_of(funcs: &[FuncDef], bank_dir: &str) -> Vec<String> {
+    tape_set_over(funcs).window_labels.remove(bank_dir).unwrap_or_default()
+}
+
+/// The window labels of `bank_dir` whose value comes from the callee's batch,
+/// i.e. not from its identity path.
+#[must_use]
+pub fn window_batch_labels_of(funcs: &[FuncDef], bank_dir: &str) -> Vec<String> {
+    let mut ts = tape_set_over(funcs);
+    let ids = ts.window_identity.remove(bank_dir).unwrap_or_default();
+    ts.window_labels
+        .remove(bank_dir)
+        .unwrap_or_default()
+        .into_iter()
+        .filter(|l| !ids.contains(l))
+        .collect()
+}
+
+fn tape_set_over(funcs: &[FuncDef]) -> TapeSet {
+    let dirs: Vec<String> = funcs.iter().map(|f| f.name.to_lowercase()).collect();
+    tape_set_with(&dirs, &FuncsLookup(funcs), &|dir: &str| {
+        funcs.iter().find(|f| f.name.eq_ignore_ascii_case(dir)).cloned()
+    })
+}
+
+/// The functions a period bank steps through a tape frame, and per period bank
+/// the MAType labels it evaluates in window mode.
+#[derive(Debug, Clone, Default)]
+pub struct TapeSet {
+    pub members: BTreeSet<String>,
+    /// By period-bank dir-name: the case labels whose value at a bar is the
+    /// callee's batch over that bar's window alone, so the bank keeps no
+    /// sub-streams for them. See [`window_evaluable`].
+    pub window_labels: std::collections::BTreeMap<String, Vec<String>>,
+    /// The subset of [`Self::window_labels`] that come from the callee's
+    /// identity path: those copy the input and call no batch.
+    pub window_identity: std::collections::BTreeMap<String, Vec<String>>,
 }
 
 fn tape_set_with(
     dirs: &[String],
     lookup: &dyn CalleeLookup,
     load: &dyn Fn(&str) -> Option<FuncDef>,
-) -> BTreeSet<String> {
+) -> TapeSet {
     let mut set = BTreeSet::new();
+    let mut window_labels = std::collections::BTreeMap::new();
+    let mut window_identity = std::collections::BTreeMap::new();
     for dir in dirs {
         // The bank's shape starts with its YAML; only candidates pay for a parse.
         if !lookup
@@ -4337,15 +4386,37 @@ fn tape_set_with(
         let callee = load(&plan.callee)
             .unwrap_or_else(|| panic!("{}: bank callee `{}` has no definition", func.name, plan.callee));
         set.insert(plan.callee.clone());
-        let members = match validate_streamable(&callee, lookup) {
-            Ok(StreamPlan::Dispatch(dp)) => dp
-                .arms
+        let mut labels = Vec::new();
+        let members = if let Ok(StreamPlan::Dispatch(dp)) = validate_streamable(&callee, lookup) {
+            for a in dp.arms.iter().filter(|a| a.supported && !a.callee.is_empty()) {
+                let def = load(&a.callee).unwrap_or_else(|| {
+                    panic!("{}: tape member `{}` has no definition", func.name, a.callee)
+                });
+                if window_evaluable(&def, lookup).is_ok() {
+                    labels.push(a.label.clone());
+                }
+            }
+            if let Some(idp) = &dp.identity {
+                let ids = identity_type_sentinels(&idp.condition, &dp.param);
+                labels.extend(ids.iter().cloned());
+                if !ids.is_empty() {
+                    window_identity.insert(dir.clone(), ids);
+                }
+            }
+            dp.arms
                 .iter()
                 .filter(|a| a.supported && !a.callee.is_empty())
                 .map(|a| a.callee.clone())
-                .collect(),
-            _ => vec![plan.callee.clone()],
+                .collect()
+        } else {
+            if window_evaluable(&callee, lookup).is_ok() {
+                labels.push("*".to_string());
+            }
+            vec![plan.callee.clone()]
         };
+        if !labels.is_empty() {
+            window_labels.insert(dir.clone(), labels);
+        }
         for member in members {
             let def = load(&member)
                 .unwrap_or_else(|| panic!("{}: tape member `{member}` has no definition", func.name));
@@ -4353,7 +4424,116 @@ fn tape_set_with(
             set.insert(member);
         }
     }
-    set
+    TapeSet { members: set, window_labels, window_identity }
+}
+
+/// The constants a dispatch identity guard compares its type parameter to
+/// (`TA_MAType_DISABLED`): those types copy the input at every period.
+fn identity_type_sentinels(cond: &Expr, param: &str) -> Vec<String> {
+    let mut out = Vec::new();
+    match cond {
+        Expr::BinOp(l, BinOp::Or, r) => {
+            out.extend(identity_type_sentinels(l, param));
+            out.extend(identity_type_sentinels(r, param));
+        }
+        Expr::BinOp(l, BinOp::Eq, r) => {
+            if let (Expr::Var(v), Expr::Var(c)) = (l.as_ref(), r.as_ref()) {
+                if v == param {
+                    // The arm labels' spelling, which every backend resolves.
+                    out.push(c.strip_prefix("TA_").unwrap_or(c).to_string());
+                }
+            }
+        }
+        _ => {}
+    }
+    out
+}
+
+/// Whether `func`'s batch value at a bar is a bitwise function of that bar's
+/// window of its one input and its parameters alone, so a period bank can take
+/// it from the batch over the window instead of stepping a sub-stream.
+///
+/// A false positive gives wrong values; each clause errs toward refusing.
+///
+/// # Errors
+/// Names the clause that fails.
+pub fn window_evaluable(func: &FuncDef, lookup: &dyn CalleeLookup) -> Result<(), String> {
+    let resolved = func.resolved_for(crate::ir::Lang::C);
+    let func: &FuncDef = &resolved;
+    let name = &func.name;
+    let inputs = input_array_names(func);
+    let [input] = inputs.as_slice() else {
+        return Err(format!("{name}: not one input"));
+    };
+    let Ok(StreamPlan::Loop(m)) = validate_streamable(func, lookup) else {
+        return Err(format!("{name}: not a single-loop stream"));
+    };
+    check_tape_eligible(&m, input)?;
+    if m.extrema().is_some()
+        || m.counter().is_some()
+        || m.parity.is_some()
+        || !m.out_feedback.is_empty()
+        || !m.lags.is_empty()
+        || tape_covered_rings(&m, input).len() != m.rings().len()
+        || tape_covered_windows(&m, input).len() != m.windows().len()
+    {
+        return Err(format!("{name}: carries history other than lags of its input"));
+    }
+    let mut persisted: BTreeSet<String> = m.state.iter().map(|(n, _)| n.clone()).collect();
+    for c in m.circs() {
+        persisted.extend(circ_storages(c).into_iter().map(|(n, _)| n));
+    }
+    if let Some(n) = assigned_per_bar(&m).intersection(&persisted).next() {
+        return Err(format!("{name}: the step writes `{n}`, which persists across bars"));
+    }
+    // Only math builtins: any other call may read library state (unstable
+    // periods, candle settings) or another indicator's.
+    let body = m.body;
+    let mut bad_call = None;
+    for st in body {
+        walk_stmt_exprs_deep(st, &mut |e| {
+            if let Expr::FuncCall(f, _) = e {
+                if crate::backends::builtins::MathFn::from_name(f).is_none() {
+                    bad_call.get_or_insert_with(|| f.clone());
+                }
+            }
+        });
+    }
+    if let Some(f) = bad_call {
+        return Err(format!("{name}: calls `{f}`"));
+    }
+    if !crate::candle_settings::detect_candle_settings(body).is_empty() {
+        return Err(format!("{name}: reads candle settings"));
+    }
+    // What persists must come from the parameters alone, never from the input
+    // or the range: statement-granular taint over the part before the loop.
+    let cut = steady_loop_index(body).unwrap_or(body.len());
+    let mut tainted: BTreeSet<String> =
+        inputs.iter().cloned().chain(["startIdx".to_string(), "endIdx".to_string()]).collect();
+    loop {
+        let before = tainted.len();
+        for st in &body[..cut] {
+            let mut reads = BTreeSet::new();
+            walk_stmt_exprs_deep(st, &mut |e| match e {
+                Expr::Var(v) | Expr::ArrayAccess(v, _) => {
+                    reads.insert(v.clone());
+                }
+                _ => {}
+            });
+            if reads.iter().any(|r| tainted.contains(r)) {
+                let mut targets = BTreeSet::new();
+                walk_stmt_targets(st, &mut targets);
+                tainted.extend(targets);
+            }
+        }
+        if tainted.len() == before {
+            break;
+        }
+    }
+    if let Some(n) = tainted.intersection(&persisted).next() {
+        return Err(format!("{name}: `{n}` depends on the input or the range"));
+    }
+    Ok(())
 }
 
 /// A function stepped through a tape frame must be one the frame renders: a

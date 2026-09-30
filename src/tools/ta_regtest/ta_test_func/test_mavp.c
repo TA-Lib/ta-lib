@@ -625,7 +625,7 @@ done:
 
 static ErrorNumber mvStreamBank( void )
 {
-   static const int bands[][2] = { {1,1}, {2,2}, {1,13}, {2,32}, {2,33}, {2,65} };
+   static const int bands[][2] = { {1,1}, {2,2}, {1,13}, {2,12}, {2,13}, {2,32}, {2,33}, {2,65} };
    TA_MAVP_Stream *h;
    TA_Real x;
    TA_Integer beg, nb;
@@ -727,6 +727,48 @@ static ErrorNumber mvStreamBank( void )
       if( err == TA_TEST_PASS )
          err = mvSbDrive( mvTypes[ti], minP, maxP, series, n, lb, lb + ( n - lb ) / 3,
                           lb + ( n - lb ) / 2, 0 );
+      if( err != TA_TEST_PASS )
+         return err;
+   }
+
+   /* The widest band, over the types a stream serves without a bank: every
+    * bar's period jumps across the band and past both ends. */
+   for( b = 0; b < 2; b++ )
+   {
+      static const double jumps[] = { 2.0, 7.0, 5000.5, 9999.0, 10000.0, 0.5, 1e9 };
+      TA_MAType wideType = b == 0 ? TA_MAType_ALMA : TA_MAType_DISABLED;
+
+      minP = b == 0 ? 2 : 1;
+      maxP = 10000;
+      lb = TA_MAVP_Lookback( minP, maxP, wideType );
+      n = lb + 3000;
+      for( i = 0; i < n; i++ )
+         mvSbPer[i] = jumps[i % (int)( sizeof(jumps) / sizeof(jumps[0]) )];
+      if( TA_MAVP( 0, n - 1, mvSbPrice, mvSbPer, minP, maxP, wideType,
+                   &beg, &nb, mvSbBatch ) != TA_SUCCESS || beg != lb || nb != n - lb )
+      {
+         printf( "\nFail: MAVP stream batch: type=%d band=[%d,%d] wide\n",
+                 (int)wideType, minP, maxP );
+         return TA_MAVP_STREAM_CALL_FAILED;
+      }
+      h = NULL;
+      if( TA_MAVP_OpenAndFill( &h, mvSbPrice, mvSbPer, n, minP, maxP, wideType,
+                               &beg, &nb, mvSbOut ) != TA_SUCCESS || beg != lb || nb != n - lb )
+      {
+         TA_MAVP_Close( h );
+         printf( "\nFail: MAVP stream OpenAndFill: type=%d band=[%d,%d] wide\n",
+                 (int)wideType, minP, maxP );
+         return TA_MAVP_STREAM_CALL_FAILED;
+      }
+      TA_MAVP_Close( h );
+      for( i = 0; i < nb; i++ )
+      {
+         if( !mvSbSame( mvSbOut[i], mvSbBatch[i] ) )
+            return mvSbFail( "OpenAndFill", wideType, minP, maxP, "wide",
+                             lb + i, mvSbOut[i], mvSbBatch[i] );
+         mvSbCompared++;
+      }
+      err = mvSbDrive( wideType, minP, maxP, "wide", n, lb, lb + 1, lb + 1500, 1 );
       if( err != TA_TEST_PASS )
          return err;
    }

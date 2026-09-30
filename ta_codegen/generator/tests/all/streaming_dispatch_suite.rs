@@ -1742,7 +1742,7 @@ fn test_c_mavp_period_bank() {
     assert!(s.contains("slotReach = TA_MA_TapeDetach( sp->bank[k] );"), "every slot is detached from its own history");
     assert!(s.contains("while( size <= reach ) size <<= 1;"), "the tape is longer than the deepest lag");
     // Update: lockstep advance + clamp-indexed output.
-    let upd = s.split("TA_MAVP_Update").nth(1).unwrap();
+    let upd = s.split("TA_RetCode TA_MAVP_Update(").nth(1).unwrap();
     let upd = &upd[..upd.find("TA_MAVP_Peek").unwrap_or(upd.len())];
     assert!(upd.contains("stream->tape[stream->tapePos] = inReal;"), "the bar enters the tape before any slot steps");
     assert!(upd.contains("for( k = 0; k < stream->nBank; k++ )") && upd.contains("TA_MA_StepTape( stream->bank[k], stream->tape, tapeBase, stream->tapeMask, inReal, &stream->scratch[k] );"), "advances the whole bank in lockstep");
@@ -1764,6 +1764,37 @@ fn test_c_mavp_period_bank() {
     assert!(!peek.contains("TA_MA_Update") && !peek.contains("StepTape") && !peek.contains("tape[stream->"), "peek never advances the bank or writes the tape");
     // Close frees every sub-stream + the arrays.
     assert!(s.contains("if( stream->bank[k] ) TA_MA_Close( stream->bank[k] );"), "close frees each sub-stream");
+    // Window mode: exactly the window-evaluable types, and a bank-less handle
+    // routes Update and Peek to the window.
+    let wm = s.split("static int TA_MAVP_WindowMode(").nth(1).expect("window mode emitted");
+    let wm = &wm[..wm.find("\n}").unwrap()];
+    assert_eq!(wm.matches("case ").count(), 2, "{wm}");
+    assert!(wm.contains("case TA_MAType_ALMA:") && wm.contains("case TA_MAType_DISABLED:"), "{wm}");
+    assert!(upd.contains("if( !stream->bank ) return TA_MAVP_UpdateWindow( stream, inReal, inPeriods, outReal );"));
+    // Both opens decide the mode before any bank exists; a wide band is only
+    // cheap if they do, and no value gate can tell the two paths apart.
+    for open in ["TA_MAVP_OpenInternal(", "TA_RetCode TA_MAVP_OpenAndFill("] {
+        let body = s.split(open).nth(1).unwrap();
+        let body = &body[..body.find("\n}").unwrap()];
+        let gate = body.find("window = TA_MAVP_WindowMode( optInMAType );").expect("mode chosen");
+        assert!(
+            body.contains(&format!("if( optInMaxPeriod - optInMinPeriod + 1 < {} ) window = 0;", ta_codegen_lib::streaming::WINDOW_MIN_BAND)),
+            "{open}: a narrow band keeps the bank"
+        );
+        let tape = body.find("retCode = TA_MAVP_TapeOpen( sp, inReal, historyLen, lookbackTotal );").expect("window tape");
+        let bank = body.find("sp->bank = (struct TA_MA_Stream **)TA_Malloc(").expect("bank path");
+        assert!(gate < tape && tape < bank, "{open}: the window arm precedes the bank");
+    }
+    assert!(peek.contains("if( !stream->bank ) return TA_MAVP_EvalWindow( stream, inReal, cp, outReal );"));
+    // The value exists before the tape takes the bar: a failed evaluation
+    // (allocation) must leave the handle as it was, and nothing at run time
+    // provokes one.
+    let uw = s.split("static TA_RetCode TA_MAVP_UpdateWindow(").nth(1).expect("window update emitted");
+    let uw = &uw[..uw.find("\n}").unwrap()];
+    let eval = uw.find("retCode = TA_MAVP_EvalWindow(").expect("evaluates");
+    let bail = uw.find("if( retCode != TA_SUCCESS ) return retCode;").expect("returns on failure");
+    let commit = uw.find("stream->tape[stream->tapePos] = inReal;").expect("commits the bar");
+    assert!(eval < bail && bail < commit, "{uw}");
 }
 
 /// Pin the generated TRIMA dual-mode (if/else) stream section: the odd/even arms

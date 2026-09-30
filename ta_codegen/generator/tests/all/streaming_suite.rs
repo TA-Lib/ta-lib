@@ -2109,3 +2109,41 @@ fn nan_inf_callee_is_refused() {
     assert!(streaming::validate_streamable(&mavp, reg).is_ok(), "MAVP plans normally");
     assert!(streaming::validate_streamable(&ma, reg).is_ok(), "MA plans normally");
 }
+
+/// Window mode is taken only for MA types whose value at a bar is the batch
+/// over that bar's window alone. A false positive gives wrong stream values,
+/// so every other arm must be refused, each by the clause that applies to it.
+#[test]
+fn mavp_window_labels_are_alma_and_disabled() {
+    let mut labels = lookup().window_labels("mavp").to_vec();
+    labels.sort();
+    assert_eq!(labels, ["MAType_ALMA", "MAType_DISABLED"]);
+    assert!(streaming::window_evaluable(&load("alma"), lookup()).is_ok());
+    let persists = "persists across bars";
+    let history = "carries history other than lags of its input";
+    let not_loop = "not a single-loop stream";
+    for (name, clause) in [
+        ("sma", persists), ("ema", persists), ("wma", persists), ("t3", persists),
+        ("zlema", persists), ("vidya", persists), ("dema", persists), ("tema", persists),
+        ("kama", history), ("rma", history), ("mama", history),
+        ("trima", not_loop), ("hma", not_loop),
+    ] {
+        let why = streaming::window_evaluable(&load(name), lookup())
+            .expect_err(&format!("{name} must not be window-evaluable"));
+        assert!(why.contains(clause), "{name}: {why}");
+    }
+}
+
+/// The input-taint clause is the one no shipped arm reaches: ALMA with its
+/// normaliser seeded from the input keeps every other property.
+#[test]
+fn window_evaluable_refuses_state_derived_from_the_input() {
+    let src = std::fs::read_to_string(input_dir().join("alma/alma.c")).unwrap();
+    assert_eq!(src.matches("   norm = 0.0;").count(), 2, "fixture anchor moved");
+    let (clean, _) = crate::common::load_indicator_with_source("alma", &src);
+    assert!(streaming::window_evaluable(&clean, lookup()).is_ok(), "the unchanged source must pass");
+    let tainted = src.replace("   norm = 0.0;", "   norm = inReal[0] - inReal[0];");
+    let (func, _) = crate::common::load_indicator_with_source("alma", &tainted);
+    let why = streaming::window_evaluable(&func, lookup()).expect_err("input-derived weights");
+    assert!(why.contains("depends on the input or the range"), "{why}");
+}

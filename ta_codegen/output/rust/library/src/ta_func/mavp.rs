@@ -541,7 +541,7 @@ struct MavpStreamState {
     optInMinPeriod: i32,
     optInMaxPeriod: i32,
     optInMAType: MAType,
-    // One sub-MA stream per period in [optInMinPeriod, optInMaxPeriod], advanced in lockstep.
+    // Empty in window mode; otherwise one sub-MA stream per period in [optInMinPeriod, optInMaxPeriod], advanced in lockstep.
     bank: Vec<MaStream>,
     tapeMask: usize,
     tapePos: usize,
@@ -589,6 +589,45 @@ impl Core {
         (tape, tapeMask, (historyLen - 1) & tapeMask)
     }
 
+    fn mavp_window_mode(t: MAType) -> bool {
+        matches!(t, MAType::ALMA | MAType::DISABLED)
+    }
+
+    fn mavp_eval_window(sp: &MavpStreamState, inReal: f64, cp: i32) -> Result<f64, RetCode> {
+        let core = Core::new();
+        let lb: usize = core.ma_lookback(cp, sp.optInMAType)?;
+        let mut small = [0.0_f64; 32];
+        let mut heap: Vec<f64>;
+        let win: &mut [f64] = if lb < 32 {
+            &mut small[..=lb]
+        } else {
+            heap = vec![0.0_f64; lb + 1];
+            &mut heap
+        };
+        for (i, w) in win[..lb].iter_mut().enumerate() {
+            *w = sp.tape[(sp.tapePos + sp.tapeMask + 2 - lb + i) & sp.tapeMask];
+        }
+        win[lb] = inReal;
+        let mut out1 = [0.0_f64; 1];
+        core.ma(lb, lb, win, cp, sp.optInMAType, &mut out1)?;
+        Ok(out1[0])
+    }
+
+    fn mavp_update_window(sp: &mut MavpStreamState, inReal: f64, inPeriods: f64, outReal: &mut f64) -> Result<(), RetCode> {
+        let mut cp: i32 = inPeriods as i32;
+        if cp < sp.optInMinPeriod {
+            cp = sp.optInMinPeriod;
+        } else if cp > sp.optInMaxPeriod {
+            cp = sp.optInMaxPeriod;
+        }
+        let v = Core::mavp_eval_window(sp, inReal, cp)?;
+        sp.tapePos = (sp.tapePos + 1) & sp.tapeMask;
+        sp.tape[sp.tapePos] = inReal;
+        (*outReal) = v;
+        sp.cur_outReal = v;
+        Ok(())
+    }
+
     /// Internal startIdx-anchored open behind [`Core::mavp_open`] (composition seam).
     pub(crate) fn mavp_open_internal(
         &self, inReal: &[f64], inPeriods: &[f64], startIdx: usize, mut optInMinPeriod: i32, mut optInMaxPeriod: i32, mut optInMAType: MAType,
@@ -632,6 +671,31 @@ impl Core {
             return Err(RetCode::InsufficientHistory);
         }
         let nBank: usize = (optInMaxPeriod - optInMinPeriod + 1) as usize;
+        let mut window: bool = Core::mavp_window_mode(optInMAType);
+        if (optInMaxPeriod - optInMinPeriod + 1) < 12 {
+            window = false;
+        }
+        if window {
+            for bankIdx in 0..nBank {
+                if self.ma_lookback(optInMinPeriod + (bankIdx as i32), optInMAType)? > lookbackTotal {
+                    window = false;
+                    break;
+                }
+            }
+        }
+        if window {
+            let (tape, tapeMask, tapePos) = Core::mavp_tape_open(inReal, lookbackTotal);
+            let mut cp: i32 = inPeriods[historyLen - 1] as i32;
+            if cp < optInMinPeriod {
+                cp = optInMinPeriod;
+            } else if cp > optInMaxPeriod {
+                cp = optInMaxPeriod;
+            }
+            let mut out1 = [0.0_f64; 1];
+            self.ma(historyLen - 1, historyLen - 1, inReal, cp, optInMAType, &mut out1)?;
+            let state = MavpStreamState { optInMinPeriod, optInMaxPeriod, optInMAType, bank: Vec::new(), tapeMask, tapePos, tape, cur_outReal: out1[0] };
+            return Ok((MavpStream { state, out: OutRange { beg_idx: subStart, count: historyLen - subStart } }, out1[0]));
+        }
         let mut bank: Vec<MaStream> = Vec::with_capacity(nBank);
         let mut scratch: Vec<f64> = Vec::with_capacity(nBank);
         let mut reach: usize = 0;
@@ -758,6 +822,47 @@ impl Core {
             return Err(RetCode::InsufficientHistory);
         }
         let nBank: usize = (optInMaxPeriod - optInMinPeriod + 1) as usize;
+        let mut window: bool = Core::mavp_window_mode(optInMAType);
+        if (optInMaxPeriod - optInMinPeriod + 1) < 12 {
+            window = false;
+        }
+        if window {
+            for bankIdx in 0..nBank {
+                if self.ma_lookback(optInMinPeriod + (bankIdx as i32), optInMAType)? > lookbackTotal {
+                    window = false;
+                    break;
+                }
+            }
+        }
+        if window {
+            let mut t: usize = lookbackTotal;
+            while t < historyLen {
+                let mut cp: i32 = inPeriods[t] as i32;
+                if cp < optInMinPeriod {
+                    cp = optInMinPeriod;
+                } else if cp > optInMaxPeriod {
+                    cp = optInMaxPeriod;
+                }
+                let mut t1: usize = t;
+                while t1 + 1 < historyLen {
+                    let mut cp2: i32 = inPeriods[t1 + 1] as i32;
+                    if cp2 < optInMinPeriod {
+                        cp2 = optInMinPeriod;
+                    } else if cp2 > optInMaxPeriod {
+                        cp2 = optInMaxPeriod;
+                    }
+                    if cp2 != cp {
+                        break;
+                    }
+                    t1 += 1;
+                }
+                self.ma(t, t1, inReal, cp, optInMAType, &mut outReal[t - lookbackTotal..=t1 - lookbackTotal])?;
+                t = t1 + 1;
+            }
+            let (tape, tapeMask, tapePos) = Core::mavp_tape_open(inReal, lookbackTotal);
+            let state = MavpStreamState { optInMinPeriod, optInMaxPeriod, optInMAType, bank: Vec::new(), tapeMask, tapePos, tape, cur_outReal: outReal[historyLen - 1 - lookbackTotal] };
+            return Ok((MavpStream { state, out: OutRange { beg_idx: lookbackTotal, count: historyLen - lookbackTotal } }, OutRange { beg_idx: lookbackTotal, count: historyLen - lookbackTotal }));
+        }
         // Seed each sub-MA at the first output bar (lookbackTotal), NOT the last.
         let mut bank: Vec<MaStream> = Vec::with_capacity(nBank);
         let mut scratch: Vec<f64> = Vec::with_capacity(nBank);
@@ -797,7 +902,7 @@ impl Core {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl MavpStream {
-    /// Commit one closed bar. Never allocates.
+    /// Commit one closed bar.
     ///
     /// # Errors
     ///
@@ -826,6 +931,11 @@ impl MavpStream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
+        if self.state.bank.is_empty() {
+            Core::mavp_update_window(&mut self.state, inReal, inPeriods, &mut outReal)?;
+            self.out.count += 1;
+            return Ok(outReal);
+        }
         Core::mavp_step_impl(&mut self.state, inReal, inPeriods, &mut outReal);
         self.out.count += 1;
         Ok(outReal)
@@ -856,6 +966,9 @@ impl MavpStream {
                 cp = sp.optInMinPeriod;
             } else if cp > sp.optInMaxPeriod {
                 cp = sp.optInMaxPeriod;
+            }
+            if sp.bank.is_empty() {
+                return Core::mavp_eval_window(sp, inReal, cp);
             }
             let slot: usize = (cp - sp.optInMinPeriod) as usize;
             let tapeBase: usize = ((sp.tapePos + 1) & sp.tapeMask) + sp.tapeMask + 1;

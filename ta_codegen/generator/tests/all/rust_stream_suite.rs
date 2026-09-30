@@ -368,6 +368,23 @@ fn rust_exempt_tiers_keep_their_own_bodies() {
     }
 }
 
+/// Nothing provokes the window evaluation's failure at runtime, so a tape commit
+/// ahead of it would pass every value gate.
+#[test]
+fn rust_mavp_window_update_evaluates_before_it_commits() {
+    let s = rust_stream_section("mavp");
+    let upd = body_of(&s, "fn mavp_update_window(");
+    let eval = upd.find("Core::mavp_eval_window(sp, inReal, cp)?;").expect("the window step evaluates");
+    let commit = upd.find("sp.tape[sp.tapePos] = inReal;").expect("the window step commits the bar");
+    assert!(eval < commit, "the window step commits the bar before the value exists:\n{upd}");
+    let narrow = format!("if (optInMaxPeriod - optInMinPeriod + 1) < {} {{", ta_codegen_lib::streaming::WINDOW_MIN_BAND);
+    assert_eq!(s.matches(&narrow).count(), 2, "both opens keep the bank for a narrow band");
+    assert!(
+        s.contains("fn mavp_step_impl(sp: &mut MavpStreamState, inReal: f64, inPeriods: f64, outReal: &mut f64) {"),
+        "the bank step stays infallible"
+    );
+}
+
 /// The Rust twin of `dispatch_open_modes_differ_only_where_intended`: since
 /// issue #204 all three open entry points come out of one emitter over a mode
 /// list, so this is what pins which mode owns which difference. Rust needs no

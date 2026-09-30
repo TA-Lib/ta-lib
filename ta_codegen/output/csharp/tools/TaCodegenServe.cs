@@ -32130,7 +32130,7 @@ public class TaCodegenServe {
                         long ad = GC.GetAllocatedBytesForCurrentThread() - a0;
                         svUpdSink += sink;
                         if (ad > updAlloc) updAlloc = ad;
-                        if (ad != 0) { allOk = false; if (diag.Length == 0) diag = ",\"updAllocBytes\":" + ad; }
+                        if (ad != 0 && !((optInMAType == MAType.ALMA) && optInMaxPeriod - optInMinPeriod + 1 >= 12)) { allOk = false; if (diag.Length == 0) diag = ",\"updAllocBytes\":" + ad; }
                     } catch (ArgumentException) { /* open rejects here -- nothing to measure */ }
                 }
             }

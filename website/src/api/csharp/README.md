@@ -153,7 +153,7 @@ Computing wholly in place is allowed and stays supported — passing the same bu
 
 A `NaN` or `±Inf` inside an input series is not detected, and nothing is promised about the output: a running sum or a recursion carries it into every later value, not only the bars whose window holds it. Clean or split the series before calling.
 
-A batch call may allocate managed scratch, sized by a period (MFI, ULTOSC) or, for some functions built from other functions such as STOCHRSI, by the range. An allocation of 85,000 bytes or more (about 10,600 doubles) lands on the large object heap. A stream's `Update` allocates nothing (see the [Streaming API](/api/csharp/stream/)).
+A batch call may allocate managed scratch, sized by a period (MFI, ULTOSC) or, for some functions built from other functions such as STOCHRSI, by the range. An allocation of 85,000 bytes or more (about 10,600 doubles) lands on the large object heap.
 
 ## 4.0 Advanced Features {#advanced}
 

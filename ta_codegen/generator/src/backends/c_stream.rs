@@ -936,7 +936,7 @@ fn period_bank_clone_lines(
     disown.push("   sp->bank = NULL;".to_string());
     disown.push("   sp->scratch = NULL;".to_string());
     dup.push(format!(
-        "   {{ int k;\n     \
+        "   if( stream->bank )\n   {{ int k;\n     \
          sp->bank = (struct {pre}_Stream **)TA_Malloc( sizeof(struct {pre}_Stream *) * (size_t)sp->nBank );\n     \
          if( !sp->bank ) {{ TA_{n}_Close( sp ); return TA_ALLOC_ERR; }}\n     \
          for( k = 0; k < sp->nBank; k++ ) sp->bank[k] = NULL;\n     \
@@ -4816,6 +4816,35 @@ fn emit_period_bank(
         })
         .collect::<Vec<_>>()
         .join(", ");
+    // MATypes whose value is the callee's batch over the tape tail keep no
+    // bank: see streaming::window_evaluable.
+    let window_labels = registry.window_labels(&func.name.to_lowercase());
+    let windowed = !window_labels.is_empty();
+    let matype = &plan.matype_param;
+    let callee_args = |per: &str, ty: &str| -> String {
+        plan.callee_opts
+            .iter()
+            .map(|a| match a {
+                streaming::PeriodBankArg::Period => per.to_string(),
+                streaming::PeriodBankArg::MAType => ty.to_string(),
+            })
+            .collect::<Vec<_>>()
+            .join(", ")
+    };
+    // A window-mode Open starts from Lookback(max) like the bank does, so every
+    // selected period's window must fit inside it; a band where one does not
+    // falls back to the bank.
+    let window_gate = |o: &mut String| {
+        let _ = writeln!(o, "   window = TA_{n}_WindowMode( {matype} );");
+        let _ = writeln!(o, "   if( {max} - {min} + 1 < {} ) window = 0;", crate::streaming::WINDOW_MIN_BAND);
+        let _ = writeln!(o, "   if( window )");
+        let _ = writeln!(o, "      for( k = 0; k < {max} - {min} + 1; k++ )");
+        let _ = writeln!(
+            o,
+            "         if( {pre}_Lookback( {} ) > lookbackTotal ) {{ window = 0; break; }}",
+            callee_args(&format!("{min} + k"), matype)
+        );
+    };
     let clamp = |o: &mut String, pad: &str, x: &str, h: &str| {
         let _ = writeln!(o, "{pad}cpReal = {x};");
         let _ = writeln!(o, "{pad}if( !(cpReal >= {h}{min}) ) cp = {h}{min};");
@@ -4839,7 +4868,7 @@ fn emit_period_bank(
         let _ = writeln!(o, "   retCode = TA_{n}_TapeOpen( sp, {price}, {hist}, reach );");
         let _ = writeln!(o, "   if( retCode != TA_SUCCESS ) {{ TA_{n}_Close( sp ); return retCode; }}");
     };
-    let alloc_handle = |o: &mut String| {
+    let alloc_head = |o: &mut String| {
         let _ = writeln!(o, "\n   sp = (struct TA_{n}_Stream *)TA_Malloc( sizeof(*sp) );");
         let _ = writeln!(o, "   if( !sp ) return TA_ALLOC_ERR;");
         let _ = writeln!(o, "   memset( sp, 0, sizeof(*sp) );");
@@ -4847,6 +4876,8 @@ fn emit_period_bank(
             let _ = writeln!(o, "   sp->{0} = {0};", p.name);
         }
         let _ = writeln!(o, "   sp->nBank = {max} - {min} + 1;");
+    };
+    let alloc_bank = |o: &mut String| {
         let _ = writeln!(
             o,
             "   sp->bank = ({subty} **)TA_Malloc( sizeof({subty} *) * (size_t)sp->nBank );"
@@ -4896,10 +4927,72 @@ fn emit_period_bank(
     let _ = writeln!(o, "   sp->tapePos = (historyLen - 1) & sp->tapeMask;");
     let _ = writeln!(o, "   return TA_SUCCESS;\n}}\n");
 
+    if windowed {
+        let _ = writeln!(o, "/* Private function, not in public API. */\nstatic int TA_{n}_WindowMode( int maType )\n{{");
+        let _ = writeln!(o, "   switch( maType )\n   {{");
+        for label in window_labels {
+            if label == "*" {
+                let _ = writeln!(o, "   default:\n      return 1;");
+            } else {
+                let _ = writeln!(o, "   case {}:", crate::backends::c::render_c_switch_label(label, enums));
+            }
+        }
+        if !window_labels.iter().any(|l| l == "*") {
+            let _ = writeln!(o, "      return 1;\n   default:\n      return 0;");
+        }
+        let _ = writeln!(o, "   }}\n}}\n");
+
+        // The window is the `lb` committed bars before the incoming one, read
+        // from the tape, then that bar: the same values, in the same order, as
+        // the batch reads for it.
+        let _ = writeln!(
+            o,
+            "/* Private function, not in public API. */\nstatic TA_RetCode TA_{n}_EvalWindow( const struct TA_{n}_Stream *sp, double {price}, int cp, double *{out} )\n{{"
+        );
+        let _ = writeln!(o, "   double localWin[32];");
+        let _ = writeln!(o, "   double *win = localWin;");
+        let _ = writeln!(o, "   int lb, i, wBeg, wNb;");
+        let _ = writeln!(o, "   TA_RetCode retCode;\n");
+        let _ = writeln!(o, "   lb = {pre}_Lookback( {} );", callee_args("cp", &format!("sp->{matype}")));
+        let _ = writeln!(o, "   if( lb + 1 > 32 )\n   {{");
+        let _ = writeln!(o, "      win = (double *)TA_Malloc( sizeof(double) * (size_t)(lb + 1) );");
+        let _ = writeln!(o, "      if( !win ) return TA_ALLOC_ERR;\n   }}");
+        let _ = writeln!(o, "   for( i = 0; i < lb; i++ )");
+        let _ = writeln!(o, "      win[i] = sp->tape[(sp->tapePos + sp->tapeMask + 2 - lb + i) & sp->tapeMask];");
+        let _ = writeln!(o, "   win[lb] = {price};");
+        let _ = writeln!(
+            o,
+            "   retCode = {pre}( lb, lb, win, {}, &wBeg, &wNb, {out} );",
+            callee_args("cp", &format!("sp->{matype}"))
+        );
+        let _ = writeln!(o, "   if( win != localWin ) TA_Free( win );");
+        let _ = writeln!(o, "   return retCode;\n}}\n");
+
+        // Out of Update's body, so the bank path keeps its frame. The tape takes
+        // the bar only once the value exists: a failure changes nothing.
+        let _ = writeln!(
+            o,
+            "/* Private function, not in public API. */\nstatic TA_RetCode TA_{n}_UpdateWindow( struct TA_{n}_Stream *stream, double {price}, double {period}, double *{out} )\n{{"
+        );
+        let _ = writeln!(o, "   int cp;\n   double cpReal, v;\n   TA_RetCode retCode;\n");
+        clamp(o, "   ", period, "stream->");
+        let _ = writeln!(o, "   retCode = TA_{n}_EvalWindow( stream, {price}, cp, &v );");
+        let _ = writeln!(o, "   if( retCode != TA_SUCCESS ) return retCode;");
+        let _ = writeln!(o, "   stream->tapePos = (stream->tapePos + 1) & stream->tapeMask;");
+        let _ = writeln!(o, "   stream->tape[stream->tapePos] = {price};");
+        let _ = writeln!(o, "   *{out} = v;");
+        emit_cur_retain(o, "   ", "stream", func);
+        emit_range_head_advance(o, "   ", "stream");
+        let _ = writeln!(o, "   return TA_SUCCESS;\n}}\n");
+    }
+
     // --- OpenInternal -------------------------------------------------------
     let _ = writeln!(o, "/* Private function, not in public API. */\n{}\n{{", open_internal_signature(func));
     let _ = writeln!(o, "   struct TA_{n}_Stream *sp;");
     let _ = writeln!(o, "   int k, cp, lookbackTotal, subStart, reach, slotReach;");
+    if windowed {
+        let _ = writeln!(o, "   int window, wBeg, wNb;");
+    }
     let _ = writeln!(o, "   double cpReal;");
     let _ = writeln!(o, "   TA_RetCode retCode;");
     let _ = writeln!(o, "\n   if( !stream ) return TA_BAD_PARAM;");
@@ -4928,12 +5021,30 @@ fn emit_period_bank(
     // this an anchor past the history publishes a negative count (and, where the
     // count is unsigned, underflows).
     let _ = writeln!(o, "   if( historyLen < subStart + 1 ) return TA_INSUFFICIENT_HISTORY;");
-    alloc_handle(o);
+    alloc_head(o);
+    if windowed {
+        window_gate(o);
+        let _ = writeln!(o, "   if( window )\n   {{");
+        let _ = writeln!(o, "      retCode = TA_{n}_TapeOpen( sp, {price}, historyLen, lookbackTotal );");
+        let _ = writeln!(o, "      if( retCode != TA_SUCCESS ) {{ TA_{n}_Close( sp ); return retCode; }}");
+        clamp(o, "      ", &format!("{period}[historyLen - 1]"), "");
+        let _ = writeln!(
+            o,
+            "      retCode = {pre}( historyLen - 1, historyLen - 1, {price}, {}, &wBeg, &wNb, {out} );",
+            callee_args("cp", matype)
+        );
+        let _ = writeln!(o, "      if( retCode != TA_SUCCESS ) {{ TA_{n}_Close( sp ); return retCode; }}");
+        let _ = writeln!(o, "   }}\n   else\n   {{");
+    }
+    alloc_bank(o);
     open_bank(o, "subStart", "historyLen");
     // Current output: the last history bar's clamped period selects the slot.
     let _ = writeln!(o);
     clamp(o, "   ", &format!("{period}[historyLen - 1]"), "");
     let _ = writeln!(o, "   *{out} = sp->scratch[cp - {min}];");
+    if windowed {
+        let _ = writeln!(o, "   }}");
+    }
     // No out-param pair on the scalar open: `subStart` is the resolved
     // `max(startIdx, lookback)` the bank was opened at, which is the range's
     // start by definition.
@@ -4962,6 +5073,9 @@ fn emit_period_bank(
     let _ = writeln!(o, "{}\n{{", open_and_fill_signature(func));
     let _ = writeln!(o, "   struct TA_{n}_Stream *sp;");
     let _ = writeln!(o, "   int k, cp, lookbackTotal, t, reach, slotReach, tapeBase;");
+    if windowed {
+        let _ = writeln!(o, "   int window, t1, cp2, wBeg, wNb;");
+    }
     let _ = writeln!(o, "   double cpReal;");
     let _ = writeln!(o, "   TA_RetCode retCode;");
     let _ = writeln!(o, "\n   if( !stream ) return TA_BAD_PARAM;");
@@ -4988,7 +5102,28 @@ fn emit_period_bank(
     let _ = writeln!(o, "      *outNBElement = 0;");
     let _ = writeln!(o, "      return TA_INSUFFICIENT_HISTORY;");
     let _ = writeln!(o, "   }}");
-    alloc_handle(o);
+    alloc_head(o);
+    if windowed {
+        // One batch call per run of equal clamped periods.
+        window_gate(o);
+        let _ = writeln!(o, "   if( window )\n   {{");
+        let _ = writeln!(o, "      for( t = lookbackTotal; t < historyLen; t = t1 + 1 )\n      {{");
+        clamp(o, "         ", &format!("{period}[t]"), "");
+        let _ = writeln!(o, "         for( t1 = t; t1 + 1 < historyLen; t1++ )\n         {{");
+        let _ = writeln!(o, "            cp2 = cp;");
+        clamp(o, "            ", &format!("{period}[t1 + 1]"), "");
+        let _ = writeln!(o, "            if( cp != cp2 ) {{ cp = cp2; break; }}\n         }}");
+        let _ = writeln!(
+            o,
+            "         retCode = {pre}( t, t1, {price}, {}, &wBeg, &wNb, &{out}[t - lookbackTotal] );",
+            callee_args("cp", matype)
+        );
+        let _ = writeln!(o, "         if( retCode != TA_SUCCESS ) {{ TA_{n}_Close( sp ); return retCode; }}\n      }}");
+        let _ = writeln!(o, "      retCode = TA_{n}_TapeOpen( sp, {price}, historyLen, lookbackTotal );");
+        let _ = writeln!(o, "      if( retCode != TA_SUCCESS ) {{ TA_{n}_Close( sp ); return retCode; }}");
+        let _ = writeln!(o, "   }}\n   else\n   {{");
+    }
+    alloc_bank(o);
     // Seed each sub-MA at the first output bar (lookbackTotal), NOT the last.
     open_bank(o, "lookbackTotal", "lookbackTotal + 1");
     // First output bar (lookbackTotal), then replay the remaining history.
@@ -5001,6 +5136,9 @@ fn emit_period_bank(
     clamp(o, "      ", &format!("{period}[t]"), "");
     let _ = writeln!(o, "      {out}[t - lookbackTotal] = sp->scratch[cp - {min}];");
     let _ = writeln!(o, "   }}");
+    if windowed {
+        let _ = writeln!(o, "   }}");
+    }
     let _ = writeln!(o, "\n   *outBegIdx = lookbackTotal;");
     let _ = writeln!(o, "   *outNBElement = historyLen - lookbackTotal;");
     emit_range_head_capture(o, "   ");
@@ -5015,6 +5153,9 @@ fn emit_period_bank(
     // inPeriods is in the bar check too: a non-finite period would reach `(int)`,
     // and the conversion of NaN or an infinity to int is undefined behaviour.
     o.push_str(&step_prologue(func, Frame::Step, true));
+    if windowed {
+        let _ = writeln!(o, "   if( !stream->bank ) return TA_{n}_UpdateWindow( stream, {price}, {period}, {out} );");
+    }
     step_bank(o, "   ", "stream->", price);
     clamp(o, "   ", period, "stream->");
     let _ = writeln!(o, "   *{out} = stream->scratch[cp - stream->{min}];");
@@ -5030,6 +5171,9 @@ fn emit_period_bank(
     let _ = writeln!(o, "   double cpReal;");
     o.push_str(&step_prologue(func, Frame::Step, false));
     clamp(o, "   ", period, "stream->");
+    if windowed {
+        let _ = writeln!(o, "   if( !stream->bank ) return TA_{n}_EvalWindow( stream, {price}, cp, {out} );");
+    }
     let _ = writeln!(
         o,
         "   {pre}_PeekTape( stream->bank[cp - stream->{min}], stream->tape, ((stream->tapePos + 1) & stream->tapeMask) + stream->tapeMask + 1, stream->tapeMask, {price}, {out} );"
