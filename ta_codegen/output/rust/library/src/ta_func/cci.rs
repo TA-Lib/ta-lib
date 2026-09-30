@@ -215,11 +215,14 @@ impl Core {
                 }
             }
             theAverage += lastValue;
-            // for( j = circBuffer_Idx + 1; j < ((optInTimePeriod) as usize); j += 1 )
             j = circBuffer_Idx + 1;
-            while j < ((optInTimePeriod) as usize) {
-                theAverage += circBuffer[j];
-                j += 1;
+            if j < ((optInTimePeriod) as usize) {
+                let _wn: usize = (optInTimePeriod as usize) - j;
+                let _w0 = &circBuffer[j..][.._wn];
+                for _wk in 0.._wn {
+                    theAverage += _w0[_wk];
+                    j += 1;
+                }
             }
             theAverage /= ((optInTimePeriod) as f64);
             // Do the summation of the ABS(TypePrice-average)
@@ -235,11 +238,14 @@ impl Core {
                 }
             }
             tempReal2 += (lastValue - theAverage).abs();
-            // for( j = circBuffer_Idx + 1; j < ((optInTimePeriod) as usize); j += 1 )
             j = circBuffer_Idx + 1;
-            while j < ((optInTimePeriod) as usize) {
-                tempReal2 += (circBuffer[j] - theAverage).abs();
-                j += 1;
+            if j < ((optInTimePeriod) as usize) {
+                let _wn: usize = (optInTimePeriod as usize) - j;
+                let _w0 = &circBuffer[j..][.._wn];
+                for _wk in 0.._wn {
+                    tempReal2 += (_w0[_wk] - theAverage).abs();
+                    j += 1;
+                }
             }
             tempReal2 /= ((optInTimePeriod) as f64);
             // And finally, the CCI...

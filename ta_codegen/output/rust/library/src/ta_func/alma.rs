@@ -61,7 +61,7 @@
 // Import types from parent module
 use super::*;
 
-/* Using alma_ALT2 for TA_ALT={BATCH,RUST} */
+/* Using alma_ALT1 for TA_ALT={BATCH,ALL_LANGUAGES} */
 
 // Allow non-snake-case names to maintain TA-Lib API compatibility
 #[allow(non_snake_case)]
@@ -163,6 +163,7 @@ impl Core {
         let mut j: usize = 0_usize;
         let mut w: usize = 0_usize;
         let mut m: i32 = 0_i32;
+        let mut b: usize = 0_usize;
         let mut local_weights: [f64; 30] = [0.0_f64; 30];
         let mut heap_weights: Vec<f64> = Vec::new();
         let mut weights: &mut [f64] = &mut [];
@@ -209,23 +210,31 @@ impl Core {
         s = (optInTimePeriod as f64) / ((optInSigma) as f64);
         twoSSq = 2.0 * s * s;
         norm = 0.0;
-        // for( j = 0; j < ((optInTimePeriod) as usize); j += 1 )
         j = 0;
-        while j < ((optInTimePeriod) as usize) {
-            d = (((j) as i32) - m) as f64;
-            weights[j] = (-(d * d) / twoSSq).exp();
-            norm += weights[j];
-            j += 1;
+        if j < ((optInTimePeriod) as usize) {
+            let _wn: usize = (optInTimePeriod as usize) - j;
+            let _w0 = &mut weights[j..][.._wn];
+            for _wk in 0.._wn {
+                d = (((j) as i32) - m) as f64;
+                _w0[_wk] = (-(d * d) / twoSSq).exp();
+                norm += _w0[_wk];
+                j += 1;
+            }
         }
-        // for( j = 0; j < ((optInTimePeriod) as usize); j += 1 )
         j = 0;
-        while j < ((optInTimePeriod) as usize) {
-            weights[j] = weights[j] / norm;
-            j += 1;
+        if j < ((optInTimePeriod) as usize) {
+            let _wn: usize = (optInTimePeriod as usize) - j;
+            let _w0 = &mut weights[j..][.._wn];
+            for _wk in 0.._wn {
+                _w0[_wk] = _w0[_wk] / norm;
+                j += 1;
+            }
         }
-        // ALT1's passes with j running over the window itself: Rust reads only this
-        // form through a slice, without a bounds check per term, and the same form
-        // costs Java up to 2x at long periods.
+        // 4 bars per pass, each with its own accumulator summed in the same
+        // order as the base: the same bits, with 4 independent add chains in
+        // flight instead of one. Every window of a pass is read before any of its
+        // outputs is written, and the next pass reads past them, so outReal may
+        // alias inReal.
         outIdx = 0;
         i = startIdx;
         while i + 3 <= endIdx {
@@ -233,19 +242,19 @@ impl Core {
             s1 = 0.0;
             s2 = 0.0;
             s3 = 0.0;
-            w = 0;
-            j = i - lookbackTotal;
-            if j <= i {
-                let _wn: usize = i - j + 1;
-                let _w0 = &inReal[j..][.._wn + 3];
-                let _w1 = &weights[w..][.._wn];
+            b = i - lookbackTotal;
+            j = 0;
+            if j < ((optInTimePeriod) as usize) {
+                let _wn: usize = (optInTimePeriod as usize) - j;
+                let _w0 = &inReal[b..][.._wn + 3];
+                let _w1 = &weights[j..][.._wn];
                 for _wk in 0.._wn {
                     wj = _w1[_wk];
                     s0 += wj * _w0[_wk];
                     s1 += wj * _w0[_wk + 1];
                     s2 += wj * _w0[_wk + 2];
                     s3 += wj * _w0[_wk + 3];
-                    w += 1;
+                    b += 1;
                     j += 1;
                 }
             }

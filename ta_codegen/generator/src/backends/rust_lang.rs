@@ -97,6 +97,9 @@ pub struct RustRenderCtx {
     pub window_loops: bool,
     /// Inputs resliced to `..=endIdx`, so all of one length.
     pub same_len_inputs: std::collections::HashSet<String>,
+    /// The integer optional inputs: the only `i32`s a window bound may take
+    /// through a cast. Set for batch bodies only.
+    pub int_params: std::collections::HashSet<String>,
     /// If true, emit a pre-loop bounds-assert preamble at the top of the body. The
     /// asserts give LLVM the proof it needs to elide the per-access bounds checks on
     /// the safe `[]` indexing that follows — the generated code never uses `unsafe`.
@@ -278,6 +281,7 @@ impl RustRenderCtx {
             for_range_lowering: true,
             window_loops: false,
             same_len_inputs: std::collections::HashSet::new(),
+            int_params: std::collections::HashSet::new(),
             bounds_asserts: false,
             index_vars: std::collections::HashSet::new(),
             real_vars: std::collections::HashSet::new(),
@@ -673,6 +677,7 @@ fn gen_impl_block(func: &FuncDef, enums: &HashMap<String, EnumDef>, registry: &R
             for_range_lowering: true,
         window_loops: true,
         same_len_inputs: std::collections::HashSet::new(),
+        int_params: int_param_names(func),
         bounds_asserts: true,
         index_vars,
         real_vars,
@@ -1055,6 +1060,7 @@ fn gen_guarded_func(
             for_range_lowering: true,
             window_loops: true,
             same_len_inputs: std::collections::HashSet::new(),
+            int_params: int_param_names(func),
             // The guarded preamble is emitted once by gen_guarded_func above, not
             // from the statement renderer — keep this false so it cannot double.
             bounds_asserts: false,
@@ -1160,6 +1166,7 @@ fn gen_guarded_func(
             for_range_lowering: true,
             window_loops: true,
             same_len_inputs: std::collections::HashSet::new(),
+            int_params: int_param_names(func),
             // The guarded preamble is emitted once by gen_guarded_func above, not
             // from the statement renderer — keep this false so it cannot double.
             bounds_asserts: false,
@@ -2974,6 +2981,7 @@ impl RustStmt<'_, '_> {
         let ctx = self.ctx;
         let index = |n: &str| ctx.index_vars.contains(n) && !ctx.sentinel_vars.contains(n);
         let usize_expr = |e: &Expr| expr_is_usize(e, ctx);
+        let castable = |e: &Expr| matches!(e, Expr::Var(n) if ctx.int_params.contains(n));
         // A fixed-size array's length is already known to LLVM, and the loops
         // over one run a constant few passes that a window's entry checks
         // would outweigh.
@@ -2984,6 +2992,7 @@ impl RustStmt<'_, '_> {
         let names = Names {
             index: &index,
             usize_expr: &usize_expr,
+            castable: &castable,
             sliceable: &sliceable,
             same_len: &same_len,
             ring_storage: &ring_storage,
@@ -6964,4 +6973,12 @@ fn gen_footer() -> String {
      /* End of File */\n\
      /***************/\n"
         .to_string()
+}
+
+fn int_param_names(func: &FuncDef) -> std::collections::HashSet<String> {
+    func.optional_inputs
+        .iter()
+        .filter(|o| o.param_type == ParamType::Integer)
+        .map(|o| o.name.clone())
+        .collect()
 }

@@ -22,7 +22,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use super::builtins::{MathFn, SpecialBuiltin};
 use super::rust_respell::SELECT_OTHER;
-use crate::ir::{BinOp, CircBuf, Expr, Statement};
+use crate::ir::{BinOp, CircBuf, Expr, Statement, VarType};
 
 /// The pass count and the pass index in the emitted code.
 pub(crate) const TRIP: &str = "_wn";
@@ -83,6 +83,9 @@ pub(crate) struct Names<'a> {
     pub index: &'a dyn Fn(&str) -> bool,
     /// An expression that renders as a `usize`.
     pub usize_expr: &'a dyn Fn(&Expr) -> bool,
+    /// An `i32` a bound may take through the `as usize` cast the loop as
+    /// written already applies, so the trip and the guard agree.
+    pub castable: &'a dyn Fn(&Expr) -> bool,
     /// An array a window may be cut from.
     pub sliceable: &'a dyn Fn(&str) -> bool,
     /// One of the inputs that all have one length here.
@@ -180,9 +183,13 @@ struct Form {
 fn form(cond: &Expr, names: &Names) -> Option<Form> {
     let Expr::BinOp(lhs, op, rhs) = cond else { return None };
     let bound = rhs.as_ref().clone();
-    if !(names.usize_expr)(&bound) {
+    let bound = if (names.usize_expr)(&bound) {
+        bound
+    } else if (names.castable)(&bound) {
+        Expr::Cast(VarType::Index, Box::new(bound))
+    } else {
         return None;
-    }
+    };
     let zero = matches!(bound, Expr::IntLiteral(0));
     let limit = || bound.clone();
     let counted = |c: &str, d: i64, trip: Expr| Form {
@@ -943,11 +950,18 @@ mod tests {
             matches!(x, Expr::IntLiteral(_) | Expr::PointerDeref(_) | Expr::FuncCall(..))
                 || matches!(x, Expr::Var(n) if index(n))
         };
+        let castable = |x: &Expr| matches!(x, Expr::Var(n) if n == "p");
         let sliceable = |_: &str| true;
         let pool = |a: &str| same_len && (a == "in" || a == "in2");
         let ring = |id: &str| (id == "r").then(|| "ring".to_string());
-        let names =
-            Names { index: &index, usize_expr: &usize_expr, sliceable: &sliceable, same_len: &pool, ring_storage: &ring };
+        let names = Names {
+            index: &index,
+            usize_expr: &usize_expr,
+            castable: &castable,
+            sliceable: &sliceable,
+            same_len: &pool,
+            ring_storage: &ring,
+        };
         plan(cond, body, update, &names)
     }
     fn run_with(cond: &Expr, body: &[Statement], same_len: bool) -> Option<Plan> {
@@ -993,6 +1007,24 @@ mod tests {
         assert_eq!(accesses(&p), ["in[_w0[_wk]]", "in[_w1[_wk]]", "out[_w2[_wk]]"]);
         // The updates stay: each variable still holds C's value.
         assert_eq!(p.body.len(), body.len());
+    }
+
+    #[test]
+    fn an_i32_bound_counts_through_its_cast_and_a_base_steps_beside_it() {
+        // while( j < p ) { s += in[b]; s += in[b+3]; b++; j++; }, p an i32
+        let body = [
+            Statement::Assign { target: v("s"), value: plus(v("s"), at("in", v("b"))), compound: true },
+            Statement::Assign { target: v("s"), value: plus(v("s"), at("in", plus(v("b"), int(3)))), compound: true },
+            inc("b"),
+            inc("j"),
+        ];
+        let p = run(&bin(v("j"), BinOp::Less, v("p")), &body).expect("windowed");
+        assert_eq!(text(&p.trip), text(&bin(Expr::Cast(VarType::Index, Box::new(v("p"))), BinOp::Sub, v("j"))));
+        let cut: Vec<(String, String, i64)> = p.windows.iter().map(|w| (w.array.clone(), text(&w.start), w.extra)).collect();
+        assert_eq!(cut, vec![("in".into(), text(&v("b")), 3)]);
+        assert_eq!(accesses(&p), ["in[_w0[_wk]]", "in[_w0[_wk + 3]]"]);
+        // A bound that is neither a usize nor a castable i32 stays as written.
+        assert!(run(&bin(v("j"), BinOp::Less, v("q")), &body).is_none());
     }
 
     #[test]
