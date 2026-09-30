@@ -55,6 +55,9 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 - PERCENTILE and PERCENTRANK accept periods up to 10000, down from 100000. Both do work
   proportional to the period on every bar, so a 100000-bar window costs ten times as much
   per bar as a 10000-bar one. A longer period is now rejected.
+- MAVP accepts periods up to 10000, down from 100000. Its stream advances one moving
+  average per period in the band on every bar, so a band of 100000 periods costs at least
+  ten times as much per bar as a band of 10000. A longer period is now rejected.
 - The i386 `.deb` now uses SSE2 instead of x87, so its values match the other packages. It
   needs an SSE2 CPU. (#443)
 - Java: `FuncUnstId.COUNT` is no longer public. javac copied its value into every caller, so

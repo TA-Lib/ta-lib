@@ -423,11 +423,11 @@ static ErrorNumber mvLoadTypes( void )
 
 /* Issue #145: the bucket table must be sized by the SPREAD of periods actually
  * used, not by the largest one. The pre-#145 `malloc((maxUsed+2) * sizeof(int))`
- * asked for ~400KB to describe a two-wide band clustered near 100000.
+ * asked for ~40KB to describe a two-wide band clustered near 10000.
  *
  * The widest band the API can express is optInMinPeriod = 1,
- * optInMaxPeriod = 100000 with the period series hitting both ends — a
- * 100001-int table. The narrow band at the top of the range is a two-int table.
+ * optInMaxPeriod = 10000 with the period series hitting both ends — a
+ * 10001-int table. The narrow band at the top of the range is a two-int table.
  * Both shapes are checked here.
  */
 static ErrorNumber mvWidestExpressibleBand( void )
@@ -439,13 +439,13 @@ static ErrorNumber mvWidestExpressibleBand( void )
    for( i = 0; i < MV_DATA_SIZE; i++ )
       mvInplace[i] = 100.0 + (TA_Real)i;
 
-   /* Widest band the guarded API can express: spread 99999, one below the
-    * bound. Sized by the spread, so this must succeed rather than be refused. */
+   /* Widest band the guarded API can express: spread 9999. Sized by the
+    * spread, so this must succeed rather than be refused. */
    for( i = 0; i < MV_DATA_SIZE; i++ )
-      mvPeriods[i] = ( i % 2 ) ? 1.0 : 100000.0;
+      mvPeriods[i] = ( i % 2 ) ? 1.0 : 10000.0;
    outBegIdx = outNbElement = -1;
    retCode = TA_MAVP( 0, MV_DATA_SIZE-1, mvInplace, mvPeriods,
-                      1, 100000, TA_MAType_DISABLED,
+                      1, 10000, TA_MAType_DISABLED,
                       &outBegIdx, &outNbElement, mvOut );
    if( retCode != TA_SUCCESS || outBegIdx != 0 || outNbElement != MV_DATA_SIZE )
    {
@@ -466,12 +466,12 @@ static ErrorNumber mvWidestExpressibleBand( void )
 
    /* Narrow band at the top of the range: the spread is 0, so relative
     * indexing makes this a two-int table. Absolute indexing would have asked
-    * for ~400KB to describe a single period. */
+    * for ~40KB to describe a single period. */
    for( i = 0; i < MV_DATA_SIZE; i++ )
-      mvPeriods[i] = 100000.0;
+      mvPeriods[i] = 10000.0;
    outBegIdx = outNbElement = -1;
    retCode = TA_MAVP( 0, MV_DATA_SIZE-1, mvInplace, mvPeriods,
-                      100000, 100000, TA_MAType_DISABLED,
+                      10000, 10000, TA_MAType_DISABLED,
                       &outBegIdx, &outNbElement, mvOut );
    if( retCode != TA_SUCCESS || outBegIdx != 0 || outNbElement != MV_DATA_SIZE )
    {
@@ -486,7 +486,7 @@ static ErrorNumber mvWidestExpressibleBand( void )
       mvPeriods[i] = (TA_Real)( 2 + i % 50 );
    outBegIdx = outNbElement = -1;
    retCode = TA_MAVP( 0, MV_DATA_SIZE-1, mvInplace, mvPeriods,
-                      1, 100000, TA_MAType_DISABLED,
+                      1, 10000, TA_MAType_DISABLED,
                       &outBegIdx, &outNbElement, mvOut );
    if( retCode != TA_SUCCESS || outNbElement != MV_DATA_SIZE )
    {

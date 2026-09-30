@@ -134,8 +134,8 @@ TA_RetCode mavp(int startIdx, int endIdx,
     * range of periods actually used so all later work is sized by the data,
     * not by optInMaxPeriod. The floor at 1 (and on minUsed's start value)
     * keeps a period below 1 from indexing the occurrence tables out of range.
-    * mavp.yaml caps both periods at [1, 100000], so it is inert through the
-    * API; it is kept because this file is the source of truth for four
+    * mavp.yaml's period range starts at 1, so it is inert through the API;
+    * it is kept because this file is the source of truth for four
     * backends and it makes the shared source safe by construction rather than
     * by trusting each backend's prologue to be identical.
     */
@@ -177,8 +177,8 @@ TA_RetCode mavp(int startIdx, int endIdx,
 
    /* Bound the bucket table before sizing it.
     *
-    * Unreachable through the API: mavp.yaml caps both periods at 100000, so
-    * the widest spread expressible is 99999. It is kept because it protects a
+    * Unreachable through the API: mavp.yaml's period range keeps the spread
+    * below this bound. It is kept because it protects a
     * memory-safety property and this file is the source of truth for four
     * backends — without it the size expression below can overflow (signed
     * overflow in C, a wrapped negative in Java, a usize underflow panic in

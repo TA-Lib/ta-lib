@@ -71,9 +71,9 @@ public partial class Core
    /// series is requested. Feed at least <c>lookback + 1</c> bars to get any
    /// output.
    /// </remarks>
-   /// <param name="optInMinPeriod">Lower clamp for the per-bar period (default 2; range 1..100000;
+   /// <param name="optInMinPeriod">Lower clamp for the per-bar period (default 2; range 1..10000;
    /// <c>int.MinValue</c> selects the default).</param>
-   /// <param name="optInMaxPeriod">Upper clamp for the per-bar period (default 30; range 1..100000;
+   /// <param name="optInMaxPeriod">Upper clamp for the per-bar period (default 30; range 1..10000;
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInMAType">Moving-average type applied (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA,
    /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
@@ -84,12 +84,12 @@ public partial class Core
    {
       if( optInMinPeriod == int.MinValue ) {
          optInMinPeriod = 2;
-      } else if( optInMinPeriod < 1 || optInMinPeriod > 100000 ) {
+      } else if( optInMinPeriod < 1 || optInMinPeriod > 10000 ) {
          return -1;
       }
       if( optInMaxPeriod == int.MinValue ) {
          optInMaxPeriod = 30;
-      } else if( optInMaxPeriod < 1 || optInMaxPeriod > 100000 ) {
+      } else if( optInMaxPeriod < 1 || optInMaxPeriod > 10000 ) {
          return -1;
       }
       if( (int)optInMAType == int.MinValue || optInMAType == MAType.DEFAULT ) {
@@ -152,12 +152,12 @@ public partial class Core
       }
       if( optInMinPeriod == int.MinValue ) {
          optInMinPeriod = 2;
-      } else if( optInMinPeriod < 1 || optInMinPeriod > 100000 ) {
+      } else if( optInMinPeriod < 1 || optInMinPeriod > 10000 ) {
          return RetCode.BadParam;
       }
       if( optInMaxPeriod == int.MinValue ) {
          optInMaxPeriod = 30;
-      } else if( optInMaxPeriod < 1 || optInMaxPeriod > 100000 ) {
+      } else if( optInMaxPeriod < 1 || optInMaxPeriod > 10000 ) {
          return RetCode.BadParam;
       }
       if( (int)optInMAType == int.MinValue || optInMAType == MAType.DEFAULT ) {
@@ -227,8 +227,8 @@ public partial class Core
        * range of periods actually used so all later work is sized by the data,
        * not by optInMaxPeriod. The floor at 1 (and on minUsed's start value)
        * keeps a period below 1 from indexing the occurrence tables out of range.
-       * mavp.yaml caps both periods at [1, 100000], so it is inert through the
-       * API; it is kept because this file is the source of truth for four
+       * mavp.yaml's period range starts at 1, so it is inert through the API;
+       * it is kept because this file is the source of truth for four
        * backends and it makes the shared source safe by construction rather than
        * by trusting each backend's prologue to be identical.
        */
@@ -273,8 +273,8 @@ public partial class Core
       }
       /* Bound the bucket table before sizing it.
        *
-       * Unreachable through the API: mavp.yaml caps both periods at 100000, so
-       * the widest spread expressible is 99999. It is kept because it protects a
+       * Unreachable through the API: mavp.yaml's period range keeps the spread
+       * below this bound. It is kept because it protects a
        * memory-safety property and this file is the source of truth for four
        * backends — without it the size expression below can overflow (signed
        * overflow in C, a wrapped negative in Java, a usize underflow panic in
@@ -420,12 +420,12 @@ public partial class Core
       }
       if( optInMinPeriod == int.MinValue ) {
          optInMinPeriod = 2;
-      } else if( optInMinPeriod < 1 || optInMinPeriod > 100000 ) {
+      } else if( optInMinPeriod < 1 || optInMinPeriod > 10000 ) {
          return RetCode.BadParam;
       }
       if( optInMaxPeriod == int.MinValue ) {
          optInMaxPeriod = 30;
-      } else if( optInMaxPeriod < 1 || optInMaxPeriod > 100000 ) {
+      } else if( optInMaxPeriod < 1 || optInMaxPeriod > 10000 ) {
          return RetCode.BadParam;
       }
       if( (int)optInMAType == int.MinValue || optInMAType == MAType.DEFAULT ) {
@@ -580,9 +580,9 @@ public partial class Core
    /// <param name="endIdx">Last bar of the requested range (inclusive).</param>
    /// <param name="inReal">series to be averaged.</param>
    /// <param name="inPeriods">per-bar desired MA period.</param>
-   /// <param name="optInMinPeriod">Lower clamp for the per-bar period (default 2; range 1..100000;
+   /// <param name="optInMinPeriod">Lower clamp for the per-bar period (default 2; range 1..10000;
    /// <c>int.MinValue</c> selects the default).</param>
-   /// <param name="optInMaxPeriod">Upper clamp for the per-bar period (default 30; range 1..100000;
+   /// <param name="optInMaxPeriod">Upper clamp for the per-bar period (default 30; range 1..10000;
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInMAType">Moving-average type applied (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA,
    /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
@@ -675,9 +675,9 @@ public partial class Core
    /// <param name="endIdx">Last bar of the requested range (inclusive).</param>
    /// <param name="inReal">series to be averaged.</param>
    /// <param name="inPeriods">per-bar desired MA period.</param>
-   /// <param name="optInMinPeriod">Lower clamp for the per-bar period (default 2; range 1..100000;
+   /// <param name="optInMinPeriod">Lower clamp for the per-bar period (default 2; range 1..10000;
    /// <c>int.MinValue</c> selects the default).</param>
-   /// <param name="optInMaxPeriod">Upper clamp for the per-bar period (default 30; range 1..100000;
+   /// <param name="optInMaxPeriod">Upper clamp for the per-bar period (default 30; range 1..10000;
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInMAType">Moving-average type applied (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA,
    /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
@@ -947,12 +947,12 @@ public partial class Core
       }
       if( optInMinPeriod == int.MinValue ) {
          optInMinPeriod = 2;
-      } else if( optInMinPeriod < 1 || optInMinPeriod > 100000 ) {
+      } else if( optInMinPeriod < 1 || optInMinPeriod > 10000 ) {
          return RetCode.BadParam;
       }
       if( optInMaxPeriod == int.MinValue ) {
          optInMaxPeriod = 30;
-      } else if( optInMaxPeriod < 1 || optInMaxPeriod > 100000 ) {
+      } else if( optInMaxPeriod < 1 || optInMaxPeriod > 10000 ) {
          return RetCode.BadParam;
       }
       if( (int)optInMAType == int.MinValue || optInMAType == MAType.DEFAULT ) {
@@ -1020,12 +1020,12 @@ public partial class Core
       }
       if( optInMinPeriod == int.MinValue ) {
          optInMinPeriod = 2;
-      } else if( optInMinPeriod < 1 || optInMinPeriod > 100000 ) {
+      } else if( optInMinPeriod < 1 || optInMinPeriod > 10000 ) {
          return RetCode.BadParam;
       }
       if( optInMaxPeriod == int.MinValue ) {
          optInMaxPeriod = 30;
-      } else if( optInMaxPeriod < 1 || optInMaxPeriod > 100000 ) {
+      } else if( optInMaxPeriod < 1 || optInMaxPeriod > 10000 ) {
          return RetCode.BadParam;
       }
       if( (int)optInMAType == int.MinValue || optInMAType == MAType.DEFAULT ) {

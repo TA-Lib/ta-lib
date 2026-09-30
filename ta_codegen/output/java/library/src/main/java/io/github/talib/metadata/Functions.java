@@ -2732,12 +2732,12 @@ public final class Functions {
                OptInputType.INTEGER_RANGE, "optInMinPeriod", 0x00000000,
                "Minimum Period", "Value less than minimum will be changed to Minimum period", 2.0,
                0.0, 0.0, 0, 0.0, 0.0, 0.0,
-               1, 100000, 1, 200, 1, null),
+               1, 10000, 1, 200, 1, null),
             new OptInputInfo(
                OptInputType.INTEGER_RANGE, "optInMaxPeriod", 0x00000000,
                "Maximum Period", "Value higher than maximum will be changed to Maximum period", 30.0,
                0.0, 0.0, 0, 0.0, 0.0, 0.0,
-               1, 100000, 1, 200, 1, null),
+               1, 10000, 1, 200, 1, null),
             new OptInputInfo(
                OptInputType.INTEGER_LIST, "optInMAType", 0x00000000,
                "MA Type", "Type of Moving Average", 0.0,

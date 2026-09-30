@@ -67,11 +67,11 @@ TA_LIB_API int TA_MAVP_Lookback( int optInMinPeriod, int optInMaxPeriod, TA_MATy
 {
    if( (int)optInMinPeriod == TA_INTEGER_DEFAULT )
       optInMinPeriod = 2;
-   else if( (int)optInMinPeriod < 1 || (int)optInMinPeriod > 100000 )
+   else if( (int)optInMinPeriod < 1 || (int)optInMinPeriod > 10000 )
       return -1;
    if( (int)optInMaxPeriod == TA_INTEGER_DEFAULT )
       optInMaxPeriod = 30;
-   else if( (int)optInMaxPeriod < 1 || (int)optInMaxPeriod > 100000 )
+   else if( (int)optInMaxPeriod < 1 || (int)optInMaxPeriod > 10000 )
       return -1;
    if( (int)optInMAType == TA_INTEGER_DEFAULT || optInMAType == TA_MAType_DEFAULT )
       optInMAType = 0;
@@ -131,11 +131,11 @@ TA_LIB_API TA_RetCode TA_MAVP( int    startIdx,
 
    if( (int)optInMinPeriod == TA_INTEGER_DEFAULT )
       optInMinPeriod = 2;
-   else if( (int)optInMinPeriod < 1 || (int)optInMinPeriod > 100000 )
+   else if( (int)optInMinPeriod < 1 || (int)optInMinPeriod > 10000 )
       return TA_BAD_PARAM;
    if( (int)optInMaxPeriod == TA_INTEGER_DEFAULT )
       optInMaxPeriod = 30;
-   else if( (int)optInMaxPeriod < 1 || (int)optInMaxPeriod > 100000 )
+   else if( (int)optInMaxPeriod < 1 || (int)optInMaxPeriod > 10000 )
       return TA_BAD_PARAM;
    if( (int)optInMAType == TA_INTEGER_DEFAULT || optInMAType == TA_MAType_DEFAULT )
       optInMAType = 0;
@@ -230,8 +230,8 @@ TA_LIB_API TA_RetCode TA_MAVP( int    startIdx,
     * range of periods actually used so all later work is sized by the data,
     * not by optInMaxPeriod. The floor at 1 (and on minUsed's start value)
     * keeps a period below 1 from indexing the occurrence tables out of range.
-    * mavp.yaml caps both periods at [1, 100000], so it is inert through the
-    * API; it is kept because this file is the source of truth for four
+    * mavp.yaml's period range starts at 1, so it is inert through the API;
+    * it is kept because this file is the source of truth for four
     * backends and it makes the shared source safe by construction rather than
     * by trusting each backend's prologue to be identical.
     */
@@ -284,8 +284,8 @@ TA_LIB_API TA_RetCode TA_MAVP( int    startIdx,
    }
    /* Bound the bucket table before sizing it.
     *
-    * Unreachable through the API: mavp.yaml caps both periods at 100000, so
-    * the widest spread expressible is 99999. It is kept because it protects a
+    * Unreachable through the API: mavp.yaml's period range keeps the spread
+    * below this bound. It is kept because it protects a
     * memory-safety property and this file is the source of truth for four
     * backends — without it the size expression below can overflow (signed
     * overflow in C, a wrapped negative in Java, a usize underflow panic in
@@ -489,11 +489,11 @@ TA_RetCode TA_S_MAVP( int    startIdx,
 
    if( (int)optInMinPeriod == TA_INTEGER_DEFAULT )
       optInMinPeriod = 2;
-   else if( (int)optInMinPeriod < 1 || (int)optInMinPeriod > 100000 )
+   else if( (int)optInMinPeriod < 1 || (int)optInMinPeriod > 10000 )
       return TA_BAD_PARAM;
    if( (int)optInMaxPeriod == TA_INTEGER_DEFAULT )
       optInMaxPeriod = 30;
-   else if( (int)optInMaxPeriod < 1 || (int)optInMaxPeriod > 100000 )
+   else if( (int)optInMaxPeriod < 1 || (int)optInMaxPeriod > 10000 )
       return TA_BAD_PARAM;
    if( (int)optInMAType == TA_INTEGER_DEFAULT || optInMAType == TA_MAType_DEFAULT )
       optInMAType = 0;
@@ -766,11 +766,11 @@ TA_RetCode TA_MAVP_OpenInternal( struct TA_MAVP_Stream **stream, const double in
    if( !inReal || !inPeriods || !outReal ) return TA_BAD_PARAM;
    if( (int)optInMinPeriod == TA_INTEGER_DEFAULT )
       optInMinPeriod = 2;
-   else if( (int)optInMinPeriod < 1 || (int)optInMinPeriod > 100000 )
+   else if( (int)optInMinPeriod < 1 || (int)optInMinPeriod > 10000 )
       return TA_BAD_PARAM;
    if( (int)optInMaxPeriod == TA_INTEGER_DEFAULT )
       optInMaxPeriod = 30;
-   else if( (int)optInMaxPeriod < 1 || (int)optInMaxPeriod > 100000 )
+   else if( (int)optInMaxPeriod < 1 || (int)optInMaxPeriod > 10000 )
       return TA_BAD_PARAM;
    if( (int)optInMAType == TA_INTEGER_DEFAULT || optInMAType == TA_MAType_DEFAULT )
       optInMAType = 0;
@@ -844,11 +844,11 @@ TA_LIB_API TA_RetCode TA_MAVP_OpenAndFill( TA_MAVP_Stream **stream, const double
    if( (const void *)outReal == (const void *)inReal || (const void *)outReal == (const void *)inPeriods ) return TA_BAD_PARAM;
    if( (int)optInMinPeriod == TA_INTEGER_DEFAULT )
       optInMinPeriod = 2;
-   else if( (int)optInMinPeriod < 1 || (int)optInMinPeriod > 100000 )
+   else if( (int)optInMinPeriod < 1 || (int)optInMinPeriod > 10000 )
       return TA_BAD_PARAM;
    if( (int)optInMaxPeriod == TA_INTEGER_DEFAULT )
       optInMaxPeriod = 30;
-   else if( (int)optInMaxPeriod < 1 || (int)optInMaxPeriod > 100000 )
+   else if( (int)optInMaxPeriod < 1 || (int)optInMaxPeriod > 10000 )
       return TA_BAD_PARAM;
    if( (int)optInMAType == TA_INTEGER_DEFAULT || optInMAType == TA_MAType_DEFAULT )
       optInMAType = 0;

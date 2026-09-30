@@ -3540,8 +3540,8 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         optInputs:
         [
-            new OptInputInfo("optInMinPeriod", "Minimum Period", "Value less than minimum will be changed to Minimum period", OptInputFlags.None, new OptInputDomain.IntegerRange(1, 100000, 2, 1, 200, 1)),
-            new OptInputInfo("optInMaxPeriod", "Maximum Period", "Value higher than maximum will be changed to Maximum period", OptInputFlags.None, new OptInputDomain.IntegerRange(1, 100000, 30, 1, 200, 1)),
+            new OptInputInfo("optInMinPeriod", "Minimum Period", "Value less than minimum will be changed to Minimum period", OptInputFlags.None, new OptInputDomain.IntegerRange(1, 10000, 2, 1, 200, 1)),
+            new OptInputInfo("optInMaxPeriod", "Maximum Period", "Value higher than maximum will be changed to Maximum period", OptInputFlags.None, new OptInputDomain.IntegerRange(1, 10000, 30, 1, 200, 1)),
             new OptInputInfo("optInMAType", "MA Type", "Type of Moving Average", OptInputFlags.None, new OptInputDomain.IntegerList(MATypeValues, 0)),
         ],
         outputs:

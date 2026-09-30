@@ -6221,8 +6221,8 @@ static TA_RetCode TA_MAVP_VFrameS( int startIdx, int endIdx,
 static const TA_VInputKind TA_VIn_MAVP[] = { TA_VIN_REAL, TA_VIN_PERIODS };
 static const int TA_VOutIsInt_MAVP[] = { 0 };
 static const TA_VOptSpec TA_VOpt_MAVP[] = {
-   { "optInMinPeriod", TA_VOPT_INT, 1.0, 100000.0, 2.0 },
-   { "optInMaxPeriod", TA_VOPT_INT, 1.0, 100000.0, 30.0 },
+   { "optInMinPeriod", TA_VOPT_INT, 1.0, 10000.0, 2.0 },
+   { "optInMaxPeriod", TA_VOPT_INT, 1.0, 10000.0, 30.0 },
    { "optInMAType", TA_VOPT_ENUM, 0.0, 15.0, 0.0 },
 };
 

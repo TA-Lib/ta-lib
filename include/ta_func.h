@@ -12654,10 +12654,10 @@ TA_LIB_API TA_RetCode TA_MASSI_Clone( const TA_MASSI_Stream *stream, TA_MASSI_St
  * 
  * Optional Parameters
  * -------------------
- * optInMinPeriod:(From 1 to 100000)
+ * optInMinPeriod:(From 1 to 10000)
  *    Value less than minimum will be changed to Minimum period
  * 
- * optInMaxPeriod:(From 1 to 100000)
+ * optInMaxPeriod:(From 1 to 10000)
  *    Value higher than maximum will be changed to Maximum period
  * 
  * optInMAType:
@@ -12669,8 +12669,8 @@ TA_LIB_API TA_RetCode TA_MAVP( int    startIdx,
                                int    endIdx,
                                           const double inReal[],
                                           const double inPeriods[],
-                                          int           optInMinPeriod, /* From 1 to 100000 */
-                                          int           optInMaxPeriod, /* From 1 to 100000 */
+                                          int           optInMinPeriod, /* From 1 to 10000 */
+                                          int           optInMaxPeriod, /* From 1 to 10000 */
                                           TA_MAType     optInMAType,
                                           int          *outBegIdx,
                                           int          *outNBElement,
@@ -12680,15 +12680,15 @@ TA_LIB_API TA_RetCode TA_S_MAVP( int    startIdx,
                                  int    endIdx,
                                             const float  inReal[],
                                             const float  inPeriods[],
-                                            int           optInMinPeriod, /* From 1 to 100000 */
-                                            int           optInMaxPeriod, /* From 1 to 100000 */
+                                            int           optInMinPeriod, /* From 1 to 10000 */
+                                            int           optInMaxPeriod, /* From 1 to 10000 */
                                             TA_MAType     optInMAType,
                                             int          *outBegIdx,
                                             int          *outNBElement,
                                             double        outReal[] );
 
-TA_LIB_API int TA_MAVP_Lookback( int           optInMinPeriod, /* From 1 to 100000 */
-                                          int           optInMaxPeriod, /* From 1 to 100000 */
+TA_LIB_API int TA_MAVP_Lookback( int           optInMinPeriod, /* From 1 to 10000 */
+                                          int           optInMaxPeriod, /* From 1 to 10000 */
                                           TA_MAType     optInMAType );
 
 

@@ -27,9 +27,9 @@
     * output.
     *
     * @param optInMinPeriod Lower clamp for the per-bar period (default 2; range
-    *        1..100000; {@code Integer.MIN_VALUE} selects the default).
+    *        1..10000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInMaxPeriod Upper clamp for the per-bar period (default 30;
-    *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+    *        range 1..10000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInMAType Moving-average type applied (default 0 = SMA; values:
     *        0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
     *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
@@ -40,12 +40,12 @@
    {
       if( optInMinPeriod == Integer.MIN_VALUE ) {
          optInMinPeriod = 2;
-      } else if( optInMinPeriod < 1 || optInMinPeriod > 100000 ) {
+      } else if( optInMinPeriod < 1 || optInMinPeriod > 10000 ) {
          return -1;
       }
       if( optInMaxPeriod == Integer.MIN_VALUE ) {
          optInMaxPeriod = 30;
-      } else if( optInMaxPeriod < 1 || optInMaxPeriod > 100000 ) {
+      } else if( optInMaxPeriod < 1 || optInMaxPeriod > 10000 ) {
          return -1;
       }
       if( optInMAType == MAType.DEFAULT ) {
@@ -104,12 +104,12 @@
       }
       if( optInMinPeriod == Integer.MIN_VALUE ) {
          optInMinPeriod = 2;
-      } else if( optInMinPeriod < 1 || optInMinPeriod > 100000 ) {
+      } else if( optInMinPeriod < 1 || optInMinPeriod > 10000 ) {
          return RetCode.BAD_PARAM;
       }
       if( optInMaxPeriod == Integer.MIN_VALUE ) {
          optInMaxPeriod = 30;
-      } else if( optInMaxPeriod < 1 || optInMaxPeriod > 100000 ) {
+      } else if( optInMaxPeriod < 1 || optInMaxPeriod > 10000 ) {
          return RetCode.BAD_PARAM;
       }
       if( optInMAType == MAType.DEFAULT ) {
@@ -174,8 +174,8 @@
        * range of periods actually used so all later work is sized by the data,
        * not by optInMaxPeriod. The floor at 1 (and on minUsed's start value)
        * keeps a period below 1 from indexing the occurrence tables out of range.
-       * mavp.yaml caps both periods at [1, 100000], so it is inert through the
-       * API; it is kept because this file is the source of truth for four
+       * mavp.yaml's period range starts at 1, so it is inert through the API;
+       * it is kept because this file is the source of truth for four
        * backends and it makes the shared source safe by construction rather than
        * by trusting each backend's prologue to be identical.
        */
@@ -220,8 +220,8 @@
       }
       /* Bound the bucket table before sizing it.
        *
-       * Unreachable through the API: mavp.yaml caps both periods at 100000, so
-       * the widest spread expressible is 99999. It is kept because it protects a
+       * Unreachable through the API: mavp.yaml's period range keeps the spread
+       * below this bound. It is kept because it protects a
        * memory-safety property and this file is the source of truth for four
        * backends — without it the size expression below can overflow (signed
        * overflow in C, a wrapped negative in Java, a usize underflow panic in
@@ -365,12 +365,12 @@
       }
       if( optInMinPeriod == Integer.MIN_VALUE ) {
          optInMinPeriod = 2;
-      } else if( optInMinPeriod < 1 || optInMinPeriod > 100000 ) {
+      } else if( optInMinPeriod < 1 || optInMinPeriod > 10000 ) {
          return RetCode.BAD_PARAM;
       }
       if( optInMaxPeriod == Integer.MIN_VALUE ) {
          optInMaxPeriod = 30;
-      } else if( optInMaxPeriod < 1 || optInMaxPeriod > 100000 ) {
+      } else if( optInMaxPeriod < 1 || optInMaxPeriod > 10000 ) {
          return RetCode.BAD_PARAM;
       }
       if( optInMAType == MAType.DEFAULT ) {
@@ -516,9 +516,9 @@
     * @param inReal series to be averaged.
     * @param inPeriods per-bar desired MA period.
     * @param optInMinPeriod Lower clamp for the per-bar period (default 2; range
-    *        1..100000; {@code Integer.MIN_VALUE} selects the default).
+    *        1..10000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInMaxPeriod Upper clamp for the per-bar period (default 30;
-    *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+    *        range 1..10000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInMAType Moving-average type applied (default 0 = SMA; values:
     *        0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
     *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
@@ -595,9 +595,9 @@
     * @param inReal series to be averaged.
     * @param inPeriods per-bar desired MA period.
     * @param optInMinPeriod Lower clamp for the per-bar period (default 2; range
-    *        1..100000; {@code Integer.MIN_VALUE} selects the default).
+    *        1..10000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInMaxPeriod Upper clamp for the per-bar period (default 30;
-    *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+    *        range 1..10000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInMAType Moving-average type applied (default 0 = SMA; values:
     *        0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
     *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
@@ -855,12 +855,12 @@
       }
       if( optInMinPeriod == Integer.MIN_VALUE ) {
          optInMinPeriod = 2;
-      } else if( optInMinPeriod < 1 || optInMinPeriod > 100000 ) {
+      } else if( optInMinPeriod < 1 || optInMinPeriod > 10000 ) {
          return RetCode.BAD_PARAM;
       }
       if( optInMaxPeriod == Integer.MIN_VALUE ) {
          optInMaxPeriod = 30;
-      } else if( optInMaxPeriod < 1 || optInMaxPeriod > 100000 ) {
+      } else if( optInMaxPeriod < 1 || optInMaxPeriod > 10000 ) {
          return RetCode.BAD_PARAM;
       }
       if( optInMAType == MAType.DEFAULT ) {
@@ -923,12 +923,12 @@
       }
       if( optInMinPeriod == Integer.MIN_VALUE ) {
          optInMinPeriod = 2;
-      } else if( optInMinPeriod < 1 || optInMinPeriod > 100000 ) {
+      } else if( optInMinPeriod < 1 || optInMinPeriod > 10000 ) {
          return RetCode.BAD_PARAM;
       }
       if( optInMaxPeriod == Integer.MIN_VALUE ) {
          optInMaxPeriod = 30;
-      } else if( optInMaxPeriod < 1 || optInMaxPeriod > 100000 ) {
+      } else if( optInMaxPeriod < 1 || optInMaxPeriod > 10000 ) {
          return RetCode.BAD_PARAM;
       }
       if( optInMAType == MAType.DEFAULT ) {

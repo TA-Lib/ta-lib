@@ -440,6 +440,15 @@ DEF_FUNCTION( MASSI,
 /* MASSI END */
 
 /* MAVP BEGIN */
+static const TA_IntegerRange TA_DEF_MAVP_MinPeriod =
+{
+   1,
+   10000,
+   1,
+   200,
+   1
+};
+
 static const TA_OptInputParameterInfo TA_DEF_UI_D_MAVP_MinPeriod =
 {
    TA_OptInput_IntegerRange,
@@ -447,11 +456,20 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_MAVP_MinPeriod =
    0,
 
    "Minimum Period",
-   (const void *)&TA_DEF_TimePeriod_Positive,
+   (const void *)&TA_DEF_MAVP_MinPeriod,
    2,
    "Value less than minimum will be changed to Minimum period",
 
    NULL
+};
+
+static const TA_IntegerRange TA_DEF_MAVP_MaxPeriod =
+{
+   1,
+   10000,
+   1,
+   200,
+   1
 };
 
 static const TA_OptInputParameterInfo TA_DEF_UI_D_MAVP_MaxPeriod =
@@ -461,7 +479,7 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_MAVP_MaxPeriod =
    0,
 
    "Maximum Period",
-   (const void *)&TA_DEF_TimePeriod_Positive,
+   (const void *)&TA_DEF_MAVP_MaxPeriod,
    30,
    "Value higher than maximum will be changed to Maximum period",
 

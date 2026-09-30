@@ -76,8 +76,8 @@ impl Core {
     ///
     /// # Arguments
     ///
-    /// * `optInMinPeriod` — Lower clamp for the per-bar period (default 2, range 1..=100000)
-    /// * `optInMaxPeriod` — Upper clamp for the per-bar period (default 30, range 1..=100000)
+    /// * `optInMinPeriod` — Lower clamp for the per-bar period (default 2, range 1..=10000)
+    /// * `optInMaxPeriod` — Upper clamp for the per-bar period (default 30, range 1..=10000)
     /// * `optInMAType` — Moving-average type applied (default 0 = SMA, values: 0=SMA, 1=EMA,
     ///   2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT,
     ///   12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, `MAType::DEFAULT` selects the default)
@@ -91,12 +91,12 @@ impl Core {
     pub fn mavp_lookback(&self, mut optInMinPeriod: i32, mut optInMaxPeriod: i32, mut optInMAType: MAType) -> Result<usize, RetCode> {
         if ((optInMinPeriod) as i32) == (i32::MIN) {
             optInMinPeriod = 2;
-        } else if (((optInMinPeriod) as i32) < 1) || (((optInMinPeriod) as i32) > 100000) {
+        } else if (((optInMinPeriod) as i32) < 1) || (((optInMinPeriod) as i32) > 10000) {
             return Err(RetCode::BadParam);
         }
         if ((optInMaxPeriod) as i32) == (i32::MIN) {
             optInMaxPeriod = 30;
-        } else if (((optInMaxPeriod) as i32) < 1) || (((optInMaxPeriod) as i32) > 100000) {
+        } else if (((optInMaxPeriod) as i32) < 1) || (((optInMaxPeriod) as i32) > 10000) {
             return Err(RetCode::BadParam);
         }
         if optInMAType == MAType::DEFAULT {
@@ -134,12 +134,12 @@ impl Core {
         }
         if ((optInMinPeriod) as i32) == (i32::MIN) {
             optInMinPeriod = 2;
-        } else if (((optInMinPeriod) as i32) < 1) || (((optInMinPeriod) as i32) > 100000) {
+        } else if (((optInMinPeriod) as i32) < 1) || (((optInMinPeriod) as i32) > 10000) {
             return RetCode::BadParam;
         }
         if ((optInMaxPeriod) as i32) == (i32::MIN) {
             optInMaxPeriod = 30;
-        } else if (((optInMaxPeriod) as i32) < 1) || (((optInMaxPeriod) as i32) > 100000) {
+        } else if (((optInMaxPeriod) as i32) < 1) || (((optInMaxPeriod) as i32) > 10000) {
             return RetCode::BadParam;
         }
         if optInMAType == MAType::DEFAULT {
@@ -229,8 +229,8 @@ impl Core {
         // range of periods actually used so all later work is sized by the data,
         // not by optInMaxPeriod. The floor at 1 (and on minUsed's start value)
         // keeps a period below 1 from indexing the occurrence tables out of range.
-        // mavp.yaml caps both periods at [1, 100000], so it is inert through the
-        // API; it is kept because this file is the source of truth for four
+        // mavp.yaml's period range starts at 1, so it is inert through the API;
+        // it is kept because this file is the source of truth for four
         // backends and it makes the shared source safe by construction rather than
         // by trusting each backend's prologue to be identical.
         minUsed = (optInMaxPeriod) as usize;
@@ -275,8 +275,8 @@ impl Core {
         }
         // Bound the bucket table before sizing it.
         //
-        // Unreachable through the API: mavp.yaml caps both periods at 100000, so
-        // the widest spread expressible is 99999. It is kept because it protects a
+        // Unreachable through the API: mavp.yaml's period range keeps the spread
+        // below this bound. It is kept because it protects a
         // memory-safety property and this file is the source of truth for four
         // backends — without it the size expression below can overflow (signed
         // overflow in C, a wrapped negative in Java, a usize underflow panic in
@@ -416,8 +416,8 @@ impl Core {
     /// * `endIdx` — End index of the requested calculation range (inclusive).
     /// * `inReal` — series to be averaged.
     /// * `inPeriods` — per-bar desired MA period.
-    /// * `optInMinPeriod` — Lower clamp for the per-bar period (default 2, range 1..=100000)
-    /// * `optInMaxPeriod` — Upper clamp for the per-bar period (default 30, range 1..=100000)
+    /// * `optInMinPeriod` — Lower clamp for the per-bar period (default 2, range 1..=10000)
+    /// * `optInMaxPeriod` — Upper clamp for the per-bar period (default 30, range 1..=10000)
     /// * `optInMAType` — Moving-average type applied (default 0 = SMA, values: 0=SMA, 1=EMA,
     ///   2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT,
     ///   12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, `MAType::DEFAULT` selects the default)
@@ -601,12 +601,12 @@ impl Core {
         }
         if ((optInMinPeriod) as i32) == (i32::MIN) {
             optInMinPeriod = 2;
-        } else if (((optInMinPeriod) as i32) < 1) || (((optInMinPeriod) as i32) > 100000) {
+        } else if (((optInMinPeriod) as i32) < 1) || (((optInMinPeriod) as i32) > 10000) {
             return Err(RetCode::BadParam);
         }
         if ((optInMaxPeriod) as i32) == (i32::MIN) {
             optInMaxPeriod = 30;
-        } else if (((optInMaxPeriod) as i32) < 1) || (((optInMaxPeriod) as i32) > 100000) {
+        } else if (((optInMaxPeriod) as i32) < 1) || (((optInMaxPeriod) as i32) > 10000) {
             return Err(RetCode::BadParam);
         }
         if optInMAType == MAType::DEFAULT {
@@ -729,12 +729,12 @@ impl Core {
         }
         if ((optInMinPeriod) as i32) == (i32::MIN) {
             optInMinPeriod = 2;
-        } else if (((optInMinPeriod) as i32) < 1) || (((optInMinPeriod) as i32) > 100000) {
+        } else if (((optInMinPeriod) as i32) < 1) || (((optInMinPeriod) as i32) > 10000) {
             return Err(RetCode::BadParam);
         }
         if ((optInMaxPeriod) as i32) == (i32::MIN) {
             optInMaxPeriod = 30;
-        } else if (((optInMaxPeriod) as i32) < 1) || (((optInMaxPeriod) as i32) > 100000) {
+        } else if (((optInMaxPeriod) as i32) < 1) || (((optInMaxPeriod) as i32) > 10000) {
             return Err(RetCode::BadParam);
         }
         if optInMAType == MAType::DEFAULT {
