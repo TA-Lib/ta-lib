@@ -942,7 +942,7 @@ impl Core {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Cdlunique3riverStream {
-    /// Commit one closed bar. Never allocates.
+    /// Commit one closed bar.
     ///
     /// # Errors
     ///

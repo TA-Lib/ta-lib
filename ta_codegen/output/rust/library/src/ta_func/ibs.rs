@@ -467,7 +467,7 @@ impl Core {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl IbsStream {
-    /// Commit one closed bar. Never allocates.
+    /// Commit one closed bar.
     ///
     /// # Errors
     ///

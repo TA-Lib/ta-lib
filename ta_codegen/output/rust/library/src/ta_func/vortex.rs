@@ -925,7 +925,7 @@ impl Core {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl VortexStream {
-    /// Commit one closed bar. Never allocates.
+    /// Commit one closed bar.
     ///
     /// # Errors
     ///

@@ -469,7 +469,6 @@ public partial class Core
 
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
-      /// <para>Allocates nothing — neither handle state nor a return value.</para>
       /// <para>Throws <see cref="System.ArgumentException"/> if any bar value is not
       /// finite (NaN or an infinity). That check runs before anything is written,
       /// so nothing moves — <see cref="OutRange"/> included — and

@@ -545,7 +545,7 @@ impl Core {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Rocr100Stream {
-    /// Commit one closed bar. Never allocates.
+    /// Commit one closed bar.
     ///
     /// # Errors
     ///

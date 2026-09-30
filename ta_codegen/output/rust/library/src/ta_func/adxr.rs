@@ -587,7 +587,7 @@ impl Core {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl AdxrStream {
-    /// Commit one closed bar. Never allocates.
+    /// Commit one closed bar.
     ///
     /// # Errors
     ///

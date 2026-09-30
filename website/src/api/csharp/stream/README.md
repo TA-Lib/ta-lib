@@ -156,4 +156,4 @@ foreach (var f in Core.Functions)
 
 That is discovery only. Unlike the batch tier, there is no name-based way to *open* a stream — `ParamHolder` binds batch calls, and nothing binds streams. Opening one means calling its typed `<Name>Open` directly.
 
-This is deliberate rather than an oversight, and the same is true of the other language bindings. A generic opener would have to return a stream whose type varies per function, and `Update` varies in both arity and return type, so the values would have to be boxed — which costs an allocation per bar, on the one path this whole tier exists to keep allocation-free. Worth designing properly if there is a call for it; not worth guessing at.
+This is deliberate rather than an oversight, and the same is true of the other language bindings. A generic opener would have to return a stream whose type varies per function, and `Update` varies in both arity and return type, so the values would have to be boxed, an allocation on every Update. Worth designing properly if there is a call for it; not worth guessing at.

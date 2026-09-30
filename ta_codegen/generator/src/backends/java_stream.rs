@@ -742,9 +742,8 @@ fn emit_handle_class_with_members(
     }
     o.push_str(extra_members);
     // The bars this handle has an output for (issue #241). Two ints
-    // rather than an `OutRange`: `update` runs on every bar and the emitted
-    // javadoc promises it never allocates handle state, so the record is built
-    // in the accessor instead of replaced per bar.
+    // rather than an `OutRange`: `update` runs on every bar, so the record is
+    // built in the accessor instead of replaced per bar.
     let _ = writeln!(o, "      private int outRangeBegIdx;");
     let _ = writeln!(o, "      private int outRangeCount;");
     let _ = writeln!(o, "\n      private {class}( Core core ) {{ this.core = core; }}");

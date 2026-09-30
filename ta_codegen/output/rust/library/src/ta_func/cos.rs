@@ -386,7 +386,7 @@ impl Core {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl CosStream {
-    /// Commit one closed bar. Never allocates.
+    /// Commit one closed bar.
     ///
     /// # Errors
     ///

@@ -1164,9 +1164,6 @@ fn emit_update_method(o: &mut String, func: &FuncDef) {
     d.summary("Commit one closed bar, returning the new current value.");
     d.open("remarks");
     d.para(
-        "Allocates nothing — neither handle state nor a return value.",
-    );
-    d.para(
         "Throws <see cref=\"System.ArgumentException\"/> if any bar value is not finite \
          (NaN or an infinity). That check runs before anything is written, so nothing \
          moves — <see cref=\"OutRange\"/> included — and <see cref=\"Value\"/> still \
@@ -4030,15 +4027,7 @@ fn emit_period_bank(
     } else {
         let _ = writeln!(bank_frame, "         double cur_{out} = {peek_tape};");
     }
-    let class_at = o.len();
     emit_handle_class_with_members(o, func, &fields, &subs, &extra_members, Some(&bank_frame));
-    if windowed {
-        // The callee's batch may allocate (ALMA's weights), so the promise is false.
-        let promise = "      /// <para>Allocates nothing — neither handle state nor a return value.</para>\n";
-        let class_text = o.split_off(class_at);
-        assert!(class_text.contains(promise), "MAVP Update's allocation promise moved");
-        o.push_str(&class_text.replacen(promise, "", 1));
-    }
 
     // --- step: advance ALL slots, output the clamped-period slot ------------
     emit_step_sig(o, func);

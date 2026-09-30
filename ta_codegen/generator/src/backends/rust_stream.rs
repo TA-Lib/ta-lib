@@ -3178,7 +3178,7 @@ fn emit_update_and_peek(
     );
     let _ = writeln!(
         o,
-        "    /// Commit one closed bar.{}\n\
+        "    /// Commit one closed bar.\n\
          \x20   ///\n\
          \x20   /// # Errors\n\
          \x20   ///\n\
@@ -3197,8 +3197,7 @@ fn emit_update_and_peek(
          \x20   ///\n\
          \x20   /// [`RetCode::OutOfRangeEndIndex`] once [`Self::out_range`] has reached\n\
          \x20   /// bar [`Core::INDEX_MAX`], which no re-feed clears: the handle has run\n\
-         \x20   /// out of index domain and only a shorter history can start a new one.",
-        if update_branch.is_some() { "" } else { " Never allocates." }
+         \x20   /// out of index domain and only a shorter history can start a new one."
     );
     let _ = writeln!(o, "    #[doc(alias = \"TA_{n}_Update\")]");
     let _ = writeln!(
