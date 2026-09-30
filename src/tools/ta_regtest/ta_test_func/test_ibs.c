@@ -259,7 +259,7 @@ static ErrorNumber test_ibs_degenerate( void )
 
    for( i = 0; i < NB_IBS_HAND; i++ )
    {
-      high[i]  = ibsHand[i].wantNaN ? TA_REAL_MIN * 0.0 / 0.0 : ibsHand[i].high;
+      high[i]  = ibsHand[i].wantNaN ? NAN : ibsHand[i].high;
       low[i]   = ibsHand[i].low;
       close[i] = ibsHand[i].close;
    }
