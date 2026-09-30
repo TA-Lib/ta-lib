@@ -564,8 +564,8 @@ fn emit_rust_sv_clone_leg(
     s.push_str("                }\n            }\n        }\n");
 }
 
-/// The Rust `stream_verify` helpers and dispatcher; each `sv_<name>` is
-/// emitted by `emit_rust_sv_func` into its indicator's module.
+/// The Rust `stream_verify` helpers and dispatcher. Each `sv_<name>` lives in
+/// its indicator's module.
 pub(crate) fn generate_rust_stream_verify(funcs: &[FuncDef]) -> String {
     use std::fmt::Write as _;
     let mut s = String::new();

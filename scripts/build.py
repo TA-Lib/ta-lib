@@ -44,8 +44,7 @@ BUILD_DIR_NAME = "cmake-build"
 SANITIZE_DIR_NAME = "cmake-build-asan"
 DEFAULT_BUILD_TYPE = "Release"
 DEFAULT_JOBS = default_build_jobs()
-# Replaced by main() when --jobs is given; every compiler this script starts
-# runs inside it.
+# Replaced by main() when --jobs is given.
 JOBS = JobServer(DEFAULT_JOBS)
 
 def find_repo_root() -> str:
@@ -209,8 +208,8 @@ def show_help():
 
   Options:
     --build-type=Debug  Set cmake build type (default: Release)
-    --jobs=8            Parallel jobs, shared by every compiler a target starts
-                        (default: the CPUs not busy now, leaving 1/8 free)
+    --jobs=8            Parallel jobs for cargo, make and gcc's LTO together
+                        (default: up to 16, fewer on a small or busy host)
     --cmake-args="..."  Extra arguments passed to cmake configure
     --language=c,rust   For servers/regtest/xlang-hash: build only
                         these backends, and require only their toolchains. A

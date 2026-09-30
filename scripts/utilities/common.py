@@ -9,11 +9,16 @@ import sys
 import tempfile
 import time
 
+# Past this, a full `build.py servers` gets no faster (the Rust server's own
+# compile is the critical path): 16 jobs matched 70 on an 80-thread host.
+BUILD_JOBS_CAP = 16
+
+
 def default_build_jobs() -> int:
-    """Parallel build jobs this host can spare now: the CPUs this process may
-    use, less the one-minute load, and never more than 7/8 of them (at least one
-    left free from 4 CPUs up), so a build on a shared or interactive machine
-    does not pin every core."""
+    """Parallel build jobs for this host now: at most BUILD_JOBS_CAP, one CPU
+    left free from 4 CPUs up, and less the one-minute load, but never below half
+    that cap -- the load average lags by a minute, so a script's own previous
+    step would otherwise throttle the next one."""
     try:
         cpus = len(os.sched_getaffinity(0))
     except AttributeError:
@@ -22,28 +27,27 @@ def default_build_jobs() -> int:
         load = os.getloadavg()[0]
     except (AttributeError, OSError):
         load = 0.0
-    cap = cpus - max(1, cpus // 8) if cpus >= 4 else cpus
-    return max(1, min(cap, int(cpus - load)))
+    cap = min(BUILD_JOBS_CAP, cpus - 1 if cpus >= 4 else cpus)
+    return max((cap + 1) // 2, min(cap, int(cpus - load)))
 
 
 class JobServer:
-    """One GNU make jobserver of `jobs` slots shared by everything a build
-    starts: make (through cmake --build), cargo and each rustc join it, so
-    concurrent builds stay within `jobs` together rather than each taking the
-    whole machine. POSIX only; elsewhere `active` is False and callers pass -j.
+    """One GNU make jobserver of `jobs` slots shared by cargo, every rustc and
+    make, so concurrent builds stay within `jobs` together. POSIX only;
+    elsewhere cargo gets CARGO_BUILD_JOBS and make gets -j.
 
     A child joins only if it gets both the env and the fds: run it through
-    `run()`, since subprocess closes inherited fds by default. gcc must never
-    get it (its LTO stage deadlocks on one); ta_codegen strips it from gcc and
-    sizes -flto from TA_BUILD_JOBS instead."""
+    `run()`, since subprocess closes inherited fds by default. gcc must not
+    join: its LTO stage deadlocks on a pipe jobserver."""
 
     def __init__(self, jobs: int):
         self.jobs = jobs
-        self.env = dict(os.environ, TA_BUILD_JOBS=str(jobs))
+        self.env = dict(os.environ, TA_BUILD_JOBS=str(jobs),
+                        CARGO_BUILD_JOBS=str(jobs))
         self.fds = ()
         for k in ('MAKEFLAGS', 'MFLAGS', 'CARGO_MAKEFLAGS'):
             self.env.pop(k, None)
-        self.active = os.name == 'posix' and jobs > 1
+        self.active = os.name == 'posix'
         if self.active:
             r, w = os.pipe()
             os.write(w, b'+' * (jobs - 1))

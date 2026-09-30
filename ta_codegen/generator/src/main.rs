@@ -991,15 +991,13 @@ const COMMON_GCC_FLAGS: &[&str] = &[
     "-Wno-parentheses-equality",
 ];
 
-/// The `-flto` spelling for `concurrent` whole-library compiles running at once.
-/// gcc runs up to N LTRANS jobs per link, so N is this build's share of
-/// `TA_BUILD_JOBS` (set by scripts/build.py from the host's load); `auto` would
-/// be one job per CPU for each link. Clang accepts no count and runs no
-/// parallel LTRANS for one TU, so it keeps `auto`.
+/// The `-flto` spelling for `concurrent` whole-library compiles running at once:
+/// each gets its share of the caller's `TA_BUILD_JOBS` budget, where `auto`
+/// would give every link one LTRANS job per CPU. Clang takes no count and runs
+/// no parallel LTRANS for one TU, so it keeps `auto`.
 ///
-/// Never let gcc see a make jobserver: gcc 14's WPA stage deadlocks on one
-/// (`lto1` blocks on the pipe with its streaming children unreaped), so every
-/// gcc command here must drop the MAKEFLAGS family from its environment.
+/// Every gcc here must drop the MAKEFLAGS family from its environment: gcc 14's
+/// LTO stage hangs on an inherited pipe jobserver.
 fn gcc_lto_flag(concurrent: usize) -> String {
     let is_clang = std::process::Command::new("gcc")
         .arg("--version")
