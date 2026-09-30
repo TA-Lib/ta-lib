@@ -3,11 +3,11 @@
 # policy=monotone: a passing run lowers a row it beat and holds every
 # other, so a row may predate the commit below. Raising one is a human
 # decision that NAMES it: `scripts/bench_icount.py --accept=SMA[/batch]`.
-#policy	accepted
+#policy	monotone
 #toolchain	x86_64/x86_64-linux-gnu/13.3.0
 #corpus	points=20000 regime_period=14 seed=42 shape=randwalk stream_iters=1024 trend_strength=0.500000
-#commit	d8744b41f3a1f7ea18392a56c006371c1512e937
-#generated	2026-09-29T12:40:14Z
+#commit	6103431c1029f184e53740d56e7f6832fe6a9b66
+#generated	2026-09-30T10:50:02Z
 AC	batch	0	703438
 AC	open	0	704171
 AC	openfill	0	692624
@@ -53,6 +53,11 @@ ADXR	open	0	1600841
 ADXR	openfill	0	1600336
 ADXR	peek	0	165901
 ADXR	update	0	198669
+ALMA	batch	0	595663
+ALMA	open	0	1340832
+ALMA	openfill	0	1341116
+ALMA	peek	0	218128
+ALMA	update	0	179208
 AO	batch	0	459767
 AO	open	0	440439
 AO	openfill	0	440427
@@ -184,8 +189,8 @@ CDLBREAKAWAY	openfill	0	683369
 CDLBREAKAWAY	peek	0	59405
 CDLBREAKAWAY	update	0	137489
 CDLCLOSINGMARUBOZU	batch	0	1122744
-CDLCLOSINGMARUBOZU	open	0	1133351
-CDLCLOSINGMARUBOZU	openfill	0	1133350
+CDLCLOSINGMARUBOZU	open	0	1133305
+CDLCLOSINGMARUBOZU	openfill	0	1133304
 CDLCLOSINGMARUBOZU	peek	0	77540
 CDLCLOSINGMARUBOZU	update	0	136560
 CDLCONCEALBABYSWALL	batch	0	999826
@@ -443,9 +448,19 @@ CG	open	0	1379753
 CG	openfill	0	1399774
 CG	peek	0	111632
 CG	update	0	156686
+CHOP	batch	0	8248628
+CHOP	open	0	7329702
+CHOP	openfill	0	7389679
+CHOP	peek	0	653092
+CHOP	update	0	560151
+CHOPTR	batch	0	7808949
+CHOPTR	open	0	7749458
+CHOPTR	openfill	0	7749469
+CHOPTR	peek	0	690980
+CHOPTR	update	0	539603
 CMF	batch	0	999865
 CMF	open	0	1060246
-CMF	openfill	0	1080229
+CMF	openfill	0	1080227
 CMF	peek	0	90125
 CMF	update	0	117826
 CMO	batch	0	619848
@@ -535,7 +550,7 @@ EMA	peek	0	35853
 EMA	update	0	47118
 EMV	batch	0	722917
 EMV	open	0	721819
-EMV	openfill	0	722013
+EMV	openfill	0	721822
 EMV	peek	0	66574
 EMV	update	0	93275
 ER	batch	0	599699
@@ -613,6 +628,11 @@ HT_TRENDMODE	open	0	94125944
 HT_TRENDMODE	openfill	0	94126073
 HT_TRENDMODE	peek	0	5867564
 HT_TRENDMODE	update	0	5066021
+IBS	batch	0	150114
+IBS	open	0	150221
+IBS	openfill	0	150206
+IBS	peek	0	48142
+IBS	update	0	61457
 IMI	batch	0	3297972
 IMI	open	0	3278353
 IMI	openfill	0	3158455
@@ -632,10 +652,15 @@ KDJ	batch	0	1904462
 KDJ	open	0	2304607
 KDJ	openfill	0	2302686
 KDJ	peek	0	265533
-KDJ	update	0	425592
+KDJ	update	0	417400
+KST	batch	0	2117869
+KST	open	0	3117020
+KST	openfill	0	3117429
+KST	peek	0	151567
+KST	update	0	245237
 KURTOSIS	batch	0	1147575
 KURTOSIS	open	0	2128118
-KURTOSIS	openfill	0	2128205
+KURTOSIS	openfill	0	2128112
 KURTOSIS	peek	0	82957
 KURTOSIS	update	0	152544
 LINEARREG	batch	0	606134
@@ -718,6 +743,11 @@ MAXINDEX	open	0	646643
 MAXINDEX	openfill	0	646639
 MAXINDEX	peek	0	40973
 MAXINDEX	update	0	86009
+MCGD	batch	0	362708
+MCGD	open	0	380161
+MCGD	openfill	0	362795
+MCGD	peek	0	45072
+MCGD	update	0	53262
 MEDIAN	batch	0	5178818
 MEDIAN	open	0	5237801
 MEDIAN	openfill	0	5237806
@@ -1033,6 +1063,11 @@ VHF	open	0	9906488
 VHF	openfill	0	9926487
 VHF	peek	0	787468
 VHF	update	0	721049
+VIDYA	batch	0	645342
+VIDYA	open	0	1060528
+VIDYA	openfill	0	1060521
+VIDYA	peek	0	77431
+VIDYA	update	0	98137
 VORTEX	batch	0	1219748
 VORTEX	open	0	1240592
 VORTEX	openfill	0	1200592
@@ -1072,4 +1107,4 @@ ZLEMA	batch	0	199835
 ZLEMA	open	0	359865
 ZLEMA	openfill	0	359859
 ZLEMA	peek	0	48141
-ZLEMA	update	0	61456
+ZLEMA	update	0	61453
