@@ -54,7 +54,7 @@ fn rust_canary_check(out_is_int: &[bool]) -> String {
 
 /// One `sv_<name>` verify function for a function with an emitted Rust stream.
 #[allow(clippy::too_many_lines)]
-fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> String {
+pub(crate) fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> String {
     use std::fmt::Write as _;
     let sn = crate::backends::common::snake_words(&func.name);
     let fname = &sn;
@@ -73,7 +73,7 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
         .collect();
 
     let mut s = String::new();
-    let _ = writeln!(s, "fn sv_{sn}(core: &Core, params: &Value) -> String {{");
+    let _ = writeln!(s, "pub(super) fn sv_{sn}(core: &Core, params: &Value) -> String {{");
     s.push_str("    let svShape = params[\"gen_shape\"].as_i64().unwrap_or(0) as i32;\n");
     s.push_str("    let svSeed = params[\"gen_seed\"].as_i64().unwrap_or(0) as i32;\n");
     s.push_str("    let mut svN = params[\"gen_n\"].as_i64().unwrap_or(0) as usize;\n");
@@ -564,12 +564,9 @@ fn emit_rust_sv_clone_leg(
     s.push_str("                }\n            }\n        }\n");
 }
 
-/// The whole Rust `stream_verify` section: candle-settings helpers, one
-/// `sv_<name>` per function with an emitted Rust stream, and the dispatcher.
-pub(crate) fn generate_rust_stream_verify(
-    funcs: &[FuncDef],
-    enums: &HashMap<String, EnumDef>,
-) -> String {
+/// The Rust `stream_verify` helpers and dispatcher; each `sv_<name>` is
+/// emitted by `emit_rust_sv_func` into its indicator's module.
+pub(crate) fn generate_rust_stream_verify(funcs: &[FuncDef]) -> String {
     use std::fmt::Write as _;
     let mut s = String::new();
     s.push_str("// ---- stream_verify: Rust stream vs Rust batch, bitwise ----\n\n");
@@ -591,10 +588,6 @@ pub(crate) fn generate_rust_stream_verify(
         .iter()
         .filter(|f| crate::backends::rust_stream::emits_stream(f, &lookup))
         .collect();
-    for f in &emitted {
-        s.push_str(&emit_rust_sv_func(f, funcs, enums));
-    }
-
     s.push_str("fn handle_stream_verify(core: &Core, params: &Value) -> String {\n");
     s.push_str("    let func_name = params[\"funcName\"].as_str().unwrap_or(\"\");\n");
     s.push_str("    match func_name {\n");

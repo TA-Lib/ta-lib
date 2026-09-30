@@ -48,6 +48,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from utilities.common import (
     check_prerequisites, prereqs_for_languages, backends_for_languages,
+    default_build_jobs,
 )
 from utilities import ta_ref
 
@@ -154,7 +155,7 @@ def main():
     build_dir = os.path.join(root, "cmake-build")
     bin_dir = os.path.join(root, "bin")
     codegen_dir = os.path.join(root, "ta_codegen", "generator")
-    jobs = str(os.cpu_count() or 4)
+    jobs = str(default_build_jobs())
 
     # 1. cmake
     if not no_build:
@@ -227,7 +228,8 @@ def main():
         cmd = ["cargo", "run", "--release", "--", "build"]
         if backend_filter:
             cmd.append(f"--backend={backend_filter}")
-        subprocess.run(cmd, check=True, cwd=codegen_dir)
+        subprocess.run(cmd, check=True, cwd=codegen_dir,
+                       env=dict(os.environ, TA_BUILD_JOBS=jobs))
 
         # Debug-profile Rust server: rebuild just the Rust server bin without
         # --release (overflow checks on) and install it over the release one, so

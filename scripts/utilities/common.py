@@ -9,6 +9,52 @@ import sys
 import tempfile
 import time
 
+def default_build_jobs() -> int:
+    """Parallel build jobs this host can spare now: the CPUs this process may
+    use, less the one-minute load, and never more than 7/8 of them (at least one
+    left free from 4 CPUs up), so a build on a shared or interactive machine
+    does not pin every core."""
+    try:
+        cpus = len(os.sched_getaffinity(0))
+    except AttributeError:
+        cpus = os.cpu_count() or 4
+    try:
+        load = os.getloadavg()[0]
+    except (AttributeError, OSError):
+        load = 0.0
+    cap = cpus - max(1, cpus // 8) if cpus >= 4 else cpus
+    return max(1, min(cap, int(cpus - load)))
+
+
+class JobServer:
+    """One GNU make jobserver of `jobs` slots shared by everything a build
+    starts: make (through cmake --build), cargo and each rustc join it, so
+    concurrent builds stay within `jobs` together rather than each taking the
+    whole machine. POSIX only; elsewhere `active` is False and callers pass -j.
+
+    A child joins only if it gets both the env and the fds: run it through
+    `run()`, since subprocess closes inherited fds by default. gcc must never
+    get it (its LTO stage deadlocks on one); ta_codegen strips it from gcc and
+    sizes -flto from TA_BUILD_JOBS instead."""
+
+    def __init__(self, jobs: int):
+        self.jobs = jobs
+        self.env = dict(os.environ, TA_BUILD_JOBS=str(jobs))
+        self.fds = ()
+        for k in ('MAKEFLAGS', 'MFLAGS', 'CARGO_MAKEFLAGS'):
+            self.env.pop(k, None)
+        self.active = os.name == 'posix' and jobs > 1
+        if self.active:
+            r, w = os.pipe()
+            os.write(w, b'+' * (jobs - 1))
+            flags = f'-j{jobs} --jobserver-auth={r},{w}'
+            self.env.update(MAKEFLAGS=flags, CARGO_MAKEFLAGS=flags)
+            self.fds = (r, w)
+
+    def run(self, cmd, **kwargs):
+        return subprocess.run(cmd, env=self.env, pass_fds=self.fds, **kwargs)
+
+
 # Various bool functions to help identify the host environment
 def is_redhat_based() -> bool:
     return os.path.exists('/etc/redhat-release')

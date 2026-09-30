@@ -985,12 +985,42 @@ fn generate_bench(backend_filter: Option<&str>) {
 const COMMON_GCC_FLAGS: &[&str] = &[
     "-lm",
     "-O3",
-    "-flto=auto",
     "-DNDEBUG",
     "-ffp-contract=off",
     "-fno-math-errno",
     "-Wno-parentheses-equality",
 ];
+
+/// The `-flto` spelling for `concurrent` whole-library compiles running at once.
+/// gcc runs up to N LTRANS jobs per link, so N is this build's share of
+/// `TA_BUILD_JOBS` (set by scripts/build.py from the host's load); `auto` would
+/// be one job per CPU for each link. Clang accepts no count and runs no
+/// parallel LTRANS for one TU, so it keeps `auto`.
+///
+/// Never let gcc see a make jobserver: gcc 14's WPA stage deadlocks on one
+/// (`lto1` blocks on the pipe with its streaming children unreaped), so every
+/// gcc command here must drop the MAKEFLAGS family from its environment.
+fn gcc_lto_flag(concurrent: usize) -> String {
+    let is_clang = std::process::Command::new("gcc")
+        .arg("--version")
+        .output()
+        .map(|o| String::from_utf8_lossy(&o.stdout).contains("clang"))
+        .unwrap_or(false);
+    if is_clang {
+        return "-flto=auto".to_string();
+    }
+    let jobs = std::env::var("TA_BUILD_JOBS")
+        .ok()
+        .and_then(|v| v.parse::<usize>().ok())
+        .unwrap_or_else(|| std::thread::available_parallelism().map_or(4, |n| n.get()));
+    format!("-flto={}", (jobs / concurrent.max(1)).max(1))
+}
+
+fn gcc_command() -> std::process::Command {
+    let mut cmd = std::process::Command::new("gcc");
+    cmd.env_remove("MAKEFLAGS").env_remove("MFLAGS").env_remove("CARGO_MAKEFLAGS");
+    cmd
+}
 
 /// `-falign-functions=64 -falign-loops=64` on x86 hosts, as the CMake and autotools
 /// builds add them (issue #437), so these builds align code the way the library
@@ -1156,6 +1186,11 @@ fn build_c(root: &Path, out_base: &Path, bin_dir: &Path, servers_only: bool) -> 
     // bench_corpus.h (shared benchmark input corpus) for the benchmark binaries.
     let ta_bench_dir = src_dir.join("tools/ta_bench");
     let inc = |d: &Path| format!("-I{}", d.to_str().unwrap());
+    let benches = ["ta_bench_cg.c", "ta_bench_stream.c"]
+        .iter()
+        .filter(|f| !servers_only && c_dir.join(f).exists())
+        .count();
+    let lto = gcc_lto_flag(1 + benches);
 
     let server = || {
         let src = c_dir.join("ta_codegen_serve.c");
@@ -1163,7 +1198,8 @@ fn build_c(root: &Path, out_base: &Path, bin_dir: &Path, servers_only: bool) -> 
         run_build_step(
             "C server",
             "gcc",
-            std::process::Command::new("gcc")
+            gcc_command()
+                .arg(&lto)
                 .args(["-o", dst.to_str().unwrap(), src.to_str().unwrap()])
                 .args([
                     inc(&c_dir),
@@ -1189,7 +1225,8 @@ fn build_c(root: &Path, out_base: &Path, bin_dir: &Path, servers_only: bool) -> 
         Some(run_build_step(
             label,
             "gcc",
-            std::process::Command::new("gcc")
+            gcc_command()
+                .arg(&lto)
                 .args(["-o", dst.to_str().unwrap(), src.to_str().unwrap()])
                 .args([
                     inc(&c_dir),
@@ -2817,8 +2854,11 @@ fn generate_rust_crate_scaffolding(
     println!("  Scaffolding -> {}", lib_dir.join("LICENSE").display());
 
     // --- workspace Cargo.toml (virtual manifest — profiles apply at the root) ---
+    // `tools` alone gets parallel codegen: the server is its build's critical
+    // path, and the indicator code it times is the library's, codegen'd whole.
     let workspace_toml = "[workspace]\nmembers = [\"dispatch\", \"library\", \"tools\"]\nresolver = \"2\"\n\n\
-        [profile.release]\nlto = \"thin\"\ncodegen-units = 1\n";
+        [profile.release]\nlto = \"thin\"\ncodegen-units = 1\n\n\
+        [profile.release.package.ta-lib-tools]\ncodegen-units = 16\n";
     write_if_changed(rust_dir.join("Cargo.toml"), workspace_toml).unwrap();
 
     // --- dispatch/ (issue #156): the runtime FMA-dispatch macro crate ---

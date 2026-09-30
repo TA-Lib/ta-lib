@@ -3666,12 +3666,22 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("            format!(\"{{\\\"status\\\":\\\"ok\\\",\\\"n\\\":{}}}\", ref_data.n)\n");
     s.push_str("        }\n");
 
-    // Per-function dispatch
+    // Per-function dispatch. Each handler is its own function in its
+    // indicator's module: rustc partitions codegen units by module, so one
+    // match holding every body, or one module holding every function, compiles
+    // on a single core however many codegen units the profile allows.
+    let mut per_func: Vec<(String, String)> = Vec::new();
     for func in funcs {
         let method_name = format!("TA_{}", func.name);
         let fn_name = crate::backends::common::snake_words(&func.name);
 
-        s.push_str(&format!("        \"{method_name}\" => {{\n"));
+        s.push_str(&format!(
+            "        \"{method_name}\" => rpc_{fn_name}(core, ref_data, params),\n"
+        ));
+        let mut s = String::new();
+        s.push_str(&format!(
+            "pub(super) fn rpc_{fn_name}(core: &mut Core, ref_data: &mut RefData, params: &Value) -> String {{\n"
+        ));
 
         // Parse startIdx, endIdx
         s.push_str(
@@ -4045,7 +4055,8 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         }
         s.push_str("            resp.push('}');\n");
         s.push_str("            resp\n");
-        s.push_str("        }\n");
+        s.push_str("}\n\n");
+        per_func.push((fn_name, s));
     }
 
     // list_functions method
@@ -4210,9 +4221,21 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("    }\n");
     s.push_str("}\n");
 
-    // Stream verify section (sv_<name> per streamable function + dispatcher).
-    s.push_str(&crate::stream_verify_gen::rust_lang::generate_rust_stream_verify(funcs, enums));
-    s.push_str(&crate::ride_gen::rust_lang::generate_rust_ridealong(funcs));
+    s.push_str(&crate::stream_verify_gen::rust_lang::generate_rust_stream_verify(funcs));
+    s.push_str(&crate::ride_gen::rust_lang::generate_rust_ridealong());
+
+    let lookup = crate::streaming::FuncsLookup(funcs);
+    for (func, (fn_name, rpc)) in funcs.iter().zip(&per_func) {
+        s.push_str(&format!("mod f_{fn_name} {{\nuse super::*;\n\n"));
+        s.push_str(rpc);
+        if crate::backends::rust_stream::emits_stream(func, &lookup) {
+            s.push_str(&crate::stream_verify_gen::rust_lang::emit_rust_sv_func(func, funcs, enums));
+        }
+        if func.streaming {
+            s.push_str(&crate::ride_gen::rust_lang::emit_rust_ridealong_fn(func));
+        }
+        s.push_str(&format!("}}\nuse f_{fn_name}::*;\n\n"));
+    }
 
     s
 }

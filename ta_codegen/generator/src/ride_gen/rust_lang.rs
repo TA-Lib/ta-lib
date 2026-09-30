@@ -11,16 +11,8 @@ use std::fmt::Write as _;
 /// counter bumped by every non-indicator method, because `Core`'s ambient state
 /// is `pub(crate)` and unreadable from here: a second sweep at a new unstable
 /// period over identical bars would otherwise collide with the first.
-pub(crate) fn generate_rust_ridealong(funcs: &[FuncDef]) -> String {
-    let mut s = String::new();
-    s.push_str(RIDE_RUST_SUPPORT);
-    for func in funcs {
-        if !func.streaming {
-            continue;
-        }
-        s.push_str(&emit_rust_ridealong_fn(func));
-    }
-    s
+pub(crate) fn generate_rust_ridealong() -> String {
+    RIDE_RUST_SUPPORT.to_string()
 }
 
 const RIDE_RUST_SUPPORT: &str = r#"// ---- ride-along: batch-vs-stream on caller-supplied data ----
@@ -113,7 +105,7 @@ impl RideResult {
 "#;
 
 #[allow(clippy::too_many_lines)]
-fn emit_rust_ridealong_fn(func: &FuncDef) -> String {
+pub(crate) fn emit_rust_ridealong_fn(func: &FuncDef) -> String {
     let n = crate::backends::common::snake_words(&func.name);
     let base = crate::backends::common::snake_words(&func.name);
     let input_names = expand_input_names(&func.inputs);
@@ -207,7 +199,7 @@ fn emit_rust_ridealong_fn(func: &FuncDef) -> String {
 
     let _ = writeln!(
         s,
-        "#[allow(clippy::too_many_arguments, clippy::needless_range_loop)]\nfn ride_{base}(core: &Core, params: &Value, endIdx: usize, {sig_ins}{sig_opts}resp: &mut String) {{"
+        "#[allow(clippy::too_many_arguments, clippy::needless_range_loop)]\npub(super) fn ride_{base}(core: &Core, params: &Value, endIdx: usize, {sig_ins}{sig_opts}resp: &mut String) {{"
     );
     s.push_str("    if !ride_gate(params) { return; }\n");
     s.push_str("    let mut r = RideResult::new();\n");

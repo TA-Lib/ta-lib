@@ -22,7 +22,9 @@
 #   scripts/build.py help           Show all targets
 
 import argparse
+import concurrent.futures
 import os
+import re
 import shlex
 import shutil
 import subprocess
@@ -35,12 +37,16 @@ from utilities.common import (
     PREREQS_CARGO, PREREQS_CMAKE, PREREQS_GCC, PREREQS_JAVAC, PREREQS_JAVA,
     PREREQS_DOTNET, LIBRARY_PREREQS,
     prereqs_for_languages, backends_for_languages,
+    default_build_jobs, JobServer,
 )
 
 BUILD_DIR_NAME = "cmake-build"
 SANITIZE_DIR_NAME = "cmake-build-asan"
 DEFAULT_BUILD_TYPE = "Release"
-DEFAULT_JOBS = os.cpu_count() or 4
+DEFAULT_JOBS = default_build_jobs()
+# Replaced by main() when --jobs is given; every compiler this script starts
+# runs inside it.
+JOBS = JobServer(DEFAULT_JOBS)
 
 def find_repo_root() -> str:
     """Find the git repository root, regardless of where the script is called from."""
@@ -87,12 +93,40 @@ def ensure_configured(root_dir: str, build_dir: str, build_type: str, cmake_args
             cmd.extend(shlex.split(cmake_args))
         subprocess.run(cmd, check=True, cwd=build_dir)
 
+def make_joins_jobserver(build_dir: str) -> bool:
+    """True when cmake --build drives GNU make 4+, the one generator here that
+    reads a pipe jobserver's --jobserver-auth. Any other one gets -j instead."""
+    if not JOBS.active:
+        return False
+    cache = {}
+    try:
+        with open(os.path.join(build_dir, "CMakeCache.txt"), encoding="utf-8",
+                  errors="replace") as f:
+            for line in f:
+                key, sep, val = line.partition('=')
+                if sep:
+                    cache[key.split(':')[0]] = val.strip()
+    except OSError:
+        return False
+    if cache.get('CMAKE_GENERATOR') != 'Unix Makefiles':
+        return False
+    try:
+        out = subprocess.run([cache.get('CMAKE_MAKE_PROGRAM', 'make'), '--version'],
+                             capture_output=True, text=True).stdout
+    except OSError:
+        return False
+    m = re.match(r'GNU Make (\d+)', out)
+    return bool(m) and int(m.group(1)) >= 4
+
 def cmake_build(build_dir: str, target: str = None, jobs: int = DEFAULT_JOBS):
     """Run cmake --build, optionally for a specific target."""
-    cmd = ['cmake', '--build', '.', '-j', str(jobs)]
+    cmd = ['cmake', '--build', '.']
     if target:
         cmd.extend(['--target', target])
-    subprocess.run(cmd, check=True, cwd=build_dir)
+    if make_joins_jobserver(build_dir):
+        JOBS.run(cmd, check=True, cwd=build_dir)
+    else:
+        subprocess.run(cmd + ['-j', str(jobs)], check=True, cwd=build_dir)
 
 def show_help():
     print("""TA-Lib Build Targets
@@ -175,7 +209,8 @@ def show_help():
 
   Options:
     --build-type=Debug  Set cmake build type (default: Release)
-    --jobs=8            Parallel jobs (default: number of CPUs)
+    --jobs=8            Parallel jobs, shared by every compiler a target starts
+                        (default: the CPUs not busy now, leaving 1/8 free)
     --cmake-args="..."  Extra arguments passed to cmake configure
     --language=c,rust   For servers/regtest/xlang-hash: build only
                         these backends, and require only their toolchains. A
@@ -193,7 +228,7 @@ def run_codegen(root_dir: str, *cargo_args: str):
     CMake. Keeps the C build systems free of any Rust/cargo dependency.
     """
     codegen_dir = os.path.join(root_dir, "ta_codegen", "generator")
-    subprocess.run(['cargo', *cargo_args], check=True, cwd=codegen_dir)
+    JOBS.run(['cargo', *cargo_args], check=True, cwd=codegen_dir)
 
 def run_clippy(root_dir: str):
     """Lint both Rust crates exactly as the dev nightly's clippy job does.
@@ -213,23 +248,33 @@ def run_clippy(root_dir: str):
     for manifest in ('ta_codegen/generator/Cargo.toml',
                      'ta_codegen/output/rust/Cargo.toml'):
         print(f"  Clippy {manifest} ...")
-        subprocess.run(
+        JOBS.run(
             ['cargo', 'clippy', '--all-targets', '--manifest-path', manifest,
              '--', '-D', 'warnings'],
             check=True, cwd=root_dir)
     print("  Clippy clean (generator + generated crate).")
 
 
-def build_servers(root_dir: str, lang_filter=None):
+def build_servers(root_dir: str, lang_filter=None, alongside=None):
     """Generate the JSON-RPC language servers and compile them (cargo).
 
     With a --language filter only those backends are generated and built, so a
     machine without the JDK or the .NET SDK is not forced to have them just to
-    exercise C and Rust (issue #150, extended from regtest.py to build.py)."""
+    exercise C and Rust (issue #150, extended from regtest.py to build.py).
+
+    `alongside` runs while the servers compile. It must not read what
+    generate-servers writes or write what the server builds read."""
     backends = backends_for_languages(lang_filter)
     extra = [f'--backend={backends}'] if backends else []
     run_codegen(root_dir, 'run', '--release', '--', 'generate-servers', *extra)
-    run_codegen(root_dir, 'run', '--release', '--', 'build', *extra)
+    if alongside is None:
+        run_codegen(root_dir, 'run', '--release', '--', 'build', *extra)
+        return
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+        servers = pool.submit(run_codegen, root_dir, 'run', '--release', '--',
+                              'build', *extra)
+        alongside()
+        servers.result()
 
 def build_libraries(root_dir: str, lang_filter=None) -> int:
     """Build the publishable Java/C# libraries and run their suites (issue #428).
@@ -721,6 +766,9 @@ def main():
                         help='Build with AddressSanitizer + UBSan into cmake-build-asan (issue #94)')
     parser.add_argument('--help', '-h', action='store_true')
     args = parser.parse_args()
+    global JOBS
+    if args.jobs != DEFAULT_JOBS:
+        JOBS = JobServer(args.jobs)
 
     if args.help or args.target == 'help':
         show_help()
@@ -829,7 +877,10 @@ def main():
     # longer does it. `servers` runs the same cargo step and then falls through
     # to ensure_ta_regtest_in_bin, so what it leaves in bin/ can be run by hand.
     if args.target in ('servers', 'regtest'):
-        build_servers(root_dir, args.language)
+        regtest_bin = ('ta_regtest' if args.sanitize
+                       else 'ensure_ta_regtest_in_bin')
+        build_servers(root_dir, args.language, alongside=lambda: cmake_build(
+            build_dir, target=regtest_bin, jobs=args.jobs))
 
     if args.target == 'all':
         cmake_build(build_dir, jobs=args.jobs)
