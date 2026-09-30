@@ -617,9 +617,8 @@ on it. Needs cmake + gcc + cargo plus the **JDK** and the **.NET SDK**.
   `Math.*` reaches the platform libm** — an ordinary-value 1 ULP difference,
   host-dependent, so a locally clean run proves nothing here.
   `Math.FusedMultiplyAdd` is still correctly rounded, so the FMA contract is
-  untouched; only transcendentals moved. Such calls are decided **per call** (the
-  name set OR a `*MAType == TA_MAType_MAMA`, via
-  `codegen_call_is_transcendental`), drop `want_hash`, and are element-compared at
+  untouched; only transcendentals moved. Such calls are decided **per call** by
+  `codegen_call_is_transcendental`, drop `want_hash`, and are element-compared at
   `CODEGEN_TRANSCENDENTAL_TOL` (1e-9). Every other Java call and every Rust call
   stays bitwise, and the summary reports the per-server tolerance-path count so
   the bitwise coverage is visibly non-vacuous.

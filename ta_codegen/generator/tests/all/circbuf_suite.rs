@@ -444,6 +444,38 @@ fn c_circbuf_alloc_failure_frees_the_circbufs_before_it() {
 /// Both halves are asserted: the scratch users must NOT carry the pair, and the
 /// ring users must still carry it. Dropping it from a ring would not compile,
 /// but this says so at the generator rather than in a downstream build.
+/// A stream Open copies the batch body's circular buffers into its state only
+/// after the rings, windows and extrema are captured, so every failure return
+/// between the handle's allocation and that copy still owes their frees. A
+/// missing one leaks silently.
+#[test]
+fn c_stream_capture_failures_free_the_batch_circbufs() {
+    let registry = make_registry();
+    let helpers = make_helpers();
+    let mut returns = 0;
+    for name in ["hma", "kst", "alma"] {
+        let (func, enums) = load_indicator(name);
+        let stream_c = backends::c_stream::generate(&func, &enums, registry, helpers);
+        // A capture region opens where the handle's own allocation failure
+        // already frees them; the identity path allocates no batch buffer.
+        let mut inside = false;
+        for line in stream_c.lines() {
+            if line.contains("if( !sp )") && line.contains("!= &local_") {
+                inside = true;
+            } else if line.contains("memcpy( sp->cb_") {
+                inside = false;
+            } else if inside && line.contains("ReleaseImpl( sp ); return") {
+                assert!(
+                    line.contains("!= &local_"),
+                    "{name}: a capture failure returns without freeing the batch circular buffers: {line}"
+                );
+                returns += 1;
+            }
+        }
+    }
+    assert!(returns >= 6, "only {returns} capture failure returns seen across hma, kst and alma");
+}
+
 #[test]
 fn c_circbuf_omits_the_cursor_when_nothing_reads_it() {
     let registry = make_registry();
