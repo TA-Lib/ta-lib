@@ -25,8 +25,9 @@ enum FuncUnstId {
     UNUSED_12, KAMA, MAMA, UNUSED_15, MINUS_DI, MINUS_DM,
     NATR, PLUS_DI, PLUS_DM, RSI, UNUSED_22, T3,
     RMA, HA, RVI, FRAMA, MCGD, VIDYA,
+    STC,
     ALL;
-    static final int COUNT = 30;
+    static final int COUNT = 31;
     int value() { return this == ALL ? 65535 : ordinal(); }
 }
 
@@ -176933,6 +176934,2022 @@ class Core {
           MInteger outNBElement = new MInteger();
           return sqrtOpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outReal);
        }
+    /* Schaff Trend Cycle, created by Doug Schaff (FX-Strategy.com), who released
+     * its code in "Releasing the Code to the Schaff Trend Cycle", FXStreet.com,
+     * February 15, 2008,
+     * https://web.archive.org/web/20090418215759/mediaserver.fxstreet.com/Reports/99afdb5f-d41d-4a2c-802c-f5d787df886c/ebfbf387-4b27-4a0f-848c-039f4ab77c00.pdf
+     *
+     * List of contributors:
+     *
+     *  Initial  Name/description
+     *  -------------------------------------------------------------------
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
+     *
+     * Change history:
+     *
+     *  MMDDYY BY     Description
+     *  -------------------------------------------------------------------
+     *  092926 MF,CC  Initial version (#478).
+     */
+
+       /**
+        * Number of leading input bars {@link Core#stc} consumes before it can
+        * produce its first value.
+        * <p>Equivalently, the index of the first bar with a value when the whole
+        * series is requested. Feed at least {@code lookback + 1} bars to get any
+        * output.
+        * <p>This function is recursive, so the result also includes this
+        * {@code Core}'s unstable-period setting — which is why it is an instance
+        * method.
+        *
+        * @param optInFastPeriod Period of the fast EMA (default 23; range
+        *        2..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInSlowPeriod Period of the slow EMA (default 50; range
+        *        2..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInCyclePeriod Window of both stochastic stages (default 10;
+        *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @return The lookback, or {@code -1} if a parameter is out of range.
+        */
+       public int stcLookback( int optInFastPeriod, int optInSlowPeriod, int optInCyclePeriod )
+       {
+          if( optInFastPeriod == Integer.MIN_VALUE ) {
+             optInFastPeriod = 23;
+          } else if( optInFastPeriod < 2 || optInFastPeriod > 100000 ) {
+             return -1;
+          }
+          if( optInSlowPeriod == Integer.MIN_VALUE ) {
+             optInSlowPeriod = 50;
+          } else if( optInSlowPeriod < 2 || optInSlowPeriod > 100000 ) {
+             return -1;
+          }
+          if( optInCyclePeriod == Integer.MIN_VALUE ) {
+             optInCyclePeriod = 10;
+          } else if( optInCyclePeriod < 2 || optInCyclePeriod > 100000 ) {
+             return -1;
+          }
+          int tempInteger;
+          if( optInSlowPeriod < optInFastPeriod ) {
+             tempInteger = optInSlowPeriod;
+             optInSlowPeriod = optInFastPeriod;
+             optInFastPeriod = tempInteger;
+          }
+          /* The MACD line's own lookback, which is what inherits TA_FUNC_UNST_EMA,
+           * then one window per stochastic stage. The two 0.5 smoothers seed on
+           * their first input, so they add only the unstable period.
+           */
+          return emaLookback(optInSlowPeriod) + 2 * (optInCyclePeriod - 1) + this.unstablePeriod[FuncUnstId.STC.ordinal()] ;
+
+       }
+       RetCode stcImpl( int startIdx,
+                        int endIdx,
+                        double inReal[],
+                        int optInFastPeriod,
+                        int optInSlowPeriod,
+                        int optInCyclePeriod,
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
+       {
+          double[] lineRing;
+          int lineRing_Idx = 0;
+          int maxIdx_lineRing = (30)-1;
+          double[] lineSufHi;
+          int lineSufHi_Idx = 0;
+          int maxIdx_lineSufHi = (30)-1;
+          double[] lineSufLo;
+          int lineSufLo_Idx = 0;
+          int maxIdx_lineSufLo = (30)-1;
+          double[] pfRing;
+          int pfRing_Idx = 0;
+          int maxIdx_pfRing = (30)-1;
+          double[] pfSufHi;
+          int pfSufHi_Idx = 0;
+          int maxIdx_pfSufHi = (30)-1;
+          double[] pfSufLo;
+          int pfSufLo_Idx = 0;
+          int maxIdx_pfSufLo = (30)-1;
+          double prevFast = 0;
+          double prevSlow = 0;
+          double fastK = 0;
+          double slowK = 0;
+          double tempReal = 0;
+          double lineValue = 0;
+          double lowest = 0;
+          double highest = 0;
+          double range = 0;
+          double frac1 = 0;
+          double frac2 = 0;
+          double pf = 0;
+          double pff = 0;
+          double lineHi = 0;
+          double lineLo = 0;
+          double pfHi = 0;
+          double pfLo = 0;
+          double sufHi = 0;
+          double sufLo = 0;
+          int i = 0;
+          int today = 0;
+          int lineStart = 0;
+          int outIdx = 0;
+          int tempInteger = 0;
+          int lookbackTotal = 0;
+          int lastIdx = 0;
+          int nLine = 0;
+          int nPF = 0;
+          if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX ;
+          }
+          if( (endIdx < 0) || (endIdx > INDEX_MAX) || (endIdx < startIdx)) {
+             return RetCode.OUT_OF_RANGE_END_INDEX ;
+          }
+          if( optInFastPeriod == Integer.MIN_VALUE ) {
+             optInFastPeriod = 23;
+          } else if( optInFastPeriod < 2 || optInFastPeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInSlowPeriod == Integer.MIN_VALUE ) {
+             optInSlowPeriod = 50;
+          } else if( optInSlowPeriod < 2 || optInSlowPeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInCyclePeriod == Integer.MIN_VALUE ) {
+             optInCyclePeriod = 10;
+          } else if( optInCyclePeriod < 2 || optInCyclePeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInSlowPeriod < optInFastPeriod ) {
+             tempInteger = optInSlowPeriod;
+             optInSlowPeriod = optInFastPeriod;
+             optInFastPeriod = tempInteger;
+          }
+          lookbackTotal = stcLookback(optInFastPeriod, optInSlowPeriod, optInCyclePeriod);
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.SUCCESS ;
+          }
+          outBegIdx.value = startIdx;
+          fastK = 2.0 / (double)(optInFastPeriod + 1);
+          slowK = 2.0 / (double)(optInSlowPeriod + 1);
+          /* Rolling extrema, van Herk / Gil-Werman: the window ending in slot j is
+           * the current block's prefix extremum joined with the previous block's
+           * suffix extremum from slot j+1. The extrema are exact, so the output must
+           * stay bit-identical to a full rescan of each window.
+           */
+          if( optInCyclePeriod < 1 ) return RetCode.INTERNAL_ERROR;
+          lineRing = new double[optInCyclePeriod];
+          maxIdx_lineRing = (optInCyclePeriod)-1;
+          lineRing_Idx = 0;
+          if( optInCyclePeriod < 1 ) return RetCode.INTERNAL_ERROR;
+          lineSufHi = new double[optInCyclePeriod];
+          maxIdx_lineSufHi = (optInCyclePeriod)-1;
+          lineSufHi_Idx = 0;
+          if( optInCyclePeriod < 1 ) return RetCode.INTERNAL_ERROR;
+          lineSufLo = new double[optInCyclePeriod];
+          maxIdx_lineSufLo = (optInCyclePeriod)-1;
+          lineSufLo_Idx = 0;
+          if( optInCyclePeriod < 1 ) return RetCode.INTERNAL_ERROR;
+          pfRing = new double[optInCyclePeriod];
+          maxIdx_pfRing = (optInCyclePeriod)-1;
+          pfRing_Idx = 0;
+          if( optInCyclePeriod < 1 ) return RetCode.INTERNAL_ERROR;
+          pfSufHi = new double[optInCyclePeriod];
+          maxIdx_pfSufHi = (optInCyclePeriod)-1;
+          pfSufHi_Idx = 0;
+          if( optInCyclePeriod < 1 ) return RetCode.INTERNAL_ERROR;
+          pfSufLo = new double[optInCyclePeriod];
+          maxIdx_pfSufLo = (optInCyclePeriod)-1;
+          pfSufLo_Idx = 0;
+          lastIdx = optInCyclePeriod - 1;
+          /* The line is TA_MACD's: co-terminal SMA seeds, then both EMAs advanced
+           * through TA_FUNC_UNST_EMA to lineStart, so that from lineStart on it is
+           * TA_EMA(fast) - TA_EMA(slow) bit for bit. The chain is fed from
+           * lineStart, not from the EMA seed: TA_FUNC_UNST_EMA then reaches only the
+           * line, while TA_FUNC_UNST_STC moves the whole chain back and so warms the
+           * line and both smoothers.
+           */
+          lineStart = startIdx - (lookbackTotal - emaLookback(optInSlowPeriod));
+          today = startIdx - lookbackTotal;
+          tempReal = 0.0;
+          i = optInSlowPeriod - optInFastPeriod;
+          while( i-- > 0 ) {
+             tempReal += inReal[today++];
+          }
+          prevFast = 0.0;
+          i = optInFastPeriod;
+          while( i-- > 0 ) {
+             prevFast += inReal[today];
+             tempReal += inReal[today++];
+          }
+          prevSlow = tempReal / optInSlowPeriod;
+          prevFast = prevFast / optInFastPeriod;
+          while( today <= lineStart ) {
+             tempReal = inReal[today++];
+             prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+             prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+          }
+          /* A zero range holds the previous fraction (0.0 before any), and the test
+           * is exact: in a sustained trend PF saturates at 100 and the second
+           * range reaches exactly 0 while the output must stay at 100.
+           */
+          frac1 = 0.0;
+          frac2 = 0.0;
+          pf = 0.0;
+          pff = 0.0;
+          pfHi = 0.0;
+          pfLo = 0.0;
+          nPF = 0;
+          lineValue = prevFast - prevSlow;
+          lineRing[lineRing_Idx] = lineValue;
+          lineRing_Idx++;
+          if( lineRing_Idx > maxIdx_lineRing ) { lineRing_Idx = 0; }
+          lineHi = lineValue;
+          lineLo = lineValue;
+          nLine = 1;
+          /* Warm-up, through startIdx inclusive. Each stage starts once its
+           * window is full, and each smoother is seeded on its first input.
+           */
+          while( today <= startIdx ) {
+             tempReal = inReal[today];
+             prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+             prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+             lineValue = prevFast - prevSlow;
+             nLine = nLine + 1;
+             lineRing[lineRing_Idx] = lineValue;
+             if( lineRing_Idx == 0 ) {
+                lineHi = lineValue;
+                lineLo = lineValue;
+             } else {
+                if( lineValue > lineHi ) {
+                   lineHi = lineValue;
+                }
+                if( lineValue < lineLo ) {
+                   lineLo = lineValue;
+                }
+             }
+             highest = lineHi;
+             lowest = lineLo;
+             if( nLine >= optInCyclePeriod && lineRing_Idx < lastIdx ) {
+                tempReal = lineSufHi[lineRing_Idx + 1];
+                if( tempReal > highest ) {
+                   highest = tempReal;
+                }
+                tempReal = lineSufLo[lineRing_Idx + 1];
+                if( tempReal < lowest ) {
+                   lowest = tempReal;
+                }
+             }
+             lineRing_Idx++;
+             if( lineRing_Idx > maxIdx_lineRing ) { lineRing_Idx = 0; }
+             if( lineRing_Idx == 0 ) {
+                sufHi = lineRing[lastIdx];
+                sufLo = sufHi;
+                lineSufHi[lastIdx] = sufHi;
+                lineSufLo[lastIdx] = sufLo;
+                i = lastIdx;
+                while( i > 0 ) {
+                   i -= 1;
+                   tempReal = lineRing[i];
+                   if( tempReal > sufHi ) {
+                      sufHi = tempReal;
+                   }
+                   if( tempReal < sufLo ) {
+                      sufLo = tempReal;
+                   }
+                   lineSufHi[i] = sufHi;
+                   lineSufLo[i] = sufLo;
+                }
+             }
+             if( nLine >= optInCyclePeriod ) {
+                range = highest - lowest;
+                if( range > 0.0 ) {
+                   frac1 = (lineValue - lowest) / range * 100.0;
+                }
+                if( nPF == 0 ) {
+                   pf = frac1;
+                } else {
+                   pf = Math.fma(0.5, frac1 - pf, pf);
+                }
+                nPF = nPF + 1;
+                pfRing[pfRing_Idx] = pf;
+                if( pfRing_Idx == 0 ) {
+                   pfHi = pf;
+                   pfLo = pf;
+                } else {
+                   if( pf > pfHi ) {
+                      pfHi = pf;
+                   }
+                   if( pf < pfLo ) {
+                      pfLo = pf;
+                   }
+                }
+                highest = pfHi;
+                lowest = pfLo;
+                if( nPF >= optInCyclePeriod && pfRing_Idx < lastIdx ) {
+                   tempReal = pfSufHi[pfRing_Idx + 1];
+                   if( tempReal > highest ) {
+                      highest = tempReal;
+                   }
+                   tempReal = pfSufLo[pfRing_Idx + 1];
+                   if( tempReal < lowest ) {
+                      lowest = tempReal;
+                   }
+                }
+                pfRing_Idx++;
+                if( pfRing_Idx > maxIdx_pfRing ) { pfRing_Idx = 0; }
+                if( pfRing_Idx == 0 ) {
+                   sufHi = pfRing[lastIdx];
+                   sufLo = sufHi;
+                   pfSufHi[lastIdx] = sufHi;
+                   pfSufLo[lastIdx] = sufLo;
+                   i = lastIdx;
+                   while( i > 0 ) {
+                      i -= 1;
+                      tempReal = pfRing[i];
+                      if( tempReal > sufHi ) {
+                         sufHi = tempReal;
+                      }
+                      if( tempReal < sufLo ) {
+                         sufLo = tempReal;
+                      }
+                      pfSufHi[i] = sufHi;
+                      pfSufLo[i] = sufLo;
+                   }
+                }
+                if( nPF >= optInCyclePeriod ) {
+                   range = highest - lowest;
+                   if( range > 0.0 ) {
+                      frac2 = (pf - lowest) / range * 100.0;
+                   }
+                   if( nPF == optInCyclePeriod ) {
+                      pff = frac2;
+                   } else {
+                      pff = Math.fma(0.5, frac2 - pff, pff);
+                   }
+                }
+             }
+             today = today + 1;
+          }
+          outReal[0] = pff;
+          outIdx = 1;
+          while( today <= endIdx ) {
+             tempReal = inReal[today];
+             prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+             prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+             lineValue = prevFast - prevSlow;
+             lineRing[lineRing_Idx] = lineValue;
+             if( lineRing_Idx == 0 ) {
+                lineHi = lineValue;
+                lineLo = lineValue;
+             } else {
+                if( lineValue > lineHi ) {
+                   lineHi = lineValue;
+                }
+                if( lineValue < lineLo ) {
+                   lineLo = lineValue;
+                }
+             }
+             highest = lineHi;
+             lowest = lineLo;
+             if( lineRing_Idx < lastIdx ) {
+                tempReal = lineSufHi[lineRing_Idx + 1];
+                if( tempReal > highest ) {
+                   highest = tempReal;
+                }
+                tempReal = lineSufLo[lineRing_Idx + 1];
+                if( tempReal < lowest ) {
+                   lowest = tempReal;
+                }
+             }
+             lineRing_Idx++;
+             if( lineRing_Idx > maxIdx_lineRing ) { lineRing_Idx = 0; }
+             if( lineRing_Idx == 0 ) {
+                sufHi = lineRing[lastIdx];
+                sufLo = sufHi;
+                lineSufHi[lastIdx] = sufHi;
+                lineSufLo[lastIdx] = sufLo;
+                i = lastIdx;
+                while( i > 0 ) {
+                   i -= 1;
+                   tempReal = lineRing[i];
+                   if( tempReal > sufHi ) {
+                      sufHi = tempReal;
+                   }
+                   if( tempReal < sufLo ) {
+                      sufLo = tempReal;
+                   }
+                   lineSufHi[i] = sufHi;
+                   lineSufLo[i] = sufLo;
+                }
+             }
+             range = highest - lowest;
+             if( range > 0.0 ) {
+                frac1 = (lineValue - lowest) / range * 100.0;
+             }
+             pf = Math.fma(0.5, frac1 - pf, pf);
+             pfRing[pfRing_Idx] = pf;
+             if( pfRing_Idx == 0 ) {
+                pfHi = pf;
+                pfLo = pf;
+             } else {
+                if( pf > pfHi ) {
+                   pfHi = pf;
+                }
+                if( pf < pfLo ) {
+                   pfLo = pf;
+                }
+             }
+             highest = pfHi;
+             lowest = pfLo;
+             if( pfRing_Idx < lastIdx ) {
+                tempReal = pfSufHi[pfRing_Idx + 1];
+                if( tempReal > highest ) {
+                   highest = tempReal;
+                }
+                tempReal = pfSufLo[pfRing_Idx + 1];
+                if( tempReal < lowest ) {
+                   lowest = tempReal;
+                }
+             }
+             pfRing_Idx++;
+             if( pfRing_Idx > maxIdx_pfRing ) { pfRing_Idx = 0; }
+             if( pfRing_Idx == 0 ) {
+                sufHi = pfRing[lastIdx];
+                sufLo = sufHi;
+                pfSufHi[lastIdx] = sufHi;
+                pfSufLo[lastIdx] = sufLo;
+                i = lastIdx;
+                while( i > 0 ) {
+                   i -= 1;
+                   tempReal = pfRing[i];
+                   if( tempReal > sufHi ) {
+                      sufHi = tempReal;
+                   }
+                   if( tempReal < sufLo ) {
+                      sufLo = tempReal;
+                   }
+                   pfSufHi[i] = sufHi;
+                   pfSufLo[i] = sufLo;
+                }
+             }
+             range = highest - lowest;
+             if( range > 0.0 ) {
+                frac2 = (pf - lowest) / range * 100.0;
+             }
+             pff = Math.fma(0.5, frac2 - pff, pff);
+             outReal[outIdx++] = pff;
+             today = today + 1;
+          }
+          outNBElement.value = outIdx;
+          return RetCode.SUCCESS ;
+       }
+       RetCode stcImpl( int startIdx,
+                        int endIdx,
+                        float inReal[],
+                        int optInFastPeriod,
+                        int optInSlowPeriod,
+                        int optInCyclePeriod,
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
+       {
+          double[] lineRing;
+          int lineRing_Idx = 0;
+          int maxIdx_lineRing = (30)-1;
+          double[] lineSufHi;
+          int lineSufHi_Idx = 0;
+          int maxIdx_lineSufHi = (30)-1;
+          double[] lineSufLo;
+          int lineSufLo_Idx = 0;
+          int maxIdx_lineSufLo = (30)-1;
+          double[] pfRing;
+          int pfRing_Idx = 0;
+          int maxIdx_pfRing = (30)-1;
+          double[] pfSufHi;
+          int pfSufHi_Idx = 0;
+          int maxIdx_pfSufHi = (30)-1;
+          double[] pfSufLo;
+          int pfSufLo_Idx = 0;
+          int maxIdx_pfSufLo = (30)-1;
+          double prevFast = 0;
+          double prevSlow = 0;
+          double fastK = 0;
+          double slowK = 0;
+          double tempReal = 0;
+          double lineValue = 0;
+          double lowest = 0;
+          double highest = 0;
+          double range = 0;
+          double frac1 = 0;
+          double frac2 = 0;
+          double pf = 0;
+          double pff = 0;
+          double lineHi = 0;
+          double lineLo = 0;
+          double pfHi = 0;
+          double pfLo = 0;
+          double sufHi = 0;
+          double sufLo = 0;
+          int i = 0;
+          int today = 0;
+          int lineStart = 0;
+          int outIdx = 0;
+          int tempInteger = 0;
+          int lookbackTotal = 0;
+          int lastIdx = 0;
+          int nLine = 0;
+          int nPF = 0;
+          if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX ;
+          }
+          if( (endIdx < 0) || (endIdx > INDEX_MAX) || (endIdx < startIdx)) {
+             return RetCode.OUT_OF_RANGE_END_INDEX ;
+          }
+          if( optInFastPeriod == Integer.MIN_VALUE ) {
+             optInFastPeriod = 23;
+          } else if( optInFastPeriod < 2 || optInFastPeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInSlowPeriod == Integer.MIN_VALUE ) {
+             optInSlowPeriod = 50;
+          } else if( optInSlowPeriod < 2 || optInSlowPeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInCyclePeriod == Integer.MIN_VALUE ) {
+             optInCyclePeriod = 10;
+          } else if( optInCyclePeriod < 2 || optInCyclePeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInSlowPeriod < optInFastPeriod ) {
+             tempInteger = optInSlowPeriod;
+             optInSlowPeriod = optInFastPeriod;
+             optInFastPeriod = tempInteger;
+          }
+          lookbackTotal = stcLookback(optInFastPeriod, optInSlowPeriod, optInCyclePeriod);
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.SUCCESS ;
+          }
+          outBegIdx.value = startIdx;
+          fastK = 2.0 / (double)(optInFastPeriod + 1);
+          slowK = 2.0 / (double)(optInSlowPeriod + 1);
+          if( optInCyclePeriod < 1 ) return RetCode.INTERNAL_ERROR;
+          lineRing = new double[optInCyclePeriod];
+          maxIdx_lineRing = (optInCyclePeriod)-1;
+          lineRing_Idx = 0;
+          if( optInCyclePeriod < 1 ) return RetCode.INTERNAL_ERROR;
+          lineSufHi = new double[optInCyclePeriod];
+          maxIdx_lineSufHi = (optInCyclePeriod)-1;
+          lineSufHi_Idx = 0;
+          if( optInCyclePeriod < 1 ) return RetCode.INTERNAL_ERROR;
+          lineSufLo = new double[optInCyclePeriod];
+          maxIdx_lineSufLo = (optInCyclePeriod)-1;
+          lineSufLo_Idx = 0;
+          if( optInCyclePeriod < 1 ) return RetCode.INTERNAL_ERROR;
+          pfRing = new double[optInCyclePeriod];
+          maxIdx_pfRing = (optInCyclePeriod)-1;
+          pfRing_Idx = 0;
+          if( optInCyclePeriod < 1 ) return RetCode.INTERNAL_ERROR;
+          pfSufHi = new double[optInCyclePeriod];
+          maxIdx_pfSufHi = (optInCyclePeriod)-1;
+          pfSufHi_Idx = 0;
+          if( optInCyclePeriod < 1 ) return RetCode.INTERNAL_ERROR;
+          pfSufLo = new double[optInCyclePeriod];
+          maxIdx_pfSufLo = (optInCyclePeriod)-1;
+          pfSufLo_Idx = 0;
+          lastIdx = optInCyclePeriod - 1;
+          lineStart = startIdx - (lookbackTotal - emaLookback(optInSlowPeriod));
+          today = startIdx - lookbackTotal;
+          tempReal = 0.0;
+          i = optInSlowPeriod - optInFastPeriod;
+          while( i-- > 0 ) {
+             tempReal += (double)inReal[today++];
+          }
+          prevFast = 0.0;
+          i = optInFastPeriod;
+          while( i-- > 0 ) {
+             prevFast += (double)inReal[today];
+             tempReal += (double)inReal[today++];
+          }
+          prevSlow = tempReal / optInSlowPeriod;
+          prevFast = prevFast / optInFastPeriod;
+          while( today <= lineStart ) {
+             tempReal = (double)inReal[today++];
+             prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+             prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+          }
+          frac1 = 0.0;
+          frac2 = 0.0;
+          pf = 0.0;
+          pff = 0.0;
+          pfHi = 0.0;
+          pfLo = 0.0;
+          nPF = 0;
+          lineValue = prevFast - prevSlow;
+          lineRing[lineRing_Idx] = lineValue;
+          lineRing_Idx++;
+          if( lineRing_Idx > maxIdx_lineRing ) { lineRing_Idx = 0; }
+          lineHi = lineValue;
+          lineLo = lineValue;
+          nLine = 1;
+          while( today <= startIdx ) {
+             tempReal = (double)inReal[today];
+             prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+             prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+             lineValue = prevFast - prevSlow;
+             nLine = nLine + 1;
+             lineRing[lineRing_Idx] = lineValue;
+             if( lineRing_Idx == 0 ) {
+                lineHi = lineValue;
+                lineLo = lineValue;
+             } else {
+                if( lineValue > lineHi ) {
+                   lineHi = lineValue;
+                }
+                if( lineValue < lineLo ) {
+                   lineLo = lineValue;
+                }
+             }
+             highest = lineHi;
+             lowest = lineLo;
+             if( nLine >= optInCyclePeriod && lineRing_Idx < lastIdx ) {
+                tempReal = lineSufHi[lineRing_Idx + 1];
+                if( tempReal > highest ) {
+                   highest = tempReal;
+                }
+                tempReal = lineSufLo[lineRing_Idx + 1];
+                if( tempReal < lowest ) {
+                   lowest = tempReal;
+                }
+             }
+             lineRing_Idx++;
+             if( lineRing_Idx > maxIdx_lineRing ) { lineRing_Idx = 0; }
+             if( lineRing_Idx == 0 ) {
+                sufHi = lineRing[lastIdx];
+                sufLo = sufHi;
+                lineSufHi[lastIdx] = sufHi;
+                lineSufLo[lastIdx] = sufLo;
+                i = lastIdx;
+                while( i > 0 ) {
+                   i -= 1;
+                   tempReal = lineRing[i];
+                   if( tempReal > sufHi ) {
+                      sufHi = tempReal;
+                   }
+                   if( tempReal < sufLo ) {
+                      sufLo = tempReal;
+                   }
+                   lineSufHi[i] = sufHi;
+                   lineSufLo[i] = sufLo;
+                }
+             }
+             if( nLine >= optInCyclePeriod ) {
+                range = highest - lowest;
+                if( range > 0.0 ) {
+                   frac1 = (lineValue - lowest) / range * 100.0;
+                }
+                if( nPF == 0 ) {
+                   pf = frac1;
+                } else {
+                   pf = Math.fma(0.5, frac1 - pf, pf);
+                }
+                nPF = nPF + 1;
+                pfRing[pfRing_Idx] = pf;
+                if( pfRing_Idx == 0 ) {
+                   pfHi = pf;
+                   pfLo = pf;
+                } else {
+                   if( pf > pfHi ) {
+                      pfHi = pf;
+                   }
+                   if( pf < pfLo ) {
+                      pfLo = pf;
+                   }
+                }
+                highest = pfHi;
+                lowest = pfLo;
+                if( nPF >= optInCyclePeriod && pfRing_Idx < lastIdx ) {
+                   tempReal = pfSufHi[pfRing_Idx + 1];
+                   if( tempReal > highest ) {
+                      highest = tempReal;
+                   }
+                   tempReal = pfSufLo[pfRing_Idx + 1];
+                   if( tempReal < lowest ) {
+                      lowest = tempReal;
+                   }
+                }
+                pfRing_Idx++;
+                if( pfRing_Idx > maxIdx_pfRing ) { pfRing_Idx = 0; }
+                if( pfRing_Idx == 0 ) {
+                   sufHi = pfRing[lastIdx];
+                   sufLo = sufHi;
+                   pfSufHi[lastIdx] = sufHi;
+                   pfSufLo[lastIdx] = sufLo;
+                   i = lastIdx;
+                   while( i > 0 ) {
+                      i -= 1;
+                      tempReal = pfRing[i];
+                      if( tempReal > sufHi ) {
+                         sufHi = tempReal;
+                      }
+                      if( tempReal < sufLo ) {
+                         sufLo = tempReal;
+                      }
+                      pfSufHi[i] = sufHi;
+                      pfSufLo[i] = sufLo;
+                   }
+                }
+                if( nPF >= optInCyclePeriod ) {
+                   range = highest - lowest;
+                   if( range > 0.0 ) {
+                      frac2 = (pf - lowest) / range * 100.0;
+                   }
+                   if( nPF == optInCyclePeriod ) {
+                      pff = frac2;
+                   } else {
+                      pff = Math.fma(0.5, frac2 - pff, pff);
+                   }
+                }
+             }
+             today = today + 1;
+          }
+          outReal[0] = pff;
+          outIdx = 1;
+          while( today <= endIdx ) {
+             tempReal = (double)inReal[today];
+             prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+             prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+             lineValue = prevFast - prevSlow;
+             lineRing[lineRing_Idx] = lineValue;
+             if( lineRing_Idx == 0 ) {
+                lineHi = lineValue;
+                lineLo = lineValue;
+             } else {
+                if( lineValue > lineHi ) {
+                   lineHi = lineValue;
+                }
+                if( lineValue < lineLo ) {
+                   lineLo = lineValue;
+                }
+             }
+             highest = lineHi;
+             lowest = lineLo;
+             if( lineRing_Idx < lastIdx ) {
+                tempReal = lineSufHi[lineRing_Idx + 1];
+                if( tempReal > highest ) {
+                   highest = tempReal;
+                }
+                tempReal = lineSufLo[lineRing_Idx + 1];
+                if( tempReal < lowest ) {
+                   lowest = tempReal;
+                }
+             }
+             lineRing_Idx++;
+             if( lineRing_Idx > maxIdx_lineRing ) { lineRing_Idx = 0; }
+             if( lineRing_Idx == 0 ) {
+                sufHi = lineRing[lastIdx];
+                sufLo = sufHi;
+                lineSufHi[lastIdx] = sufHi;
+                lineSufLo[lastIdx] = sufLo;
+                i = lastIdx;
+                while( i > 0 ) {
+                   i -= 1;
+                   tempReal = lineRing[i];
+                   if( tempReal > sufHi ) {
+                      sufHi = tempReal;
+                   }
+                   if( tempReal < sufLo ) {
+                      sufLo = tempReal;
+                   }
+                   lineSufHi[i] = sufHi;
+                   lineSufLo[i] = sufLo;
+                }
+             }
+             range = highest - lowest;
+             if( range > 0.0 ) {
+                frac1 = (lineValue - lowest) / range * 100.0;
+             }
+             pf = Math.fma(0.5, frac1 - pf, pf);
+             pfRing[pfRing_Idx] = pf;
+             if( pfRing_Idx == 0 ) {
+                pfHi = pf;
+                pfLo = pf;
+             } else {
+                if( pf > pfHi ) {
+                   pfHi = pf;
+                }
+                if( pf < pfLo ) {
+                   pfLo = pf;
+                }
+             }
+             highest = pfHi;
+             lowest = pfLo;
+             if( pfRing_Idx < lastIdx ) {
+                tempReal = pfSufHi[pfRing_Idx + 1];
+                if( tempReal > highest ) {
+                   highest = tempReal;
+                }
+                tempReal = pfSufLo[pfRing_Idx + 1];
+                if( tempReal < lowest ) {
+                   lowest = tempReal;
+                }
+             }
+             pfRing_Idx++;
+             if( pfRing_Idx > maxIdx_pfRing ) { pfRing_Idx = 0; }
+             if( pfRing_Idx == 0 ) {
+                sufHi = pfRing[lastIdx];
+                sufLo = sufHi;
+                pfSufHi[lastIdx] = sufHi;
+                pfSufLo[lastIdx] = sufLo;
+                i = lastIdx;
+                while( i > 0 ) {
+                   i -= 1;
+                   tempReal = pfRing[i];
+                   if( tempReal > sufHi ) {
+                      sufHi = tempReal;
+                   }
+                   if( tempReal < sufLo ) {
+                      sufLo = tempReal;
+                   }
+                   pfSufHi[i] = sufHi;
+                   pfSufLo[i] = sufLo;
+                }
+             }
+             range = highest - lowest;
+             if( range > 0.0 ) {
+                frac2 = (pf - lowest) / range * 100.0;
+             }
+             pff = Math.fma(0.5, frac2 - pff, pff);
+             outReal[outIdx++] = pff;
+             today = today + 1;
+          }
+          outNBElement.value = outIdx;
+          return RetCode.SUCCESS ;
+       }
+       /**
+        * Schaff Trend Cycle (Doug Schaff): a MACD line passed twice through a
+        * stochastic, each pass smoothed by half. Bounded 0 to 100, read against 25
+        * and 75: turning up from below 25 is bullish, turning down from above 75
+        * bearish.
+        * <p>Formula and more info at <a
+        * href="https://ta-lib.org/functions/stc">ta-lib.org/functions/stc</a>.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>The smoothing factor is fixed at 0.5, as in Schaff's published code.</li>
+        * <li>The MACD line is TA-Lib's: both EMAs are seeded with a simple average over windows ending on the same bar. The published code runs the EMAs from the first bar of the data.</li>
+        * <li>If the slow period is set smaller than the fast period, the two are swapped, as in {@code MACD}.</li>
+        * <li>Being recursive, an output depends on how much history precedes it. The unstable period warms the two smoothers; the EMA unstable period warms the MACD line.</li>
+        * </ul>
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are; nothing
+        * outside that range is touched, and the library never pads with NaN. A
+        * valid range that ends before {@link Core#stcLookback} is a <b>success with
+        * no values</b> ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inReal Input series (typically close)
+        * @param optInFastPeriod Period of the fast EMA (default 23; range
+        *        2..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInSlowPeriod Period of the slow EMA (default 50; range
+        *        2..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInCyclePeriod Window of both stochastic stages (default 10;
+        *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param outReal Schaff Trend Cycle, from 0 to 100. Must hold at least
+        *        {@code endIdx - max(startIdx, stcLookback(...)) + 1} values, the count the
+        *        call produces (none when that is not positive).
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#INDEX_MAX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. An output this function documents as declinable is the one
+        *        exception: {@code null} is how you decline it. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
+        *
+        * @see Core#macd
+        * @see Core#stochf
+        * @see Core#stochrsi
+        */
+       public OutRange stc( int startIdx,
+                            int endIdx,
+                            double inReal[],
+                            int optInFastPeriod,
+                            int optInSlowPeriod,
+                            int optInCyclePeriod,
+                            double outReal[] )
+       {
+          requireIndexRange("STC", startIdx, endIdx);
+          int guardStart = clampedStart("STC", startIdx, stcLookback(optInFastPeriod, optInSlowPeriod, optInCyclePeriod));
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("STC", "inReal", inReal, guardInLen);
+          requireLength("STC", "outReal", outReal, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = stcImpl(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInCyclePeriod, outBegIdx, outNBElement, outReal);
+          if( retCode != RetCode.SUCCESS ) {
+             throw failure("STC", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+       /**
+        * Schaff Trend Cycle (Doug Schaff): a MACD line passed twice through a
+        * stochastic, each pass smoothed by half. Bounded 0 to 100, read against 25
+        * and 75: turning up from below 25 is bullish, turning down from above 75
+        * bearish.
+        * <p>Formula and more info at <a
+        * href="https://ta-lib.org/functions/stc">ta-lib.org/functions/stc</a>.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>The smoothing factor is fixed at 0.5, as in Schaff's published code.</li>
+        * <li>The MACD line is TA-Lib's: both EMAs are seeded with a simple average over windows ending on the same bar. The published code runs the EMAs from the first bar of the data.</li>
+        * <li>If the slow period is set smaller than the fast period, the two are swapped, as in {@code MACD}.</li>
+        * <li>Being recursive, an output depends on how much history precedes it. The unstable period warms the two smoothers; the EMA unstable period warms the MACD line.</li>
+        * </ul>
+        * <p>This is the {@code float[]} overload. The arithmetic is performed in
+        * {@code double} before being written to the {@code double[]} output, so a
+        * result beyond {@code float} range is still representable.
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are; nothing
+        * outside that range is touched, and the library never pads with NaN. A
+        * valid range that ends before {@link Core#stcLookback} is a <b>success with
+        * no values</b> ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inReal Input series (typically close)
+        * @param optInFastPeriod Period of the fast EMA (default 23; range
+        *        2..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInSlowPeriod Period of the slow EMA (default 50; range
+        *        2..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInCyclePeriod Window of both stochastic stages (default 10;
+        *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param outReal Schaff Trend Cycle, from 0 to 100. Must hold at least
+        *        {@code endIdx - max(startIdx, stcLookback(...)) + 1} values, the count the
+        *        call produces (none when that is not positive).
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#INDEX_MAX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. An output this function documents as declinable is the one
+        *        exception: {@code null} is how you decline it. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
+        *
+        * @see Core#macd
+        * @see Core#stochf
+        * @see Core#stochrsi
+        */
+       public OutRange stc( int startIdx,
+                            int endIdx,
+                            float inReal[],
+                            int optInFastPeriod,
+                            int optInSlowPeriod,
+                            int optInCyclePeriod,
+                            double outReal[] )
+       {
+          requireIndexRange("STC", startIdx, endIdx);
+          int guardStart = clampedStart("STC", startIdx, stcLookback(optInFastPeriod, optInSlowPeriod, optInCyclePeriod));
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("STC", "inReal", inReal, guardInLen);
+          requireLength("STC", "outReal", outReal, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = stcImpl(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInCyclePeriod, outBegIdx, outNBElement, outReal);
+          if( retCode != RetCode.SUCCESS ) {
+             throw failure("STC", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+    /**** Streaming API *****/
+
+       /**
+        * A live STC stream (unrelated to {@code java.util.stream}): one value per
+        * closed bar, bit-identical to {@link Core#stc} over the same series.
+        * Open with {@link Core#stcOpen}; there is no close — the handle is
+        * ordinary heap state, unreferenced handles are simply garbage-collected.
+        * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
+        * {@code value} and {@code clone} must not race with an {@code update} on
+        * the same handle. With no concurrent {@code update}, {@code peek}/
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
+        * <p>Not serializable by design: to checkpoint, retain the history and
+        * re-open — the result is bit-identical by contract.
+        */
+       public static final class StcStream {
+          private Core core;
+          private int optInFastPeriod;
+          private int optInSlowPeriod;
+          private int optInCyclePeriod;
+          private double prevFast;
+          private double prevSlow;
+          private double fastK;
+          private double slowK;
+          private double frac1;
+          private double frac2;
+          private double pf;
+          private double pff;
+          private double lineHi;
+          private double lineLo;
+          private double pfHi;
+          private double pfLo;
+          private int lastIdx;
+          private int lineRing_Idx;
+          private int pfRing_Idx;
+          private int maxIdx_lineRing;
+          private int lineSufHi_Idx;
+          private int maxIdx_lineSufHi;
+          private int lineSufLo_Idx;
+          private int maxIdx_lineSufLo;
+          private int maxIdx_pfRing;
+          private int pfSufHi_Idx;
+          private int maxIdx_pfSufHi;
+          private int pfSufLo_Idx;
+          private int maxIdx_pfSufLo;
+          private int cbSize_lineRing;
+          private double[] cb_lineRing;
+          private int cbSize_lineSufHi;
+          private double[] cb_lineSufHi;
+          private int cbSize_lineSufLo;
+          private double[] cb_lineSufLo;
+          private int cbSize_pfRing;
+          private double[] cb_pfRing;
+          private int cbSize_pfSufHi;
+          private double[] cb_pfSufHi;
+          private int cbSize_pfSufLo;
+          private double[] cb_pfSufLo;
+          private double cur_outReal;
+          private int outRangeBegIdx;
+          private int outRangeCount;
+
+          private StcStream( Core core ) { this.core = core; }
+
+          /**
+           * The bars this stream has an output for, in the input series'
+           * coordinates: {@code [begIdx, begIdx + count)}.
+           * <p>It is what {@link Core#stc} reports over the same bars: the
+           * opener sets it to {@code (lookback, historyLen - lookback)}, every
+           * accepted {@code update} adds one to the count — a rejected one
+           * changes nothing, and neither does {@code peek} — and
+           * {@code clone()} carries it verbatim. A plain
+           * {@code open} hands back only the last value, a subset of this range,
+           * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#INDEX_MAX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
+           */
+          public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
+
+          /**
+           * Count one bar this stream was not fed: {@link #outRange()} advances
+           * by one and nothing else moves — {@link #value()} keeps answering the previous
+           * output, which is this bar's output too.
+           * <p>For a bar the caller leaves out: one an {@code update} rejected
+           * and that will not be re-fed, or a session with no print. Without it
+           * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#INDEX_MAX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
+           */
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
+                throw failure("STC advance", RetCode.OUT_OF_RANGE_END_INDEX);
+             this.outRangeCount++;
+          }
+
+          private StcStream( StcStream other ) {
+             this.core = other.core;
+             this.optInFastPeriod = other.optInFastPeriod;
+             this.optInSlowPeriod = other.optInSlowPeriod;
+             this.optInCyclePeriod = other.optInCyclePeriod;
+             this.prevFast = other.prevFast;
+             this.prevSlow = other.prevSlow;
+             this.fastK = other.fastK;
+             this.slowK = other.slowK;
+             this.frac1 = other.frac1;
+             this.frac2 = other.frac2;
+             this.pf = other.pf;
+             this.pff = other.pff;
+             this.lineHi = other.lineHi;
+             this.lineLo = other.lineLo;
+             this.pfHi = other.pfHi;
+             this.pfLo = other.pfLo;
+             this.lastIdx = other.lastIdx;
+             this.lineRing_Idx = other.lineRing_Idx;
+             this.pfRing_Idx = other.pfRing_Idx;
+             this.maxIdx_lineRing = other.maxIdx_lineRing;
+             this.lineSufHi_Idx = other.lineSufHi_Idx;
+             this.maxIdx_lineSufHi = other.maxIdx_lineSufHi;
+             this.lineSufLo_Idx = other.lineSufLo_Idx;
+             this.maxIdx_lineSufLo = other.maxIdx_lineSufLo;
+             this.maxIdx_pfRing = other.maxIdx_pfRing;
+             this.pfSufHi_Idx = other.pfSufHi_Idx;
+             this.maxIdx_pfSufHi = other.maxIdx_pfSufHi;
+             this.pfSufLo_Idx = other.pfSufLo_Idx;
+             this.maxIdx_pfSufLo = other.maxIdx_pfSufLo;
+             this.cbSize_lineRing = other.cbSize_lineRing;
+             this.cb_lineRing = other.cb_lineRing.clone();
+             this.cbSize_lineSufHi = other.cbSize_lineSufHi;
+             this.cb_lineSufHi = other.cb_lineSufHi.clone();
+             this.cbSize_lineSufLo = other.cbSize_lineSufLo;
+             this.cb_lineSufLo = other.cb_lineSufLo.clone();
+             this.cbSize_pfRing = other.cbSize_pfRing;
+             this.cb_pfRing = other.cb_pfRing.clone();
+             this.cbSize_pfSufHi = other.cbSize_pfSufHi;
+             this.cb_pfSufHi = other.cb_pfSufHi.clone();
+             this.cbSize_pfSufLo = other.cbSize_pfSufLo;
+             this.cb_pfSufLo = other.cb_pfSufLo.clone();
+             this.cur_outReal = other.cur_outReal;
+             this.outRangeBegIdx = other.outRangeBegIdx;
+             this.outRangeCount = other.outRangeCount;
+          }
+
+          /**
+           * Commit one closed bar, returning the new current value.
+           * <p>Throws {@link IllegalArgumentException} if any bar value is not
+           * finite (NaN or an infinity). That check runs before anything is
+           * written, so nothing moves — {@link #outRange()} included — and
+           * {@link #value()} still answers the previous value. Re-feed the bar when a
+           * corrected value arrives, or call {@link #advance()} to count it and
+           * carry on; two handles on one feed drift a bar apart if neither
+           * happens.
+           * This is the one place the streaming tier is stricter than
+           * the batch API, which computes on whatever it is given: a handle
+           * retains its state, so a single non-finite bar would poison every
+           * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#INDEX_MAX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
+           */
+          public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
+                throw failure("STC update", RetCode.OUT_OF_RANGE_END_INDEX);
+             if( !Double.isFinite(inReal) )
+                throw nonFiniteBar("STC update", "inReal");
+             core.stcStepImpl(this, inReal);
+             this.outRangeCount++;
+             return this.cur_outReal;
+          }
+
+          /**
+           * Evaluate a forming bar without committing — bit-identical to what the
+           * next {@code update} with the same bar would return — the same
+           * transition, with every store it would make carried in a local instead.
+           * Never writes this handle, so peeks may run concurrently with each other.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
+           */
+          public double peek( double inReal ) {
+             if( !Double.isFinite(inReal) )
+                throw nonFiniteBar("STC peek", "inReal");
+             StcStream sp = this;
+             double tempReal = 0.0;
+             double lineValue = 0.0;
+             double lowest = 0.0;
+             double highest = 0.0;
+             double range = 0.0;
+             double sufHi = 0.0;
+             double sufLo = 0.0;
+             int i = 0;
+             double cur_outReal = 0.0;
+             double frac1 = sp.frac1;
+             double frac2 = sp.frac2;
+             double lineHi = sp.lineHi;
+             double lineLo = sp.lineLo;
+             int lineRing_Idx = sp.lineRing_Idx;
+             double pf = sp.pf;
+             double pfHi = sp.pfHi;
+             double pfLo = sp.pfLo;
+             int pfRing_Idx = sp.pfRing_Idx;
+             double pff = sp.pff;
+             double prevFast = sp.prevFast;
+             double prevSlow = sp.prevSlow;
+             int pkSlot0 = -1;
+             double pkVal0 = 0.0;
+             int pkSlot1 = -1;
+             double pkVal1 = 0.0;
+             tempReal = inReal;
+             prevFast = Math.fma(tempReal - prevFast, sp.fastK, prevFast);
+             prevSlow = Math.fma(tempReal - prevSlow, sp.slowK, prevSlow);
+             lineValue = prevFast - prevSlow;
+             pkSlot0 = lineRing_Idx;
+             pkVal0 = lineValue;
+             if( lineRing_Idx == 0 ) {
+                lineHi = lineValue;
+                lineLo = lineValue;
+             } else {
+                if( lineValue > lineHi ) {
+                   lineHi = lineValue;
+                }
+                if( lineValue < lineLo ) {
+                   lineLo = lineValue;
+                }
+             }
+             highest = lineHi;
+             lowest = lineLo;
+             if( lineRing_Idx < sp.lastIdx ) {
+                tempReal = sp.cb_lineSufHi[lineRing_Idx + 1];
+                if( tempReal > highest ) {
+                   highest = tempReal;
+                }
+                tempReal = sp.cb_lineSufLo[lineRing_Idx + 1];
+                if( tempReal < lowest ) {
+                   lowest = tempReal;
+                }
+             }
+             lineRing_Idx = lineRing_Idx + 1;
+             if( lineRing_Idx > sp.maxIdx_lineRing ) {
+                lineRing_Idx = 0;
+             }
+             if( lineRing_Idx == 0 ) {
+                sufHi = (sp.lastIdx != pkSlot0) ? sp.cb_lineRing[sp.lastIdx] : pkVal0;
+                sufLo = sufHi;
+                i = sp.lastIdx;
+                while( i > 0 ) {
+                   i -= 1;
+                   tempReal = (i != pkSlot0) ? sp.cb_lineRing[i] : pkVal0;
+                   if( tempReal > sufHi ) {
+                      sufHi = tempReal;
+                   }
+                   if( tempReal < sufLo ) {
+                      sufLo = tempReal;
+                   }
+                }
+             }
+             range = highest - lowest;
+             if( range > 0.0 ) {
+                frac1 = (lineValue - lowest) / range * 100.0;
+             }
+             pf = Math.fma(0.5, frac1 - pf, pf);
+             pkSlot1 = pfRing_Idx;
+             pkVal1 = pf;
+             if( pfRing_Idx == 0 ) {
+                pfHi = pf;
+                pfLo = pf;
+             } else {
+                if( pf > pfHi ) {
+                   pfHi = pf;
+                }
+                if( pf < pfLo ) {
+                   pfLo = pf;
+                }
+             }
+             highest = pfHi;
+             lowest = pfLo;
+             if( pfRing_Idx < sp.lastIdx ) {
+                tempReal = sp.cb_pfSufHi[pfRing_Idx + 1];
+                if( tempReal > highest ) {
+                   highest = tempReal;
+                }
+                tempReal = sp.cb_pfSufLo[pfRing_Idx + 1];
+                if( tempReal < lowest ) {
+                   lowest = tempReal;
+                }
+             }
+             pfRing_Idx = pfRing_Idx + 1;
+             if( pfRing_Idx > sp.maxIdx_pfRing ) {
+                pfRing_Idx = 0;
+             }
+             if( pfRing_Idx == 0 ) {
+                sufHi = (sp.lastIdx != pkSlot1) ? sp.cb_pfRing[sp.lastIdx] : pkVal1;
+                sufLo = sufHi;
+                i = sp.lastIdx;
+                while( i > 0 ) {
+                   i -= 1;
+                   tempReal = (i != pkSlot1) ? sp.cb_pfRing[i] : pkVal1;
+                   if( tempReal > sufHi ) {
+                      sufHi = tempReal;
+                   }
+                   if( tempReal < sufLo ) {
+                      sufLo = tempReal;
+                   }
+                }
+             }
+             range = highest - lowest;
+             if( range > 0.0 ) {
+                frac2 = (pf - lowest) / range * 100.0;
+             }
+             pff = Math.fma(0.5, frac2 - pff, pff);
+             cur_outReal = pff;
+             return cur_outReal;
+          }
+
+          /**
+           * The value at the last bar this stream counted — the bar
+           * {@link #outRange()} ends on. The last history bar right after open,
+           * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
+           */
+          public double value() {
+             return this.cur_outReal;
+          }
+
+          /**
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
+           */
+          @Override
+          public StcStream clone() {
+             return new StcStream(this);
+          }
+       }
+       private void stcStepImpl( StcStream sp, double inReal )
+       {
+          double tempReal = 0.0;
+          double lineValue = 0.0;
+          double lowest = 0.0;
+          double highest = 0.0;
+          double range = 0.0;
+          double sufHi = 0.0;
+          double sufLo = 0.0;
+          int i = 0;
+          tempReal = inReal;
+          sp.prevFast = Math.fma(tempReal - sp.prevFast, sp.fastK, sp.prevFast);
+          sp.prevSlow = Math.fma(tempReal - sp.prevSlow, sp.slowK, sp.prevSlow);
+          lineValue = sp.prevFast - sp.prevSlow;
+          sp.cb_lineRing[sp.lineRing_Idx] = lineValue;
+          if( sp.lineRing_Idx == 0 ) {
+             sp.lineHi = lineValue;
+             sp.lineLo = lineValue;
+          } else {
+             if( lineValue > sp.lineHi ) {
+                sp.lineHi = lineValue;
+             }
+             if( lineValue < sp.lineLo ) {
+                sp.lineLo = lineValue;
+             }
+          }
+          highest = sp.lineHi;
+          lowest = sp.lineLo;
+          if( sp.lineRing_Idx < sp.lastIdx ) {
+             tempReal = sp.cb_lineSufHi[sp.lineRing_Idx + 1];
+             if( tempReal > highest ) {
+                highest = tempReal;
+             }
+             tempReal = sp.cb_lineSufLo[sp.lineRing_Idx + 1];
+             if( tempReal < lowest ) {
+                lowest = tempReal;
+             }
+          }
+          sp.lineRing_Idx = sp.lineRing_Idx + 1;
+          if( sp.lineRing_Idx > sp.maxIdx_lineRing ) {
+             sp.lineRing_Idx = 0;
+          }
+          if( sp.lineRing_Idx == 0 ) {
+             sufHi = sp.cb_lineRing[sp.lastIdx];
+             sufLo = sufHi;
+             sp.cb_lineSufHi[sp.lastIdx] = sufHi;
+             sp.cb_lineSufLo[sp.lastIdx] = sufLo;
+             i = sp.lastIdx;
+             while( i > 0 ) {
+                i -= 1;
+                tempReal = sp.cb_lineRing[i];
+                if( tempReal > sufHi ) {
+                   sufHi = tempReal;
+                }
+                if( tempReal < sufLo ) {
+                   sufLo = tempReal;
+                }
+                sp.cb_lineSufHi[i] = sufHi;
+                sp.cb_lineSufLo[i] = sufLo;
+             }
+          }
+          range = highest - lowest;
+          if( range > 0.0 ) {
+             sp.frac1 = (lineValue - lowest) / range * 100.0;
+          }
+          sp.pf = Math.fma(0.5, sp.frac1 - sp.pf, sp.pf);
+          sp.cb_pfRing[sp.pfRing_Idx] = sp.pf;
+          if( sp.pfRing_Idx == 0 ) {
+             sp.pfHi = sp.pf;
+             sp.pfLo = sp.pf;
+          } else {
+             if( sp.pf > sp.pfHi ) {
+                sp.pfHi = sp.pf;
+             }
+             if( sp.pf < sp.pfLo ) {
+                sp.pfLo = sp.pf;
+             }
+          }
+          highest = sp.pfHi;
+          lowest = sp.pfLo;
+          if( sp.pfRing_Idx < sp.lastIdx ) {
+             tempReal = sp.cb_pfSufHi[sp.pfRing_Idx + 1];
+             if( tempReal > highest ) {
+                highest = tempReal;
+             }
+             tempReal = sp.cb_pfSufLo[sp.pfRing_Idx + 1];
+             if( tempReal < lowest ) {
+                lowest = tempReal;
+             }
+          }
+          sp.pfRing_Idx = sp.pfRing_Idx + 1;
+          if( sp.pfRing_Idx > sp.maxIdx_pfRing ) {
+             sp.pfRing_Idx = 0;
+          }
+          if( sp.pfRing_Idx == 0 ) {
+             sufHi = sp.cb_pfRing[sp.lastIdx];
+             sufLo = sufHi;
+             sp.cb_pfSufHi[sp.lastIdx] = sufHi;
+             sp.cb_pfSufLo[sp.lastIdx] = sufLo;
+             i = sp.lastIdx;
+             while( i > 0 ) {
+                i -= 1;
+                tempReal = sp.cb_pfRing[i];
+                if( tempReal > sufHi ) {
+                   sufHi = tempReal;
+                }
+                if( tempReal < sufLo ) {
+                   sufLo = tempReal;
+                }
+                sp.cb_pfSufHi[i] = sufHi;
+                sp.cb_pfSufLo[i] = sufLo;
+             }
+          }
+          range = highest - lowest;
+          if( range > 0.0 ) {
+             sp.frac2 = (sp.pf - lowest) / range * 100.0;
+          }
+          sp.pff = Math.fma(0.5, sp.frac2 - sp.pff, sp.pff);
+          sp.cur_outReal = sp.pff;
+       }
+       private RetCode stcOpenImpl( StcStream sp, double inReal[], int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInCyclePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+       {
+          double[] lineRing;
+          int lineRing_Idx = 0;
+          int maxIdx_lineRing = (30)-1;
+          double[] lineSufHi;
+          int lineSufHi_Idx = 0;
+          int maxIdx_lineSufHi = (30)-1;
+          double[] lineSufLo;
+          int lineSufLo_Idx = 0;
+          int maxIdx_lineSufLo = (30)-1;
+          double[] pfRing;
+          int pfRing_Idx = 0;
+          int maxIdx_pfRing = (30)-1;
+          double[] pfSufHi;
+          int pfSufHi_Idx = 0;
+          int maxIdx_pfSufHi = (30)-1;
+          double[] pfSufLo;
+          int pfSufLo_Idx = 0;
+          int maxIdx_pfSufLo = (30)-1;
+          double prevFast = 0;
+          double prevSlow = 0;
+          double fastK = 0;
+          double slowK = 0;
+          double tempReal = 0;
+          double lineValue = 0;
+          double lowest = 0;
+          double highest = 0;
+          double range = 0;
+          double frac1 = 0;
+          double frac2 = 0;
+          double pf = 0;
+          double pff = 0;
+          double lineHi = 0;
+          double lineLo = 0;
+          double pfHi = 0;
+          double pfLo = 0;
+          double sufHi = 0;
+          double sufLo = 0;
+          int i = 0;
+          int today = 0;
+          int lineStart = 0;
+          int outIdx = 0;
+          int tempInteger = 0;
+          int lookbackTotal = 0;
+          int lastIdx = 0;
+          int nLine = 0;
+          int nPF = 0;
+          int historyLen = inReal.length;
+          int endIdx = historyLen - 1;
+          if( historyLen < 1 ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX;
+          }
+          if( historyLen > INDEX_MAX + 1 ) {
+             return RetCode.OUT_OF_RANGE_END_INDEX;
+          }
+          if( optInFastPeriod == Integer.MIN_VALUE ) {
+             optInFastPeriod = 23;
+          } else if( optInFastPeriod < 2 || optInFastPeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInSlowPeriod == Integer.MIN_VALUE ) {
+             optInSlowPeriod = 50;
+          } else if( optInSlowPeriod < 2 || optInSlowPeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInCyclePeriod == Integer.MIN_VALUE ) {
+             optInCyclePeriod = 10;
+          } else if( optInCyclePeriod < 2 || optInCyclePeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.INSUFFICIENT_HISTORY;
+          }
+          if( optInSlowPeriod < optInFastPeriod ) {
+             tempInteger = optInSlowPeriod;
+             optInSlowPeriod = optInFastPeriod;
+             optInFastPeriod = tempInteger;
+          }
+          lookbackTotal = stcLookback(optInFastPeriod, optInSlowPeriod, optInCyclePeriod);
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.INSUFFICIENT_HISTORY ;
+          }
+          outBegIdx.value = startIdx;
+          fastK = 2.0 / (double)(optInFastPeriod + 1);
+          slowK = 2.0 / (double)(optInSlowPeriod + 1);
+          /* Rolling extrema, van Herk / Gil-Werman: the window ending in slot j is
+           * the current block's prefix extremum joined with the previous block's
+           * suffix extremum from slot j+1. The extrema are exact, so the output must
+           * stay bit-identical to a full rescan of each window.
+           */
+          if( optInCyclePeriod < 1 ) return RetCode.INTERNAL_ERROR;
+          lineRing = new double[optInCyclePeriod];
+          maxIdx_lineRing = (optInCyclePeriod)-1;
+          lineRing_Idx = 0;
+          if( optInCyclePeriod < 1 ) return RetCode.INTERNAL_ERROR;
+          lineSufHi = new double[optInCyclePeriod];
+          maxIdx_lineSufHi = (optInCyclePeriod)-1;
+          lineSufHi_Idx = 0;
+          if( optInCyclePeriod < 1 ) return RetCode.INTERNAL_ERROR;
+          lineSufLo = new double[optInCyclePeriod];
+          maxIdx_lineSufLo = (optInCyclePeriod)-1;
+          lineSufLo_Idx = 0;
+          if( optInCyclePeriod < 1 ) return RetCode.INTERNAL_ERROR;
+          pfRing = new double[optInCyclePeriod];
+          maxIdx_pfRing = (optInCyclePeriod)-1;
+          pfRing_Idx = 0;
+          if( optInCyclePeriod < 1 ) return RetCode.INTERNAL_ERROR;
+          pfSufHi = new double[optInCyclePeriod];
+          maxIdx_pfSufHi = (optInCyclePeriod)-1;
+          pfSufHi_Idx = 0;
+          if( optInCyclePeriod < 1 ) return RetCode.INTERNAL_ERROR;
+          pfSufLo = new double[optInCyclePeriod];
+          maxIdx_pfSufLo = (optInCyclePeriod)-1;
+          pfSufLo_Idx = 0;
+          lastIdx = optInCyclePeriod - 1;
+          /* The line is TA_MACD's: co-terminal SMA seeds, then both EMAs advanced
+           * through TA_FUNC_UNST_EMA to lineStart, so that from lineStart on it is
+           * TA_EMA(fast) - TA_EMA(slow) bit for bit. The chain is fed from
+           * lineStart, not from the EMA seed: TA_FUNC_UNST_EMA then reaches only the
+           * line, while TA_FUNC_UNST_STC moves the whole chain back and so warms the
+           * line and both smoothers.
+           */
+          lineStart = startIdx - (lookbackTotal - emaLookback(optInSlowPeriod));
+          today = startIdx - lookbackTotal;
+          tempReal = 0.0;
+          i = optInSlowPeriod - optInFastPeriod;
+          while( i-- > 0 ) {
+             tempReal += inReal[today++];
+          }
+          prevFast = 0.0;
+          i = optInFastPeriod;
+          while( i-- > 0 ) {
+             prevFast += inReal[today];
+             tempReal += inReal[today++];
+          }
+          prevSlow = tempReal / optInSlowPeriod;
+          prevFast = prevFast / optInFastPeriod;
+          while( today <= lineStart ) {
+             tempReal = inReal[today++];
+             prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+             prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+          }
+          /* A zero range holds the previous fraction (0.0 before any), and the test
+           * is exact: in a sustained trend PF saturates at 100 and the second
+           * range reaches exactly 0 while the output must stay at 100.
+           */
+          frac1 = 0.0;
+          frac2 = 0.0;
+          pf = 0.0;
+          pff = 0.0;
+          pfHi = 0.0;
+          pfLo = 0.0;
+          nPF = 0;
+          lineValue = prevFast - prevSlow;
+          lineRing[lineRing_Idx] = lineValue;
+          lineRing_Idx++;
+          if( lineRing_Idx > maxIdx_lineRing ) { lineRing_Idx = 0; }
+          lineHi = lineValue;
+          lineLo = lineValue;
+          nLine = 1;
+          /* Warm-up, through startIdx inclusive. Each stage starts once its
+           * window is full, and each smoother is seeded on its first input.
+           */
+          while( today <= startIdx ) {
+             tempReal = inReal[today];
+             prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+             prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+             lineValue = prevFast - prevSlow;
+             nLine = nLine + 1;
+             lineRing[lineRing_Idx] = lineValue;
+             if( lineRing_Idx == 0 ) {
+                lineHi = lineValue;
+                lineLo = lineValue;
+             } else {
+                if( lineValue > lineHi ) {
+                   lineHi = lineValue;
+                }
+                if( lineValue < lineLo ) {
+                   lineLo = lineValue;
+                }
+             }
+             highest = lineHi;
+             lowest = lineLo;
+             if( nLine >= optInCyclePeriod && lineRing_Idx < lastIdx ) {
+                tempReal = lineSufHi[lineRing_Idx + 1];
+                if( tempReal > highest ) {
+                   highest = tempReal;
+                }
+                tempReal = lineSufLo[lineRing_Idx + 1];
+                if( tempReal < lowest ) {
+                   lowest = tempReal;
+                }
+             }
+             lineRing_Idx++;
+             if( lineRing_Idx > maxIdx_lineRing ) { lineRing_Idx = 0; }
+             if( lineRing_Idx == 0 ) {
+                sufHi = lineRing[lastIdx];
+                sufLo = sufHi;
+                lineSufHi[lastIdx] = sufHi;
+                lineSufLo[lastIdx] = sufLo;
+                i = lastIdx;
+                while( i > 0 ) {
+                   i -= 1;
+                   tempReal = lineRing[i];
+                   if( tempReal > sufHi ) {
+                      sufHi = tempReal;
+                   }
+                   if( tempReal < sufLo ) {
+                      sufLo = tempReal;
+                   }
+                   lineSufHi[i] = sufHi;
+                   lineSufLo[i] = sufLo;
+                }
+             }
+             if( nLine >= optInCyclePeriod ) {
+                range = highest - lowest;
+                if( range > 0.0 ) {
+                   frac1 = (lineValue - lowest) / range * 100.0;
+                }
+                if( nPF == 0 ) {
+                   pf = frac1;
+                } else {
+                   pf = Math.fma(0.5, frac1 - pf, pf);
+                }
+                nPF = nPF + 1;
+                pfRing[pfRing_Idx] = pf;
+                if( pfRing_Idx == 0 ) {
+                   pfHi = pf;
+                   pfLo = pf;
+                } else {
+                   if( pf > pfHi ) {
+                      pfHi = pf;
+                   }
+                   if( pf < pfLo ) {
+                      pfLo = pf;
+                   }
+                }
+                highest = pfHi;
+                lowest = pfLo;
+                if( nPF >= optInCyclePeriod && pfRing_Idx < lastIdx ) {
+                   tempReal = pfSufHi[pfRing_Idx + 1];
+                   if( tempReal > highest ) {
+                      highest = tempReal;
+                   }
+                   tempReal = pfSufLo[pfRing_Idx + 1];
+                   if( tempReal < lowest ) {
+                      lowest = tempReal;
+                   }
+                }
+                pfRing_Idx++;
+                if( pfRing_Idx > maxIdx_pfRing ) { pfRing_Idx = 0; }
+                if( pfRing_Idx == 0 ) {
+                   sufHi = pfRing[lastIdx];
+                   sufLo = sufHi;
+                   pfSufHi[lastIdx] = sufHi;
+                   pfSufLo[lastIdx] = sufLo;
+                   i = lastIdx;
+                   while( i > 0 ) {
+                      i -= 1;
+                      tempReal = pfRing[i];
+                      if( tempReal > sufHi ) {
+                         sufHi = tempReal;
+                      }
+                      if( tempReal < sufLo ) {
+                         sufLo = tempReal;
+                      }
+                      pfSufHi[i] = sufHi;
+                      pfSufLo[i] = sufLo;
+                   }
+                }
+                if( nPF >= optInCyclePeriod ) {
+                   range = highest - lowest;
+                   if( range > 0.0 ) {
+                      frac2 = (pf - lowest) / range * 100.0;
+                   }
+                   if( nPF == optInCyclePeriod ) {
+                      pff = frac2;
+                   } else {
+                      pff = Math.fma(0.5, frac2 - pff, pff);
+                   }
+                }
+             }
+             today = today + 1;
+          }
+          outReal[0 * outStride] = pff;
+          outIdx = 1;
+          while( today <= endIdx ) {
+             tempReal = inReal[today];
+             prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
+             prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+             lineValue = prevFast - prevSlow;
+             lineRing[lineRing_Idx] = lineValue;
+             if( lineRing_Idx == 0 ) {
+                lineHi = lineValue;
+                lineLo = lineValue;
+             } else {
+                if( lineValue > lineHi ) {
+                   lineHi = lineValue;
+                }
+                if( lineValue < lineLo ) {
+                   lineLo = lineValue;
+                }
+             }
+             highest = lineHi;
+             lowest = lineLo;
+             if( lineRing_Idx < lastIdx ) {
+                tempReal = lineSufHi[lineRing_Idx + 1];
+                if( tempReal > highest ) {
+                   highest = tempReal;
+                }
+                tempReal = lineSufLo[lineRing_Idx + 1];
+                if( tempReal < lowest ) {
+                   lowest = tempReal;
+                }
+             }
+             lineRing_Idx++;
+             if( lineRing_Idx > maxIdx_lineRing ) { lineRing_Idx = 0; }
+             if( lineRing_Idx == 0 ) {
+                sufHi = lineRing[lastIdx];
+                sufLo = sufHi;
+                lineSufHi[lastIdx] = sufHi;
+                lineSufLo[lastIdx] = sufLo;
+                i = lastIdx;
+                while( i > 0 ) {
+                   i -= 1;
+                   tempReal = lineRing[i];
+                   if( tempReal > sufHi ) {
+                      sufHi = tempReal;
+                   }
+                   if( tempReal < sufLo ) {
+                      sufLo = tempReal;
+                   }
+                   lineSufHi[i] = sufHi;
+                   lineSufLo[i] = sufLo;
+                }
+             }
+             range = highest - lowest;
+             if( range > 0.0 ) {
+                frac1 = (lineValue - lowest) / range * 100.0;
+             }
+             pf = Math.fma(0.5, frac1 - pf, pf);
+             pfRing[pfRing_Idx] = pf;
+             if( pfRing_Idx == 0 ) {
+                pfHi = pf;
+                pfLo = pf;
+             } else {
+                if( pf > pfHi ) {
+                   pfHi = pf;
+                }
+                if( pf < pfLo ) {
+                   pfLo = pf;
+                }
+             }
+             highest = pfHi;
+             lowest = pfLo;
+             if( pfRing_Idx < lastIdx ) {
+                tempReal = pfSufHi[pfRing_Idx + 1];
+                if( tempReal > highest ) {
+                   highest = tempReal;
+                }
+                tempReal = pfSufLo[pfRing_Idx + 1];
+                if( tempReal < lowest ) {
+                   lowest = tempReal;
+                }
+             }
+             pfRing_Idx++;
+             if( pfRing_Idx > maxIdx_pfRing ) { pfRing_Idx = 0; }
+             if( pfRing_Idx == 0 ) {
+                sufHi = pfRing[lastIdx];
+                sufLo = sufHi;
+                pfSufHi[lastIdx] = sufHi;
+                pfSufLo[lastIdx] = sufLo;
+                i = lastIdx;
+                while( i > 0 ) {
+                   i -= 1;
+                   tempReal = pfRing[i];
+                   if( tempReal > sufHi ) {
+                      sufHi = tempReal;
+                   }
+                   if( tempReal < sufLo ) {
+                      sufLo = tempReal;
+                   }
+                   pfSufHi[i] = sufHi;
+                   pfSufLo[i] = sufLo;
+                }
+             }
+             range = highest - lowest;
+             if( range > 0.0 ) {
+                frac2 = (pf - lowest) / range * 100.0;
+             }
+             pff = Math.fma(0.5, frac2 - pff, pff);
+             outReal[outIdx++ * outStride] = pff;
+             today = today + 1;
+          }
+          outNBElement.value = outIdx;
+          /* Capture the live batch state into the handle. */
+          int capCb_lineRing = maxIdx_lineRing + 1;
+          if( capCb_lineRing > historyLen + 1 ) {
+             return RetCode.INTERNAL_ERROR;
+          }
+          int capCb_lineSufHi = maxIdx_lineSufHi + 1;
+          if( capCb_lineSufHi > historyLen + 1 ) {
+             return RetCode.INTERNAL_ERROR;
+          }
+          int capCb_lineSufLo = maxIdx_lineSufLo + 1;
+          if( capCb_lineSufLo > historyLen + 1 ) {
+             return RetCode.INTERNAL_ERROR;
+          }
+          int capCb_pfRing = maxIdx_pfRing + 1;
+          if( capCb_pfRing > historyLen + 1 ) {
+             return RetCode.INTERNAL_ERROR;
+          }
+          int capCb_pfSufHi = maxIdx_pfSufHi + 1;
+          if( capCb_pfSufHi > historyLen + 1 ) {
+             return RetCode.INTERNAL_ERROR;
+          }
+          int capCb_pfSufLo = maxIdx_pfSufLo + 1;
+          if( capCb_pfSufLo > historyLen + 1 ) {
+             return RetCode.INTERNAL_ERROR;
+          }
+          sp.optInFastPeriod = optInFastPeriod;
+          sp.optInSlowPeriod = optInSlowPeriod;
+          sp.optInCyclePeriod = optInCyclePeriod;
+          sp.prevFast = prevFast;
+          sp.prevSlow = prevSlow;
+          sp.fastK = fastK;
+          sp.slowK = slowK;
+          sp.frac1 = frac1;
+          sp.frac2 = frac2;
+          sp.pf = pf;
+          sp.pff = pff;
+          sp.lineHi = lineHi;
+          sp.lineLo = lineLo;
+          sp.pfHi = pfHi;
+          sp.pfLo = pfLo;
+          sp.lastIdx = lastIdx;
+          sp.lineRing_Idx = lineRing_Idx;
+          sp.pfRing_Idx = pfRing_Idx;
+          sp.maxIdx_lineRing = maxIdx_lineRing;
+          sp.lineSufHi_Idx = lineSufHi_Idx;
+          sp.maxIdx_lineSufHi = maxIdx_lineSufHi;
+          sp.lineSufLo_Idx = lineSufLo_Idx;
+          sp.maxIdx_lineSufLo = maxIdx_lineSufLo;
+          sp.maxIdx_pfRing = maxIdx_pfRing;
+          sp.pfSufHi_Idx = pfSufHi_Idx;
+          sp.maxIdx_pfSufHi = maxIdx_pfSufHi;
+          sp.pfSufLo_Idx = pfSufLo_Idx;
+          sp.maxIdx_pfSufLo = maxIdx_pfSufLo;
+          sp.cbSize_lineRing = capCb_lineRing;
+          sp.cb_lineRing = lineRing;
+          sp.cbSize_lineSufHi = capCb_lineSufHi;
+          sp.cb_lineSufHi = lineSufHi;
+          sp.cbSize_lineSufLo = capCb_lineSufLo;
+          sp.cb_lineSufLo = lineSufLo;
+          sp.cbSize_pfRing = capCb_pfRing;
+          sp.cb_pfRing = pfRing;
+          sp.cbSize_pfSufHi = capCb_pfSufHi;
+          sp.cb_pfSufHi = pfSufHi;
+          sp.cbSize_pfSufLo = capCb_pfSufLo;
+          sp.cb_pfSufLo = pfSufLo;
+          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
+          return RetCode.SUCCESS;
+       }
+       /* stcOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+       StcStream stcOpenAndFillInternal( double inReal[], int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInCyclePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+       {
+          StcStream sp = new StcStream(this);
+          RetCode retCode = stcOpenImpl(sp, inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInCyclePeriod, outBegIdx, outNBElement, outReal, 1);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.SUCCESS ) {
+             return sp;
+          }
+          if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
+             throw insufficientHistory("STC openAndFill", inReal.length, startIdx, stcLookback(optInFastPeriod, optInSlowPeriod, optInCyclePeriod));
+          }
+          throw streamFailure("STC openAndFill", retCode);
+       }
+       /* Internal startIdx-anchored open behind stcOpen (composition seam). */
+       StcStream stcOpenInternal( double inReal[], int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInCyclePeriod )
+       {
+          StcStream sp = new StcStream(this);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          double[] sink_outReal = new double[1];
+          RetCode retCode = stcOpenImpl(sp, inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInCyclePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.SUCCESS ) {
+             return sp;
+          }
+          if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
+             throw insufficientHistory("STC open", inReal.length, startIdx, stcLookback(optInFastPeriod, optInSlowPeriod, optInCyclePeriod));
+          }
+          throw streamFailure("STC open", retCode);
+       }
+       /**
+        * Open a live STC stream over the warm-up history; the handle's
+        * {@code value()} starts at the last history bar's value — bit-identical
+        * to {@link Core#stc} at that bar.
+        * <p>The history must hold at least {@code stcLookback(...) + 1} bars
+        * (unstable-period aware), or {@link InsufficientHistoryException} is
+        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+        * as in the batch API). An EMPTY history throws
+        * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+        * names no bar — and a null argument {@link IllegalArgumentException},
+        * both ahead of everything above.
+        */
+       public StcStream stcOpen( double inReal[], int optInFastPeriod, int optInSlowPeriod, int optInCyclePeriod )
+       {
+          requireArgument("STC open", "inReal", inReal);
+          requireHistory("STC open", inReal.length);
+          return stcOpenInternal(inReal, 0, optInFastPeriod, optInSlowPeriod, optInCyclePeriod);
+       }
+       /**
+        * {@link Core#stcOpen} that also fills the output array(s) bit-identically
+        * to {@link Core#stc} over the whole history in the same single pass
+        * (no separate batch call needed for the warm-up plot). Output arrays must
+        * not alias the inputs or each other, and must hold
+        * {@code historyLen - lookback} values — both checked before anything is
+        * written, so an undersized array is an {@link IllegalArgumentException}
+        * naming it rather than a fault from inside the fill.
+        * <p>The range written is on the returned handle:
+        * {@link StcStream#outRange()}.
+        */
+       public StcStream stcOpenAndFill( double inReal[], int optInFastPeriod, int optInSlowPeriod, int optInCyclePeriod, double outReal[] )
+       {
+          requireArgument("STC openAndFill", "inReal", inReal);
+          requireHistory("STC openAndFill", inReal.length);
+          int guardOutLen = openFillCount("STC openAndFill", inReal.length, stcLookback(optInFastPeriod, optInSlowPeriod, optInCyclePeriod));
+          requireLength("STC openAndFill", "outReal", outReal, guardOutLen);
+          if( (Object)outReal == (Object)inReal ) {
+             throw streamFailure("STC openAndFill", RetCode.BAD_PARAM);
+          }
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          return stcOpenAndFillInternal(inReal, 0, optInFastPeriod, optInSlowPeriod, optInCyclePeriod, outBegIdx, outNBElement, outReal);
+       }
     /* List of contributors:
      *
      *  Initial  Name/description
@@ -203362,7 +205379,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "7d6b3fe01d4964bf";
+    static final String SPLICED_GENCODE_DIGEST = "66d3139356548c7d";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];
@@ -204290,6 +206307,10 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{  },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("STC", new AbsFunc("STC", "Momentum Indicators", "Schaff Trend Cycle", 167772160,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{ new AbsOpt(2,"optInFastPeriod",0,"Fast Period","Period of the fast EMA",23.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInSlowPeriod",0,"Slow Period","Period of the slow EMA",50.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInCyclePeriod",0,"Cycle Period","Window of both stochastic stages",10.0, 0,0,0,0,0,0, 2,100000,2,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("STDDEV", new AbsFunc("STDDEV", "Statistic Functions", "Standard Deviation", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",5.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(0,"optInNbDev",0,"Deviations","Nb of deviations",1.0, -3e37,3e37,2,-2.0,2.0,0.2, 0,0,0,0,0, null) },
@@ -204705,6 +206726,7 @@ public class TaCodegenServe {
         "TA_SMA",
         "TA_SMI",
         "TA_SQRT",
+        "TA_STC",
         "TA_STDDEV",
         "TA_STOCH",
         "TA_STOCHF",
@@ -204931,35 +206953,36 @@ public class TaCodegenServe {
             case 188: return handle_SMA(json);
             case 189: return handle_SMI(json);
             case 190: return handle_SQRT(json);
-            case 191: return handle_STDDEV(json);
-            case 192: return handle_STOCH(json);
-            case 193: return handle_STOCHF(json);
-            case 194: return handle_STOCHRSI(json);
-            case 195: return handle_SUB(json);
-            case 196: return handle_SUM(json);
-            case 197: return handle_SUPERTREND(json);
-            case 198: return handle_T3(json);
-            case 199: return handle_TAN(json);
-            case 200: return handle_TANH(json);
-            case 201: return handle_TEMA(json);
-            case 202: return handle_TRANGE(json);
-            case 203: return handle_TRIMA(json);
-            case 204: return handle_TRIX(json);
-            case 205: return handle_TSF(json);
-            case 206: return handle_TSI(json);
-            case 207: return handle_TYPPRICE(json);
-            case 208: return handle_ULTOSC(json);
-            case 209: return handle_VAR(json);
-            case 210: return handle_VHF(json);
-            case 211: return handle_VIDYA(json);
-            case 212: return handle_VORTEX(json);
-            case 213: return handle_VWAP(json);
-            case 214: return handle_VWMA(json);
-            case 215: return handle_WAD(json);
-            case 216: return handle_WCLPRICE(json);
-            case 217: return handle_WILLR(json);
-            case 218: return handle_WMA(json);
-            case 219: return handle_ZLEMA(json);
+            case 191: return handle_STC(json);
+            case 192: return handle_STDDEV(json);
+            case 193: return handle_STOCH(json);
+            case 194: return handle_STOCHF(json);
+            case 195: return handle_STOCHRSI(json);
+            case 196: return handle_SUB(json);
+            case 197: return handle_SUM(json);
+            case 198: return handle_SUPERTREND(json);
+            case 199: return handle_T3(json);
+            case 200: return handle_TAN(json);
+            case 201: return handle_TANH(json);
+            case 202: return handle_TEMA(json);
+            case 203: return handle_TRANGE(json);
+            case 204: return handle_TRIMA(json);
+            case 205: return handle_TRIX(json);
+            case 206: return handle_TSF(json);
+            case 207: return handle_TSI(json);
+            case 208: return handle_TYPPRICE(json);
+            case 209: return handle_ULTOSC(json);
+            case 210: return handle_VAR(json);
+            case 211: return handle_VHF(json);
+            case 212: return handle_VIDYA(json);
+            case 213: return handle_VORTEX(json);
+            case 214: return handle_VWAP(json);
+            case 215: return handle_VWMA(json);
+            case 216: return handle_WAD(json);
+            case 217: return handle_WCLPRICE(json);
+            case 218: return handle_WILLR(json);
+            case 219: return handle_WMA(json);
+            case 220: return handle_ZLEMA(json);
             default: return null;
         }
     }
@@ -235204,6 +237227,156 @@ public class TaCodegenServe {
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         rideSqrt(core, json, endIdx, inReal, sb);
+        sb.append("}");
+        return sb.toString();
+    }
+
+    static String handle_STC(String json) {
+        int startIdx = jsonInt(json, "startIdx");
+        int endIdx = jsonInt(json, "endIdx");
+        int use_preloaded = jsonInt(json, "use_preloaded");
+        int bench_iters = jsonInt(json, "iters");
+        if (bench_iters < 1) bench_iters = 1;
+        double[] inReal;
+        if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
+            System.arraycopy(refClose, 0, inReal, 0, refN);
+        } else {
+            inReal = jsonDoubleArray(json, "inReal");
+        }
+        boolean _optRejected = false;
+        int optInFastPeriod = jsonInt(json, "optInFastPeriod");
+        int optInSlowPeriod = jsonInt(json, "optInSlowPeriod");
+        int optInCyclePeriod = jsonInt(json, "optInCyclePeriod");
+        core.unstablePeriod[30] = jsonInt(json, "unstablePeriod");
+        // The output buffers are sized to the count the call actually PRODUCES --
+        // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
+        // never below one. Not to the width of the requested range: that is the bound the
+        // managed backends check and the Rust asserts state, and at the range width it was
+        // slack by exactly the lookback, so no call could ever approach it.
+        // The pad is there because a bound is a MINIMUM, never an equality. A caller
+        // re-using a pre-allocated buffer passes a larger one, and that is not an error --
+        // the reported OutRange is what says which part was written. So the harness sends
+        // both: the startIdx axis sends no pad (the bound is reachable) while the
+        // full-range value comparison sends one (slack is legal). Sizing every call one way
+        // would silently drop the other property.
+        // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
+        // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
+        // for a range shorter than the lookback, where the output bound switches off and
+        // the spec says any length will do, including none. It does not: two EMPTY output
+        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
+        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
+        // accepted by C and Java -- a four-way divergence on a call the specification says
+        // all four accept. Sizing to zero here would reach it on every multi-output
+        // function, which is a semantic question, not a harness one. Recorded as
+        // error-handling-spec, open item 11.
+        // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
+        // sizes and cannot make the check, so an exact buffer would test nothing there.
+        int _lb = core.stcLookback(optInFastPeriod, optInSlowPeriod, optInCyclePeriod);
+        int _cs = startIdx > _lb ? startIdx : _lb;
+        int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
+        double[] outArr0 = new double[_outLen];
+        MInteger outBegIdx = new MInteger();
+        MInteger outNBElement = new MInteger();
+        RetCode rc = RetCode.SUCCESS;
+        int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        long startNs = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+        if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                rc = core.stcImpl(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInCyclePeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        } else {
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _pr = core.stc(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInCyclePeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.SUCCESS;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        }
+        }
+        else if (_optRejected) { rc = RetCode.BAD_PARAM; }
+        else { try {
+            if (bench_mode == 1) {
+                core.stcOpen(_warm_inReal, optInFastPeriod, optInSlowPeriod, optInCyclePeriod);
+            } else {
+                Core.StcStream _wh = core.stcOpenAndFill(_warm_inReal, optInFastPeriod, optInSlowPeriod, optInCyclePeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
+            }
+            rc = RetCode.SUCCESS;
+        } catch (RuntimeException _e) { rc = _e instanceof TALibFailure ? ((TALibFailure)_e).retCode() : RetCode.BAD_PARAM; } }
+        }
+        long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _fr = core.stc(startIdx, endIdx, f_inReal, optInFastPeriod, optInSlowPeriod, optInCyclePeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.SUCCESS;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+            usedFloat = 1;
+        }
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            StringBuilder hb = new StringBuilder();
+            hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            rideStc(core, json, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInCyclePeriod, hb);
+            hb.append("}");
+            return hb.toString();
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"retCode\":").append(rc.toInt());
+        sb.append(",\"outBegIdx\":").append(outBegIdx.value);
+        sb.append(",\"outNBElement\":").append(outNBElement.value);
+        sb.append(",\"out_len\":").append(_outLen);
+        sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
+        sb.append(",\"timing_ns\":").append(elapsedNs);
+        rideStc(core, json, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInCyclePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -271453,6 +273626,173 @@ public class TaCodegenServe {
         return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
+    static String sv_STC(String json) {
+        int svShape = jsonInt(json, "gen_shape");
+        int svSeed = jsonInt(json, "gen_seed");
+        int svN = jsonInt(json, "gen_n");
+        if (svN < 2) svN = 2;
+        if (svN > 256) svN = 256;
+        int svK = jsonInt(json, "unstablePeriod");
+        int optInFastPeriod = json.contains("\"optInFastPeriod\"") ? jsonInt(json, "optInFastPeriod") : 23;
+        int optInSlowPeriod = json.contains("\"optInSlowPeriod\"") ? jsonInt(json, "optInSlowPeriod") : 50;
+        int optInCyclePeriod = json.contains("\"optInCyclePeriod\"") ? jsonInt(json, "optInCyclePeriod") : 10;
+        double[] fz_o = new double[svN];
+        double[] fz_h = new double[svN];
+        double[] fz_l = new double[svN];
+        double[] fz_c = new double[svN];
+        double[] fz_v = new double[svN];
+        double[] fz_oi = new double[svN];
+        FuzzData.fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
+        double[] b0 = new double[svN];
+        long legs = 0;
+        boolean allOk = true;
+        boolean peekAll = true;
+        long peekReps = 0;
+        long peekRejects = 0;
+        boolean peekRepAll = true;
+        int fillChecked = 0;
+        boolean fillOk = true;
+        MInteger beg = new MInteger();
+        MInteger nb = new MInteger();
+        String diag = "";
+        int rangeChecked = 0;
+        boolean rangeOk = true;
+        long rangeLegs = 0;
+        int rangeSites = 0;
+        long[] zsign = { 0 };
+        int rounds = 1;
+        for (int rd = 0; rd < rounds; rd++) {
+            Core c2 = new Core();
+            c2.unstablePeriod[30] = svK;
+            c2.unstablePeriod[5] = svK;
+            RetCode rc;
+            try { rc = c2.stcImpl(0, svN - 1, fz_c, optInFastPeriod, optInSlowPeriod, optInCyclePeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
+            int lb = c2.stcLookback(optInFastPeriod, optInSlowPeriod, optInCyclePeriod);
+            if (rc != RetCode.SUCCESS || nb.value == 0) {
+                boolean openRejects;
+                try { c2.stcOpen(fz_c, optInFastPeriod, optInSlowPeriod, optInCyclePeriod); openRejects = false; } catch (IllegalArgumentException _e) { openRejects = true; }
+                return "{\"retCode\":" + rc.toInt() + ",\"legs\":0,\"nb\":" + nb.value + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
+            }
+            fillChecked = 1;
+            try {
+                double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                Core.StcStream _fh = c2.stcOpenAndFill(fz_c, optInFastPeriod, optInSlowPeriod, optInCyclePeriod, f0);
+                OutRange _fr = _fh.outRange();
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
+                else {
+                    for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
+                }
+                try { c2.stcOpenAndFill(fz_c, optInFastPeriod, optInSlowPeriod, optInCyclePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
+            } catch (IllegalArgumentException _e) { fillOk = false; }
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
+            java.util.Arrays.sort(pcs);
+            int prevP = -1;
+            for (int pi = 0; pi < pcs.length; pi++) {
+                int p = pcs[pi];
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
+                prevP = p;
+                Core.StcStream st;
+                try { st = c2.stcOpen(java.util.Arrays.copyOf(fz_c, p), optInFastPeriod, optInSlowPeriod, optInCyclePeriod); }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
+                legs++;
+                if (svXtierNe(st.value(), b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                for (int t = p; t < svN; t++) {
+                    boolean pkTook = true;
+                    double pk = 0;
+                    try { pk = st.peek(fz_c[t]); } catch (IllegalArgumentException _e) { pkTook = false; peekRejects++; }
+                    if (t % 7 == 0) {
+                        boolean rpTook = pkTook;
+                        try { st.peek(fz_c[t - 1]); } catch (IllegalArgumentException _e) { peekRejects++; }
+                        double rp = 0;
+                        try { rp = st.peek(fz_c[t]); } catch (IllegalArgumentException _e) { rpTook = false; }
+                        if (rpTook) {
+                            peekReps++;
+                            if (svBne(rp, pk)) peekRepAll = false;
+                        } else { peekRejects++; }
+                    }
+                    double up = st.update(fz_c[t]);
+                    if (pkTook && svBne(pk, up)) peekAll = false;
+                    try { st.peek(fz_c[t - 1]); } catch (IllegalArgumentException _e) { peekRejects++; }
+                    if (svBne(st.value(), up)) allOk = false;
+                    if (svXtierNe(up, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up)) + "\""; }
+                }
+                if (allOk) {
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
+                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
+                    rangeLegs++; rangeSites |= 16;
+                    st.advance();
+                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value + 1) rangeOk = false;
+                }
+            }
+            {
+                int p0 = lb + 1;
+                if (p0 <= svN - 1) {
+                    try {
+                        Core.StcStream sA = c2.stcOpen(java.util.Arrays.copyOf(fz_c, p0), optInFastPeriod, optInSlowPeriod, optInCyclePeriod);
+                        int mid = (p0 + svN) / 2;
+                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        Core.StcStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        for (int t = mid; t < svN; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        if (allOk) {
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 8;
+                            if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                        }
+                    } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
+                }
+            }
+            if (lb >= 1 && lb < svN) {
+                try { c2.stcOpen(java.util.Arrays.copyOf(fz_c, lb), optInFastPeriod, optInSlowPeriod, optInCyclePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
+                catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.stcOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInFastPeriod, optInSlowPeriod, optInCyclePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
+            }
+            try {
+                Core.StcStream sD = c2.stcOpen(fz_c, Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE);
+                Core.StcStream sE = c2.stcOpen(fz_c, 23, 50, 10);
+                if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+            } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.stcImpl(Sidx, svN - 1, fz_c, optInFastPeriod, optInSlowPeriod, optInCyclePeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rcS = ((TALibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.SUCCESS && nbS.value > 0) {
+                        try {
+                            Core.StcStream stA = c2.stcOpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx, optInFastPeriod, optInSlowPeriod, optInCyclePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
+        }
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign[0] + diag + "}";
+    }
+
     static String sv_STDDEV(String json) {
         int svShape = jsonInt(json, "gen_shape");
         int svSeed = jsonInt(json, "gen_seed");
@@ -276542,6 +278882,7 @@ public class TaCodegenServe {
         case "TA_SMA": return sv_SMA(json);
         case "TA_SMI": return sv_SMI(json);
         case "TA_SQRT": return sv_SQRT(json);
+        case "TA_STC": return sv_STC(json);
         case "TA_STDDEV": return sv_STDDEV(json);
         case "TA_STOCH": return sv_STOCH(json);
         case "TA_STOCHF": return sv_STOCHF(json);
@@ -295856,6 +298197,105 @@ public class TaCodegenServe {
             double[] fb0 = new double[m];
             try {
                 Core.SqrtStream st2 = core.sqrtOpenAndFill(java.util.Arrays.copyOf(inReal, m), fb0);
+                if (st2.outRange().begIdx() != beg || st2.outRange().count() != nb) { r.ok = false; r.leg = 2; }
+                if (r.ok) {
+                    for (int k = 0; k < nb; k++) {
+                        boolean cmp = true;
+                        if (cmp && svXtierNe(rb0[k], fb0[k], r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[k]); r.stream = Double.doubleToRawLongBits(fb0[k]); }
+                        if (cmp) r.fillBars++;
+                        if (!cmp) { r.ok = false; r.leg = 2; r.bar = beg + k; break; }
+                    }
+                }
+            } catch (RuntimeException _e) { r.ok = false; r.leg = 2; }
+        }
+
+        if (r.ok) {
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
+            rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
+        }
+    }
+
+    static void rideStc(Core core, String json, int endIdx, double[] inReal, int optInFastPeriod, int optInSlowPeriod, int optInCyclePeriod, StringBuilder sb) {
+        if (!rideGate(json)) return;
+        RideResult r = new RideResult();
+        rideBodyStc(core, json, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInCyclePeriod, r);
+        r.emit(sb);
+    }
+
+    @SuppressWarnings("unused")
+    static void rideBodyStc(Core core, String json, int endIdx, double[] inReal, int optInFastPeriod, int optInSlowPeriod, int optInCyclePeriod, RideResult r) {
+        try { r.lb = core.stcLookback(optInFastPeriod, optInSlowPeriod, optInCyclePeriod); } catch (RuntimeException _e) { r.lb = -1; }
+        int lb = r.lb;
+        int navail = endIdx + 1;
+        if (inReal.length < navail) navail = inReal.length;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
+        if (m > navail) m = navail;
+        r.m = m;
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
+        if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
+
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_STC");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInFastPeriod);
+        hash = rideMix(hash, optInSlowPeriod);
+        hash = rideMix(hash, optInCyclePeriod);
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
+            r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
+        }
+
+        double[] rb0 = new double[m];
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
+        try { OutRange _rr = core.stc(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInFastPeriod, optInSlowPeriod, optInCyclePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.stcOpen(java.util.Arrays.copyOf(inReal, m), optInFastPeriod, optInSlowPeriod, optInCyclePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.stcOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInFastPeriod, optInSlowPeriod, optInCyclePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
+        if (nb == 0) { r.skip = 5; return; }
+        if (beg != lb) { r.skip = 6; return; }
+
+        try {
+            boolean cmp;
+            Core.StcStream st = core.stcOpen(java.util.Arrays.copyOf(inReal, lb + 1), optInFastPeriod, optInSlowPeriod, optInCyclePeriod);
+            double uv = st.value();
+            cmp = true;
+            if (cmp && svXtierNe(rb0[lb - beg], uv, r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[lb - beg]); r.stream = Double.doubleToRawLongBits(uv); }
+            if (cmp) r.openBars++;
+            if (!cmp) { r.ok = false; r.leg = 1; r.bar = lb; }
+            for (int t = lb + 1; r.ok && t < m; t++) {
+                double uv2 = st.update(inReal[t]);
+                uv = uv2;
+                cmp = true;
+                if (cmp && svXtierNe(rb0[t - beg], uv, r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[t - beg]); r.stream = Double.doubleToRawLongBits(uv); }
+                if (cmp) r.openBars++;
+                if (!cmp) { r.ok = false; r.leg = 1; r.bar = t; }
+            }
+        } catch (RuntimeException _e) { r.ok = false; r.leg = 1; }
+
+        if (r.ok) {
+            double[] fb0 = new double[m];
+            try {
+                Core.StcStream st2 = core.stcOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInFastPeriod, optInSlowPeriod, optInCyclePeriod, fb0);
                 if (st2.outRange().begIdx() != beg || st2.outRange().count() != nb) { r.ok = false; r.leg = 2; }
                 if (r.ok) {
                     for (int k = 0; k < nb; k++) {

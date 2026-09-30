@@ -18,7 +18,7 @@
 # Written by `ta_codegen generate`. Do not renumber by hand -- the number is
 # the only thing a bug report carries, and it has to mean the same guard in the
 # next release as it did in the last.
-next: 462
+next: 474
 sites:
   AC.cbsize.oscBuffer: 184
   AC.circbuf.oscBuffer: 181
@@ -277,6 +277,18 @@ sites:
   RVOL.ringcap.trailingIdx: 408
   SMA.ringcap.trailingIdx: 383
   SMI.extrema: 384
+  STC.cbsize.lineRing: 468
+  STC.cbsize.lineSufHi: 469
+  STC.cbsize.lineSufLo: 470
+  STC.cbsize.pfRing: 471
+  STC.cbsize.pfSufHi: 472
+  STC.cbsize.pfSufLo: 473
+  STC.circbuf.lineRing: 462
+  STC.circbuf.lineSufHi: 463
+  STC.circbuf.lineSufLo: 464
+  STC.circbuf.pfRing: 465
+  STC.circbuf.pfSufHi: 466
+  STC.circbuf.pfSufLo: 467
   STOCH.extrema: 385
   STOCHF.extrema: 386
   SUM.ringcap.trailingIdx: 387

@@ -189,6 +189,7 @@ SINH                Vector Trigonometric Sinh
 SMA                 Simple Moving Average
 SMI                 Stochastic Momentum Index
 SQRT                Vector Square Root
+STC                 Schaff Trend Cycle
 STDDEV              Standard Deviation
 STOCH               Stochastic
 STOCHF              Stochastic Fast

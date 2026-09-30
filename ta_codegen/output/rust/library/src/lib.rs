@@ -176,7 +176,7 @@
 //! * [`TAN`](Core::tan) — Vector Trigonometric Tan
 //! * [`TANH`](Core::tanh) — Vector Trigonometric Tanh
 //!
-//! ## Momentum Indicators (56)
+//! ## Momentum Indicators (57)
 //!
 //! * [`AC`](Core::ac) — Accelerator/Decelerator Oscillator
 //! * [`ADX`](Core::adx) — Average Directional Movement Index
@@ -224,6 +224,7 @@
 //! * [`RSI`](Core::rsi) — Relative Strength Index
 //! * [`SI`](Core::si) — Wilder Swing Index
 //! * [`SMI`](Core::smi) — Stochastic Momentum Index
+//! * [`STC`](Core::stc) — Schaff Trend Cycle
 //! * [`STOCH`](Core::stoch) — Stochastic
 //! * [`STOCHF`](Core::stochf) — Stochastic Fast
 //! * [`STOCHRSI`](Core::stochrsi) — Stochastic Relative Strength Index

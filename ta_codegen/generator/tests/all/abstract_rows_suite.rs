@@ -56,6 +56,7 @@ fn abstract_rows_unstable_period_set_is_exactly_the_declared_ids() {
         ("FRAMA", 27),
         ("MCGD", 28),
         ("VIDYA", 29),
+        ("STC", 30),
     ];
 
     let rows = all_abstract_rows();

@@ -8116,6 +8116,51 @@ static TA_RetCode TA_SQRT_VFrameS( int startIdx, int endIdx,
 static const TA_VInputKind TA_VIn_SQRT[] = { TA_VIN_REAL };
 static const int TA_VOutIsInt_SQRT[] = { 0 };
 
+static TA_RetCode TA_STC_VFrameD( int startIdx, int endIdx,
+                  const double *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_STC(
+               startIdx,
+               endIdx,
+               in[0] /* inReal */,
+               (int)optIn[0] /* optInFastPeriod */,
+               (int)optIn[1] /* optInSlowPeriod */,
+               (int)optIn[2] /* optInCyclePeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_STC_VFrameS( int startIdx, int endIdx,
+                  const float *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_S_STC(
+               startIdx,
+               endIdx,
+               in[0] /* inReal */,
+               (int)optIn[0] /* optInFastPeriod */,
+               (int)optIn[1] /* optInSlowPeriod */,
+               (int)optIn[2] /* optInCyclePeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+
+static const TA_VInputKind TA_VIn_STC[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_STC[] = { 0 };
+static const TA_VOptSpec TA_VOpt_STC[] = {
+   { "optInFastPeriod", TA_VOPT_INT, 2.0, 100000.0, 23.0 },
+   { "optInSlowPeriod", TA_VOPT_INT, 2.0, 100000.0, 50.0 },
+   { "optInCyclePeriod", TA_VOPT_INT, 2.0, 100000.0, 10.0 },
+};
+
 static TA_RetCode TA_STDDEV_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -9715,6 +9760,8 @@ static const TA_VariantEntry TA_VariantTable[] = {
      3, TA_VIn_SMI, 4, TA_VOpt_SMI, 2, TA_VOutIsInt_SMI, 0 },
    { "SQRT", TA_SQRT_VFrameD, TA_SQRT_VFrameS,
      1, TA_VIn_SQRT, 0, NULL, 1, TA_VOutIsInt_SQRT, 0 },
+   { "STC", TA_STC_VFrameD, TA_STC_VFrameS,
+     1, TA_VIn_STC, 3, TA_VOpt_STC, 1, TA_VOutIsInt_STC, 0 },
    { "STDDEV", TA_STDDEV_VFrameD, TA_STDDEV_VFrameS,
      1, TA_VIn_STDDEV, 2, TA_VOpt_STDDEV, 1, TA_VOutIsInt_STDDEV, 0 },
    { "STOCH", TA_STOCH_VFrameD, TA_STOCH_VFrameS,
@@ -9775,6 +9822,6 @@ static const TA_VariantEntry TA_VariantTable[] = {
      1, TA_VIn_ZLEMA, 1, TA_VOpt_ZLEMA, 1, TA_VOutIsInt_ZLEMA, 0 },
 };
 
-#define TA_VARIANT_TABLE_SIZE 220
+#define TA_VARIANT_TABLE_SIZE 221
 
 #endif /* TA_VARIANT_FRAME_H */

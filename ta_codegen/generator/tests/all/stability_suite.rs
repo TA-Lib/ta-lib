@@ -49,6 +49,7 @@ fn load() -> Vec<FuncDef> {
 /// KC is the only one with TWO sources (EMA for its centre line, ATR for its band), and it
 /// shares the ATR one with SUPERTREND -- which inherits it through `atr_lookback()` alone,
 /// with no call to `atr()` in the body at all.
+/// STC is the one row that also declares an id of its own.
 const INHERITED: &[(&str, &str)] = &[
     ("ADOSC", "EMA"),
     ("ADXR", "ADX"),
@@ -62,6 +63,7 @@ const INHERITED: &[(&str, &str)] = &[
     ("MASSI", "EMA"),
     ("RVIR", "RVI"),
     ("SMI", "EMA"),
+    ("STC", "EMA"),
     ("STOCHRSI", "RSI"),
     ("SUPERTREND", "ATR"),
     ("TEMA", "EMA"),
@@ -90,7 +92,7 @@ fn classification_matches_the_measured_library() {
         .filter(|f| f.flags.iter().any(|x| x == "unstable_period"))
         .map(|f| f.name.as_str())
         .collect();
-    assert_eq!(declared.len(), 26, "the measured set of self-declaring functions is 26");
+    assert_eq!(declared.len(), 27, "the measured set of self-declaring functions is 27");
     for f in &funcs {
         assert_eq!(
             st[&f.name].intrinsic,
@@ -135,6 +137,9 @@ fn classification_matches_the_measured_library() {
             "KC must inherit from both EMA and ATR, got {kc:?}"
         );
     }
+
+    // Owning an id must not shadow an inherited one: ta_regtest sweeps only the ids it is given.
+    assert_eq!(st["STC"].inherited_from, ["EMA"], "STC also inherits EMA's period");
 
     // SAR is the regression this analysis was narrowed for: it calls MINUS_DM (which owns
     // an unstable period) with a literal period of 1, so it inherits nothing.

@@ -4,7 +4,7 @@ format 9
 soname libta-lib.so.1
 version-info 3:0:2
 headers ta_abstract.h ta_common.h ta_defs.h ta_func.h ta_libc.h
-function-count 2679
+function-count 2691
 platform pointer=8 long=8 int=4 enum=4
 type TA_FuncInfo sizeof=48 name:const_char_*=0 group:const_char_*=8 hint:const_char_*=16 flags:TA_FuncFlags=24 nbInput:unsigned_int=28 nbOptInput:unsigned_int=32 nbOutput:unsigned_int=36 handle:const_TA_FuncHandle_*=40
 type TA_InputParameterInfo sizeof=24 type:TA_InputParameterType=0 paramName:const_char_*=8 flags:TA_InputFlags=16
@@ -66,6 +66,7 @@ enum TA_FuncUnstId TA_FUNC_UNST_RVI = 26
 enum TA_FuncUnstId TA_FUNC_UNST_FRAMA = 27
 enum TA_FuncUnstId TA_FUNC_UNST_MCGD = 28
 enum TA_FuncUnstId TA_FUNC_UNST_VIDYA = 29
+enum TA_FuncUnstId TA_FUNC_UNST_STC = 30
 enum TA_FuncUnstId TA_FUNC_UNST_ALL = 65535
 enum TA_InputParameterType sizeof=4
 enum TA_InputParameterType TA_Input_Price = 0
@@ -2104,6 +2105,16 @@ function TA_RetCode TA_SQRT_OutRange(const TA_SQRT_Stream *, int *, int *)
 function TA_RetCode TA_SQRT_Peek(const TA_SQRT_Stream *, double, double *)
 function TA_RetCode TA_SQRT_Update(TA_SQRT_Stream *, double, double *)
 function TA_RetCode TA_SQRT_Value(const TA_SQRT_Stream *, double *)
+function TA_RetCode TA_STC(int, int, const double *, int, int, int, int *, int *, double *)
+function TA_RetCode TA_STC_Advance(TA_STC_Stream *)
+function TA_RetCode TA_STC_Clone(const TA_STC_Stream *, TA_STC_Stream **)
+function TA_RetCode TA_STC_Close(TA_STC_Stream *)
+function TA_RetCode TA_STC_Open(TA_STC_Stream **, const double *, int, int, int, int, double *)
+function TA_RetCode TA_STC_OpenAndFill(TA_STC_Stream **, const double *, int, int, int, int, int *, int *, double *)
+function TA_RetCode TA_STC_OutRange(const TA_STC_Stream *, int *, int *)
+function TA_RetCode TA_STC_Peek(const TA_STC_Stream *, double, double *)
+function TA_RetCode TA_STC_Update(TA_STC_Stream *, double, double *)
+function TA_RetCode TA_STC_Value(const TA_STC_Stream *, double *)
 function TA_RetCode TA_STDDEV(int, int, const double *, int, double, int *, int *, double *)
 function TA_RetCode TA_STDDEV_Advance(TA_STDDEV_Stream *)
 function TA_RetCode TA_STDDEV_Clone(const TA_STDDEV_Stream *, TA_STDDEV_Stream **)
@@ -2365,6 +2376,7 @@ function TA_RetCode TA_S_SINH(int, int, const float *, int *, int *, double *)
 function TA_RetCode TA_S_SMA(int, int, const float *, int, int *, int *, double *)
 function TA_RetCode TA_S_SMI(int, int, const float *, const float *, const float *, int, int, int, int, int *, int *, double *, double *)
 function TA_RetCode TA_S_SQRT(int, int, const float *, int *, int *, double *)
+function TA_RetCode TA_S_STC(int, int, const float *, int, int, int, int *, int *, double *)
 function TA_RetCode TA_S_STDDEV(int, int, const float *, int, double, int *, int *, double *)
 function TA_RetCode TA_S_STOCH(int, int, const float *, const float *, const float *, int, int, TA_MAType, int, TA_MAType, int *, int *, double *, double *)
 function TA_RetCode TA_S_STOCHF(int, int, const float *, const float *, const float *, int, int, TA_MAType, int *, int *, double *, double *)
@@ -2825,6 +2837,7 @@ function int TA_SI_Lookback(double)
 function int TA_SMA_Lookback(int)
 function int TA_SMI_Lookback(int, int, int, int)
 function int TA_SQRT_Lookback(void)
+function int TA_STC_Lookback(int, int, int)
 function int TA_STDDEV_Lookback(int, double)
 function int TA_STOCHF_Lookback(int, int, TA_MAType)
 function int TA_STOCHRSI_Lookback(int, int, int, TA_MAType)

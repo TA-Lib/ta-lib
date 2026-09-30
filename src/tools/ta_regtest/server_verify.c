@@ -91,6 +91,7 @@ static const UnstableLookup UNSTABLE_MAP[] = {
     {"FRAMA",        TA_FUNC_UNST_FRAMA},
     {"MCGD",         TA_FUNC_UNST_MCGD},
     {"VIDYA",        TA_FUNC_UNST_VIDYA},
+    {"STC",          TA_FUNC_UNST_STC},
     {"T3",           TA_FUNC_UNST_T3},
 };
 #define NUM_UNSTABLE_MAP (sizeof(UNSTABLE_MAP) / sizeof(UNSTABLE_MAP[0]))

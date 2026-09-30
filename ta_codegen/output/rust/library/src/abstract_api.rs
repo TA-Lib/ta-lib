@@ -424,6 +424,8 @@ pub enum FuncId {
     SMI,
     /// Vector Square Root — [`Core::sqrt`](crate::Core::sqrt).
     SQRT,
+    /// Schaff Trend Cycle — [`Core::stc`](crate::Core::stc).
+    STC,
     /// Standard Deviation — [`Core::stddev`](crate::Core::stddev).
     STDDEV,
     /// Stochastic — [`Core::stoch`](crate::Core::stoch).
@@ -486,7 +488,7 @@ pub enum FuncId {
 
 impl FuncId {
     /// Number of functions in the registry.
-    pub const COUNT: usize = 220;
+    pub const COUNT: usize = 221;
     /// Metadata for this function (O(1) index into the const table).
     #[inline] pub fn info(self) -> &'static FuncInfo { &FUNC_TABLE[self as usize] }
     /// Upper-case TA name, e.g. "RSI".
@@ -813,7 +815,7 @@ impl FuncInfo {
 
 /// Backing storage for [`FUNCS`], indexed by [`FuncId`]. Link-time const, in
 /// `.rodata`. Private, so its length is nobody's business but this module's.
-static FUNC_TABLE: [FuncInfo; 220] = [
+static FUNC_TABLE: [FuncInfo; 221] = [
     FuncInfo {
         id: FuncId::AC,
         name: "AC",
@@ -2916,6 +2918,17 @@ static FUNC_TABLE: [FuncInfo; 220] = [
         unst_id: None,
     },
     FuncInfo {
+        id: FuncId::STC,
+        name: "STC",
+        group: Group::MomentumIndicators,
+        hint: "Schaff Trend Cycle",
+        flags: FuncFlags(0x0a000000),
+        inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInFastPeriod", display_name: "Fast Period", hint: "Period of the fast EMA", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 23, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInSlowPeriod", display_name: "Slow Period", hint: "Period of the slow EMA", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 50, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInCyclePeriod", display_name: "Cycle Period", hint: "Window of both stochastic stages", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 10, suggested: (2, 200, 1) } }, ],
+        outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        unst_id: Some(FuncUnstId::STC),
+    },
+    FuncInfo {
         id: FuncId::STDDEV,
         name: "STDDEV",
         group: Group::StatisticFunctions,
@@ -3443,6 +3456,7 @@ fn get_func_handle_exact(name: &str) -> Option<FuncId> {
         "SMA" => FuncId::SMA,
         "SMI" => FuncId::SMI,
         "SQRT" => FuncId::SQRT,
+        "STC" => FuncId::STC,
         "STDDEV" => FuncId::STDDEV,
         "STOCH" => FuncId::STOCH,
         "STOCHF" => FuncId::STOCHF,
@@ -3920,6 +3934,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::SMA => self.core.sma_lookback(self.int_opt[0]),
             FuncId::SMI => self.core.smi_lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2], self.int_opt[3]),
             FuncId::SQRT => self.core.sqrt_lookback(),
+            FuncId::STC => self.core.stc_lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2]),
             FuncId::STDDEV => self.core.stddev_lookback(self.int_opt[0], self.real_opt[1]),
             FuncId::STOCH => self.core.stoch_lookback(self.int_opt[0], self.int_opt[1], MAType::try_from(self.int_opt[2])?, self.int_opt[3], MAType::try_from(self.int_opt[4])?),
             FuncId::STOCHF => self.core.stochf_lookback(self.int_opt[0], self.int_opt[1], MAType::try_from(self.int_opt[2])?),
@@ -6254,6 +6269,16 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 let res = self.core.sqrt(start_idx, end_idx, i0, &mut *o0);
+                self.real_out[0] = Some(o0);
+                match res {
+                    Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
+                    Err(e) => e,
+                }
+            }
+            FuncId::STC => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let res = self.core.stc(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }

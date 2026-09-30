@@ -547,6 +547,9 @@ typedef enum
   /* (#475) ALMA legs that ran while comparing nothing. */
   TA_ALMA_VACUOUS                    = 1692,
 
+  /* (#478) STC legs that ran while comparing nothing. */
+  TA_STC_VACUOUS                     = 1693,
+
   /* One code for every suite that routes a fixed vector through server_verify
    * (#427), because it reports one failure and the message names the leg.
    * server_verify answers TA_TEST_PASS when it cannot build the request, so a

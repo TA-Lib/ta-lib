@@ -311,6 +311,7 @@ public final class Functions {
       put(m, f_SMA());
       put(m, f_SMI());
       put(m, f_SQRT());
+      put(m, f_STC());
       put(m, f_STDDEV());
       put(m, f_STOCH());
       put(m, f_STOCHF());
@@ -3628,6 +3629,34 @@ public final class Functions {
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),
          List.of(),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
+         ));
+   }
+
+   private static FuncInfo f_STC() {
+      return new FuncInfo(
+         "STC", "Momentum Indicators", "Schaff Trend Cycle", 0x0A000000,
+         List.of(
+            new InputInfo(InputType.REAL, "inReal", 0x00000000)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInFastPeriod", 0x00000000,
+               "Fast Period", "Period of the fast EMA", 23.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               2, 100000, 4, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInSlowPeriod", 0x00000000,
+               "Slow Period", "Period of the slow EMA", 50.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               2, 100000, 4, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInCyclePeriod", 0x00000000,
+               "Cycle Period", "Window of both stochastic stages", 10.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               2, 100000, 2, 200, 1, null)
+         ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
          ));

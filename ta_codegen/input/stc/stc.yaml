@@ -1,0 +1,33 @@
+name: STC
+group: Momentum Indicators
+hint: Schaff Trend Cycle
+flags: [unstable_period, stream]
+inputs:
+  - name: inReal
+    type: real
+optional_inputs:
+  - name: optInFastPeriod
+    type: integer
+    display_name: Fast Period
+    hint: Period of the fast EMA
+    range: [2, 100000]
+    default: 23
+    suggested: [4, 200, 1]
+  - name: optInSlowPeriod
+    type: integer
+    display_name: Slow Period
+    hint: Period of the slow EMA
+    range: [2, 100000]
+    default: 50
+    suggested: [4, 200, 1]
+  - name: optInCyclePeriod
+    type: integer
+    display_name: Cycle Period
+    hint: Window of both stochastic stages
+    range: [2, 100000]
+    default: 10
+    suggested: [2, 200, 1]
+outputs:
+  - name: outReal
+    type: real
+    flags: [line]

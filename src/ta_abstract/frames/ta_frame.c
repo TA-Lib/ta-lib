@@ -4310,6 +4310,30 @@ unsigned int TA_SQRT_FramePPLB( const TA_ParamHolderPriv *params )
    (void)params;
    return TA_SQRT_Lookback( );
 }
+TA_RetCode TA_STC_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+{
+   return TA_STC(
+               startIdx,
+               endIdx,
+               params->in[0].data.inReal, /* inReal */
+               params->optIn[0].data.optInInteger, /* optInFastPeriod*/
+               params->optIn[1].data.optInInteger, /* optInSlowPeriod*/
+               params->optIn[2].data.optInInteger, /* optInCyclePeriod*/
+               outBegIdx, 
+               outNBElement, 
+               params->out[0].data.outReal /*  outReal */
+               );
+}
+unsigned int TA_STC_FramePPLB( const TA_ParamHolderPriv *params )
+{
+   return TA_STC_Lookback(params->optIn[0].data.optInInteger, /* optInFastPeriod*/
+                    params->optIn[1].data.optInInteger, /* optInSlowPeriod*/
+                    params->optIn[2].data.optInInteger /* optInCyclePeriod*/ );
+}
 TA_RetCode TA_STDDEV_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

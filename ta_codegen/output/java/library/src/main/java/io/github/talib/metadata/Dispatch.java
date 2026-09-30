@@ -629,6 +629,9 @@ final class Dispatch {
          case "SQRT":
             return core.sqrt(
                startIdx, endIdx, h.realInput(0), h.realOutput(0));
+         case "STC":
+            return core.stc(
+               startIdx, endIdx, h.realInput(0), h.intOpt(0), h.intOpt(1), h.intOpt(2), h.realOutput(0));
          case "STDDEV":
             return core.stddev(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOpt(1), h.realOutput(0));
@@ -1109,6 +1112,8 @@ final class Dispatch {
             return core.smiLookback(h.intOpt(0), h.intOpt(1), h.intOpt(2), h.intOpt(3));
          case "SQRT":
             return core.sqrtLookback();
+         case "STC":
+            return core.stcLookback(h.intOpt(0), h.intOpt(1), h.intOpt(2));
          case "STDDEV":
             return core.stddevLookback(h.intOpt(0), h.realOpt(1));
          case "STOCH":

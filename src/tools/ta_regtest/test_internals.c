@@ -1186,6 +1186,7 @@ static ErrorNumber testEnumValueContract( void )
       { "TA_FUNC_UNST_FRAMA",        27, TA_FUNC_UNST_FRAMA },
       { "TA_FUNC_UNST_MCGD",         28, TA_FUNC_UNST_MCGD },
       { "TA_FUNC_UNST_VIDYA",        29, TA_FUNC_UNST_VIDYA },
+      { "TA_FUNC_UNST_STC",          30, TA_FUNC_UNST_STC },
       /* Pinned so adding an indicator can never move it (#144). */
       { "TA_FUNC_UNST_ALL",       65535, TA_FUNC_UNST_ALL }
    };

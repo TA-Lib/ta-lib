@@ -45,6 +45,7 @@
  *  112400 MF   First version.
  *  072026 MF,CC Add checkOracleValue (abs-near-zero / rel-away tolerance).
  *  092526 MF,CC doRangeTestMulti restores the unstable periods it sweeps.
+ *  092926 MF,CC STC ignores 200 bars in the range envelope, as T3 does.
  *
  */
 
@@ -1267,6 +1268,9 @@ static int dataWithinReasonableRange( TA_Real val1, TA_Real val2,
    switch( unstId )
    {
    case TA_FUNC_UNST_T3:
+   /* STC's two stochastic stages amplify the slow EMA's transient: at 150
+    * the sweep fails on every seed. */
+   case TA_FUNC_UNST_STC:
       periodToIgnore = 200;
       break;
    default:

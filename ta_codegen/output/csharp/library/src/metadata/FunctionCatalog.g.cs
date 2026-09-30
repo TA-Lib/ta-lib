@@ -306,6 +306,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
             MakeSma(),
             MakeSmi(),
             MakeSqrt(),
+            MakeStc(),
             MakeStddev(),
             MakeStoch(),
             MakeStochf(),
@@ -4609,6 +4610,31 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         invoke: static (core, c, startIdx, endIdx) =>
             core.Sqrt(
                 startIdx, endIdx, c.Series(0), c.RealOut(0)));
+
+    private static FuncInfo MakeStc() => new(
+        name: "STC",
+        group: FunctionGroup.MomentumIndicators,
+        hint: "Schaff Trend Cycle",
+        flags: FuncFlags.Stream | FuncFlags.UnstablePeriod,
+        unstableId: FuncUnstId.STC,
+        inputs:
+        [
+            new InputInfo(InputKind.Real, "inReal", PriceComponents.None, []),
+        ],
+        optInputs:
+        [
+            new OptInputInfo("optInFastPeriod", "Fast Period", "Period of the fast EMA", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 23, 4, 200, 1)),
+            new OptInputInfo("optInSlowPeriod", "Slow Period", "Period of the slow EMA", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 50, 4, 200, 1)),
+            new OptInputInfo("optInCyclePeriod", "Cycle Period", "Window of both stochastic stages", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 10, 2, 200, 1)),
+        ],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+        ],
+        lookback: static (core, c) => core.StcLookback(c.IntOpt(0), c.IntOpt(1), c.IntOpt(2)),
+        invoke: static (core, c, startIdx, endIdx) =>
+            core.Stc(
+                startIdx, endIdx, c.Series(0), c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), c.RealOut(0)));
 
     private static FuncInfo MakeStddev() => new(
         name: "STDDEV",

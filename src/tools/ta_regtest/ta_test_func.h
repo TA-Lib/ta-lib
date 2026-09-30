@@ -65,6 +65,7 @@ ErrorNumber test_func_frama   ( TA_History *history );
 ErrorNumber test_func_mcgd    ( TA_History *history );
 ErrorNumber test_func_vidya   ( TA_History *history );
 ErrorNumber test_func_alma    ( TA_History *history );
+ErrorNumber test_func_stc     ( TA_History *history );
 ErrorNumber test_func_fractal ( TA_History *history );
 ErrorNumber test_func_ha      ( TA_History *history );
 ErrorNumber test_func_tsi     ( TA_History *history );

@@ -1265,6 +1265,12 @@ internal static class NoPhantomIoBinder
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
+        ["STC"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.StcImpl(
+                startIdx, endIdx, c.Series(0), c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), out int b, out int n, c.RealOut(0));
+            return new CallOutcome(rc, b, n);
+        },
         ["STDDEV"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.StddevImpl(
@@ -2590,6 +2596,12 @@ internal static class NoPhantomIoBinder
                 startIdx, endIdx, Narrow(c.Series(0)), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
+        ["STC"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.StcImpl(
+                startIdx, endIdx, Narrow(c.Series(0)), c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), out int b, out int n, c.RealOut(0));
+            return new CallOutcome(rc, b, n);
+        },
         ["STDDEV"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.StddevImpl(
@@ -2960,6 +2972,7 @@ internal static class NoPhantomIoBinder
         ["SMA"] = static (core, c) => core.SmaOpen(c.Series(0), c.IntOpt(0)),
         ["SMI"] = static (core, c) => core.SmiOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), c.IntOpt(3)),
         ["SQRT"] = static (core, c) => core.SqrtOpen(c.Series(0)),
+        ["STC"] = static (core, c) => core.StcOpen(c.Series(0), c.IntOpt(0), c.IntOpt(1), c.IntOpt(2)),
         ["STDDEV"] = static (core, c) => core.StddevOpen(c.Series(0), c.IntOpt(0), c.RealOpt(1)),
         ["STOCH"] = static (core, c) => core.StochOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2), c.IntOpt(3), (MAType)c.IntOpt(4)),
         ["STOCHF"] = static (core, c) => core.StochfOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2)),

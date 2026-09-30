@@ -94,6 +94,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 - [RSI](/functions/rsi.md) — Relative Strength Index
 - [SI](/functions/si.md) — Wilder Swing Index
 - [SMI](/functions/smi.md) — Stochastic Momentum Index
+- [STC](/functions/stc.md) — Schaff Trend Cycle
 - [STOCH](/functions/stoch.md) — Stochastic
 - [STOCHF](/functions/stochf.md) — Stochastic Fast
 - [STOCHRSI](/functions/stochrsi.md) — Stochastic Relative Strength Index

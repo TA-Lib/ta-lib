@@ -460,8 +460,16 @@ fn stability_line(
     } else if st.unconditional() {
         // Owning the period is the plain case the reference page already describes; only
         // an inherited one, or an extra contributed by the MA type, is worth saying here.
+        // A function that owns a period AND inherits one must name both ids, or a reader
+        // tunes one and its output still moves with the other.
         let mut why = if st.inherited_from.is_empty() {
             String::new()
+        } else if st.intrinsic {
+            let names = join_and(&st.inherited_from);
+            format!(
+                "tunable via {0}'s own unstable period and {names}'s, which {0} computes internally.",
+                func.name
+            )
         } else {
             let names = join_and(&st.inherited_from);
             format!(
@@ -1500,6 +1508,16 @@ mod tests {
             stability_line(&f, &enums, &all),
             "**Numerical Stability:** [Initial Unstable Period](/functions/stability.md#initial-unstable-period)"
         );
+
+        // Owning a period and inheriting one: both ids are named.
+        let f = stability_of("STC", &["unstable_period"], vec![]);
+        let mut all = HashMap::new();
+        all.insert(
+            "STC".to_string(),
+            Stability { intrinsic: true, inherited_from: vec!["EMA".into()], ..Stability::default() },
+        );
+        let line = stability_line(&f, &enums, &all);
+        assert!(line.contains("Tunable via STC's own unstable period and EMA's"), "{line}");
 
         // Combination: unstable regardless *and* MA-type dependent -> both stated.
         let f = stability_of("STOCHRSI", &[], vec![]);

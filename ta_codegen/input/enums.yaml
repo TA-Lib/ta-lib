@@ -82,3 +82,4 @@ FuncUnstId:
     - { name: FRAMA,        value: 27 }
     - { name: MCGD,         value: 28 }
     - { name: VIDYA,        value: 29 }
+    - { name: STC,          value: 30 }

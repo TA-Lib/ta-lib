@@ -699,6 +699,10 @@ static const UnstableLookup UNSTABLE_MAP[] = {
     {"FRAMA",        TA_FUNC_UNST_FRAMA},
     {"MCGD",         TA_FUNC_UNST_MCGD},
     {"VIDYA",        TA_FUNC_UNST_VIDYA},
+    /* STC also inherits UNST_EMA through its MACD line; its own id never
+     * varies EMA's, so the sweep needs both rows. */
+    {"STC",          TA_FUNC_UNST_STC},
+    {"STC",          TA_FUNC_UNST_EMA},
     {"T3",           TA_FUNC_UNST_T3},
     /* EMA-derived: doRangeTest sweeps UNST_EMA, as the hand MA tests do. */
     {"DEMA",         TA_FUNC_UNST_EMA},

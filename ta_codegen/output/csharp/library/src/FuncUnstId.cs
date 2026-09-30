@@ -99,6 +99,8 @@ public enum FuncUnstId
     MCGD = 28,
     /// <summary>Unstable-period id for <c>TA_FUNC_UNST_VIDYA</c>.</summary>
     VIDYA = 29,
+    /// <summary>Unstable-period id for <c>TA_FUNC_UNST_STC</c>.</summary>
+    STC = 30,
 
     /// <summary>Wildcard: sets the unstable period for every function at
     /// once. Pinned, so adding an indicator can never move it.</summary>
@@ -111,5 +113,5 @@ internal static class FuncUnstIds
     /// <summary>Size of the unstable-period table: one past the highest
     /// function id. <see cref="FuncUnstId.ALL"/> selects every slot and is
     /// not one. Mirrors C's TA_FUNC_UNST_COUNT.</summary>
-    public const int Count = 30;
+    public const int Count = 31;
 }

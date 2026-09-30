@@ -38,7 +38,7 @@ pub const FUSING_INVENTORY: &[&str] = &[
     "dema", "efi", "ema", "eri", "fosc", "frama", "ht_dcperiod", "ht_dcphase", "ht_phasor", "ht_sine",
     "ht_trendline", "ht_trendmode", "kama", "kst", "kurtosis", "linearreg", "macd",
     "macdfix", "mama", "massi", "natr", "percentb", "ppo", "pvo", "rma", "rvi",
-    "sar", "sarext", "smi", "supertrend",
+    "sar", "sarext", "smi", "stc", "supertrend",
     "t3", "tema", "trix", "tsf", "tsi", "vidya", "wclprice", "zlema",
 ];
 
