@@ -329,6 +329,7 @@
     * <p><b>Notes</b>
     * <ul>
     * <li>The peak is floored to a whole bar, as in the authors' code. At periods below about 5 this puts it on an older bar: at period 2 the line is almost entirely the previous bar.</li>
+    * <li>{@code TA_MAType_ALMA} runs this function at the default sigma and offset, so the line in {@code MA} and every function taking an MAType has the lag and noise stated above.</li>
     * <li>The published paper's summary formula uses a different parameterisation; this is the form of the authors' own implementation.</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
@@ -408,6 +409,7 @@
     * <p><b>Notes</b>
     * <ul>
     * <li>The peak is floored to a whole bar, as in the authors' code. At periods below about 5 this puts it on an older bar: at period 2 the line is almost entirely the previous bar.</li>
+    * <li>{@code TA_MAType_ALMA} runs this function at the default sigma and offset, so the line in {@code MA} and every function taking an MAType has the lag and noise stated above.</li>
     * <li>The published paper's summary formula uses a different parameterisation; this is the form of the authors' own implementation.</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
@@ -891,4 +893,47 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       return almaOpenAndFillInternal(inReal, 0, optInTimePeriod, optInSigma, optInOffset, outBegIdx, outNBElement, outReal);
+   }
+   private double almaStepTape( AlmaStream sp, double[] tape, int tapeBase, int tapeMask, double inReal )
+   {
+      double sum = 0.0;
+      int j = 0;
+      int w = 0;
+      sum = 0.0;
+      w = 0;
+      for( j = sp.lookbackTotal; j >= 0; j -= 1 ) {
+         sum += sp.cb_weights[w] * tape[(tapeBase - j) & tapeMask];
+         w += 1;
+      }
+      sp.cur_outReal = sum;
+      sp.outRangeCount++;
+      return sp.cur_outReal;
+   }
+   private double almaPeekTape( AlmaStream sp, double[] tape, int tapeBase, int tapeMask, double inReal )
+   {
+      double sum = 0.0;
+      int j = 0;
+      int w = 0;
+      double cur_outReal = 0.0;
+      int pkSlot0 = -1;
+      double pkVal0 = 0.0;
+      pkSlot0 = tapeBase & tapeMask;
+      pkVal0 = inReal;
+      sum = 0.0;
+      w = 0;
+      for( j = sp.lookbackTotal; j >= 0; j -= 1 ) {
+         sum += sp.cb_weights[w] * ((((tapeBase - j) & tapeMask) != pkSlot0) ? tape[(tapeBase - j) & tapeMask] : pkVal0);
+         w += 1;
+      }
+      cur_outReal = sum;
+      return cur_outReal;
+   }
+   private int almaTapeDetach( AlmaStream sp )
+   {
+      int reach = 0;
+      sp.win_j_inReal = new double[0];
+      if( sp.winCap_j - 1 > reach ) {
+         reach = sp.winCap_j - 1;
+      }
+      return reach;
    }

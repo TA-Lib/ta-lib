@@ -4958,6 +4958,9 @@ static int sv_steq_TA_MA( const struct TA_MA_Stream *a, const struct TA_MA_Strea
       case TA_MAType_VIDYA:
          if( sv_steq_TA_VIDYA( (const struct TA_VIDYA_Stream *)a->sub, (const struct TA_VIDYA_Stream *)b->sub, w, z ) ) return 1;
          break;
+      case TA_MAType_ALMA:
+         if( sv_steq_TA_ALMA( (const struct TA_ALMA_Stream *)a->sub, (const struct TA_ALMA_Stream *)b->sub, w, z ) ) return 1;
+         break;
       default:
          *w = "sub"; return 1;
       }

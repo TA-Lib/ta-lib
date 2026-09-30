@@ -64,5 +64,6 @@ public enum MAType
    DEFAULT,
    ZLEMA,
    RMA,
-   VIDYA
+   VIDYA,
+   ALMA
 };

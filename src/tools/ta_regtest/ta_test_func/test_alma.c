@@ -67,6 +67,9 @@
  *     6. The startIdx/endIdx range sweep.
  *     7. The stream tier (Open, then Peek and Update per bar) against the
  *        batch, bit for bit, period 1 and its signed zeros included.
+ *     8. TA_MAType_ALMA: MA, MAVP and BBANDS' middle band against TA_ALMA at
+ *        sigma 6 and offset 0.85, bit for bit, with the lookback compared on
+ *        its own.
  */
 
 /**** Headers ****/
@@ -91,6 +94,7 @@
 #define ALMA_PERIOD1_CMP 8
 #define ALMA_STREAM_CMP  22736
 #define ALMA_CORNER_CMP  7194
+#define ALMA_MATYPE_CMP  12886
 
 typedef struct { int n; double sigma, offset; int bar; double want; } AlmaGolden;
 
@@ -153,6 +157,7 @@ static int g_almaTulipCmp;
 static int g_almaPeriod1Cmp;
 static int g_almaStreamCmp;
 static int g_almaCornerCmp;
+static int g_almaMaTypeCmp;
 
 static void        almaSynth( double *c );
 static ErrorNumber almaRoute( const char *tag, const double *x, int nb, int n,
@@ -167,13 +172,14 @@ static ErrorNumber almaSmallCorners( void );
 static ErrorNumber test_alma_corners( void );
 static ErrorNumber test_alma_range( const TA_Real *in );
 static ErrorNumber test_alma_stream( void );
+static ErrorNumber test_alma_matype( void );
 
 /**** Global functions definitions. ****/
 ErrorNumber test_func_alma( TA_History *history )
 {
    ErrorNumber err;
 
-   g_almaGoldCmp = g_almaTulipCmp = g_almaPeriod1Cmp = g_almaStreamCmp = g_almaCornerCmp = 0;
+   g_almaGoldCmp = g_almaTulipCmp = g_almaPeriod1Cmp = g_almaStreamCmp = g_almaCornerCmp = g_almaMaTypeCmp = 0;
 
    err = test_alma_goldens( history );
    if( err == TA_TEST_PASS )
@@ -188,18 +194,23 @@ ErrorNumber test_func_alma( TA_History *history )
       err = test_alma_range( history->close );
    if( err == TA_TEST_PASS )
       err = test_alma_stream();
+   if( err == TA_TEST_PASS )
+      err = test_alma_matype();
 
    /* Literal counts: every input is fixed, so each leg is deterministic. */
    if( err == TA_TEST_PASS
        && ( g_almaGoldCmp != NB_OF(almaGolden) + ALMA_SPY_NB - 8
             || g_almaTulipCmp != ALMA_TULIP_CMP || g_almaPeriod1Cmp != ALMA_PERIOD1_CMP
-            || g_almaStreamCmp != ALMA_STREAM_CMP || g_almaCornerCmp != ALMA_CORNER_CMP ) )
+            || g_almaStreamCmp != ALMA_STREAM_CMP || g_almaCornerCmp != ALMA_CORNER_CMP
+            || g_almaMaTypeCmp != ALMA_MATYPE_CMP ) )
    {
       printf( "ALMA Fail: coverage counters (golden %d, tulip %d, period1 %d, stream %d, "
-              "corner %d) are not what this file was written with (%d, %d, %d, %d, %d)\n",
+              "corner %d, matype %d) are not what this file was written with "
+              "(%d, %d, %d, %d, %d, %d)\n",
               g_almaGoldCmp, g_almaTulipCmp, g_almaPeriod1Cmp, g_almaStreamCmp,
-              g_almaCornerCmp, NB_OF(almaGolden) + ALMA_SPY_NB - 8, ALMA_TULIP_CMP,
-              ALMA_PERIOD1_CMP, ALMA_STREAM_CMP, ALMA_CORNER_CMP );
+              g_almaCornerCmp, g_almaMaTypeCmp, NB_OF(almaGolden) + ALMA_SPY_NB - 8,
+              ALMA_TULIP_CMP, ALMA_PERIOD1_CMP, ALMA_STREAM_CMP, ALMA_CORNER_CMP,
+              ALMA_MATYPE_CMP );
       return TA_ALMA_VACUOUS;
    }
 
@@ -718,5 +729,121 @@ static ErrorNumber test_alma_stream( void )
       if( e != TA_TEST_PASS )
          return e;
    }
+   return TA_TEST_PASS;
+}
+
+/* (8) The lookback is compared on its own: ma() forwards to alma(), which
+ * clamps startIdx to its own lookback, so a wrong ma_lookback arm leaves every
+ * value right and only the caller's buffer sizing wrong. */
+static ErrorNumber test_alma_matype( void )
+{
+   static const int np[] = { 2, 3, 5, 9, 10, 21, 50, 200 };
+   static double c[ALMA_SYN_NB], outM[ALMA_SYN_NB], outA[ALMA_SYN_NB], per[ALMA_SYN_NB];
+   static double up[ALMA_SYN_NB], mid[ALMA_SYN_NB], lo[ALMA_SYN_NB];
+   static double alt[2][ALMA_SYN_NB];
+   TA_RetCode rcM, rcA;
+   TA_Integer begM, nbM, begA, nbA, begX[2], nbX[2];
+   double optIn[2];
+   int k, i, cmpBefore;
+   ErrorNumber e;
+
+   almaSynth( c );
+   for( k = 0; k < NB_OF(np); k++ )
+   {
+      int n = np[k];
+
+      if( TA_MA_Lookback( n, TA_MAType_ALMA ) != TA_ALMA_Lookback( n, 6.0, 0.85 ) )
+      {
+         printf( "ALMA matype Fail [n %d]: MA_Lookback %d, ALMA_Lookback %d\n", n,
+                 TA_MA_Lookback( n, TA_MAType_ALMA ), TA_ALMA_Lookback( n, 6.0, 0.85 ) );
+         return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+      }
+      g_almaMaTypeCmp++;
+
+      rcM = TA_MA( 0, ALMA_SYN_NB-1, c, n, TA_MAType_ALMA, &begM, &nbM, outM );
+      rcA = TA_ALMA( 0, ALMA_SYN_NB-1, c, n, 6.0, 0.85, &begA, &nbA, outA );
+      if( rcM != TA_SUCCESS || rcA != TA_SUCCESS || begM != begA || nbM != nbA
+          || memcmp( outM, outA, (size_t)nbM * sizeof(double) ) != 0 )
+      {
+         printf( "ALMA matype Fail [n %d]: MA rc=%d (%d,%d), ALMA rc=%d (%d,%d), "
+                 "or values differ\n", n, (int)rcM, begM, nbM, (int)rcA, begA, nbA );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+      g_almaMaTypeCmp += nbM;
+   }
+
+   /* Two parameters off MA's defaults, which the sweep never sends together. */
+   if( server_verify_active() )
+   {
+      rcM = TA_MA( 0, ALMA_SYN_NB-1, c, 21, TA_MAType_ALMA, &begM, &nbM, outM );
+      optIn[0] = 21.0;
+      optIn[1] = (double)TA_MAType_ALMA;
+      cmpBefore = server_verify_comparisons();
+      e = server_verify( "MA", 0, ALMA_SYN_NB-1, ALMA_SYN_NB, rcM, begM, nbM,
+                         (const TA_Real*[]){ c, NULL }, optIn, 2,
+                         (const TA_Real*[]){ outM, NULL }, NULL );
+      if( e != TA_TEST_PASS )
+         return e;
+      if( server_verify_comparisons() == cmpBefore )
+      {
+         printf( "ALMA matype: MA(21, ALMA) compared no server despite live pipes\n" );
+         return TA_SV_ROUTED_VACUOUS;
+      }
+   }
+
+   rcM = TA_MA( 0, ALMA_SYN_NB-1, c, 1, TA_MAType_ALMA, &begM, &nbM, outM );
+   if( rcM != TA_SUCCESS || begM != 0 || nbM != ALMA_SYN_NB
+       || memcmp( outM, c, sizeof(c) ) != 0 )
+   {
+      printf( "ALMA matype Fail: MA(1, ALMA) is not the identity copy\n" );
+      return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+   }
+   g_almaMaTypeCmp += nbM;
+
+   /* MAVP picks, bar by bar, the MA of that bar's period, each anchored at
+    * MAVP's own first bar. */
+   for( i = 0; i < ALMA_SYN_NB; i++ )
+      per[i] = (i % 3) ? 5.0 : 12.0;
+   rcM = TA_MAVP( 0, ALMA_SYN_NB-1, c, per, 5, 12, TA_MAType_ALMA, &begM, &nbM, outM );
+   rcA  = TA_MA( begM, ALMA_SYN_NB-1, c, 5, TA_MAType_ALMA, &begX[0], &nbX[0], alt[0] );
+   rcA |= TA_MA( begM, ALMA_SYN_NB-1, c, 12, TA_MAType_ALMA, &begX[1], &nbX[1], alt[1] );
+   if( rcM != TA_SUCCESS || rcA != TA_SUCCESS
+       || begM != TA_MA_Lookback( 12, TA_MAType_ALMA ) || nbM != ALMA_SYN_NB - begM )
+   {
+      printf( "ALMA matype Fail: MAVP rc=%d (%d,%d)\n", (int)rcM, begM, nbM );
+      return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+   }
+   for( i = 0; i < nbM; i++ )
+   {
+      int bar = begM + i, w = (bar % 3) ? 0 : 1;
+      if( memcmp( &outM[i], &alt[w][bar - begX[w]], sizeof(double) ) != 0 )
+      {
+         printf( "ALMA matype Fail: MAVP at bar %d is %.17g, MA(%d) %.17g\n",
+                 bar, outM[i], w ? 12 : 5, alt[w][bar - begX[w]] );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+      g_almaMaTypeCmp++;
+   }
+
+   /* BBANDS' middle band is MA(close, 20, ALMA). */
+   rcM = TA_BBANDS( 0, ALMA_SYN_NB-1, c, 20, 2.0, 2.0, TA_MAType_ALMA,
+                    &begM, &nbM, up, mid, lo );
+   rcA = TA_ALMA( 0, ALMA_SYN_NB-1, c, 20, 6.0, 0.85, &begA, &nbA, outA );
+   if( rcM != TA_SUCCESS || rcA != TA_SUCCESS || nbM <= 0 || begM < begA )
+   {
+      printf( "ALMA matype Fail: BBANDS rc=%d (%d,%d)\n", (int)rcM, begM, nbM );
+      return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+   }
+   for( i = 0; i < nbM; i++ )
+   {
+      if( memcmp( &mid[i], &outA[begM - begA + i], sizeof(double) ) != 0 )
+      {
+         printf( "ALMA matype Fail: BBANDS middle at bar %d %.17g != %.17g\n",
+                 begM + i, mid[i], outA[begM - begA + i] );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+      g_almaMaTypeCmp++;
+   }
+
    return TA_TEST_PASS;
 }

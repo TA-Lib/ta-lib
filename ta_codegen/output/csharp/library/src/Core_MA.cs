@@ -64,6 +64,7 @@ public partial class Core
     *  090426 MF,CC Add ZLEMA (issue #347).
     *  090426 MF,CC Add RMA (issue #348).
     *  092926 MF,CC Add VIDYA (issue #474).
+    *  092926 MF,CC Add ALMA (issue #475).
     */
    /// <summary>
    /// Number of leading input bars <c>Ma</c> consumes before it can produce its
@@ -78,8 +79,9 @@ public partial class Core
    /// selects the default).</param>
    /// <param name="optInMAType">Which moving-average algorithm to dispatch to (default 0 = SMA; values:
    /// 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-   /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA; <c>MAType.DEFAULT</c>
-   /// (or <c>(MAType)int.MinValue</c>) selects the default).</param>
+   /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+   /// <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects the
+   /// default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
    public int MaLookback( int optInTimePeriod, MAType optInMAType )
    {
@@ -137,6 +139,9 @@ public partial class Core
          break;
       case MAType.VIDYA:
          retValue = VidyaLookback(optInTimePeriod, (3 * optInTimePeriod + 2) / 4);
+         break;
+      case MAType.ALMA:
+         retValue = AlmaLookback(optInTimePeriod, 6.0, 0.85);
          break;
       default:
          retValue = 0;
@@ -308,6 +313,12 @@ public partial class Core
          outNBElement = _xr12.Count;
          retCode = RetCode.Success;
          break;
+      case MAType.ALMA:
+         OutRange _xr13 = Alma(startIdx, endIdx, inReal, optInTimePeriod, 6.0, 0.85, outReal);
+         outBegIdx = _xr13.BegIdx;
+         outNBElement = _xr13.Count;
+         retCode = RetCode.Success;
+         break;
       default:
          retCode = RetCode.BadParam;
          break;
@@ -442,6 +453,12 @@ public partial class Core
          outNBElement = _xr12.Count;
          retCode = RetCode.Success;
          break;
+      case MAType.ALMA:
+         OutRange _xr13 = Alma(startIdx, endIdx, inReal, optInTimePeriod, 6.0, 0.85, outReal);
+         outBegIdx = _xr13.BegIdx;
+         outNBElement = _xr13.Count;
+         retCode = RetCode.Success;
+         break;
       default:
          retCode = RetCode.BadParam;
          break;
@@ -483,8 +500,9 @@ public partial class Core
    /// selects the default).</param>
    /// <param name="optInMAType">Which moving-average algorithm to dispatch to (default 0 = SMA; values:
    /// 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-   /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA; <c>MAType.DEFAULT</c>
-   /// (or <c>(MAType)int.MinValue</c>) selects the default).</param>
+   /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+   /// <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects the
+   /// default).</param>
    /// <param name="outReal">Selected moving average of the input. Must hold at least <c>endIdx -
    /// max(startIdx, MaLookback(...)) + 1</c> values, the count the call produces
    /// (none when that is not positive).</param>
@@ -523,6 +541,7 @@ public partial class Core
    /// <seealso cref="Core.Zlema(int, int, ReadOnlySpan{double}, int, Span{double})"/>
    /// <seealso cref="Core.Rma(int, int, ReadOnlySpan{double}, int, Span{double})"/>
    /// <seealso cref="Core.Vidya(int, int, ReadOnlySpan{double}, int, int, Span{double})"/>
+   /// <seealso cref="Core.Alma(int, int, ReadOnlySpan{double}, int, double, double, Span{double})"/>
    public OutRange Ma( int startIdx,
                        int endIdx,
                        ReadOnlySpan<double> inReal,
@@ -582,8 +601,9 @@ public partial class Core
    /// selects the default).</param>
    /// <param name="optInMAType">Which moving-average algorithm to dispatch to (default 0 = SMA; values:
    /// 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-   /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA; <c>MAType.DEFAULT</c>
-   /// (or <c>(MAType)int.MinValue</c>) selects the default).</param>
+   /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+   /// <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects the
+   /// default).</param>
    /// <param name="outReal">Selected moving average of the input. Must hold at least <c>endIdx -
    /// max(startIdx, MaLookback(...)) + 1</c> values, the count the call produces
    /// (none when that is not positive).</param>
@@ -624,6 +644,7 @@ public partial class Core
    /// <seealso cref="Core.Zlema(int, int, ReadOnlySpan{double}, int, Span{double})"/>
    /// <seealso cref="Core.Rma(int, int, ReadOnlySpan{double}, int, Span{double})"/>
    /// <seealso cref="Core.Vidya(int, int, ReadOnlySpan{double}, int, int, Span{double})"/>
+   /// <seealso cref="Core.Alma(int, int, ReadOnlySpan{double}, int, double, double, Span{double})"/>
    public OutRange Ma( int startIdx,
                        int endIdx,
                        ReadOnlySpan<float> inReal,
@@ -756,6 +777,9 @@ public partial class Core
             case MAType.VIDYA:
                this.sub = new VidyaStream((VidyaStream) other.sub!);
                break;
+            case MAType.ALMA:
+               this.sub = new AlmaStream((AlmaStream) other.sub!);
+               break;
             default:
                throw new InvalidOperationException("unreachable: open rejects arms without a sub-stream");
             }
@@ -869,6 +893,10 @@ public partial class Core
             cur_outReal = ((VidyaStream) sp.sub!).Peek(inReal);
             break;
          }
+         case MAType.ALMA: {
+            cur_outReal = ((AlmaStream) sp.sub!).Peek(inReal);
+            break;
+         }
          default:
             break; /* unreachable: open rejects arms without a sub-stream */
          }
@@ -951,6 +979,10 @@ public partial class Core
       }
       case MAType.VIDYA: {
          sp.cur_outReal = ((VidyaStream) sp.sub!).Update(inReal);
+         break;
+      }
+      case MAType.ALMA: {
+         sp.cur_outReal = ((AlmaStream) sp.sub!).Update(inReal);
          break;
       }
       default:
@@ -1097,6 +1129,14 @@ public partial class Core
       }
       case MAType.VIDYA: {
          VidyaStream sub = VidyaOpenInternal(inReal, startIdx, optInTimePeriod, (3 * optInTimePeriod + 2) / 4);
+         sp.outRangeBegIdx = sub.outRangeBegIdx;
+         sp.outRangeCount = sub.outRangeCount;
+         sp.sub = sub;
+         sp.cur_outReal = sub.cur_outReal;
+         break;
+      }
+      case MAType.ALMA: {
+         AlmaStream sub = AlmaOpenInternal(inReal, startIdx, optInTimePeriod, 6.0, 0.85);
          sp.outRangeBegIdx = sub.outRangeBegIdx;
          sp.outRangeCount = sub.outRangeCount;
          sp.sub = sub;
@@ -1260,6 +1300,14 @@ public partial class Core
          sp.cur_outReal = sub.cur_outReal;
          break;
       }
+      case MAType.ALMA: {
+         AlmaStream sub = AlmaOpenAndFill(inReal, optInTimePeriod, 6.0, 0.85, outReal);
+         outBegIdx = sub.outRangeBegIdx;
+         outNBElement = sub.outRangeCount;
+         sp.sub = sub;
+         sp.cur_outReal = sub.cur_outReal;
+         break;
+      }
       default:
          return RetCode.BadParam;
       }
@@ -1388,6 +1436,12 @@ public partial class Core
       }
       case MAType.VIDYA: {
          VidyaStream sub = VidyaOpenAndFillInternal(inReal, startIdx, optInTimePeriod, (3 * optInTimePeriod + 2) / 4, out outBegIdx, out outNBElement, outReal);
+         sp.sub = sub;
+         sp.cur_outReal = sub.cur_outReal;
+         break;
+      }
+      case MAType.ALMA: {
+         AlmaStream sub = AlmaOpenAndFillInternal(inReal, startIdx, optInTimePeriod, 6.0, 0.85, out outBegIdx, out outNBElement, outReal);
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outReal;
          break;
@@ -1566,6 +1620,10 @@ public partial class Core
          sp.cur_outReal = VidyaStepTape((VidyaStream) sp.sub!, tape, tapeBase, tapeMask, inReal);
          break;
       }
+      case MAType.ALMA: {
+         sp.cur_outReal = AlmaStepTape((AlmaStream) sp.sub!, tape, tapeBase, tapeMask, inReal);
+         break;
+      }
       default:
          break; /* unreachable: open rejects arms without a sub-stream */
       }
@@ -1635,6 +1693,10 @@ public partial class Core
          cur_outReal = VidyaPeekTape((VidyaStream) sp.sub!, tape, tapeBase, tapeMask, inReal);
          break;
       }
+      case MAType.ALMA: {
+         cur_outReal = AlmaPeekTape((AlmaStream) sp.sub!, tape, tapeBase, tapeMask, inReal);
+         break;
+      }
       default:
          break; /* unreachable: open rejects arms without a sub-stream */
       }
@@ -1674,6 +1736,8 @@ public partial class Core
          return RmaTapeDetach((RmaStream) sp.sub!);
       case MAType.VIDYA:
          return VidyaTapeDetach((VidyaStream) sp.sub!);
+      case MAType.ALMA:
+         return AlmaTapeDetach((AlmaStream) sp.sub!);
       default:
          return 0;
       }

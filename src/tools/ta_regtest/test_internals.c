@@ -1205,7 +1205,8 @@ static ErrorNumber testEnumValueContract( void )
       { "TA_MAType_DEFAULT",  11, TA_MAType_DEFAULT },
       { "TA_MAType_ZLEMA",    12, TA_MAType_ZLEMA },
       { "TA_MAType_RMA",      13, TA_MAType_RMA },
-      { "TA_MAType_VIDYA",    14, TA_MAType_VIDYA }
+      { "TA_MAType_VIDYA",    14, TA_MAType_VIDYA },
+      { "TA_MAType_ALMA",     15, TA_MAType_ALMA }
    };
 
    /* Returned to every caller and mapped by name in the wrappers (ta-lib-python

@@ -87,6 +87,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         new(12, "ZLEMA"),
         new(13, "RMA"),
         new(14, "VIDYA"),
+        new(15, "ALMA"),
     ];
 
     /// <summary>The process-wide catalogue.</summary>

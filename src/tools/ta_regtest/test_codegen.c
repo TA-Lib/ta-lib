@@ -6602,9 +6602,9 @@ int codegen_is_transcendental(const char *name)
 }
 
 /* The MA-dispatch functions (MA, MAVP, BBANDS, MACDEXT, APO, PPO, STOCH*) route
- * to MAMA — which uses atan — when a MAType optional parameter selects it, so
- * transcendental-ness is a per-CALL property (TA_MAType_MAMA == 7, enums.yaml;
- * MAType params are the only optInputs whose paramName contains "MAType"). */
+ * to MAMA (atan) or ALMA (exp) when a MAType optional parameter selects it, so
+ * transcendental-ness is a per-CALL property (MAType params are the only
+ * optInputs whose paramName contains "MAType"). */
 int codegen_call_is_transcendental(const TA_FuncHandle *handle,
                                    const double optVals[], int nbOpt)
 {
@@ -6620,7 +6620,7 @@ int codegen_call_is_transcendental(const TA_FuncHandle *handle,
         /* One optVals slot per optInput (default assumed beyond nbOpt). */
         double val = (optVals && (int)i < nbOpt) ? optVals[i] : oi->defaultValue;
         if( oi->paramName && strstr(oi->paramName, "MAType") &&
-            (int)val == 7 /* TA_MAType_MAMA */ )
+            ((int)val == TA_MAType_MAMA || (int)val == TA_MAType_ALMA) )
             return 1;
     }
     return 0;

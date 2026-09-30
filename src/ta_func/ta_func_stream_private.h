@@ -678,6 +678,9 @@ TA_RetCode TA_WMA_OpenAndFillInternal( struct TA_WMA_Stream **stream, const doub
 TA_RetCode TA_ZLEMA_OpenAndFillInternal( struct TA_ZLEMA_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /* Period-bank tape entries */
+void TA_ALMA_StepTape( struct TA_ALMA_Stream *sp, const double tape[], int tapeBase, int tapeMask, double inReal, double *outReal );
+void TA_ALMA_PeekTape( const struct TA_ALMA_Stream *sp, const double tape[], int tapeBase, int tapeMask, double inReal, double *outReal );
+int TA_ALMA_TapeDetach( struct TA_ALMA_Stream *sp );
 void TA_DEMA_StepTape( struct TA_DEMA_Stream *sp, const double tape[], int tapeBase, int tapeMask, double inReal, double *outReal );
 void TA_DEMA_PeekTape( const struct TA_DEMA_Stream *sp, const double tape[], int tapeBase, int tapeMask, double inReal, double *outReal );
 int TA_DEMA_TapeDetach( struct TA_DEMA_Stream *sp );

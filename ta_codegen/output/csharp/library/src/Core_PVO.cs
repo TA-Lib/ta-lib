@@ -75,8 +75,9 @@ public partial class Core
    /// selects the default).</param>
    /// <param name="optInMAType">Moving average type used for both MAs (default 1 = EMA; values: 0=SMA,
    /// 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-   /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA; <c>MAType.DEFAULT</c>
-   /// (or <c>(MAType)int.MinValue</c>) selects the default).</param>
+   /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+   /// <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects the
+   /// default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
    public int PvoLookback( int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
    {
@@ -689,8 +690,9 @@ public partial class Core
    /// selects the default).</param>
    /// <param name="optInMAType">Moving average type used for both MAs (default 1 = EMA; values: 0=SMA,
    /// 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-   /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA; <c>MAType.DEFAULT</c>
-   /// (or <c>(MAType)int.MinValue</c>) selects the default).</param>
+   /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+   /// <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects the
+   /// default).</param>
    /// <param name="outReal">PVO value in percent. Must hold at least <c>endIdx - max(startIdx,
    /// PvoLookback(...)) + 1</c> values, the count the call produces (none when
    /// that is not positive).</param>
@@ -784,8 +786,9 @@ public partial class Core
    /// selects the default).</param>
    /// <param name="optInMAType">Moving average type used for both MAs (default 1 = EMA; values: 0=SMA,
    /// 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-   /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA; <c>MAType.DEFAULT</c>
-   /// (or <c>(MAType)int.MinValue</c>) selects the default).</param>
+   /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+   /// <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects the
+   /// default).</param>
    /// <param name="outReal">PVO value in percent. Must hold at least <c>endIdx - max(startIdx,
    /// PvoLookback(...)) + 1</c> values, the count the call produces (none when
    /// that is not positive).</param>

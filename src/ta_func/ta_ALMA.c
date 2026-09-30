@@ -726,6 +726,57 @@ TA_LIB_API TA_RetCode TA_ALMA_Close( TA_ALMA_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+void TA_ALMA_StepTape( struct TA_ALMA_Stream *sp, const double tape[], int tapeBase, int tapeMask, double inReal, double *outReal )
+{
+   double sum;
+   int j;
+   int w;
+
+   sum = 0.0;
+   w = 0;
+   for( j = sp->lookbackTotal; j >= 0; j -= 1 )
+   {
+      sum += sp->cb_weights[w] * tape[(tapeBase - j) & tapeMask];
+      w += 1;
+   }
+   *outReal= sum;
+   sp->cur_outReal = *outReal;
+   sp->outRangeCount++;
+}
+
+/* Private function, not in public API. */
+void TA_ALMA_PeekTape( const struct TA_ALMA_Stream *sp, const double tape[], int tapeBase, int tapeMask, double inReal, double *outReal )
+{
+   double sum;
+   int j;
+   int w;
+   double *cb_weights;
+   int pkSlot0 = -1;
+   double pkVal0 = 0.0;
+
+   cb_weights = sp->cb_weights;
+   pkSlot0 = tapeBase & tapeMask;
+   pkVal0 = inReal;
+   sum = 0.0;
+   w = 0;
+   for( j = sp->lookbackTotal; j >= 0; j -= 1 )
+   {
+      sum += cb_weights[w] * ((((tapeBase - j) & tapeMask) != pkSlot0) ? tape[(tapeBase - j) & tapeMask] : pkVal0);
+      w += 1;
+   }
+   *outReal= sum;
+}
+
+/* Private function, not in public API. */
+int TA_ALMA_TapeDetach( struct TA_ALMA_Stream *sp )
+{
+   int reach = 0;
+   if( sp->win_j_inReal ) { TA_Free( sp->win_j_inReal ); sp->win_j_inReal = NULL; }
+   if( sp->winCap_j - 1 > reach ) reach = sp->winCap_j - 1;
+   return reach;
+}
+
 TA_LIB_API TA_RetCode TA_ALMA_Value( const TA_ALMA_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

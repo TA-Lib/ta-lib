@@ -862,15 +862,15 @@ static ErrorNumber test_bbw_all( void )
 {
    static const struct { const char *leg; int want; const int *got; } cov[] = {
       { "golden exact",        361, &g_bbwGoldenCmp   },
-      { "composition",    48139400, &g_bbwDiffCmp     },
-      { "middle == 0",      148860, &g_bbwDiffMid0    },
-      { "float tier",        27832, &g_bbwFloatCmp    },
-      { "rule 18",          717674, &g_bbwIdentCmp    },
-      { "lookback",           2710, &g_bbwLookbackCmp },
-      { "in-place",         1066162, &g_bbwAliasCmp    },
-      { "anchor",           352872, &g_bbwAnchorCmp   },
+      { "composition",    50841490, &g_bbwDiffCmp     },
+      { "middle == 0",      157150, &g_bbwDiffMid0    },
+      { "float tier",        29752, &g_bbwFloatCmp    },
+      { "rule 18",          765734, &g_bbwIdentCmp    },
+      { "lookback",           2890, &g_bbwLookbackCmp },
+      { "in-place",         1135924, &g_bbwAliasCmp    },
+      { "anchor",           377026, &g_bbwAnchorCmp   },
       { "parameters",         1194, &g_bbwParamCmp    },
-      { "degenerate",        65590, &g_bbwDegenCmp    },
+      { "degenerate",        70300, &g_bbwDegenCmp    },
    };
    ErrorNumber err;
    unsigned int c;

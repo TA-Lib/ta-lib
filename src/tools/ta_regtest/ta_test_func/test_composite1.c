@@ -125,6 +125,7 @@ static const struct { int fast; int slow; TA_MAType maType; } pvoGrid[] =
    { 12, 26, TA_MAType_ZLEMA },
    { 12, 26, TA_MAType_RMA   },
    { 12, 26, TA_MAType_VIDYA },
+   { 12, 26, TA_MAType_ALMA },
    { 26, 12, TA_MAType_SMA   },  /* fast>slow: internal swap path */
    { 26, 12, TA_MAType_EMA   },  /* fast>slow: internal swap path */
    {  5, 10, TA_MAType_EMA   },  /* shorter periods */

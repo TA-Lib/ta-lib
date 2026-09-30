@@ -386,6 +386,7 @@ public partial class Core
    /// </para>
    /// <list type="bullet">
    /// <item><description>The peak is floored to a whole bar, as in the authors' code. At periods below about 5 this puts it on an older bar: at period 2 the line is almost entirely the previous bar.</description></item>
+   /// <item><description><c>TA_MAType_ALMA</c> runs this function at the default sigma and offset, so the line in <c>MA</c> and every function taking an MAType has the lag and noise stated above.</description></item>
    /// <item><description>The published paper's summary formula uses a different parameterisation; this is the form of the authors' own implementation.</description></item>
    /// </list>
    /// <para>
@@ -479,6 +480,7 @@ public partial class Core
    /// </para>
    /// <list type="bullet">
    /// <item><description>The peak is floored to a whole bar, as in the authors' code. At periods below about 5 this puts it on an older bar: at period 2 the line is almost entirely the previous bar.</description></item>
+   /// <item><description><c>TA_MAType_ALMA</c> runs this function at the default sigma and offset, so the line in <c>MA</c> and every function taking an MAType has the lag and noise stated above.</description></item>
    /// <item><description>The published paper's summary formula uses a different parameterisation; this is the form of the authors' own implementation.</description></item>
    /// </list>
    /// <para>
@@ -1012,5 +1014,51 @@ public partial class Core
          throw StreamFailure("ALMA", "openAndFill", RetCode.BadParam);
       }
       return AlmaOpenAndFillInternal(inReal, 0, optInTimePeriod, optInSigma, optInOffset, out _, out _, outReal);
+   }
+
+   private double AlmaStepTape( AlmaStream sp, ReadOnlySpan<double> tape, int tapeBase, int tapeMask, double inReal )
+   {
+      double sum = 0.0;
+      int j = 0;
+      int w = 0;
+      sum = 0.0;
+      w = 0;
+      for( j = sp.lookbackTotal; j >= 0; j -= 1 ) {
+         sum += sp.cb_weights[w] * tape[(tapeBase - j) & tapeMask];
+         w += 1;
+      }
+      sp.cur_outReal = sum;
+      sp.outRangeCount++;
+      return sp.cur_outReal;
+   }
+
+   private double AlmaPeekTape( AlmaStream sp, ReadOnlySpan<double> tape, int tapeBase, int tapeMask, double inReal )
+   {
+      double sum = 0.0;
+      int j = 0;
+      int w = 0;
+      double cur_outReal = 0.0;
+      int pkSlot0 = -1;
+      double pkVal0 = 0.0;
+      pkSlot0 = tapeBase & tapeMask;
+      pkVal0 = inReal;
+      sum = 0.0;
+      w = 0;
+      for( j = sp.lookbackTotal; j >= 0; j -= 1 ) {
+         sum += sp.cb_weights[w] * ((((tapeBase - j) & tapeMask) != pkSlot0) ? tape[(tapeBase - j) & tapeMask] : pkVal0);
+         w += 1;
+      }
+      cur_outReal = sum;
+      return cur_outReal;
+   }
+
+   private int AlmaTapeDetach( AlmaStream sp )
+   {
+      int reach = 0;
+      sp.win_j_inReal = [];
+      if( sp.winCap_j - 1 > reach ) {
+         reach = sp.winCap_j - 1;
+      }
+      return reach;
    }
 }

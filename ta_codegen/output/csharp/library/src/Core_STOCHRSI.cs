@@ -76,7 +76,7 @@ public partial class Core
    /// selects the default).</param>
    /// <param name="optInFastD_MAType">MA type used to smooth %D (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA,
    /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA; <c>MAType.DEFAULT</c> (or
+   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA; <c>MAType.DEFAULT</c> (or
    /// <c>(MAType)int.MinValue</c>) selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
    public int StochrsiLookback( int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
@@ -349,7 +349,7 @@ public partial class Core
    /// selects the default).</param>
    /// <param name="optInFastD_MAType">MA type used to smooth %D (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA,
    /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA; <c>MAType.DEFAULT</c> (or
+   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA; <c>MAType.DEFAULT</c> (or
    /// <c>(MAType)int.MinValue</c>) selects the default).</param>
    /// <param name="outFastK">Unsmoothed stochastic of the RSI (raw %K) Must hold at least <c>endIdx -
    /// max(startIdx, StochrsiLookback(...)) + 1</c> values, the count the call
@@ -450,7 +450,7 @@ public partial class Core
    /// selects the default).</param>
    /// <param name="optInFastD_MAType">MA type used to smooth %D (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA,
    /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA; <c>MAType.DEFAULT</c> (or
+   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA; <c>MAType.DEFAULT</c> (or
    /// <c>(MAType)int.MinValue</c>) selects the default).</param>
    /// <param name="outFastK">Unsmoothed stochastic of the RSI (raw %K) Must hold at least <c>endIdx -
    /// max(startIdx, StochrsiLookback(...)) + 1</c> values, the count the call

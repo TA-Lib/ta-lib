@@ -72,8 +72,9 @@ public partial class Core
    /// <see cref="Core.RealDefault"/> selects the default).</param>
    /// <param name="optInMAType">Moving-average type for the middle band (default 0 = SMA; values: 0=SMA,
    /// 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-   /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA; <c>MAType.DEFAULT</c>
-   /// (or <c>(MAType)int.MinValue</c>) selects the default).</param>
+   /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+   /// <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects the
+   /// default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
    public int PercentbLookback( int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType )
    {
@@ -663,8 +664,9 @@ public partial class Core
    /// <see cref="Core.RealDefault"/> selects the default).</param>
    /// <param name="optInMAType">Moving-average type for the middle band (default 0 = SMA; values: 0=SMA,
    /// 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-   /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA; <c>MAType.DEFAULT</c>
-   /// (or <c>(MAType)int.MinValue</c>) selects the default).</param>
+   /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+   /// <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects the
+   /// default).</param>
    /// <param name="outReal">Position of the input between the lower band (0) and the upper band (1)
    /// Must hold at least <c>endIdx - max(startIdx, PercentbLookback(...)) +
    /// 1</c> values, the count the call produces (none when that is not
@@ -761,8 +763,9 @@ public partial class Core
    /// <see cref="Core.RealDefault"/> selects the default).</param>
    /// <param name="optInMAType">Moving-average type for the middle band (default 0 = SMA; values: 0=SMA,
    /// 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-   /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA; <c>MAType.DEFAULT</c>
-   /// (or <c>(MAType)int.MinValue</c>) selects the default).</param>
+   /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+   /// <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects the
+   /// default).</param>
    /// <param name="outReal">Position of the input between the lower band (0) and the upper band (1)
    /// Must hold at least <c>endIdx - max(startIdx, PercentbLookback(...)) +
    /// 1</c> values, the count the call produces (none when that is not

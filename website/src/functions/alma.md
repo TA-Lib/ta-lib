@@ -22,6 +22,7 @@ The first output is at bar N-1.
 ## Notes
 
 - The peak is floored to a whole bar, as in the authors' code. At periods below about 5 this puts it on an older bar: at period 2 the line is almost entirely the previous bar.
+- `TA_MAType_ALMA` runs this function at the default sigma and offset, so the line in `MA` and every function taking an MAType has the lag and noise stated above.
 - The published paper's summary formula uses a different parameterisation; this is the form of the authors' own implementation.
 
 ## Inputs

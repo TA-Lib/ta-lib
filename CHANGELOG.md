@@ -34,6 +34,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   - VIDYA: Variable Index Dynamic Average, Chande's EMA scaled bar by bar by the CMO (#474)
 - New MAType (for MA, BBANDS, STOCH etc...):
   - TA_MAType_VIDYA (#474)
+  - TA_MAType_ALMA (#475)
 
 ### Faster
 - ~1.3x to 2.7x: CMO, PLUS_DM, MINUS_DM, PLUS_DI, MINUS_DI, DX, ADX and ADXR (#411)

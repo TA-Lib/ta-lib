@@ -130,7 +130,7 @@ int codegen_is_transcendental(const char *name);
 
 /* True if THIS CALL reaches a transcendental — the name test above, OR an
  * MA-dispatch function (MA/MAVP/BBANDS/MACDEXT/APO/PPO/STOCH*) whose *MAType
- * optional parameter selects TA_MAType_MAMA (which uses atan). optVals[i] is one
+ * optional parameter selects TA_MAType_MAMA (atan) or TA_MAType_ALMA (exp). optVals[i] is one
  * value per optInput in signature order; defaults are assumed beyond nbOpt. */
 int codegen_call_is_transcendental(const TA_FuncHandle *handle,
                                    const double optVals[], int nbOpt);

@@ -150,7 +150,7 @@ fn ma_types_split_into_recursive_and_windowed() {
     for name in ["EMA", "KAMA", "MAMA", "T3", "DEMA", "TEMA", "RMA", "VIDYA"] {
         assert!(st[name].unconditional(), "{name} carries an unstable period");
     }
-    for name in ["SMA", "WMA", "TRIMA", "HMA"] {
+    for name in ["SMA", "WMA", "TRIMA", "HMA", "ALMA"] {
         assert!(!st[name].unconditional(), "{name} is a windowed average");
     }
 }

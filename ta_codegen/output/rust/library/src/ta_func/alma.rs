@@ -462,6 +462,24 @@ impl Core {
         }
     }
 
+    fn alma_step_tape_impl(sp: &mut AlmaStreamState, tape: &[f64], tapeBase: usize, tapeMask: usize, inReal: f64, outReal: &mut f64) {
+        let mut sum: f64 = 0.0_f64;
+        let mut j: usize = 0_usize;
+        let mut w: usize = 0_usize;
+        sum = 0.0;
+        w = 0;
+        // for( j = sp.lookbackTotal; j >= 0; j -= 1 )
+        j = sp.lookbackTotal;
+        loop {
+            sum += sp.cb_weights[w] * tape[(tapeBase - j & tapeMask) as usize];
+            w += 1;
+            if j == 0 { break; }
+            j -= 1;
+        }
+        (*outReal) = sum;
+        sp.cur_outReal = (*outReal);
+    }
+
     /// The single whole-history transcription behind [`Core::alma_open_internal`]
     /// (stride 0, scalar sink) and [`Core::alma_open_and_fill`] (stride 1, caller slices).
     pub(crate) fn alma_open_impl(
@@ -865,6 +883,56 @@ impl AlmaStream {
         }
         self.out.count += 1;
         Ok(())
+    }
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
+impl AlmaStream {
+    pub(crate) fn step_tape(&mut self, tape: &[f64], tapeBase: usize, tapeMask: usize, inReal: f64) -> f64 {
+        let mut outReal: f64 = 0.0_f64;
+        Core::alma_step_tape_impl(&mut self.state, tape, tapeBase, tapeMask, inReal, &mut outReal);
+        self.out.count += 1;
+        outReal
+    }
+
+    pub(crate) fn peek_tape(&self, tape: &[f64], tapeBase: usize, tapeMask: usize, inReal: f64) -> Result<f64, RetCode> {
+        let mut outReal: f64 = 0.0_f64;
+        {
+            let sp = &self.state;
+            let outReal = &mut outReal;
+            let mut sum: f64 = 0.0_f64;
+            let mut j: usize = 0_usize;
+            let mut w: usize = 0_usize;
+            let mut pkSlot0: usize = usize::MAX;
+            let mut pkVal0: f64 = 0.0_f64;
+            pkSlot0 = (tapeBase & tapeMask) as usize;
+            pkVal0 = inReal;
+            sum = 0.0;
+            w = 0;
+            // for( j = sp.lookbackTotal; j >= 0; j -= 1 )
+            j = sp.lookbackTotal;
+            loop {
+                sum += sp.cb_weights[w] * (if ((tapeBase - j & tapeMask) as usize) != pkSlot0 { tape[(tapeBase - j & tapeMask) as usize] } else { pkVal0 });
+                w += 1;
+                if j == 0 { break; }
+                j -= 1;
+            }
+            (*outReal) = sum;
+        }
+        Ok(outReal)
+    }
+
+    pub(crate) fn tape_detach(&mut self) -> usize {
+        let mut reach: usize = 0;
+        self.state.win_j_inReal = Vec::new();
+        if self.state.winCap_j > reach + 1 {
+            reach = self.state.winCap_j - 1;
+        }
+        reach
     }
 }
 

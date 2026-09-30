@@ -20,6 +20,7 @@
  *  090426 MF,CC Add ZLEMA (issue #347).
  *  090426 MF,CC Add RMA (issue #348).
  *  092926 MF,CC Add VIDYA (issue #474).
+ *  092926 MF,CC Add ALMA (issue #475).
  */
 
 int ma_lookback(int optInTimePeriod, TA_MAType optInMAType)
@@ -81,6 +82,10 @@ int ma_lookback(int optInTimePeriod, TA_MAType optInMAType)
 
       case TA_MAType_VIDYA:
          retValue = vidya_lookback( optInTimePeriod, (3*optInTimePeriod+2)/4 );
+         break;
+
+      case TA_MAType_ALMA:
+         retValue = alma_lookback( optInTimePeriod, 6.0, 0.85 );
          break;
 
       default:
@@ -218,6 +223,12 @@ TA_RetCode ma(int startIdx, int endIdx,
           * Chande's 12:9 ratio. */
          retCode = vidya( startIdx, endIdx, inReal,
             optInTimePeriod, (3*optInTimePeriod+2)/4,
+            outBegIdx, outNBElement, outReal );
+         break;
+
+      case TA_MAType_ALMA:
+         retCode = alma( startIdx, endIdx, inReal,
+            optInTimePeriod, 6.0, 0.85,
             outBegIdx, outNBElement, outReal );
          break;
 

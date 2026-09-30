@@ -46,6 +46,8 @@ pub enum MAType {
     RMA = 13,
     /// The `TA_MAType_VIDYA` moving average.
     VIDYA = 14,
+    /// The `TA_MAType_ALMA` moving average.
+    ALMA = 15,
 }
 
 impl TryFrom<i32> for MAType {
@@ -80,6 +82,7 @@ impl TryFrom<i32> for MAType {
             12 => Self::ZLEMA,
             13 => Self::RMA,
             14 => Self::VIDYA,
+            15 => Self::ALMA,
             i32::MIN => Self::DEFAULT,
             _ => return Err(RetCode::BadParam),
         })

@@ -87,6 +87,7 @@ enum TA_MAType TA_MAType_DEFAULT = 11
 enum TA_MAType TA_MAType_ZLEMA = 12
 enum TA_MAType TA_MAType_RMA = 13
 enum TA_MAType TA_MAType_VIDYA = 14
+enum TA_MAType TA_MAType_ALMA = 15
 enum TA_OptInputParameterType sizeof=4
 enum TA_OptInputParameterType TA_OptInput_RealRange = 0
 enum TA_OptInputParameterType TA_OptInput_RealList = 1

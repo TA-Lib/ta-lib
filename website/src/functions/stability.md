@@ -36,6 +36,7 @@ Some functions take an `optInMAType` parameter selecting how their moving averag
 | [ZLEMA](/functions/zlema.md) | 12 | Initial Unstable Period | Built from EMA, and inherits its unstable period. |
 | [RMA](/functions/rma.md) | 13 | Initial Unstable Period | Recursive: each value folds in the previous one. Tunable via RMA's own unstable period. |
 | [VIDYA](/functions/vidya.md) | 14 | Initial Unstable Period | Recursive: each value folds in the previous one. Tunable via VIDYA's own unstable period. |
+| [ALMA](/functions/alma.md) | 15 | Start-Independent | A windowed average: it reads a fixed number of bars and forgets everything older. |
 
 ## If Path-Dependent, then... {#path-dependent}
 
