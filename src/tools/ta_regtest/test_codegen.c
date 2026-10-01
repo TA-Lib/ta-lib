@@ -779,6 +779,9 @@ static const UnstableLookup UNSTABLE_MAP[] = {
      * warm-up loop the body carries for exactly that setting is never entered on
      * the streaming path in any of the four. */
     {"SUPERTREND",   TA_FUNC_UNST_ATR},
+    /* ADOSC is path_dependent too, and inherits UNST_EMA through both of its
+     * EMA legs: like SUPERTREND, the row buys the stream K-leg alone. */
+    {"ADOSC",        TA_FUNC_UNST_EMA},
     /* KDJ declares no unstable flag of its own -- its instability arrives
      * through the MA type its two smoothing hops select, and the default is
      * the recursive RMA. Without a row here stability_class() falls to the

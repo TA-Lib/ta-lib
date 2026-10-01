@@ -168,8 +168,8 @@ fn ma_types_split_into_recursive_and_windowed() {
 /// what the website publishes, must explain every row and give each function it derives a
 /// row.
 ///
-/// Two classes are not held to it. The range sweep skips path-dependent functions before
-/// it reads the map, so their rows serve only the stream K-leg and are optional here. A
+/// A path-dependent function's row serves only the stream K-leg, since the range sweep
+/// skips it before reading the map; without one, the K-leg never runs it warm. A
 /// MAType-dependent function's rows depend on which MA types its tests select, which the
 /// call graph cannot see, so they are allowed, not required.
 #[test]
@@ -198,28 +198,18 @@ fn derivation_agrees_with_ta_regtest_unstable_map() {
     let map: BTreeSet<(String, String)> = rows.into_iter().collect();
 
     let mut required = BTreeSet::new();
-    let mut allowed = BTreeSet::new();
     for f in &funcs {
         let s = &st[&f.name];
         let mut ids: Vec<String> = s.inherited_from.clone();
         if s.intrinsic {
             ids.push(f.name.clone());
         }
-        for id in ids {
-            let row = (f.name.clone(), id);
-            if s.path_dependent {
-                allowed.insert(row);
-            } else {
-                required.insert(row);
-            }
-        }
+        required.extend(ids.into_iter().map(|id| (f.name.clone(), id)));
     }
     let missing: Vec<_> = required.difference(&map).collect();
     assert!(missing.is_empty(), "derived unstable, but no UNSTABLE_MAP row: {missing:?}");
-    let unexplained: Vec<_> = map
-        .difference(&required)
-        .filter(|r| !allowed.contains(*r) && !st[&r.0].matype_dependent)
-        .collect();
+    let unexplained: Vec<_> =
+        map.difference(&required).filter(|r| !st[&r.0].matype_dependent).collect();
     assert!(
         unexplained.is_empty(),
         "UNSTABLE_MAP rows the derivation calls start-independent: {unexplained:?}"
