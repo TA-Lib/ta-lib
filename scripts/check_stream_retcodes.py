@@ -3,10 +3,11 @@
 
 Two rules, one scan each.
 
-Rule S7 (docs/error-handling-spec.md): a streaming `Open`/`OpenAndFill` given
-fewer than `lookback + 1` bars reports `TA_INSUFFICIENT_HISTORY`. It is the
-library's one RECOVERABLE condition, so it must be distinguishable from
-`TA_BAD_PARAM`, which always means the call itself is wrong.
+Rule S7 (https://ta-lib.org/spec/streaming/#s7): a streaming
+`Open`/`OpenAndFill` given fewer than `lookback + 1` bars reports
+`TA_INSUFFICIENT_HISTORY`. It is the library's one RECOVERABLE condition, so it
+must be distinguishable from `TA_BAD_PARAM`, which always means the call itself
+is wrong.
 
 Rule S1: an EMPTY history reports `TA_OUT_OF_RANGE_START_INDEX`. An opener is a
 batch call over `[0, historyLen - 1]`, so the implied `startIdx` of 0 has to name

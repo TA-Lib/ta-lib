@@ -1090,8 +1090,8 @@ fn fresh_value_expr(func: &FuncDef, handle_var: &str) -> String {
 }
 
 /// Rule U4 — the opener's index-pair check read on a live handle, one bar at a
-/// time (`docs/error-handling-spec.md` §2.4, which carries why a sub-handle
-/// cannot answer it before its parent).
+/// time. Why a sub-handle cannot answer it before its parent: rationale U4 in
+/// `docs/error-handling-spec.md`.
 ///
 /// `>` and not `>=`: an opener may legally take `IndexMax + 1` bars (rule S2),
 /// so a handle can be born holding the last bar in the domain and it is the NEXT
@@ -2078,9 +2078,9 @@ fn emit_open_validation(
     let first = &inputs[0];
     // The implied index pair first: an opener is a batch call over
     // `[0, historyLen - 1]`, so S1 and S2 are B1 and B2 read on that range and
-    // answer the same two codes (docs/error-handling-spec.md 2.3). `historyLen`
-    // is the FIRST input's length, so a later input of a different length is an
-    // argument disagreement, not an empty history.
+    // answer the same two codes (https://ta-lib.org/spec/streaming/#s1).
+    // `historyLen` is the FIRST input's length, so a later input of a different
+    // length is an argument disagreement, not an empty history.
     let _ = writeln!(o, "      if( historyLen < 1 ) {{");
     let _ = writeln!(o, "         return RetCode.OutOfRangeStartIndex;");
     let _ = writeln!(o, "      }}");

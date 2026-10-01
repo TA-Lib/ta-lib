@@ -141,7 +141,8 @@ fn ceiling_needle(lang: &str) -> &'static str {
     }
 }
 
-/// Rule U4's guard, in the ONE slot §2.4 puts it in: first, with only the
+/// Rule U4's guard, in the ONE slot its table puts it in
+/// (`https://ta-lib.org/spec/streaming/#u4`): first, with only the
 /// handle-presence check allowed in front of it — exactly as only `!stream` may
 /// precede an opener's S1/S2 pair.
 ///

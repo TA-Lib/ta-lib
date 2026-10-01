@@ -278,8 +278,8 @@ public class StreamSmokeTest {
      *
      * <p>What is deliberately NOT pinned: the warm-up history handed to
      * {@code Open}/{@code OpenAndFill}. It is an input array, and the library
-     * does not scan input arrays — see {@code docs/error-handling-spec.md},
-     * "Non-finite input". Passing a non-finite one is undefined behaviour.
+     * does not scan input arrays. Passing a non-finite one is undefined
+     * behaviour (rule I5, https://ta-lib.org/spec/inputs-outputs/#i5).
      *
      * <p>Coverage is by stream TIER, not by function count: the check is emitted
      * from one place, but into the entry points of five different tiers. SMA is
@@ -395,7 +395,7 @@ public class StreamSmokeTest {
               + nfOpenRejects + "/" + nfBarRejects + "/" + nfStateHolds + ")");
     }
 
-    /* ---- rule U3, stated absolutely (docs/error-handling-spec.md 2.4) ---- */
+    /* ---- rule U3, stated absolutely (https://ta-lib.org/spec/streaming/#u3) ---- */
 
     /** Advance counters, one per property, each incremented AT its assertion. */
     private static int advRejects = 0;
@@ -708,7 +708,7 @@ public class StreamSmokeTest {
               + "/" + advPeekStills + "/" + advSkips + "/" + advSkipHolds + ")");
     }
 
-    /* ---- rule U4, the other absolute (docs/error-handling-spec.md 2.4) --- */
+    /* ---- rule U4, the other absolute (https://ta-lib.org/spec/streaming/#u4) --- */
 
     private static int u4Ceilings = 0;
     private static int u4Rejects = 0;

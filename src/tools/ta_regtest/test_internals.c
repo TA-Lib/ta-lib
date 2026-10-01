@@ -683,9 +683,9 @@ static ErrorNumber testBatchArgumentContract( void )
    /* A price leg the algorithm never INDEXES is a required argument all the
     * same (#260). CDL3OUTSIDE reads open and close only, CDLHIKKAKE everything
     * but open; C has always rejected a NULL there, and Rust, Java and C# used
-    * to accept it. Without these the worked example in
-    * docs/error-handling-spec.md 2.2 is asserted from the source and executed
-    * nowhere. */
+    * to accept it. Without these, B4 on a leg the algorithm never reads
+    * (https://ta-lib.org/spec/errors/#b4) is asserted from the source and
+    * executed nowhere. */
    BAC_ACCEPT( "TA_CDL3OUTSIDE",
                TA_CDL3OUTSIDE( 0, 251, bars, bars, bars, bars, &beg, &nb, outI ) );
    BAC_REJECT( "TA_CDL3OUTSIDE(inHigh=NULL)",

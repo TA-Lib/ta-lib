@@ -484,7 +484,7 @@ fn cross_typed_output_pairs_are_compared_where_the_language_can_express_it() {
     );
 }
 
-/// Rule B6a (`docs/error-handling-spec.md` 2.2, issue #262): an omitted output
+/// Rule B6a (`https://ta-lib.org/spec/errors/#b6a`, issue #262): an omitted output
 /// is accepted iff the .yaml marks it `nullable`. C has honoured it since #125;
 /// this pins the other three, each of which spells "declined" in its own way.
 ///
@@ -803,7 +803,7 @@ fn method<'a>(src: &'a str, sig: &str, what: &str) -> &'a str {
 /// rather than a suppressed computation.
 ///
 /// The handle is not in the guard: it is checked on its own line ahead of rule
-/// U4, which has to read the range head (`docs/error-handling-spec.md` §2.4).
+/// U4, which has to read the range head (`https://ta-lib.org/spec/streaming/#u4`).
 #[test]
 fn test_a_nullable_output_is_declinable_at_update_in_c() {
     let registry = make_registry();

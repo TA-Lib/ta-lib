@@ -995,7 +995,7 @@ fn gen_func_inner(
         // A CROSS-TYPED pair is compared too, through `const void *`: `double * ==
         // int *` is the constraint violation, not the question, and the cast is
         // well defined. Reachable since SUPERTREND (#272) made the corpus mix the
-        // two. Appendix E of docs/error-handling-spec.md, #262.
+        // two. Rationale B6 in docs/error-handling-spec.md, #262.
         if func.outputs.len() >= 2 {
             let mut pairs: Vec<String> = Vec::new();
             for i in 0..func.outputs.len() {

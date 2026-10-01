@@ -1,4 +1,4 @@
-//! Rule S1 for the Rust streaming openers — `docs/error-handling-spec.md` 2.3,
+//! Rule S1 for the Rust streaming openers (`https://ta-lib.org/spec/streaming/#s1`),
 //! issue #268.
 //!
 //! An opener is a batch call over `[0, historyLen - 1]`, so an empty history is

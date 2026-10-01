@@ -8,7 +8,7 @@ the state shape, the tier — is derived from the IR, and
 `ta_codegen stream-census` prints what each function derives today.
 
 This file is the contract and the shape. The error model is
-`docs/error-handling-spec.md`; the gates are `src/tools/ta_regtest/CLAUDE.md`.
+https://ta-lib.org/spec/errors/; the gates are `src/tools/ta_regtest/CLAUDE.md`.
 
 ## Lifecycle
 
@@ -36,8 +36,8 @@ it has an output for, in the input series' coordinates: `TA_<N>_OutRange`,
 `out_range()`, `outRange()`, `OutRange`. It is the batch tier's range and lives
 in the batch tier's domain, so the last bar a handle can reach is `INDEX_MAX`:
 past it `update` and `advance` refuse, permanently. Which calls move
-it, and how the refusal is spelled, are `docs/error-handling-spec.md` §2.4's
-business.
+it is rules U4, H4 and H5 (https://ta-lib.org/spec/streaming/#u4); how the
+refusal is spelled, https://ta-lib.org/spec/#failures.
 
 **`Advance` counts a bar the handle was not fed** — `TA_<N>_Advance`,
 `advance()`, `advance()`, `Advance()`, emitted per handle class in all four
@@ -239,7 +239,7 @@ Shape rules that are not visible in those lines:
   separately), and the `TALibArgumentException` / `TALibIndexException` /
   `TALibStateException` family — each carrying its `RetCode` — for everything
   else. Messages carry the stable prefix `"<NAME> open:"` / `"<NAME> update:"` /
-  `"<NAME> peek:"`. `docs/error-handling-spec.md` §2.3–2.5 is the rule-by-rule
+  `"<NAME> peek:"`. https://ta-lib.org/spec/streaming/ is the rule-by-rule
   source.
 - `value()` re-reads the value(s) at the last bar the stream counted, without
   recomputing.

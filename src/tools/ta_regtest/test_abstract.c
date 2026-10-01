@@ -2678,7 +2678,7 @@ static ErrorNumber checkOutputAliasRejected( const TA_FuncInfo *funcInfo )
           * through `const void *`; this is what proves it does. Only C can be
           * asked: Java and Rust cannot express the comparison and C# has no
           * `Overlaps` across element types, so the rule they are held to is the
-          * same-typed one (Appendix E).
+          * same-typed one (B6, https://ta-lib.org/spec/errors/#b6).
           */
          TA_GetOutputParameterInfo( handle, oa, &outInfoA );
          TA_GetOutputParameterInfo( handle, ob, &outInfoB );

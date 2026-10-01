@@ -1080,8 +1080,8 @@ public static class StreamApiTest
     /// more useful.</para>
     /// <para>The warm-up history handed to <c>Open</c>/<c>OpenAndFill</c> is
     /// deliberately NOT checked: it is an input array, and the library does not
-    /// scan input arrays. Passing a non-finite one is undefined behaviour — see
-    /// <c>docs/error-handling-spec.md</c>, "Non-finite input".</para>
+    /// scan input arrays. Passing a non-finite one is undefined behaviour (rule I5,
+    /// https://ta-lib.org/spec/inputs-outputs/#i5).</para>
     /// <para>Coverage is by stream TIER, not by function count. The check is emitted
     /// from one place, but into the entry points of five different tiers: SMA is
     /// the loop tier, MINUS_DI dual-mode, MA the dispatch tier (including its
@@ -1206,7 +1206,7 @@ public static class StreamApiTest
               + $"({_nfOpen}/{_nfBar}/{_nfState})");
     }
 
-    /* ---- rule U3, stated absolutely (docs/error-handling-spec.md 2.4) ---- */
+    /* ---- rule U3, stated absolutely (https://ta-lib.org/spec/streaming/#u3) ---- */
 
     /* Advance counters, one per property, each incremented AT its assertion. */
     private static int _advRejects;

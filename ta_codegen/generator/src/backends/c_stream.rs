@@ -400,7 +400,7 @@ fn finite_bar_check(func: &FuncDef, indent: &str, fail: &str) -> String {
 /// Rules S1 and S2 — the opener's implied index pair — ahead of every presence
 /// check, because an opener is a batch call over `[0, historyLen - 1]` and the
 /// pair is B1 and B2 read on that range, answering the same two codes
-/// (`docs/error-handling-spec.md` §2.3). Only `!stream` may precede it: the
+/// (`https://ta-lib.org/spec/streaming/#s1`). Only `!stream` may precede it: the
 /// "`*stream` is NULL on any failure" contract is published through that
 /// pointer, so it is a precondition for reporting anything at all rather than an
 /// argument competing with the pair.
@@ -416,9 +416,9 @@ fn index_pair_guards() -> &'static str {
     )
 }
 
-/// Rule U4 — [`index_pair_guards`] read on a live handle, one bar at a time
-/// (`docs/error-handling-spec.md` §2.4, which carries why a sub-handle cannot
-/// answer it before its parent).
+/// Rule U4 — [`index_pair_guards`] read on a live handle, one bar at a time.
+/// Why a sub-handle cannot answer it before its parent: rationale U4 in
+/// `docs/error-handling-spec.md`.
 ///
 /// `>` and not `>=`: an opener may legally take `TA_INDEX_MAX + 1` bars (rule
 /// S2), so a handle can be born holding the last bar in the domain and it is the
@@ -435,7 +435,7 @@ fn step_index_guard() -> &'static str {
 /// itself can reorder it silently — every clause answers a different code.
 ///
 /// `ceiling` is false for `Peek`, which counts no bar and so has no index to
-/// leave the domain (`docs/error-handling-spec.md` §2.4).
+/// leave the domain (rule U4).
 fn step_prologue(func: &FuncDef, frame: Frame, ceiling: bool) -> String {
     let mut s = String::new();
     if ceiling {
@@ -485,7 +485,7 @@ enum Frame {
 /// below. Nothing could see any of it: they all answer `TA_BAD_PARAM`.
 ///
 /// **A `nullable` output is in the list only where nothing guards its write.**
-/// Declining one is legal (Appendix F), and the transcribed bodies honour that
+/// Declining one is legal (rule O5), and the transcribed bodies honour that
 /// with an `if( out != NULL )` — so the opener and the transcribed step leave it
 /// out, and only [`Frame::StepEveryOutput`] keeps it. Hand-rolling had both
 /// halves wrong in the same tier: the dispatch OPENER dropped the clause it

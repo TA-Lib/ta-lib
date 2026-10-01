@@ -928,8 +928,8 @@ fn assert_single_output(func: &FuncDef, site: &str) {
 }
 
 /// Rule U4 — the opener's index-pair check read on a live handle, one bar at a
-/// time (`docs/error-handling-spec.md` §2.4, which carries why a sub-handle
-/// cannot answer it before its parent).
+/// time. Why a sub-handle cannot answer it before its parent: rationale U4 in
+/// `docs/error-handling-spec.md`.
 ///
 /// `>` and not `>=`: an opener may legally take `INDEX_MAX + 1` bars (rule S2),
 /// so a handle can be born holding the last bar in the domain and it is the NEXT
@@ -2042,9 +2042,9 @@ fn emit_open_validation(o: &mut String, func: &FuncDef, mode: OutMode, enums: &H
     let first = &inputs[0];
     // The implied index pair first: an opener is a batch call over
     // `[0, historyLen - 1]`, so S1 and S2 are B1 and B2 read on that range and
-    // answer the same two codes (docs/error-handling-spec.md 2.3). `historyLen`
-    // is the FIRST input's length, so a later input of a different length is an
-    // argument disagreement, not an empty history.
+    // answer the same two codes (https://ta-lib.org/spec/streaming/#s1).
+    // `historyLen` is the FIRST input's length, so a later input of a different
+    // length is an argument disagreement, not an empty history.
     let _ = writeln!(o, "      if( historyLen < 1 ) {{");
     let _ = writeln!(o, "         return RetCode.OUT_OF_RANGE_START_INDEX;");
     let _ = writeln!(o, "      }}");
@@ -2634,8 +2634,9 @@ fn emit_open_internal_seam(
 /// **Exactly one presence check precedes the pair**: the FIRST input's, because
 /// that is the array `historyLen` is read from and a length cannot be taken from
 /// an array that is not there. Every other argument — the remaining price legs
-/// included — is checked after, which is the specified order
-/// (`docs/error-handling-spec.md` §2.3, footnote [4]). Checking them all up
+/// included — is checked after, which is the specified order (rule S1's note,
+/// `https://ta-lib.org/spec/streaming/#s1`; footnote [4] of
+/// `docs/error-handling-spec.md`). Checking them all up
 /// front reads as tidier and is wrong: a candlestick opened on an empty history
 /// with one null leg would report the leg, where C reports the empty history.
 ///

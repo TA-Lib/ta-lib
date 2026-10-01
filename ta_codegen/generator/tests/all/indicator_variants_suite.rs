@@ -277,9 +277,9 @@ fn c_batch_prologues(c: &str) -> Vec<&str> {
     out
 }
 
-/// `docs/error-handling-spec.md` 2.2: B1, B2, then B3 — an optional parameter
-/// outside its documented domain — and only then B4, a required argument that was
-/// not supplied.
+/// The batch order (`https://ta-lib.org/spec/errors/#b1`): B1, B2, then B3, an
+/// optional parameter outside its documented domain, and only then B4, a required
+/// argument that was not supplied.
 ///
 /// The parameter rule leads because it is the one every backend can express: a
 /// Rust slice and a C# span cannot be absent, so B4 is C's and Java's alone, and
@@ -379,9 +379,10 @@ fn c_batch_prologue_orders_parameters_before_presence() {
 /// RUST cannot compare a real output with an integer one: `*const f64 ==
 /// *const i32` is a type error, so a cross-typed pair contributes no term and a
 /// function whose outputs are all cross-typed gets no guard at all. (C can and
-/// does compare them, through `const void *` — Appendix E. The rule differs per
-/// backend, so do not read this as a statement about the library.) Without the
-/// skip, reconstructing the guard reads a correctly-absent term as a missing one.
+/// does compare them, through `const void *`: rationale B6 in
+/// `docs/error-handling-spec.md`. The rule differs per backend, so do not read
+/// this as a statement about the library.) Without the skip, reconstructing the
+/// guard reads a correctly-absent term as a missing one.
 fn same_typed_outputs(a: &ir::Output, b: &ir::Output) -> bool {
     (a.param_type == ir::ParamType::Integer) == (b.param_type == ir::ParamType::Integer)
 }
@@ -436,15 +437,16 @@ fn rust_cross_typed_term(a: &ir::Output, b: &ir::Output) -> String {
     format!("{0}.as_ptr() == {1}.as_ptr()", a.name, b.name)
 }
 
-/// `docs/error-handling-spec.md` 2.2: B1, B2, B3, then B5 — a buffer too short —
-/// and only then B6, two outputs that are the same buffer.
+/// The batch order (`https://ta-lib.org/spec/errors/#b1`): B1, B2, B3, then B5, a
+/// buffer too short, and only then B6, two outputs that are the same buffer.
 ///
 /// Rust is the one backend where the order between those last two is
 /// *observable*, and it had them the wrong way round (#261). Here B5 is an
-/// `assert!` rather than a returned code — footnote [5], the LLVM proof that
-/// elides the per-access bounds checks — so a call that is both undersized and
-/// aliased answered `BadParam` where the specified order makes it a panic. C,
-/// Java and C# answer `TA_BAD_PARAM` for either, so no order is owed there.
+/// `assert!` rather than a returned code (rationale B5 in
+/// `docs/error-handling-spec.md`: the LLVM proof that elides the per-access bounds
+/// checks), so a call that is both undersized and aliased answered `BadParam`
+/// where the specified order makes it a panic. C, Java and C# answer
+/// `TA_BAD_PARAM` for either, so no order is owed there.
 ///
 /// **This tier, not the shipped one.** Since #265 the public entry point states
 /// B5 as a returned code ahead of both of these

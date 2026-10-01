@@ -1411,8 +1411,8 @@ fn finite_bar_check(func: &FuncDef, indent: &str) -> String {
 }
 
 /// Rule U4 — the opener's index-pair check read on a live handle, one bar at a
-/// time (`docs/error-handling-spec.md` §2.4, which carries why a sub-handle
-/// cannot answer it before its parent).
+/// time. Why a sub-handle cannot answer it before its parent: rationale U4 in
+/// `docs/error-handling-spec.md`.
 ///
 /// `>` and not `>=`: an opener may legally take `INDEX_MAX + 1` bars (rule S2),
 /// so a handle can be born holding the last bar in the domain and it is the NEXT
@@ -2213,7 +2213,7 @@ fn emit_open_sig(o: &mut String, func: &FuncDef, mode: OutMode, enums: &HashMap<
 /// One output parameter per declared output, in declaration order.
 ///
 /// A `nullable` output is `Option<&mut [T]>`, the spelling the batch tier took
-/// in #262 and the one Appendix F pins: Rust can say "declined" distinctly from
+/// in #262 and the one rule O5 pins: Rust can say "declined" distinctly from
 /// "empty", so it does. The `mut` binding rides the Core tier alone — the one
 /// that renders a body and re-borrows with `as_deref_mut()`.
 fn open_out_params(func: &FuncDef, mode: OutMode) -> String {
@@ -2236,7 +2236,7 @@ fn open_out_params(func: &FuncDef, mode: OutMode) -> String {
 ///
 /// The pair comes first because an opener is a batch call over
 /// `[0, historyLen - 1]`: S1 and S2 are B1 and B2 read on that range and answer
-/// the same two codes (`docs/error-handling-spec.md` §2.3). `historyLen` is the
+/// the same two codes (`https://ta-lib.org/spec/streaming/#s1`). `historyLen` is the
 /// FIRST input's length — a later input being empty is a length disagreement,
 /// which is `BadParam` like every other argument fault.
 fn emit_open_validation_head(o: &mut String, func: &FuncDef, mode: OutMode, enums: &HashMap<String, EnumDef>) {

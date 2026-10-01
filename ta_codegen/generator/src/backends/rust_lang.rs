@@ -815,8 +815,9 @@ fn internal_callee(name: &str) -> String {
 ///
 /// **Order is the contract, not an implementation detail.** The index rules
 /// (B1, B2) first, then the parameters (B3, carried by the `<N>_Lookback` call's
-/// `?`), then the buffers (B4, B5) — `docs/error-handling-spec.md` 2.2, and the
-/// same order [`super::java::gen_argument_checks`] emits. Put the input bound at
+/// `?`), then the buffers (B4, B5): the order of the batch table
+/// (`https://ta-lib.org/spec/errors/#b1`), and the one
+/// [`super::java::gen_argument_checks`] emits. Put the input bound at
 /// the top and `SMA(10, 9, ..)` answers `BadParam` where `test_index_range_xlang`
 /// requires `OutOfRangeEndIndex`.
 fn gen_public_entry(
@@ -1018,7 +1019,7 @@ fn gen_guarded_func(
                 // Cross-typed pairs are skipped because safe code cannot lay
                 // a `&mut [f64]` over a `&mut [i32]` to begin with, so there is
                 // nothing to detect — not because the compare is unspellable
-                // (both `as *const u8` would do). Appendix E of
+                // (both `as *const u8` would do). Rationale B6 in
                 // `docs/error-handling-spec.md`, #262.
                 if (a.param_type == ParamType::Integer) != (b.param_type == ParamType::Integer) {
                     continue;
@@ -1762,7 +1763,7 @@ fn gen_generic_params(func: &FuncDef) -> String {
 ///
 /// A `nullable` output (rule B6a) is `Option<&mut [T]>`. Rust can spell
 /// "declined" distinctly from "empty" and so it does, which leaves C# the only
-/// backend where the two collapse — Appendix F of `docs/error-handling-spec.md`.
+/// backend where the two collapse (rationale O5 in `docs/error-handling-spec.md`).
 /// `None` means *compute it but do not write it out*: every store to that output
 /// is guarded and its capacity assert is skipped.
 fn output_param_type(output: &Output) -> String {

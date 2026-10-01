@@ -1,5 +1,5 @@
 //! Rule B6a, the empty-output half of rule B6, and B5's two bounds, for the Rust
-//! batch API — `docs/error-handling-spec.md` 2.2 and Appendix F, issues #262 and
+//! batch API (`https://ta-lib.org/spec/errors/#b6a`, rule O5), issues #262 and
 //! #265.
 //!
 //! None of it is reachable from the cross-language gates. The JSON-RPC servers
@@ -164,7 +164,7 @@ fn empty_outputs_on_a_producing_range_still_fault() {
 
 /// B5's input half, which the public tier states without the sub-lookback escape
 /// the body's assert takes — so a short input is refused on a range that
-/// produces nothing as readily as on one that does (#265, spec footnote [5]).
+/// produces nothing as readily as on one that does (#265, rule I2).
 ///
 /// This is the one bound where the crate answers a caller that C cannot: C is
 /// handed bare pointers and reads past the end. Java and C# have said it since

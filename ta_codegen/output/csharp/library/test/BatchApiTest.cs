@@ -978,7 +978,7 @@ public static class BatchApiTest
     /// </summary>
     /// <remarks>C# cannot spell "absent" apart from "empty" — a <c>Span&lt;T&gt;</c>
     /// is a ref struct and a null array converts to an empty span — so an empty
-    /// span IS the declination (Appendix F of the error-handling spec).
+    /// span IS the declination (rule O5).
     /// <para>Acceptance alone would not test this: a body that stopped computing
     /// FAMA, or took a different path without it, would be accepted here just the
     /// same. So the declining call has to reproduce the supplied one bit for bit
