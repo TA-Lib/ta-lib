@@ -395,7 +395,7 @@ public class StreamSmokeTest {
               + nfOpenRejects + "/" + nfBarRejects + "/" + nfStateHolds + ")");
     }
 
-    /* ---- rule U3, stated absolutely (https://ta-lib.org/spec/streaming/#u3) ---- */
+    /* ---- rules U3, H4, H5 and N7, stated absolutely (https://ta-lib.org/spec/streaming/#u3, #h4, #h5, #n7) ---- */
 
     /** Advance counters, one per property, each incremented AT its assertion. */
     private static int advRejects = 0;

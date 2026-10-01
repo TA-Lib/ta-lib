@@ -2207,13 +2207,10 @@ pub(super) fn rpc_ac(core: &mut Core, ref_data: &mut RefData, params: &Value) ->
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.ac_lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod).unwrap_or(usize::MAX);
@@ -2595,13 +2592,10 @@ pub(super) fn rpc_accbands(core: &mut Core, ref_data: &mut RefData, params: &Val
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.accbands_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -3013,13 +3007,10 @@ pub(super) fn rpc_acos(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.acos_lookback().unwrap_or(usize::MAX);
@@ -3395,13 +3386,10 @@ pub(super) fn rpc_ad(core: &mut Core, ref_data: &mut RefData, params: &Value) ->
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.ad_lookback().unwrap_or(usize::MAX);
@@ -3772,13 +3760,10 @@ pub(super) fn rpc_add(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.add_lookback().unwrap_or(usize::MAX);
@@ -4159,13 +4144,10 @@ pub(super) fn rpc_adosc(core: &mut Core, ref_data: &mut RefData, params: &Value)
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.adosc_lookback(optInFastPeriod, optInSlowPeriod).unwrap_or(usize::MAX);
@@ -4544,13 +4526,10 @@ pub(super) fn rpc_adr(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.adr_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -4929,13 +4908,10 @@ pub(super) fn rpc_adx(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.adx_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -5315,13 +5291,10 @@ pub(super) fn rpc_adxr(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.adxr_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -5689,13 +5662,10 @@ pub(super) fn rpc_alma(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.alma_lookback(optInTimePeriod, optInSigma, optInOffset).unwrap_or(usize::MAX);
@@ -6068,13 +6038,10 @@ pub(super) fn rpc_ao(core: &mut Core, ref_data: &mut RefData, params: &Value) ->
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.ao_lookback(optInFastPeriod, optInSlowPeriod).unwrap_or(usize::MAX);
@@ -6443,13 +6410,10 @@ pub(super) fn rpc_apo(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.apo_lookback(optInFastPeriod, optInSlowPeriod, optInMAType).unwrap_or(usize::MAX);
@@ -6834,13 +6798,10 @@ pub(super) fn rpc_aroon(core: &mut Core, ref_data: &mut RefData, params: &Value)
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.aroon_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -7233,13 +7194,10 @@ pub(super) fn rpc_aroonosc(core: &mut Core, ref_data: &mut RefData, params: &Val
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.aroonosc_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -7622,13 +7580,10 @@ pub(super) fn rpc_asi(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.asi_lookback(optInLimitMove).unwrap_or(usize::MAX);
@@ -7995,13 +7950,10 @@ pub(super) fn rpc_asin(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.asin_lookback().unwrap_or(usize::MAX);
@@ -8356,13 +8308,10 @@ pub(super) fn rpc_atan(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.atan_lookback().unwrap_or(usize::MAX);
@@ -8735,13 +8684,10 @@ pub(super) fn rpc_atr(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.atr_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -9107,13 +9053,10 @@ pub(super) fn rpc_avgdev(core: &mut Core, ref_data: &mut RefData, params: &Value
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.avgdev_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -9492,13 +9435,10 @@ pub(super) fn rpc_avgprice(core: &mut Core, ref_data: &mut RefData, params: &Val
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.avgprice_lookback().unwrap_or(usize::MAX);
@@ -9868,13 +9808,10 @@ pub(super) fn rpc_bbands(core: &mut Core, ref_data: &mut RefData, params: &Value
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.bbands_lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType).unwrap_or(usize::MAX);
@@ -10308,13 +10245,10 @@ pub(super) fn rpc_bbw(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.bbw_lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType).unwrap_or(usize::MAX);
@@ -10702,13 +10636,10 @@ pub(super) fn rpc_beta(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.beta_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -11090,13 +11021,10 @@ pub(super) fn rpc_bop(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.bop_lookback().unwrap_or(usize::MAX);
@@ -11475,13 +11403,10 @@ pub(super) fn rpc_cci(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cci_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -11866,13 +11791,10 @@ pub(super) fn rpc_cdl2crows(core: &mut Core, ref_data: &mut RefData, params: &Va
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cdl2crows_lookback().unwrap_or(usize::MAX);
@@ -12261,13 +12183,10 @@ pub(super) fn rpc_cdl3blackcrows(core: &mut Core, ref_data: &mut RefData, params
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cdl3blackcrows_lookback().unwrap_or(usize::MAX);
@@ -12656,13 +12575,10 @@ pub(super) fn rpc_cdl3inside(core: &mut Core, ref_data: &mut RefData, params: &V
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cdl3inside_lookback().unwrap_or(usize::MAX);
@@ -13051,13 +12967,10 @@ pub(super) fn rpc_cdl3linestrike(core: &mut Core, ref_data: &mut RefData, params
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cdl3linestrike_lookback().unwrap_or(usize::MAX);
@@ -13446,13 +13359,10 @@ pub(super) fn rpc_cdl3outside(core: &mut Core, ref_data: &mut RefData, params: &
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cdl3outside_lookback().unwrap_or(usize::MAX);
@@ -13841,13 +13751,10 @@ pub(super) fn rpc_cdl3starsinsouth(core: &mut Core, ref_data: &mut RefData, para
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cdl3starsinsouth_lookback().unwrap_or(usize::MAX);
@@ -14236,13 +14143,10 @@ pub(super) fn rpc_cdl3whitesoldiers(core: &mut Core, ref_data: &mut RefData, par
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cdl3whitesoldiers_lookback().unwrap_or(usize::MAX);
@@ -14632,13 +14536,10 @@ pub(super) fn rpc_cdlabandonedbaby(core: &mut Core, ref_data: &mut RefData, para
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cdlabandonedbaby_lookback(optInPenetration).unwrap_or(usize::MAX);
@@ -15030,13 +14931,10 @@ pub(super) fn rpc_cdladvanceblock(core: &mut Core, ref_data: &mut RefData, param
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cdladvanceblock_lookback().unwrap_or(usize::MAX);
@@ -15425,13 +15323,10 @@ pub(super) fn rpc_cdlbelthold(core: &mut Core, ref_data: &mut RefData, params: &
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cdlbelthold_lookback().unwrap_or(usize::MAX);
@@ -15820,13 +15715,10 @@ pub(super) fn rpc_cdlbreakaway(core: &mut Core, ref_data: &mut RefData, params: 
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cdlbreakaway_lookback().unwrap_or(usize::MAX);
@@ -16215,13 +16107,10 @@ pub(super) fn rpc_cdlclosingmarubozu(core: &mut Core, ref_data: &mut RefData, pa
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cdlclosingmarubozu_lookback().unwrap_or(usize::MAX);
@@ -16610,13 +16499,10 @@ pub(super) fn rpc_cdlconcealbabyswall(core: &mut Core, ref_data: &mut RefData, p
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cdlconcealbabyswall_lookback().unwrap_or(usize::MAX);
@@ -17005,13 +16891,10 @@ pub(super) fn rpc_cdlcounterattack(core: &mut Core, ref_data: &mut RefData, para
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cdlcounterattack_lookback().unwrap_or(usize::MAX);
@@ -17401,13 +17284,10 @@ pub(super) fn rpc_cdldarkcloudcover(core: &mut Core, ref_data: &mut RefData, par
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cdldarkcloudcover_lookback(optInPenetration).unwrap_or(usize::MAX);
@@ -17799,13 +17679,10 @@ pub(super) fn rpc_cdldoji(core: &mut Core, ref_data: &mut RefData, params: &Valu
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cdldoji_lookback().unwrap_or(usize::MAX);
@@ -18194,13 +18071,10 @@ pub(super) fn rpc_cdldojistar(core: &mut Core, ref_data: &mut RefData, params: &
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cdldojistar_lookback().unwrap_or(usize::MAX);
@@ -18589,13 +18463,10 @@ pub(super) fn rpc_cdldragonflydoji(core: &mut Core, ref_data: &mut RefData, para
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cdldragonflydoji_lookback().unwrap_or(usize::MAX);
@@ -18984,13 +18855,10 @@ pub(super) fn rpc_cdlengulfing(core: &mut Core, ref_data: &mut RefData, params: 
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cdlengulfing_lookback().unwrap_or(usize::MAX);
@@ -19380,13 +19248,10 @@ pub(super) fn rpc_cdleveningdojistar(core: &mut Core, ref_data: &mut RefData, pa
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cdleveningdojistar_lookback(optInPenetration).unwrap_or(usize::MAX);
@@ -19779,13 +19644,10 @@ pub(super) fn rpc_cdleveningstar(core: &mut Core, ref_data: &mut RefData, params
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cdleveningstar_lookback(optInPenetration).unwrap_or(usize::MAX);
@@ -20177,13 +20039,10 @@ pub(super) fn rpc_cdlgapsidesidewhite(core: &mut Core, ref_data: &mut RefData, p
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cdlgapsidesidewhite_lookback().unwrap_or(usize::MAX);
@@ -20572,13 +20431,10 @@ pub(super) fn rpc_cdlgravestonedoji(core: &mut Core, ref_data: &mut RefData, par
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cdlgravestonedoji_lookback().unwrap_or(usize::MAX);
@@ -20967,13 +20823,10 @@ pub(super) fn rpc_cdlhammer(core: &mut Core, ref_data: &mut RefData, params: &Va
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cdlhammer_lookback().unwrap_or(usize::MAX);
@@ -21362,13 +21215,10 @@ pub(super) fn rpc_cdlhangingman(core: &mut Core, ref_data: &mut RefData, params:
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cdlhangingman_lookback().unwrap_or(usize::MAX);
@@ -21757,13 +21607,10 @@ pub(super) fn rpc_cdlharami(core: &mut Core, ref_data: &mut RefData, params: &Va
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cdlharami_lookback().unwrap_or(usize::MAX);
@@ -22152,13 +21999,10 @@ pub(super) fn rpc_cdlharamicross(core: &mut Core, ref_data: &mut RefData, params
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cdlharamicross_lookback().unwrap_or(usize::MAX);
@@ -22547,13 +22391,10 @@ pub(super) fn rpc_cdlhighwave(core: &mut Core, ref_data: &mut RefData, params: &
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cdlhighwave_lookback().unwrap_or(usize::MAX);
@@ -22942,13 +22783,10 @@ pub(super) fn rpc_cdlhikkake(core: &mut Core, ref_data: &mut RefData, params: &V
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cdlhikkake_lookback().unwrap_or(usize::MAX);
@@ -23337,13 +23175,10 @@ pub(super) fn rpc_cdlhikkakemod(core: &mut Core, ref_data: &mut RefData, params:
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cdlhikkakemod_lookback().unwrap_or(usize::MAX);
@@ -23732,13 +23567,10 @@ pub(super) fn rpc_cdlhomingpigeon(core: &mut Core, ref_data: &mut RefData, param
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cdlhomingpigeon_lookback().unwrap_or(usize::MAX);
@@ -24127,13 +23959,10 @@ pub(super) fn rpc_cdlidentical3crows(core: &mut Core, ref_data: &mut RefData, pa
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cdlidentical3crows_lookback().unwrap_or(usize::MAX);
@@ -24522,13 +24351,10 @@ pub(super) fn rpc_cdlinneck(core: &mut Core, ref_data: &mut RefData, params: &Va
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cdlinneck_lookback().unwrap_or(usize::MAX);
@@ -24917,13 +24743,10 @@ pub(super) fn rpc_cdlinvertedhammer(core: &mut Core, ref_data: &mut RefData, par
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cdlinvertedhammer_lookback().unwrap_or(usize::MAX);
@@ -25312,13 +25135,10 @@ pub(super) fn rpc_cdlkicking(core: &mut Core, ref_data: &mut RefData, params: &V
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cdlkicking_lookback().unwrap_or(usize::MAX);
@@ -25707,13 +25527,10 @@ pub(super) fn rpc_cdlkickingbylength(core: &mut Core, ref_data: &mut RefData, pa
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cdlkickingbylength_lookback().unwrap_or(usize::MAX);
@@ -26102,13 +25919,10 @@ pub(super) fn rpc_cdlladderbottom(core: &mut Core, ref_data: &mut RefData, param
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cdlladderbottom_lookback().unwrap_or(usize::MAX);
@@ -26497,13 +26311,10 @@ pub(super) fn rpc_cdllongleggeddoji(core: &mut Core, ref_data: &mut RefData, par
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cdllongleggeddoji_lookback().unwrap_or(usize::MAX);
@@ -26892,13 +26703,10 @@ pub(super) fn rpc_cdllongline(core: &mut Core, ref_data: &mut RefData, params: &
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cdllongline_lookback().unwrap_or(usize::MAX);
@@ -27287,13 +27095,10 @@ pub(super) fn rpc_cdlmarubozu(core: &mut Core, ref_data: &mut RefData, params: &
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cdlmarubozu_lookback().unwrap_or(usize::MAX);
@@ -27682,13 +27487,10 @@ pub(super) fn rpc_cdlmatchinglow(core: &mut Core, ref_data: &mut RefData, params
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cdlmatchinglow_lookback().unwrap_or(usize::MAX);
@@ -28078,13 +27880,10 @@ pub(super) fn rpc_cdlmathold(core: &mut Core, ref_data: &mut RefData, params: &V
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cdlmathold_lookback(optInPenetration).unwrap_or(usize::MAX);
@@ -28477,13 +28276,10 @@ pub(super) fn rpc_cdlmorningdojistar(core: &mut Core, ref_data: &mut RefData, pa
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cdlmorningdojistar_lookback(optInPenetration).unwrap_or(usize::MAX);
@@ -28876,13 +28672,10 @@ pub(super) fn rpc_cdlmorningstar(core: &mut Core, ref_data: &mut RefData, params
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cdlmorningstar_lookback(optInPenetration).unwrap_or(usize::MAX);
@@ -29274,13 +29067,10 @@ pub(super) fn rpc_cdlonneck(core: &mut Core, ref_data: &mut RefData, params: &Va
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cdlonneck_lookback().unwrap_or(usize::MAX);
@@ -29669,13 +29459,10 @@ pub(super) fn rpc_cdlpiercing(core: &mut Core, ref_data: &mut RefData, params: &
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cdlpiercing_lookback().unwrap_or(usize::MAX);
@@ -30064,13 +29851,10 @@ pub(super) fn rpc_cdlrickshawman(core: &mut Core, ref_data: &mut RefData, params
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cdlrickshawman_lookback().unwrap_or(usize::MAX);
@@ -30459,13 +30243,10 @@ pub(super) fn rpc_cdlrisefall3methods(core: &mut Core, ref_data: &mut RefData, p
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cdlrisefall3methods_lookback().unwrap_or(usize::MAX);
@@ -30854,13 +30635,10 @@ pub(super) fn rpc_cdlseparatinglines(core: &mut Core, ref_data: &mut RefData, pa
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cdlseparatinglines_lookback().unwrap_or(usize::MAX);
@@ -31249,13 +31027,10 @@ pub(super) fn rpc_cdlshootingstar(core: &mut Core, ref_data: &mut RefData, param
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cdlshootingstar_lookback().unwrap_or(usize::MAX);
@@ -31644,13 +31419,10 @@ pub(super) fn rpc_cdlshortline(core: &mut Core, ref_data: &mut RefData, params: 
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cdlshortline_lookback().unwrap_or(usize::MAX);
@@ -32039,13 +31811,10 @@ pub(super) fn rpc_cdlspinningtop(core: &mut Core, ref_data: &mut RefData, params
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cdlspinningtop_lookback().unwrap_or(usize::MAX);
@@ -32434,13 +32203,10 @@ pub(super) fn rpc_cdlstalledpattern(core: &mut Core, ref_data: &mut RefData, par
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cdlstalledpattern_lookback().unwrap_or(usize::MAX);
@@ -32829,13 +32595,10 @@ pub(super) fn rpc_cdlsticksandwich(core: &mut Core, ref_data: &mut RefData, para
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cdlsticksandwich_lookback().unwrap_or(usize::MAX);
@@ -33224,13 +32987,10 @@ pub(super) fn rpc_cdltakuri(core: &mut Core, ref_data: &mut RefData, params: &Va
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cdltakuri_lookback().unwrap_or(usize::MAX);
@@ -33619,13 +33379,10 @@ pub(super) fn rpc_cdltasukigap(core: &mut Core, ref_data: &mut RefData, params: 
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cdltasukigap_lookback().unwrap_or(usize::MAX);
@@ -34014,13 +33771,10 @@ pub(super) fn rpc_cdlthrusting(core: &mut Core, ref_data: &mut RefData, params: 
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cdlthrusting_lookback().unwrap_or(usize::MAX);
@@ -34409,13 +34163,10 @@ pub(super) fn rpc_cdltristar(core: &mut Core, ref_data: &mut RefData, params: &V
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cdltristar_lookback().unwrap_or(usize::MAX);
@@ -34804,13 +34555,10 @@ pub(super) fn rpc_cdlunique3river(core: &mut Core, ref_data: &mut RefData, param
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cdlunique3river_lookback().unwrap_or(usize::MAX);
@@ -35199,13 +34947,10 @@ pub(super) fn rpc_cdlupsidegap2crows(core: &mut Core, ref_data: &mut RefData, pa
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cdlupsidegap2crows_lookback().unwrap_or(usize::MAX);
@@ -35594,13 +35339,10 @@ pub(super) fn rpc_cdlxsidegap3methods(core: &mut Core, ref_data: &mut RefData, p
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cdlxsidegap3methods_lookback().unwrap_or(usize::MAX);
@@ -35968,13 +35710,10 @@ pub(super) fn rpc_ceil(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.ceil_lookback().unwrap_or(usize::MAX);
@@ -36330,13 +36069,10 @@ pub(super) fn rpc_cg(core: &mut Core, ref_data: &mut RefData, params: &Value) ->
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cg_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -36709,13 +36445,10 @@ pub(super) fn rpc_chop(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.chop_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -37094,13 +36827,10 @@ pub(super) fn rpc_choptr(core: &mut Core, ref_data: &mut RefData, params: &Value
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.choptr_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -37481,13 +37211,10 @@ pub(super) fn rpc_cksp(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cksp_lookback(optInTimePeriod, optInMultiplier, optInStopPeriod).unwrap_or(usize::MAX);
@@ -37904,13 +37631,10 @@ pub(super) fn rpc_cmf(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cmf_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -38281,13 +38005,10 @@ pub(super) fn rpc_cmo(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cmo_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -38647,13 +38368,10 @@ pub(super) fn rpc_cmou(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cmou_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -39014,13 +38732,10 @@ pub(super) fn rpc_coppock(core: &mut Core, ref_data: &mut RefData, params: &Valu
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.coppock_lookback(optInWMAPeriod, optInROC1Period, optInROC2Period).unwrap_or(usize::MAX);
@@ -39392,13 +39107,10 @@ pub(super) fn rpc_correl(core: &mut Core, ref_data: &mut RefData, params: &Value
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.correl_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -39759,13 +39471,10 @@ pub(super) fn rpc_cos(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cos_lookback().unwrap_or(usize::MAX);
@@ -40120,13 +39829,10 @@ pub(super) fn rpc_cosh(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cosh_lookback().unwrap_or(usize::MAX);
@@ -40484,13 +40190,10 @@ pub(super) fn rpc_crsi(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.crsi_lookback(optInTimePeriod, optInStreakPeriod, optInRankPeriod).unwrap_or(usize::MAX);
@@ -40856,13 +40559,10 @@ pub(super) fn rpc_cti(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cti_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -41220,13 +40920,10 @@ pub(super) fn rpc_cumsum(core: &mut Core, ref_data: &mut RefData, params: &Value
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cumsum_lookback().unwrap_or(usize::MAX);
@@ -41590,13 +41287,10 @@ pub(super) fn rpc_cvi(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.cvi_lookback(optInTimePeriod, optInROCPeriod).unwrap_or(usize::MAX);
@@ -41962,13 +41656,10 @@ pub(super) fn rpc_dema(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.dema_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -42334,13 +42025,10 @@ pub(super) fn rpc_div(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.div_lookback().unwrap_or(usize::MAX);
@@ -42706,13 +42394,10 @@ pub(super) fn rpc_donchian(core: &mut Core, ref_data: &mut RefData, params: &Val
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.donchian_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -43122,13 +42807,10 @@ pub(super) fn rpc_dpo(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.dpo_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -43504,13 +43186,10 @@ pub(super) fn rpc_dx(core: &mut Core, ref_data: &mut RefData, params: &Value) ->
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.dx_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -43883,13 +43562,10 @@ pub(super) fn rpc_efi(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.efi_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -44255,13 +43931,10 @@ pub(super) fn rpc_ema(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.ema_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -44636,13 +44309,10 @@ pub(super) fn rpc_emv(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.emv_lookback(optInTimePeriod, optInVolumeDivisor).unwrap_or(usize::MAX);
@@ -45010,13 +44680,10 @@ pub(super) fn rpc_er(core: &mut Core, ref_data: &mut RefData, params: &Value) ->
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.er_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -45389,13 +45056,10 @@ pub(super) fn rpc_eri(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.eri_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -45784,13 +45448,10 @@ pub(super) fn rpc_exp(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.exp_lookback().unwrap_or(usize::MAX);
@@ -46145,13 +45806,10 @@ pub(super) fn rpc_floor(core: &mut Core, ref_data: &mut RefData, params: &Value)
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.floor_lookback().unwrap_or(usize::MAX);
@@ -46507,13 +46165,10 @@ pub(super) fn rpc_fosc(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.fosc_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -46880,13 +46535,10 @@ pub(super) fn rpc_fractal(core: &mut Core, ref_data: &mut RefData, params: &Valu
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.fractal_lookback(optInLeftBars, optInRightBars).unwrap_or(usize::MAX);
@@ -47285,13 +46937,10 @@ pub(super) fn rpc_frama(core: &mut Core, ref_data: &mut RefData, params: &Value)
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.frama_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -47677,13 +47326,10 @@ pub(super) fn rpc_ha(core: &mut Core, ref_data: &mut RefData, params: &Value) ->
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.ha_lookback().unwrap_or(usize::MAX);
@@ -48121,13 +47767,10 @@ pub(super) fn rpc_hma(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.hma_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -48488,13 +48131,10 @@ pub(super) fn rpc_ht_dcperiod(core: &mut Core, ref_data: &mut RefData, params: &
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.ht_dcperiod_lookback().unwrap_or(usize::MAX);
@@ -48853,13 +48493,10 @@ pub(super) fn rpc_ht_dcphase(core: &mut Core, ref_data: &mut RefData, params: &V
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.ht_dcphase_lookback().unwrap_or(usize::MAX);
@@ -49218,13 +48855,10 @@ pub(super) fn rpc_ht_phasor(core: &mut Core, ref_data: &mut RefData, params: &Va
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.ht_phasor_lookback().unwrap_or(usize::MAX);
@@ -49607,13 +49241,10 @@ pub(super) fn rpc_ht_sine(core: &mut Core, ref_data: &mut RefData, params: &Valu
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.ht_sine_lookback().unwrap_or(usize::MAX);
@@ -49996,13 +49627,10 @@ pub(super) fn rpc_ht_trendline(core: &mut Core, ref_data: &mut RefData, params: 
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.ht_trendline_lookback().unwrap_or(usize::MAX);
@@ -50361,13 +49989,10 @@ pub(super) fn rpc_ht_trendmode(core: &mut Core, ref_data: &mut RefData, params: 
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.ht_trendmode_lookback().unwrap_or(usize::MAX);
@@ -50737,13 +50362,10 @@ pub(super) fn rpc_ibs(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.ibs_lookback().unwrap_or(usize::MAX);
@@ -51112,13 +50734,10 @@ pub(super) fn rpc_imi(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.imi_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -51483,13 +51102,10 @@ pub(super) fn rpc_kama(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.kama_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -51865,13 +51481,10 @@ pub(super) fn rpc_kc(core: &mut Core, ref_data: &mut RefData, params: &Value) ->
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.kc_lookback(optInTimePeriod, optInATRPeriod, optInNbDev).unwrap_or(usize::MAX);
@@ -52314,13 +51927,10 @@ pub(super) fn rpc_kdj(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.kdj_lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType).unwrap_or(usize::MAX);
@@ -52770,13 +52380,10 @@ pub(super) fn rpc_kst(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.kst_lookback(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod).unwrap_or(usize::MAX);
@@ -53197,13 +52804,10 @@ pub(super) fn rpc_kstext(core: &mut Core, ref_data: &mut RefData, params: &Value
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.kstext_lookback(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType).unwrap_or(usize::MAX);
@@ -53633,13 +53237,10 @@ pub(super) fn rpc_kurtosis(core: &mut Core, ref_data: &mut RefData, params: &Val
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.kurtosis_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -53998,13 +53599,10 @@ pub(super) fn rpc_linearreg(core: &mut Core, ref_data: &mut RefData, params: &Va
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.linearreg_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -54363,13 +53961,10 @@ pub(super) fn rpc_linearreg_angle(core: &mut Core, ref_data: &mut RefData, param
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.linearreg_angle_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -54728,13 +54323,10 @@ pub(super) fn rpc_linearreg_intercept(core: &mut Core, ref_data: &mut RefData, p
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.linearreg_intercept_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -55093,13 +54685,10 @@ pub(super) fn rpc_linearreg_slope(core: &mut Core, ref_data: &mut RefData, param
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.linearreg_slope_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -55457,13 +55046,10 @@ pub(super) fn rpc_ln(core: &mut Core, ref_data: &mut RefData, params: &Value) ->
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.ln_lookback().unwrap_or(usize::MAX);
@@ -55818,13 +55404,10 @@ pub(super) fn rpc_log10(core: &mut Core, ref_data: &mut RefData, params: &Value)
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.log10_lookback().unwrap_or(usize::MAX);
@@ -56183,13 +55766,10 @@ pub(super) fn rpc_ma(core: &mut Core, ref_data: &mut RefData, params: &Value) ->
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.ma_lookback(optInTimePeriod, optInMAType).unwrap_or(usize::MAX);
@@ -56566,13 +56146,10 @@ pub(super) fn rpc_macd(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.macd_lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod).unwrap_or(usize::MAX);
@@ -56997,13 +56574,10 @@ pub(super) fn rpc_macdext(core: &mut Core, ref_data: &mut RefData, params: &Valu
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.macdext_lookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType).unwrap_or(usize::MAX);
@@ -57446,13 +57020,10 @@ pub(super) fn rpc_macdfix(core: &mut Core, ref_data: &mut RefData, params: &Valu
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.macdfix_lookback(optInSignalPeriod).unwrap_or(usize::MAX);
@@ -57864,13 +57435,10 @@ pub(super) fn rpc_mama(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.mama_lookback(optInFastLimit, optInSlowLimit).unwrap_or(usize::MAX);
@@ -58270,13 +57838,10 @@ pub(super) fn rpc_marketfi(core: &mut Core, ref_data: &mut RefData, params: &Val
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.marketfi_lookback().unwrap_or(usize::MAX);
@@ -58646,13 +58211,10 @@ pub(super) fn rpc_massi(core: &mut Core, ref_data: &mut RefData, params: &Value)
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.massi_lookback(optInFastPeriod, optInSlowPeriod).unwrap_or(usize::MAX);
@@ -59029,13 +58591,10 @@ pub(super) fn rpc_mavp(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.mavp_lookback(optInMinPeriod, optInMaxPeriod, optInMAType).unwrap_or(usize::MAX);
@@ -59417,13 +58976,10 @@ pub(super) fn rpc_max(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.max_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -59782,13 +59338,10 @@ pub(super) fn rpc_maxindex(core: &mut Core, ref_data: &mut RefData, params: &Val
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.maxindex_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -60150,13 +59703,10 @@ pub(super) fn rpc_mcgd(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.mcgd_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -60516,13 +60066,10 @@ pub(super) fn rpc_median(core: &mut Core, ref_data: &mut RefData, params: &Value
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.median_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -60887,13 +60434,10 @@ pub(super) fn rpc_medprice(core: &mut Core, ref_data: &mut RefData, params: &Val
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.medprice_lookback().unwrap_or(usize::MAX);
@@ -61273,13 +60817,10 @@ pub(super) fn rpc_mfi(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.mfi_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -61647,13 +61188,10 @@ pub(super) fn rpc_midpoint(core: &mut Core, ref_data: &mut RefData, params: &Val
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.midpoint_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -62019,13 +61557,10 @@ pub(super) fn rpc_midprice(core: &mut Core, ref_data: &mut RefData, params: &Val
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.midprice_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -62387,13 +61922,10 @@ pub(super) fn rpc_min(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.min_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -62752,13 +62284,10 @@ pub(super) fn rpc_minindex(core: &mut Core, ref_data: &mut RefData, params: &Val
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.minindex_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -63117,13 +62646,10 @@ pub(super) fn rpc_minmax(core: &mut Core, ref_data: &mut RefData, params: &Value
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.minmax_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -63506,13 +63032,10 @@ pub(super) fn rpc_minmaxindex(core: &mut Core, ref_data: &mut RefData, params: &
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.minmaxindex_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -63912,13 +63435,10 @@ pub(super) fn rpc_minus_di(core: &mut Core, ref_data: &mut RefData, params: &Val
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.minus_di_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -64294,13 +63814,10 @@ pub(super) fn rpc_minus_dm(core: &mut Core, ref_data: &mut RefData, params: &Val
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.minus_dm_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -64663,13 +64180,10 @@ pub(super) fn rpc_mom(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.mom_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -65034,13 +64548,10 @@ pub(super) fn rpc_mult(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.mult_lookback().unwrap_or(usize::MAX);
@@ -65416,13 +64927,10 @@ pub(super) fn rpc_natr(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.natr_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -65794,13 +65302,10 @@ pub(super) fn rpc_nvi(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.nvi_lookback().unwrap_or(usize::MAX);
@@ -66165,13 +65670,10 @@ pub(super) fn rpc_obv(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.obv_lookback().unwrap_or(usize::MAX);
@@ -66535,13 +66037,10 @@ pub(super) fn rpc_percentb(core: &mut Core, ref_data: &mut RefData, params: &Val
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.percentb_lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType).unwrap_or(usize::MAX);
@@ -66923,13 +66422,10 @@ pub(super) fn rpc_percentile(core: &mut Core, ref_data: &mut RefData, params: &V
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.percentile_lookback(optInTimePeriod, optInPercentile).unwrap_or(usize::MAX);
@@ -67291,13 +66787,10 @@ pub(super) fn rpc_percentrank(core: &mut Core, ref_data: &mut RefData, params: &
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.percentrank_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -67673,13 +67166,10 @@ pub(super) fn rpc_plus_di(core: &mut Core, ref_data: &mut RefData, params: &Valu
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.plus_di_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -68055,13 +67545,10 @@ pub(super) fn rpc_plus_dm(core: &mut Core, ref_data: &mut RefData, params: &Valu
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.plus_dm_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -68428,13 +67915,10 @@ pub(super) fn rpc_ppo(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.ppo_lookback(optInFastPeriod, optInSlowPeriod, optInMAType).unwrap_or(usize::MAX);
@@ -68818,13 +68302,10 @@ pub(super) fn rpc_pvi(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.pvi_lookback().unwrap_or(usize::MAX);
@@ -69187,13 +68668,10 @@ pub(super) fn rpc_pvo(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.pvo_lookback(optInFastPeriod, optInSlowPeriod, optInMAType).unwrap_or(usize::MAX);
@@ -69577,13 +69055,10 @@ pub(super) fn rpc_pvt(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.pvt_lookback().unwrap_or(usize::MAX);
@@ -69949,13 +69424,10 @@ pub(super) fn rpc_qstick(core: &mut Core, ref_data: &mut RefData, params: &Value
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.qstick_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -70320,13 +69792,10 @@ pub(super) fn rpc_rma(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.rma_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -70686,13 +70155,10 @@ pub(super) fn rpc_roc(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.roc_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -71051,13 +70517,10 @@ pub(super) fn rpc_rocp(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.rocp_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -71416,13 +70879,10 @@ pub(super) fn rpc_rocr(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.rocr_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -71781,13 +71241,10 @@ pub(super) fn rpc_rocr100(core: &mut Core, ref_data: &mut RefData, params: &Valu
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.rocr100_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -72149,13 +71606,10 @@ pub(super) fn rpc_rsi(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.rsi_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -72519,13 +71973,10 @@ pub(super) fn rpc_rvi(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.rvi_lookback(optInTimePeriod, optInStdDevPeriod).unwrap_or(usize::MAX);
@@ -72896,13 +72347,10 @@ pub(super) fn rpc_rvir(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.rvir_lookback(optInTimePeriod, optInStdDevPeriod).unwrap_or(usize::MAX);
@@ -73268,13 +72716,10 @@ pub(super) fn rpc_rvol(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.rvol_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -73641,13 +73086,10 @@ pub(super) fn rpc_sar(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.sar_lookback(optInAcceleration, optInMaximum).unwrap_or(usize::MAX);
@@ -74026,13 +73468,10 @@ pub(super) fn rpc_sarext(core: &mut Core, ref_data: &mut RefData, params: &Value
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.sarext_lookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort).unwrap_or(usize::MAX);
@@ -74436,13 +73875,10 @@ pub(super) fn rpc_si(core: &mut Core, ref_data: &mut RefData, params: &Value) ->
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.si_lookback(optInLimitMove).unwrap_or(usize::MAX);
@@ -74809,13 +74245,10 @@ pub(super) fn rpc_sin(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.sin_lookback().unwrap_or(usize::MAX);
@@ -75170,13 +74603,10 @@ pub(super) fn rpc_sinh(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.sinh_lookback().unwrap_or(usize::MAX);
@@ -75532,13 +74962,10 @@ pub(super) fn rpc_sma(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.sma_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -75914,13 +75341,10 @@ pub(super) fn rpc_smi(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.smi_lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod).unwrap_or(usize::MAX);
@@ -76318,13 +75742,10 @@ pub(super) fn rpc_sqrt(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.sqrt_lookback().unwrap_or(usize::MAX);
@@ -76685,13 +76106,10 @@ pub(super) fn rpc_stc(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.stc_lookback(optInFastPeriod, optInSlowPeriod, optInCyclePeriod).unwrap_or(usize::MAX);
@@ -77059,13 +76477,10 @@ pub(super) fn rpc_stddev(core: &mut Core, ref_data: &mut RefData, params: &Value
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.stddev_lookback(optInTimePeriod, optInNbDev).unwrap_or(usize::MAX);
@@ -77449,13 +76864,10 @@ pub(super) fn rpc_stoch(core: &mut Core, ref_data: &mut RefData, params: &Value)
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.stoch_lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType).unwrap_or(usize::MAX);
@@ -77891,13 +77303,10 @@ pub(super) fn rpc_stochf(core: &mut Core, ref_data: &mut RefData, params: &Value
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.stochf_lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType).unwrap_or(usize::MAX);
@@ -78310,13 +77719,10 @@ pub(super) fn rpc_stochrsi(core: &mut Core, ref_data: &mut RefData, params: &Val
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.stochrsi_lookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType).unwrap_or(usize::MAX);
@@ -78728,13 +78134,10 @@ pub(super) fn rpc_sub(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.sub_lookback().unwrap_or(usize::MAX);
@@ -79093,13 +78496,10 @@ pub(super) fn rpc_sum(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.sum_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -79473,13 +78873,10 @@ pub(super) fn rpc_supertrend(core: &mut Core, ref_data: &mut RefData, params: &V
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.supertrend_lookback(optInTimePeriod, optInMultiplier).unwrap_or(usize::MAX);
@@ -79876,13 +79273,10 @@ pub(super) fn rpc_t3(core: &mut Core, ref_data: &mut RefData, params: &Value) ->
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.t3_lookback(optInTimePeriod, optInVFactor).unwrap_or(usize::MAX);
@@ -80244,13 +79638,10 @@ pub(super) fn rpc_tan(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.tan_lookback().unwrap_or(usize::MAX);
@@ -80605,13 +79996,10 @@ pub(super) fn rpc_tanh(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.tanh_lookback().unwrap_or(usize::MAX);
@@ -80967,13 +80355,10 @@ pub(super) fn rpc_tema(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.tema_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -81346,13 +80731,10 @@ pub(super) fn rpc_trange(core: &mut Core, ref_data: &mut RefData, params: &Value
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.trange_lookback().unwrap_or(usize::MAX);
@@ -81714,13 +81096,10 @@ pub(super) fn rpc_trima(core: &mut Core, ref_data: &mut RefData, params: &Value)
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.trima_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -82079,13 +81458,10 @@ pub(super) fn rpc_trix(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.trix_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -82445,13 +81821,10 @@ pub(super) fn rpc_tsf(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.tsf_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -82811,13 +82184,10 @@ pub(super) fn rpc_tsi(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.tsi_lookback(optInFirstPeriod, optInSecondPeriod).unwrap_or(usize::MAX);
@@ -83193,13 +82563,10 @@ pub(super) fn rpc_typprice(core: &mut Core, ref_data: &mut RefData, params: &Val
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.typprice_lookback().unwrap_or(usize::MAX);
@@ -83577,13 +82944,10 @@ pub(super) fn rpc_ultosc(core: &mut Core, ref_data: &mut RefData, params: &Value
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.ultosc_lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3).unwrap_or(usize::MAX);
@@ -83955,13 +83319,10 @@ pub(super) fn rpc_var(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.var_lookback(optInTimePeriod, optInNbDev).unwrap_or(usize::MAX);
@@ -84323,13 +83684,10 @@ pub(super) fn rpc_vhf(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.vhf_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -84692,13 +84050,10 @@ pub(super) fn rpc_vidya(core: &mut Core, ref_data: &mut RefData, params: &Value)
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.vidya_lookback(optInTimePeriod, optInCMOPeriod).unwrap_or(usize::MAX);
@@ -85075,13 +84430,10 @@ pub(super) fn rpc_vortex(core: &mut Core, ref_data: &mut RefData, params: &Value
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.vortex_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -85490,13 +84842,10 @@ pub(super) fn rpc_vwap(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.vwap_lookback().unwrap_or(usize::MAX);
@@ -85868,13 +85217,10 @@ pub(super) fn rpc_vwma(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.vwma_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -86249,13 +85595,10 @@ pub(super) fn rpc_wad(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.wad_lookback().unwrap_or(usize::MAX);
@@ -86630,13 +85973,10 @@ pub(super) fn rpc_wclprice(core: &mut Core, ref_data: &mut RefData, params: &Val
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.wclprice_lookback().unwrap_or(usize::MAX);
@@ -87012,13 +86352,10 @@ pub(super) fn rpc_willr(core: &mut Core, ref_data: &mut RefData, params: &Value)
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.willr_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -87383,13 +86720,10 @@ pub(super) fn rpc_wma(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.wma_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -87748,13 +87082,10 @@ pub(super) fn rpc_zlema(core: &mut Core, ref_data: &mut RefData, params: &Value)
             // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
             // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
             // for a range shorter than the lookback, where the output bound switches off and
-            // the spec says any length will do, including none. It does not: two EMPTY output
-            // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-            // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-            // accepted by C and Java -- a four-way divergence on a call the specification says
-            // all four accept. Sizing to zero here would reach it on every multi-output
-            // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec, open item 11.
+            // the spec says any length will do, including none. Sizing to zero here would put
+            // every multi-output function on the empty-buffer aliasing edge of
+            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.zlema_lookback(optInTimePeriod).unwrap_or(usize::MAX);

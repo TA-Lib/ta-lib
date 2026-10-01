@@ -210678,13 +210678,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.acLookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
@@ -210836,13 +210833,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.accbandsLookback(optInTimePeriod);
@@ -210994,13 +210988,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.acosLookback();
@@ -211152,13 +211143,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.adLookback();
@@ -211311,13 +211299,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.addLookback();
@@ -211474,13 +211459,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.adoscLookback(optInFastPeriod, optInSlowPeriod);
@@ -211634,13 +211616,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.adrLookback(optInTimePeriod);
@@ -211793,13 +211772,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.adxLookback(optInTimePeriod);
@@ -211954,13 +211930,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.adxrLookback(optInTimePeriod);
@@ -212109,13 +212082,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.almaLookback(optInTimePeriod, optInSigma, optInOffset);
@@ -212261,13 +212231,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.aoLookback(optInFastPeriod, optInSlowPeriod);
@@ -212415,13 +212382,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.apoLookback(optInFastPeriod, optInSlowPeriod, optInMAType);
@@ -212566,13 +212530,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.aroonLookback(optInTimePeriod);
@@ -212723,13 +212684,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.aroonoscLookback(optInTimePeriod);
@@ -212885,13 +212843,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.asiLookback(optInLimitMove);
@@ -213040,13 +212995,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.asinLookback();
@@ -213186,13 +213138,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.atanLookback();
@@ -213342,13 +213291,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.atrLookback(optInTimePeriod);
@@ -213495,13 +213441,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.avgdevLookback(optInTimePeriod);
@@ -213653,13 +213596,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.avgpriceLookback();
@@ -213814,13 +213754,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.bbandsLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
@@ -213972,13 +213909,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.bbwLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
@@ -214123,13 +214057,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.betaLookback(optInTimePeriod);
@@ -214284,13 +214215,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.bopLookback();
@@ -214448,13 +214376,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cciLookback(optInTimePeriod);
@@ -214612,13 +214537,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdl2crowsLookback();
@@ -214779,13 +214701,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdl3blackcrowsLookback();
@@ -214946,13 +214865,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdl3insideLookback();
@@ -215113,13 +215029,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdl3linestrikeLookback();
@@ -215280,13 +215193,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdl3outsideLookback();
@@ -215447,13 +215357,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdl3starsinsouthLookback();
@@ -215614,13 +215521,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdl3whitesoldiersLookback();
@@ -215782,13 +215686,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlabandonedbabyLookback(optInPenetration);
@@ -215949,13 +215850,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdladvanceblockLookback();
@@ -216116,13 +216014,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlbeltholdLookback();
@@ -216283,13 +216178,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlbreakawayLookback();
@@ -216450,13 +216342,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlclosingmarubozuLookback();
@@ -216617,13 +216506,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlconcealbabyswallLookback();
@@ -216784,13 +216670,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlcounterattackLookback();
@@ -216952,13 +216835,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdldarkcloudcoverLookback(optInPenetration);
@@ -217119,13 +216999,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdldojiLookback();
@@ -217286,13 +217163,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdldojistarLookback();
@@ -217453,13 +217327,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdldragonflydojiLookback();
@@ -217620,13 +217491,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlengulfingLookback();
@@ -217788,13 +217656,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdleveningdojistarLookback(optInPenetration);
@@ -217956,13 +217821,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdleveningstarLookback(optInPenetration);
@@ -218123,13 +217985,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlgapsidesidewhiteLookback();
@@ -218290,13 +218149,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlgravestonedojiLookback();
@@ -218457,13 +218313,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlhammerLookback();
@@ -218624,13 +218477,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlhangingmanLookback();
@@ -218791,13 +218641,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlharamiLookback();
@@ -218958,13 +218805,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlharamicrossLookback();
@@ -219125,13 +218969,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlhighwaveLookback();
@@ -219292,13 +219133,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlhikkakeLookback();
@@ -219459,13 +219297,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlhikkakemodLookback();
@@ -219626,13 +219461,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlhomingpigeonLookback();
@@ -219793,13 +219625,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlidentical3crowsLookback();
@@ -219960,13 +219789,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlinneckLookback();
@@ -220127,13 +219953,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlinvertedhammerLookback();
@@ -220294,13 +220117,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlkickingLookback();
@@ -220461,13 +220281,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlkickingbylengthLookback();
@@ -220628,13 +220445,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlladderbottomLookback();
@@ -220795,13 +220609,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdllongleggeddojiLookback();
@@ -220962,13 +220773,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdllonglineLookback();
@@ -221129,13 +220937,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlmarubozuLookback();
@@ -221296,13 +221101,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlmatchinglowLookback();
@@ -221464,13 +221266,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlmatholdLookback(optInPenetration);
@@ -221632,13 +221431,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlmorningdojistarLookback(optInPenetration);
@@ -221800,13 +221596,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlmorningstarLookback(optInPenetration);
@@ -221967,13 +221760,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlonneckLookback();
@@ -222134,13 +221924,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlpiercingLookback();
@@ -222301,13 +222088,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlrickshawmanLookback();
@@ -222468,13 +222252,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlrisefall3methodsLookback();
@@ -222635,13 +222416,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlseparatinglinesLookback();
@@ -222802,13 +222580,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlshootingstarLookback();
@@ -222969,13 +222744,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlshortlineLookback();
@@ -223136,13 +222908,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlspinningtopLookback();
@@ -223303,13 +223072,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlstalledpatternLookback();
@@ -223470,13 +223236,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlsticksandwichLookback();
@@ -223637,13 +223400,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdltakuriLookback();
@@ -223804,13 +223564,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdltasukigapLookback();
@@ -223971,13 +223728,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlthrustingLookback();
@@ -224138,13 +223892,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdltristarLookback();
@@ -224305,13 +224056,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlunique3riverLookback();
@@ -224472,13 +224220,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlupsidegap2crowsLookback();
@@ -224639,13 +224384,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlxsidegap3methodsLookback();
@@ -224794,13 +224536,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.ceilLookback();
@@ -224941,13 +224680,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cgLookback(optInTimePeriod);
@@ -225096,13 +224832,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.chopLookback(optInTimePeriod);
@@ -225257,13 +224990,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.choptrLookback(optInTimePeriod);
@@ -225420,13 +225150,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.ckspLookback(optInTimePeriod, optInMultiplier, optInStopPeriod);
@@ -225588,13 +225315,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cmfLookback(optInTimePeriod);
@@ -225745,13 +225469,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cmoLookback(optInTimePeriod);
@@ -225892,13 +225613,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cmouLookback(optInTimePeriod);
@@ -226041,13 +225759,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.coppockLookback(optInWMAPeriod, optInROC1Period, optInROC2Period);
@@ -226192,13 +225907,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.correlLookback(optInTimePeriod);
@@ -226341,13 +226053,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cosLookback();
@@ -226487,13 +226196,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.coshLookback();
@@ -226636,13 +226342,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.crsiLookback(optInTimePeriod, optInStreakPeriod, optInRankPeriod);
@@ -226783,13 +226486,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.ctiLookback(optInTimePeriod);
@@ -226929,13 +226629,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cumsumLookback();
@@ -227081,13 +226778,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cviLookback(optInTimePeriod, optInROCPeriod);
@@ -227231,13 +226925,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.demaLookback(optInTimePeriod);
@@ -227381,13 +227072,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.divLookback();
@@ -227535,13 +227223,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.donchianLookback(optInTimePeriod);
@@ -227691,13 +227376,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.dpoLookback(optInTimePeriod);
@@ -227847,13 +227529,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.dxLookback(optInTimePeriod);
@@ -228004,13 +227683,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.efiLookback(optInTimePeriod);
@@ -228155,13 +227831,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.emaLookback(optInTimePeriod);
@@ -228311,13 +227984,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.emvLookback(optInTimePeriod, optInVolumeDivisor);
@@ -228464,13 +228134,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.erLookback(optInTimePeriod);
@@ -228619,13 +228286,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.eriLookback(optInTimePeriod);
@@ -228774,13 +228438,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.expLookback();
@@ -228920,13 +228581,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.floorLookback();
@@ -229067,13 +228725,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.foscLookback(optInTimePeriod);
@@ -229219,13 +228874,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.fractalLookback(optInLeftBars, optInRightBars);
@@ -229377,13 +229029,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.framaLookback(optInTimePeriod);
@@ -229539,13 +229188,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.haLookback();
@@ -229704,13 +229350,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.hmaLookback(optInTimePeriod);
@@ -229851,13 +229494,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.htDcperiodLookback();
@@ -229998,13 +229638,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.htDcphaseLookback();
@@ -230145,13 +229782,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.htPhasorLookback();
@@ -230295,13 +229929,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.htSineLookback();
@@ -230445,13 +230076,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.htTrendlineLookback();
@@ -230592,13 +230220,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.htTrendmodeLookback();
@@ -230746,13 +230371,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.ibsLookback();
@@ -230903,13 +230525,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.imiLookback(optInTimePeriod);
@@ -231054,13 +230673,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.kamaLookback(optInTimePeriod);
@@ -231211,13 +230827,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.kcLookback(optInTimePeriod, optInATRPeriod, optInNbDev);
@@ -231386,13 +230999,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.kdjLookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
@@ -231553,13 +231163,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.kstLookback(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod);
@@ -231717,13 +231324,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.kstextLookback(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType);
@@ -231867,13 +231471,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.kurtosisLookback(optInTimePeriod);
@@ -232014,13 +231615,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.linearregLookback(optInTimePeriod);
@@ -232161,13 +231759,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.linearregAngleLookback(optInTimePeriod);
@@ -232308,13 +231903,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.linearregInterceptLookback(optInTimePeriod);
@@ -232455,13 +232047,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.linearregSlopeLookback(optInTimePeriod);
@@ -232601,13 +232190,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.lnLookback();
@@ -232747,13 +232333,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.log10Lookback();
@@ -232897,13 +232480,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.maLookback(optInTimePeriod, optInMAType);
@@ -233046,13 +232626,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.macdLookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
@@ -233210,13 +232787,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.macdextLookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType);
@@ -233363,13 +232937,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.macdfixLookback(optInSignalPeriod);
@@ -233518,13 +233089,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.mamaLookback(optInFastLimit, optInSlowLimit);
@@ -233675,13 +233243,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.marketfiLookback();
@@ -233833,13 +233398,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.massiLookback(optInFastPeriod, optInSlowPeriod);
@@ -233991,13 +233553,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.mavpLookback(optInMinPeriod, optInMaxPeriod, optInMAType);
@@ -234141,13 +233700,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.maxLookback(optInTimePeriod);
@@ -234288,13 +233844,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.maxindexLookback(optInTimePeriod);
@@ -234436,13 +233989,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.mcgdLookback(optInTimePeriod);
@@ -234583,13 +234133,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.medianLookback(optInTimePeriod);
@@ -234733,13 +234280,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.medpriceLookback();
@@ -234895,13 +234439,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.mfiLookback(optInTimePeriod);
@@ -235051,13 +234592,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.midpointLookback(optInTimePeriod);
@@ -235202,13 +234740,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.midpriceLookback(optInTimePeriod);
@@ -235352,13 +234887,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.minLookback(optInTimePeriod);
@@ -235499,13 +235031,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.minindexLookback(optInTimePeriod);
@@ -235646,13 +235175,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.minmaxLookback(optInTimePeriod);
@@ -235796,13 +235322,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.minmaxindexLookback(optInTimePeriod);
@@ -235955,13 +235478,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.minusDiLookback(optInTimePeriod);
@@ -236113,13 +235633,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.minusDmLookback(optInTimePeriod);
@@ -236263,13 +235780,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.momLookback(optInTimePeriod);
@@ -236413,13 +235927,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.multLookback();
@@ -236572,13 +236083,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.natrLookback(optInTimePeriod);
@@ -236728,13 +236236,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.nviLookback();
@@ -236881,13 +236386,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.obvLookback();
@@ -237036,13 +236538,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.percentbLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
@@ -237184,13 +236683,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.percentileLookback(optInTimePeriod, optInPercentile);
@@ -237331,13 +236827,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.percentrankLookback(optInTimePeriod);
@@ -237487,13 +236980,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.plusDiLookback(optInTimePeriod);
@@ -237645,13 +237135,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.plusDmLookback(optInTimePeriod);
@@ -237799,13 +237286,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.ppoLookback(optInFastPeriod, optInSlowPeriod, optInMAType);
@@ -237949,13 +237433,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.pviLookback();
@@ -238103,13 +237584,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.pvoLookback(optInFastPeriod, optInSlowPeriod, optInMAType);
@@ -238253,13 +237731,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.pvtLookback();
@@ -238407,13 +237882,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.qstickLookback(optInTimePeriod);
@@ -238558,13 +238030,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.rmaLookback(optInTimePeriod);
@@ -238705,13 +238174,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.rocLookback(optInTimePeriod);
@@ -238852,13 +238318,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.rocpLookback(optInTimePeriod);
@@ -238999,13 +238462,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.rocrLookback(optInTimePeriod);
@@ -239146,13 +238606,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.rocr100Lookback(optInTimePeriod);
@@ -239294,13 +238751,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.rsiLookback(optInTimePeriod);
@@ -239443,13 +238897,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.rviLookback(optInTimePeriod, optInStdDevPeriod);
@@ -239595,13 +239046,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.rvirLookback(optInTimePeriod, optInStdDevPeriod);
@@ -239745,13 +239193,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.rvolLookback(optInTimePeriod);
@@ -239897,13 +239342,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.sarLookback(optInAcceleration, optInMaximum);
@@ -240058,13 +239500,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.sarextLookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
@@ -240220,13 +239659,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.siLookback(optInLimitMove);
@@ -240375,13 +239811,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.sinLookback();
@@ -240521,13 +239954,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.sinhLookback();
@@ -240668,13 +240098,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.smaLookback(optInTimePeriod);
@@ -240826,13 +240253,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.smiLookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
@@ -240981,13 +240405,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.sqrtLookback();
@@ -241131,13 +240552,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.stcLookback(optInFastPeriod, optInSlowPeriod, optInCyclePeriod);
@@ -241279,13 +240697,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.stddevLookback(optInTimePeriod, optInNbDev);
@@ -241442,13 +240857,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.stochLookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
@@ -241610,13 +241022,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.stochfLookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
@@ -241771,13 +241180,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.stochrsiLookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
@@ -241924,13 +241330,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.subLookback();
@@ -242074,13 +241477,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.sumLookback(optInTimePeriod);
@@ -242230,13 +241630,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.supertrendLookback(optInTimePeriod, optInMultiplier);
@@ -242388,13 +241785,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.t3Lookback(optInTimePeriod, optInVFactor);
@@ -242534,13 +241928,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.tanLookback();
@@ -242680,13 +242071,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.tanhLookback();
@@ -242827,13 +242215,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.temaLookback(optInTimePeriod);
@@ -242981,13 +242366,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.trangeLookback();
@@ -243134,13 +242516,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.trimaLookback(optInTimePeriod);
@@ -243281,13 +242660,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.trixLookback(optInTimePeriod);
@@ -243428,13 +242804,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.tsfLookback(optInTimePeriod);
@@ -243576,13 +242949,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.tsiLookback(optInFirstPeriod, optInSecondPeriod);
@@ -243730,13 +243100,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.typpriceLookback();
@@ -243893,13 +243260,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.ultoscLookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
@@ -244047,13 +243411,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.varLookback(optInTimePeriod, optInNbDev);
@@ -244194,13 +243555,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.vhfLookback(optInTimePeriod);
@@ -244343,13 +243701,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.vidyaLookback(optInTimePeriod, optInCMOPeriod);
@@ -244498,13 +243853,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.vortexLookback(optInTimePeriod);
@@ -244665,13 +244017,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.vwapLookback();
@@ -244825,13 +244174,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.vwmaLookback(optInTimePeriod);
@@ -244982,13 +244328,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.wadLookback();
@@ -245142,13 +244485,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.wclpriceLookback();
@@ -245303,13 +244643,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.willrLookback(optInTimePeriod);
@@ -245456,13 +244793,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.wmaLookback(optInTimePeriod);
@@ -245603,13 +244937,10 @@ public class TaCodegenServe {
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
         // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
+        // the spec says any length will do, including none. Sizing to zero here would put
+        // every multi-output function on the empty-buffer aliasing edge of
+        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.zlemaLookback(optInTimePeriod);

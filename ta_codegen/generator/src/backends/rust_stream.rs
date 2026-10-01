@@ -2234,11 +2234,11 @@ fn open_out_params(func: &FuncDef, mode: OutMode) -> String {
 /// The open validation head: the implied index pair, the equal-length input
 /// check, then optional-param validation. Shared by every tier.
 ///
-/// The pair comes first because an opener is a batch call over
-/// `[0, historyLen - 1]`: S1 and S2 are B1 and B2 read on that range and answer
-/// the same two codes (`https://ta-lib.org/spec/streaming/#s1`). `historyLen` is the
-/// FIRST input's length — a later input being empty is a length disagreement,
-/// which is `BadParam` like every other argument fault.
+/// S1 and S2 run first, ahead of every other check, answering
+/// `OutOfRangeStartIndex` and `OutOfRangeEndIndex`
+/// (`https://ta-lib.org/spec/streaming/#s1`). `historyLen` is the FIRST input's
+/// length: a later input being empty is a length disagreement, which is
+/// `BadParam` like every other argument fault.
 fn emit_open_validation_head(o: &mut String, func: &FuncDef, mode: OutMode, enums: &HashMap<String, EnumDef>) {
     let inputs = streaming::input_array_names(func);
     let first = &inputs[0];

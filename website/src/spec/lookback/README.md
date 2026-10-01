@@ -34,7 +34,7 @@ Every function has a lookback call. It takes exactly the batch call's optional p
 
 **Current behaviour** (every function, default parameters), for a batch call reading from bar 0 (`startIdx` at most the lookback before the raise): raising an id's unstable period removes leading outputs from the owner and leaves every value it still reports unchanged, bit for bit. A function computed through the owner can also change the values it still reports (DEMA, MACD, KC), because each inner stage then starts later.
 
-The functions that own an id, and how to set one: [Unstable Period](/api/unstable-period/). An inheriting function names its source in the Numerical Stability line of its [function page](/functions/), except EFI (current behaviour): its page says Start-Independent, yet its lookback carries EMA's unstable period and its values depend on `startIdx`. The [lookback test](/spec/lookback/#start) detects it.
+The functions that own an id, and how to set one: [Unstable Period](/api/unstable-period/). An inheriting function names its source in the Numerical Stability line of its [function page](/functions/).
 
 ## Candle averaging {#candle-averaging}
 
@@ -55,7 +55,7 @@ Whether the value at a bar depends on where the series starts is a function's nu
 **Current behaviour** (every function, default parameters):
 
 - A batch call reads no bar before `max(startIdx, lookback) - lookback`: changing an earlier bar changes no output. That bar is where the call's series starts, so for a function that is not start-independent, a call with a later `startIdx` is not a slice of a call from 0.
-- A start-independent function gives the same value at a bar for any `startIdx` only up to rounding error, as much as about 1e-10 of `max(|value|, 1)` (LINEARREG_ANGLE). Never compare such values bit for bit. EFI is not start-independent: [Unstable period](/spec/lookback/#unstable-period).
+- A start-independent function gives the same value at a bar for any `startIdx` only up to rounding error, as much as about 1e-10 of `max(|value|, 1)` (LINEARREG_ANGLE). Never compare such values bit for bit.
 
 Detecting each property from metadata:
 

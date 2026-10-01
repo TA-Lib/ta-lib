@@ -2076,11 +2076,11 @@ fn emit_open_validation(
 ) {
     let inputs = streaming::input_array_names(func);
     let first = &inputs[0];
-    // The implied index pair first: an opener is a batch call over
-    // `[0, historyLen - 1]`, so S1 and S2 are B1 and B2 read on that range and
-    // answer the same two codes (https://ta-lib.org/spec/streaming/#s1).
-    // `historyLen` is the FIRST input's length, so a later input of a different
-    // length is an argument disagreement, not an empty history.
+    // S1 and S2 run first, ahead of every other check, answering
+    // OutOfRangeStartIndex and OutOfRangeEndIndex
+    // (https://ta-lib.org/spec/streaming/#s1). `historyLen` is the FIRST input's
+    // length, so a later input of a different length is an argument
+    // disagreement, not an empty history.
     let _ = writeln!(o, "      if( historyLen < 1 ) {{");
     let _ = writeln!(o, "         return RetCode.OutOfRangeStartIndex;");
     let _ = writeln!(o, "      }}");

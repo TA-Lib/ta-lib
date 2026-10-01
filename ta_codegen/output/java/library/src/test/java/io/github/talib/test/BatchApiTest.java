@@ -1023,10 +1023,9 @@ public class BatchApiTest {
     }
 
     /**
-     * Rule S1, and its order. An opener is a batch call over
-     * {@code [0, historyLen - 1]}, so an empty history is B1's condition read on
-     * that range — the implied {@code startIdx} of 0 names no bar — and answers
-     * B1's code.
+     * Rule S1, and its order. S1 and S2 run ahead of every presence check,
+     * answering {@code OUT_OF_RANGE_START_INDEX} and
+     * {@code OUT_OF_RANGE_END_INDEX} (https://ta-lib.org/spec/streaming/#s1).
      *
      * <p>The order is the part worth a case of its own: the third call below is
      * BOTH an empty history and an absent output, and the empty history is what

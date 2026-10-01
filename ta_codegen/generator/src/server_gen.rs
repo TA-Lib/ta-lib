@@ -4609,13 +4609,10 @@ would silently drop the other property.\n\
 FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call\n\
 (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and\n\
 for a range shorter than the lookback, where the output bound switches off and\n\
-the spec says any length will do, including none. It does not: two EMPTY output\n\
-buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust\n\
-(the empty Vec the server hands each output shares one dangling as_ptr()), and\n\
-accepted by C and Java -- a four-way divergence on a call the specification says\n\
-all four accept. Sizing to zero here would reach it on every multi-output\n\
-function, which is a semantic question, not a harness one. Recorded as\n\
-error-handling-spec, open item 11.\n\
+the spec says any length will do, including none. Sizing to zero here would put\n\
+every multi-output function on the empty-buffer aliasing edge of\n\
+error-handling-spec Appendix D item 11 (fixed), which each backend's own suite\n\
+probes.\n\
 The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no\n\
 sizes and cannot make the check, so an exact buffer would test nothing there.";
 

@@ -31,7 +31,7 @@ Engine switching: pandas-ta computed with TA-Lib automatically whenever TA-Lib w
 rsi = df.ta.rsi(length=14, talib=True)
 ```
 
-For `cmo` and `stochrsi`, the flag also changes the definition: see them in the name map.
+The flag can change the values of many indicators, and changes the definition of `cmo` and `stochrsi`: see them in the name map.
 
 ## Call TA-Lib directly
 
@@ -63,14 +63,16 @@ df = df.join(abstract.MACD(df, fastperiod=12, slowperiod=26, signalperiod=9))  #
 
 ## Name map
 
-When TA-Lib has an indicator, it usually has pandas-ta's name in capitals: `rsi` is `RSI`. The table lists the other names, and the same names whose meaning or scale differs; the next section lists the outputs that change with pandas-ta's engine. An indicator that is not in the [function list](https://ta-lib.org/functions/index.md), or not in the installed package, stays on pandas-ta-classic. Notes on pandas-ta describe 0.3.14b0 and 0.4.71b0; notes on pandas-ta-classic describe 0.8.32.
+When TA-Lib has an indicator, it usually has pandas-ta's name in capitals: `rsi` is `RSI`. The table lists the other names, and the same names whose meaning or scale differs; the next section lists the outputs whose meaning, columns or scale change with pandas-ta's engine. An indicator that is not in the [function list](https://ta-lib.org/functions/index.md), or not in the installed package, stays on pandas-ta-classic. Notes on pandas-ta describe 0.3.14b0 and 0.4.71b0; notes on pandas-ta-classic describe 0.8.32.
 
 | pandas-ta | TA-Lib | Note |
 | --- | --- | --- |
 | `adx` | `ADX`, `PLUS_DI`, `MINUS_DI` | pandas-ta 0.4.x's `ADXR` column averages `ADX` with its value `adxr_length` bars earlier, 2 by default; `ADXR(timeperiod=n)` averages it with its value n - 1 bars earlier. |
 | `alma` | `ALMA` | With the default distribution offset (0.85), the `alma` of pandas-ta 0.3.x and of pandas-ta-classic gives the oldest bars of the window the most weight; `ALMA`, like pandas-ta 0.4.x's `alma`, gives the newest bars the most. |
 | `aroon` | `AROON`, `AROONOSC` | |
+| `bbands` | `BBANDS`; its `BBB` and `BBP` columns: `BBW`, `PERCENTB` | |
 | `cg` | `CG` | pandas-ta 0.4.x's `cg` is `-(length + 1) - CG`, so it moves the opposite way. |
+| `cksp` | `CKSP` | pandas-ta's `CKSPl`, computed from highs, is `CKSP`'s first output (`outHighStop`); `CKSPs`, computed from lows, is its second (`outLowStop`). |
 | `cmo` | `CMO` or `CMOU` | pandas-ta's `cmo` is `CMO`. pandas-ta-classic's `cmo` is `CMOU`, a different indicator, and `CMO` with `talib=True`. |
 | `crsi` (0.4.x) | none | `CRSI`'s streak is the signed length of the current run of higher or lower closes; pandas-ta's streak is the sign of each bar's change. pandas-ta-classic has no `crsi`. |
 | `dm` | `PLUS_DM`, `MINUS_DM` | |
@@ -103,7 +105,7 @@ When TA-Lib has an indicator, it usually has pandas-ta's name in capitals: `rsi`
 
 ## pandas-ta's two engines
 
-pandas-ta 0.3.x and 0.4.x compute an indicator with TA-Lib whenever TA-Lib is installed, and with their own code otherwise, so one call can return different values on two machines. Find out which applied where the model was trained. These outputs differ between the two:
+pandas-ta 0.3.x and 0.4.x compute an indicator with TA-Lib whenever TA-Lib is installed, and with their own code otherwise, so one call can return different values on two machines. Find out which applied where the model was trained. Many outputs change value with the engine; these change meaning, columns or scale:
 
 - `adx` (0.4.x): with TA-Lib, the `DMP` and `DMN` columns hold `PLUS_DM` and `MINUS_DM`; without it, `PLUS_DI` and `MINUS_DI`.
 - `cci` (0.4.x): without TA-Lib, `cci` is `TYPPRICE - SMA(TYPPRICE, length) / (c * AVGDEV(TYPPRICE, length))`, where `c` is its 0.015 constant; that is not `CCI`.

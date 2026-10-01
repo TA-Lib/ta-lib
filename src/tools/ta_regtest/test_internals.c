@@ -390,9 +390,8 @@ static ErrorNumber testStreamShortHistory( void )
                 TA_SMA_Close( st ) );
    }
 
-   /* Rule S1, the LOWER half of the history bound: the implied `startIdx` of 0
-    * has to name a bar, so an empty history is TA_OUT_OF_RANGE_START_INDEX --
-    * B1's code, because an opener is a batch call over `[0, historyLen - 1]`.
+   /* Rule S1, the LOWER half of the history bound: an empty history is
+    * TA_OUT_OF_RANGE_START_INDEX (https://ta-lib.org/spec/streaming/#s1).
     *
     * What is worth the probe is the ORDER, not the code alone. The pair is
     * evaluated ahead of every presence check, so a call that is BOTH an absent

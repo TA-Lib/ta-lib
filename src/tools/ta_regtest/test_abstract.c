@@ -2676,9 +2676,9 @@ static ErrorNumber checkOutputAliasRejected( const TA_FuncInfo *funcInfo )
           * no longer true of the corpus either, now that SUPERTREND (#272) ships
           * a real output beside an integer one. C's guard compares the pair
           * through `const void *`; this is what proves it does. Only C can be
-          * asked: Java and Rust cannot express the comparison and C# has no
-          * `Overlaps` across element types, so the rule they are held to is the
-          * same-typed one (B6, https://ta-lib.org/spec/errors/#b6).
+          * asked here: Java and safe Rust cannot build the case, and C# compares
+          * by byte range but is not reachable through this sweep (B6,
+          * https://ta-lib.org/spec/errors/#b6).
           */
          TA_GetOutputParameterInfo( handle, oa, &outInfoA );
          TA_GetOutputParameterInfo( handle, ob, &outInfoB );

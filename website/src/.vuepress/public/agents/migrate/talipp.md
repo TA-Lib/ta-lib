@@ -67,6 +67,7 @@ These talipp classes map to a TA-Lib function of another name, or need care:
 | ADX | [ADX](https://ta-lib.org/functions/adx.md) | The DI lines are [PLUS_DI](https://ta-lib.org/functions/plus_di.md) and [MINUS_DI](https://ta-lib.org/functions/minus_di.md). |
 | BB | [BBANDS](https://ta-lib.org/functions/bbands.md) | |
 | ChaikinOsc | [ADOSC](https://ta-lib.org/functions/adosc.md) | |
+| ChandeKrollStop | [CKSP](https://ta-lib.org/functions/cksp.md) | `short_stop` is the first output, `long_stop` the second. |
 | CoppockCurve | [COPPOCK](https://ta-lib.org/functions/coppock.md) | |
 | DonchianChannels | [DONCHIAN](https://ta-lib.org/functions/donchian.md) | |
 | ForceIndex | [EFI](https://ta-lib.org/functions/efi.md) | |
@@ -89,7 +90,7 @@ These talipp indicators have a TA-Lib function of the same name: ALMA, AO, Aroon
 
 Where TA-Lib fixes a setting that talipp exposes, such as the moving-average type, a talipp value other than TA-Lib's has no single-function equivalent; the function's page gives TA-Lib's value. Two exceptions: [MACDEXT](https://ta-lib.org/functions/macdext.md) takes a moving-average type for each MACD line, and [SAREXT](https://ta-lib.org/functions/sarext.md) takes ParabolicSAR's initial acceleration separately and returns the stop negated while short.
 
-Compose these from several handles: SOBV (SMA over OBV), SFX (ATR, STDDEV, SMA), ChandeKrollStop (MAX, MIN, ATR), Ichimoku (MIDPRICE; keep your own buffer for the displaced lines) and RogersSatchell (SUM over your own per-bar term).
+Compose these from several handles: SOBV (SMA over OBV), SFX (ATR, STDDEV, SMA), Ichimoku (MIDPRICE; keep your own buffer for the displaced lines) and RogersSatchell (SUM over your own per-bar term).
 
 No TA-Lib function: KVO, PivotsHL, TTM, ZigZag.
 

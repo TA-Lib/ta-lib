@@ -7246,9 +7246,9 @@ static void xlang_tier_self_check(XlangCtx *ctx, const TA_FuncInfo *funcInfo,
     /* Streaming carries an extra rejection axis batch/lookback do NOT share:
      * S7 (https://ta-lib.org/spec/streaming/#s7): Open and OpenAndFill
      * reject outright (TA_INSUFFICIENT_HISTORY) when the fixed LB_TIER_N-bar
-     * buffer is shorter than the lookback, where batch just returns a
-     * coherent EMPTY success. A lookback that fits the params but exceeds the
-     * buffer is therefore an EXPECTED streaming reject, not a divergence. */
+     * buffer holds fewer than lookback + 1 bars, where batch just returns a
+     * coherent EMPTY success. A lookback the params accept but the buffer
+     * cannot cover is therefore an EXPECTED streaming reject, not a divergence. */
     int streamRejected = rejected || (lookbackVerdict >= LB_TIER_N);
 
     xlang_build_tier_request(ctx->tierReqBuf, funcInfo, optVals, 0);

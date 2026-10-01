@@ -274,7 +274,7 @@ public final class Core {
     * runs first only to fix the ORDER. The specification lists the index rules
     * before the presence check, and without this an absent buffer pre-empted
     * them — a negative {@code startIdx} with a null input reported the null
-    * ({@code docs/error-handling-spec.md}, open item 3). A caller cannot fix
+    * ({@code docs/error-handling-spec.md}, Appendix D item 3, fixed). A caller cannot fix
     * an argument the diagnosis never mentions.
     *
     * <p>The duplication is deliberate and cheap: two comparisons on a path that

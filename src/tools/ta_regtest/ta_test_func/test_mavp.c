@@ -207,10 +207,10 @@ ErrorNumber test_func_mavp( TA_History *history )
    errNb = mvRunShapeMatrix( "const-clamp-down", history, 2, 30 );
    if( errNb != TA_TEST_PASS ) return errNb;
 
-   /* Shape: periods too large for an int. FINITE, so inside the documented
-    * input domain -- rule I5 (https://ta-lib.org/spec/inputs-outputs/#i5)
-    * leaves only non-finite elements undefined, and these are ordinary doubles
-    * the caller may legitimately pass.
+   /* Shape: periods too large for an int. FINITE and within +/-3e37, so inside
+    * the documented input domain (rules I4 and I5,
+    * https://ta-lib.org/spec/inputs-outputs/#i4): ordinary doubles the caller
+    * may legitimately pass.
     *
     * This is the shape that pins the clamp ORDER. Narrowing before clamping is
     * undefined in C and on x86 delivers INT_MIN for any value that does not

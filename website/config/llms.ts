@@ -38,7 +38,14 @@ const FUNCTION_SECTION_PAGES = new Set(["/functions/", "/functions/stability.htm
 const isFunctionPage = (page: Page): boolean =>
   page.path.startsWith("/functions/") && !FUNCTION_SECTION_PAGES.has(page.path);
 
-const CONCEPT_ORDER = [
+// Within a section, in the sidebar's order.
+const PAGE_ORDER = [
+  "/spec/errors/",
+  "/spec/inputs-outputs/",
+  "/spec/lookback/",
+  "/spec/streaming/",
+  "/spec/settings-threads/",
+  "/spec/versions/",
   "/api/",
   "/api/stream/",
   "/api/rust/",
@@ -61,11 +68,11 @@ const SECTIONS: [string, (page: Page) => boolean][] = [
 
 const sectionOf = (page: Page): number => SECTIONS.findIndex(([, belongs]) => belongs(page));
 
-// A section's index page first, then the listed concept pages, then the rest by path.
+// A section's index page first, then the listed pages, then the rest by path.
 const orderOf = (page: Page): number =>
   page.path === "/spec/" || page.path === "/functions/"
     ? -1
-    : CONCEPT_ORDER.indexOf(page.path) + 1 || CONCEPT_ORDER.length + 1;
+    : PAGE_ORDER.indexOf(page.path) + 1 || PAGE_ORDER.length + 1;
 
 const byRank = (a: Page, b: Page): number =>
   sectionOf(a) - sectionOf(b) || orderOf(a) - orderOf(b) || a.path.localeCompare(b.path);
@@ -87,19 +94,26 @@ const toc = (pages: LLMPage[], state: LLMState): string => {
 
 // /llms-full.txt without the function pages: their full text is far beyond what an agent
 // reads at once, and /functions/index.md, which is included, lists and links every one.
-// Built from the Markdown twins, so it runs after the llms plugin has written them.
+// Built from the Markdown twins, so it runs after the llms plugin has written them. The
+// filter must stay the plugin's own page selection: a narrower one drops a page silently.
 const llmsFull: Plugin = {
   name: "ta-lib-llms-full",
   onGenerated: async (app) => {
-    const twin = (page: Page): string => {
-      const path = page.path.slice(1);
-      return app.dir.dest(path === "" || path.endsWith("/") ? `${path}index.md` : path.replace(/\.html$/, ".md"));
-    };
     const pages = app.pages
-      .filter((page) => page.filePath?.endsWith(".md") && !isFunctionPage(page))
+      .filter(
+        (page) =>
+          page.pathLocale === "/" &&
+          page.filePath?.endsWith(".md") &&
+          page.frontmatter.llmstxt !== false &&
+          matter(page.content).content.trim() !== "" &&
+          !isFunctionPage(page),
+      )
       .sort(byRank);
-    const bodies = await Promise.all(pages.map((page) => readFile(twin(page), "utf8")));
-    const { title, description } = app.siteData.locales["/"] ?? app.siteData;
+    const bodies = await Promise.all(
+      pages.map((page) => readFile(app.dir.dest(page.htmlFilePathRelative.replace(/\.html$/, ".md")), "utf8")),
+    );
+    const { locales, ...site } = app.siteData;
+    const { title, description } = { ...site, ...locales["/"] };
     const head = `# ${title}\n\n> ${description}\n\n## Key facts\n\n${keyFacts}\n`;
     await writeFile(app.dir.dest("llms-full.txt"), [head, ...bodies].join("\n---\n\n"));
   },
@@ -118,7 +132,7 @@ export default [
 
     // The default template's empty {alternateLinks} fuses the description into the next line.
     llmsTxtTemplate:
-      "# {title}\n\n{description}\n\n## Key facts\n\n{keyFacts}\n\n## Table of Contents\n\n{toc}",
+      "# {title}\n\n{description}\n\n## Key facts\n\n{keyFacts}\n\n## Table of Contents\n\n{toc}\n",
     llmsTxtTemplateGetter: { keyFacts, toc },
 
     // The plugin's own remark pass has no math syntax, so it rewrites LaTeX on the function

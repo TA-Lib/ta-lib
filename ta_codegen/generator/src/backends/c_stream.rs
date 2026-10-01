@@ -397,10 +397,9 @@ fn finite_bar_check(func: &FuncDef, indent: &str, fail: &str) -> String {
     format!("{indent}if( {} ) return {fail};\n", conds.join(" || "))
 }
 
-/// Rules S1 and S2 — the opener's implied index pair — ahead of every presence
-/// check, because an opener is a batch call over `[0, historyLen - 1]` and the
-/// pair is B1 and B2 read on that range, answering the same two codes
-/// (`https://ta-lib.org/spec/streaming/#s1`). Only `!stream` may precede it: the
+/// Rules S1 and S2 run first, ahead of every presence check, answering
+/// `TA_OUT_OF_RANGE_START_INDEX` and `TA_OUT_OF_RANGE_END_INDEX`
+/// (`https://ta-lib.org/spec/streaming/#s1`). Only `!stream` may precede them: the
 /// "`*stream` is NULL on any failure" contract is published through that
 /// pointer, so it is a precondition for reporting anything at all rather than an
 /// argument competing with the pair.
