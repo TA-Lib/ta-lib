@@ -22,7 +22,7 @@ Every function has a lookback call. It takes exactly the batch call's optional p
 | <a id="l3"></a>**L3** | Rust, Java and C# reach the same accept or reject decision as C for the same parameters and settings, and wherever both accept, return the same lookback. Whether their outputs match C's: [D1](/spec/versions/#d1) (Rust), [D2](/spec/versions/#d2) (Java, C#). |
 | <a id="l4"></a>**L4** | Nothing else in this tier fails. |
 
-**[Current behaviour](/spec/#reading)**: Java's lookback calls break L2 and L4 for a null MA type. They return a lookback when every null-typed stage runs at period 1 and throw `NullPointerException` otherwise; the batch call rejects every such call under [B3](/spec/errors/#b3).
+**[Current behaviour](/spec/#reading)**: Java's lookback calls break L1, L2 and L4 for a null MA type. They return a lookback when every null-typed stage runs at period 1 and throw `NullPointerException` otherwise; the batch call rejects every such call under [B3](/spec/errors/#b3).
 
 <a id="l6"></a>**L6** A lookback depends only on the optional parameters and on the settings in effect at the call: the unstable periods ([L7](/spec/lookback/#l7)) and the candle averaging periods ([L8](/spec/lookback/#l8)). C reads them from the process globals ([T2](/spec/settings-threads/#t2)); Rust, Java and C# from the `Core` the call is made on ([T3](/spec/settings-threads/#t3)). It never depends on an input value.
 

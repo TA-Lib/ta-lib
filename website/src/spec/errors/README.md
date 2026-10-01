@@ -44,7 +44,7 @@ Who returns codes 1, 4 to 11, 14 to 16 and 65535 is current behaviour, and so is
 
 <a id="r3"></a>**R3** One code across backends. In the batch and stream tiers, a call that two or more backends can express and detect gets the same code from each; the one known exception is in [B6](/spec/errors/#b6). Lookback: [L3](/spec/lookback/#l3). Settings refusals and the abstraction layer's own are outside R3 ([hub](/spec/#failures)).
 
-<a id="r4"></a>**R4** Checks precede writes. A call rejected under any rule of this specification leaves every caller-owned buffer, and C's range out-parameters, as it found them, except for C's writes stated with [S7](/spec/streaming/#s7) (`OpenAndFill`'s range) and with its handle out-parameters ([lifetime](/spec/streaming/#lifetime)). Nothing is promised after [B7](/spec/errors/#b7) or [B8](/spec/errors/#b8).
+<a id="r4"></a>**R4** Checks precede writes. A call rejected under any rule of this specification leaves every caller-owned buffer, and C's range out-parameters, as it found them, except for C's writes stated with [S7](/spec/streaming/#s7) (`OpenAndFill`'s range) and with its handle out-parameters ([lifetime](/spec/streaming/#lifetime)). Current behaviour: C's MAVP and FRAMA set the range out-parameters to 0 before rejecting a value [I3](/spec/inputs-outputs/#i3) names. Nothing is promised after [B7](/spec/errors/#b7) or [B8](/spec/errors/#b8).
 
 ## Batch tier
 
@@ -58,7 +58,7 @@ A batch call accepts `0 <= startIdx <= endIdx <= TA_INDEX_MAX`; B1 and B2 are th
 | <a id="b4"></a>**B4** | A required argument is absent: an input, an output, or a range out-parameter. | `TA_BAD_PARAM` | Rust, C# |
 | <a id="b5"></a>**B5** | A buffer is too short: an input does not reach `endIdx` ([I2](/spec/inputs-outputs/#i2)), or an output cannot hold the count the call produces ([O2](/spec/inputs-outputs/#o2)). | `TA_BAD_PARAM` | none; C cannot detect it |
 | <a id="b6"></a>**B6** | Two outputs are the same buffer. | `TA_BAD_PARAM` | Rust (safe code) |
-| <a id="b6a"></a>**B6a** | An output is omitted that the function does not let a caller decline ([O5](/spec/inputs-outputs/#o5)). | `TA_BAD_PARAM` | Rust, C# |
+| <a id="b6a"></a>**B6a** | An output is omitted that the function does not let a caller decline ([O5](/spec/inputs-outputs/#o5)). | `TA_BAD_PARAM` | Rust: cannot decline. C#: no check of its own, [B5](/spec/errors/#b5) applies (current behaviour) |
 | <a id="b7"></a>**B7** | A memory allocation failed. | `TA_ALLOC_ERR` (C only) | none |
 | <a id="b8"></a>**B8** | The library found an inconsistency in its own state. | `TA_INTERNAL_ERROR` + id | none |
 

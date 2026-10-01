@@ -13,7 +13,7 @@ This page maps that shared vocabulary onto Rust, Java and C#; a rule that introd
 - A wrapper keeps its own conventions. ta-lib-python aligns outputs to the input and fills the warm-up with NaN; the native APIs do not ([N2](/spec/inputs-outputs/#n2)).
 - Published packages and their versions: [Install](/install/).
 - Owned by other pages: [Unstable Period](/api/unstable-period/), [Candlestick Settings](/api/candle-settings/) (model and defaults), streaming in [C](/api/stream/), [Rust](/api/rust/stream/), [Java](/api/java/stream/) and [C#](/api/csharp/stream/), [Numerical Stability](/functions/stability), and the [function pages](/functions/): inputs, outputs in order, parameters (type, default, accepted values), stability category, flags.
-- Every page in one file: [/llms-full.txt](/llms-full.txt), indexed by [/llms.txt](/llms.txt). Each page has a Markdown twin, `/spec/index.md` for this one.
+- Every page except the per-function pages in one file: [/llms-full.txt](/llms-full.txt), whose [function index](/functions/) lists and links each function's page; [/llms.txt](/llms.txt) indexes them all. Each page has a Markdown twin, `/spec/index.md` for this one.
 
 ## Rule pages {#reading}
 
@@ -92,7 +92,7 @@ Constants: C prefixes `TA_` (`TA_INDEX_MAX`); Rust, Java and C# hold them on `Co
 
 ### Abstraction layer {#abstraction}
 
-It describes every function at run time (inputs, outputs, optional parameters with default and accepted values, flags) and runs its double-precision batch call. Its flags do not give the stability category: [Lookback](/spec/lookback/#start).
+It describes every function at run time (inputs, outputs, each optional parameter's default and range, flags) and runs its double-precision batch call. Its flags do not give the stability category: [Lookback](/spec/lookback/#start).
 
 | | C `ta_abstract.h` | Rust `ta_lib::abstract_api` | Java `io.github.talib.metadata` | C# `TALib.Metadata` |
 |---|---|---|---|---|
