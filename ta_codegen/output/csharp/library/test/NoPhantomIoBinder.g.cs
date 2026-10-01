@@ -1325,6 +1325,36 @@ internal static class NoPhantomIoBinder
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.RealOpt(1), out int b, out int n, c.RealOut(0), c.IntOut(1));
             return new CallOutcome(rc, b, n);
         },
+        ["SWAK_2PHP"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.Swak2phpImpl(
+                startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
+            return new CallOutcome(rc, b, n);
+        },
+        ["SWAK_BP"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.SwakBpImpl(
+                startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOpt(1), out int b, out int n, c.RealOut(0));
+            return new CallOutcome(rc, b, n);
+        },
+        ["SWAK_BUTTER"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.SwakButterImpl(
+                startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
+            return new CallOutcome(rc, b, n);
+        },
+        ["SWAK_GAUSS"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.SwakGaussImpl(
+                startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
+            return new CallOutcome(rc, b, n);
+        },
+        ["SWAK_HP"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.SwakHpImpl(
+                startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
+            return new CallOutcome(rc, b, n);
+        },
         ["T3"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.T3Impl(
@@ -2668,6 +2698,36 @@ internal static class NoPhantomIoBinder
                 startIdx, endIdx, Narrow(c.Price(0, PriceComponents.High)), Narrow(c.Price(0, PriceComponents.Low)), Narrow(c.Price(0, PriceComponents.Close)), c.IntOpt(0), c.RealOpt(1), out int b, out int n, c.RealOut(0), c.IntOut(1));
             return new CallOutcome(rc, b, n);
         },
+        ["SWAK_2PHP"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.Swak2phpImpl(
+                startIdx, endIdx, Narrow(c.Series(0)), c.IntOpt(0), out int b, out int n, c.RealOut(0));
+            return new CallOutcome(rc, b, n);
+        },
+        ["SWAK_BP"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.SwakBpImpl(
+                startIdx, endIdx, Narrow(c.Series(0)), c.IntOpt(0), c.RealOpt(1), out int b, out int n, c.RealOut(0));
+            return new CallOutcome(rc, b, n);
+        },
+        ["SWAK_BUTTER"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.SwakButterImpl(
+                startIdx, endIdx, Narrow(c.Series(0)), c.IntOpt(0), out int b, out int n, c.RealOut(0));
+            return new CallOutcome(rc, b, n);
+        },
+        ["SWAK_GAUSS"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.SwakGaussImpl(
+                startIdx, endIdx, Narrow(c.Series(0)), c.IntOpt(0), out int b, out int n, c.RealOut(0));
+            return new CallOutcome(rc, b, n);
+        },
+        ["SWAK_HP"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.SwakHpImpl(
+                startIdx, endIdx, Narrow(c.Series(0)), c.IntOpt(0), out int b, out int n, c.RealOut(0));
+            return new CallOutcome(rc, b, n);
+        },
         ["T3"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.T3Impl(
@@ -3006,6 +3066,11 @@ internal static class NoPhantomIoBinder
         ["SUB"] = static (core, c) => core.SubOpen(c.Series(0), c.Series(1)),
         ["SUM"] = static (core, c) => core.SumOpen(c.Series(0), c.IntOpt(0)),
         ["SUPERTREND"] = static (core, c) => core.SupertrendOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.RealOpt(1)),
+        ["SWAK_2PHP"] = static (core, c) => core.Swak2phpOpen(c.Series(0), c.IntOpt(0)),
+        ["SWAK_BP"] = static (core, c) => core.SwakBpOpen(c.Series(0), c.IntOpt(0), c.RealOpt(1)),
+        ["SWAK_BUTTER"] = static (core, c) => core.SwakButterOpen(c.Series(0), c.IntOpt(0)),
+        ["SWAK_GAUSS"] = static (core, c) => core.SwakGaussOpen(c.Series(0), c.IntOpt(0)),
+        ["SWAK_HP"] = static (core, c) => core.SwakHpOpen(c.Series(0), c.IntOpt(0)),
         ["T3"] = static (core, c) => core.T3Open(c.Series(0), c.IntOpt(0), c.RealOpt(1)),
         ["TAN"] = static (core, c) => core.TanOpen(c.Series(0)),
         ["TANH"] = static (core, c) => core.TanhOpen(c.Series(0)),

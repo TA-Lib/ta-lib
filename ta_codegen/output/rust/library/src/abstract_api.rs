@@ -444,6 +444,16 @@ pub enum FuncId {
     SUM,
     /// SuperTrend — [`Core::supertrend`](crate::Core::supertrend).
     SUPERTREND,
+    /// Swiss Army Knife - Two-Pole High-Pass Filter — [`Core::swak_2php`](crate::Core::swak_2php).
+    SWAK_2PHP,
+    /// Swiss Army Knife - Band-Pass Filter — [`Core::swak_bp`](crate::Core::swak_bp).
+    SWAK_BP,
+    /// Swiss Army Knife - Butterworth Filter — [`Core::swak_butter`](crate::Core::swak_butter).
+    SWAK_BUTTER,
+    /// Swiss Army Knife - Gaussian Filter — [`Core::swak_gauss`](crate::Core::swak_gauss).
+    SWAK_GAUSS,
+    /// Swiss Army Knife - High-Pass Filter — [`Core::swak_hp`](crate::Core::swak_hp).
+    SWAK_HP,
     /// Triple Exponential Moving Average (T3) — [`Core::t3`](crate::Core::t3).
     T3,
     /// Vector Trigonometric Tan — [`Core::tan`](crate::Core::tan).
@@ -492,7 +502,7 @@ pub enum FuncId {
 
 impl FuncId {
     /// Number of functions in the registry.
-    pub const COUNT: usize = 223;
+    pub const COUNT: usize = 228;
     /// Metadata for this function (O(1) index into the const table).
     #[inline] pub fn info(self) -> &'static FuncInfo { &FUNC_TABLE[self as usize] }
     /// Upper-case TA name, e.g. "RSI".
@@ -825,7 +835,7 @@ impl FuncInfo {
 
 /// Backing storage for [`FUNCS`], indexed by [`FuncId`]. Link-time const, in
 /// `.rodata`. Private, so its length is nobody's business but this module's.
-static FUNC_TABLE: [FuncInfo; 223] = [
+static FUNC_TABLE: [FuncInfo; 228] = [
     FuncInfo {
         id: FuncId::AC,
         name: "AC",
@@ -3038,6 +3048,61 @@ static FUNC_TABLE: [FuncInfo; 223] = [
         unst_id: None,
     },
     FuncInfo {
+        id: FuncId::SWAK_2PHP,
+        name: "SWAK_2PHP",
+        group: Group::CycleIndicators,
+        hint: "Swiss Army Knife - Two-Pole High-Pass Filter",
+        flags: FuncFlags(0x0a000000),
+        inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Cutoff period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 10000, default: 20, suggested: (5, 200, 1) } }, ],
+        outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        unst_id: Some(FuncUnstId::SWAK_2PHP),
+    },
+    FuncInfo {
+        id: FuncId::SWAK_BP,
+        name: "SWAK_BP",
+        group: Group::CycleIndicators,
+        hint: "Swiss Army Knife - Band-Pass Filter",
+        flags: FuncFlags(0x0a000000),
+        inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Center period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 5, max: 2000, default: 20, suggested: (5, 200, 1) } }, OptInputInfo { param_name: "optInDelta", display_name: "Delta", hint: "Half-bandwidth as a fraction of the center period", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 0.05, max: 0.5, precision: 2, default: 0.1, suggested: (0.05, 0.5, 0.05) } }, ],
+        outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        unst_id: Some(FuncUnstId::SWAK_BP),
+    },
+    FuncInfo {
+        id: FuncId::SWAK_BUTTER,
+        name: "SWAK_BUTTER",
+        group: Group::OverlapStudies,
+        hint: "Swiss Army Knife - Butterworth Filter",
+        flags: FuncFlags(0x0b000000),
+        inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Cutoff period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 10000, default: 20, suggested: (5, 200, 1) } }, ],
+        outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        unst_id: Some(FuncUnstId::SWAK_BUTTER),
+    },
+    FuncInfo {
+        id: FuncId::SWAK_GAUSS,
+        name: "SWAK_GAUSS",
+        group: Group::OverlapStudies,
+        hint: "Swiss Army Knife - Gaussian Filter",
+        flags: FuncFlags(0x0b000000),
+        inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Cutoff period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 10000, default: 20, suggested: (5, 200, 1) } }, ],
+        outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        unst_id: Some(FuncUnstId::SWAK_GAUSS),
+    },
+    FuncInfo {
+        id: FuncId::SWAK_HP,
+        name: "SWAK_HP",
+        group: Group::CycleIndicators,
+        hint: "Swiss Army Knife - High-Pass Filter",
+        flags: FuncFlags(0x0a000000),
+        inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Cutoff period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 5, max: 100000, default: 20, suggested: (5, 200, 1) } }, ],
+        outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        unst_id: Some(FuncUnstId::SWAK_HP),
+    },
+    FuncInfo {
         id: FuncId::T3,
         name: "T3",
         group: Group::OverlapStudies,
@@ -3498,6 +3563,11 @@ fn get_func_handle_exact(name: &str) -> Option<FuncId> {
         "SUB" => FuncId::SUB,
         "SUM" => FuncId::SUM,
         "SUPERTREND" => FuncId::SUPERTREND,
+        "SWAK_2PHP" => FuncId::SWAK_2PHP,
+        "SWAK_BP" => FuncId::SWAK_BP,
+        "SWAK_BUTTER" => FuncId::SWAK_BUTTER,
+        "SWAK_GAUSS" => FuncId::SWAK_GAUSS,
+        "SWAK_HP" => FuncId::SWAK_HP,
         "T3" => FuncId::T3,
         "TAN" => FuncId::TAN,
         "TANH" => FuncId::TANH,
@@ -3978,6 +4048,11 @@ impl<'a> ParamHolder<'a> {
             FuncId::SUB => self.core.sub_lookback(),
             FuncId::SUM => self.core.sum_lookback(self.int_opt[0]),
             FuncId::SUPERTREND => self.core.supertrend_lookback(self.int_opt[0], self.real_opt[1]),
+            FuncId::SWAK_2PHP => self.core.swak_2php_lookback(self.int_opt[0]),
+            FuncId::SWAK_BP => self.core.swak_bp_lookback(self.int_opt[0], self.real_opt[1]),
+            FuncId::SWAK_BUTTER => self.core.swak_butter_lookback(self.int_opt[0]),
+            FuncId::SWAK_GAUSS => self.core.swak_gauss_lookback(self.int_opt[0]),
+            FuncId::SWAK_HP => self.core.swak_hp_lookback(self.int_opt[0]),
             FuncId::T3 => self.core.t3_lookback(self.int_opt[0], self.real_opt[1]),
             FuncId::TAN => self.core.tan_lookback(),
             FuncId::TANH => self.core.tanh_lookback(),
@@ -4214,6 +4289,11 @@ impl<'a> ParamHolder<'a> {
             FuncId::SUB => self.core.sub_display_shift(output_idx),
             FuncId::SUM => self.core.sum_display_shift(self.int_opt[0], output_idx),
             FuncId::SUPERTREND => self.core.supertrend_display_shift(self.int_opt[0], self.real_opt[1], output_idx),
+            FuncId::SWAK_2PHP => self.core.swak_2php_display_shift(self.int_opt[0], output_idx),
+            FuncId::SWAK_BP => self.core.swak_bp_display_shift(self.int_opt[0], self.real_opt[1], output_idx),
+            FuncId::SWAK_BUTTER => self.core.swak_butter_display_shift(self.int_opt[0], output_idx),
+            FuncId::SWAK_GAUSS => self.core.swak_gauss_display_shift(self.int_opt[0], output_idx),
+            FuncId::SWAK_HP => self.core.swak_hp_display_shift(self.int_opt[0], output_idx),
             FuncId::T3 => self.core.t3_display_shift(self.int_opt[0], self.real_opt[1], output_idx),
             FuncId::TAN => self.core.tan_display_shift(output_idx),
             FuncId::TANH => self.core.tanh_display_shift(output_idx),
@@ -6675,6 +6755,56 @@ impl<'a> ParamHolder<'a> {
                 let res = self.core.supertrend(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.real_opt[1], &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.int_out[1] = Some(o1);
+                match res {
+                    Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
+                    Err(e) => e,
+                }
+            }
+            FuncId::SWAK_2PHP => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let res = self.core.swak_2php(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
+                self.real_out[0] = Some(o0);
+                match res {
+                    Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
+                    Err(e) => e,
+                }
+            }
+            FuncId::SWAK_BP => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let res = self.core.swak_bp(start_idx, end_idx, i0, self.int_opt[0], self.real_opt[1], &mut *o0);
+                self.real_out[0] = Some(o0);
+                match res {
+                    Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
+                    Err(e) => e,
+                }
+            }
+            FuncId::SWAK_BUTTER => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let res = self.core.swak_butter(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
+                self.real_out[0] = Some(o0);
+                match res {
+                    Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
+                    Err(e) => e,
+                }
+            }
+            FuncId::SWAK_GAUSS => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let res = self.core.swak_gauss(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
+                self.real_out[0] = Some(o0);
+                match res {
+                    Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
+                    Err(e) => e,
+                }
+            }
+            FuncId::SWAK_HP => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let res = self.core.swak_hp(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
+                self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
                     Err(e) => e,

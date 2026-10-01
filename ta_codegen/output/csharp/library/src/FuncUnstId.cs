@@ -101,6 +101,16 @@ public enum FuncUnstId
     VIDYA = 29,
     /// <summary>Unstable-period id for <c>TA_FUNC_UNST_STC</c>.</summary>
     STC = 30,
+    /// <summary>Unstable-period id for <c>TA_FUNC_UNST_SWAK_GAUSS</c>.</summary>
+    SWAK_GAUSS = 31,
+    /// <summary>Unstable-period id for <c>TA_FUNC_UNST_SWAK_BUTTER</c>.</summary>
+    SWAK_BUTTER = 32,
+    /// <summary>Unstable-period id for <c>TA_FUNC_UNST_SWAK_HP</c>.</summary>
+    SWAK_HP = 33,
+    /// <summary>Unstable-period id for <c>TA_FUNC_UNST_SWAK_2PHP</c>.</summary>
+    SWAK_2PHP = 34,
+    /// <summary>Unstable-period id for <c>TA_FUNC_UNST_SWAK_BP</c>.</summary>
+    SWAK_BP = 35,
 
     /// <summary>Wildcard: sets the unstable period for every function at
     /// once. Pinned, so adding an indicator can never move it.</summary>
@@ -113,5 +123,5 @@ internal static class FuncUnstIds
     /// <summary>Size of the unstable-period table: one past the highest
     /// function id. <see cref="FuncUnstId.ALL"/> selects every slot and is
     /// not one. Mirrors C's TA_FUNC_UNST_COUNT.</summary>
-    public const int Count = 31;
+    public const int Count = 36;
 }

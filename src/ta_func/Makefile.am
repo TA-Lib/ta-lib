@@ -204,6 +204,11 @@ libta_func_la_SOURCES = ta_utility.c \
 	ta_SUB.c \
 	ta_SUM.c \
 	ta_SUPERTREND.c \
+	ta_SWAK_2PHP.c \
+	ta_SWAK_BP.c \
+	ta_SWAK_BUTTER.c \
+	ta_SWAK_GAUSS.c \
+	ta_SWAK_HP.c \
 	ta_T3.c \
 	ta_TAN.c \
 	ta_TANH.c \

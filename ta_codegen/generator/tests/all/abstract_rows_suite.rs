@@ -57,6 +57,11 @@ fn abstract_rows_unstable_period_set_is_exactly_the_declared_ids() {
         ("MCGD", 28),
         ("VIDYA", 29),
         ("STC", 30),
+        ("SWAK_GAUSS", 31),
+        ("SWAK_BUTTER", 32),
+        ("SWAK_HP", 33),
+        ("SWAK_2PHP", 34),
+        ("SWAK_BP", 35),
     ];
 
     let rows = all_abstract_rows();

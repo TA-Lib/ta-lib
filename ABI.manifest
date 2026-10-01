@@ -4,7 +4,7 @@ format 9
 soname libta-lib.so.1
 version-info 3:0:2
 headers ta_abstract.h ta_common.h ta_defs.h ta_func.h ta_libc.h
-function-count 2939
+function-count 3004
 platform pointer=8 long=8 int=4 enum=4
 type TA_FuncInfo sizeof=48 name:const_char_*=0 group:const_char_*=8 hint:const_char_*=16 flags:TA_FuncFlags=24 nbInput:unsigned_int=28 nbOptInput:unsigned_int=32 nbOutput:unsigned_int=36 handle:const_TA_FuncHandle_*=40
 type TA_InputParameterInfo sizeof=24 type:TA_InputParameterType=0 paramName:const_char_*=8 flags:TA_InputFlags=16
@@ -67,6 +67,11 @@ enum TA_FuncUnstId TA_FUNC_UNST_FRAMA = 27
 enum TA_FuncUnstId TA_FUNC_UNST_MCGD = 28
 enum TA_FuncUnstId TA_FUNC_UNST_VIDYA = 29
 enum TA_FuncUnstId TA_FUNC_UNST_STC = 30
+enum TA_FuncUnstId TA_FUNC_UNST_SWAK_GAUSS = 31
+enum TA_FuncUnstId TA_FUNC_UNST_SWAK_BUTTER = 32
+enum TA_FuncUnstId TA_FUNC_UNST_SWAK_HP = 33
+enum TA_FuncUnstId TA_FUNC_UNST_SWAK_2PHP = 34
+enum TA_FuncUnstId TA_FUNC_UNST_SWAK_BP = 35
 enum TA_FuncUnstId TA_FUNC_UNST_ALL = 65535
 enum TA_InputParameterType sizeof=4
 enum TA_InputParameterType TA_Input_Price = 0
@@ -2208,6 +2213,56 @@ function TA_RetCode TA_SUPERTREND_OutRange(const TA_SUPERTREND_Stream *, int *, 
 function TA_RetCode TA_SUPERTREND_Peek(const TA_SUPERTREND_Stream *, double, double, double, double *, int *)
 function TA_RetCode TA_SUPERTREND_Update(TA_SUPERTREND_Stream *, double, double, double, double *, int *)
 function TA_RetCode TA_SUPERTREND_Value(const TA_SUPERTREND_Stream *, double *, int *)
+function TA_RetCode TA_SWAK_2PHP(int, int, const double *, int, int *, int *, double *)
+function TA_RetCode TA_SWAK_2PHP_Advance(TA_SWAK_2PHP_Stream *)
+function TA_RetCode TA_SWAK_2PHP_Clone(const TA_SWAK_2PHP_Stream *, TA_SWAK_2PHP_Stream **)
+function TA_RetCode TA_SWAK_2PHP_Close(TA_SWAK_2PHP_Stream *)
+function TA_RetCode TA_SWAK_2PHP_Open(TA_SWAK_2PHP_Stream **, const double *, int, int, double *)
+function TA_RetCode TA_SWAK_2PHP_OpenAndFill(TA_SWAK_2PHP_Stream **, const double *, int, int, int *, int *, double *)
+function TA_RetCode TA_SWAK_2PHP_OutRange(const TA_SWAK_2PHP_Stream *, int *, int *)
+function TA_RetCode TA_SWAK_2PHP_Peek(const TA_SWAK_2PHP_Stream *, double, double *)
+function TA_RetCode TA_SWAK_2PHP_Update(TA_SWAK_2PHP_Stream *, double, double *)
+function TA_RetCode TA_SWAK_2PHP_Value(const TA_SWAK_2PHP_Stream *, double *)
+function TA_RetCode TA_SWAK_BP(int, int, const double *, int, double, int *, int *, double *)
+function TA_RetCode TA_SWAK_BP_Advance(TA_SWAK_BP_Stream *)
+function TA_RetCode TA_SWAK_BP_Clone(const TA_SWAK_BP_Stream *, TA_SWAK_BP_Stream **)
+function TA_RetCode TA_SWAK_BP_Close(TA_SWAK_BP_Stream *)
+function TA_RetCode TA_SWAK_BP_Open(TA_SWAK_BP_Stream **, const double *, int, int, double, double *)
+function TA_RetCode TA_SWAK_BP_OpenAndFill(TA_SWAK_BP_Stream **, const double *, int, int, double, int *, int *, double *)
+function TA_RetCode TA_SWAK_BP_OutRange(const TA_SWAK_BP_Stream *, int *, int *)
+function TA_RetCode TA_SWAK_BP_Peek(const TA_SWAK_BP_Stream *, double, double *)
+function TA_RetCode TA_SWAK_BP_Update(TA_SWAK_BP_Stream *, double, double *)
+function TA_RetCode TA_SWAK_BP_Value(const TA_SWAK_BP_Stream *, double *)
+function TA_RetCode TA_SWAK_BUTTER(int, int, const double *, int, int *, int *, double *)
+function TA_RetCode TA_SWAK_BUTTER_Advance(TA_SWAK_BUTTER_Stream *)
+function TA_RetCode TA_SWAK_BUTTER_Clone(const TA_SWAK_BUTTER_Stream *, TA_SWAK_BUTTER_Stream **)
+function TA_RetCode TA_SWAK_BUTTER_Close(TA_SWAK_BUTTER_Stream *)
+function TA_RetCode TA_SWAK_BUTTER_Open(TA_SWAK_BUTTER_Stream **, const double *, int, int, double *)
+function TA_RetCode TA_SWAK_BUTTER_OpenAndFill(TA_SWAK_BUTTER_Stream **, const double *, int, int, int *, int *, double *)
+function TA_RetCode TA_SWAK_BUTTER_OutRange(const TA_SWAK_BUTTER_Stream *, int *, int *)
+function TA_RetCode TA_SWAK_BUTTER_Peek(const TA_SWAK_BUTTER_Stream *, double, double *)
+function TA_RetCode TA_SWAK_BUTTER_Update(TA_SWAK_BUTTER_Stream *, double, double *)
+function TA_RetCode TA_SWAK_BUTTER_Value(const TA_SWAK_BUTTER_Stream *, double *)
+function TA_RetCode TA_SWAK_GAUSS(int, int, const double *, int, int *, int *, double *)
+function TA_RetCode TA_SWAK_GAUSS_Advance(TA_SWAK_GAUSS_Stream *)
+function TA_RetCode TA_SWAK_GAUSS_Clone(const TA_SWAK_GAUSS_Stream *, TA_SWAK_GAUSS_Stream **)
+function TA_RetCode TA_SWAK_GAUSS_Close(TA_SWAK_GAUSS_Stream *)
+function TA_RetCode TA_SWAK_GAUSS_Open(TA_SWAK_GAUSS_Stream **, const double *, int, int, double *)
+function TA_RetCode TA_SWAK_GAUSS_OpenAndFill(TA_SWAK_GAUSS_Stream **, const double *, int, int, int *, int *, double *)
+function TA_RetCode TA_SWAK_GAUSS_OutRange(const TA_SWAK_GAUSS_Stream *, int *, int *)
+function TA_RetCode TA_SWAK_GAUSS_Peek(const TA_SWAK_GAUSS_Stream *, double, double *)
+function TA_RetCode TA_SWAK_GAUSS_Update(TA_SWAK_GAUSS_Stream *, double, double *)
+function TA_RetCode TA_SWAK_GAUSS_Value(const TA_SWAK_GAUSS_Stream *, double *)
+function TA_RetCode TA_SWAK_HP(int, int, const double *, int, int *, int *, double *)
+function TA_RetCode TA_SWAK_HP_Advance(TA_SWAK_HP_Stream *)
+function TA_RetCode TA_SWAK_HP_Clone(const TA_SWAK_HP_Stream *, TA_SWAK_HP_Stream **)
+function TA_RetCode TA_SWAK_HP_Close(TA_SWAK_HP_Stream *)
+function TA_RetCode TA_SWAK_HP_Open(TA_SWAK_HP_Stream **, const double *, int, int, double *)
+function TA_RetCode TA_SWAK_HP_OpenAndFill(TA_SWAK_HP_Stream **, const double *, int, int, int *, int *, double *)
+function TA_RetCode TA_SWAK_HP_OutRange(const TA_SWAK_HP_Stream *, int *, int *)
+function TA_RetCode TA_SWAK_HP_Peek(const TA_SWAK_HP_Stream *, double, double *)
+function TA_RetCode TA_SWAK_HP_Update(TA_SWAK_HP_Stream *, double, double *)
+function TA_RetCode TA_SWAK_HP_Value(const TA_SWAK_HP_Stream *, double *)
 function TA_RetCode TA_S_AC(int, int, const float *, const float *, int, int, int, int *, int *, double *)
 function TA_RetCode TA_S_ACCBANDS(int, int, const float *, const float *, const float *, int, int *, int *, double *, double *, double *)
 function TA_RetCode TA_S_ACOS(int, int, const float *, int *, int *, double *)
@@ -2409,6 +2464,11 @@ function TA_RetCode TA_S_STOCHRSI(int, int, const float *, int, int, int, TA_MAT
 function TA_RetCode TA_S_SUB(int, int, const float *, const float *, int *, int *, double *)
 function TA_RetCode TA_S_SUM(int, int, const float *, int, int *, int *, double *)
 function TA_RetCode TA_S_SUPERTREND(int, int, const float *, const float *, const float *, int, double, int *, int *, double *, int *)
+function TA_RetCode TA_S_SWAK_2PHP(int, int, const float *, int, int *, int *, double *)
+function TA_RetCode TA_S_SWAK_BP(int, int, const float *, int, double, int *, int *, double *)
+function TA_RetCode TA_S_SWAK_BUTTER(int, int, const float *, int, int *, int *, double *)
+function TA_RetCode TA_S_SWAK_GAUSS(int, int, const float *, int, int *, int *, double *)
+function TA_RetCode TA_S_SWAK_HP(int, int, const float *, int, int *, int *, double *)
 function TA_RetCode TA_S_T3(int, int, const float *, int, double, int *, int *, double *)
 function TA_RetCode TA_S_TAN(int, int, const float *, int *, int *, double *)
 function TA_RetCode TA_S_TANH(int, int, const float *, int *, int *, double *)
@@ -3073,6 +3133,16 @@ function int TA_SUM_DisplayShift(int, int)
 function int TA_SUM_Lookback(int)
 function int TA_SUPERTREND_DisplayShift(int, double, int)
 function int TA_SUPERTREND_Lookback(int, double)
+function int TA_SWAK_2PHP_DisplayShift(int, int)
+function int TA_SWAK_2PHP_Lookback(int)
+function int TA_SWAK_BP_DisplayShift(int, double, int)
+function int TA_SWAK_BP_Lookback(int, double)
+function int TA_SWAK_BUTTER_DisplayShift(int, int)
+function int TA_SWAK_BUTTER_Lookback(int)
+function int TA_SWAK_GAUSS_DisplayShift(int, int)
+function int TA_SWAK_GAUSS_Lookback(int)
+function int TA_SWAK_HP_DisplayShift(int, int)
+function int TA_SWAK_HP_Lookback(int)
 function int TA_T3_DisplayShift(int, double, int)
 function int TA_T3_Lookback(int, double)
 function int TA_TANH_DisplayShift(int)

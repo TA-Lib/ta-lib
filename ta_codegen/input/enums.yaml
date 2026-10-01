@@ -83,3 +83,8 @@ FuncUnstId:
     - { name: MCGD,         value: 28 }
     - { name: VIDYA,        value: 29 }
     - { name: STC,          value: 30 }
+    - { name: SWAK_GAUSS,   value: 31 }
+    - { name: SWAK_BUTTER,  value: 32 }
+    - { name: SWAK_HP,      value: 33 }
+    - { name: SWAK_2PHP,    value: 34 }
+    - { name: SWAK_BP,      value: 35 }

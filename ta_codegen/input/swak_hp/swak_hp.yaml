@@ -1,0 +1,19 @@
+name: SWAK_HP
+group: Cycle Indicators
+hint: Swiss Army Knife - High-Pass Filter
+flags: [unstable_period, stream]
+inputs:
+  - name: inReal
+    type: real
+optional_inputs:
+  - name: optInTimePeriod
+    type: integer
+    display_name: Time Period
+    hint: Cutoff period
+    range: [5, 100000]
+    default: 20
+    suggested: [5, 200, 1]
+outputs:
+  - name: outReal
+    type: real
+    flags: [line]

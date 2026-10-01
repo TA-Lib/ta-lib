@@ -1080,6 +1080,262 @@ DEF_FUNCTION( SUPERTREND,
              );
 /* SUPERTREND END */
 
+/* SWAK_2PHP BEGIN */
+static const TA_IntegerRange TA_DEF_SWAK_2PHP_TimePeriod =
+{
+   2,
+   10000,
+   5,
+   200,
+   1
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_SWAK_2PHP_TimePeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInTimePeriod",
+   0,
+
+   "Time Period",
+   (const void *)&TA_DEF_SWAK_2PHP_TimePeriod,
+   20,
+   "Cutoff period",
+
+   NULL
+};
+
+static const TA_InputParameterInfo    *TA_SWAK_2PHP_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Real,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_SWAK_2PHP_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_SWAK_2PHP_OptInputs[] =
+{ &TA_DEF_UI_D_SWAK_2PHP_TimePeriod,
+  NULL
+};
+
+DEF_FUNCTION( SWAK_2PHP,
+              TA_GroupId_CycleIndicators,
+              "Swiss Army Knife - Two-Pole High-Pass Filter",
+              TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM
+             );
+/* SWAK_2PHP END */
+
+/* SWAK_BP BEGIN */
+static const TA_IntegerRange TA_DEF_SWAK_BP_TimePeriod =
+{
+   5,
+   2000,
+   5,
+   200,
+   1
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_SWAK_BP_TimePeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInTimePeriod",
+   0,
+
+   "Time Period",
+   (const void *)&TA_DEF_SWAK_BP_TimePeriod,
+   20,
+   "Center period",
+
+   NULL
+};
+
+static const TA_RealRange TA_DEF_SWAK_BP_Delta =
+{
+   0.05,
+   0.5,
+   2,
+   0.05,
+   0.5,
+   0.05
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_SWAK_BP_Delta =
+{
+   TA_OptInput_RealRange,
+   "optInDelta",
+   0,
+
+   "Delta",
+   (const void *)&TA_DEF_SWAK_BP_Delta,
+   0.1,
+   "Half-bandwidth as a fraction of the center period",
+
+   NULL
+};
+
+static const TA_InputParameterInfo    *TA_SWAK_BP_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Real,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_SWAK_BP_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_SWAK_BP_OptInputs[] =
+{ &TA_DEF_UI_D_SWAK_BP_TimePeriod,
+  &TA_DEF_UI_D_SWAK_BP_Delta,
+  NULL
+};
+
+DEF_FUNCTION( SWAK_BP,
+              TA_GroupId_CycleIndicators,
+              "Swiss Army Knife - Band-Pass Filter",
+              TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM
+             );
+/* SWAK_BP END */
+
+/* SWAK_BUTTER BEGIN */
+static const TA_IntegerRange TA_DEF_SWAK_BUTTER_TimePeriod =
+{
+   2,
+   10000,
+   5,
+   200,
+   1
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_SWAK_BUTTER_TimePeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInTimePeriod",
+   0,
+
+   "Time Period",
+   (const void *)&TA_DEF_SWAK_BUTTER_TimePeriod,
+   20,
+   "Cutoff period",
+
+   NULL
+};
+
+static const TA_InputParameterInfo    *TA_SWAK_BUTTER_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Real,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_SWAK_BUTTER_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_SWAK_BUTTER_OptInputs[] =
+{ &TA_DEF_UI_D_SWAK_BUTTER_TimePeriod,
+  NULL
+};
+
+DEF_FUNCTION( SWAK_BUTTER,
+              TA_GroupId_OverlapStudies,
+              "Swiss Army Knife - Butterworth Filter",
+              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM
+             );
+/* SWAK_BUTTER END */
+
+/* SWAK_GAUSS BEGIN */
+static const TA_IntegerRange TA_DEF_SWAK_GAUSS_TimePeriod =
+{
+   2,
+   10000,
+   5,
+   200,
+   1
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_SWAK_GAUSS_TimePeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInTimePeriod",
+   0,
+
+   "Time Period",
+   (const void *)&TA_DEF_SWAK_GAUSS_TimePeriod,
+   20,
+   "Cutoff period",
+
+   NULL
+};
+
+static const TA_InputParameterInfo    *TA_SWAK_GAUSS_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Real,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_SWAK_GAUSS_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_SWAK_GAUSS_OptInputs[] =
+{ &TA_DEF_UI_D_SWAK_GAUSS_TimePeriod,
+  NULL
+};
+
+DEF_FUNCTION( SWAK_GAUSS,
+              TA_GroupId_OverlapStudies,
+              "Swiss Army Knife - Gaussian Filter",
+              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM
+             );
+/* SWAK_GAUSS END */
+
+/* SWAK_HP BEGIN */
+static const TA_OptInputParameterInfo TA_DEF_UI_D_SWAK_HP_TimePeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInTimePeriod",
+   0,
+
+   "Time Period",
+   (const void *)&TA_DEF_TimePeriod_Positive_Minimum5,
+   20,
+   "Cutoff period",
+
+   NULL
+};
+
+static const TA_InputParameterInfo    *TA_SWAK_HP_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Real,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_SWAK_HP_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_SWAK_HP_OptInputs[] =
+{ &TA_DEF_UI_D_SWAK_HP_TimePeriod,
+  NULL
+};
+
+DEF_FUNCTION( SWAK_HP,
+              TA_GroupId_CycleIndicators,
+              "Swiss Army Knife - High-Pass Filter",
+              TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM
+             );
+/* SWAK_HP END */
+
 /****************************************************************************
  * Step 2 - Add your TA function to the table.
  *          Keep in alphabetical order. Must be NULL terminated.
@@ -1102,6 +1358,11 @@ const TA_FuncDef *TA_DEF_TableS[] =
    ADD_TO_TABLE(SUB),
    ADD_TO_TABLE(SUM),
    ADD_TO_TABLE(SUPERTREND),
+   ADD_TO_TABLE(SWAK_2PHP),
+   ADD_TO_TABLE(SWAK_BP),
+   ADD_TO_TABLE(SWAK_BUTTER),
+   ADD_TO_TABLE(SWAK_GAUSS),
+   ADD_TO_TABLE(SWAK_HP),
    NULL
 };
 

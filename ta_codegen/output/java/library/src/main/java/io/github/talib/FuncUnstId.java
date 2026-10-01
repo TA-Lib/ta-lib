@@ -79,6 +79,11 @@ public enum FuncUnstId {
 	  /* 028 */  MCGD(28),
 	  /* 029 */  VIDYA(29),
 	  /* 030 */  STC(30),
+	  /* 031 */  SWAK_GAUSS(31),
+	  /* 032 */  SWAK_BUTTER(32),
+	  /* 033 */  SWAK_HP(33),
+	  /* 034 */  SWAK_2PHP(34),
+	  /* 035 */  SWAK_BP(35),
 
 	  /** Wildcard: sets the unstable period for every function at once.
 	   *  Pinned, so adding an indicator can never move it. */
@@ -86,7 +91,7 @@ public enum FuncUnstId {
 
 	/* Size of the unstable-period table: one past the highest function id.
 	 * ALL selects every slot and is not one. Mirrors C's TA_FUNC_UNST_COUNT. */
-	static final int COUNT = 31;
+	static final int COUNT = 36;
 
 	private final int value;
 
