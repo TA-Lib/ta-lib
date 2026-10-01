@@ -27,7 +27,7 @@ This page maps that shared vocabulary onto Rust, Java and C#; a rule that introd
 | [Versions and Determinism](/spec/versions/) | bit-identity across languages and machines; releases | D1 to D4, V1 to V4 |
 
 - `<N>` stands for a function's canonical name: `TA_<N>_Open` is `TA_SMA_Open`.
-- An id's anchor is the id in lower case: [/spec/errors/#b5](/spec/errors/#b5). Its number is not its evaluation order (U4 precedes U2): [R2](/spec/errors/#r2). Its meaning is not promised to stay the same across releases.
+- An id's anchor is the id in lower case: [/spec/errors/#b5](/spec/errors/#b5). Its number is not its evaluation order (U4 precedes U2): [R2](/spec/errors/#r2). Its meaning is not promised to stay the same across releases yet; that may be settled once the specification is stable.
 - **Current behaviour** marks what today's code does, verified, where no rule is decided. It promises nothing.
 
 ## Names in each language {#names}
