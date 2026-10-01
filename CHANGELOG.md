@@ -52,6 +52,10 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   the 0-100 scale (a few 1e-15 relative for the DMs). CMO, ADX and ADXR move more at longer
   periods. After thousands of identical prices the smoothed sums reach rounding residue, and
   old and new values can then differ by tens of points (CMO by up to 100).
+- (#480) RSI answers the neutral 50, up from 0, while the input has not changed since the first
+  bar the call reads: no gain against no loss is not oversold. The same holds at period 2 once
+  about a thousand unchanged bars follow a move. STOCHRSI follows on the first bars after such
+  a flat start.
 - PERCENTILE's default period is now 100, up from 30: at 30 bars the 95th percentile is the
   second-largest value. Pass the period explicitly to keep the old output.
 - PERCENTILE and PERCENTRANK accept periods up to 10000, down from 100000. Both do work
