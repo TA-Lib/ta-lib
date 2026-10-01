@@ -272,8 +272,9 @@ impl Core {
             for _wk in 0.._wn {
                 // The evaluation order is the bit-exactness contract across backends:
                 // the numerator as c0*(x0 - x2), then the a1 feedback, then a2. The
-                // middle tap is zero and dropped rather than added, which also fixes
-                // the sign of a zero result.
+                // middle tap is zero and dropped rather than added, which costs an
+                // operation per bar and nothing else: adding 0.0*x1 would land on the
+                // same bits, +0.0 for a cancelled numerator included.
                 x0 = _w0[_wk];
                 y = (a2 as f64).mul_add(y2, (c0 as f64).mul_add(x0 - x2, a1 * y1));
                 x2 = x1;
@@ -446,8 +447,9 @@ impl Core {
         let mut y: f64 = 0.0_f64;
         // The evaluation order is the bit-exactness contract across backends:
         // the numerator as c0*(x0 - x2), then the a1 feedback, then a2. The
-        // middle tap is zero and dropped rather than added, which also fixes
-        // the sign of a zero result.
+        // middle tap is zero and dropped rather than added, which costs an
+        // operation per bar and nothing else: adding 0.0*x1 would land on the
+        // same bits, +0.0 for a cancelled numerator included.
         x0 = inReal;
         y = (sp.a2 as f64).mul_add(sp.y2, (sp.c0 as f64).mul_add(x0 - sp.x2, sp.a1 * sp.y1));
         sp.x2 = sp.x1;
@@ -560,8 +562,9 @@ impl Core {
         while today <= endIdx {
             // The evaluation order is the bit-exactness contract across backends:
             // the numerator as c0*(x0 - x2), then the a1 feedback, then a2. The
-            // middle tap is zero and dropped rather than added, which also fixes
-            // the sign of a zero result.
+            // middle tap is zero and dropped rather than added, which costs an
+            // operation per bar and nothing else: adding 0.0*x1 would land on the
+            // same bits, +0.0 for a cancelled numerator included.
             x0 = inReal[today];
             y = (a2 as f64).mul_add(y2, (c0 as f64).mul_add(x0 - x2, a1 * y1));
             x2 = x1;
@@ -760,8 +763,9 @@ impl SwakBpStream {
             let mut y2 = sp.y2;
             // The evaluation order is the bit-exactness contract across backends:
             // the numerator as c0*(x0 - x2), then the a1 feedback, then a2. The
-            // middle tap is zero and dropped rather than added, which also fixes
-            // the sign of a zero result.
+            // middle tap is zero and dropped rather than added, which costs an
+            // operation per bar and nothing else: adding 0.0*x1 would land on the
+            // same bits, +0.0 for a cancelled numerator included.
             x0 = inReal;
             y = (sp.a2 as f64).mul_add(y2, (sp.c0 as f64).mul_add(x0 - x2, sp.a1 * y1));
             x2 = x1;

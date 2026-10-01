@@ -104,8 +104,9 @@ TA_RetCode swak_bp(int startIdx, int endIdx,
    {
       /* The evaluation order is the bit-exactness contract across backends:
        * the numerator as c0*(x0 - x2), then the a1 feedback, then a2. The
-       * middle tap is zero and dropped rather than added, which also fixes
-       * the sign of a zero result.
+       * middle tap is zero and dropped rather than added, which costs an
+       * operation per bar and nothing else: adding 0.0*x1 would land on the
+       * same bits, +0.0 for a cancelled numerator included.
        */
       x0 = inReal[today];
       y  = ((c0 * (x0 - x2) + a1 * y1) + a2 * y2);

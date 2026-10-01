@@ -36,6 +36,11 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   - RVIR: Relative Volatility Index, 1995 refined form (#416)
   - SI: Wilder Swing Index, each bar rated against the one before (#451)
   - STC: Schaff Trend Cycle, a MACD line run twice through a stochastic, each pass smoothed by half (#478)
+  - SWAK_2PHP: Swiss Army Knife - Two-Pole High-Pass Filter, Ehlers' high-pass rolling off twice as steeply as SWAK_HP (#486)
+  - SWAK_BP: Swiss Army Knife - Band-Pass Filter, Ehlers' resonator passing one period at unity gain and zero phase (#486)
+  - SWAK_BUTTER: Swiss Army Knife - Butterworth Filter, Ehlers' two-pole low-pass with both zeros at Nyquist (#486)
+  - SWAK_GAUSS: Swiss Army Knife - Gaussian Filter, Ehlers' two-pole low-pass with no zeros, hence no overshoot (#486)
+  - SWAK_HP: Swiss Army Knife - High-Pass Filter, Ehlers' one-pole detrender centred on zero (#486)
   - VIDYA: Variable Index Dynamic Average, Chande's EMA scaled bar by bar by the CMO (#474)
 - New MAType (for MA, BBANDS, STOCH etc...):
   - TA_MAType_VIDYA (#474)

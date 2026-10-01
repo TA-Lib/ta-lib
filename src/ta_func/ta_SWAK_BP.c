@@ -193,8 +193,9 @@ TA_LIB_API TA_RetCode TA_SWAK_BP( int    startIdx,
    {
       /* The evaluation order is the bit-exactness contract across backends:
        * the numerator as c0*(x0 - x2), then the a1 feedback, then a2. The
-       * middle tap is zero and dropped rather than added, which also fixes
-       * the sign of a zero result.
+       * middle tap is zero and dropped rather than added, which costs an
+       * operation per bar and nothing else: adding 0.0*x1 would land on the
+       * same bits, +0.0 for a cancelled numerator included.
        */
       x0 = inReal[today];
       y = fma(a2, y2, fma(c0, x0 - x2, a1 * y1));
@@ -340,8 +341,9 @@ static TA_FMA_STEP_INLINE void TA_SWAK_BP_StepImpl( struct TA_SWAK_BP_Stream *sp
 
    /* The evaluation order is the bit-exactness contract across backends:
     * the numerator as c0*(x0 - x2), then the a1 feedback, then a2. The
-    * middle tap is zero and dropped rather than added, which also fixes
-    * the sign of a zero result.
+    * middle tap is zero and dropped rather than added, which costs an
+    * operation per bar and nothing else: adding 0.0*x1 would land on the
+    * same bits, +0.0 for a cancelled numerator included.
     */
    x0 = inReal;
    y = fma(sp->a2, sp->y2, fma(sp->c0, x0 - sp->x2, sp->a1 * sp->y1));
@@ -460,8 +462,9 @@ static TA_RetCode TA_SWAK_BP_OpenImpl( struct TA_SWAK_BP_Stream **stream, const 
       {
          /* The evaluation order is the bit-exactness contract across backends:
           * the numerator as c0*(x0 - x2), then the a1 feedback, then a2. The
-          * middle tap is zero and dropped rather than added, which also fixes
-          * the sign of a zero result.
+          * middle tap is zero and dropped rather than added, which costs an
+          * operation per bar and nothing else: adding 0.0*x1 would land on the
+          * same bits, +0.0 for a cancelled numerator included.
           */
          x0 = inReal[today];
          y = fma(a2, y2, fma(c0, x0 - x2, a1 * y1));
@@ -571,8 +574,9 @@ TA_LIB_API TA_RetCode TA_SWAK_BP_Peek( const TA_SWAK_BP_Stream *stream, double i
    y2 = sp->y2;
    /* The evaluation order is the bit-exactness contract across backends:
     * the numerator as c0*(x0 - x2), then the a1 feedback, then a2. The
-    * middle tap is zero and dropped rather than added, which also fixes
-    * the sign of a zero result.
+    * middle tap is zero and dropped rather than added, which costs an
+    * operation per bar and nothing else: adding 0.0*x1 would land on the
+    * same bits, +0.0 for a cancelled numerator included.
     */
    x0 = inReal;
    y = fma(sp->a2, y2, fma(sp->c0, x0 - x2, sp->a1 * y1));

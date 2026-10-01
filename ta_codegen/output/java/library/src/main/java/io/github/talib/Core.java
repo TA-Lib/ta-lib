@@ -194427,8 +194427,9 @@ public final class Core {
       while( today <= endIdx ) {
          /* The evaluation order is the bit-exactness contract across backends:
           * the numerator as c0*(x0 - x2), then the a1 feedback, then a2. The
-          * middle tap is zero and dropped rather than added, which also fixes
-          * the sign of a zero result.
+          * middle tap is zero and dropped rather than added, which costs an
+          * operation per bar and nothing else: adding 0.0*x1 would land on the
+          * same bits, +0.0 for a cancelled numerator included.
           */
          x0 = inReal[today];
          y = Math.fma(a2, y2, Math.fma(c0, x0 - x2, a1 * y1));
@@ -194813,8 +194814,9 @@ public final class Core {
          double y2 = sp.y2;
          /* The evaluation order is the bit-exactness contract across backends:
           * the numerator as c0*(x0 - x2), then the a1 feedback, then a2. The
-          * middle tap is zero and dropped rather than added, which also fixes
-          * the sign of a zero result.
+          * middle tap is zero and dropped rather than added, which costs an
+          * operation per bar and nothing else: adding 0.0*x1 would land on the
+          * same bits, +0.0 for a cancelled numerator included.
           */
          x0 = inReal;
          y = Math.fma(sp.a2, y2, Math.fma(sp.c0, x0 - x2, sp.a1 * y1));
@@ -194858,8 +194860,9 @@ public final class Core {
       double y = 0.0;
       /* The evaluation order is the bit-exactness contract across backends:
        * the numerator as c0*(x0 - x2), then the a1 feedback, then a2. The
-       * middle tap is zero and dropped rather than added, which also fixes
-       * the sign of a zero result.
+       * middle tap is zero and dropped rather than added, which costs an
+       * operation per bar and nothing else: adding 0.0*x1 would land on the
+       * same bits, +0.0 for a cancelled numerator included.
        */
       x0 = inReal;
       y = Math.fma(sp.a2, sp.y2, Math.fma(sp.c0, x0 - sp.x2, sp.a1 * sp.y1));
@@ -194969,8 +194972,9 @@ public final class Core {
       while( today <= endIdx ) {
          /* The evaluation order is the bit-exactness contract across backends:
           * the numerator as c0*(x0 - x2), then the a1 feedback, then a2. The
-          * middle tap is zero and dropped rather than added, which also fixes
-          * the sign of a zero result.
+          * middle tap is zero and dropped rather than added, which costs an
+          * operation per bar and nothing else: adding 0.0*x1 would land on the
+          * same bits, +0.0 for a cancelled numerator included.
           */
          x0 = inReal[today];
          y = Math.fma(a2, y2, Math.fma(c0, x0 - x2, a1 * y1));
@@ -196723,8 +196727,9 @@ public final class Core {
       while( today <= endIdx ) {
          /* The evaluation order is the bit-exactness contract across backends:
           * the numerator as c0*(x0 - x1), then the a1 feedback. This row's a2 is
-          * zero and the term is dropped rather than added, which is also what
-          * fixes the sign of a zero result.
+          * zero and the term is dropped rather than added, which costs an
+          * operation per bar and nothing else: adding 0.0*y2 would land on the
+          * same bits, +0.0 for a cancelled numerator included.
           */
          x0 = inReal[today];
          y = Math.fma(c0, x0 - x1, a1 * y1);
@@ -197069,8 +197074,9 @@ public final class Core {
          double y1 = sp.y1;
          /* The evaluation order is the bit-exactness contract across backends:
           * the numerator as c0*(x0 - x1), then the a1 feedback. This row's a2 is
-          * zero and the term is dropped rather than added, which is also what
-          * fixes the sign of a zero result.
+          * zero and the term is dropped rather than added, which costs an
+          * operation per bar and nothing else: adding 0.0*y2 would land on the
+          * same bits, +0.0 for a cancelled numerator included.
           */
          x0 = inReal;
          y = Math.fma(sp.c0, x0 - x1, sp.a1 * y1);
@@ -197112,8 +197118,9 @@ public final class Core {
       double y = 0.0;
       /* The evaluation order is the bit-exactness contract across backends:
        * the numerator as c0*(x0 - x1), then the a1 feedback. This row's a2 is
-       * zero and the term is dropped rather than added, which is also what
-       * fixes the sign of a zero result.
+       * zero and the term is dropped rather than added, which costs an
+       * operation per bar and nothing else: adding 0.0*y2 would land on the
+       * same bits, +0.0 for a cancelled numerator included.
        */
       x0 = inReal;
       y = Math.fma(sp.c0, x0 - sp.x1, sp.a1 * sp.y1);
@@ -197204,8 +197211,9 @@ public final class Core {
       while( today <= endIdx ) {
          /* The evaluation order is the bit-exactness contract across backends:
           * the numerator as c0*(x0 - x1), then the a1 feedback. This row's a2 is
-          * zero and the term is dropped rather than added, which is also what
-          * fixes the sign of a zero result.
+          * zero and the term is dropped rather than added, which costs an
+          * operation per bar and nothing else: adding 0.0*y2 would land on the
+          * same bits, +0.0 for a cancelled numerator included.
           */
          x0 = inReal[today];
          y = Math.fma(c0, x0 - x1, a1 * y1);
