@@ -149,7 +149,7 @@ TA_LIB_API void TA_SetRetCodeInfo( TA_RetCode theRetCode, TA_RetCodeInfo *retCod
  *
  * The unstable period and the candle settings are process-wide. Change them
  * only while no TA function is running and no stream is open; the effect of a
- * change made otherwise is undefined. TA_Shutdown counts as a change.
+ * change made otherwise is undefined.
  */
 TA_LIB_API TA_RetCode TA_Initialize( void );
 TA_LIB_API TA_RetCode TA_Shutdown( void );
@@ -158,7 +158,7 @@ TA_LIB_API TA_RetCode TA_Shutdown( void );
  * whenever a source modification should trigger a repackaging of TA-Lib.
  * Written by scripts/sync.py; do not edit.
  */
-#define TA_LIB_SOURCES_DIGEST 315bc49e436df2cbcd401c610d8542b4
+#define TA_LIB_SOURCES_DIGEST 27b4d8fd5d7e358ed502d719fbffb77b
 
 #ifdef __cplusplus
 }
