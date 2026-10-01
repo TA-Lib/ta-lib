@@ -64,13 +64,7 @@
  *     4. LOOKBACK is the unstable period and nothing else, under several
  *        settings of it, per row.
  *     5. ALIASING: outReal == inReal.
- *     6. The generic start/end range sweep, for four of the five rows.
- *
- *   NOT COVERED, and deliberately left so rather than papered over: BP has no
- *   range-sweep leg. Its convergence envelope classification is the open
- *   question of #486 -- the same probe fails it deterministically under
- *   --codegen while the other four pass at every seed -- and a leg written
- *   before that is ruled would be encoding a guess. See the issue.
+ *     6. The generic start/end range sweep, all five rows.
  *
  *   SERVER_VERIFY: the constant and Nyquist shapes are routed. The --codegen
  *   sweep sends the 252-bar corpus with one parameter moved at a time and
@@ -461,6 +455,46 @@ static ErrorNumber test_swak_nyquist( void )
          if( d > worst ) worst = d;
       }
 
+      /* Route the first period of EVERY row -- two shapes the generic sweep
+       * never sends -- before the control arm's early exit below. Behind that
+       * exit, GAUSS routed nothing, and no run without a live server can see
+       * the difference: the routed floor is only asserted when a pipe is up. */
+      if( pi == 0 && di == 0 )
+      {
+         /* Its own shape locals: writing the measured call's begIdx/nbElement
+          * here would silently shrink the count the leg asserts below. */
+         TA_RetCode rrc;
+         int rb, rn;
+
+         for( i = 0; i < SWAK_N_ROUTE; i++ )
+            swakIn[i] = (i & 1) ? -1.0 : 1.0;
+         rrc = swakCall( f, 0, SWAK_N_ROUTE-1, swakIn, P, delta, &rb, &rn, swakOut );
+         if( rrc != TA_SUCCESS )
+         {
+            printf( "%s Nyquist route Fail [P=%d]: rc=%d\n", swakName[f], P, (int)rrc );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+         e = swakRoute( f, "nyquist", SWAK_N_ROUTE, P, delta, rrc, rb, rn );
+         if( e != TA_TEST_PASS )
+            return e;
+
+         for( i = 0; i < SWAK_N_ROUTE; i++ )
+            swakIn[i] = swakLevel[1];
+         rrc = swakCall( f, 0, SWAK_N_ROUTE-1, swakIn, P, delta, &rb, &rn, swakOut );
+         if( rrc != TA_SUCCESS )
+         {
+            printf( "%s DC route Fail [P=%d]: rc=%d\n", swakName[f], P, (int)rrc );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+         e = swakRoute( f, "dc", SWAK_N_ROUTE, P, delta, rrc, rb, rn );
+         if( e != TA_TEST_PASS )
+            return e;
+
+         /* Restore the measured series: the route calls overwrote it. */
+         for( i = 0; i < n; i++ )
+            swakIn[i] = (i & 1) ? -1.0 : 1.0;
+      }
+
       if( swakNyquist[f] == -1 )
       {
          /* The control arm. GAUSS's numerator is (1,0,0): it has no zero
@@ -487,36 +521,6 @@ static ErrorNumber test_swak_nyquist( void )
       }
       g_swakNyqCmp += nbElement - k0;
 
-      /* Route the first period of each row: a shape the generic sweep never
-       * sends, at a length the transport can carry. */
-      if( pi == 0 && di == 0 )
-      {
-         for( i = 0; i < SWAK_N_ROUTE; i++ )
-            swakIn[i] = (i & 1) ? -1.0 : 1.0;
-         rc = swakCall( f, 0, SWAK_N_ROUTE-1, swakIn, P, delta,
-                        &begIdx, &nbElement, swakOut );
-         if( rc != TA_SUCCESS )
-         {
-            printf( "%s Nyquist route Fail [P=%d]: rc=%d\n", swakName[f], P, (int)rc );
-            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
-         }
-         e = swakRoute( f, "nyquist", SWAK_N_ROUTE, P, delta, rc, begIdx, nbElement );
-         if( e != TA_TEST_PASS )
-            return e;
-
-         for( i = 0; i < SWAK_N_ROUTE; i++ )
-            swakIn[i] = swakLevel[1];
-         rc = swakCall( f, 0, SWAK_N_ROUTE-1, swakIn, P, delta,
-                        &begIdx, &nbElement, swakOut );
-         if( rc != TA_SUCCESS )
-         {
-            printf( "%s DC route Fail [P=%d]: rc=%d\n", swakName[f], P, (int)rc );
-            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
-         }
-         e = swakRoute( f, "dc", SWAK_N_ROUTE, P, delta, rc, begIdx, nbElement );
-         if( e != TA_TEST_PASS )
-            return e;
-      }
    }
 
    return TA_TEST_PASS;
@@ -678,12 +682,14 @@ static ErrorNumber test_swak_inplace( void )
    return TA_TEST_PASS;
 }
 
-/* (6) The generic range sweep, four rows of five.
+/* (6) The generic range sweep, all five rows under TA_STABLE_CONVERGING.
  *
- * BP is absent on purpose, not by omission: #486 is open on how its range
- * dependence should be classified, and the --codegen sweep fails it
- * deterministically under TA_STABLE_CONVERGING while the other four pass at
- * every seed. A leg written now would be a guess at the answer. */
+ * BP needs a 200-bar ignore prefix where the other four converge inside 100,
+ * and that is a property of its poles rather than of its code: it is the one
+ * row whose pair is COMPLEX, so its transient rings instead of decaying
+ * monotonically and a bar well inside the envelope can still sit far from the
+ * converged value. test_util.c's periodToIgnore switch carries it beside T3
+ * and STC (#486). */
 typedef struct { const TA_Real *in; int f; } SwakRangeParam;
 
 static TA_RetCode swakRangeTestFunction( TA_Integer startIdx, TA_Integer endIdx,
@@ -712,8 +718,6 @@ static ErrorNumber test_swak_range( const TA_Real *in )
    param.in = in;
    for( f = 0; f < SWAK_NB_FUNC && err == TA_TEST_PASS; f++ )
    {
-      if( f == SWAK_BP )
-         continue;
       param.f = f;
       err = doRangeTestEx( swakRangeTestFunction, TA_STABLE_CONVERGING,
                            swakUnstId[f], (void *)&param, 1, 0 );
