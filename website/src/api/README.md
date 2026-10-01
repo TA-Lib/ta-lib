@@ -77,8 +77,8 @@ For Windows, look into <b>C:\Program Files\TA-Lib</b> for 64-bit and <b>C:\Progr
 
 <pre>TA_RetCode TA_Initialize( void );
 TA_RetCode TA_Shutdown( void );</pre>
-<p><b>TA_Initialize</b> must be called once (and only once), from a single thread, prior to any other API function. After it returns TA_SUCCESS, you can start processing your data in three ways: <a href="#direct_call">batch processing</a>, the <a href="/api/stream/">streaming API</a> or through the <a href="#abstract">abstraction layer</a>.</p>
-<p><b>TA_Shutdown</b> releases the resources acquired by TA_Initialize. Call it while no other TA function is running and no stream is open, typically just before your application exits.</p>
+<p><b>TA_Initialize</b> must be called once, and only once, per process, before any other API function. After it returns TA_SUCCESS, you can start processing your data in three ways: <a href="#direct_call">batch processing</a>, the <a href="/api/stream/">streaming API</a> or through the <a href="#abstract">abstraction layer</a>.</p>
+<p><b>TA_Shutdown</b> releases the resources acquired by TA_Initialize. Call it while no other TA function is running and no stream is open, typically just before your application exits; the library must not be used after it.</p>
 
 ### 3.2 Batch Processing {#direct_call}
 
@@ -196,7 +196,7 @@ int shift = TA_DPO_DisplayShift( 20, 0 );   /* period 20, first output: -11 */
 | Code | Meaning |
 |------|---------|
 | `TA_SUCCESS` | No error. |
-| `TA_LIB_NOT_INITIALIZE` | [TA_Initialize](#init) was not called, or did not succeed. |
+| `TA_LIB_NOT_INITIALIZE` | Returned by [TA_Shutdown](#init) when the library is not initialized. |
 | `TA_BAD_PARAM` | A parameter is out of range, or a required pointer is NULL. |
 | `TA_ALLOC_ERR` | Allocation failed, most likely out of memory. Fatal: nothing about the call is defined past it. |
 | `TA_OUT_OF_RANGE_START_INDEX` | startIdx is negative or above [TA_INDEX_MAX](#index_range). |

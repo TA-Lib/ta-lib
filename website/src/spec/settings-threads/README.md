@@ -11,13 +11,7 @@ What each setting means: [Unstable Period](/api/unstable-period/), [Candlestick 
 
 ## C lifecycle
 
-<a id="t1"></a>**T1** Call `TA_Initialize` once before any other TA call, and again before using the library after `TA_Shutdown`. It sets every unstable period to 0 and every candle setting to its default. When it and `TA_Shutdown` may run: [T2](/spec/settings-threads/#t2). Rust, Java and C# have no lifecycle call: a `Core` is ready when constructed.
-
-Current behaviour in C:
-
-- Nothing checks that `TA_Initialize` was called, and every setter works without it. Without it, or after `TA_Shutdown`, every setting the caller has not set is zero: CDL functions drop the averaging period from their lookback (`TA_CDL3BLACKCROWS_Lookback` gives 3 instead of 13) and return `TA_SUCCESS` with values judged against zero thresholds. Zero is also an unstable period's initialized value, so only CDL functions are affected.
-- Every `TA_Initialize`, the first included, returns `TA_SUCCESS` and discards whatever was set before it.
-- When it succeeds, `TA_Shutdown` sets every unstable period and every candle setting to zero and releases nothing. It returns `TA_LIB_NOT_INITIALIZE`, and changes nothing, when `TA_Initialize` has not been called since the process started or since the last successful `TA_Shutdown`.
+<a id="t1"></a>**T1** Call `TA_Initialize` once, and only once, per process, before any other TA call. It sets every unstable period to 0 and every candle setting to its default. Call `TA_Shutdown` before the process exits; the library must not be used after it. Any other use is outside this specification. When `TA_Initialize` and `TA_Shutdown` may run: [T2](/spec/settings-threads/#t2). `TA_Shutdown` returns `TA_LIB_NOT_INITIALIZE` when the library is not initialized. Rust, Java and C# have no lifecycle call: a `Core` is ready when constructed.
 
 ## C settings
 

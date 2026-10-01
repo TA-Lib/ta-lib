@@ -141,14 +141,11 @@ typedef struct TA_RetCodeInfo
 /* Info is always returned, even when 'theRetCode' is invalid. */
 TA_LIB_API void TA_SetRetCodeInfo( TA_RetCode theRetCode, TA_RetCodeInfo *retCodeInfo );
 
-/* TA_Initialize() initialize the ressources used by TA-Lib. This
- * function must be called once prior to any other functions declared in
- * this file.
+/* TA_Initialize() must be called once, and only once, per process, before
+ * any other function declared in this file.
  *
- * TA_Shutdown() allows to free all ressources used by TA-Lib. Following
- * a shutdown, TA_Initialize() must be called again for re-using TA-Lib.
- *
- * TA_Shutdown() should be called prior to exiting the application code.
+ * TA_Shutdown() should be called before the application exits; the library
+ * must not be used after it.
  *
  * The unstable period and the candle settings are process-wide. Change them
  * only while no TA function is running and no stream is open; the effect of a

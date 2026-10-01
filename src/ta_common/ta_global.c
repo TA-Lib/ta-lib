@@ -52,6 +52,7 @@
  *  040707 MF   Change global initialization to eliminate Mac OS X link error.
  *  081126 KL,MF,CC Validate every TA_SetCandleSettings argument, not just the
  *                settingType (#185)
+ *  100126 MF,CC Pre-load the candle defaults, also after TA_Shutdown.
  */
 
 /* Description:
@@ -76,8 +77,38 @@
 
 /**** Global variables definitions.    ****/
 
-/* The entry point for all globals */
-TA_LibcPriv ta_theGlobals = {0,{{0,0,0}},0,0,0,0,{0},{{(TA_CandleSettingType)0,(TA_RangeType)0,0,0}}};
+/* One row per TA_CandleSettingType, in enum order. */
+#define TA_CANDLE_DEFAULT_SETTINGS \
+   /* real body is long when it's longer than the average of the 10 previous candles' real body */ \
+   { TA_BodyLong, TA_RangeType_RealBody, 10, 1.0 }, \
+   /* real body is very long when it's longer than 3 times the average of the 10 previous candles' real body */ \
+   { TA_BodyVeryLong, TA_RangeType_RealBody, 10, 3.0 }, \
+   /* real body is short when it's shorter than the average of the 10 previous candles' real bodies */ \
+   { TA_BodyShort, TA_RangeType_RealBody, 10, 1.0 }, \
+   /* real body is like doji's body when it's shorter than 10% the average of the 10 previous candles' high-low range */ \
+   { TA_BodyDoji, TA_RangeType_HighLow, 10, 0.1 }, \
+   /* shadow is long when it's longer than the real body */ \
+   { TA_ShadowLong, TA_RangeType_RealBody, 0, 1.0 }, \
+   /* shadow is very long when it's longer than 2 times the real body */ \
+   { TA_ShadowVeryLong, TA_RangeType_RealBody, 0, 2.0 }, \
+   /* shadow is short when it's shorter than half the average of the 10 previous candles' sum of shadows */ \
+   { TA_ShadowShort, TA_RangeType_Shadows, 10, 1.0 }, \
+   /* shadow is very short when it's shorter than 10% the average of the 10 previous candles' high-low range */ \
+   { TA_ShadowVeryShort, TA_RangeType_HighLow, 10, 0.1 }, \
+   /* when measuring distance between parts of candles or width of gaps */ \
+   /* "near" means "<= 20% of the average of the 5 previous candles' high-low range" */ \
+   { TA_Near, TA_RangeType_HighLow, 5, 0.2 }, \
+   /* when measuring distance between parts of candles or width of gaps */ \
+   /* "far" means ">= 60% of the average of the 5 previous candles' high-low range" */ \
+   { TA_Far, TA_RangeType_HighLow, 5, 0.6 }, \
+   /* when measuring distance between parts of candles or width of gaps */ \
+   /* "equal" means "<= 5% of the average of the 5 previous candles' high-low range" */ \
+   { TA_Equal, TA_RangeType_HighLow, 5, 0.05 }
+
+/* The entry point for all globals. The candle defaults are pre-loaded only to
+ * soften a call made without TA_Initialize; the contract still requires it, once
+ * per process. */
+TA_LibcPriv ta_theGlobals = { .candleSettings = { TA_CANDLE_DEFAULT_SETTINGS } };
 
 TA_LibcPriv *TA_Globals = &ta_theGlobals;
 
@@ -122,7 +153,7 @@ TA_RetCode TA_Shutdown( void )
    /* Initialize to all zero to make sure we invalidate that object. */
    memset( TA_Globals, 0, sizeof( TA_LibcPriv ) );
 
-   return TA_SUCCESS;
+   return TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
 }
 
 /* A setting at 12 or above means candleSettings[] reaches past index 11,
@@ -183,33 +214,7 @@ TA_RetCode TA_SetCandleSettings( TA_CandleSettingType settingType,
 
 TA_RetCode TA_RestoreCandleDefaultSettings( TA_CandleSettingType settingType )
 {
-    const TA_CandleSetting TA_CandleDefaultSettings[] = {
-        /* real body is long when it's longer than the average of the 10 previous candles' real body */
-        { TA_BodyLong, TA_RangeType_RealBody, 10, 1.0 },
-        /* real body is very long when it's longer than 3 times the average of the 10 previous candles' real body */
-        { TA_BodyVeryLong, TA_RangeType_RealBody, 10, 3.0 },
-        /* real body is short when it's shorter than the average of the 10 previous candles' real bodies */
-        { TA_BodyShort, TA_RangeType_RealBody, 10, 1.0 },
-        /* real body is like doji's body when it's shorter than 10% the average of the 10 previous candles' high-low range */
-        { TA_BodyDoji, TA_RangeType_HighLow, 10, 0.1 },
-        /* shadow is long when it's longer than the real body */
-        { TA_ShadowLong, TA_RangeType_RealBody, 0, 1.0 },
-        /* shadow is very long when it's longer than 2 times the real body */
-        { TA_ShadowVeryLong, TA_RangeType_RealBody, 0, 2.0 },
-        /* shadow is short when it's shorter than half the average of the 10 previous candles' sum of shadows */
-        { TA_ShadowShort, TA_RangeType_Shadows, 10, 1.0 },
-        /* shadow is very short when it's shorter than 10% the average of the 10 previous candles' high-low range */
-        { TA_ShadowVeryShort, TA_RangeType_HighLow, 10, 0.1 },
-        /* when measuring distance between parts of candles or width of gaps */
-        /* "near" means "<= 20% of the average of the 5 previous candles' high-low range" */
-        { TA_Near, TA_RangeType_HighLow, 5, 0.2 },
-        /* when measuring distance between parts of candles or width of gaps */
-        /* "far" means ">= 60% of the average of the 5 previous candles' high-low range" */
-        { TA_Far, TA_RangeType_HighLow, 5, 0.6 },
-        /* when measuring distance between parts of candles or width of gaps */
-        /* "equal" means "<= 5% of the average of the 5 previous candles' high-low range" */
-        { TA_Equal, TA_RangeType_HighLow, 5, 0.05 }
-    };
+    static const TA_CandleSetting TA_CandleDefaultSettings[] = { TA_CANDLE_DEFAULT_SETTINGS };
 
     int i;
 
