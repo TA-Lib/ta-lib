@@ -6,8 +6,8 @@
 #policy	monotone
 #toolchain	x86_64/x86_64-linux-gnu/13.3.0
 #corpus	points=20000 regime_period=14 seed=42 shape=peg stream_iters=1024 trend_strength=0.500000
-#commit	2ff6f193d014e278fab44ffe6ea6511bd74e47ef
-#generated	2026-10-01T11:16:59Z
+#commit	72e58a9661e9caf2228fb11159af3cff8dcb6c15
+#generated	2026-10-01T16:30:28Z
 AC	batch	0	703438
 AC	open	0	704171
 AC	openfill	0	692624
@@ -663,6 +663,11 @@ KST	open	0	3117020
 KST	openfill	0	3117429
 KST	peek	0	151567
 KST	update	0	245237
+KSTEXT	batch	0	2189497
+KSTEXT	open	0	3424229
+KSTEXT	openfill	0	3422524
+KSTEXT	peek	0	444431
+KSTEXT	update	0	799762
 KURTOSIS	batch	0	1083370
 KURTOSIS	open	0	2026935
 KURTOSIS	openfill	0	2026929
@@ -670,7 +675,7 @@ KURTOSIS	peek	0	82957
 KURTOSIS	update	0	142870
 LINEARREG	batch	0	606134
 LINEARREG	open	0	1207181
-LINEARREG	openfill	0	1207236
+LINEARREG	openfill	0	1207175
 LINEARREG	peek	0	71693
 LINEARREG	update	0	103942
 LINEARREG_ANGLE	batch	0	1864935
