@@ -656,8 +656,8 @@ static int json_error_is_unsupported(const char *json)
  * ADXR/STOCHRSI via ADX/RSI) that converge through an internal callee. APO and PPO now default to EMA (issue #120), so their
  * default-parameter range sweep is EMA-converging and needs the loose convergence
  * envelope; the envelope is a safe superset for their finite-window (SMA/WMA/…)
- * parameterisations too. (MACDEXT defaults to SMA but is in this list on the same
- * safe-superset basis — it converges only when an optional MA type is set to EMA.)
+ * parameterisations too. (MACDEXT and KSTEXT default to SMA but are in this list on the same
+ * safe-superset basis — they converge only when an optional MA type is set to EMA.)
  * IMI and MFI are deliberately excluded (finite-window, stable).
  */
 typedef struct {
@@ -3034,8 +3034,7 @@ static void sweep_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
 /* Sized for the widest stream-vector enumeration: MACDEXT carries 3 MAType
  * params, so its count is 8*M-1 in the MAType-list length M (base 4 + 3 params *
  * (2 base-vector crosses * (M-1) non-default arms + 1 out-of-list) + the 2 *
- * (M-1) multi-enum diagonal, #181). M=16 today => 127; 160 keeps runway for
- * 4 more MATypes before MACDEXT reaches it again. Overflow is a hard failure,
+ * (M-1) multi-enum diagonal, #181): 127 at M=16. Overflow is a hard failure,
  * never a skip. */
 #define STREAM_MAX_VEC 160
 #define STREAM_N       240

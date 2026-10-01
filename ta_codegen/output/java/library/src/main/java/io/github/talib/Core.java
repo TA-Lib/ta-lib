@@ -121817,6 +121817,7 @@ public final class Core {
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
+    * @see Core#kstext
     * @see Core#roc
     * @see Core#sma
     * @see Core#coppock
@@ -121926,6 +121927,7 @@ public final class Core {
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
+    * @see Core#kstext
     * @see Core#roc
     * @see Core#sma
     * @see Core#coppock
@@ -123110,7 +123112,9 @@ public final class Core {
          return RetCode.SUCCESS ;
       }
       sigStart = startIdx - lookbackSignal;
-      /* A leg's rate of change runs its average's lookback ahead of sigStart. */
+      /* Both buffers are sized by the longest leg average: a rate of change
+       * starts its average's lookback before sigStart.
+       */
       lookbackMA = maLookback(optInMA1Period, optInROCMAType);
       tempInteger = maLookback(optInMA2Period, optInROCMAType);
       if( tempInteger > lookbackMA ) {
@@ -123349,22 +123353,22 @@ public final class Core {
       return RetCode.SUCCESS ;
    }
    /**
-    * Know Sure Thing with selectable moving averages: Martin J. Pring's
-    * weighted sum of four smoothed rates of change, where one MA type smooths
-    * the four legs and another the signal line. {@code KST} is Pring's
-    * definition, with simple averages throughout. Formulas published since then
-    * smooth the legs exponentially, and Pring allows a simple or an exponential
-    * signal line. The reading is the same as {@code KST}'s: above zero the
-    * combined momentum is positive, and the usual signals are the line crossing
-    * its signal line and the line changing direction.
+    * Know Sure Thing with selectable moving averages: Pring's weighted sum of
+    * four smoothed rates of change, with a signal line. One MA type smooths the
+    * four legs and another the signal line. {@code KST} is Pring's definition,
+    * with simple averages throughout. Formulas published since then smooth the
+    * legs exponentially, and Pring allows a simple or an exponential signal
+    * line. The reading is the same as {@code KST}'s: above zero the combined
+    * momentum is positive, and the usual signals are the line crossing its
+    * signal line and the line changing direction.
     * <p>Formula and more info at <a
     * href="https://ta-lib.org/functions/kstext">ta-lib.org/functions/kstext</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>With both MA types set to {@code TA_MAType_SMA} the outputs are those of {@code KST}.</li>
     * <li>Both outputs start at the first bar where the signal line exists. A signal period of 1 disables signal-line smoothing for every signal MAType: the signal is then a copy of the line.</li>
-    * <li>An MA type with an unstable period lengthens the lookback by it, on the legs and on the signal line separately.</li>
-    * <li>{@code TA_MAType_MAMA} ignores its period argument, so the four leg periods, or the signal period, have no effect where it is selected.</li>
+    * <li>The unstable period of a selected MA type lengthens the lookback, for the legs and for the signal line separately.</li>
+    * <li>{@code TA_MAType_MAMA} ignores its period argument, so where it is selected every period above 1 gives the same average.</li>
     * <li>Each rate of change follows {@code ROC}: a zero price in the denominator makes that term 0.</li>
     * <li>The weights go with leg position, not with the length of the rate of change.</li>
     * </ul>
@@ -123464,22 +123468,22 @@ public final class Core {
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
    /**
-    * Know Sure Thing with selectable moving averages: Martin J. Pring's
-    * weighted sum of four smoothed rates of change, where one MA type smooths
-    * the four legs and another the signal line. {@code KST} is Pring's
-    * definition, with simple averages throughout. Formulas published since then
-    * smooth the legs exponentially, and Pring allows a simple or an exponential
-    * signal line. The reading is the same as {@code KST}'s: above zero the
-    * combined momentum is positive, and the usual signals are the line crossing
-    * its signal line and the line changing direction.
+    * Know Sure Thing with selectable moving averages: Pring's weighted sum of
+    * four smoothed rates of change, with a signal line. One MA type smooths the
+    * four legs and another the signal line. {@code KST} is Pring's definition,
+    * with simple averages throughout. Formulas published since then smooth the
+    * legs exponentially, and Pring allows a simple or an exponential signal
+    * line. The reading is the same as {@code KST}'s: above zero the combined
+    * momentum is positive, and the usual signals are the line crossing its
+    * signal line and the line changing direction.
     * <p>Formula and more info at <a
     * href="https://ta-lib.org/functions/kstext">ta-lib.org/functions/kstext</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>With both MA types set to {@code TA_MAType_SMA} the outputs are those of {@code KST}.</li>
     * <li>Both outputs start at the first bar where the signal line exists. A signal period of 1 disables signal-line smoothing for every signal MAType: the signal is then a copy of the line.</li>
-    * <li>An MA type with an unstable period lengthens the lookback by it, on the legs and on the signal line separately.</li>
-    * <li>{@code TA_MAType_MAMA} ignores its period argument, so the four leg periods, or the signal period, have no effect where it is selected.</li>
+    * <li>The unstable period of a selected MA type lengthens the lookback, for the legs and for the signal line separately.</li>
+    * <li>{@code TA_MAType_MAMA} ignores its period argument, so where it is selected every period above 1 gives the same average.</li>
     * <li>Each rate of change follows {@code ROC}: a zero price in the denominator makes that term 0.</li>
     * <li>The weights go with leg position, not with the length of the rate of change.</li>
     * </ul>
@@ -123930,7 +123934,9 @@ public final class Core {
          return RetCode.INSUFFICIENT_HISTORY ;
       }
       sigStart = startIdx - lookbackSignal;
-      /* A leg's rate of change runs its average's lookback ahead of sigStart. */
+      /* Both buffers are sized by the longest leg average: a rate of change
+       * starts its average's lookback before sigStart.
+       */
       lookbackMA = maLookback(optInMA1Period, optInROCMAType);
       tempInteger = maLookback(optInMA2Period, optInROCMAType);
       if( tempInteger > lookbackMA ) {

@@ -334,7 +334,8 @@ impl Core {
             return RetCode::Success;
         }
         sigStart = startIdx - lookbackSignal;
-        // A leg's rate of change runs its average's lookback ahead of sigStart.
+        // Both buffers are sized by the longest leg average: a rate of change
+        // starts its average's lookback before sigStart.
         lookbackMA = self.ma_lookback(optInMA1Period, optInROCMAType).unwrap_or(usize::MAX);
         tempInteger = self.ma_lookback(optInMA2Period, optInROCMAType).unwrap_or(usize::MAX);
         if tempInteger > lookbackMA {
@@ -428,8 +429,8 @@ impl Core {
         (*outNBElement) = sigNb;
         return RetCode::Success;
     }
-    /// Know Sure Thing with selectable moving averages: Martin J. Pring's weighted sum of four
-    /// smoothed rates of change, where one MA type smooths the four legs and another the signal
+    /// Know Sure Thing with selectable moving averages: Pring's weighted sum of four smoothed rates
+    /// of change, with a signal line. One MA type smooths the four legs and another the signal
     /// line. `KST` is Pring's definition, with simple averages throughout. Formulas published since
     /// then smooth the legs exponentially, and Pring allows a simple or an exponential signal line.
     /// The reading is the same as `KST`'s: above zero the combined momentum is positive, and the
@@ -768,7 +769,8 @@ impl Core {
             return Err(RetCode::InsufficientHistory);
         }
         sigStart = startIdx - lookbackSignal;
-        // A leg's rate of change runs its average's lookback ahead of sigStart.
+        // Both buffers are sized by the longest leg average: a rate of change
+        // starts its average's lookback before sigStart.
         lookbackMA = self.ma_lookback(optInMA1Period, optInROCMAType)?;
         tempInteger = self.ma_lookback(optInMA2Period, optInROCMAType)?;
         if tempInteger > lookbackMA {

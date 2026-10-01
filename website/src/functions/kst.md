@@ -87,7 +87,7 @@ Know Sure Thing, Pring KST, Summed Rate of Change
 
 ## See Also
 
-[ROC](/functions/roc.md) · [SMA](/functions/sma.md) · [COPPOCK](/functions/coppock.md) · [MACD](/functions/macd.md)
+[KSTEXT](/functions/kstext.md) · [ROC](/functions/roc.md) · [SMA](/functions/sma.md) · [COPPOCK](/functions/coppock.md) · [MACD](/functions/macd.md)
 
 ## References
 

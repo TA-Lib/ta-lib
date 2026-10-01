@@ -828,6 +828,7 @@ public partial class Core
    /// Computing wholly in place (an output that IS an input) is allowed.</description></item>
    /// </list>
    /// </exception>
+   /// <seealso cref="Core.Kstext(int, int, ReadOnlySpan{double}, int, int, int, int, int, int, int, int, int, MAType, MAType, Span{double}, Span{double})"/>
    /// <seealso cref="Core.Roc(int, int, ReadOnlySpan{double}, int, Span{double})"/>
    /// <seealso cref="Core.Sma(int, int, ReadOnlySpan{double}, int, Span{double})"/>
    /// <seealso cref="Core.Coppock(int, int, ReadOnlySpan{double}, int, int, int, Span{double})"/>
@@ -951,6 +952,7 @@ public partial class Core
    /// overlap of their byte ranges is rejected.</description></item>
    /// </list>
    /// </exception>
+   /// <seealso cref="Core.Kstext(int, int, ReadOnlySpan{double}, int, int, int, int, int, int, int, int, int, MAType, MAType, Span{double}, Span{double})"/>
    /// <seealso cref="Core.Roc(int, int, ReadOnlySpan{double}, int, Span{double})"/>
    /// <seealso cref="Core.Sma(int, int, ReadOnlySpan{double}, int, Span{double})"/>
    /// <seealso cref="Core.Coppock(int, int, ReadOnlySpan{double}, int, int, int, Span{double})"/>

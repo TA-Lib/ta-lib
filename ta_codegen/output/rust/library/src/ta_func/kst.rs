@@ -805,8 +805,8 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`ROC`](Core::roc) · [`SMA`](Core::sma) · [`COPPOCK`](Core::coppock) ·
-    /// [`MACD`](Core::macd)
+    /// [`KSTEXT`](Core::kstext) · [`ROC`](Core::roc) · [`SMA`](Core::sma) ·
+    /// [`COPPOCK`](Core::coppock) · [`MACD`](Core::macd)
     ///
     /// # References
     ///

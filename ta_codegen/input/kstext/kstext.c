@@ -70,7 +70,9 @@ TA_RetCode kstext(int startIdx, int endIdx,
 
    sigStart = startIdx - lookbackSignal;
 
-   /* A leg's rate of change runs its average's lookback ahead of sigStart. */
+   /* Both buffers are sized by the longest leg average: a rate of change
+    * starts its average's lookback before sigStart.
+    */
    lookbackMA = ma_lookback( optInMA1Period, optInROCMAType );
    tempInteger = ma_lookback( optInMA2Period, optInROCMAType );
    if( tempInteger > lookbackMA ) lookbackMA = tempInteger;

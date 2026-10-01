@@ -53,7 +53,7 @@ Know Sure Thing, Pring KST, Summed Rate of Change
 
 ## See Also
 
-ROC · SMA · COPPOCK · MACD
+KSTEXT · ROC · SMA · COPPOCK · MACD
 
 ## References
 

@@ -56,8 +56,8 @@
  *      Proves the anchoring and which type reaches which average, not the
  *      formula.
  *   3. GOLDENS per MA type: rows the QuantConnect LEAN KnowSureThing class
- *      produced with that MovingAverageType, the leg that sees a type routed
- *      to the wrong average.
+ *      produced with that MovingAverageType on all five averages: the formula
+ *      leg for the types TA_KST cannot vouch for.
  *   4. LOOKBACK pins, with and without an unstable period.
  *   5. FLAT and ZERO-PRICE input, ALIASING.
  */
@@ -93,7 +93,7 @@ static const KstextPeriods kstextGrid[] =
 };
 #define NB_KSTEXT_GRID ((int)(sizeof(kstextGrid)/sizeof(kstextGrid[0])))
 
-static const int kstextStartGrid[] = { 0, 1, 52, 53, 100, 251 };
+static const int kstextStartGrid[] = { 0, 100, 52, 53, 180, 251 };
 #define NB_KSTEXT_START ((int)(sizeof(kstextStartGrid)/sizeof(kstextStartGrid[0])))
 
 static const TA_MAType kstextTypes[] =
@@ -476,7 +476,7 @@ static ErrorNumber test_kstext_lookback( void )
       { { { 10, 15, 20, 30, 10, 10, 10, 15,  9 } }, TA_MAType_SMA,  TA_MAType_EMA,  5, 57 },
       /* DEMA is 2(n-1), TEMA 3(n-1): 30 + 28 + 24. */
       { { { 10, 15, 20, 30, 10, 10, 10, 15,  9 } }, TA_MAType_DEMA, TA_MAType_TEMA, 0, 82 },
-      /* MAMA's 32 whatever the period: 30 + 32 + 32. */
+      /* MAMA's 32 at any period above 1: 30 + 32 + 32. */
       { { { 10, 15, 20, 30, 10, 10, 10, 15,  9 } }, TA_MAType_MAMA, TA_MAType_MAMA, 0, 94 },
       { { { 10, 15, 20, 30, 10, 10, 10, 15,  9 } }, TA_MAType_DISABLED, TA_MAType_DISABLED, 0, 30 },
       /* Each leg the unique max in turn, its MA period unlike every other. */
@@ -484,6 +484,10 @@ static ErrorNumber test_kstext_lookback( void )
       { { {  1, 50,  1,  1,  2, 40,  3,  4,  1 } }, TA_MAType_WMA,  TA_MAType_WMA,  0, 89 },
       { { {  1,  1, 50,  1,  2,  3, 40,  4,  1 } }, TA_MAType_WMA,  TA_MAType_WMA,  0, 89 },
       { { {  1,  1,  1, 50,  2,  3,  4, 40,  1 } }, TA_MAType_WMA,  TA_MAType_WMA,  0, 89 },
+      /* The longest ROC and the longest MA on different legs: the max is over
+       * the per-leg sums, not the sum of two maxima. */
+      { { { 50,  1,  1,  1,  2,  3,  4, 40,  1 } }, TA_MAType_WMA,  TA_MAType_WMA,  0, 51 },
+      { { {  1,  1,  1, 50, 40,  3,  4,  2,  1 } }, TA_MAType_WMA,  TA_MAType_WMA,  0, 51 },
    };
    unsigned int c;
 

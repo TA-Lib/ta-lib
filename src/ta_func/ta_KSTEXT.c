@@ -235,7 +235,9 @@ TA_LIB_API TA_RetCode TA_KSTEXT( int    startIdx,
       return TA_SUCCESS;
    }
    sigStart = startIdx - lookbackSignal;
-   /* A leg's rate of change runs its average's lookback ahead of sigStart. */
+   /* Both buffers are sized by the longest leg average: a rate of change
+    * starts its average's lookback before sigStart.
+    */
    lookbackMA = TA_MA_Lookback(optInMA1Period,optInROCMAType);
    tempInteger = TA_MA_Lookback(optInMA2Period,optInROCMAType);
    if( tempInteger > lookbackMA )
@@ -787,7 +789,9 @@ static TA_RetCode TA_KSTEXT_OpenImpl( struct TA_KSTEXT_Stream **stream, const do
          return TA_INSUFFICIENT_HISTORY;
       }
       sigStart = startIdx - lookbackSignal;
-      /* A leg's rate of change runs its average's lookback ahead of sigStart. */
+      /* Both buffers are sized by the longest leg average: a rate of change
+       * starts its average's lookback before sigStart.
+       */
       lookbackMA = TA_MA_Lookback(optInMA1Period,optInROCMAType);
       tempInteger = TA_MA_Lookback(optInMA2Period,optInROCMAType);
       if( tempInteger > lookbackMA )

@@ -766,6 +766,7 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
+    * @see Core#kstext
     * @see Core#roc
     * @see Core#sma
     * @see Core#coppock
@@ -875,6 +876,7 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
+    * @see Core#kstext
     * @see Core#roc
     * @see Core#sma
     * @see Core#coppock
