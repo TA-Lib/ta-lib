@@ -154,6 +154,10 @@ The setting follows the function wherever it runs: whether you call it directly,
 another indicator uses it internally. The EMA id therefore affects EMA itself and
 every indicator built on one, such as MACD and DEMA.
 
+In C, the unstable period and the candle settings are process-wide. Change them
+only while no TA function is running and no stream is open
+([T2](/spec/settings-threads/#t2)).
+
 ## Functions with an unstable period
 
 <!-- ta_codegen:begin unstable-func-list -->

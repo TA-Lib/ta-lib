@@ -1,17 +1,17 @@
 ---
 title: Settings and Threads
-description: "C initialization and process-global settings, the immutable Core of the Rust, Java and C# APIs, setting validation, and what is safe across threads and under a live stream."
+description: "C initialization, C's process-wide settings and when they may change, the immutable Core of the Rust, Java and C# APIs, setting validation, and what is safe across threads."
 ---
 
 *Part of TA-Lib's exhaustive [specifications](/spec/), intended for precise AI-agent-driven integration with TA-Lib, to minimize errors.*
 
-C keeps its settings (unstable periods and candle settings) in process globals that are set before any concurrent use; Rust, Java and C# keep them in an immutable `Core`. This page owns the C lifecycle, the rules every setter and getter enforces, and what may run concurrently.
+C keeps its settings (unstable periods and candle settings) in process-wide globals; Rust, Java and C# keep them in an immutable `Core`. This page owns the C lifecycle, when a C setting may change, the rules every setter and getter enforces, and what may run concurrently.
 
 What each setting means: [Unstable Period](/api/unstable-period/), [Candlestick Settings](/api/candle-settings/) (with the defaults). Names per language: [names](/spec/#names). How a refusal reaches the caller: [failures](/spec/#failures).
 
 ## C lifecycle
 
-<a id="t1"></a>**T1** Call `TA_Initialize` once, from one thread, before any other TA call, and again before using the library after `TA_Shutdown`. It sets every unstable period to 0 and every candle setting to its default. Call `TA_Shutdown` from one thread while no other TA call runs. Rust, Java and C# have no lifecycle call: a `Core` is ready when constructed.
+<a id="t1"></a>**T1** Call `TA_Initialize` once before any other TA call, and again before using the library after `TA_Shutdown`. It sets every unstable period to 0 and every candle setting to its default. When it and `TA_Shutdown` may run: [T2](/spec/settings-threads/#t2). Rust, Java and C# have no lifecycle call: a `Core` is ready when constructed.
 
 Current behaviour in C:
 
@@ -21,11 +21,11 @@ Current behaviour in C:
 
 ## C settings
 
-<a id="t2"></a>**T2** Unstable periods and candle settings are process-global, unsynchronized memory. Change them (`TA_SetUnstablePeriod`, `TA_SetCandleSettings`, `TA_RestoreCandleDefaultSettings`, and `TA_Initialize` or `TA_Shutdown`, which reset them) from one thread while no other TA call runs. Once they are set, batch calls, lookbacks, streams (under [T4](/spec/settings-threads/#t4)) and the abstraction layer, each thread with its own `TA_ParamHolder` ([T6](/spec/settings-threads/#t6)), may run on any number of threads. The library allocates with `malloc` and `free` and assumes both are thread-safe; an allocation failure is [B7](/spec/errors/#b7). How the settings enter a result: [L7](/spec/lookback/#l7) (unstable period), [L8](/spec/lookback/#l8) (candle averaging), [T7](/spec/settings-threads/#t7) (open streams).
+<a id="t2"></a>**T2** In C, the unstable period and the candle settings are process-wide. Change them (`TA_SetUnstablePeriod`, `TA_SetCandleSettings`, `TA_RestoreCandleDefaultSettings`) only while no TA function is running and no stream is open; the effect of a change made otherwise is undefined. `TA_Initialize` and `TA_Shutdown` count as changes. Between changes, batch calls, lookbacks, streams (under [T4](/spec/settings-threads/#t4)) and the abstraction layer, each thread with its own `TA_ParamHolder` ([T6](/spec/settings-threads/#t6)), may run on any number of threads. The library allocates with `malloc` and `free` and assumes both are thread-safe; an allocation failure is [B7](/spec/errors/#b7). How the settings enter a result: [L7](/spec/lookback/#l7) (unstable period), [L8](/spec/lookback/#l8) (candle averaging).
 
 ## Managed cores
 
-<a id="t3"></a>**T3** In Rust, Java and C#, settings live on an immutable `Core` made by a builder. There are no process-global settings. One `Core` may be shared by any number of threads with no synchronization: Rust's is `Send + Sync`, Java's has only final, deeply immutable fields and is safe even when published racily, and C#'s cannot change once built. To change a setting, build another `Core`, from defaults or seeded from an existing one (`to_builder()`, `toBuilder()`, `ToBuilder()`); the existing one is unchanged. A Java or C# builder stays usable after `build()`, and later changes to it never reach a `Core` it built.
+<a id="t3"></a>**T3** In Rust, Java and C#, settings live on an immutable `Core` made by a builder. There are no process-global settings. One `Core` may be shared by any number of threads with no synchronization: Rust's is `Send + Sync`, Java's has only final, deeply immutable fields and is safe even when published racily, and C#'s cannot change once built. To change a setting, build another `Core`, from defaults or seeded from an existing one (`to_builder()`, `toBuilder()`, `ToBuilder()`); the existing one is unchanged. A stream keeps the settings of the `Core` that opened it. A Java or C# builder stays usable after `build()`, and later changes to it never reach a `Core` it built.
 
 Java's and C#'s `build()` cannot fail. How a refused setter call reaches the caller in each language: [failures](/spec/#failures) and [G7](/spec/settings-threads/#g7).
 
@@ -54,14 +54,3 @@ The rows hold for every setter and getter in all four languages, except where a 
 <a id="t5"></a>**T5** A Java multi-output stream writes its results into a caller-owned sink (`Core.MacdOut` for MACD) on `update`, `peek` and `value`. The sink carries no publication guarantee: give each thread its own. The other languages' carriers: [names](/spec/#names).
 
 <a id="t6"></a>**T6** A parameter holder (C `TA_ParamHolder`, Java and C# `ParamHolder`) is not thread-safe, and in Java and C# neither is a `CoreBuilder`: confine each to one thread, or make one per call. In C, the `const` in `TA_CallFunc`'s signature does not make a holder shareable: the call writes the output buffers bound to the holder, and the setters write the holder itself, with no synchronization. The function catalogs (Java `Functions`, C# `FunctionCatalog`, Rust `FUNCS`) are immutable and shared freely. Rust's builder setters take the builder by value and its `ParamHolder` setters and `call` take `&mut self`, so the compiler confines both.
-
-## Settings under a live stream
-
-<a id="t7"></a>**T7** What a stream sees when a setting changes after Open:
-
-| Setting | C | Rust, Java, C# |
-|---|---|---|
-| Unstable period | Read once, at Open. A later change applies to later opens, batch calls and lookbacks, never to an open handle, so `TA_<N>_Lookback` may then disagree with that handle's range (current behaviour). | The `Core` that opened the handle cannot change. To stream with other settings, open from another `Core`. |
-| Candle settings | Changing one while a CDL stream is open, by any call including `TA_Initialize` and `TA_Shutdown`, is undefined. Close the stream and open a new one. | The `Core` that opened the handle cannot change. |
-
-What an open handle's values equal: [H1](/spec/streaming/#h1).

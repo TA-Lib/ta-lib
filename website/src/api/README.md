@@ -78,7 +78,7 @@ For Windows, look into <b>C:\Program Files\TA-Lib</b> for 64-bit and <b>C:\Progr
 <pre>TA_RetCode TA_Initialize( void );
 TA_RetCode TA_Shutdown( void );</pre>
 <p><b>TA_Initialize</b> must be called once (and only once), from a single thread, prior to any other API function. After it returns TA_SUCCESS, you can start processing your data in three ways: <a href="#direct_call">batch processing</a>, the <a href="/api/stream/">streaming API</a> or through the <a href="#abstract">abstraction layer</a>.</p>
-<p><b>TA_Shutdown</b> releases the resources acquired by TA_Initialize. Call it single-threaded, typically from the last remaining thread just before your application exits.</p>
+<p><b>TA_Shutdown</b> releases the resources acquired by TA_Initialize. Call it while no other TA function is running and no stream is open, typically just before your application exits.</p>
 
 ### 3.2 Batch Processing {#direct_call}
 
@@ -237,7 +237,7 @@ Error 1(TA_LIB_NOT_INITIALIZE): TA_Initialize was not successfully called
 
 ### 4.3 Candlestick Settings {#candle_settings}
 
-<p>The candlestick pattern functions (<b>TA_CDL*</b>) judge each candle against tunable thresholds — is its body "long", its shadow "short", two candles "near". These thresholds are global settings: change them once, from a single thread, before any concurrent calls (see <a href="#multithreading">multi-threading</a>).</p>
+<p>The candlestick pattern functions (<b>TA_CDL*</b>) judge each candle against tunable thresholds: is its body "long", its shadow "short", are two candles "near". These thresholds are process-wide settings: change them only while no TA function is running and no stream is open (see <a href="#multithreading">multi-threading</a>).</p>
 <p>See the <a href="/api/candle-settings/">Candlestick Settings</a> page for the API, the setting types and their defaults.</p>
 
 ### 4.4 Input Type: float vs. double {#input_type}
@@ -283,15 +283,13 @@ Error 1(TA_LIB_NOT_INITIALIZE): TA_Initialize was not successfully called
 
 <p>TA-Lib is multi-thread safe where it matters most for performance: calling the TA functions themselves (TA_SMA, TA_RSI, ...).</p>
 
-<p>One important caveat: the "global settings" must first be initialized from a single thread. That includes calls to:</p>
+<p>One important caveat: the unstable period and the candle settings are process-wide. Change them only while no TA function is running and no stream is open; the effect of a change made otherwise is undefined. TA_Initialize and TA_Shutdown count as changes. The calls that change them:</p>
 <ul>
-  <li><a href="#init">TA_Initialize</a></li>
+  <li><a href="#init">TA_Initialize, TA_Shutdown</a></li>
   <li><a href="/api/unstable-period/">TA_SetUnstablePeriod</a></li>
   <li><a href="/api/candle-settings/">TA_SetCandleSettings, TA_RestoreCandleDefaultSettings</a></li>
 </ul>
 
-<p>Once these initial calls are done, the application can call the rest of the API from multiple threads (including the ta_abstract.h interface).</p>
-
-<p>The exception at the other end is <a href="#init">TA_Shutdown</a>, which is single-threaded as well.</p>
+<p>Between changes, the application can call the rest of the API from multiple threads (including the ta_abstract.h interface). The rule in the specification: <a href="/spec/settings-threads/#t2">T2</a>.</p>
 
 <p>Note: TA-Lib assumes it is linked against a thread-safe malloc/free runtime, which is the default on all modern platforms (Linux, Windows, Mac). In other words, any toolchain supporting C11 or newer is safe.</p>

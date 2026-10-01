@@ -13,7 +13,7 @@ Every function streams ([H10](/spec/streaming/#h10)): `Open` or `OpenAndFill` on
 
 ## Definition
 
-<a id="h1"></a>**H1** Open a stream on bars 0 to k, then `Update` it with bars k+1 to t, with no `Advance`. At every bar the stream reported (Open's value for bar k, each Update's for its bar), the value is bit-identical to what `batch(0, t)` writes for that bar, and `OutRange` equals the range `batch(0, t)` reports. This holds under the same parameters and settings, with no setting changed since `Open` ([T7](/spec/settings-threads/#t7)). One exception: a zero output may differ in sign, `+0.0` against `-0.0`, which compare equal (current behaviour: seen in functions that take a rolling maximum or minimum, such as MAX, MIN and MIDPOINT).
+<a id="h1"></a>**H1** Open a stream on bars 0 to k, then `Update` it with bars k+1 to t, with no `Advance`. At every bar the stream reported (Open's value for bar k, each Update's for its bar), the value is bit-identical to what `batch(0, t)` writes for that bar, and `OutRange` equals the range `batch(0, t)` reports. This holds under the same parameters and settings ([T2](/spec/settings-threads/#t2), [T3](/spec/settings-threads/#t3)). One exception: a zero output may differ in sign, `+0.0` against `-0.0`, which compare equal (current behaviour: seen in functions that take a rolling maximum or minimum, such as MAX, MIN and MIDPOINT).
 
 <a id="h2"></a>**H2** The history given to `Open` defines bar 0. State is carried forward from bar to bar and never re-seeded, so a stream opened on a later start equals the batch call over that shorter series. Which functions' values depend on the start: [/functions/stability](/functions/stability).
 
@@ -83,7 +83,7 @@ In Rust, Java and C#, only `Advance` (U4) and Java's multi-output `value(out)` (
 - **C ownership.** Close every handle that `Open`, `OpenAndFill` or `Clone` returns, exactly once; `Close` frees it. When one of them fails, it sets its handle out-parameter (`*stream`, `*clone`) to NULL unless that argument is itself NULL ([B7](/spec/errors/#b7) aside), so never open or clone into a variable that holds a live handle. A failed `Clone` leaves the original untouched.
 - <a id="x1"></a>**X1** `Close(NULL)` is a success no-op. Only C has a release call; Rust drops a handle and Java and C# collect it.
 - <a id="h8"></a>**H8** A handle is not serializable and is valid only within the library version that opened it. To checkpoint, keep the history, the bars fed since and the number of bars counted with `Advance`; reopen on the bars and call `Advance` that many times ([H1](/spec/streaming/#h1), [H5](/spec/streaming/#h5)).
-- Threads on one handle: [T4](/spec/settings-threads/#t4). A setting changed while a stream is open: [T7](/spec/settings-threads/#t7).
+- Threads on one handle: [T4](/spec/settings-threads/#t4). When a C setting may change: [T2](/spec/settings-threads/#t2).
 
 ## Index outputs
 

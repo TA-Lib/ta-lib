@@ -109,4 +109,4 @@ None of these is promised to be reported. The caller avoids them, or treats what
 - [B7](/spec/errors/#b7): the state after an allocation failure.
 - [G3](/spec/settings-threads/#g3): C's unstable-period getter given a wildcard or unknown id, which returns 0.
 - [T1](/spec/settings-threads/#t1): C used before `TA_Initialize` or after `TA_Shutdown`.
-- [T7](/spec/settings-threads/#t7): a C candle setting changed while a stream is open.
+- [T2](/spec/settings-threads/#t2): a C setting changed while a TA function is running or a stream is open.

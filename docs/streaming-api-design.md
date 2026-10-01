@@ -121,9 +121,8 @@ throughput.
 For every function F, parameters p and series `x[0..t]`: after `open(x[0..k], p)`
 for any `k+1 >= lookback + 1`, then `update(x[k+1]) … update(x[t])`, the stream
 value at every bar where batch reports an output is **bit-identical** to
-`batch_F(0, t, x[0..t])` at that bar — under the same candle
-settings, which must not change over the stream's lifetime, and the unstable
-period in effect at open.
+`batch_F(0, t, x[0..t])` at that bar, under the same settings. In C no setting
+may change while a stream is open (https://ta-lib.org/spec/settings-threads/#t2).
 
 - **The range matches batch too, not just the values.** After a handle has been
   fed `N` bars by an opener and `update`, its `OutRange` is what the batch call
@@ -134,8 +133,7 @@ period in effect at open.
   computation batch would run from bar 0, which is what makes bit-exactness
   possible at all.
 - **Unstable period** is honored as in batch, where with full history it only
-  delays the first visible output. It is read once at open; changing it later
-  affects future opens, never a live stream.
+  delays the first visible output.
 - **Non-finite input: single values are rejected, arrays are not checked.** An
   input array is never scanned in either tier — keeping one free of NaN and ±Inf
   is the caller's responsibility, and passing a non-finite one is undefined
@@ -280,7 +278,7 @@ Shape rules that are not visible in those lines:
 
 One rule holds in every language, each enforcing it its own way:
 
-> **A stream's candle settings must not change over its lifetime.**
+> **A stream's settings must not change over its lifetime.**
 
 - **Rust** enforces it by construction: `open` copies the settings its own step
   reads out of the `Core` it was called on, so a violation is not expressible —
@@ -288,11 +286,13 @@ One rule holds in every language, each enforcing it its own way:
   `Send + Sync` and `open` is `&self`. A handle is `Send` but single-writer,
   because `update(&mut self)` makes concurrent updates on one handle a compile
   error.
-- **C** documents it, as an extension of the existing batch-tier caveat: calling
-  `TA_SetCandleSettings` while streams are open is
-  undefined, warm-up and ring sizes being derived from the settings in effect at
-  open. Where a candle range is BUFFERED — every trailing ring, and the
-  rescan-window reads routed into one — its value is the one the range type
+- **C** states it as part of its one settings rule
+  (https://ta-lib.org/spec/settings-threads/#t2): change a setting only while no
+  TA function is running and no stream is open. Implementation, not a promise:
+  warm-up and ring sizes come from the settings in effect at open, the unstable
+  period is read only there, and a CDL step reads the candle settings live.
+  Where a candle range is BUFFERED (every trailing ring, and the
+  rescan-window reads routed into one), its value is the one the range type
   produced when that bar was pushed, up to `back` bars earlier. That sits inside
   the undefined region and is the more self-consistent of the two: a bar now
   enters and leaves a running total as the identical double, so the sum

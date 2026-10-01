@@ -149,6 +149,11 @@ TA_LIB_API void TA_SetRetCodeInfo( TA_RetCode theRetCode, TA_RetCodeInfo *retCod
  * a shutdown, TA_Initialize() must be called again for re-using TA-Lib.
  *
  * TA_Shutdown() should be called prior to exiting the application code.
+ *
+ * The unstable period and the candle settings are process-wide. Change them
+ * only while no TA function is running and no stream is open; the effect of a
+ * change made otherwise is undefined. TA_Initialize and TA_Shutdown count as
+ * changes.
  */
 TA_LIB_API TA_RetCode TA_Initialize( void );
 TA_LIB_API TA_RetCode TA_Shutdown( void );

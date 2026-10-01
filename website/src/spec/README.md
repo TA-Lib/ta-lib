@@ -23,7 +23,7 @@ This page maps that shared vocabulary onto Rust, Java and C#; a rule that introd
 | [Inputs and Outputs](/spec/inputs-outputs/) | index range, inputs, parameters, outputs, aliasing | I1 to I6, O1 to O7, N1 to N4, N8 |
 | [Lookback](/spec/lookback/) | lookback call, display shift, unstable period, candle averaging, period 1, start dependence | L1 to L12 |
 | [Streaming](/spec/streaming/) | bit-identity with batch, every stream call, lifetime | S1 to S7, S6a, U1 to U4, U6a, X1, H1 to H10, N7 |
-| [Settings and Threads](/spec/settings-threads/) | C lifecycle, `Core`, setting validation, threads, settings under a live stream | G1 to G7, T1 to T7, N5, N6 |
+| [Settings and Threads](/spec/settings-threads/) | C lifecycle, when a C setting may change, `Core`, setting validation, threads | G1 to G7, T1 to T6, N5, N6 |
 | [Versions and Determinism](/spec/versions/) | bit-identity across languages and machines; releases | D1 to D4, V1 to V4 |
 
 - `<N>` stands for a function's canonical name: `TA_<N>_Open` is `TA_SMA_Open`.
