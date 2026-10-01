@@ -46,6 +46,7 @@
  *                non-vacuous cases of the retired junit CoreTest.
  *  081826 MF,CC  Array-argument checks (#172 C2).
  *  082526 MF,CC  Declinable outputs and distinct empty ones (#262).
+ *  100126 MF,CC  One empty array as two outputs is one buffer (Appendix D item 15).
  */
 
 package io.github.talib.test;
@@ -910,24 +911,35 @@ public class BatchApiTest {
     }
 
     /**
-     * Appendix D item 11: three separately allocated zero-length outputs are
-     * three distinct buffers, and a range shorter than the lookback produces
-     * nothing, so the call is a success with an empty range (rule N1).
-     *
-     * <p>Java always accepted it — two arrays are the same object or disjoint,
-     * so its guard is reference equality and complete. It is here as the
-     * cross-language anchor: C# and Rust rejected the same call until #262, and
-     * this is the shape they now have to agree with.
+     * Rules B6 and S6 on empty outputs (Appendix D items 11 and 15): one
+     * zero-length array passed as two outputs is one buffer, and three
+     * separately allocated ones are three. A range shorter than the lookback
+     * produces nothing (rule N1), so the distinct call is a success with an
+     * empty range, and the distinct fill answers S7.
      */
-    static void distinctEmptyOutputsAreNotAliases() {
+    static void oneEmptyArrayIsOneBuffer() {
         final double[] in = closes(252);
         final int period = 253;
         check(Core.DEFAULT.accbandsLookback(period) > 251,
             "the probe needs a lookback past the range, or it proves nothing");
 
+        final double[] empty = new double[0];
+        checkCode(RetCode.BAD_PARAM,
+            () -> Core.DEFAULT.accbands(0, 251, in, in, in, period, empty, empty, new double[0]),
+            "one empty array as two outputs is rejected");
         OutRange r = Core.DEFAULT.accbands(0, 251, in, in, in, period,
             new double[0], new double[0], new double[0]);
         check(r.count() == 0, "a sub-lookback range needs no output space");
+
+        final double[] history = Arrays.copyOf(in, Core.DEFAULT.accbandsLookback(20));
+        checkCode(RetCode.BAD_PARAM,
+            () -> Core.DEFAULT.accbandsOpenAndFill(history, history, history, 20,
+                empty, empty, new double[0]),
+            "openAndFill: one empty array as two outputs is rejected");
+        checkCode(RetCode.INSUFFICIENT_HISTORY,
+            () -> Core.DEFAULT.accbandsOpenAndFill(history, history, history, 20,
+                new double[0], new double[0], new double[0]),
+            "openAndFill: distinct empty outputs pass S6");
 
         // Control: the same three empty arrays on a range that DOES produce
         // values are still rejected, so this is about the count and not about
@@ -1314,7 +1326,7 @@ public class BatchApiTest {
         aBadParameterOutranksAnAbsentBuffer();
         aNullEnumIsNamed();
         aNullableOutputMayBeDeclined();
-        distinctEmptyOutputsAreNotAliases();
+        oneEmptyArrayIsOneBuffer();
         streamingOpenersCheckTheirArguments();
         anEmptyHistoryOutranksAnAbsentArgument();
         theFillOutputBoundFromBothSides();

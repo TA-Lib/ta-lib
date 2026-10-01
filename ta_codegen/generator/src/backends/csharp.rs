@@ -717,11 +717,8 @@ fn gen_public_wrapper(
         }
         for output in &func.outputs {
             let name = &output.name;
-            // A nullable output may be declined (rule B6a). C# cannot spell
-            // "absent" apart from "empty" — a `Span<T>` is a ref struct and a
-            // null array converts to an empty one — so an empty span IS the
-            // declination, and its stores are guarded. Supplied, it is bounded
-            // like any other output.
+            // A nullable output may be declined (rule O5): any empty span
+            // declines it.
             if output.is_nullable() {
                 let _ = writeln!(
                     out,

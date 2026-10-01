@@ -234,6 +234,7 @@ typedef enum
   TA_ABS_TST_FAIL_NAME_CASE_FOLD        = 627,
   TA_ABS_TST_FAIL_DISPLAY_SHIFT         = 628,
   TA_ABS_TST_FAIL_DISPLAY_SHIFT_VACUOUS = 629,
+  TA_ABS_TST_FAIL_OUTPUT_ALIAS_VACUOUS  = 630,
 
   /* Error code related to internal tests. */
   TA_INTERNAL_CIRC_BUFF_FAIL_0      = 700,

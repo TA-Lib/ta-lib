@@ -33,7 +33,7 @@ For `Open` and `OpenAndFill`, the history is the first declared input and `histo
 | <a id="s7"></a>**S7** | The history holds fewer than [lookback](/spec/lookback/) `+ 1` bars | `TA_INSUFFICIENT_HISTORY` | |
 
 - One check precedes S1. C: the `stream` argument itself, NULL answering `TA_BAD_PARAM` with nothing written. Java: a null first input, answering `TA_BAD_PARAM`. Rust and C# have none.
-- S6a: C and Java decline with `NULL` or `null`, which S4 reports first. C# declines with an empty span, which only S5 bounds: when the history holds `lookback` bars or fewer, S5 requires no values and S7 answers `TA_INSUFFICIENT_HISTORY`, where C and Java answer `TA_BAD_PARAM`.
+- S6a: C and Java decline with `NULL` or `null`, which S4 reports first. C# declines with an empty span, which S5 bounds in place of S4 and S6a: when the history holds `lookback` bars or fewer, S5 requires no values and S7 answers `TA_INSUFFICIENT_HISTORY`, where C and Java answer `TA_BAD_PARAM` (current behaviour).
 - `TA_INSUFFICIENT_HISTORY` is the one recoverable code: send more bars rather than fix the call. An empty history is S1, not S7, so a loop that waits for enough history starts at one bar.
 - On S7, a C `OpenAndFill` sets `*outBegIdx` and `*outNBElement` to 0 and writes no output (current behaviour, an exception to [R4](/spec/errors/#r4)).
 - Non-finite history values: [I5](/spec/inputs-outputs/#i5).

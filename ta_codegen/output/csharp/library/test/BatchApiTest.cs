@@ -1035,9 +1035,9 @@ public static class BatchApiTest
     /// <summary>
     /// Rules B6 and S6 on empty outputs (Appendix D items 11 and 15): one
     /// zero-length array passed as two outputs is one buffer, as in C and Java;
-    /// two separate ones are not, and neither is a null array, which declines.
-    /// An empty output reaches the guard only on a call that produces no values
-    /// (rule N1), so in an opener the accepted shapes answer S7.
+    /// two separate ones are not, and a null array is no buffer. A non-declinable
+    /// empty output passes the length check only on a call that produces no
+    /// values (rule N1), so in an opener the accepted shapes answer S7.
     /// </summary>
     private static void OneEmptyArrayIsOneBuffer()
     {

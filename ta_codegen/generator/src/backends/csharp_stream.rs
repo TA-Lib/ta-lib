@@ -1729,22 +1729,16 @@ fn emit_identity_step_branch(
 
 /// The output/input and output/output aliasing reject.
 ///
-/// `MemoryExtensions.Overlaps`, not reference identity. Over arrays the two
-/// agreed, because two arrays are identical or disjoint and nothing in
-/// between. Spans made the in-between expressible: `buf.Slice(0, n)` and
-/// `buf.Slice(1, n)` are different spans over overlapping memory, and identity
-/// would call them unrelated.
+/// An output/input pair takes `MemoryExtensions.Overlaps`, not reference
+/// identity: `buf.Slice(0, n)` and `buf.Slice(1, n)` are different spans over
+/// overlapping memory, and identity would call them unrelated.
 ///
 /// This is not only about the reject. Several transcribed bodies branch on
-/// series identity as part of the ALGORITHM — BBANDS elects its scratch with
-/// `if (inReal == outRealUpperBand)` — and on a partially-overlapping pair that
+/// series identity as part of the ALGORITHM (BBANDS elects its scratch with
+/// `if (inReal == outRealUpperBand)`), and on a partially-overlapping pair that
 /// test is false while the buffers do in fact collide, so the body would take
 /// the wrong arm and write through its own input. Rejecting overlap up front is
 /// what keeps those branches sound.
-///
-/// Output pairs, cross-typed ones included, go through
-/// [`super::common::csharp_output_alias_expr`], so one empty buffer passed as
-/// two outputs is rejected here as in the batch tier.
 fn alias_condition(func: &FuncDef, inputs: &[String]) -> Option<String> {
     let outs: Vec<&str> = func.outputs.iter().map(|out| out.name.as_str()).collect();
     let mut pairs: Vec<String> = Vec::new();
@@ -2658,12 +2652,10 @@ fn emit_open_and_fill_internal_wrapper(o: &mut String, func: &FuncDef, merged: b
     let _ = writeln!(o, "   }}");
 }
 
-/// The PUBLIC opener's input guards. A span cannot be null — a null array
-/// converts to an empty one — so emptiness is the only absence C# can see, and
-/// it means two different things by position: the FIRST input carries the
-/// history, so empty there is rule S1, the implied `startIdx` of 0 naming no bar;
-/// any other input is then a length disagreement, which is `BadParam` like every
-/// other argument fault.
+/// The PUBLIC opener's input guards. An empty input means two different things
+/// by position: the FIRST input carries the history, so empty there is rule S1,
+/// the implied `startIdx` of 0 naming no bar; any other input is then a length
+/// disagreement, which is `BadParam` like every other argument fault.
 ///
 /// S1 is answered here rather than left to the core so the pair is evaluated
 /// ahead of the aliasing guard below, which would otherwise see two empty spans
@@ -2986,8 +2978,9 @@ fn emit_open_wrappers(
                 "{}{} Must hold at least <c>historyLen - {base}Lookback(...)</c> values.",
                 super::csharp_doc::output_desc(out, doc),
                 if out.is_nullable() {
-                    " Pass an empty span to decline it: the value is still computed \
-                     — the handle's <c>Value</c> reports it — and nothing is written out."
+                    " Pass an empty span, such as <c>default</c>, to decline it: the value \
+                     is still computed (the handle's <c>Value</c> reports it) and nothing \
+                     is written out."
                 } else {
                     ""
                 }

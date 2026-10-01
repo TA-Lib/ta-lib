@@ -66,7 +66,7 @@ A batch call accepts `0 <= startIdx <= endIdx <= TA_INDEX_MAX`; B1 and B2 are th
 
 **B5.** C is handed bare pointers and cannot check: a short buffer is read or written past its end, which is undefined.
 
-**B6.** Identity only: partial overlap is [N8](/spec/inputs-outputs/#n8), and an input reused whole as an output is legal ([N4](/spec/inputs-outputs/#n4)). One buffer passed as two outputs is rejected whatever its length, a zero-length array included; two distinct empty outputs never collide. C and C# also compare an integer output with a real one.
+**B6.** Identity only: partial overlap is [N8](/spec/inputs-outputs/#n8), and an input reused whole as an output is legal ([N4](/spec/inputs-outputs/#n4)). One buffer passed as two outputs is rejected whatever its length, a zero-length array included; two distinct empty outputs never collide. In .NET, `Array.Empty<T>()`, the collection expression `[]` assigned to an array, `ArrayPool<T>.Shared.Rent(0)` and the `ToArray()` of an empty sequence return one shared array, so using them for two outputs passes one buffer twice: allocate a distinct array per output (`new double[n]`), or pass `null` or `default` for an output that may be declined ([O5](/spec/inputs-outputs/#o5)). C and C# also compare an integer output with a real one.
 
 **B7.** Fatal in every tier: nothing after it is defined (outputs, range, stream handle), so stop. Rust aborts the process, and Java and C# raise their runtime's out-of-memory error.
 

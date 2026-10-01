@@ -558,6 +558,7 @@ static ErrorNumber testStreamShortHistory( void )
  */
 static int bacReject, bacAccept;
 static int s4Reject, s4Accept;
+static int s6Probe;
 static int u6aUpd;
 
 #define BAC_REJECT( name, call )                                               \
@@ -628,6 +629,7 @@ static ErrorNumber testBatchArgumentContract( void )
 
    bacReject = bacAccept = 0;
    s4Reject = s4Accept = 0;
+   s6Probe = 0;
    u6aUpd = 0;
 
    for( i = 0; i < 512; i++ )
@@ -828,6 +830,38 @@ static ErrorNumber testBatchArgumentContract( void )
       S4_ACCEPT( "TA_CDL3OUTSIDE_Open",
                  TA_CDL3OUTSIDE_Open( &cst, bars, bars, bars, bars, 252, outI ) );
       if( cst ) { TA_CDL3OUTSIDE_Close( cst ); cst = NULL; }
+   }
+
+   /* Rule S6 on a history that fills nothing: one buffer passed as two outputs
+    * is still one buffer. The control holds the outputs apart and answers S7,
+    * so the rejection is the alias guard's and not the history's. The batch
+    * half is the sub-lookback leg of test_abstract.c's alias sweep. */
+   {
+      TA_ACCBANDS_Stream *ast = NULL;
+      const int shortLen = TA_ACCBANDS_Lookback( 20 );
+      TA_RetCode rc;
+
+      rc = TA_ACCBANDS_OpenAndFill( &ast, bars, bars, bars, shortLen, 20,
+                                    &beg, &nb, outA, outA, outB );
+      if( ast ) { TA_ACCBANDS_Close( ast ); ast = NULL; }
+      if( rc != TA_BAD_PARAM )
+      {
+         printf( "\nFailed: TA_ACCBANDS_OpenAndFill(outA twice, short history) "
+                 "returned %d, expected TA_BAD_PARAM\n", (int)rc );
+         return TA_BATCH_ARG_WRONG_CODE;
+      }
+      s6Probe++;
+
+      rc = TA_ACCBANDS_OpenAndFill( &ast, bars, bars, bars, shortLen, 20,
+                                    &beg, &nb, outA, outB, outC );
+      if( ast ) { TA_ACCBANDS_Close( ast ); ast = NULL; }
+      if( rc != TA_INSUFFICIENT_HISTORY )
+      {
+         printf( "\nFailed: TA_ACCBANDS_OpenAndFill(short history) returned %d, "
+                 "expected TA_INSUFFICIENT_HISTORY\n", (int)rc );
+         return TA_BATCH_ARG_CONTROL;
+      }
+      s6Probe++;
    }
 
    /* Rule U6a: a nullable output may be declined at Update too, and the choice
@@ -1095,6 +1129,12 @@ static ErrorNumber testBatchArgumentContract( void )
    if( s4Reject < 12 || s4Accept < 5 )
    {
       printf( "\nFailed: the streaming argument gate ran fewer checks than it "
+              "was written with\n" );
+      return TA_BATCH_ARG_VACUOUS;
+   }
+   if( s6Probe < 2 )
+   {
+      printf( "\nFailed: the short-history alias gate ran fewer checks than it "
               "was written with\n" );
       return TA_BATCH_ARG_VACUOUS;
    }

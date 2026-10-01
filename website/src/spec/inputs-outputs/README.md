@@ -62,7 +62,7 @@ An MA-type parameter accepts every `MAType` member, and a release may add member
 
 ## Declinable outputs
 
-<a id="o5"></a>**O5** An output whose metadata flags include `TA_OUT_NULLABLE` (Rust `OutputFlags::NULLABLE`, Java `OutputFlags.NULLABLE`, C# `OutputFlags.Nullable`) may be declined. Current behaviour: MAMA's `outFAMA` is the only one; read the flag rather than rely on that. Decline it with `NULL` in C, `None` in Rust (the parameter is an `Option`), `null` in Java, an empty span in C#. It is still computed: every other output is bit-identical to the same call with it supplied, and a stream opened that way still reports its value. Any other output cannot be declined; what passing it null or empty does: [B6a](/spec/errors/#b6a), [S6a](/spec/streaming/#s6a), [U6a](/spec/streaming/#u6a).
+<a id="o5"></a>**O5** An output whose metadata flags include `TA_OUT_NULLABLE` (Rust `OutputFlags::NULLABLE`, Java `OutputFlags.NULLABLE`, C# `OutputFlags.Nullable`) may be declined. Current behaviour: MAMA's `outFAMA` is the only one; read the flag rather than rely on that. Decline it with `NULL` in C, `None` in Rust (the parameter is an `Option`), `null` in Java, an empty span such as `default` in C#. It is still computed: every other output is bit-identical to the same call with it supplied, and a stream opened that way still reports its value. Any other output cannot be declined; what passing it null or empty does: [B6a](/spec/errors/#b6a), [S6a](/spec/streaming/#s6a), [U6a](/spec/streaming/#u6a).
 
 ## Non-finite outputs
 

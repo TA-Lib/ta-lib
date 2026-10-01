@@ -64,9 +64,8 @@ history. A zero-length output is S5's case.
 
 [3] C has no sizes to check against: a property of the ABI, not a defect.
 
-[20] Rust takes a non-declinable output as `&mut [T]`, which cannot be omitted,
-and C# cannot tell an omitted output from an empty one (rationale O5). An empty
-output is held to B5 (S5 in an opener), as it is in Java.
+[20] Rust takes a non-declinable output as `&mut [T]`, which cannot be omitted.
+C# has no check of its own (footnote [2]).
 
 [21] Implemented, but the individual sites are not tested: no reachable input
 fires one (rationale B8).
@@ -175,13 +174,18 @@ no phantom io and `--xlang-hash` for behaviour matching.
 
 B6: `checkOutputAliasRejected` (`test_abstract.c`) sweeps every ordered output
 pair of every function, cross-typed pairs included, binding both onto one buffer
-and requiring `TA_BAD_PARAM`. It binds non-empty buffers; one empty array as
-two outputs (Appendix D item 15) is probed in C#'s `BatchApiTest`, batch and
-`OpenAndFill`.
+and requiring `TA_BAD_PARAM`, once over the full range and once over a range
+that produces no values: C's form of one zero-length array passed as two outputs
+(Appendix D item 15), with the pair rebound apart as that leg's control.
+Java's and C#'s `BatchApiTest` pass one zero-length array as two outputs.
 
 ### S1 to S7
 
-S1, S2, S4, S5, S6a and S7 are mapped; S3 and S6 are not yet.
+S1, S2, S4, S5, S6a and S7 are mapped; S3 is not yet, and S6 only for one buffer
+passed as two outputs: `testBatchArgumentContract` passes one buffer as
+ACCBANDS's first two `OpenAndFill` outputs on a history of lookback bars
+(`TA_BAD_PARAM`), with a separate-outputs control answering S7; Java's and C#'s
+`BatchApiTest` do the same with one zero-length array.
 
 `testStreamShortHistory` drives S1, S2's rejecting side and S7 in C: 9, 3 and 8
 rejections, with S7's 16 controls. Three of S1's cases are *also* an absent
@@ -359,9 +363,8 @@ for free by making the state unreachable, which is not the same as enforcing it.
 Outputs must be different buffers in every language, a zero-length one included
 (ruled 2026-10-01, Appendix D item 15): R3 then holds with no exception, and C
 and Java already compared identity whatever the length. Two distinct empty
-outputs are different buffers and never collide (item 11, #262). C# needs a
-reference compare beside `Overlaps`, which is false for an empty span. A call
-that is both undersized and identical answers B5, the earlier rule (#261).
+outputs are different buffers and never collide (item 11, #262). A call that
+is both undersized and identical answers B5, the earlier rule (#261).
 
 Outputs of different element types can only be the same buffer through a
 reinterpreting cast. C compares both through `const void *` (well defined, not
@@ -447,13 +450,15 @@ is untouched: a bar handed to `Update` or `Peek` is a single value.
 
 ### O5: declinable outputs
 
-C# reads an empty span as the declination because a `Span<T>` is a ref struct
-and a null array converts to an empty span, so the type leaves no alternative.
-The collapse costs nothing: a declined output is written to no more than one
-that has nothing to hold, and the length check is still applied to a supplied
-output. Rust could have read a zero-length slice the same way, and does not:
-`Option` is the shape a Rust caller expects, it makes the declination visible at
-the call site, and it keeps `&mut []` for a non-nullable output a sizing mistake.
+C# declines with an empty span. Its writes and its length check test
+emptiness, so a null array or `default` (a span whose reference is null) and an
+empty span over a real array decline alike there. That costs nothing: a declined
+output is written to no more than one that has nothing to hold, and the length
+check is still applied to a supplied output. Only the pair guard tells the two
+apart (next paragraph). Rust could have read a zero-length slice the same way,
+and does not: `Option` is the shape a Rust caller expects, it makes the
+declination visible at the call site, and it keeps `&mut []` for a non-nullable
+output a sizing mistake.
 
 An omitted output is not an alias, so B6's pair guard skips a pair whose
 operands are not both present. C and Java guard each nullable operand non-null

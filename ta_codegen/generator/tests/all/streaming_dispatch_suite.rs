@@ -538,8 +538,7 @@ fn test_mama_nullable_fama_is_declinable_in_every_backend() {
         "two nulls compare equal, so the pair guard checks the nullable operand first"
     );
 
-    // C#: an empty span IS the declination — a `Span<T>` is a ref struct and a
-    // null array converts to an empty one, so there is nothing else to use.
+    // C#: any empty span declines; only the pair guard tells a null one apart.
     let csharp = backends::csharp::generate(&func, &enums, registry, &helpers);
     assert!(
         csharp.contains(

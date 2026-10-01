@@ -522,9 +522,7 @@ pub(crate) fn csharp_overlap_expr(
 }
 
 /// One C# output/output term (rules B6, S6), for the same two guards as
-/// [`csharp_overlap_expr`]. `OutputsAlias` is hand-written in `Core.cs`: unlike a
-/// bare `Overlaps` it rejects one empty buffer passed as both outputs. A
-/// cross-typed pair goes in as bytes, so both halves of that test apply to it.
+/// [`csharp_overlap_expr`]. `OutputsAlias` is hand-written in `Core.cs`.
 pub(crate) fn csharp_output_alias_expr(a: &str, a_ty: &str, b: &str, b_ty: &str) -> String {
     if a_ty == b_ty {
         format!("OutputsAlias({a}, {b})")

@@ -27,13 +27,16 @@ use crate::registry::Registry;
 /// a `double` output are never the same span.
 fn aliasing_exception_text(single_precision: bool) -> &'static str {
     if single_precision {
-        "Two output buffers overlap, or an output overlaps an input. An output and a \
-         real input never share an element type in this overload, so the two can never \
-         be the same span: there is no in-place case to allow, and any overlap of their \
-         byte ranges is rejected."
+        "Two outputs overlap or are one array, a zero-length array included \
+         (<see href=\"https://ta-lib.org/spec/errors/#b6\">rule B6</see>), or an output \
+         overlaps an input. An output and a real input never share an element type in \
+         this overload, so the two can never be the same span: there is no in-place case \
+         to allow, and any overlap of their byte ranges is rejected."
     } else {
-        "Two output buffers overlap, or an output partially overlaps an input. \
-         Computing wholly in place (an output that IS an input) is allowed."
+        "Two outputs overlap or are one array, a zero-length array included \
+         (<see href=\"https://ta-lib.org/spec/errors/#b6\">rule B6</see>), or an output \
+         partially overlaps an input. Computing wholly in place (an output that IS an \
+         input) is allowed."
     }
 }
 
@@ -110,9 +113,9 @@ pub fn guarded_docs(
         // span, which the signature cannot say on its own.
         let sizing = if out.is_nullable() {
             format!(
-                "Pass an empty span to decline it: it is still computed where the \
-                 algorithm needs it, but nothing is written out. Supplied, it must \
-                 hold at least {produced}."
+                "Pass an empty span, such as <c>default</c>, to decline it: it is still \
+                 computed where the algorithm needs it, but nothing is written out. \
+                 Supplied, it must hold at least {produced}."
             )
         } else {
             format!("Must hold at least {produced}.")
@@ -141,11 +144,8 @@ pub fn guarded_docs(
         "A span is too short for the range requested: any input this function \
          <i>declares</i> that does not reach <c>endIdx</c>, or an output that cannot hold \
          the values produced. Declared, not read: a few candlestick patterns take an OHLC \
-         series they never index, and it is required all the same. An empty span — which \
-         is what a null array becomes, since a span cannot be null — is rejected on the \
-         same terms and no others: it is too short whenever the range produces a value, \
-         and fine when it produces none, and on an output this function documents as \
-         declinable it is how you decline.",
+         series they never index, and it is required all the same. A null input array \
+         arrives as an empty span and is rejected as one.",
     );
     b.item(aliasing_exception_text(single_precision));
     b.raw("</list>");

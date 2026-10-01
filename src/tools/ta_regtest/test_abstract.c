@@ -2877,6 +2877,8 @@ static ErrorNumber callWithDefaults( const char *funcName, const double *input, 
    return TA_TEST_PASS;
 }
 
+static int outputAliasEmptyNbChecked;
+
 /* Passing the same buffer for two different output arguments has no correct
  * result (each output clobbers the other), so every function with two or more
  * outputs must reject it with TA_BAD_PARAM. For a given function this aliases
@@ -2892,7 +2894,7 @@ static ErrorNumber checkOutputAliasRejected( const TA_FuncInfo *funcInfo )
    const TA_OutputParameterInfo *outInfoA, *outInfoB, *outInfo;
    TA_RetCode retCode;
    unsigned int i, oa, ob;
-   int outBegIdx, outNbElement;
+   int outBegIdx, outNbElement, lookback;
    int crossTyped;
    const int size = 252;
 
@@ -2971,16 +2973,54 @@ static ErrorNumber checkOutputAliasRejected( const TA_FuncInfo *funcInfo )
          }
 
          retCode = TA_CallFunc( paramHolder, 0, size - 1, &outBegIdx, &outNbElement );
-         TA_ParamHolderFree( paramHolder );
 
          if( retCode != TA_BAD_PARAM )
          {
+            TA_ParamHolderFree( paramHolder );
             printf( "  OUTPUT ALIAS [%s]: outputs %u and %u (%s) aliased to one buffer "
                     "but not rejected (rc=%d, expected TA_BAD_PARAM)\n",
                     funcInfo->name, oa, ob,
                     crossTyped ? "cross-typed" : "same-typed", retCode );
             return TA_ABS_TST_FAIL_OUTPUT_ALIAS;
          }
+
+         /* B6 holds whatever the length, so the same pair is asked again over a
+          * range that produces no values: C's spelling of one zero-length array
+          * passed as two outputs. A guard placed after the lookback's early
+          * return passes the full-range call above and fails here. The control
+          * rebinds the pair apart, so the rejection is the alias guard's. */
+         if( TA_GetLookback( paramHolder, &lookback ) == TA_SUCCESS && lookback > 0 )
+         {
+            const int emptyEnd = (lookback < size ? lookback : size) - 1;
+
+            retCode = TA_CallFunc( paramHolder, 0, emptyEnd, &outBegIdx, &outNbElement );
+            if( retCode != TA_BAD_PARAM )
+            {
+               TA_ParamHolderFree( paramHolder );
+               printf( "  OUTPUT ALIAS [%s]: outputs %u and %u (%s) aliased to one buffer "
+                       "over a range that produces no values, not rejected (rc=%d)\n",
+                       funcInfo->name, oa, ob,
+                       crossTyped ? "cross-typed" : "same-typed", retCode );
+               return TA_ABS_TST_FAIL_OUTPUT_ALIAS;
+            }
+
+            if( outInfoB->type == TA_Output_Integer )
+               TA_SetOutputParamIntegerPtr( paramHolder, ob, &output_int[ob][0] );
+            else
+               TA_SetOutputParamRealPtr( paramHolder, ob, &output[ob][0] );
+            outNbElement = -1;
+            retCode = TA_CallFunc( paramHolder, 0, emptyEnd, &outBegIdx, &outNbElement );
+            if( retCode != TA_SUCCESS || outNbElement != 0 )
+            {
+               TA_ParamHolderFree( paramHolder );
+               printf( "  OUTPUT ALIAS [%s]: control with outputs %u and %u apart "
+                       "(rc=%d, nb=%d, expected TA_SUCCESS with no values)\n",
+                       funcInfo->name, oa, ob, retCode, outNbElement );
+               return TA_ABS_TST_FAIL_OUTPUT_ALIAS;
+            }
+            outputAliasEmptyNbChecked++;
+         }
+         TA_ParamHolderFree( paramHolder );
       }
    }
    return TA_TEST_PASS;
@@ -3933,7 +3973,16 @@ static ErrorNumber test_default_calls(void)
 
    /* Every multi-output function must reject output-buffer aliasing (issue #108). */
    if( errNumber == TA_TEST_PASS )
+   {
+      outputAliasEmptyNbChecked = 0;
       TA_ForEachFunc( testOutputAlias, &errNumber );
+      if( errNumber == TA_TEST_PASS && outputAliasEmptyNbChecked < 40 )
+      {
+         printf( "Failed: output alias gate asked %d pair(s) over a range that "
+                 "produces no values\n", outputAliasEmptyNbChecked );
+         errNumber = TA_ABS_TST_FAIL_OUTPUT_ALIAS_VACUOUS;
+      }
+   }
 
    /* Every function must bound startIdx/endIdx by TA_INDEX_MAX (issue #180). */
    if( errNumber == TA_TEST_PASS )

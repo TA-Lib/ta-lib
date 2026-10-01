@@ -260,9 +260,8 @@ public sealed partial class Core
 
     /* Rules B6 and S6: whether two outputs are one buffer. Overlaps is false
      * whenever a side is empty, so one zero-length buffer passed twice is caught
-     * by its reference. A null array converts to a span with a null reference: a
-     * declined output, never one buffer with another. Pass a cross-typed pair as
-     * bytes. */
+     * by its reference. A null array converts to a span with a null reference,
+     * which is no buffer. Pass a cross-typed pair as bytes. */
     internal static bool OutputsAlias<T>(Span<T> a, Span<T> b)
     {
         if (a.Overlaps(b))
