@@ -428,9 +428,10 @@ being zeros. Running the extra shapes on the boundary vectors (`range.min`,
 windows per function — and is right independently of ±0, since those are the
 degenerate-arm periods and were otherwise seeing only `MONO_UP`/`MONO_DOWN`.
 
-Deliberately **not** surfaced in the user-facing docs: the sign of a zero is
-below the level a caller reasons about, and qualifying the published
-"bit-identical" wording would cost more clarity than it buys.
+Stated once, in spec rule H1 (`website/src/spec/streaming/README.md`), and
+nowhere in the user pages: the sign of a zero is below the level a caller
+reasons about, and qualifying every "bit-identical" would cost more clarity
+than it buys.
 
 ## `ta_test_legacy` — the frozen v0.6.4 reference
 

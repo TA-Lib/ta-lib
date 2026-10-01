@@ -18,8 +18,8 @@ On this page, **bit-identical** means the same return code, the same output rang
 | the same call in one backend on two machines | bit-identical, except a call that evaluates a transcendental function | [D3](/spec/versions/#d3) |
 | C built from source | bit-identical only under D4's conditions | [D4](/spec/versions/#d4) |
 | the same bar from batch calls with different `startIdx` | not bit-identical in general | [Lookback](/spec/lookback/#start) |
-| a stream and the batch call over the same bars | bit-identical but for a zero's sign, under H1's conditions | [H1](/spec/streaming/#h1) |
-| `OpenAndFill` and the batch call over its history | bit-identical but for a zero's sign | [H3](/spec/streaming/#h3) |
+| a stream and the batch call over the same bars | bit-identical, as H1 defines | [H1](/spec/streaming/#h1) |
+| `OpenAndFill` and the batch call over its history | bit-identical, as H3 defines | [H3](/spec/streaming/#h3) |
 | `Peek` and the next `Update` with the same bar | bit-identical | [N7](/spec/streaming/#n7) |
 | a `Clone` and its original | the same state, value and range | [H7](/spec/streaming/#h7) |
 | a default sentinel and the explicit default | bit-identical | [N3](/spec/inputs-outputs/#n3) |

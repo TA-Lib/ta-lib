@@ -5,7 +5,7 @@ description: "The streaming contract in C, Rust, Java and C#: bit-identity with 
 
 *Part of TA-Lib's exhaustive [specifications](/spec/), intended for precise AI-agent-driven integration with TA-Lib, to minimize errors.*
 
-A stream is defined as the batch call over every bar fed to it: the same values, bit for bit up to the sign of a zero, and the same range ([H1](/spec/streaming/#h1)); a bar counted with [Advance](/spec/streaming/#h5) enters the range only. This page owns that definition and the error rules of the stream calls. How to call each language's stream API is on that language's streaming page.
+A stream is defined as the batch call over every bar fed to it: the same values, bit for bit, and the same range ([H1](/spec/streaming/#h1)); a bar counted with [Advance](/spec/streaming/#h5) enters the range only. This page owns that definition and the error rules of the stream calls. How to call each language's stream API is on that language's streaming page.
 
 ## Calls
 
@@ -38,7 +38,7 @@ For `Open` and `OpenAndFill`, the history is the first declared input and `histo
 - On S7, a C `OpenAndFill` sets `*outBegIdx` and `*outNBElement` to 0 and writes no output (current behaviour, an exception to [R4](/spec/errors/#r4)).
 - Non-finite history values: [I5](/spec/inputs-outputs/#i5).
 
-<a id="h3"></a>**H3** `OpenAndFill` writes what `batch(0, historyLen - 1)` writes, zero signs aside ([H1](/spec/streaming/#h1)): `historyLen - lookback` values per output from index 0, the first for bar `lookback`, and the same range. The handle it opens is the one `Open` opens on the same history. It takes no `startIdx`.
+<a id="h3"></a>**H3** `OpenAndFill` writes what `batch(0, historyLen - 1)` writes, compared as in [H1](/spec/streaming/#h1): `historyLen - lookback` values per output from index 0, the first for bar `lookback`, and the same range. The handle it opens is the one `Open` opens on the same history. It takes no `startIdx`.
 
 ## Advancing
 
