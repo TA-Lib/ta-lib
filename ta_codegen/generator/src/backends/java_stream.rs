@@ -1314,16 +1314,12 @@ fn identity_branch_as_frame(func: &FuncDef, model: &StreamModel) -> Option<Vec<S
 /// The dispatch tier's peek frame: the step's switch with each arm entering the
 /// callee's PUBLIC `peek`. The sub-handle is only read, which is the point —
 /// nothing here commits, so there is no copy to make.
-#[allow(clippy::too_many_arguments)]
 fn build_dispatch_peek_frame(
     func: &FuncDef,
     dp: &streaming::DispatchPlan,
     outputs: &[String],
     bar_args: &str,
-    ctx: &JavaRenderCtx,
-    enums: &HashMap<String, EnumDef>,
     registry: &Registry,
-    helpers: &HelperRegistry,
 ) -> PeekFrame {
     // Arms return straight out of the switch rather than accumulating, to keep
     // the frame under C2's default `FreqInlineSize` (325 bytes of bytecode):
@@ -1339,10 +1335,9 @@ fn build_dispatch_peek_frame(
             let _ = writeln!(f, "         {jty} cur_{} = {zero};", out.name);
         }
     }
+    let _ = writeln!(f, "         Object sub = sp.sub;\n         switch( sp.arm )\n         {{");
     if let Some(idp) = &dp.identity {
-        let cond = params_on_state(func, &idp.condition);
-        let cond = render_predicate(&cond, ctx, registry, helpers);
-        let _ = writeln!(f, "         if( {cond} ) {{");
+        let _ = writeln!(f, "         case {IDENTITY_TAG}:");
         if terminal {
             let (_, inp) = &idp.pairs[0];
             let _ = writeln!(f, "            return {inp};");
@@ -1352,12 +1347,9 @@ fn build_dispatch_peek_frame(
             }
             let _ = writeln!(f, "            return {};", fresh_value_expr_local(func));
         }
-        let _ = writeln!(f, "         }}");
     }
-    let _ = writeln!(f, "         switch( sp.{} )", dp.param);
-    let _ = writeln!(f, "         {{");
     for arm in dp.arms.iter().filter(|a| a.supported) {
-        let label = super::java::render_java_switch_label(&arm.label, enums);
+        let label = arm_tag(dp, arm);
         let cls = callee_stream_class(registry, &arm.callee);
         let ocls = callee_out_class(registry, &arm.callee);
         let _ = writeln!(f, "         case {label}: {{");
@@ -1366,7 +1358,7 @@ fn build_dispatch_peek_frame(
             let streaming::OutSlot::Forward(k) = arm.out_map[0] else {
                 panic!("single-output arm cannot discard its only slot")
             };
-            let call = format!("(({cls}) sp.sub).peek({bar_args})");
+            let call = format!("(({cls}) sub).peek({bar_args})");
             if terminal {
                 let _ = writeln!(f, "            return {call};");
                 returned = true;
@@ -1377,7 +1369,7 @@ fn build_dispatch_peek_frame(
             let _ = writeln!(
                 f,
                 "            {ocls} subValue = new {ocls}();\n\
-                 \x20           (({cls}) sp.sub).peek({bar_args}, subValue);"
+                 \x20           (({cls}) sub).peek({bar_args}, subValue);"
             );
             for (i, slot) in arm.out_map.iter().enumerate() {
                 if let streaming::OutSlot::Forward(k) = slot {
@@ -3210,8 +3202,10 @@ fn dispatch_store_sub(
     arm: &streaming::DispatchArm,
     outputs: &[String],
     pad: &str,
+    tag: usize,
 ) {
     let _ = writeln!(o, "{pad}sp.sub = sub;");
+    let _ = writeln!(o, "{pad}sp.arm = {tag};");
     for (i, slot) in arm.out_map.iter().enumerate() {
         if let streaming::OutSlot::Forward(k) = slot {
             let _ = writeln!(
@@ -3224,10 +3218,20 @@ fn dispatch_store_sub(
     }
 }
 
-/// How many dispatch arms, in enum order, a dispatcher's committing step and
-/// its tape step and peek route themselves before handing the rest to a second
+/// The number open stores in a dispatch handle's `arm` for this arm, and the case
+/// label every per-bar frame switches on: its index among the supported arms. An
+/// int switch skips the enum's ordinal lookup, and the identity path takes
+/// `IDENTITY_TAG`, which spares each frame the identity test.
+fn arm_tag(dp: &streaming::DispatchPlan, arm: &streaming::DispatchArm) -> usize {
+    dp.arms.iter().filter(|a| a.supported).position(|a| a.label == arm.label).expect("a supported arm")
+}
+
+const IDENTITY_TAG: &str = "-1";
+
+/// How many dispatch arms, in tag order, a dispatcher's committing step and its
+/// tape step and peek route themselves before handing the rest to a second
 /// frame. C2 inlines no frame past `FreqInlineSize` (325 bytes by default), and
-/// an arm costs 20 to 30 of them.
+/// an arm costs 18 to 22 of them.
 const FRAME_ARMS: usize = 7;
 
 fn split_frame<T>(arms: &[T]) -> (&[T], &[T]) {
@@ -3259,7 +3263,7 @@ fn emit_dispatch(
     // --- handle class -------------------------------------------------------
     let fields = base_fields(func);
     let extra_members = format!(
-        "      // Sub-stream, tagged by {}; null on the identity path.\n      private Object sub;\n",
+        "      // The sub-stream {} picked at open, and its arm's tag, which every\n      // per-bar frame routes on; null and {IDENTITY_TAG} on the identity path.\n      private Object sub;\n      private int arm;\n",
         dp.param
     );
     // Deep copy of the tagged sub: switch on the stored enum param, invoke the
@@ -3267,6 +3271,7 @@ fn emit_dispatch(
     // step/open switches, so a new MAType cannot be handled in one and missed
     // in the other).
     let mut copy_extra = String::new();
+    let _ = writeln!(copy_extra, "         this.arm = other.arm;");
     let _ = writeln!(copy_extra, "         if( other.sub == null ) {{");
     let _ = writeln!(copy_extra, "            this.sub = null;");
     let _ = writeln!(copy_extra, "         }} else {{");
@@ -3292,25 +3297,12 @@ fn emit_dispatch(
     // The peek frame: the same routing, into each callee's PUBLIC peek. Nothing
     // here commits, so the dispatch tier needs no copy of the handle it
     // delegates to.
-    let dispatch_frame = build_dispatch_peek_frame(
-        func, dp, &outputs, &bar_args, &ctx, enums, registry, helpers,
-    );
+    let dispatch_frame = build_dispatch_peek_frame(func, dp, &outputs, &bar_args, registry);
     emit_handle_class_with_members(o, func, &fields, &subs, &extra_members, Some(&dispatch_frame));
 
     // --- step ---------------------------------------------------------------
-    emit_step_sig(o, func);
-    if let Some(idp) = &dp.identity {
-        let cond = params_on_state(func, &idp.condition);
-        let cond = render_predicate(&cond, &ctx, registry, helpers);
-        let _ = writeln!(o, "      if( {cond} ) {{");
-        for (out, inp) in &idp.pairs {
-            let _ = writeln!(o, "         sp.cur_{out} = {inp};");
-        }
-        let _ = writeln!(o, "         return;");
-        let _ = writeln!(o, "      }}");
-    }
     let emit_step_case = |o: &mut String, arm: &streaming::DispatchArm| {
-        let label = super::java::render_java_switch_label(&arm.label, enums);
+        let label = arm_tag(dp, arm);
         let cls = callee_stream_class(registry, &arm.callee);
         let _ = writeln!(o, "      case {label}: {{");
         // Route callee output slots through the arm's OutSlot map: Forward(k)
@@ -3322,7 +3314,7 @@ fn emit_dispatch(
             };
             let _ = writeln!(
                 o,
-                "         sp.cur_{} = (({cls}) sp.sub).update({bar_args});",
+                "         sp.cur_{} = (({cls}) sub).update({bar_args});",
                 outputs[k]
             );
         } else {
@@ -3333,7 +3325,7 @@ fn emit_dispatch(
             // it needs a sink-less `update` that the API does not have.
             let ocls = callee_out_class(registry, &arm.callee);
             let _ = writeln!(o, "         {ocls} subOut = new {ocls}();");
-            let _ = writeln!(o, "         (({cls}) sp.sub).update({bar_args}, subOut);");
+            let _ = writeln!(o, "         (({cls}) sub).update({bar_args}, subOut);");
             for (i, slot) in arm.out_map.iter().enumerate() {
                 if let streaming::OutSlot::Forward(k) = slot {
                     let _ = writeln!(
@@ -3358,18 +3350,29 @@ fn emit_dispatch(
     let unreachable = "return; /* unreachable: open rejects arms without a sub-stream */";
     let step_arms: Vec<_> = dp.arms.iter().filter(|a| a.supported).collect();
     let (head, rest) = split_frame(&step_arms);
-    let rest_call = format!("{}StepImplRest(sp, {bar_args});", method_base(func));
-    let _ = writeln!(o, "      switch( sp.{} )\n      {{", dp.param);
+    emit_step_sig(o, func);
+    let _ = writeln!(o, "      Object sub = sp.sub;\n      switch( sp.arm )\n      {{");
+    if let Some(idp) = &dp.identity {
+        let _ = writeln!(o, "      case {IDENTITY_TAG}:");
+        for (out, inp) in &idp.pairs {
+            let _ = writeln!(o, "         sp.cur_{out} = {inp};");
+        }
+        let _ = writeln!(o, "         return;");
+    }
     for arm in head {
         emit_step_case(o, arm);
     }
-    let default = if rest.is_empty() { unreachable.to_string() } else { format!("{rest_call}\n         return;") };
+    let default = if rest.is_empty() {
+        unreachable.to_string()
+    } else {
+        format!("{}StepImplRest(sp, {bar_args});\n         return;", method_base(func))
+    };
     let _ = writeln!(o, "      default:\n         {default}\n      }}\n   }}");
     if !rest.is_empty() {
         let (sig_bars, _) = bar_params(func);
         let class = stream_class_name(func);
         let _ = writeln!(o, "   private void {}StepImplRest( {class} sp, {sig_bars} )\n   {{", method_base(func));
-        let _ = writeln!(o, "      switch( sp.{} )\n      {{", dp.param);
+        let _ = writeln!(o, "      Object sub = sp.sub;\n      switch( sp.arm )\n      {{");
         for arm in rest {
             emit_step_case(o, arm);
         }
@@ -3400,6 +3403,7 @@ fn emit_dispatch(
                 let _ = writeln!(o, "         sp.{0} = {0};", p.name);
             }
             let _ = writeln!(o, "         sp.sub = null;");
+            let _ = writeln!(o, "         sp.arm = {IDENTITY_TAG};");
             match mode {
                 // The dispatch tier is exempt from the Open merge (it hands the
                 // fill to a sub's public OpenAndFill), so it only ever renders
@@ -3509,7 +3513,7 @@ fn emit_dispatch(
                                 o,
                                 "         {cls} sub = {callee_base}OpenAndFillInternal({bar_args}, startIdx, {opts}outBegIdx, outNBElement, {fill_outs});"
                             );
-                            dispatch_store_sub(o, registry, arm, &outputs, "         ");
+                            dispatch_store_sub(o, registry, arm, &outputs, "         ", arm_tag(dp, arm));
                             let _ = writeln!(o, "         break;");
                             let _ = writeln!(o, "      }}");
                             continue;
@@ -3525,7 +3529,7 @@ fn emit_dispatch(
                         );
                     }
                 }
-                dispatch_store_sub(o, registry, arm, &outputs, "         ");
+                dispatch_store_sub(o, registry, arm, &outputs, "         ", arm_tag(dp, arm));
                 let _ = writeln!(o, "         break;");
                 let _ = writeln!(o, "      }}");
             } else {
@@ -3547,7 +3551,7 @@ fn emit_dispatch(
     emit_open_wrappers(o, func, false, enums);
     emit_open_and_fill_internal_wrapper(o, func, false);
     if registry.in_tape_set(&func.name.to_lowercase()) {
-        emit_dispatch_tape(o, func, dp, &ctx, enums, registry, helpers);
+        emit_dispatch_tape(o, func, dp, registry);
     }
 }
 
@@ -3558,24 +3562,17 @@ fn emit_dispatch_tape(
     o: &mut String,
     func: &FuncDef,
     dp: &streaming::DispatchPlan,
-    ctx: &JavaRenderCtx,
-    enums: &HashMap<String, EnumDef>,
     registry: &Registry,
-    helpers: &HelperRegistry,
 ) {
     assert_single_output(func, "a dispatcher's tape entries");
     let base = method_base(func);
     let class = stream_class_name(func);
     let (sig_bars, bar_args) = bar_params(func);
     let out = &func.outputs[0].name;
-    let identity = dp.identity.as_ref().map(|idp| {
-        let cond = render_predicate(&params_on_state(func, &idp.condition), ctx, registry, helpers);
-        let (_, inp) = &idp.pairs[0];
-        (cond, inp.clone())
-    });
+    let identity = dp.identity.as_ref().map(|idp| idp.pairs[0].1.clone());
     let arms: Vec<_> = dp.arms.iter().filter(|a| a.supported && !a.callee.is_empty()).collect();
     let (head, rest) = split_frame(&arms);
-    let label = |arm: &streaming::DispatchArm| super::java::render_java_switch_label(&arm.label, enums);
+    let label = |arm: &streaming::DispatchArm| arm_tag(dp, arm);
     let tape_args = format!("tape, tapeBase, tapeMask, {bar_args}");
     let params = format!("{class} sp, {TAPE_PARAMS}, {sig_bars}");
     let fwd = format!("sp, {tape_args}");
@@ -3625,7 +3622,7 @@ fn emit_dispatch_tape(
     // The second frame: the arms past the first, answering the value.
     let emit_rest = |o: &mut String, verb: &str, var: &str| {
         let _ = writeln!(o, "   private double {base}{verb}TapeRest( {params} )\n   {{");
-        let _ = writeln!(o, "      switch( sp.{} )\n      {{", dp.param);
+        let _ = writeln!(o, "      switch( sp.arm )\n      {{");
         for arm in rest {
             emit_case(o, "      ", arm, verb, var, &|v| format!("return {v};"));
         }
@@ -3634,14 +3631,11 @@ fn emit_dispatch_tape(
 
     // --- StepTape -------------------------------------------------------------
     let _ = writeln!(o, "   private double {base}StepTape( {params} )\n   {{");
-    let mut pad = "      ";
-    if let Some((cond, inp)) = &identity {
-        let _ = writeln!(o, "      if( {cond} ) {{");
-        let _ = writeln!(o, "         sp.cur_{out} = {inp};");
-        let _ = writeln!(o, "      }} else {{");
-        pad = "         ";
+    let pad = "      ";
+    let _ = writeln!(o, "{pad}switch( sp.arm )\n{pad}{{");
+    if let Some(inp) = &identity {
+        let _ = writeln!(o, "{pad}case {IDENTITY_TAG}:\n{pad}   sp.cur_{out} = {inp};\n{pad}   break;");
     }
-    let _ = writeln!(o, "{pad}switch( sp.{} )\n{pad}{{", dp.param);
     for arm in head {
         emit_case(o, pad, arm, "Step", "subOut", &|v| format!("sp.cur_{out} = {v};\nbreak;"));
     }
@@ -3653,9 +3647,6 @@ fn emit_dispatch_tape(
         let _ = writeln!(o, "{pad}   break;");
     }
     let _ = writeln!(o, "{pad}}}");
-    if identity.is_some() {
-        let _ = writeln!(o, "      }}");
-    }
     let _ = writeln!(o, "      sp.outRangeCount++;");
     let _ = writeln!(o, "      return sp.cur_{out};");
     let _ = writeln!(o, "   }}");
@@ -3665,12 +3656,10 @@ fn emit_dispatch_tape(
 
     // --- PeekTape -------------------------------------------------------------
     let _ = writeln!(o, "   private double {base}PeekTape( {params} )\n   {{");
-    if let Some((cond, inp)) = &identity {
-        let _ = writeln!(o, "      if( {cond} ) {{");
-        let _ = writeln!(o, "         return {inp};");
-        let _ = writeln!(o, "      }}");
+    let _ = writeln!(o, "      switch( sp.arm )\n      {{");
+    if let Some(inp) = &identity {
+        let _ = writeln!(o, "      case {IDENTITY_TAG}:\n         return {inp};");
     }
-    let _ = writeln!(o, "      switch( sp.{} )\n      {{", dp.param);
     for arm in head {
         emit_case(o, "      ", arm, "Peek", "subValue", &|v| format!("return {v};"));
     }
@@ -3688,12 +3677,7 @@ fn emit_dispatch_tape(
 
     // --- TapeDetach -----------------------------------------------------------
     let _ = writeln!(o, "   private int {base}TapeDetach( {class} sp )\n   {{");
-    if let Some((cond, _)) = &identity {
-        let _ = writeln!(o, "      if( {cond} ) {{");
-        let _ = writeln!(o, "         return 0;");
-        let _ = writeln!(o, "      }}");
-    }
-    let _ = writeln!(o, "      switch( sp.{} )\n      {{", dp.param);
+    let _ = writeln!(o, "      switch( sp.arm )\n      {{");
     for arm in &arms {
         let cb = common::camel_words(&registry.name_of(&arm.callee));
         let cls = callee_stream_class(registry, &arm.callee);

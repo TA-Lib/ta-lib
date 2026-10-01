@@ -127546,8 +127546,10 @@ class Core {
           private int optInTimePeriod;
           private MAType optInMAType;
           private double cur_outReal;
-          // Sub-stream, tagged by optInMAType; null on the identity path.
+          // The sub-stream optInMAType picked at open, and its arm's tag, which every
+          // per-bar frame routes on; null and -1 on the identity path.
           private Object sub;
+          private int arm;
           private int outRangeBegIdx;
           private int outRangeCount;
 
@@ -127592,6 +127594,7 @@ class Core {
              this.optInTimePeriod = other.optInTimePeriod;
              this.optInMAType = other.optInMAType;
              this.cur_outReal = other.cur_outReal;
+             this.arm = other.arm;
              if( other.sub == null ) {
                 this.sub = null;
              } else {
@@ -127687,54 +127690,54 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw nonFiniteBar("MA peek", "inReal");
              MaStream sp = this;
-             if( sp.optInTimePeriod == 1 || sp.optInMAType == MAType.DISABLED ) {
-                return inReal;
-             }
-             switch( sp.optInMAType )
+             Object sub = sp.sub;
+             switch( sp.arm )
              {
-             case SMA: {
-                return ((SmaStream) sp.sub).peek(inReal);
+             case -1:
+                return inReal;
+             case 0: {
+                return ((SmaStream) sub).peek(inReal);
              }
-             case EMA: {
-                return ((EmaStream) sp.sub).peek(inReal);
+             case 1: {
+                return ((EmaStream) sub).peek(inReal);
              }
-             case WMA: {
-                return ((WmaStream) sp.sub).peek(inReal);
+             case 2: {
+                return ((WmaStream) sub).peek(inReal);
              }
-             case DEMA: {
-                return ((DemaStream) sp.sub).peek(inReal);
+             case 3: {
+                return ((DemaStream) sub).peek(inReal);
              }
-             case TEMA: {
-                return ((TemaStream) sp.sub).peek(inReal);
+             case 4: {
+                return ((TemaStream) sub).peek(inReal);
              }
-             case TRIMA: {
-                return ((TrimaStream) sp.sub).peek(inReal);
+             case 5: {
+                return ((TrimaStream) sub).peek(inReal);
              }
-             case KAMA: {
-                return ((KamaStream) sp.sub).peek(inReal);
+             case 6: {
+                return ((KamaStream) sub).peek(inReal);
              }
-             case MAMA: {
+             case 7: {
                 MamaOut subValue = new MamaOut();
-                ((MamaStream) sp.sub).peek(inReal, subValue);
+                ((MamaStream) sub).peek(inReal, subValue);
                 return subValue.mama;
              }
-             case T3: {
-                return ((T3Stream) sp.sub).peek(inReal);
+             case 8: {
+                return ((T3Stream) sub).peek(inReal);
              }
-             case HMA: {
-                return ((HmaStream) sp.sub).peek(inReal);
+             case 9: {
+                return ((HmaStream) sub).peek(inReal);
              }
-             case ZLEMA: {
-                return ((ZlemaStream) sp.sub).peek(inReal);
+             case 10: {
+                return ((ZlemaStream) sub).peek(inReal);
              }
-             case RMA: {
-                return ((RmaStream) sp.sub).peek(inReal);
+             case 11: {
+                return ((RmaStream) sub).peek(inReal);
              }
-             case VIDYA: {
-                return ((VidyaStream) sp.sub).peek(inReal);
+             case 12: {
+                return ((VidyaStream) sub).peek(inReal);
              }
-             case ALMA: {
-                return ((AlmaStream) sp.sub).peek(inReal);
+             case 13: {
+                return ((AlmaStream) sub).peek(inReal);
              }
              default:
                 throw new IllegalStateException("unreachable: open rejects arms without a sub-stream");
@@ -127769,38 +127772,38 @@ class Core {
        }
        private void maStepImpl( MaStream sp, double inReal )
        {
-          if( sp.optInTimePeriod == 1 || sp.optInMAType == MAType.DISABLED ) {
+          Object sub = sp.sub;
+          switch( sp.arm )
+          {
+          case -1:
              sp.cur_outReal = inReal;
              return;
-          }
-          switch( sp.optInMAType )
-          {
-          case SMA: {
-             sp.cur_outReal = ((SmaStream) sp.sub).update(inReal);
+          case 0: {
+             sp.cur_outReal = ((SmaStream) sub).update(inReal);
              return;
           }
-          case EMA: {
-             sp.cur_outReal = ((EmaStream) sp.sub).update(inReal);
+          case 1: {
+             sp.cur_outReal = ((EmaStream) sub).update(inReal);
              return;
           }
-          case WMA: {
-             sp.cur_outReal = ((WmaStream) sp.sub).update(inReal);
+          case 2: {
+             sp.cur_outReal = ((WmaStream) sub).update(inReal);
              return;
           }
-          case DEMA: {
-             sp.cur_outReal = ((DemaStream) sp.sub).update(inReal);
+          case 3: {
+             sp.cur_outReal = ((DemaStream) sub).update(inReal);
              return;
           }
-          case TEMA: {
-             sp.cur_outReal = ((TemaStream) sp.sub).update(inReal);
+          case 4: {
+             sp.cur_outReal = ((TemaStream) sub).update(inReal);
              return;
           }
-          case TRIMA: {
-             sp.cur_outReal = ((TrimaStream) sp.sub).update(inReal);
+          case 5: {
+             sp.cur_outReal = ((TrimaStream) sub).update(inReal);
              return;
           }
-          case KAMA: {
-             sp.cur_outReal = ((KamaStream) sp.sub).update(inReal);
+          case 6: {
+             sp.cur_outReal = ((KamaStream) sub).update(inReal);
              return;
           }
           default:
@@ -127810,36 +127813,37 @@ class Core {
        }
        private void maStepImplRest( MaStream sp, double inReal )
        {
-          switch( sp.optInMAType )
+          Object sub = sp.sub;
+          switch( sp.arm )
           {
-          case MAMA: {
+          case 7: {
              MamaOut subOut = new MamaOut();
-             ((MamaStream) sp.sub).update(inReal, subOut);
+             ((MamaStream) sub).update(inReal, subOut);
              sp.cur_outReal = subOut.mama;
              return;
           }
-          case T3: {
-             sp.cur_outReal = ((T3Stream) sp.sub).update(inReal);
+          case 8: {
+             sp.cur_outReal = ((T3Stream) sub).update(inReal);
              return;
           }
-          case HMA: {
-             sp.cur_outReal = ((HmaStream) sp.sub).update(inReal);
+          case 9: {
+             sp.cur_outReal = ((HmaStream) sub).update(inReal);
              return;
           }
-          case ZLEMA: {
-             sp.cur_outReal = ((ZlemaStream) sp.sub).update(inReal);
+          case 10: {
+             sp.cur_outReal = ((ZlemaStream) sub).update(inReal);
              return;
           }
-          case RMA: {
-             sp.cur_outReal = ((RmaStream) sp.sub).update(inReal);
+          case 11: {
+             sp.cur_outReal = ((RmaStream) sub).update(inReal);
              return;
           }
-          case VIDYA: {
-             sp.cur_outReal = ((VidyaStream) sp.sub).update(inReal);
+          case 12: {
+             sp.cur_outReal = ((VidyaStream) sub).update(inReal);
              return;
           }
-          case ALMA: {
-             sp.cur_outReal = ((AlmaStream) sp.sub).update(inReal);
+          case 13: {
+             sp.cur_outReal = ((AlmaStream) sub).update(inReal);
              return;
           }
           default:
@@ -127873,6 +127877,7 @@ class Core {
              sp.optInTimePeriod = optInTimePeriod;
              sp.optInMAType = optInMAType;
              sp.sub = null;
+             sp.arm = -1;
              sp.cur_outReal = inReal[historyLen - 1];
              int fillLb = maLookback(optInTimePeriod, optInMAType);
              if( startIdx > fillLb ) fillLb = startIdx;
@@ -127890,6 +127895,7 @@ class Core {
              sp.outRangeBegIdx = sub.outRangeBegIdx;
              sp.outRangeCount = sub.outRangeCount;
              sp.sub = sub;
+             sp.arm = 0;
              sp.cur_outReal = sub.cur_outReal;
              break;
           }
@@ -127898,6 +127904,7 @@ class Core {
              sp.outRangeBegIdx = sub.outRangeBegIdx;
              sp.outRangeCount = sub.outRangeCount;
              sp.sub = sub;
+             sp.arm = 1;
              sp.cur_outReal = sub.cur_outReal;
              break;
           }
@@ -127906,6 +127913,7 @@ class Core {
              sp.outRangeBegIdx = sub.outRangeBegIdx;
              sp.outRangeCount = sub.outRangeCount;
              sp.sub = sub;
+             sp.arm = 2;
              sp.cur_outReal = sub.cur_outReal;
              break;
           }
@@ -127914,6 +127922,7 @@ class Core {
              sp.outRangeBegIdx = sub.outRangeBegIdx;
              sp.outRangeCount = sub.outRangeCount;
              sp.sub = sub;
+             sp.arm = 3;
              sp.cur_outReal = sub.cur_outReal;
              break;
           }
@@ -127922,6 +127931,7 @@ class Core {
              sp.outRangeBegIdx = sub.outRangeBegIdx;
              sp.outRangeCount = sub.outRangeCount;
              sp.sub = sub;
+             sp.arm = 4;
              sp.cur_outReal = sub.cur_outReal;
              break;
           }
@@ -127930,6 +127940,7 @@ class Core {
              sp.outRangeBegIdx = sub.outRangeBegIdx;
              sp.outRangeCount = sub.outRangeCount;
              sp.sub = sub;
+             sp.arm = 5;
              sp.cur_outReal = sub.cur_outReal;
              break;
           }
@@ -127938,6 +127949,7 @@ class Core {
              sp.outRangeBegIdx = sub.outRangeBegIdx;
              sp.outRangeCount = sub.outRangeCount;
              sp.sub = sub;
+             sp.arm = 6;
              sp.cur_outReal = sub.cur_outReal;
              break;
           }
@@ -127946,6 +127958,7 @@ class Core {
              sp.outRangeBegIdx = sub.outRangeBegIdx;
              sp.outRangeCount = sub.outRangeCount;
              sp.sub = sub;
+             sp.arm = 7;
              sp.cur_outReal = sub.cur_outMAMA;
              break;
           }
@@ -127954,6 +127967,7 @@ class Core {
              sp.outRangeBegIdx = sub.outRangeBegIdx;
              sp.outRangeCount = sub.outRangeCount;
              sp.sub = sub;
+             sp.arm = 8;
              sp.cur_outReal = sub.cur_outReal;
              break;
           }
@@ -127962,6 +127976,7 @@ class Core {
              sp.outRangeBegIdx = sub.outRangeBegIdx;
              sp.outRangeCount = sub.outRangeCount;
              sp.sub = sub;
+             sp.arm = 9;
              sp.cur_outReal = sub.cur_outReal;
              break;
           }
@@ -127970,6 +127985,7 @@ class Core {
              sp.outRangeBegIdx = sub.outRangeBegIdx;
              sp.outRangeCount = sub.outRangeCount;
              sp.sub = sub;
+             sp.arm = 10;
              sp.cur_outReal = sub.cur_outReal;
              break;
           }
@@ -127978,6 +127994,7 @@ class Core {
              sp.outRangeBegIdx = sub.outRangeBegIdx;
              sp.outRangeCount = sub.outRangeCount;
              sp.sub = sub;
+             sp.arm = 11;
              sp.cur_outReal = sub.cur_outReal;
              break;
           }
@@ -127986,6 +128003,7 @@ class Core {
              sp.outRangeBegIdx = sub.outRangeBegIdx;
              sp.outRangeCount = sub.outRangeCount;
              sp.sub = sub;
+             sp.arm = 12;
              sp.cur_outReal = sub.cur_outReal;
              break;
           }
@@ -127994,6 +128012,7 @@ class Core {
              sp.outRangeBegIdx = sub.outRangeBegIdx;
              sp.outRangeCount = sub.outRangeCount;
              sp.sub = sub;
+             sp.arm = 13;
              sp.cur_outReal = sub.cur_outReal;
              break;
           }
@@ -128034,6 +128053,7 @@ class Core {
              sp.optInTimePeriod = optInTimePeriod;
              sp.optInMAType = optInMAType;
              sp.sub = null;
+             sp.arm = -1;
              int fillLb = maLookback(optInTimePeriod, optInMAType);
              outBegIdx.value = fillLb;
              outNBElement.value = historyLen - fillLb;
@@ -128050,6 +128070,7 @@ class Core {
              outBegIdx.value = sub.outRangeBegIdx;
              outNBElement.value = sub.outRangeCount;
              sp.sub = sub;
+             sp.arm = 0;
              sp.cur_outReal = sub.cur_outReal;
              break;
           }
@@ -128058,6 +128079,7 @@ class Core {
              outBegIdx.value = sub.outRangeBegIdx;
              outNBElement.value = sub.outRangeCount;
              sp.sub = sub;
+             sp.arm = 1;
              sp.cur_outReal = sub.cur_outReal;
              break;
           }
@@ -128066,6 +128088,7 @@ class Core {
              outBegIdx.value = sub.outRangeBegIdx;
              outNBElement.value = sub.outRangeCount;
              sp.sub = sub;
+             sp.arm = 2;
              sp.cur_outReal = sub.cur_outReal;
              break;
           }
@@ -128074,6 +128097,7 @@ class Core {
              outBegIdx.value = sub.outRangeBegIdx;
              outNBElement.value = sub.outRangeCount;
              sp.sub = sub;
+             sp.arm = 3;
              sp.cur_outReal = sub.cur_outReal;
              break;
           }
@@ -128082,6 +128106,7 @@ class Core {
              outBegIdx.value = sub.outRangeBegIdx;
              outNBElement.value = sub.outRangeCount;
              sp.sub = sub;
+             sp.arm = 4;
              sp.cur_outReal = sub.cur_outReal;
              break;
           }
@@ -128090,6 +128115,7 @@ class Core {
              outBegIdx.value = sub.outRangeBegIdx;
              outNBElement.value = sub.outRangeCount;
              sp.sub = sub;
+             sp.arm = 5;
              sp.cur_outReal = sub.cur_outReal;
              break;
           }
@@ -128098,6 +128124,7 @@ class Core {
              outBegIdx.value = sub.outRangeBegIdx;
              outNBElement.value = sub.outRangeCount;
              sp.sub = sub;
+             sp.arm = 6;
              sp.cur_outReal = sub.cur_outReal;
              break;
           }
@@ -128106,6 +128133,7 @@ class Core {
              outBegIdx.value = sub.outRangeBegIdx;
              outNBElement.value = sub.outRangeCount;
              sp.sub = sub;
+             sp.arm = 7;
              sp.cur_outReal = sub.cur_outMAMA;
              break;
           }
@@ -128114,6 +128142,7 @@ class Core {
              outBegIdx.value = sub.outRangeBegIdx;
              outNBElement.value = sub.outRangeCount;
              sp.sub = sub;
+             sp.arm = 8;
              sp.cur_outReal = sub.cur_outReal;
              break;
           }
@@ -128122,6 +128151,7 @@ class Core {
              outBegIdx.value = sub.outRangeBegIdx;
              outNBElement.value = sub.outRangeCount;
              sp.sub = sub;
+             sp.arm = 9;
              sp.cur_outReal = sub.cur_outReal;
              break;
           }
@@ -128130,6 +128160,7 @@ class Core {
              outBegIdx.value = sub.outRangeBegIdx;
              outNBElement.value = sub.outRangeCount;
              sp.sub = sub;
+             sp.arm = 10;
              sp.cur_outReal = sub.cur_outReal;
              break;
           }
@@ -128138,6 +128169,7 @@ class Core {
              outBegIdx.value = sub.outRangeBegIdx;
              outNBElement.value = sub.outRangeCount;
              sp.sub = sub;
+             sp.arm = 11;
              sp.cur_outReal = sub.cur_outReal;
              break;
           }
@@ -128146,6 +128178,7 @@ class Core {
              outBegIdx.value = sub.outRangeBegIdx;
              outNBElement.value = sub.outRangeCount;
              sp.sub = sub;
+             sp.arm = 12;
              sp.cur_outReal = sub.cur_outReal;
              break;
           }
@@ -128154,6 +128187,7 @@ class Core {
              outBegIdx.value = sub.outRangeBegIdx;
              outNBElement.value = sub.outRangeCount;
              sp.sub = sub;
+             sp.arm = 13;
              sp.cur_outReal = sub.cur_outReal;
              break;
           }
@@ -128191,6 +128225,7 @@ class Core {
              sp.optInTimePeriod = optInTimePeriod;
              sp.optInMAType = optInMAType;
              sp.sub = null;
+             sp.arm = -1;
              int fillLb = maLookback(optInTimePeriod, optInMAType);
              if( startIdx > fillLb ) fillLb = startIdx;
              if( historyLen < fillLb + 1 ) {
@@ -128209,84 +128244,98 @@ class Core {
           case SMA: {
              SmaStream sub = smaOpenAndFillInternal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
              sp.sub = sub;
+             sp.arm = 0;
              sp.cur_outReal = sub.cur_outReal;
              break;
           }
           case EMA: {
              EmaStream sub = emaOpenAndFillInternal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
              sp.sub = sub;
+             sp.arm = 1;
              sp.cur_outReal = sub.cur_outReal;
              break;
           }
           case WMA: {
              WmaStream sub = wmaOpenAndFillInternal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
              sp.sub = sub;
+             sp.arm = 2;
              sp.cur_outReal = sub.cur_outReal;
              break;
           }
           case DEMA: {
              DemaStream sub = demaOpenAndFillInternal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
              sp.sub = sub;
+             sp.arm = 3;
              sp.cur_outReal = sub.cur_outReal;
              break;
           }
           case TEMA: {
              TemaStream sub = temaOpenAndFillInternal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
              sp.sub = sub;
+             sp.arm = 4;
              sp.cur_outReal = sub.cur_outReal;
              break;
           }
           case TRIMA: {
              TrimaStream sub = trimaOpenAndFillInternal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
              sp.sub = sub;
+             sp.arm = 5;
              sp.cur_outReal = sub.cur_outReal;
              break;
           }
           case KAMA: {
              KamaStream sub = kamaOpenAndFillInternal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
              sp.sub = sub;
+             sp.arm = 6;
              sp.cur_outReal = sub.cur_outReal;
              break;
           }
           case MAMA: {
              MamaStream sub = mamaOpenAndFillInternal(inReal, startIdx, 0.5, 0.05, outBegIdx, outNBElement, outReal, null);
              sp.sub = sub;
+             sp.arm = 7;
              sp.cur_outReal = sub.cur_outMAMA;
              break;
           }
           case T3: {
              T3Stream sub = t3OpenAndFillInternal(inReal, startIdx, optInTimePeriod, 0.7, outBegIdx, outNBElement, outReal);
              sp.sub = sub;
+             sp.arm = 8;
              sp.cur_outReal = sub.cur_outReal;
              break;
           }
           case HMA: {
              HmaStream sub = hmaOpenAndFillInternal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
              sp.sub = sub;
+             sp.arm = 9;
              sp.cur_outReal = sub.cur_outReal;
              break;
           }
           case ZLEMA: {
              ZlemaStream sub = zlemaOpenAndFillInternal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
              sp.sub = sub;
+             sp.arm = 10;
              sp.cur_outReal = sub.cur_outReal;
              break;
           }
           case RMA: {
              RmaStream sub = rmaOpenAndFillInternal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
              sp.sub = sub;
+             sp.arm = 11;
              sp.cur_outReal = sub.cur_outReal;
              break;
           }
           case VIDYA: {
              VidyaStream sub = vidyaOpenAndFillInternal(inReal, startIdx, optInTimePeriod, (3 * optInTimePeriod + 2) / 4, outBegIdx, outNBElement, outReal);
              sp.sub = sub;
+             sp.arm = 12;
              sp.cur_outReal = sub.cur_outReal;
              break;
           }
           case ALMA: {
              AlmaStream sub = almaOpenAndFillInternal(inReal, startIdx, optInTimePeriod, 6.0, 0.85, outBegIdx, outNBElement, outReal);
              sp.sub = sub;
+             sp.arm = 13;
              sp.cur_outReal = sub.cur_outReal;
              break;
           }
@@ -128379,60 +128428,59 @@ class Core {
        }
        private double maStepTape( MaStream sp, double[] tape, int tapeBase, int tapeMask, double inReal )
        {
-          if( sp.optInTimePeriod == 1 || sp.optInMAType == MAType.DISABLED ) {
+          switch( sp.arm )
+          {
+          case -1:
              sp.cur_outReal = inReal;
-          } else {
-             switch( sp.optInMAType )
-             {
-             case SMA:
-                sp.cur_outReal = smaStepTape((SmaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
-                break;
-             case EMA:
-                sp.cur_outReal = emaStepTape((EmaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
-                break;
-             case WMA:
-                sp.cur_outReal = wmaStepTape((WmaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
-                break;
-             case DEMA:
-                sp.cur_outReal = demaStepTape((DemaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
-                break;
-             case TEMA:
-                sp.cur_outReal = temaStepTape((TemaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
-                break;
-             case TRIMA:
-                sp.cur_outReal = trimaStepTape((TrimaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
-                break;
-             case KAMA:
-                sp.cur_outReal = kamaStepTape((KamaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
-                break;
-             default:
-                sp.cur_outReal = maStepTapeRest(sp, tape, tapeBase, tapeMask, inReal);
-                break;
-             }
+             break;
+          case 0:
+             sp.cur_outReal = smaStepTape((SmaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
+             break;
+          case 1:
+             sp.cur_outReal = emaStepTape((EmaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
+             break;
+          case 2:
+             sp.cur_outReal = wmaStepTape((WmaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
+             break;
+          case 3:
+             sp.cur_outReal = demaStepTape((DemaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
+             break;
+          case 4:
+             sp.cur_outReal = temaStepTape((TemaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
+             break;
+          case 5:
+             sp.cur_outReal = trimaStepTape((TrimaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
+             break;
+          case 6:
+             sp.cur_outReal = kamaStepTape((KamaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
+             break;
+          default:
+             sp.cur_outReal = maStepTapeRest(sp, tape, tapeBase, tapeMask, inReal);
+             break;
           }
           sp.outRangeCount++;
           return sp.cur_outReal;
        }
        private double maStepTapeRest( MaStream sp, double[] tape, int tapeBase, int tapeMask, double inReal )
        {
-          switch( sp.optInMAType )
+          switch( sp.arm )
           {
-          case MAMA: {
+          case 7: {
              MamaStream sub = (MamaStream) sp.sub;
              mamaStepTape(sub, tape, tapeBase, tapeMask, inReal);
              return sub.cur_outMAMA;
           }
-          case T3:
+          case 8:
              return t3StepTape((T3Stream) sp.sub, tape, tapeBase, tapeMask, inReal);
-          case HMA:
+          case 9:
              return hmaStepTape((HmaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
-          case ZLEMA:
+          case 10:
              return zlemaStepTape((ZlemaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
-          case RMA:
+          case 11:
              return rmaStepTape((RmaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
-          case VIDYA:
+          case 12:
              return vidyaStepTape((VidyaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
-          case ALMA:
+          case 13:
              return almaStepTape((AlmaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
           default:
              throw new IllegalStateException("unreachable: open rejects arms without a sub-stream");
@@ -128440,24 +128488,23 @@ class Core {
        }
        private double maPeekTape( MaStream sp, double[] tape, int tapeBase, int tapeMask, double inReal )
        {
-          if( sp.optInTimePeriod == 1 || sp.optInMAType == MAType.DISABLED ) {
-             return inReal;
-          }
-          switch( sp.optInMAType )
+          switch( sp.arm )
           {
-          case SMA:
+          case -1:
+             return inReal;
+          case 0:
              return smaPeekTape((SmaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
-          case EMA:
+          case 1:
              return emaPeekTape((EmaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
-          case WMA:
+          case 2:
              return wmaPeekTape((WmaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
-          case DEMA:
+          case 3:
              return demaPeekTape((DemaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
-          case TEMA:
+          case 4:
              return temaPeekTape((TemaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
-          case TRIMA:
+          case 5:
              return trimaPeekTape((TrimaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
-          case KAMA:
+          case 6:
              return kamaPeekTape((KamaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
           default:
              return maPeekTapeRest(sp, tape, tapeBase, tapeMask, inReal);
@@ -128465,24 +128512,24 @@ class Core {
        }
        private double maPeekTapeRest( MaStream sp, double[] tape, int tapeBase, int tapeMask, double inReal )
        {
-          switch( sp.optInMAType )
+          switch( sp.arm )
           {
-          case MAMA: {
+          case 7: {
              MamaOut subValue = new MamaOut();
              mamaPeekTape((MamaStream) sp.sub, tape, tapeBase, tapeMask, inReal, subValue);
              return subValue.mama;
           }
-          case T3:
+          case 8:
              return t3PeekTape((T3Stream) sp.sub, tape, tapeBase, tapeMask, inReal);
-          case HMA:
+          case 9:
              return hmaPeekTape((HmaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
-          case ZLEMA:
+          case 10:
              return zlemaPeekTape((ZlemaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
-          case RMA:
+          case 11:
              return rmaPeekTape((RmaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
-          case VIDYA:
+          case 12:
              return vidyaPeekTape((VidyaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
-          case ALMA:
+          case 13:
              return almaPeekTape((AlmaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
           default:
              throw new IllegalStateException("unreachable: open rejects arms without a sub-stream");
@@ -128490,38 +128537,35 @@ class Core {
        }
        private int maTapeDetach( MaStream sp )
        {
-          if( sp.optInTimePeriod == 1 || sp.optInMAType == MAType.DISABLED ) {
-             return 0;
-          }
-          switch( sp.optInMAType )
+          switch( sp.arm )
           {
-          case SMA:
+          case 0:
              return smaTapeDetach((SmaStream) sp.sub);
-          case EMA:
+          case 1:
              return emaTapeDetach((EmaStream) sp.sub);
-          case WMA:
+          case 2:
              return wmaTapeDetach((WmaStream) sp.sub);
-          case DEMA:
+          case 3:
              return demaTapeDetach((DemaStream) sp.sub);
-          case TEMA:
+          case 4:
              return temaTapeDetach((TemaStream) sp.sub);
-          case TRIMA:
+          case 5:
              return trimaTapeDetach((TrimaStream) sp.sub);
-          case KAMA:
+          case 6:
              return kamaTapeDetach((KamaStream) sp.sub);
-          case MAMA:
+          case 7:
              return mamaTapeDetach((MamaStream) sp.sub);
-          case T3:
+          case 8:
              return t3TapeDetach((T3Stream) sp.sub);
-          case HMA:
+          case 9:
              return hmaTapeDetach((HmaStream) sp.sub);
-          case ZLEMA:
+          case 10:
              return zlemaTapeDetach((ZlemaStream) sp.sub);
-          case RMA:
+          case 11:
              return rmaTapeDetach((RmaStream) sp.sub);
-          case VIDYA:
+          case 12:
              return vidyaTapeDetach((VidyaStream) sp.sub);
-          case ALMA:
+          case 13:
              return almaTapeDetach((AlmaStream) sp.sub);
           default:
              return 0;
@@ -205497,7 +205541,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "2e7ed3a306e6acbb";
+    static final String SPLICED_GENCODE_DIGEST = "e974c401e406d910";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];

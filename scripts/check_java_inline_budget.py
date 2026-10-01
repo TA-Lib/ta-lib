@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
 """MA's dispatch frames must stay inside HotSpot C2's inlining budget.
 
-`MaStream.peek` and `Core.maStepImpl` are switches over `MAType`, and they sit
-under every handle that holds an MA sub-handle -- APO, BBANDS, MACDEXT, MAVP,
-PPO, PVO, STOCH, STOCHF, and KDJ and STOCHRSI through those. `Core.maStepTape`
-and `Core.maPeekTape` are the same switches under every slot of an MAVP
-handle, which steps one per period in its range on every bar. C2 refuses to
-inline a hot method whose bytecode exceeds `FreqInlineSize`, so crossing that
-budget costs those callers roughly a third of their per-bar time, measured. It
-costs nothing visible: no test fails, no output changes.
+`MaStream.peek` and `Core.maStepImpl` switch over the arm MA's open picked,
+and they sit under every handle that holds an MA sub-handle -- APO, BBANDS,
+MACDEXT, MAVP, PPO, PVO, STOCH, STOCHF, and KDJ and STOCHRSI through those.
+`Core.maStepTape` and `Core.maPeekTape` are the same switches under every slot
+of an MAVP handle, which steps one per period in its range on every bar. C2
+refuses to inline a hot method whose bytecode exceeds `FreqInlineSize`, so
+crossing that budget costs those callers roughly a third of their per-bar
+time, measured. It costs nothing visible: no test fails, no output changes.
 
 The step and tape frames route the MATypes the enum opens with and hand the
 rest to a `...Rest` frame, which C2 must inline too. New MATypes append to the
-enum, so each grows peek by 16 bytes and those Rest frames by 20 to 22: these
+enum, so each adds 14 bytes to peek and 18 to 22 to every Rest frame: these
 are the frames that expire, and the enum is live.
 
 325 is C2's DEFAULT, not a law. It moves between JDK versions and any

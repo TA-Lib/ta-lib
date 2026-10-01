@@ -275,16 +275,49 @@ fn test_java_ma_dispatch() {
     let s = java_stream_section("ma");
     // Tagged handle: Object sub, null on the identity path.
     assert!(s.contains("private Object sub;"));
-    // The copy constructor and the step switch derive from the SAME arm table
-    // (design-review obligation): every MAType naming a function appears in both.
+    // Open, the copy constructor and every per-bar frame derive from the SAME
+    // arm table (design-review obligation): each MAType naming a function is
+    // copied, every open mode stores one tag for it, and every frame routes
+    // that tag to the MAType's own stream class.
+    let routes = |tag: &str, needles: &[&str]| {
+        s.match_indices(&format!("case {tag}:")).any(|(at, m)| {
+            let arm = &s[at + m.len()..];
+            let arm = &arm[..arm.find("case ").unwrap_or(arm.len()).min(240)];
+            needles.iter().all(|n| arm.contains(n))
+        })
+    };
     for label in [
         "SMA", "EMA", "WMA", "DEMA", "TEMA", "TRIMA", "KAMA", "MAMA", "T3", "HMA", "ZLEMA",
         "RMA", "VIDYA", "ALMA",
     ] {
+        let cb = label.to_lowercase();
+        let cls = format!("{}{}Stream", &label[..1], &cb[1..]);
         assert!(
-            s.matches(&format!("case {label}:")).count() >= 2,
-            "arm {label} must appear in both the copy constructor and dispatch switches"
+            s.contains(&format!("case {label}:\n               this.sub = new {cls}(")),
+            "the copy constructor does not copy the {label} arm"
         );
+        let tags: Vec<&str> = s
+            .match_indices(&format!("case {label}: {{"))
+            .map(|(at, _)| {
+                let (_, after) = s[at..].split_once("sp.arm = ").expect("an open arm stores a tag");
+                after.split_once(';').expect("a tag statement").0
+            })
+            .collect();
+        assert_eq!(tags.len(), 3, "{label}: expected one arm per open mode, found {tags:?}");
+        assert!(tags.iter().all(|t| *t == tags[0]), "{label}: the open modes store different tags {tags:?}");
+        let tag = tags[0];
+        let sub = format!("(({cls}) sub)");
+        let tape_sub = format!("({cls}) sp.sub");
+        for (frame, needles) in [
+            ("step", [format!("{sub}.update("), String::new()]),
+            ("peek", [format!("{sub}.peek("), String::new()]),
+            ("tape step", [format!("{cb}StepTape("), tape_sub.clone()]),
+            ("tape peek", [format!("{cb}PeekTape("), tape_sub.clone()]),
+            ("tape detach", [format!("{cb}TapeDetach("), tape_sub.clone()]),
+        ] {
+            let needles: Vec<&str> = needles.iter().map(String::as_str).filter(|n| !n.is_empty()).collect();
+            assert!(routes(tag, &needles), "open tags {label} {tag}, but the {frame} does not route {tag} to {cls}");
+        }
     }
     // MAMA arm routes OutSlot Forward(0) and discards FAMA, through the same
     // caller-owned sink the composed peek uses: Java has no out-params, so a
@@ -293,7 +326,7 @@ fn test_java_ma_dispatch() {
     // sub-handle's own committed `cur_*` would be free on this path, but that
     // needs a sink-less `update` the API does not have.
     assert!(s.contains("MamaOut subOut = new MamaOut();"));
-    assert!(s.contains("((MamaStream) sp.sub).update(inReal, subOut);"));
+    assert!(s.contains("((MamaStream) sub).update(inReal, subOut);"));
     assert!(s.contains("sp.cur_outReal = subOut.mama;"));
     assert!(
         !s.contains("MamaStream.Value"),
@@ -303,11 +336,12 @@ fn test_java_ma_dispatch() {
     // materializing a throwaway buffer for it (rule B6a at the opener).
     assert!(s.contains("mamaOpenAndFill(inReal, 0.5, 0.05, outReal, null)"));
     assert!(!s.contains("new double[historyLen]"));
-    // Identity path re-derived from the stored param on every step; the guard
-    // also covers the period-independent TA_MAType_DISABLED identity (issue #93).
-    assert!(s.contains("if( sp.optInTimePeriod == 1 || sp.optInMAType == MAType.DISABLED ) {"));
-    // Case labels come from the shared enum authority, not hardcoded ints.
-    assert!(s.contains("case MAMA:"));
+    // The identity test runs once, at open, and also covers the
+    // period-independent TA_MAType_DISABLED identity (issue #93); the per-bar
+    // frames route on the tag it stores.
+    assert!(s.contains("if( optInTimePeriod == 1 || optInMAType == MAType.DISABLED ) {"));
+    assert!(s.contains("sp.arm = -1;"));
+    assert!(s.contains("case -1:"));
 }
 
 #[test]
