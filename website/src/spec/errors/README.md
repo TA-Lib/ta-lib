@@ -70,7 +70,7 @@ A batch call accepts `0 <= startIdx <= endIdx <= TA_INDEX_MAX`; B1 and B2 are th
 
 **B7.** Fatal in every tier: nothing after it is defined (outputs, range, stream handle), so stop. Rust aborts the process, and Java and C# raise their runtime's out-of-memory error.
 
-**B8.** A bug in TA-Lib, not in the call: report it. C returns a value from 5000 to 5999, `TA_INTERNAL_ERROR` plus an id, so test the band, never `== TA_INTERNAL_ERROR`. In the function tier the id names the guard that fired ([V4](/spec/versions/#v4)). Rust, Java and C# report `TA_INTERNAL_ERROR` without an id.
+**B8.** A bug in TA-Lib, not in the call: report it. C returns a value from 5000 to 5999, `TA_INTERNAL_ERROR` plus an id, so test the band, never `== TA_INTERNAL_ERROR`. Rust, Java and C# report `TA_INTERNAL_ERROR` without an id.
 
 ## Messages
 

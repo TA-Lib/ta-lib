@@ -24,7 +24,7 @@ This page maps that shared vocabulary onto Rust, Java and C#; a rule that introd
 | [Lookback](/spec/lookback/) | lookback call, display shift, unstable period, candle averaging, period 1, start dependence | L1 to L12 |
 | [Streaming](/spec/streaming/) | bit-identity with batch, every stream call, lifetime | S1 to S7, S6a, U1 to U4, U6a, X1, H1 to H10, N7 |
 | [Settings and Threads](/spec/settings-threads/) | C lifecycle, when a C setting may change, `Core`, setting validation, threads | G1 to G7, T1 to T6, N5, N6 |
-| [Versions and Determinism](/spec/versions/) | bit-identity across languages and machines; releases | D1 to D4, V1 to V4 |
+| [Versions and Determinism](/spec/versions/) | bit-identity across languages and machines; releases | D1 to D4, V1 to V3 |
 
 - `<N>` stands for a function's canonical name: `TA_<N>_Open` is `TA_SMA_Open`.
 - An id's anchor is the id in lower case: [/spec/errors/#b5](/spec/errors/#b5). Its number is not its evaluation order (U4 precedes U2): [R2](/spec/errors/#r2). Its meaning is not promised to stay the same across releases yet; that may be settled once the specification is stable.

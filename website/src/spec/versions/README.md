@@ -5,7 +5,7 @@ description: "Which TA-Lib results are bit-identical across languages, machines,
 
 *Part of TA-Lib's exhaustive [specifications](/spec/), intended for precise AI-agent-driven integration with TA-Lib, to minimize errors.*
 
-D1 to D4 say where the same call gives the same bits across languages, machines and C builds; the table below also indexes the equivalences other pages own. V1 to V4 say what a release keeps and what it may add.
+D1 to D4 say where the same call gives the same bits across languages, machines and C builds; the table below also indexes the equivalences other pages own. V1 to V3 say what a release keeps and what it may add.
 
 ## Determinism {#determinism}
 
@@ -62,8 +62,6 @@ Neither the optimization level, `-march`, nor `-fno-math-errno` (which CMake and
 <a id="v2"></a>**V2** No enum member is renumbered, in any backend. A retired member keeps its number under a reserved name (`TA_FUNC_UNST_UNUSED_1` and the like) instead of being deleted. `TA_AllCandleSettings` is pinned at 11 and `TA_FUNC_UNST_ALL` at 65535; neither tracks the number of members. A Rust, Java or C# enum may omit C members; each member it has carries C's number. Reading the number: for `RetCode`, see the [hub](/spec/#failures); for the other enums, Rust `as i32`, Java `value()` on `FuncUnstId` and `ordinal()` on `MAType`, `RangeType` and `CandleSettingType`, C# an `(int)` cast.
 
 <a id="v3"></a>**V3** A release may add functions, MA types, unstable-period ids, candle settings and return codes. Enumerate functions through the abstraction layer (`TA_ForEachFunc` in C; each language's catalog is in the hub's [abstraction layer](/spec/#abstraction) table), never from a list fixed when your code was written. `TA_MATYPE_MAX` and `TA_FUNC_UNST_COUNT` grow when a member is appended to their enum; how to bound an MA-type value is [I3](/spec/inputs-outputs/#i3). Rust marks `RetCode`, `FuncUnstId`, `MAType`, `RangeType` and `CandleSettingType` `#[non_exhaustive]`, so a `match` on one needs a wildcard arm; give a Java or C# `switch` over them a default branch.
-
-<a id="v4"></a>**V4** In the function tier, the id a C internal error carries ([B8](/spec/errors/#b8)) is never reassigned: a later release keeps it on the same guard or retires it, so a reported number identifies the guard whichever release produced it.
 
 ### Not covered {#not-covered}
 

@@ -416,8 +416,7 @@ fail), which is why the public H4 excludes B8.
 `ta_codegen/input/internal_error_ids.yaml` maps a function-tier id back to the
 function and the state field it guards. The abstraction layer hand-allocates
 ids 1 to 5, most of them shared by several sites (id 2 by 13 in `ta_abstract.c`),
-so an id there names a kind of check, not one guard; V4 is scoped to the function
-tier for that reason.
+so an id there names a kind of check, not one guard.
 
 ### I4: input domain
 
