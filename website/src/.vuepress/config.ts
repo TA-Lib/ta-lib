@@ -4,6 +4,7 @@ import { defineUserConfig } from "vuepress";
 // CodeQL's JavaScript extractor skips hidden directories, so config kept in
 // here is invisible to it and the analysis fails with "no source code seen".
 import theme from "../../config/theme.js";
+import llms from "../../config/llms.js";
 import { viteBundler } from "@vuepress/bundler-vite";
 import { fileURLToPath } from "node:url";
 
@@ -33,4 +34,6 @@ export default defineUserConfig({
   },
 
   theme,
+
+  plugins: [llms],
 });

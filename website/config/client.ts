@@ -18,7 +18,13 @@ const STALE_CHUNK =
 const RELOAD_TARGET = "vp-reload-stale-chunk";
 
 export default defineClientConfig({
-  enhance({ router }) {
+  enhance({ app, router }) {
+    // The llms plugin removes these tags only in some positions; anywhere else Vue meets
+    // them as unknown components: <llm-only> text then shows to readers, and a block
+    // <llm-exclude> vanishes from the server-rendered page. Both renders need these.
+    app.component("llm-only", () => null);
+    app.component("llm-exclude", (_props, { slots }) => slots.default?.());
+
     if (__VUEPRESS_SSR__) return;
 
     router.onError((error: Error, to) => {
