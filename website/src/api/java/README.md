@@ -32,7 +32,7 @@ toc: false
 
 ## 1.0 Introduction {#intro}
 
-The Java library is a native port of TA-Lib in the `io.github.talib` package — no JNI, pure Java. Every indicator is a method on a `Core` instance, operates on `double[]` arrays (or `float[]`, see [4.4](#input_type)), and is **bit-identical** to the reference C library over the same inputs, with one exception beyond TA-Lib's control: where a calculation calls a transcendental math function (such as `exp`, `log`, `sin` or `atan`), Java's math library can round the result differently from the C library in the last bit. That difference can grow through the rest of the calculation, and is most visible in the Hilbert-transform functions (`HT_*`). Details: [Versions and Determinism](/spec/versions/).
+The Java library is a native port of TA-Lib in the `io.github.talib` package — no JNI, pure Java. Every indicator is a method on a `Core` instance, operates on `double[]` arrays (or `float[]`, see [4.4](#input_type)), and is **bit-identical** to the reference C library over the same inputs, with one exception beyond TA-Lib's control: where a calculation calls a transcendental math function (such as `exp`, `log`, `sin` or `atan`), Java's math library can round the result differently from the C library in the last bit. That difference can grow through the rest of the calculation. Details: [Versions and Determinism](/spec/versions/).
 
 The **Core API** provides:
 

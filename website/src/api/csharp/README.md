@@ -37,7 +37,7 @@ The C# API is not yet released. Estimated release: **Q1 2027**.
 
 ## 1.0 Introduction {#intro}
 
-The .NET library is a native port of TA-Lib in the `TALib` namespace — no P/Invoke, no native dependency, pure managed C# targeting `net10.0`. Every indicator is a method on a `Core` instance, takes its series as spans, and is **bit-identical** to the reference C library over the same inputs, with one exception beyond TA-Lib's control: where a calculation calls a transcendental math function (such as `exp`, `log`, `sin` or `atan`), .NET's math library can round the result differently from the C library in the last bit. That difference can grow through the rest of the calculation, and is most visible in the Hilbert-transform functions (`HT_*`). Details: [Versions and Determinism](/spec/versions/).
+The .NET library is a native port of TA-Lib in the `TALib` namespace — no P/Invoke, no native dependency, pure managed C# targeting `net10.0`. Every indicator is a method on a `Core` instance, takes its series as spans, and is **bit-identical** to the reference C library over the same inputs, with one exception beyond TA-Lib's control: where a calculation calls a transcendental math function (such as `exp`, `log`, `sin` or `atan`), .NET's math library can round the result differently from the C library in the last bit. That difference can grow through the rest of the calculation. Details: [Versions and Determinism](/spec/versions/).
 
 The **Core API** provides:
 
