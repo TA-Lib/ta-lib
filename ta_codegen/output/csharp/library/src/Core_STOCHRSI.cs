@@ -184,7 +184,7 @@ public partial class Core
       } else if( (int)optInFastD_MAType < MATypes.Min || (int)optInFastD_MAType > MATypes.Max ) {
          return RetCode.BadParam;
       }
-      if( outFastK.Overlaps(outFastD) ) {
+      if( OutputsAlias(outFastK, outFastD) ) {
          return RetCode.BadParam ;
       }
       if( (outFastK.Overlaps(inReal) && outFastK != inReal) || (outFastD.Overlaps(inReal) && outFastD != inReal) ) {
@@ -299,7 +299,7 @@ public partial class Core
       } else if( (int)optInFastD_MAType < MATypes.Min || (int)optInFastD_MAType > MATypes.Max ) {
          return RetCode.BadParam;
       }
-      if( outFastK.Overlaps(outFastD) ) {
+      if( OutputsAlias(outFastK, outFastD) ) {
          return RetCode.BadParam ;
       }
       if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outFastK).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inReal)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outFastD).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inReal)) ) {
@@ -958,7 +958,7 @@ public partial class Core
       int guardOutLen = OpenFillCount("STOCHRSI", "openAndFill", inReal.Length, StochrsiLookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType));
       RequireFillLength("STOCHRSI", "openAndFill", "outFastK", outFastK.Length, guardOutLen);
       RequireFillLength("STOCHRSI", "openAndFill", "outFastD", outFastD.Length, guardOutLen);
-      if( outFastK.Overlaps(inReal) || outFastD.Overlaps(inReal) || outFastK.Overlaps(outFastD) ) {
+      if( outFastK.Overlaps(inReal) || outFastD.Overlaps(inReal) || OutputsAlias(outFastK, outFastD) ) {
          throw StreamFailure("STOCHRSI", "openAndFill", RetCode.BadParam);
       }
       return StochrsiOpenAndFillInternal(inReal, 0, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out _, out _, outFastK, outFastD);

@@ -113,7 +113,7 @@ fn csharp_public_fill_keeps_the_aliasing_guards() {
     // vet; the seams below it get a fresh sink or a proved-disjoint destination.
     let s = section("accbands");
     let body = body_of(&s, "public AccbandsStream AccbandsOpenAndFill(");
-    for guard in ["outRealUpperBand.Overlaps(inHigh)", "outRealUpperBand.Overlaps(outRealMiddleBand)"] {
+    for guard in ["outRealUpperBand.Overlaps(inHigh)", "OutputsAlias(outRealUpperBand, outRealMiddleBand)"] {
         assert!(body.contains(guard), "{guard} survives on the public fill:\n{body}");
     }
     assert!(
@@ -125,7 +125,10 @@ fn csharp_public_fill_keeps_the_aliasing_guards() {
         "internal AccbandsStream AccbandsOpenAndFillInternal(",
     ] {
         let sbody = body_of(&s, seam);
-        assert!(!sbody.contains("Overlaps("), "{seam} must not carry the guard:\n{sbody}");
+        assert!(
+            !sbody.contains("Overlaps(") && !sbody.contains("OutputsAlias("),
+            "{seam} must not carry the guard:\n{sbody}"
+        );
     }
 }
 

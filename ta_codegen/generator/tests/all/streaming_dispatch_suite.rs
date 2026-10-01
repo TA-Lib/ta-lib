@@ -403,13 +403,13 @@ fn cross_typed_output_pairs_are_compared_where_the_language_can_express_it() {
         format!("{a} == {b}"),
         format!("{a} == {b}"),
         format!("{a}.as_ptr() == {b}.as_ptr()"),
-        format!("{a}.Overlaps({b})"),
+        format!("OutputsAlias({a}, {b})"),
     ];
     let cast = [
         Some(format!("(const void *){a} == (const void *){b}")),
         None,
         None,
-        Some(format!("{}.Overlaps({})", as_bytes(&a), as_bytes(&b))),
+        Some(format!("OutputsAlias({}, {})", as_bytes(&a), as_bytes(&b))),
     ];
     // Java's stream tier spells the pair through `(Object)` casts in BOTH
     // passes. It is inert either way, so it is counted separately rather than
@@ -552,9 +552,10 @@ fn test_mama_nullable_fama_is_declinable_in_every_backend() {
         "every store into the declined output is guarded"
     );
     assert!(
-        csharp.contains("if( outMAMA.Overlaps(outFAMA) ) {")
+        csharp.contains("if( OutputsAlias(outMAMA, outFAMA) ) {")
             && !csharp.contains("outMAMA.IsEmpty && outFAMA.IsEmpty"),
-        "the empty-pair rejection is gone: it made 'declined' unspellable (item 11)"
+        "the pair guard is the helper that tells a declined (null) output from one \
+         buffer passed twice; a bare empty-pair arm would reject the decline (item 11)"
     );
 
     // And MA's cross-call declines rather than allocating a buffer to throw away.

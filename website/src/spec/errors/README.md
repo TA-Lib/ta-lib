@@ -42,7 +42,7 @@ Who returns codes 1, 4 to 11, 14 to 16 and 65535 is current behaviour, and so is
 
 <a id="r2"></a>**R2** The first listed condition wins: a rejected call reports the code of the first condition it violates, in its tier's table order. Conditions that share a code may be checked in any order, and a Java or C# message, or a C# `ParamName`, may name any of them ([R5](/spec/errors/#r5)).
 
-<a id="r3"></a>**R3** One code across backends. In the batch and stream tiers, a call that two or more backends can express and detect gets the same code from each; the one known exception is in [B6](/spec/errors/#b6). Lookback: [L3](/spec/lookback/#l3). Settings refusals and the abstraction layer's own are outside R3 ([hub](/spec/#failures)).
+<a id="r3"></a>**R3** One code across backends. In the batch and stream tiers, a call that two or more backends can express and detect gets the same code from each. Lookback: [L3](/spec/lookback/#l3). Settings refusals and the abstraction layer's own are outside R3 ([hub](/spec/#failures)).
 
 <a id="r4"></a>**R4** Checks precede writes. A call rejected under any rule of this specification leaves every caller-owned buffer, and C's range out-parameters, as it found them, except for C's writes stated with [S7](/spec/streaming/#s7) (`OpenAndFill`'s range) and with its handle out-parameters ([lifetime](/spec/streaming/#lifetime)). Current behaviour: C's MAVP and FRAMA set the range out-parameters to 0 before rejecting a value [I3](/spec/inputs-outputs/#i3) names. Nothing is promised after [B7](/spec/errors/#b7) or [B8](/spec/errors/#b8).
 
@@ -62,11 +62,11 @@ A batch call accepts `0 <= startIdx <= endIdx <= TA_INDEX_MAX`; B1 and B2 are th
 | <a id="b7"></a>**B7** | A memory allocation failed. | `TA_ALLOC_ERR` (C only) | none |
 | <a id="b8"></a>**B8** | The library found an inconsistency in its own state. | `TA_INTERNAL_ERROR` + id | none |
 
-**B4, B6a.** An omitted output that reaches the call as null ([names](/spec/#names)) is reported by B4, which comes first. An empty output, in every language that checks lengths, is held to B5 alone: rejected when the call produces values, accepted when it produces none (current behaviour).
+**B4, B6a.** An omitted output that reaches the call as null ([names](/spec/#names)) is reported by B4, which comes first. An empty output, in every language that checks lengths, is held to B5 in place of B4 and B6a: rejected when the call produces values, not when it produces none (current behaviour).
 
 **B5.** C is handed bare pointers and cannot check: a short buffer is read or written past its end, which is undefined.
 
-**B6.** Identity only: partial overlap is [N8](/spec/inputs-outputs/#n8), and an input reused whole as an output is legal ([N4](/spec/inputs-outputs/#n4)). Two distinct empty outputs never collide. Current behaviour, and R3's exception: C and Java reject one buffer passed as two outputs whatever its length; C# never treats an empty output as aliased, so on a range that produces no values one zero-length array passed as two outputs is `TA_BAD_PARAM` in Java and a success in C#. C and C# also compare an integer output with a real one.
+**B6.** Identity only: partial overlap is [N8](/spec/inputs-outputs/#n8), and an input reused whole as an output is legal ([N4](/spec/inputs-outputs/#n4)). One buffer passed as two outputs is rejected whatever its length, a zero-length array included; two distinct empty outputs never collide. C and C# also compare an integer output with a real one.
 
 **B7.** Fatal in every tier: nothing after it is defined (outputs, range, stream handle), so stop. Rust aborts the process, and Java and C# raise their runtime's out-of-memory error.
 

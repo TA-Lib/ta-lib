@@ -228,7 +228,7 @@ public partial class Core
       } else if( (int)optInSlowD_MAType < MATypes.Min || (int)optInSlowD_MAType > MATypes.Max ) {
          return RetCode.BadParam;
       }
-      if( outSlowK.Overlaps(outSlowD) ) {
+      if( OutputsAlias(outSlowK, outSlowD) ) {
          return RetCode.BadParam ;
       }
       if( (outSlowK.Overlaps(inHigh) && outSlowK != inHigh) || (outSlowK.Overlaps(inLow) && outSlowK != inLow) || (outSlowK.Overlaps(inClose) && outSlowK != inClose) || (outSlowD.Overlaps(inHigh) && outSlowD != inHigh) || (outSlowD.Overlaps(inLow) && outSlowD != inLow) || (outSlowD.Overlaps(inClose) && outSlowD != inClose) ) {
@@ -478,7 +478,7 @@ public partial class Core
       } else if( (int)optInSlowD_MAType < MATypes.Min || (int)optInSlowD_MAType > MATypes.Max ) {
          return RetCode.BadParam;
       }
-      if( outSlowK.Overlaps(outSlowD) ) {
+      if( OutputsAlias(outSlowK, outSlowD) ) {
          return RetCode.BadParam ;
       }
       if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outSlowK).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outSlowK).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outSlowK).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inClose)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outSlowD).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outSlowD).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outSlowD).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inClose)) ) {
@@ -1531,7 +1531,7 @@ public partial class Core
       RequireHistoryLength("STOCH", "openAndFill", "inClose", inClose.Length, inHigh.Length);
       RequireFillLength("STOCH", "openAndFill", "outSlowK", outSlowK.Length, guardOutLen);
       RequireFillLength("STOCH", "openAndFill", "outSlowD", outSlowD.Length, guardOutLen);
-      if( outSlowK.Overlaps(inHigh) || outSlowK.Overlaps(inLow) || outSlowK.Overlaps(inClose) || outSlowD.Overlaps(inHigh) || outSlowD.Overlaps(inLow) || outSlowD.Overlaps(inClose) || outSlowK.Overlaps(outSlowD) ) {
+      if( outSlowK.Overlaps(inHigh) || outSlowK.Overlaps(inLow) || outSlowK.Overlaps(inClose) || outSlowD.Overlaps(inHigh) || outSlowD.Overlaps(inLow) || outSlowD.Overlaps(inClose) || OutputsAlias(outSlowK, outSlowD) ) {
          throw StreamFailure("STOCH", "openAndFill", RetCode.BadParam);
       }
       return StochOpenAndFillInternal(inHigh, inLow, inClose, 0, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, out _, out _, outSlowK, outSlowD);

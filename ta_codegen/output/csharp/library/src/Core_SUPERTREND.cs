@@ -168,7 +168,7 @@ public partial class Core
       } else if( !(optInMultiplier >= 0e0 && optInMultiplier <= RealMax) ) {
          return RetCode.BadParam;
       }
-      if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outSupertrend).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(outTrend)) ) {
+      if( OutputsAlias(System.Runtime.InteropServices.MemoryMarshal.AsBytes(outSupertrend), System.Runtime.InteropServices.MemoryMarshal.AsBytes(outTrend)) ) {
          return RetCode.BadParam ;
       }
       if( (outSupertrend.Overlaps(inHigh) && outSupertrend != inHigh) || (outSupertrend.Overlaps(inLow) && outSupertrend != inLow) || (outSupertrend.Overlaps(inClose) && outSupertrend != inClose) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outTrend).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outTrend).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outTrend).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inClose)) ) {
@@ -360,7 +360,7 @@ public partial class Core
       } else if( !(optInMultiplier >= 0e0 && optInMultiplier <= RealMax) ) {
          return RetCode.BadParam;
       }
-      if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outSupertrend).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(outTrend)) ) {
+      if( OutputsAlias(System.Runtime.InteropServices.MemoryMarshal.AsBytes(outSupertrend), System.Runtime.InteropServices.MemoryMarshal.AsBytes(outTrend)) ) {
          return RetCode.BadParam ;
       }
       if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outSupertrend).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outSupertrend).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outSupertrend).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inClose)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outTrend).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outTrend).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outTrend).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inClose)) ) {
@@ -1290,7 +1290,7 @@ public partial class Core
       RequireHistoryLength("SUPERTREND", "openAndFill", "inClose", inClose.Length, inHigh.Length);
       RequireFillLength("SUPERTREND", "openAndFill", "outSupertrend", outSupertrend.Length, guardOutLen);
       RequireFillLength("SUPERTREND", "openAndFill", "outTrend", outTrend.Length, guardOutLen);
-      if( outSupertrend.Overlaps(inHigh) || outSupertrend.Overlaps(inLow) || outSupertrend.Overlaps(inClose) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outTrend).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outTrend).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outTrend).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inClose)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outSupertrend).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(outTrend)) ) {
+      if( outSupertrend.Overlaps(inHigh) || outSupertrend.Overlaps(inLow) || outSupertrend.Overlaps(inClose) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outTrend).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outTrend).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outTrend).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inClose)) || OutputsAlias(System.Runtime.InteropServices.MemoryMarshal.AsBytes(outSupertrend), System.Runtime.InteropServices.MemoryMarshal.AsBytes(outTrend)) ) {
          throw StreamFailure("SUPERTREND", "openAndFill", RetCode.BadParam);
       }
       return SupertrendOpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, optInMultiplier, out _, out _, outSupertrend, outTrend);

@@ -144,7 +144,7 @@ public partial class Core
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( outMin.Overlaps(outMax) ) {
+      if( OutputsAlias(outMin, outMax) ) {
          return RetCode.BadParam ;
       }
       if( (outMin.Overlaps(inReal) && outMin != inReal) || (outMax.Overlaps(inReal) && outMax != inReal) ) {
@@ -326,7 +326,7 @@ public partial class Core
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( outMin.Overlaps(outMax) ) {
+      if( OutputsAlias(outMin, outMax) ) {
          return RetCode.BadParam ;
       }
       if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outMin).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inReal)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outMax).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inReal)) ) {
@@ -1095,7 +1095,7 @@ public partial class Core
       int guardOutLen = OpenFillCount("MINMAX", "openAndFill", inReal.Length, MinmaxLookback(optInTimePeriod));
       RequireFillLength("MINMAX", "openAndFill", "outMin", outMin.Length, guardOutLen);
       RequireFillLength("MINMAX", "openAndFill", "outMax", outMax.Length, guardOutLen);
-      if( outMin.Overlaps(inReal) || outMax.Overlaps(inReal) || outMin.Overlaps(outMax) ) {
+      if( outMin.Overlaps(inReal) || outMax.Overlaps(inReal) || OutputsAlias(outMin, outMax) ) {
          throw StreamFailure("MINMAX", "openAndFill", RetCode.BadParam);
       }
       return MinmaxOpenAndFillInternal(inReal, 0, optInTimePeriod, out _, out _, outMin, outMax);

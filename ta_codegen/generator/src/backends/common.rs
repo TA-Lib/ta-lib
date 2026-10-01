@@ -498,10 +498,11 @@ fn assert_nullable_stores_are_guardable(func: &FuncDef, nullable: &[String]) {
 ///
 /// `allow_identity` carves out the exact-same-span case (`a == b`) from the
 /// same-type rejection: legitimate for an output computing in place over one
-/// of its inputs (BBANDS-style scratch election), never legitimate between
-/// two outputs, and moot on the cross-type arm — two spans of different element
-/// type can never be the same span object to begin with, so the carve-out would
-/// be dead code there.
+/// of its inputs (BBANDS-style scratch election), and moot on the cross-type
+/// arm: two spans of different element type can never be the same span object
+/// to begin with, so the carve-out would be dead code there.
+///
+/// Output/input pairs only; two outputs take [`csharp_output_alias_expr`].
 pub(crate) fn csharp_overlap_expr(
     a: &str,
     a_ty: &str,
@@ -516,11 +517,24 @@ pub(crate) fn csharp_overlap_expr(
             format!("{a}.Overlaps({b})")
         }
     } else {
-        format!(
-            "System.Runtime.InteropServices.MemoryMarshal.AsBytes({a}).Overlaps(\
-             System.Runtime.InteropServices.MemoryMarshal.AsBytes({b}))"
-        )
+        format!("{}.Overlaps({})", csharp_as_bytes(a), csharp_as_bytes(b))
     }
+}
+
+/// One C# output/output term (rules B6, S6), for the same two guards as
+/// [`csharp_overlap_expr`]. `OutputsAlias` is hand-written in `Core.cs`: unlike a
+/// bare `Overlaps` it rejects one empty buffer passed as both outputs. A
+/// cross-typed pair goes in as bytes, so both halves of that test apply to it.
+pub(crate) fn csharp_output_alias_expr(a: &str, a_ty: &str, b: &str, b_ty: &str) -> String {
+    if a_ty == b_ty {
+        format!("OutputsAlias({a}, {b})")
+    } else {
+        format!("OutputsAlias({}, {})", csharp_as_bytes(a), csharp_as_bytes(b))
+    }
+}
+
+fn csharp_as_bytes(x: &str) -> String {
+    format!("System.Runtime.InteropServices.MemoryMarshal.AsBytes({x})")
 }
 
 // ---------------------------------------------------------------------------

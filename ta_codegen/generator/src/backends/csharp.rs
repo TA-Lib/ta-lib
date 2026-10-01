@@ -968,40 +968,20 @@ fn gen_func_inner(
         out.push_str("      }\n");
         // Optional parameter validation (default + range)
         out.push_str(&emit_opt_param_validation(func, "RetCode.BadParam", enums));
-        // Output-distinctness (issue #108): two outputs sharing memory has no
-        // correct result, so reject it. Input/output overlap stays allowed —
-        // several bodies are written to compute in place.
-        //
-        // `Overlaps`, NOT `==`. Spans make partial overlap expressible:
-        // `buf.AsSpan(0, n)` against `buf.AsSpan(0, n + 1)` is the SAME memory at
-        // the SAME start, and span `==` (ref AND length) reads false on it.
-        //
-        // Zero-length operands are NOT rejected, and must not be. `Overlaps`
-        // short-circuits to false when either side is empty, which is the right
-        // answer: two empty spans cannot clobber each other. Rejecting them makes
-        // a range that ends before the lookback — a documented success with no values,
-        // needing no output space (rule N1) — answer BadParam here while C and
-        // Java accept it (Appendix D item 11, #262), and it makes "declined"
-        // unspellable, since an empty span is how a C# caller declines a nullable
-        // output (B6a).
-        //
-        // Cross-typed pairs (`Span<double>` against `Span<int>`) go through
-        // `csharp_overlap_expr`'s byte-range compare rather than being
-        // skipped — `Overlaps` is not defined across element types, but a
-        // caller CAN place the two on the same memory (`MemoryMarshal.Cast`,
-        // or any other reinterpretation), so skipping them was a real hole.
-        // SUPERTREND is the corpus's only mixed-type output pair today.
+        // Output-distinctness (issue #108, rule B6). Input/output overlap stays
+        // allowed: several bodies are written to compute in place. A cross-typed
+        // pair is compared too, never skipped: `MemoryMarshal.Cast` lays one over
+        // the other in safe code.
         if func.outputs.len() >= 2 {
             let mut pairs: Vec<String> = Vec::new();
             for i in 0..func.outputs.len() {
                 for j in (i + 1)..func.outputs.len() {
                     let (a, b) = (&func.outputs[i], &func.outputs[j]);
-                    pairs.push(super::common::csharp_overlap_expr(
+                    pairs.push(super::common::csharp_output_alias_expr(
                         &a.name,
                         cs_output_elem(a),
                         &b.name,
                         cs_output_elem(b),
-                        false,
                     ));
                 }
             }

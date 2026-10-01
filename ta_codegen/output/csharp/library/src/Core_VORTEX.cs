@@ -144,7 +144,7 @@ public partial class Core
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( outPlusVI.Overlaps(outMinusVI) ) {
+      if( OutputsAlias(outPlusVI, outMinusVI) ) {
          return RetCode.BadParam ;
       }
       if( (outPlusVI.Overlaps(inHigh) && outPlusVI != inHigh) || (outPlusVI.Overlaps(inLow) && outPlusVI != inLow) || (outPlusVI.Overlaps(inClose) && outPlusVI != inClose) || (outMinusVI.Overlaps(inHigh) && outMinusVI != inHigh) || (outMinusVI.Overlaps(inLow) && outMinusVI != inLow) || (outMinusVI.Overlaps(inClose) && outMinusVI != inClose) ) {
@@ -335,7 +335,7 @@ public partial class Core
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( outPlusVI.Overlaps(outMinusVI) ) {
+      if( OutputsAlias(outPlusVI, outMinusVI) ) {
          return RetCode.BadParam ;
       }
       if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outPlusVI).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outPlusVI).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outPlusVI).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inClose)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outMinusVI).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outMinusVI).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outMinusVI).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inClose)) ) {
@@ -1332,7 +1332,7 @@ public partial class Core
       RequireHistoryLength("VORTEX", "openAndFill", "inClose", inClose.Length, inHigh.Length);
       RequireFillLength("VORTEX", "openAndFill", "outPlusVI", outPlusVI.Length, guardOutLen);
       RequireFillLength("VORTEX", "openAndFill", "outMinusVI", outMinusVI.Length, guardOutLen);
-      if( outPlusVI.Overlaps(inHigh) || outPlusVI.Overlaps(inLow) || outPlusVI.Overlaps(inClose) || outMinusVI.Overlaps(inHigh) || outMinusVI.Overlaps(inLow) || outMinusVI.Overlaps(inClose) || outPlusVI.Overlaps(outMinusVI) ) {
+      if( outPlusVI.Overlaps(inHigh) || outPlusVI.Overlaps(inLow) || outPlusVI.Overlaps(inClose) || outMinusVI.Overlaps(inHigh) || outMinusVI.Overlaps(inLow) || outMinusVI.Overlaps(inClose) || OutputsAlias(outPlusVI, outMinusVI) ) {
          throw StreamFailure("VORTEX", "openAndFill", RetCode.BadParam);
       }
       return VortexOpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, out _, out _, outPlusVI, outMinusVI);

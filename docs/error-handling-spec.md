@@ -50,7 +50,7 @@ retired footnote leaves a gap, so a citation of `[4]` keeps its meaning.
 | B3 | [parameter value](https://ta-lib.org/spec/errors/#b3) | ✅ | ✅ | ✅ | ✅ |
 | B4 | [absent argument](https://ta-lib.org/spec/errors/#b4) | ✅ | —<br>[1] | ✅ | —<br>[2] |
 | B5 | [buffer length](https://ta-lib.org/spec/errors/#b5) | ⚠️<br>[3] | ✅ | ✅ | ✅ |
-| B6 | [one buffer, two outputs](https://ta-lib.org/spec/errors/#b6) | ✅<br>[19] | ✅ | ✅<br>[19] | ✅<br>[19] |
+| B6 | [one buffer, two outputs](https://ta-lib.org/spec/errors/#b6) | ✅ | ✅ | ✅ | ✅ |
 | B6a | [omitted output](https://ta-lib.org/spec/errors/#b6a) | ✅ | —<br>[20] | ✅ | —<br>[20] |
 | B7 | [allocation failure](https://ta-lib.org/spec/errors/#b7) | ⚠️<br>[23] | ⚠️<br>[23] | ⚠️<br>[23] | ⚠️<br>[23] |
 | B8 | [internal error](https://ta-lib.org/spec/errors/#b8) | ⚠️<br>[21] | ⚠️<br>[21] | ⚠️<br>[21] | ⚠️<br>[21] |
@@ -63,9 +63,6 @@ absence surfaces as a zero length: B5 in the batch tier, S1 for a stream's
 history. A zero-length output is S5's case.
 
 [3] C has no sizes to check against: a property of the ABI, not a defect.
-
-[19] One zero-length array passed as two outputs on a range that produces no
-values: Appendix D item 15.
 
 [20] Rust takes a non-declinable output as `&mut [T]`, which cannot be omitted,
 and C# cannot tell an omitted output from an empty one (rationale O5). An empty
@@ -178,8 +175,9 @@ no phantom io and `--xlang-hash` for behaviour matching.
 
 B6: `checkOutputAliasRejected` (`test_abstract.c`) sweeps every ordered output
 pair of every function, cross-typed pairs included, binding both onto one buffer
-and requiring `TA_BAD_PARAM`. It binds non-empty buffers, so it cannot see
-Appendix D item 15.
+and requiring `TA_BAD_PARAM`. It binds non-empty buffers; one empty array as
+two outputs (Appendix D item 15) is probed in C#'s `BatchApiTest`, batch and
+`OpenAndFill`.
 
 ### S1 to S7
 
@@ -358,10 +356,12 @@ which is C, and C is the one language where the check is not merely expensive
 but not straightforwardly expressible. Java and Rust satisfy the stronger rule
 for free by making the state unreachable, which is not the same as enforcing it.
 
-Two empty outputs cannot clobber each other, so both guards that can express the
-case require both operands to be non-empty (Appendix D item 11, #262). Java's
-guard has no such term; see item 15. A call that is both undersized and
-identical answers B5, the earlier rule (#261).
+Outputs must be different buffers in every language, a zero-length one included
+(ruled 2026-10-01, Appendix D item 15): R3 then holds with no exception, and C
+and Java already compared identity whatever the length. Two distinct empty
+outputs are different buffers and never collide (item 11, #262). C# needs a
+reference compare beside `Overlaps`, which is false for an empty span. A call
+that is both undersized and identical answers B5, the earlier rule (#261).
 
 Outputs of different element types can only be the same buffer through a
 reinterpreting cast. C compares both through `const void *` (well defined, not
@@ -455,12 +455,12 @@ output. Rust could have read a zero-length slice the same way, and does not:
 `Option` is the shape a Rust caller expects, it makes the declination visible at
 the call site, and it keeps `&mut []` for a non-nullable output a sizing mistake.
 
-An omitted output is not an alias: neither of two declined or empty outputs is
-written, so B6's pair guard skips a pair whose operands are not both present,
-and in C# and Rust also one that is empty; C and Java compare identity whatever
-the length (item 15). C and Java guard each nullable operand non-null before
-comparing (two `NULL`s compare equal); C#'s `Overlaps` already answers false for
-an empty span; Rust requires both slices non-empty.
+An omitted output is not an alias, so B6's pair guard skips a pair whose
+operands are not both present. C and Java guard each nullable operand non-null
+before comparing (two `NULL`s compare equal), and C# skips a span whose
+reference is null, which is what a null array becomes; an empty span over a real
+array is still compared. Rust's guard requires both slices non-empty; safe code
+cannot pass one slice twice, so that is unobservable.
 
 A declined output is still computed, which is what MAMA needs: FAMA feeds the
 next bar. `MA`'s MAMA arm declines `outFAMA` outright in all four backends.
@@ -661,9 +661,9 @@ implemented but not covered by a CI probe; the rule's own footnote says which.
 | ~~8~~ | all | S7 | *Fixed.* `TA_RetCode` had **no member** for "history shorter than the lookback", so C and Rust fell back to the catch-all and Java and C# borrowed `TA_OUT_OF_RANGE_END_INDEX`. `TA_INSUFFICIENT_HISTORY = 17` was appended and all four now report it, which leaves S2 as the opening tier's only producer of `TA_OUT_OF_RANGE_END_INDEX`. |
 | ~~9~~ | Rust, Java, C# | S5 | *Fixed.* `OpenAndFill` validated no output capacity, so an undersized output faulted inside the fill with the buffer already partly written. The public frame now bounds every output by `historyLen - <N>_Lookback(...)`. (C still cannot: no sizes.) |
 | ~~10~~ | C | | *Obsolete.* `TA_SetCompatibility` accepted any value; #388 removed the behaviour it selected, and the pair is kept declared and inert. |
-| ~~11~~ | C#, Rust | B6 | *Fixed.* Two distinct **empty** output buffers were rejected as aliased in C# and Rust and accepted in C and Java, measured on `ACCBANDS(0, 251, …, optInTimePeriod 253, …)` with three distinct zero-length outputs. Both guards now require both operands to be non-empty (#262). |
+| ~~11~~ | C#, Rust | B6 | *Fixed.* Two distinct **empty** output buffers were rejected as aliased in C# and Rust and accepted in C and Java, measured on `ACCBANDS(0, 251, …, optInTimePeriod 253, …)` with three distinct zero-length outputs. Both now accept them (#262). |
 | ~~13~~ | all | S1 | *Fixed.* An empty history answered `TA_BAD_PARAM` where S1 specifies `TA_OUT_OF_RANGE_START_INDEX`, and C checked argument presence ahead of the index pair. All four openers now answer the pair ahead of every presence check, except for the one check each language makes a precondition of reading the length (footnote [4]). |
 | 14 | Java | L1, L2, L4 | *Open.* A lookback call does not check a null MA type: `maLookback(1, null)` returns 0 and `maLookback(2, null)` throws `NullPointerException` from its `switch`, where `ma(..., null)` throws `TALibArgumentException` carrying `TA_BAD_PARAM` (B3). The same holds for every lookback with an MA-type parameter (MA, MAVP, STOCH, STOCHF, STOCHRSI, KDJ, MACDEXT, BBANDS and the rest): a null-typed stage at period 1 returns a lookback, any other throws. |
-| 15 | C, Java, C# | B6 | *Open, needs a ruling.* One zero-length array passed as two outputs, on a range that produces no values: C and Java answer `TA_BAD_PARAM` (C compares pointers whatever the count; Java's guard is reference equality with no non-empty term, `Core_BBANDS.java`), C# answers `TA_SUCCESS` (`Overlaps` is false for an empty span). Rust cannot pass one buffer twice in safe code. Item 11 measured only distinct buffers. The public B6 note states it as current behaviour and as R3's one exception. |
+| ~~15~~ | C# | B6, S6 | *Fixed.* One zero-length array passed as two outputs, on a range that produces no values, answered `TA_SUCCESS` in C# (`Overlaps` is false for an empty span) and `TA_BAD_PARAM` in C and Java. Ruled 2026-10-01: outputs must be different buffers in every language. C#'s batch and `OpenAndFill` guards now also reject two empty outputs on the same non-null reference. |
 
 Next item: 16.

@@ -195,7 +195,7 @@ public partial class Core
       } else if( (int)optInSlowD_MAType < MATypes.Min || (int)optInSlowD_MAType > MATypes.Max ) {
          return RetCode.BadParam;
       }
-      if( outK.Overlaps(outD) || outK.Overlaps(outJ) || outD.Overlaps(outJ) ) {
+      if( OutputsAlias(outK, outD) || OutputsAlias(outK, outJ) || OutputsAlias(outD, outJ) ) {
          return RetCode.BadParam ;
       }
       if( (outK.Overlaps(inHigh) && outK != inHigh) || (outK.Overlaps(inLow) && outK != inLow) || (outK.Overlaps(inClose) && outK != inClose) || (outD.Overlaps(inHigh) && outD != inHigh) || (outD.Overlaps(inLow) && outD != inLow) || (outD.Overlaps(inClose) && outD != inClose) || (outJ.Overlaps(inHigh) && outJ != inHigh) || (outJ.Overlaps(inLow) && outJ != inLow) || (outJ.Overlaps(inClose) && outJ != inClose) ) {
@@ -280,7 +280,7 @@ public partial class Core
       } else if( (int)optInSlowD_MAType < MATypes.Min || (int)optInSlowD_MAType > MATypes.Max ) {
          return RetCode.BadParam;
       }
-      if( outK.Overlaps(outD) || outK.Overlaps(outJ) || outD.Overlaps(outJ) ) {
+      if( OutputsAlias(outK, outD) || OutputsAlias(outK, outJ) || OutputsAlias(outD, outJ) ) {
          return RetCode.BadParam ;
       }
       if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outK).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outK).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outK).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inClose)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outD).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outD).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outD).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inClose)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outJ).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outJ).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outJ).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inClose)) ) {
@@ -967,7 +967,7 @@ public partial class Core
       RequireFillLength("KDJ", "openAndFill", "outK", outK.Length, guardOutLen);
       RequireFillLength("KDJ", "openAndFill", "outD", outD.Length, guardOutLen);
       RequireFillLength("KDJ", "openAndFill", "outJ", outJ.Length, guardOutLen);
-      if( outK.Overlaps(inHigh) || outK.Overlaps(inLow) || outK.Overlaps(inClose) || outD.Overlaps(inHigh) || outD.Overlaps(inLow) || outD.Overlaps(inClose) || outJ.Overlaps(inHigh) || outJ.Overlaps(inLow) || outJ.Overlaps(inClose) || outK.Overlaps(outD) || outK.Overlaps(outJ) || outD.Overlaps(outJ) ) {
+      if( outK.Overlaps(inHigh) || outK.Overlaps(inLow) || outK.Overlaps(inClose) || outD.Overlaps(inHigh) || outD.Overlaps(inLow) || outD.Overlaps(inClose) || outJ.Overlaps(inHigh) || outJ.Overlaps(inLow) || outJ.Overlaps(inClose) || OutputsAlias(outK, outD) || OutputsAlias(outK, outJ) || OutputsAlias(outD, outJ) ) {
          throw StreamFailure("KDJ", "openAndFill", RetCode.BadParam);
       }
       return KdjOpenAndFillInternal(inHigh, inLow, inClose, 0, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, out _, out _, outK, outD, outJ);

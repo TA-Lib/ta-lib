@@ -36,6 +36,8 @@
  * `partial class Core` piece of this type. */
 
 using System;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace TALib;
 
@@ -254,6 +256,22 @@ public sealed partial class Core
                     + ", needs " + required,
                 argName, RetCode.BadParam);
         }
+    }
+
+    /* Rules B6 and S6: whether two outputs are one buffer. Overlaps is false
+     * whenever a side is empty, so one zero-length buffer passed twice is caught
+     * by its reference. A null array converts to a span with a null reference: a
+     * declined output, never one buffer with another. Pass a cross-typed pair as
+     * bytes. */
+    internal static bool OutputsAlias<T>(Span<T> a, Span<T> b)
+    {
+        if (a.Overlaps(b))
+        {
+            return true;
+        }
+        ref T start = ref MemoryMarshal.GetReference(a);
+        return a.IsEmpty && b.IsEmpty && !Unsafe.IsNullRef(ref start)
+            && Unsafe.AreSame(ref start, ref MemoryMarshal.GetReference(b));
     }
 
     /* Rule S5's bound: how many values an OpenAndFill writes.

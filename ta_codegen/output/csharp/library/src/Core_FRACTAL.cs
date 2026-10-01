@@ -149,7 +149,7 @@ public partial class Core
       } else if( optInRightBars < 1 || optInRightBars > 100000 ) {
          return RetCode.BadParam;
       }
-      if( outSwingHigh.Overlaps(outSwingLow) ) {
+      if( OutputsAlias(outSwingHigh, outSwingLow) ) {
          return RetCode.BadParam ;
       }
       if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outSwingHigh).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outSwingHigh).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outSwingLow).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outSwingLow).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) ) {
@@ -245,7 +245,7 @@ public partial class Core
       } else if( optInRightBars < 1 || optInRightBars > 100000 ) {
          return RetCode.BadParam;
       }
-      if( outSwingHigh.Overlaps(outSwingLow) ) {
+      if( OutputsAlias(outSwingHigh, outSwingLow) ) {
          return RetCode.BadParam ;
       }
       if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outSwingHigh).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outSwingHigh).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outSwingLow).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outSwingLow).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) ) {
@@ -987,7 +987,7 @@ public partial class Core
       RequireHistoryLength("FRACTAL", "openAndFill", "inLow", inLow.Length, inHigh.Length);
       RequireFillLength("FRACTAL", "openAndFill", "outSwingHigh", outSwingHigh.Length, guardOutLen);
       RequireFillLength("FRACTAL", "openAndFill", "outSwingLow", outSwingLow.Length, guardOutLen);
-      if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outSwingHigh).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outSwingHigh).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outSwingLow).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outSwingLow).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || outSwingHigh.Overlaps(outSwingLow) ) {
+      if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outSwingHigh).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outSwingHigh).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outSwingLow).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outSwingLow).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || OutputsAlias(outSwingHigh, outSwingLow) ) {
          throw StreamFailure("FRACTAL", "openAndFill", RetCode.BadParam);
       }
       return FractalOpenAndFillInternal(inHigh, inLow, 0, optInLeftBars, optInRightBars, out _, out _, outSwingHigh, outSwingLow);

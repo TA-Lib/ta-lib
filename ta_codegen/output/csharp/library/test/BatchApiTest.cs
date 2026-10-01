@@ -45,6 +45,7 @@
  *  080226 MF,CC  First Version — the OutRange batch contract, ported from the
  *                Java BatchApiTest to the C# surface.
  *  082526 MF,CC  Declinable outputs and distinct empty ones (#262).
+ *  100126 MF,CC  One empty array as two outputs is one buffer (Appendix D item 15).
  */
 
 /* Hand-written test; ta_codegen never opens this file. */
@@ -1032,39 +1033,58 @@ public static class BatchApiTest
     }
 
     /// <summary>
-    /// Appendix D item 11: distinct zero-length outputs are not aliases. A range
-    /// shorter than the lookback produces nothing and needs no output space
-    /// (rule N1), so the call is a success with an empty range — which is what C
-    /// and Java always answered.
+    /// Rules B6 and S6 on empty outputs (Appendix D items 11 and 15): one
+    /// zero-length array passed as two outputs is one buffer, as in C and Java;
+    /// two separate ones are not, and neither is a null array, which declines.
+    /// An empty output reaches the guard only on a call that produces no values
+    /// (rule N1), so in an opener the accepted shapes answer S7.
     /// </summary>
-    /// <remarks>C# used to reject it outright: the pair guard carried an explicit
-    /// <c>a.IsEmpty &amp;&amp; b.IsEmpty</c> arm, because a span carries no
-    /// identity with no elements. That arm also made "declined" unspellable,
-    /// which is why it went with #262 rather than being narrowed.</remarks>
-    private static void DistinctEmptyOutputsAreNotAliases()
+    private static void OneEmptyArrayIsOneBuffer()
     {
         var core = new Core();
         double[] input = Closes(252);
         const int period = 253;
         Check(core.AccbandsLookback(period) > 251,
             "the probe needs a lookback past the range, or it proves nothing");
+        var empty = new double[0];
 
-        OutRange r = core.Accbands(0, 251, input, input, input, period,
-            default, default, default);
-        Check(r.Count == 0, "a sub-lookback range needs no output space");
+        CheckCode(RetCode.BadParam,
+            () => core.Accbands(0, 251, input, input, input, period, empty, empty, new double[0]),
+            "one empty array as two outputs is rejected");
+        Check(core.Accbands(0, 251, input, input, input, period,
+                  new double[0], new double[0], new double[0]).Count == 0,
+            "distinct empty outputs are accepted");
+        Check(core.Accbands(0, 251, input, input, input, period, default, default, default).Count == 0,
+            "null outputs are accepted");
 
-        // Control: the same three empty spans on a range that DOES produce values
-        // are still rejected, so this is about the count and not about the bound
-        // having gone away.
-        CheckThrows<ArgumentException>(
-            () => core.Accbands(0, 251, input, input, input, 20, default, default, default),
-            "an output that has to hold values is still bounded", "ACCBANDS");
-        // And a REAL alias of two outputs is still rejected.
-        var shared = new double[252];
-        CheckThrows<ArgumentException>(
-            () => core.Accbands(0, 251, input, input, input, 20,
-                shared, shared, new double[252]),
-            "two outputs that are one span are still rejected", "ACCBANDS");
+        int mamaEnd = core.MamaLookback(0.5, 0.05) - 1;
+        CheckCode(RetCode.BadParam,
+            () => core.Mama(0, mamaEnd, input, 0.5, 0.05, empty, empty),
+            "an empty array as outMAMA and outFAMA is rejected");
+        Check(core.Mama(0, mamaEnd, input, 0.5, 0.05, empty, default).Count == 0,
+            "a declined outFAMA beside an empty outMAMA is accepted");
+
+        // Cross-typed: the int output is the real output's own bytes.
+        int stEnd = core.SupertrendLookback(10, 3.0) - 1;
+        CheckCode(RetCode.BadParam,
+            () => core.Supertrend(0, stEnd, input, input, input, 10, 3.0,
+                      empty, MemoryMarshal.Cast<double, int>(empty.AsSpan())),
+            "an empty real output reinterpreted as the int output is rejected");
+        Check(core.Supertrend(0, stEnd, input, input, input, 10, 3.0,
+                  new double[0], new int[0]).Count == 0,
+            "distinct empty outputs of two element types are accepted");
+
+        double[] history = Closes(core.AccbandsLookback(20));
+        CheckCode(RetCode.BadParam,
+            () => core.AccbandsOpenAndFill(history, history, history, 20, empty, empty, new double[0]),
+            "OpenAndFill: one empty array as two outputs is rejected");
+        CheckCode(RetCode.InsufficientHistory,
+            () => core.AccbandsOpenAndFill(history, history, history, 20,
+                      new double[0], new double[0], new double[0]),
+            "OpenAndFill: distinct empty outputs pass S6");
+        CheckCode(RetCode.InsufficientHistory,
+            () => core.AccbandsOpenAndFill(history, history, history, 20, default, default, default),
+            "OpenAndFill: null outputs pass S6");
     }
 
     /// <summary>The index rules outrank the buffer rules on the output side too.
@@ -1218,7 +1238,7 @@ public static class BatchApiTest
         IntegerSentinelSelectsTheDocumentedDefault();
         EveryFailureCarriesItsCode();
         ANullableOutputMayBeDeclined();
-        DistinctEmptyOutputsAreNotAliases();
+        OneEmptyArrayIsOneBuffer();
 
         if (_failures == 0)
         {

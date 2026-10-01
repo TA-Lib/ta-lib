@@ -185,7 +185,7 @@ public partial class Core
       if( (endIdx < 0) || (endIdx > IndexMax) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      if( outSine.Overlaps(outLeadSine) ) {
+      if( OutputsAlias(outSine, outLeadSine) ) {
          return RetCode.BadParam ;
       }
       if( (outSine.Overlaps(inReal) && outSine != inReal) || (outLeadSine.Overlaps(inReal) && outLeadSine != inReal) ) {
@@ -605,7 +605,7 @@ public partial class Core
       if( (endIdx < 0) || (endIdx > IndexMax) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      if( outSine.Overlaps(outLeadSine) ) {
+      if( OutputsAlias(outSine, outLeadSine) ) {
          return RetCode.BadParam ;
       }
       if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outSine).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inReal)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outLeadSine).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inReal)) ) {
@@ -2305,7 +2305,7 @@ public partial class Core
       int guardOutLen = OpenFillCount("HT_SINE", "openAndFill", inReal.Length, HtSineLookback());
       RequireFillLength("HT_SINE", "openAndFill", "outSine", outSine.Length, guardOutLen);
       RequireFillLength("HT_SINE", "openAndFill", "outLeadSine", outLeadSine.Length, guardOutLen);
-      if( outSine.Overlaps(inReal) || outLeadSine.Overlaps(inReal) || outSine.Overlaps(outLeadSine) ) {
+      if( outSine.Overlaps(inReal) || outLeadSine.Overlaps(inReal) || OutputsAlias(outSine, outLeadSine) ) {
          throw StreamFailure("HT_SINE", "openAndFill", RetCode.BadParam);
       }
       return HtSineOpenAndFillInternal(inReal, 0, out _, out _, outSine, outLeadSine);

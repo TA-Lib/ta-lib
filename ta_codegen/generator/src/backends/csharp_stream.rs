@@ -1742,9 +1742,9 @@ fn emit_identity_step_branch(
 /// the wrong arm and write through its own input. Rejecting overlap up front is
 /// what keeps those branches sound.
 ///
-/// Cross-typed output pairs (`Span<double>` against `Span<int>`) go through
-/// [`super::common::csharp_overlap_expr`] rather than being skipped —
-/// SUPERTREND is the corpus's only mixed-type output pair today.
+/// Output pairs, cross-typed ones included, go through
+/// [`super::common::csharp_output_alias_expr`], so one empty buffer passed as
+/// two outputs is rejected here as in the batch tier.
 fn alias_condition(func: &FuncDef, inputs: &[String]) -> Option<String> {
     let outs: Vec<&str> = func.outputs.iter().map(|out| out.name.as_str()).collect();
     let mut pairs: Vec<String> = Vec::new();
@@ -1760,7 +1760,7 @@ fn alias_condition(func: &FuncDef, inputs: &[String]) -> Option<String> {
     for i in 0..outs.len() {
         for b in &outs[i + 1..] {
             let ty = |o: &str| if out_is_int(func, o) { "int" } else { "double" };
-            pairs.push(super::common::csharp_overlap_expr(outs[i], ty(outs[i]), b, ty(b), false));
+            pairs.push(super::common::csharp_output_alias_expr(outs[i], ty(outs[i]), b, ty(b)));
         }
     }
     if pairs.is_empty() { None } else { Some(pairs.join(" || ")) }

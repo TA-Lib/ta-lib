@@ -134,7 +134,7 @@ public partial class Core
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( outAroonDown.Overlaps(outAroonUp) ) {
+      if( OutputsAlias(outAroonDown, outAroonUp) ) {
          return RetCode.BadParam ;
       }
       if( (outAroonDown.Overlaps(inHigh) && outAroonDown != inHigh) || (outAroonDown.Overlaps(inLow) && outAroonDown != inLow) || (outAroonUp.Overlaps(inHigh) && outAroonUp != inHigh) || (outAroonUp.Overlaps(inLow) && outAroonUp != inLow) ) {
@@ -254,7 +254,7 @@ public partial class Core
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( outAroonDown.Overlaps(outAroonUp) ) {
+      if( OutputsAlias(outAroonDown, outAroonUp) ) {
          return RetCode.BadParam ;
       }
       if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outAroonDown).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outAroonDown).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outAroonUp).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outAroonUp).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) ) {
@@ -1026,7 +1026,7 @@ public partial class Core
       RequireHistoryLength("AROON", "openAndFill", "inLow", inLow.Length, inHigh.Length);
       RequireFillLength("AROON", "openAndFill", "outAroonDown", outAroonDown.Length, guardOutLen);
       RequireFillLength("AROON", "openAndFill", "outAroonUp", outAroonUp.Length, guardOutLen);
-      if( outAroonDown.Overlaps(inHigh) || outAroonDown.Overlaps(inLow) || outAroonUp.Overlaps(inHigh) || outAroonUp.Overlaps(inLow) || outAroonDown.Overlaps(outAroonUp) ) {
+      if( outAroonDown.Overlaps(inHigh) || outAroonDown.Overlaps(inLow) || outAroonUp.Overlaps(inHigh) || outAroonUp.Overlaps(inLow) || OutputsAlias(outAroonDown, outAroonUp) ) {
          throw StreamFailure("AROON", "openAndFill", RetCode.BadParam);
       }
       return AroonOpenAndFillInternal(inHigh, inLow, 0, optInTimePeriod, out _, out _, outAroonDown, outAroonUp);

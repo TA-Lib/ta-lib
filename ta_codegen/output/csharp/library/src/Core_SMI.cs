@@ -209,7 +209,7 @@ public partial class Core
       } else if( optInSignalPeriod < 2 || optInSignalPeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( outSMI.Overlaps(outSMISignal) ) {
+      if( OutputsAlias(outSMI, outSMISignal) ) {
          return RetCode.BadParam ;
       }
       if( (outSMI.Overlaps(inHigh) && outSMI != inHigh) || (outSMI.Overlaps(inLow) && outSMI != inLow) || (outSMI.Overlaps(inClose) && outSMI != inClose) || (outSMISignal.Overlaps(inHigh) && outSMISignal != inHigh) || (outSMISignal.Overlaps(inLow) && outSMISignal != inLow) || (outSMISignal.Overlaps(inClose) && outSMISignal != inClose) ) {
@@ -509,7 +509,7 @@ public partial class Core
       } else if( optInSignalPeriod < 2 || optInSignalPeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( outSMI.Overlaps(outSMISignal) ) {
+      if( OutputsAlias(outSMI, outSMISignal) ) {
          return RetCode.BadParam ;
       }
       if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outSMI).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outSMI).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outSMI).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inClose)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outSMISignal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outSMISignal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outSMISignal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inClose)) ) {
@@ -1724,7 +1724,7 @@ public partial class Core
       RequireHistoryLength("SMI", "openAndFill", "inClose", inClose.Length, inHigh.Length);
       RequireFillLength("SMI", "openAndFill", "outSMI", outSMI.Length, guardOutLen);
       RequireFillLength("SMI", "openAndFill", "outSMISignal", outSMISignal.Length, guardOutLen);
-      if( outSMI.Overlaps(inHigh) || outSMI.Overlaps(inLow) || outSMI.Overlaps(inClose) || outSMISignal.Overlaps(inHigh) || outSMISignal.Overlaps(inLow) || outSMISignal.Overlaps(inClose) || outSMI.Overlaps(outSMISignal) ) {
+      if( outSMI.Overlaps(inHigh) || outSMI.Overlaps(inLow) || outSMI.Overlaps(inClose) || outSMISignal.Overlaps(inHigh) || outSMISignal.Overlaps(inLow) || outSMISignal.Overlaps(inClose) || OutputsAlias(outSMI, outSMISignal) ) {
          throw StreamFailure("SMI", "openAndFill", RetCode.BadParam);
       }
       return SmiOpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out _, out _, outSMI, outSMISignal);

@@ -74,7 +74,7 @@ public static class AllTests
     // fails until the floor is lowered on purpose.
     private static readonly Dictionary<string, int> MinChecks = new()
     {
-        ["BatchApiTest"] = 142,
+        ["BatchApiTest"] = 149,
         ["CoreBuilderTest"] = 86,
         ["DivZeroTest"] = 91,
         ["FpSelectTest"] = 3_635_004,

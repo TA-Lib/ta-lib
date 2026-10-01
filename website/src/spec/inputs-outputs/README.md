@@ -78,7 +78,7 @@ An MA-type parameter accepts every `MAType` member, and a release may add member
 
 | | C | Rust | Java | C# |
 |---|---|---|---|---|
-| "The same buffer" means | the same pointer | not expressible in safe code | the same array | equal spans: same start and length |
+| "The same buffer" means | the same pointer | not expressible in safe code | the same array | equal spans: same start and length; a null array is no buffer |
 | Output on an input (N4) | allowed | not expressible | allowed | allowed |
 | N8's cases expressible | yes | no, in safe code | no | yes |
 | N8's cases detected | no | n/a | n/a | yes (current behaviour) |

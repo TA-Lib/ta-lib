@@ -134,7 +134,7 @@ public partial class Core
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( outBullPower.Overlaps(outBearPower) ) {
+      if( OutputsAlias(outBullPower, outBearPower) ) {
          return RetCode.BadParam ;
       }
       if( (outBullPower.Overlaps(inHigh) && outBullPower != inHigh) || (outBullPower.Overlaps(inLow) && outBullPower != inLow) || (outBullPower.Overlaps(inClose) && outBullPower != inClose) || (outBearPower.Overlaps(inHigh) && outBearPower != inHigh) || (outBearPower.Overlaps(inLow) && outBearPower != inLow) || (outBearPower.Overlaps(inClose) && outBearPower != inClose) ) {
@@ -258,7 +258,7 @@ public partial class Core
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( outBullPower.Overlaps(outBearPower) ) {
+      if( OutputsAlias(outBullPower, outBearPower) ) {
          return RetCode.BadParam ;
       }
       if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outBullPower).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outBullPower).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outBullPower).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inClose)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outBearPower).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outBearPower).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outBearPower).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inClose)) ) {
@@ -983,7 +983,7 @@ public partial class Core
       RequireHistoryLength("ERI", "openAndFill", "inClose", inClose.Length, inHigh.Length);
       RequireFillLength("ERI", "openAndFill", "outBullPower", outBullPower.Length, guardOutLen);
       RequireFillLength("ERI", "openAndFill", "outBearPower", outBearPower.Length, guardOutLen);
-      if( outBullPower.Overlaps(inHigh) || outBullPower.Overlaps(inLow) || outBullPower.Overlaps(inClose) || outBearPower.Overlaps(inHigh) || outBearPower.Overlaps(inLow) || outBearPower.Overlaps(inClose) || outBullPower.Overlaps(outBearPower) ) {
+      if( outBullPower.Overlaps(inHigh) || outBullPower.Overlaps(inLow) || outBullPower.Overlaps(inClose) || outBearPower.Overlaps(inHigh) || outBearPower.Overlaps(inLow) || outBearPower.Overlaps(inClose) || OutputsAlias(outBullPower, outBearPower) ) {
          throw StreamFailure("ERI", "openAndFill", RetCode.BadParam);
       }
       return EriOpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, out _, out _, outBullPower, outBearPower);

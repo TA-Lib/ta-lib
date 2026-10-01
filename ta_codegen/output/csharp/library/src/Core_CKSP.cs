@@ -206,7 +206,7 @@ public partial class Core
       } else if( optInStopPeriod < 1 || optInStopPeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( outHighStop.Overlaps(outLowStop) ) {
+      if( OutputsAlias(outHighStop, outLowStop) ) {
          return RetCode.BadParam ;
       }
       if( (outHighStop.Overlaps(inHigh) && outHighStop != inHigh) || (outHighStop.Overlaps(inLow) && outHighStop != inLow) || (outHighStop.Overlaps(inClose) && outHighStop != inClose) || (outLowStop.Overlaps(inHigh) && outLowStop != inHigh) || (outLowStop.Overlaps(inLow) && outLowStop != inLow) || (outLowStop.Overlaps(inClose) && outLowStop != inClose) ) {
@@ -585,7 +585,7 @@ public partial class Core
       } else if( optInStopPeriod < 1 || optInStopPeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( outHighStop.Overlaps(outLowStop) ) {
+      if( OutputsAlias(outHighStop, outLowStop) ) {
          return RetCode.BadParam ;
       }
       if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outHighStop).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outHighStop).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outHighStop).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inClose)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outLowStop).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outLowStop).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outLowStop).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inClose)) ) {
@@ -1992,7 +1992,7 @@ public partial class Core
       RequireHistoryLength("CKSP", "openAndFill", "inClose", inClose.Length, inHigh.Length);
       RequireFillLength("CKSP", "openAndFill", "outHighStop", outHighStop.Length, guardOutLen);
       RequireFillLength("CKSP", "openAndFill", "outLowStop", outLowStop.Length, guardOutLen);
-      if( outHighStop.Overlaps(inHigh) || outHighStop.Overlaps(inLow) || outHighStop.Overlaps(inClose) || outLowStop.Overlaps(inHigh) || outLowStop.Overlaps(inLow) || outLowStop.Overlaps(inClose) || outHighStop.Overlaps(outLowStop) ) {
+      if( outHighStop.Overlaps(inHigh) || outHighStop.Overlaps(inLow) || outHighStop.Overlaps(inClose) || outLowStop.Overlaps(inHigh) || outLowStop.Overlaps(inLow) || outLowStop.Overlaps(inClose) || OutputsAlias(outHighStop, outLowStop) ) {
          throw StreamFailure("CKSP", "openAndFill", RetCode.BadParam);
       }
       return CkspOpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, optInMultiplier, optInStopPeriod, out _, out _, outHighStop, outLowStop);

@@ -222,7 +222,7 @@ public partial class Core
       } else if( !(optInSlowLimit >= 1e-2 && optInSlowLimit <= 9.9e-1) ) {
          return RetCode.BadParam;
       }
-      if( outMAMA.Overlaps(outFAMA) ) {
+      if( OutputsAlias(outMAMA, outFAMA) ) {
          return RetCode.BadParam ;
       }
       if( (outMAMA.Overlaps(inReal) && outMAMA != inReal) || (outFAMA.Overlaps(inReal) && outFAMA != inReal) ) {
@@ -619,7 +619,7 @@ public partial class Core
       } else if( !(optInSlowLimit >= 1e-2 && optInSlowLimit <= 9.9e-1) ) {
          return RetCode.BadParam;
       }
-      if( outMAMA.Overlaps(outFAMA) ) {
+      if( OutputsAlias(outMAMA, outFAMA) ) {
          return RetCode.BadParam ;
       }
       if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outMAMA).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inReal)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outFAMA).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inReal)) ) {
@@ -2182,7 +2182,7 @@ public partial class Core
       int guardOutLen = OpenFillCount("MAMA", "openAndFill", inReal.Length, MamaLookback(optInFastLimit, optInSlowLimit));
       RequireFillLength("MAMA", "openAndFill", "outMAMA", outMAMA.Length, guardOutLen);
       if( !outFAMA.IsEmpty ) RequireFillLength("MAMA", "openAndFill", "outFAMA", outFAMA.Length, guardOutLen);
-      if( outMAMA.Overlaps(inReal) || outFAMA.Overlaps(inReal) || outMAMA.Overlaps(outFAMA) ) {
+      if( outMAMA.Overlaps(inReal) || outFAMA.Overlaps(inReal) || OutputsAlias(outMAMA, outFAMA) ) {
          throw StreamFailure("MAMA", "openAndFill", RetCode.BadParam);
       }
       return MamaOpenAndFillInternal(inReal, 0, optInFastLimit, optInSlowLimit, out _, out _, outMAMA, outFAMA);

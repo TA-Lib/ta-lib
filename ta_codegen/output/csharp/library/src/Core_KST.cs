@@ -292,7 +292,7 @@ public partial class Core
       } else if( optInSignalPeriod < 1 || optInSignalPeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( outKST.Overlaps(outKSTSignal) ) {
+      if( OutputsAlias(outKST, outKSTSignal) ) {
          return RetCode.BadParam ;
       }
       if( (outKST.Overlaps(inReal) && outKST != inReal) || (outKSTSignal.Overlaps(inReal) && outKSTSignal != inReal) ) {
@@ -594,7 +594,7 @@ public partial class Core
       } else if( optInSignalPeriod < 1 || optInSignalPeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( outKST.Overlaps(outKSTSignal) ) {
+      if( OutputsAlias(outKST, outKSTSignal) ) {
          return RetCode.BadParam ;
       }
       if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outKST).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inReal)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outKSTSignal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inReal)) ) {
@@ -1989,7 +1989,7 @@ public partial class Core
       int guardOutLen = OpenFillCount("KST", "openAndFill", inReal.Length, KstLookback(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod));
       RequireFillLength("KST", "openAndFill", "outKST", outKST.Length, guardOutLen);
       RequireFillLength("KST", "openAndFill", "outKSTSignal", outKSTSignal.Length, guardOutLen);
-      if( outKST.Overlaps(inReal) || outKSTSignal.Overlaps(inReal) || outKST.Overlaps(outKSTSignal) ) {
+      if( outKST.Overlaps(inReal) || outKSTSignal.Overlaps(inReal) || OutputsAlias(outKST, outKSTSignal) ) {
          throw StreamFailure("KST", "openAndFill", RetCode.BadParam);
       }
       return KstOpenAndFillInternal(inReal, 0, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, out _, out _, outKST, outKSTSignal);
