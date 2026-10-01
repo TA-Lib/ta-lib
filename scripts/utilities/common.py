@@ -9,16 +9,15 @@ import sys
 import tempfile
 import time
 
-# Past this, a full `build.py servers` gets no faster (the Rust server's own
-# compile is the critical path): 16 jobs matched 70 on an 80-thread host.
+# Past this, a full `build.py servers` gets no faster: the Rust server's own
+# compile is its critical path.
 BUILD_JOBS_CAP = 16
 
 
 def default_build_jobs() -> int:
-    """Parallel build jobs for this host now: at most BUILD_JOBS_CAP, one CPU
-    left free from 4 CPUs up, and less the one-minute load, but never below half
-    that cap -- the load average lags by a minute, so a script's own previous
-    step would otherwise throttle the next one."""
+    """The floor at half the cap is load-bearing: the load average lags by a
+    minute, so a script's own previous step would otherwise throttle the next
+    one to a single job."""
     try:
         cpus = len(os.sched_getaffinity(0))
     except AttributeError:

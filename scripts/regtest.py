@@ -48,7 +48,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from utilities.common import (
     check_prerequisites, prereqs_for_languages, backends_for_languages,
-    default_build_jobs,
+    default_build_jobs, JobServer,
 )
 from utilities import ta_ref
 
@@ -156,6 +156,7 @@ def main():
     bin_dir = os.path.join(root, "bin")
     codegen_dir = os.path.join(root, "ta_codegen", "generator")
     jobs = str(default_build_jobs())
+    pool = JobServer(int(jobs))
 
     # 1. cmake
     if not no_build:
@@ -197,7 +198,7 @@ def main():
             cmd.append(f"--backend={backend_filter}")
         if func_filter:
             cmd.append(f"--function={func_filter}")
-        subprocess.run(cmd, check=True, cwd=codegen_dir)
+        pool.run(cmd, check=True, cwd=codegen_dir)
 
     # 3a. generate servers — skipped when step 2 already wrote them: a full
     # `generate` owns every committed source, the servers and benches included
@@ -209,7 +210,7 @@ def main():
         cmd = ["cargo", "run", "--release", "--", "generate-servers"]
         if backend_filter:
             cmd.append(f"--backend={backend_filter}")
-        subprocess.run(cmd, check=True, cwd=codegen_dir)
+        pool.run(cmd, check=True, cwd=codegen_dir)
 
     # 3b. generate bench binary source. The benches are C, so step 2 covers them
     # only when it actually ran the C backend — `--language=rust` narrows it to
@@ -219,7 +220,7 @@ def main():
     if not no_gen_srv and not c_covered:
         print("\n=== Regenerating bench binary ===")
         cmd = ["cargo", "run", "--release", "--", "generate-bench", "--backend=c"]
-        subprocess.run(cmd, check=True, cwd=codegen_dir)
+        pool.run(cmd, check=True, cwd=codegen_dir)
 
     # 4. compile servers (only if something was regenerated)
     did_generate = not no_gen_ind or not no_gen_srv
@@ -228,8 +229,7 @@ def main():
         cmd = ["cargo", "run", "--release", "--", "build"]
         if backend_filter:
             cmd.append(f"--backend={backend_filter}")
-        subprocess.run(cmd, check=True, cwd=codegen_dir,
-                       env=dict(os.environ, TA_BUILD_JOBS=jobs))
+        pool.run(cmd, check=True, cwd=codegen_dir)
 
         # Debug-profile Rust server: rebuild just the Rust server bin without
         # --release (overflow checks on) and install it over the release one, so
@@ -238,8 +238,8 @@ def main():
         if rust_debug:
             print("\n=== Rebuilding Rust server (debug profile) ===")
             rust_dir = os.path.join(root, "ta_codegen", "output", "rust")
-            subprocess.run(["cargo", "build", "--bin", "ta_codegen_serve"],
-                           check=True, cwd=rust_dir)
+            pool.run(["cargo", "build", "--bin", "ta_codegen_serve"],
+                     check=True, cwd=rust_dir)
             shutil.copy2(
                 os.path.join(rust_dir, "target", "debug", "ta_codegen_serve"),
                 os.path.join(bin_dir, "ta_codegen_serve_rust"),

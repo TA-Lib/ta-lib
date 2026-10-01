@@ -991,7 +991,7 @@ const COMMON_GCC_FLAGS: &[&str] = &[
     "-Wno-parentheses-equality",
 ];
 
-/// The `-flto` spelling for `concurrent` whole-library compiles running at once:
+/// The `-flto` spelling for `concurrent` heavy compiles running at once:
 /// each gets its share of the caller's `TA_BUILD_JOBS` budget, where `auto`
 /// would give every link one LTRANS job per CPU. Clang takes no count and runs
 /// no parallel LTRANS for one TU, so it keeps `auto`.
@@ -1170,7 +1170,15 @@ fn run_build_step(label: &str, tool: &str, cmd: &mut std::process::Command) -> B
     }
 }
 
-fn build_c(root: &Path, out_base: &Path, bin_dir: &Path, servers_only: bool) -> Vec<BuildStep> {
+/// `with_rust` counts the concurrent Rust build when sizing gcc's LTO share.
+/// cargo still draws on the whole budget, so the total can exceed it.
+fn build_c(
+    root: &Path,
+    out_base: &Path,
+    bin_dir: &Path,
+    servers_only: bool,
+    with_rust: bool,
+) -> Vec<BuildStep> {
     let c_dir = out_base.join("c/tools");
     let include_dir = root.join("include");
     let src_dir = root.join("src");
@@ -1188,7 +1196,7 @@ fn build_c(root: &Path, out_base: &Path, bin_dir: &Path, servers_only: bool) -> 
         .iter()
         .filter(|f| !servers_only && c_dir.join(f).exists())
         .count();
-    let lto = gcc_lto_flag(1 + benches);
+    let lto = gcc_lto_flag(1 + benches + usize::from(with_rust));
 
     let server = || {
         let src = c_dir.join("ta_codegen_serve.c");
@@ -1352,13 +1360,14 @@ fn build_servers(backend_filter: Option<&str>, servers_only: bool) {
     println!("  Building servers concurrently: {}", backends_to_build.join(", "));
 
     // None marks a backend name no arm recognises.
+    let with_rust = backends_to_build.contains(&"rust");
     let results: Vec<(&str, Option<Vec<BuildStep>>)> = std::thread::scope(|s| {
         let handles: Vec<_> = backends_to_build
             .iter()
             .map(|&backend| {
                 let (root, out_base, bin_dir) = (&root, &out_base, &bin_dir);
                 let handle = s.spawn(move || match backend {
-                    "c" => Some(build_c(root, out_base, bin_dir, servers_only)),
+                    "c" => Some(build_c(root, out_base, bin_dir, servers_only, with_rust)),
                     "java" => Some(build_java(out_base, bin_dir)),
                     "csharp" => Some(build_csharp(out_base, bin_dir)),
                     "rust" => Some(build_rust(out_base, bin_dir)),

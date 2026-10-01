@@ -44,8 +44,13 @@ BUILD_DIR_NAME = "cmake-build"
 SANITIZE_DIR_NAME = "cmake-build-asan"
 DEFAULT_BUILD_TYPE = "Release"
 DEFAULT_JOBS = default_build_jobs()
-# Replaced by main() when --jobs is given.
 JOBS = JobServer(DEFAULT_JOBS)
+
+def positive_int(text: str) -> int:
+    n = int(text)
+    if n < 1:
+        raise argparse.ArgumentTypeError(f"must be at least 1, got {n}")
+    return n
 
 def find_repo_root() -> str:
     """Find the git repository root, regardless of where the script is called from."""
@@ -208,8 +213,9 @@ def show_help():
 
   Options:
     --build-type=Debug  Set cmake build type (default: Release)
-    --jobs=8            Parallel jobs for cargo, make and gcc's LTO together
-                        (default: up to 16, fewer on a small or busy host)
+    --jobs=8            Parallel jobs shared by cargo and make; gcc's LTO
+                        takes a share of the same count (default: up to 16,
+                        fewer on a small or busy host)
     --cmake-args="..."  Extra arguments passed to cmake configure
     --language=c,rust   For servers/regtest/xlang-hash: build only
                         these backends, and require only their toolchains. A
@@ -750,7 +756,7 @@ def main():
     )
     parser.add_argument('target', nargs='?', default='all')
     parser.add_argument('--build-type', default=DEFAULT_BUILD_TYPE)
-    parser.add_argument('--jobs', '-j', type=int, default=DEFAULT_JOBS)
+    parser.add_argument('--jobs', '-j', type=positive_int, default=DEFAULT_JOBS)
     parser.add_argument('--cmake-args', default='')
     # Narrows BOTH the prerequisite check and the backends actually built, so a
     # machine without a JDK or the .NET SDK can still do `servers`/`regtest`
