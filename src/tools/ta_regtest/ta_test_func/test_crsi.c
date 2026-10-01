@@ -873,9 +873,10 @@ static ErrorNumber test_crsi_goldens( const TA_History *history )
 
 /* Flat, rising and falling are exact by construction; the rising and falling
  * values were also produced by trading-signals and by the exact arm.
- *   flat:    TA_RSI answers 0 on a window with no change (#253), the streak
- *            stays 0 and nothing ranks below a zero return, so exactly 0.0.
- *            trading-signals answers 66.67: its RSI gives 100 there.
+ *   flat:    TA_RSI answers its neutral 50 on a window with no change (#480),
+ *            on the closes and on the streak, which stays 0; nothing ranks
+ *            below a zero return, so exactly (50+50+0)/3. trading-signals
+ *            answers 66.67: its RSI gives 100 there.
  *   rising:  both RSI legs saturate at 100 and each return is below every
  *            earlier one, so exactly (100+100+0)/3.
  *   falling: every leg is 0.
@@ -886,6 +887,7 @@ static ErrorNumber test_crsi_edges( const TA_History *history )
 {
    static TA_Real in[400], out[CRSI_CAP];
    const double third = crsiFromBits( 0x4050aaaaaaaaaaabULL );
+   const double flat  = crsiFromBits( 0x4040aaaaaaaaaaabULL );
    TA_RetCode retCode;
    TA_Integer beg, nb;
    int shape, t, i, lookback;
@@ -894,7 +896,7 @@ static ErrorNumber test_crsi_edges( const TA_History *history )
    for( shape = 0; shape < 3; shape++ )
    {
       static const char *name[3] = { "flat", "rising", "falling" };
-      double want = shape == 1 ? third : 0.0;
+      double want = shape == 0 ? flat : shape == 1 ? third : 0.0;
 
       for( i = 0; i < 400; i++ )
       {

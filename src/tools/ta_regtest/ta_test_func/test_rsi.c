@@ -105,6 +105,7 @@ typedef struct
 /**** Local functions declarations.    ****/
 static ErrorNumber do_test( const TA_History *history,
                             const TA_Test *test );
+static ErrorNumber test_rsi_flat_start( void );
 
 /**** Local variables definitions.     ****/
 
@@ -179,10 +180,89 @@ ErrorNumber test_func_rsi( TA_History *history )
       }
    }
 
+   retValue = test_rsi_flat_start();
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
    /* Re-initialize all the unstable period to zero. */
    TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
 
    /* All test succeed. */
+   return TA_TEST_PASS;
+}
+
+/* #480: no gain and no loss since the seed is 0/0 and answers the neutral 50,
+ * where CMO answers 0, so CMO == 2*RSI-100 holds there too. One-sided input
+ * stays 100 or 0, and a flat run after a move holds the value the move left.
+ *   shape 0  flat throughout
+ *   shape 1  flat, one up-move at bar FLAT_MOVE_BAR, flat again
+ *   shape 2  flat, one down-move at bar FLAT_MOVE_BAR, flat again
+ *   shape 3  rising
+ *   shape 4  falling */
+#define FLAT_NB_BARS  200
+#define FLAT_MOVE_BAR 120
+static ErrorNumber test_rsi_flat_start( void )
+{
+   static const int period[] = { 2, 14, 30 };
+   static const int unstable[] = { 0, 5 };
+   static const char *name[] = { "flat", "flat-up-flat", "flat-down-flat", "rising", "falling" };
+   static TA_Real in[FLAT_NB_BARS], rsi[FLAT_NB_BARS], cmo[FLAT_NB_BARS];
+   TA_RetCode rc1, rc2;
+   TA_Integer beg, nb, cmoBeg, cmoNb;
+   unsigned int p, u;
+   int shape, i, nbNeutral, nbHeld;
+
+   nbNeutral = nbHeld = 0;
+   for( shape = 0; shape < 5; shape++ )
+   for( p = 0; p < sizeof(period)/sizeof(period[0]); p++ )
+   for( u = 0; u < sizeof(unstable)/sizeof(unstable[0]); u++ )
+   {
+      for( i = 0; i < FLAT_NB_BARS; i++ )
+      {
+         if( shape == 3 )      in[i] = (double)(10013 + 37*i) / 100.0;
+         else if( shape == 4 ) in[i] = (double)(40013 - 37*i) / 100.0;
+         else                  in[i] = 100.13;
+         if( shape == 1 && i >= FLAT_MOVE_BAR ) in[i] = 101.37;
+         if( shape == 2 && i >= FLAT_MOVE_BAR ) in[i] = 98.89;
+      }
+
+      TA_SetUnstablePeriod( TA_FUNC_UNST_RSI, unstable[u] );
+      TA_SetUnstablePeriod( TA_FUNC_UNST_CMO, unstable[u] );
+      rc1 = TA_RSI( 0, FLAT_NB_BARS-1, in, period[p], &beg, &nb, rsi );
+      rc2 = TA_CMO( 0, FLAT_NB_BARS-1, in, period[p], &cmoBeg, &cmoNb, cmo );
+      if( rc1 != TA_SUCCESS || rc2 != TA_SUCCESS || beg != period[p]+unstable[u] ||
+          nb != FLAT_NB_BARS-beg || cmoBeg != beg || cmoNb != nb || beg >= FLAT_MOVE_BAR )
+      {
+         printf( "RSI %s Fail (period %d, unstable %d): rc=%d,%d (%d,%d) (%d,%d)\n",
+                 name[shape], period[p], unstable[u], (int)rc1, (int)rc2, beg, nb, cmoBeg, cmoNb );
+         return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+      }
+
+      for( i = 0; i < nb; i++ )
+      {
+         int moved = (shape == 1 || shape == 2) && beg+i >= FLAT_MOVE_BAR;
+         double want = ( shape == 3 || (shape == 1 && moved) ) ? 100.0
+                     : ( shape == 4 || (shape == 2 && moved) ) ? 0.0 : 50.0;
+
+         if( want == 50.0 ) nbNeutral++;
+         if( moved )        nbHeld++;
+         if( rsi[i] != want || cmo[i] != 2.0*want - 100.0 )
+         {
+            printf( "RSI %s Fail (period %d, unstable %d) at bar %d: RSI %.17g CMO %.17g,"
+                    " expected exactly %.17g and %.17g (issue #480)\n",
+                    name[shape], period[p], unstable[u], beg+i, rsi[i], cmo[i],
+                    want, 2.0*want - 100.0 );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+      }
+   }
+
+   if( nbNeutral == 0 || nbHeld == 0 )
+   {
+      printf( "RSI flat-start test compared nothing: neutral=%d held=%d\n", nbNeutral, nbHeld );
+      return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+   }
+
    return TA_TEST_PASS;
 }
 

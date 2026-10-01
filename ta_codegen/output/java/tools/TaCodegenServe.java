@@ -168101,6 +168101,8 @@ class Core {
      *               gain/loss without a branch; the loop-carried chain keeps
      *               neither a divide nor a 50/50 mispredict.
      *  092826 MF,CC #466 Drop the period-1 copy-through; the range starts at 2.
+     *  093026 MF,CC #480 Answer the neutral 50 instead of 0 when neither a gain nor
+     *               a loss has been seen; 0 read as extremely oversold.
      */
 
        /**
@@ -168212,11 +168214,15 @@ class Core {
            *
            * The second equation is used here for speed optimization.
            *
-           * prevGain+prevLoss is a sum of non-negative magnitudes, so it is zero only
-           * when every change since the seed was exactly zero -- test it exactly, never
-           * against a fixed band. A gain carries the quote unit, so a constant put
-           * against it zeroes a healthy oscillator for an instrument quoted below it
-           * (issue #253).
+           * prevGain+prevLoss is a sum of non-negative magnitudes, so it is zero when
+           * every change since the seed was exactly zero, or once both have decayed to
+           * zero. Test it exactly, never against a fixed band: a gain carries the
+           * quote unit, so a constant put against it zeroes a healthy oscillator for
+           * an instrument quoted below it (issue #253).
+           *
+           * A zero total is 0/0, no gain against no loss, so it answers the neutral
+           * 50 (issue #480). Keep it apart from the one-sided cases, which are 0 and
+           * 100 and reach the division.
            */
           if( today > startIdx ) {
              tempValue1 = prevGain + prevLoss;
@@ -168224,7 +168230,7 @@ class Core {
                 outReal[outIdx] = 100.0 * (prevGain / tempValue1);
                 outIdx = outIdx + 1;
              } else {
-                outReal[outIdx] = 0.0;
+                outReal[outIdx] = 50.0;
                 outIdx = outIdx + 1;
              }
           } else {
@@ -168265,7 +168271,7 @@ class Core {
                 outReal[outIdx] = 100.0 * (prevGain / tempValue1);
                 outIdx = outIdx + 1;
              } else {
-                outReal[outIdx] = 0.0;
+                outReal[outIdx] = 50.0;
                 outIdx = outIdx + 1;
              }
           }
@@ -168336,7 +168342,7 @@ class Core {
                 outReal[outIdx] = 100.0 * (prevGain / tempValue1);
                 outIdx = outIdx + 1;
              } else {
-                outReal[outIdx] = 0.0;
+                outReal[outIdx] = 50.0;
                 outIdx = outIdx + 1;
              }
           } else {
@@ -168371,7 +168377,7 @@ class Core {
                 outReal[outIdx] = 100.0 * (prevGain / tempValue1);
                 outIdx = outIdx + 1;
              } else {
-                outReal[outIdx] = 0.0;
+                outReal[outIdx] = 50.0;
                 outIdx = outIdx + 1;
              }
           }
@@ -168385,6 +168391,11 @@ class Core {
         * gauge overbought/oversold conditions. &gt;70 overbought, &lt;30 oversold.
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/rsi">ta-lib.org/functions/rsi</a>.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>While the input has not changed since the first bar the call reads, there is neither a gain nor a loss and RSI is 0/0: the output is the neutral 50. Up to 0.8.1 it was 0, which read as oversold. Input that has only risen gives 100 and input that has only fallen gives 0.</li>
+        * <li>After a move, an unchanged input holds the last value until the two averages decay to rounding residue: about a thousand unchanged bars at period 2, about ten thousand at period 14. The output then drifts and settles on 50. Input that had only risen or only fallen stays at 100 or 0, except at period 2.</li>
+        * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are; nothing
         * outside that range is touched, and the library never pads with NaN. A
@@ -168442,6 +168453,11 @@ class Core {
         * gauge overbought/oversold conditions. &gt;70 overbought, &lt;30 oversold.
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/rsi">ta-lib.org/functions/rsi</a>.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>While the input has not changed since the first bar the call reads, there is neither a gain nor a loss and RSI is 0/0: the output is the neutral 50. Up to 0.8.1 it was 0, which read as oversold. Input that has only risen gives 100 and input that has only fallen gives 0.</li>
+        * <li>After a move, an unchanged input holds the last value until the two averages decay to rounding residue: about a thousand unchanged bars at period 2, about ten thousand at period 14. The output then drifts and settles on 50. Input that had only risen or only fallen stays at 100 or 0, except at period 2.</li>
+        * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
@@ -168632,7 +168648,7 @@ class Core {
              if( tempValue1 > 0.0 ) {
                 cur_outReal = 100.0 * (prevGain / tempValue1);
              } else {
-                cur_outReal = 0.0;
+                cur_outReal = 50.0;
              }
              return cur_outReal;
           }
@@ -168682,7 +168698,7 @@ class Core {
           if( tempValue1 > 0.0 ) {
              sp.cur_outReal = 100.0 * (sp.prevGain / tempValue1);
           } else {
-             sp.cur_outReal = 0.0;
+             sp.cur_outReal = 50.0;
           }
        }
        private RetCode rsiOpenImpl( RsiStream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
@@ -168769,11 +168785,15 @@ class Core {
            *
            * The second equation is used here for speed optimization.
            *
-           * prevGain+prevLoss is a sum of non-negative magnitudes, so it is zero only
-           * when every change since the seed was exactly zero -- test it exactly, never
-           * against a fixed band. A gain carries the quote unit, so a constant put
-           * against it zeroes a healthy oscillator for an instrument quoted below it
-           * (issue #253).
+           * prevGain+prevLoss is a sum of non-negative magnitudes, so it is zero when
+           * every change since the seed was exactly zero, or once both have decayed to
+           * zero. Test it exactly, never against a fixed band: a gain carries the
+           * quote unit, so a constant put against it zeroes a healthy oscillator for
+           * an instrument quoted below it (issue #253).
+           *
+           * A zero total is 0/0, no gain against no loss, so it answers the neutral
+           * 50 (issue #480). Keep it apart from the one-sided cases, which are 0 and
+           * 100 and reach the division.
            */
           if( today > startIdx ) {
              tempValue1 = prevGain + prevLoss;
@@ -168781,7 +168801,7 @@ class Core {
                 outReal[outIdx * outStride] = 100.0 * (prevGain / tempValue1);
                 outIdx = outIdx + 1;
              } else {
-                outReal[outIdx * outStride] = 0.0;
+                outReal[outIdx * outStride] = 50.0;
                 outIdx = outIdx + 1;
              }
           } else {
@@ -168822,7 +168842,7 @@ class Core {
                 outReal[outIdx * outStride] = 100.0 * (prevGain / tempValue1);
                 outIdx = outIdx + 1;
              } else {
-                outReal[outIdx * outStride] = 0.0;
+                outReal[outIdx * outStride] = 50.0;
                 outIdx = outIdx + 1;
              }
           }
@@ -207643,7 +207663,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "8db942e6587ee85e";
+    static final String SPLICED_GENCODE_DIGEST = "f8844e1a61552f11";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];

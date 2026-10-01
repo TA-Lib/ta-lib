@@ -63,6 +63,8 @@
  *               gain/loss without a branch; the loop-carried chain keeps
  *               neither a divide nor a 50/50 mispredict.
  *  092826 MF,CC #466 Drop the period-1 copy-through; the range starts at 2.
+ *  093026 MF,CC #480 Answer the neutral 50 instead of 0 when neither a gain nor
+ *               a loss has been seen; 0 read as extremely oversold.
  */
 
 TA_LIB_API int TA_RSI_Lookback( int optInTimePeriod )
@@ -168,11 +170,15 @@ TA_LIB_API TA_RetCode TA_RSI( int    startIdx,
     *
     * The second equation is used here for speed optimization.
     *
-    * prevGain+prevLoss is a sum of non-negative magnitudes, so it is zero only
-    * when every change since the seed was exactly zero -- test it exactly, never
-    * against a fixed band. A gain carries the quote unit, so a constant put
-    * against it zeroes a healthy oscillator for an instrument quoted below it
-    * (issue #253).
+    * prevGain+prevLoss is a sum of non-negative magnitudes, so it is zero when
+    * every change since the seed was exactly zero, or once both have decayed to
+    * zero. Test it exactly, never against a fixed band: a gain carries the
+    * quote unit, so a constant put against it zeroes a healthy oscillator for
+    * an instrument quoted below it (issue #253).
+    *
+    * A zero total is 0/0, no gain against no loss, so it answers the neutral
+    * 50 (issue #480). Keep it apart from the one-sided cases, which are 0 and
+    * 100 and reach the division.
     */
    if( today > startIdx )
    {
@@ -183,7 +189,7 @@ TA_LIB_API TA_RetCode TA_RSI( int    startIdx,
          outIdx = outIdx + 1;
       } else 
       {
-         outReal[outIdx] = 0.0;
+         outReal[outIdx] = 50.0;
          outIdx = outIdx + 1;
       }
    } else 
@@ -229,7 +235,7 @@ TA_LIB_API TA_RetCode TA_RSI( int    startIdx,
          outIdx = outIdx + 1;
       } else 
       {
-         outReal[outIdx] = 0.0;
+         outReal[outIdx] = 50.0;
          outIdx = outIdx + 1;
       }
    }
@@ -313,7 +319,7 @@ TA_RetCode TA_S_RSI( int    startIdx,
          outIdx = outIdx + 1;
       } else 
       {
-         outReal[outIdx] = 0.0;
+         outReal[outIdx] = 50.0;
          outIdx = outIdx + 1;
       }
    } else 
@@ -353,7 +359,7 @@ TA_RetCode TA_S_RSI( int    startIdx,
          outIdx = outIdx + 1;
       } else 
       {
-         outReal[outIdx] = 0.0;
+         outReal[outIdx] = 50.0;
          outIdx = outIdx + 1;
       }
    }
@@ -401,7 +407,7 @@ static void TA_RSI_StepImpl( struct TA_RSI_Stream *sp, double inReal, double *ou
       *outReal= 100.0 * (sp->prevGain / tempValue1);
    } else 
    {
-      *outReal= 0.0;
+      *outReal= 50.0;
    }
    sp->cur_outReal = *outReal;
 }
@@ -497,11 +503,15 @@ static TA_RetCode TA_RSI_OpenImpl( struct TA_RSI_Stream **stream, const double i
        *
        * The second equation is used here for speed optimization.
        *
-       * prevGain+prevLoss is a sum of non-negative magnitudes, so it is zero only
-       * when every change since the seed was exactly zero -- test it exactly, never
-       * against a fixed band. A gain carries the quote unit, so a constant put
-       * against it zeroes a healthy oscillator for an instrument quoted below it
-       * (issue #253).
+       * prevGain+prevLoss is a sum of non-negative magnitudes, so it is zero when
+       * every change since the seed was exactly zero, or once both have decayed to
+       * zero. Test it exactly, never against a fixed band: a gain carries the
+       * quote unit, so a constant put against it zeroes a healthy oscillator for
+       * an instrument quoted below it (issue #253).
+       *
+       * A zero total is 0/0, no gain against no loss, so it answers the neutral
+       * 50 (issue #480). Keep it apart from the one-sided cases, which are 0 and
+       * 100 and reach the division.
        */
       if( today > startIdx )
       {
@@ -512,7 +522,7 @@ static TA_RetCode TA_RSI_OpenImpl( struct TA_RSI_Stream **stream, const double i
             outIdx = outIdx + 1;
          } else 
          {
-            outReal[outIdx * outStride] = 0.0;
+            outReal[outIdx * outStride] = 50.0;
             outIdx = outIdx + 1;
          }
       } else 
@@ -558,7 +568,7 @@ static TA_RetCode TA_RSI_OpenImpl( struct TA_RSI_Stream **stream, const double i
             outIdx = outIdx + 1;
          } else 
          {
-            outReal[outIdx * outStride] = 0.0;
+            outReal[outIdx * outStride] = 50.0;
             outIdx = outIdx + 1;
          }
       }
@@ -667,7 +677,7 @@ TA_LIB_API TA_RetCode TA_RSI_Peek( const TA_RSI_Stream *stream, double inReal, d
       *outReal= 100.0 * (prevGain / tempValue1);
    } else 
    {
-      *outReal= 0.0;
+      *outReal= 50.0;
    }
    return TA_SUCCESS;
 }

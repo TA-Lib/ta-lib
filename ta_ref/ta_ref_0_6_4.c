@@ -89,7 +89,7 @@ static const TaRefTol TOL[] = {
 
 /* Each ceiling sits halfway between the largest share measured on one function
  * and 1. */
-enum { W_TRIX_NATR, W_VARIANCE, W_CORREL_BETA, W_MFI, W_KAMA, W_ULTOSC, W_MAVP };
+enum { W_TRIX_NATR, W_VARIANCE, W_CORREL_BETA, W_MFI, W_KAMA, W_ULTOSC, W_MAVP, W_RSI };
 static const TaRefWaiver WAIVERS[] = {
    [W_TRIX_NATR]   = { "trix_natr_98",
                        "TRIX/NATR with startIdx past the lookback, and NATR over a zero close (#98)", 0.77 },
@@ -105,6 +105,8 @@ static const TaRefWaiver WAIVERS[] = {
                        "ULTOSC with an emptied window, where 0.6.4 divides residue (#253)", 0.56 },
    [W_MAVP]        = { "mavp_inverted_94",
                        "MAVP with its minimum period above its maximum, where 0.6.4 read uninitialized results (#94)", 0.53 },
+   [W_RSI]         = { "rsi_flat_480",
+                       "RSI with no change from the first bar read to the first output, where 0.6.4 answers 0 for 0/0 (#480)", 0.56 },
 };
 
 /* 0.6.4 computes variance as E[x^2] - mean^2, losing about log10(kappa)
@@ -353,6 +355,20 @@ static int ultosc_blind( const double *h, const double *l, const double *c,
    return 0;
 }
 
+/* RSI's gain and loss sums are both zero while nothing has moved since the
+ * first bar read, so the first output tells whether the case starts on a 0/0. */
+static int rsi_flat_start( const double *x, int n, int s, int e, int lookback )
+{
+   int first, t;
+
+   if( lookback < 1 ) return 0;
+   first = (s > lookback) ? s : lookback;
+   if( first > e || first >= n ) return 0;
+   for( t = first - lookback + 1; t <= first; t++ )
+      if( x[t] != x[t-1] ) return 0;
+   return 1;
+}
+
 /* Real inputs are mapped close first, then volume. */
 static int waive( const TaRefCase *c )
 {
@@ -383,6 +399,8 @@ static int waive( const TaRefCase *c )
       return kama_blind( c->close, n, period, e ) ? W_KAMA : -1;
    if( strcmp( f, "STOCH" ) == 0 || strcmp( f, "STOCHF" ) == 0 )
       return smooths_with_kama( c ) ? W_KAMA : -1;
+   if( strcmp( f, "RSI" ) == 0 )
+      return rsi_flat_start( c->close, n, s, e, c->lookback ) ? W_RSI : -1;
    if( strcmp( f, "MAVP" ) == 0 )
       return ta_ref_opt( c, "optInMinPeriod", 0 ) > ta_ref_opt( c, "optInMaxPeriod", 0 ) ? W_MAVP : -1;
    if( strcmp( f, "ULTOSC" ) == 0 )
