@@ -6,8 +6,8 @@
 #policy	monotone
 #toolchain	x86_64/x86_64-linux-gnu/13.3.0
 #corpus	points=20000 regime_period=14 seed=42 shape=peg stream_iters=1024 trend_strength=0.500000
-#commit	fc08259553719809aedc65e5e8e25fa31c8dc0bd
-#generated	2026-10-01T00:38:49Z
+#commit	2ff6f193d014e278fab44ffe6ea6511bd74e47ef
+#generated	2026-10-01T11:16:59Z
 AC	batch	0	703438
 AC	open	0	704171
 AC	openfill	0	692624
@@ -458,6 +458,11 @@ CHOPTR	open	0	5959380
 CHOPTR	openfill	0	5994016
 CHOPTR	peek	0	597890
 CHOPTR	update	0	452160
+CKSP	batch	0	1626305
+CKSP	open	0	2475217
+CKSP	openfill	0	2475217
+CKSP	peek	0	97293
+CKSP	update	0	168490
 CMF	batch	0	871482
 CMF	open	0	931863
 CMF	openfill	0	951844
@@ -1102,7 +1107,7 @@ WILLR	batch	0	861802
 WILLR	open	0	2562808
 WILLR	openfill	0	2562806
 WILLR	peek	0	231975
-WILLR	update	0	230819
+WILLR	update	0	230818
 WMA	batch	0	345594
 WMA	open	0	366044
 WMA	openfill	0	366037
