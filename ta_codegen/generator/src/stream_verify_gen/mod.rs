@@ -40,8 +40,8 @@ fn sv_input_suffix(name: &str, generic_idx: &mut usize) -> &'static str {
 
 /// Unstable-period ids a function's stream values depend on: its own id
 /// plus every unstable id reachable through the TRANSITIVE closure of
-/// `<base>_lookback` calls starting from its lookback body (STOCH ->
-/// ma_lookback -> ema_lookback -> EMA). Composed/dispatch functions honor
+/// `<base>_lookback` calls and direct id reads starting from its lookback body
+/// (STOCH -> ma_lookback -> ema_lookback -> EMA). Composed/dispatch functions honor
 /// ambient K only through the callees' lookbacks, so the lookback closure
 /// covers exactly the sub-stream selection space.
 fn collect_pin_ids(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> Vec<i32> {
@@ -68,6 +68,9 @@ fn collect_pin_ids(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, En
                             if let Some(base) = fname.strip_suffix("_lookback") {
                                 queue.push(base.to_uppercase());
                             }
+                        }
+                        if let Some(owner) = crate::stability::unstable_period_owner(x) {
+                            queue.push(owner);
                         }
                     });
                 });

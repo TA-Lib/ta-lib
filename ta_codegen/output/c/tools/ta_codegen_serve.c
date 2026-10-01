@@ -35424,7 +35424,6 @@ static SV_NOINLINE void sv_verify_DX(const char *json, char *resp, int resp_size
 }
 
 static SV_NOINLINE void sv_verify_EFI(const char *json, char *resp, int resp_size, int svN, int svK, int svCandle) {
-    (void)svK;
     (void)svCandle;
     int optInTimePeriod = json_find_int(json, "optInTimePeriod");
     TA_RetCode rc;
@@ -35448,12 +35447,14 @@ static SV_NOINLINE void sv_verify_EFI(const char *json, char *resp, int resp_siz
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
+    TA_SetUnstablePeriod(5, (unsigned int)svK);
     rc = TA_EFI(0, svN - 1, sv_c, sv_v, optInTimePeriod, &svBeg, &svNb, sv_b0);
     lb = TA_EFI_Lookback(optInTimePeriod);
     if( rc != TA_SUCCESS || svNb <= 0 ) {
         int openRejects = 0;
         { TA_EFI_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_EFI_Open(&st, sv_c, sv_v, svN, optInTimePeriod, &v0);
           if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_EFI_Close(st); }
+        TA_SetUnstablePeriod(5, 0);
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
         return;
     }
@@ -35677,6 +35678,7 @@ static SV_NOINLINE void sv_verify_EFI(const char *json, char *resp, int resp_siz
           }
     }
     if( shortHistChecked && !shortHistOk ) allOk = 0;
+    TA_SetUnstablePeriod(5, 0);
     if( fillChecked && !fillOk ) allOk = 0;
     if( stateChecked && !stateOk ) allOk = 0;
     if( cloneChecked && !cloneOk ) allOk = 0;

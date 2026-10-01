@@ -24074,6 +24074,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
+            cb = cb.UnstablePeriod((FuncUnstId)5, svK);
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {

@@ -18,6 +18,7 @@
 use std::collections::{BTreeSet, HashSet};
 use std::path::Path;
 
+use regex::Regex;
 use ta_codegen_lib::{ir::FuncDef, parser, stability};
 
 fn load() -> Vec<FuncDef> {
@@ -42,8 +43,8 @@ fn load() -> Vec<FuncDef> {
     funcs
 }
 
-/// Functions that inherit an unstable period through a hard-coded inner call, and the
-/// function each one inherits from. Measured: every one of these moves at default params
+/// Functions that inherit an unstable period through a hard-coded inner call or a direct
+/// read of another function's id, and the function each one inherits from. Measured: every one of these moves at default params
 /// except CRSI, whose default 101-bar rank lookback outlasts both RSI legs at an unstable
 /// period of 10; it moves at (14,14,20), 21 -> 25.
 /// KC is the only one with TWO sources (EMA for its centre line, ATR for its band), and it
@@ -168,9 +169,9 @@ fn ma_types_split_into_recursive_and_windowed() {
 /// row.
 ///
 /// Two classes are not held to it. The range sweep skips path-dependent functions before
-/// it reads the map, so their rows are optional. A MAType-dependent function's row follows
-/// its default MA type, which the call graph cannot see, so its rows are allowed, not
-/// required.
+/// it reads the map, so their rows serve only the stream K-leg and are optional here. A
+/// MAType-dependent function's rows depend on which MA types its tests select, which the
+/// call graph cannot see, so they are allowed, not required.
 #[test]
 fn derivation_agrees_with_ta_regtest_unstable_map() {
     let funcs = load();
@@ -182,20 +183,19 @@ fn derivation_agrees_with_ta_regtest_unstable_map() {
         .find("static const UnstableLookup UNSTABLE_MAP[] = {")
         .expect("UNSTABLE_MAP not found in test_codegen.c");
     let body = &src[start..start + src[start..].find("\n};").expect("UNSTABLE_MAP end")];
-    let map: BTreeSet<(String, String)> = body
-        .lines()
-        .filter_map(|l| {
-            let row = l.trim().strip_prefix("{\"")?;
-            let (name, rest) = row.split_once('"')?;
-            let id = rest.split("TA_FUNC_UNST_").nth(1)?.split('}').next()?.trim();
-            Some((name.to_string(), id.to_string()))
-        })
+    let code = Regex::new(r"(?s)/\*.*?\*/").unwrap().replace_all(body, "");
+    let rows: Vec<(String, String)> = Regex::new(r#"\{\s*"(\w+)"\s*,\s*TA_FUNC_UNST_(\w+)\s*\}"#)
+        .unwrap()
+        .captures_iter(&code)
+        .map(|c| (c[1].to_string(), c[2].to_string()))
         .collect();
-    assert!(
-        map.contains(&("EMA".to_string(), "EMA".to_string())) && map.len() >= 27,
-        "UNSTABLE_MAP parse found {} rows; the row format changed",
-        map.len()
+    assert_eq!(
+        rows.len(),
+        code.matches("TA_FUNC_UNST_").count(),
+        "an UNSTABLE_MAP row escaped the parser; the row format changed"
     );
+    assert!(rows.iter().any(|r| r.0 == "EMA" && r.1 == "EMA"), "UNSTABLE_MAP parse is vacuous");
+    let map: BTreeSet<(String, String)> = rows.into_iter().collect();
 
     let mut required = BTreeSet::new();
     let mut allowed = BTreeSet::new();
@@ -225,4 +225,3 @@ fn derivation_agrees_with_ta_regtest_unstable_map() {
         "UNSTABLE_MAP rows the derivation calls start-independent: {unexplained:?}"
     );
 }
-

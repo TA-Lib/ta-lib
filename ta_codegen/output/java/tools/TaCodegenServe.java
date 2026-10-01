@@ -261938,6 +261938,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.unstablePeriod[5] = svK;
             RetCode rc;
             try { rc = c2.efiImpl(0, svN - 1, fz_c, fz_v, optInTimePeriod, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }

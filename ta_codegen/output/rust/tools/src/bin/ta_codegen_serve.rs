@@ -43980,7 +43980,8 @@ pub(super) fn sv_efi(core: &Core, params: &Value) -> String {
     let rounds = 1;
     for rd in 0..rounds {
         let _ = rd;
-        let cb = core.to_builder();
+        let mut cb = core.to_builder();
+        if let Some(id) = func_unst_id_from_int(5usize) { cb = cb.unstable_period(id, svK); }
         let c2 = match cb.build() {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
