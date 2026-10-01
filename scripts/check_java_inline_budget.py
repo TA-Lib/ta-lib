@@ -10,9 +10,10 @@ inline a hot method whose bytecode exceeds `FreqInlineSize`, so crossing that
 budget costs those callers roughly a third of their per-bar time, measured. It
 costs nothing visible: no test fails, no output changes.
 
-Each new MAType grows peek by 16 bytes and the step frame by 20 (the arm body
-plus a tableswitch entry), so this expires on a schedule -- and the enum is
-live: HMA, RMA and ZLEMA all arrived in 2026.
+The step and tape frames route the MATypes the enum opens with and hand the
+rest to a `...Rest` frame, which C2 must inline too. New MATypes append to the
+enum, so each grows peek by 16 bytes and those Rest frames by 20 to 22: these
+are the frames that expire, and the enum is live.
 
 325 is C2's DEFAULT, not a law. It moves between JDK versions and any
 deployment can override it. This gate says the frames left the budget the
@@ -34,6 +35,9 @@ FRAMES = [
     ("Core", "maStepImpl", re.compile(r"^\s+private void maStepImpl\(io\.github\.talib\.Core\$MaStream, double\);")),
     ("Core", "maStepTape", re.compile(r"^\s+private double maStepTape" + TAPE_SIG)),
     ("Core", "maPeekTape", re.compile(r"^\s+private double maPeekTape" + TAPE_SIG)),
+    ("Core", "maStepImplRest", re.compile(r"^\s+private void maStepImplRest\(io\.github\.talib\.Core\$MaStream, double\);")),
+    ("Core", "maStepTapeRest", re.compile(r"^\s+private double maStepTapeRest" + TAPE_SIG)),
+    ("Core", "maPeekTapeRest", re.compile(r"^\s+private double maPeekTapeRest" + TAPE_SIG)),
 ]
 
 # A method's last instruction is always a 1-byte return or throw, so the final
@@ -131,9 +135,9 @@ def main():
         die("%s over C2's %d-byte FreqInlineSize: %s. Every caller holding an MA "
             "sub-handle just lost inlining on that frame, worth ~a third of its "
             "per-bar time. An N-way switch cannot stay under a fixed budget as N "
-            "grows, so the fix is to split it: keep the common MATypes in this "
-            "frame and delegate the rest to a second method that may grow freely. "
-            "That split point is FRAME_ARMS. Emitter: "
+            "grows. Split an unsplit frame at FRAME_ARMS. For a Rest frame, raise "
+            "FRAME_ARMS while every head frame has room, else add a third frame. "
+            "Emitter: "
             "build_dispatch_peek_frame / emit_dispatch / emit_dispatch_tape in "
             "ta_codegen/generator/src/backends/java_stream.rs."
             % ("Frame" if len(over) == 1 else "Frames", BUDGET,
