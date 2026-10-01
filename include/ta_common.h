@@ -118,7 +118,7 @@ typedef struct TA_StringTable
  * Example:
  *        TA_RetCodeInfo info;
  *
- *        retCode = TA_Initialize( ... );
+ *        retCode = TA_SMA( ... );
  *
  *        if( retCode != TA_SUCCESS )
  *        {
@@ -130,7 +130,7 @@ typedef struct TA_StringTable
  *        }
  *
  * Would display:
- *        "Error 1(TA_LIB_NOT_INITIALIZE): TA_Initialize was not successfully called"
+ *        "Error 2(TA_BAD_PARAM): A parameter is out of range"
  */
 typedef struct TA_RetCodeInfo
 {
@@ -142,15 +142,14 @@ typedef struct TA_RetCodeInfo
 TA_LIB_API void TA_SetRetCodeInfo( TA_RetCode theRetCode, TA_RetCodeInfo *retCodeInfo );
 
 /* TA_Initialize() must be called once, and only once, per process, before
- * any other function declared in this file.
+ * any other TA function.
  *
  * TA_Shutdown() should be called before the application exits; the library
  * must not be used after it.
  *
  * The unstable period and the candle settings are process-wide. Change them
  * only while no TA function is running and no stream is open; the effect of a
- * change made otherwise is undefined. TA_Initialize and TA_Shutdown count as
- * changes.
+ * change made otherwise is undefined. TA_Shutdown counts as a change.
  */
 TA_LIB_API TA_RetCode TA_Initialize( void );
 TA_LIB_API TA_RetCode TA_Shutdown( void );

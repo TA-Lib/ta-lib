@@ -256,9 +256,9 @@ static ErrorNumber testStreamShortHistory( void )
    ErrorNumber retValue;
    int i;
 
-   /* The candle-settings test above ends with freeLib(), so the globals a
-    * candlestick lookback reads are zeroed by the time this runs. Without this
-    * the CDLDOJI leg would see lookback 0 and have no short history to give. */
+   /* The candle-settings test above ends with freeLib(). The CDLDOJI leg needs
+    * the default candle settings, which the library promises only after
+    * TA_Initialize. */
    retValue = allocLib();
    if( retValue != TA_TEST_PASS )
    {
@@ -1917,8 +1917,8 @@ static ErrorNumber testCandleSettingsBounds( void )
       return TA_INTERNAL_CANDLE_VACUOUS;
    }
 
-   /* Leave the globals as they were found: freeLib() zeroes them, but the
-    * defaults are what every later test expects if it does not re-init.
+   /* Leave the defaults in place for every later test, whatever freeLib()
+    * leaves behind.
     */
    if( TA_RestoreCandleDefaultSettings( TA_AllCandleSettings ) != TA_SUCCESS )
    {

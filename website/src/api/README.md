@@ -196,7 +196,7 @@ int shift = TA_DPO_DisplayShift( 20, 0 );   /* period 20, first output: -11 */
 | Code | Meaning |
 |------|---------|
 | `TA_SUCCESS` | No error. |
-| `TA_LIB_NOT_INITIALIZE` | Returned by [TA_Shutdown](#init) when the library is not initialized. |
+| `TA_LIB_NOT_INITIALIZE` | Not returned to a program that follows the [lifecycle rule](#init). |
 | `TA_BAD_PARAM` | A parameter is out of range, or a required pointer is NULL. |
 | `TA_ALLOC_ERR` | Allocation failed, most likely out of memory. Fatal: nothing about the call is defined past it. |
 | `TA_OUT_OF_RANGE_START_INDEX` | startIdx is negative or above [TA_INDEX_MAX](#index_range). |
@@ -283,9 +283,9 @@ Error 1(TA_LIB_NOT_INITIALIZE): TA_Initialize was not successfully called
 
 <p>TA-Lib is multi-thread safe where it matters most for performance: calling the TA functions themselves (TA_SMA, TA_RSI, ...).</p>
 
-<p>One important caveat: the unstable period and the candle settings are process-wide. Change them only while no TA function is running and no stream is open; the effect of a change made otherwise is undefined. TA_Initialize and TA_Shutdown count as changes. The calls that change them:</p>
+<p>One important caveat: the unstable period and the candle settings are process-wide. Change them only while no TA function is running and no stream is open; the effect of a change made otherwise is undefined. TA_Shutdown counts as a change. The calls that change them:</p>
 <ul>
-  <li><a href="#init">TA_Initialize, TA_Shutdown</a></li>
+  <li><a href="#init">TA_Shutdown</a></li>
   <li><a href="/api/unstable-period/">TA_SetUnstablePeriod</a></li>
   <li><a href="/api/candle-settings/">TA_SetCandleSettings, TA_RestoreCandleDefaultSettings</a></li>
 </ul>

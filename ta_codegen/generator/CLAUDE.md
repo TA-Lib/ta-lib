@@ -298,5 +298,5 @@ thousands of lines across `src/` and `tests/` and buries any real change.
 - Full-suite benchmark runs carry 10-20% variance from icache pressure; use
   `ta_bench --function=NAME --iters=500` for ground truth. A thermal canary (SMA)
   runs between indicators to normalize CPU state.
-- Every server and bench binary calls `TA_Initialize()` at startup — required for
-  the candle-settings defaults.
+- Every server and bench binary calls `TA_Initialize()` at startup, as the C
+  contract requires once per process.

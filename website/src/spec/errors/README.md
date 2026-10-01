@@ -108,5 +108,5 @@ None of these is promised to be reported. The caller avoids them, or treats what
 - [N8](/spec/inputs-outputs/#n8): shared memory other than identity, such as partial overlap (C# rejects some; not to be relied on).
 - [B7](/spec/errors/#b7): the state after an allocation failure.
 - [G3](/spec/settings-threads/#g3): C's unstable-period getter given a wildcard or unknown id, which returns 0.
-- [T1](/spec/settings-threads/#t1): C used before `TA_Initialize` or after `TA_Shutdown`.
+- [T1](/spec/settings-threads/#t1): C used before `TA_Initialize` or after `TA_Shutdown`, or `TA_Initialize` called twice.
 - [T2](/spec/settings-threads/#t2): a C setting changed while a TA function is running or a stream is open.

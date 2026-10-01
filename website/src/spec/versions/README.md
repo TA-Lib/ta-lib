@@ -9,7 +9,7 @@ D1 to D4 say where the same call gives the same bits across languages, machines 
 
 ## Determinism {#determinism}
 
-On this page, **bit-identical** means the same return code, the same output range, and every output element with the same bits, except that a NaN matches any NaN: no math library specifies a NaN's payload. **The same call** means the same function, input values, `startIdx` and `endIdx`, optional parameters and settings. **The same settings** means the same unstable periods and candle settings; in C that includes having called `TA_Initialize` ([T1](/spec/settings-threads/#t1)).
+On this page, **bit-identical** means the same return code, the same output range, and every output element with the same bits, except that a NaN matches any NaN: no math library specifies a NaN's payload. **The same call** means the same function, input values, `startIdx` and `endIdx`, optional parameters and settings. **The same settings** means the same unstable periods and candle settings.
 
 | Compared | Result | Rule |
 |---|---|---|
