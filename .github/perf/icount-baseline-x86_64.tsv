@@ -6,8 +6,8 @@
 #policy	monotone
 #toolchain	x86_64/x86_64-linux-gnu/13.3.0
 #corpus	points=20000 regime_period=14 seed=42 shape=randwalk stream_iters=1024 trend_strength=0.500000
-#commit	6103431c1029f184e53740d56e7f6832fe6a9b66
-#generated	2026-09-30T10:50:02Z
+#commit	fc08259553719809aedc65e5e8e25fa31c8dc0bd
+#generated	2026-10-01T00:38:32Z
 AC	batch	0	703438
 AC	open	0	704171
 AC	openfill	0	692624
@@ -731,7 +731,7 @@ MASSI	update	0	80952
 MAVP	batch	0	5961358
 MAVP	open	0	4075155
 MAVP	openfill	0	33178632
-MAVP	peek	0	92175
+MAVP	peek	0	91151
 MAVP	update	0	1761296
 MAX	batch	0	321078
 MAX	open	0	646640
@@ -963,6 +963,11 @@ SQRT	open	0	127
 SQRT	openfill	0	60131
 SQRT	peek	0	30733
 SQRT	update	0	40973
+STC	batch	0	1737836
+STC	open	0	3039295
+STC	openfill	0	3039559
+STC	peek	0	98320
+STC	update	0	152294
 STDDEV	batch	0	752293
 STDDEV	open	0	774530
 STDDEV	openfill	0	773611
