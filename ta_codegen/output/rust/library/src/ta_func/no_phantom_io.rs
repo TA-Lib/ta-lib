@@ -12157,6 +12157,141 @@ fn legs_KST(r: &mut Report) {
     r.legs_done("KST", 1);
 }
 
+const V_KSTEXT: &[(&str, i32, i32, i32, i32, i32, i32, i32, i32, i32, MAType, MAType)] = &[
+    ("defaults", i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, MAType::DEFAULT, MAType::DEFAULT),
+    ("minimums", 1i32, 1i32, 1i32, 1i32, 1i32, 1i32, 1i32, 1i32, 1i32, MAType::DEFAULT, MAType::DEFAULT),
+    ("optInROCMAType=SMA", i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, MAType::SMA, MAType::DEFAULT),
+    ("optInROCMAType=SMA, periods doubled", 20i32, 30i32, 40i32, 60i32, 20i32, 20i32, 20i32, 30i32, 18i32, MAType::SMA, MAType::DEFAULT),
+    ("optInROCMAType=EMA", i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, MAType::EMA, MAType::DEFAULT),
+    ("optInROCMAType=EMA, periods doubled", 20i32, 30i32, 40i32, 60i32, 20i32, 20i32, 20i32, 30i32, 18i32, MAType::EMA, MAType::DEFAULT),
+    ("optInROCMAType=WMA", i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, MAType::WMA, MAType::DEFAULT),
+    ("optInROCMAType=WMA, periods doubled", 20i32, 30i32, 40i32, 60i32, 20i32, 20i32, 20i32, 30i32, 18i32, MAType::WMA, MAType::DEFAULT),
+    ("optInROCMAType=DEMA", i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, MAType::DEMA, MAType::DEFAULT),
+    ("optInROCMAType=DEMA, periods doubled", 20i32, 30i32, 40i32, 60i32, 20i32, 20i32, 20i32, 30i32, 18i32, MAType::DEMA, MAType::DEFAULT),
+    ("optInROCMAType=TEMA", i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, MAType::TEMA, MAType::DEFAULT),
+    ("optInROCMAType=TEMA, periods doubled", 20i32, 30i32, 40i32, 60i32, 20i32, 20i32, 20i32, 30i32, 18i32, MAType::TEMA, MAType::DEFAULT),
+    ("optInROCMAType=TRIMA", i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, MAType::TRIMA, MAType::DEFAULT),
+    ("optInROCMAType=TRIMA, periods doubled", 20i32, 30i32, 40i32, 60i32, 20i32, 20i32, 20i32, 30i32, 18i32, MAType::TRIMA, MAType::DEFAULT),
+    ("optInROCMAType=KAMA", i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, MAType::KAMA, MAType::DEFAULT),
+    ("optInROCMAType=KAMA, periods doubled", 20i32, 30i32, 40i32, 60i32, 20i32, 20i32, 20i32, 30i32, 18i32, MAType::KAMA, MAType::DEFAULT),
+    ("optInROCMAType=MAMA", i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, MAType::MAMA, MAType::DEFAULT),
+    ("optInROCMAType=MAMA, periods doubled", 20i32, 30i32, 40i32, 60i32, 20i32, 20i32, 20i32, 30i32, 18i32, MAType::MAMA, MAType::DEFAULT),
+    ("optInROCMAType=T3", i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, MAType::T3, MAType::DEFAULT),
+    ("optInROCMAType=T3, periods doubled", 20i32, 30i32, 40i32, 60i32, 20i32, 20i32, 20i32, 30i32, 18i32, MAType::T3, MAType::DEFAULT),
+    ("optInROCMAType=HMA", i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, MAType::HMA, MAType::DEFAULT),
+    ("optInROCMAType=HMA, periods doubled", 20i32, 30i32, 40i32, 60i32, 20i32, 20i32, 20i32, 30i32, 18i32, MAType::HMA, MAType::DEFAULT),
+    ("optInROCMAType=DISABLED", i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, MAType::DISABLED, MAType::DEFAULT),
+    ("optInROCMAType=DISABLED, periods doubled", 20i32, 30i32, 40i32, 60i32, 20i32, 20i32, 20i32, 30i32, 18i32, MAType::DISABLED, MAType::DEFAULT),
+    ("optInROCMAType=DEFAULT", i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, MAType::DEFAULT, MAType::DEFAULT),
+    ("optInROCMAType=DEFAULT, periods doubled", 20i32, 30i32, 40i32, 60i32, 20i32, 20i32, 20i32, 30i32, 18i32, MAType::DEFAULT, MAType::DEFAULT),
+    ("optInROCMAType=ZLEMA", i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, MAType::ZLEMA, MAType::DEFAULT),
+    ("optInROCMAType=ZLEMA, periods doubled", 20i32, 30i32, 40i32, 60i32, 20i32, 20i32, 20i32, 30i32, 18i32, MAType::ZLEMA, MAType::DEFAULT),
+    ("optInROCMAType=RMA", i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, MAType::RMA, MAType::DEFAULT),
+    ("optInROCMAType=RMA, periods doubled", 20i32, 30i32, 40i32, 60i32, 20i32, 20i32, 20i32, 30i32, 18i32, MAType::RMA, MAType::DEFAULT),
+    ("optInROCMAType=VIDYA", i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, MAType::VIDYA, MAType::DEFAULT),
+    ("optInROCMAType=VIDYA, periods doubled", 20i32, 30i32, 40i32, 60i32, 20i32, 20i32, 20i32, 30i32, 18i32, MAType::VIDYA, MAType::DEFAULT),
+    ("optInROCMAType=ALMA", i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, MAType::ALMA, MAType::DEFAULT),
+    ("optInROCMAType=ALMA, periods doubled", 20i32, 30i32, 40i32, 60i32, 20i32, 20i32, 20i32, 30i32, 18i32, MAType::ALMA, MAType::DEFAULT),
+    ("optInSignalMAType=SMA", i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, MAType::DEFAULT, MAType::SMA),
+    ("optInSignalMAType=SMA, periods doubled", 20i32, 30i32, 40i32, 60i32, 20i32, 20i32, 20i32, 30i32, 18i32, MAType::DEFAULT, MAType::SMA),
+    ("optInSignalMAType=EMA", i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, MAType::DEFAULT, MAType::EMA),
+    ("optInSignalMAType=EMA, periods doubled", 20i32, 30i32, 40i32, 60i32, 20i32, 20i32, 20i32, 30i32, 18i32, MAType::DEFAULT, MAType::EMA),
+    ("optInSignalMAType=WMA", i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, MAType::DEFAULT, MAType::WMA),
+    ("optInSignalMAType=WMA, periods doubled", 20i32, 30i32, 40i32, 60i32, 20i32, 20i32, 20i32, 30i32, 18i32, MAType::DEFAULT, MAType::WMA),
+    ("optInSignalMAType=DEMA", i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, MAType::DEFAULT, MAType::DEMA),
+    ("optInSignalMAType=DEMA, periods doubled", 20i32, 30i32, 40i32, 60i32, 20i32, 20i32, 20i32, 30i32, 18i32, MAType::DEFAULT, MAType::DEMA),
+    ("optInSignalMAType=TEMA", i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, MAType::DEFAULT, MAType::TEMA),
+    ("optInSignalMAType=TEMA, periods doubled", 20i32, 30i32, 40i32, 60i32, 20i32, 20i32, 20i32, 30i32, 18i32, MAType::DEFAULT, MAType::TEMA),
+    ("optInSignalMAType=TRIMA", i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, MAType::DEFAULT, MAType::TRIMA),
+    ("optInSignalMAType=TRIMA, periods doubled", 20i32, 30i32, 40i32, 60i32, 20i32, 20i32, 20i32, 30i32, 18i32, MAType::DEFAULT, MAType::TRIMA),
+    ("optInSignalMAType=KAMA", i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, MAType::DEFAULT, MAType::KAMA),
+    ("optInSignalMAType=KAMA, periods doubled", 20i32, 30i32, 40i32, 60i32, 20i32, 20i32, 20i32, 30i32, 18i32, MAType::DEFAULT, MAType::KAMA),
+    ("optInSignalMAType=MAMA", i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, MAType::DEFAULT, MAType::MAMA),
+    ("optInSignalMAType=MAMA, periods doubled", 20i32, 30i32, 40i32, 60i32, 20i32, 20i32, 20i32, 30i32, 18i32, MAType::DEFAULT, MAType::MAMA),
+    ("optInSignalMAType=T3", i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, MAType::DEFAULT, MAType::T3),
+    ("optInSignalMAType=T3, periods doubled", 20i32, 30i32, 40i32, 60i32, 20i32, 20i32, 20i32, 30i32, 18i32, MAType::DEFAULT, MAType::T3),
+    ("optInSignalMAType=HMA", i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, MAType::DEFAULT, MAType::HMA),
+    ("optInSignalMAType=HMA, periods doubled", 20i32, 30i32, 40i32, 60i32, 20i32, 20i32, 20i32, 30i32, 18i32, MAType::DEFAULT, MAType::HMA),
+    ("optInSignalMAType=DISABLED", i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, MAType::DEFAULT, MAType::DISABLED),
+    ("optInSignalMAType=DISABLED, periods doubled", 20i32, 30i32, 40i32, 60i32, 20i32, 20i32, 20i32, 30i32, 18i32, MAType::DEFAULT, MAType::DISABLED),
+    ("optInSignalMAType=DEFAULT", i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, MAType::DEFAULT, MAType::DEFAULT),
+    ("optInSignalMAType=DEFAULT, periods doubled", 20i32, 30i32, 40i32, 60i32, 20i32, 20i32, 20i32, 30i32, 18i32, MAType::DEFAULT, MAType::DEFAULT),
+    ("optInSignalMAType=ZLEMA", i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, MAType::DEFAULT, MAType::ZLEMA),
+    ("optInSignalMAType=ZLEMA, periods doubled", 20i32, 30i32, 40i32, 60i32, 20i32, 20i32, 20i32, 30i32, 18i32, MAType::DEFAULT, MAType::ZLEMA),
+    ("optInSignalMAType=RMA", i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, MAType::DEFAULT, MAType::RMA),
+    ("optInSignalMAType=RMA, periods doubled", 20i32, 30i32, 40i32, 60i32, 20i32, 20i32, 20i32, 30i32, 18i32, MAType::DEFAULT, MAType::RMA),
+    ("optInSignalMAType=VIDYA", i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, MAType::DEFAULT, MAType::VIDYA),
+    ("optInSignalMAType=VIDYA, periods doubled", 20i32, 30i32, 40i32, 60i32, 20i32, 20i32, 20i32, 30i32, 18i32, MAType::DEFAULT, MAType::VIDYA),
+    ("optInSignalMAType=ALMA", i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, MAType::DEFAULT, MAType::ALMA),
+    ("optInSignalMAType=ALMA, periods doubled", 20i32, 30i32, 40i32, 60i32, 20i32, 20i32, 20i32, 30i32, 18i32, MAType::DEFAULT, MAType::ALMA),
+];
+
+fn sub_KSTEXT(r: &mut Report) {
+    let core = Core::new();
+    for &(label, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType) in V_KSTEXT {
+        let Ok(lb) = core.kstext_lookback(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType) else { continue; };
+        r.control("KSTEXT", label, run(|| {
+            let inReal: Vec<f64> = Vec::with_capacity(1);
+            let mut outKST: Vec<f64> = Vec::with_capacity(1);
+            let mut outKSTSignal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.kstext_impl(0, lb, &inReal, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, &mut _b, &mut _n, &mut outKST, &mut outKSTSignal);
+            (rc, _n)
+        }));
+        if lb < 1 { r.no_quiet_range("KSTEXT", label); continue; }
+        r.quiet("KSTEXT", label, lb, run(|| {
+            let inReal: Vec<f64> = Vec::with_capacity(1);
+            let mut outKST: Vec<f64> = Vec::with_capacity(1);
+            let mut outKSTSignal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.kstext_impl(0, lb - 1, &inReal, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, &mut _b, &mut _n, &mut outKST, &mut outKSTSignal);
+            (rc, _n)
+        }));
+    }
+}
+
+fn legs_KSTEXT(r: &mut Report) {
+    let core = Core::new();
+    let optInROC1Period = i32::MIN;
+    let optInROC2Period = i32::MIN;
+    let optInROC3Period = i32::MIN;
+    let optInROC4Period = i32::MIN;
+    let optInMA1Period = i32::MIN;
+    let optInMA2Period = i32::MIN;
+    let optInMA3Period = i32::MIN;
+    let optInMA4Period = i32::MIN;
+    let optInSignalPeriod = i32::MIN;
+    let optInROCMAType = MAType::DEFAULT;
+    let optInSignalMAType = MAType::DEFAULT;
+    let Ok(lb) = core.kstext_lookback(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType) else { r.no_legs("KSTEXT"); return; };
+    let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outKST: Vec<f64> = vec![Default::default(); 5];
+        let mut outKSTSignal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("KSTEXT", run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.kstext_impl(startIdx, endIdx, &inReal, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, &mut _b, &mut _n, &mut outKST, &mut outKSTSignal);
+            (rc, _n)
+        }));
+    }
+    {
+        let inReal: Vec<f64> = Vec::with_capacity(1);
+        let mut outKST: Vec<f64> = vec![Default::default(); 5];
+        let mut outKSTSignal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("KSTEXT", "inReal", 0, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.kstext_impl(startIdx, endIdx, &inReal, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, &mut _b, &mut _n, &mut outKST, &mut outKSTSignal);
+            (rc, _n)
+        }));
+    }
+    r.legs_done("KSTEXT", 1);
+}
+
 const V_KURTOSIS: &[(&str, i32)] = &[
     ("defaults", i32::MIN),
     ("minimums", 4i32),
@@ -18833,6 +18968,7 @@ const PROBES: &[(&str, Probe, Probe)] = &[
     ("KC", sub_KC, legs_KC),
     ("KDJ", sub_KDJ, legs_KDJ),
     ("KST", sub_KST, legs_KST),
+    ("KSTEXT", sub_KSTEXT, legs_KSTEXT),
     ("KURTOSIS", sub_KURTOSIS, legs_KURTOSIS),
     ("LINEARREG", sub_LINEARREG, legs_LINEARREG),
     ("LINEARREG_ANGLE", sub_LINEARREG_ANGLE, legs_LINEARREG_ANGLE),
@@ -18962,7 +19098,7 @@ fn no_phantom_io() {
     // The corpus is the generator's, not a list kept by hand: a probe that
     // stopped being emitted is a shrinking sweep, which is the one way this
     // file can fail open.
-    assert_eq!(PROBES.len(), 222, "probe count");
+    assert_eq!(PROBES.len(), 223, "probe count");
     assert_eq!(
         PROBES.len(),
         crate::abstract_api::funcs().count(),

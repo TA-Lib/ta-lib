@@ -5643,6 +5643,77 @@ static const TA_VOptSpec TA_VOpt_KST[] = {
    { "optInSignalPeriod", TA_VOPT_INT, 1.0, 100000.0, 9.0 },
 };
 
+static TA_RetCode TA_KSTEXT_VFrameD( int startIdx, int endIdx,
+                  const double *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_KSTEXT(
+               startIdx,
+               endIdx,
+               in[0] /* inReal */,
+               (int)optIn[0] /* optInROC1Period */,
+               (int)optIn[1] /* optInROC2Period */,
+               (int)optIn[2] /* optInROC3Period */,
+               (int)optIn[3] /* optInROC4Period */,
+               (int)optIn[4] /* optInMA1Period */,
+               (int)optIn[5] /* optInMA2Period */,
+               (int)optIn[6] /* optInMA3Period */,
+               (int)optIn[7] /* optInMA4Period */,
+               (int)optIn[8] /* optInSignalPeriod */,
+               (TA_MAType)(int)optIn[9] /* optInROCMAType */,
+               (TA_MAType)(int)optIn[10] /* optInSignalMAType */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outKST */,
+               outReal[1] /* outKSTSignal */
+               );
+}
+static TA_RetCode TA_KSTEXT_VFrameS( int startIdx, int endIdx,
+                  const float *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_S_KSTEXT(
+               startIdx,
+               endIdx,
+               in[0] /* inReal */,
+               (int)optIn[0] /* optInROC1Period */,
+               (int)optIn[1] /* optInROC2Period */,
+               (int)optIn[2] /* optInROC3Period */,
+               (int)optIn[3] /* optInROC4Period */,
+               (int)optIn[4] /* optInMA1Period */,
+               (int)optIn[5] /* optInMA2Period */,
+               (int)optIn[6] /* optInMA3Period */,
+               (int)optIn[7] /* optInMA4Period */,
+               (int)optIn[8] /* optInSignalPeriod */,
+               (TA_MAType)(int)optIn[9] /* optInROCMAType */,
+               (TA_MAType)(int)optIn[10] /* optInSignalMAType */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outKST */,
+               outReal[1] /* outKSTSignal */
+               );
+}
+
+static const TA_VInputKind TA_VIn_KSTEXT[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_KSTEXT[] = { 0, 0 };
+static const TA_VOptSpec TA_VOpt_KSTEXT[] = {
+   { "optInROC1Period", TA_VOPT_INT, 1.0, 100000.0, 10.0 },
+   { "optInROC2Period", TA_VOPT_INT, 1.0, 100000.0, 15.0 },
+   { "optInROC3Period", TA_VOPT_INT, 1.0, 100000.0, 20.0 },
+   { "optInROC4Period", TA_VOPT_INT, 1.0, 100000.0, 30.0 },
+   { "optInMA1Period", TA_VOPT_INT, 1.0, 100000.0, 10.0 },
+   { "optInMA2Period", TA_VOPT_INT, 1.0, 100000.0, 10.0 },
+   { "optInMA3Period", TA_VOPT_INT, 1.0, 100000.0, 10.0 },
+   { "optInMA4Period", TA_VOPT_INT, 1.0, 100000.0, 15.0 },
+   { "optInSignalPeriod", TA_VOPT_INT, 1.0, 100000.0, 9.0 },
+   { "optInROCMAType", TA_VOPT_ENUM, 0.0, 15.0, 0.0 },
+   { "optInSignalMAType", TA_VOPT_ENUM, 0.0, 15.0, 0.0 },
+};
+
 static TA_RetCode TA_KURTOSIS_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -9691,6 +9762,8 @@ static const TA_VariantEntry TA_VariantTable[] = {
      3, TA_VIn_KDJ, 5, TA_VOpt_KDJ, 3, TA_VOutIsInt_KDJ, 0 },
    { "KST", TA_KST_VFrameD, TA_KST_VFrameS,
      1, TA_VIn_KST, 9, TA_VOpt_KST, 2, TA_VOutIsInt_KST, 0 },
+   { "KSTEXT", TA_KSTEXT_VFrameD, TA_KSTEXT_VFrameS,
+     1, TA_VIn_KSTEXT, 11, TA_VOpt_KSTEXT, 2, TA_VOutIsInt_KSTEXT, 0 },
    { "KURTOSIS", TA_KURTOSIS_VFrameD, TA_KURTOSIS_VFrameS,
      1, TA_VIn_KURTOSIS, 1, TA_VOpt_KURTOSIS, 1, TA_VOutIsInt_KURTOSIS, 0 },
    { "LINEARREG", TA_LINEARREG_VFrameD, TA_LINEARREG_VFrameS,
@@ -9875,6 +9948,6 @@ static const TA_VariantEntry TA_VariantTable[] = {
      1, TA_VIn_ZLEMA, 1, TA_VOpt_ZLEMA, 1, TA_VOutIsInt_ZLEMA, 0 },
 };
 
-#define TA_VARIANT_TABLE_SIZE 222
+#define TA_VARIANT_TABLE_SIZE 223
 
 #endif /* TA_VARIANT_FRAME_H */

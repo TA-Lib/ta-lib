@@ -251,6 +251,7 @@ public final class Functions {
       put(m, f_KC());
       put(m, f_KDJ());
       put(m, f_KST());
+      put(m, f_KSTEXT());
       put(m, f_KURTOSIS());
       put(m, f_LINEARREG());
       put(m, f_LINEARREG_ANGLE());
@@ -2453,6 +2454,75 @@ public final class Functions {
                "Signal Period", "Smoothing period of the signal line", 9.0,
                0.0, 0.0, 0, 0.0, 0.0, 0.0,
                1, 100000, 1, 200, 1, null)
+         ),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outKST", 0x00000001),
+            new OutputInfo(OutputType.REAL, "outKSTSignal", 0x00000004)
+         ));
+   }
+
+   private static FuncInfo f_KSTEXT() {
+      return new FuncInfo(
+         "KSTEXT", "Momentum Indicators", "Know Sure Thing with controllable MA type", 0x02000000,
+         List.of(
+            new InputInfo(InputType.REAL, "inReal", 0x00000000)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInROC1Period", 0x00000000,
+               "ROC-1 Period", "Rate-of-change period of leg 1", 10.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               1, 100000, 1, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInROC2Period", 0x00000000,
+               "ROC-2 Period", "Rate-of-change period of leg 2", 15.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               1, 100000, 1, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInROC3Period", 0x00000000,
+               "ROC-3 Period", "Rate-of-change period of leg 3", 20.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               1, 100000, 1, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInROC4Period", 0x00000000,
+               "ROC-4 Period", "Rate-of-change period of leg 4", 30.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               1, 100000, 1, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInMA1Period", 0x00000000,
+               "MA-1 Period", "Smoothing period of leg 1", 10.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               1, 100000, 1, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInMA2Period", 0x00000000,
+               "MA-2 Period", "Smoothing period of leg 2", 10.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               1, 100000, 1, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInMA3Period", 0x00000000,
+               "MA-3 Period", "Smoothing period of leg 3", 10.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               1, 100000, 1, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInMA4Period", 0x00000000,
+               "MA-4 Period", "Smoothing period of leg 4", 15.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               1, 100000, 1, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInSignalPeriod", 0x00000000,
+               "Signal Period", "Smoothing period of the signal line", 9.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               1, 100000, 1, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_LIST, "optInROCMAType", 0x00000000,
+               "ROC MA", "Type of Moving Average smoothing the four legs", 0.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               0, 0, 0, 0, 0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA"),
+            new OptInputInfo(
+               OptInputType.INTEGER_LIST, "optInSignalMAType", 0x00000000,
+               "Signal MA", "Type of Moving Average for signal line", 0.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               0, 0, 0, 0, 0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA")
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outKST", 0x00000001),

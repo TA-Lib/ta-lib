@@ -129,6 +129,7 @@ KAMA                Kaufman Adaptive Moving Average
 KC                  Keltner Channels
 KDJ                 KDJ Stochastic
 KST                 Know Sure Thing (Pring)
+KSTEXT              Know Sure Thing with controllable MA type
 KURTOSIS            Rolling Excess Kurtosis
 LINEARREG           Linear Regression
 LINEARREG_ANGLE     Linear Regression Angle

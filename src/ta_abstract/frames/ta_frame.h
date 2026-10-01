@@ -1226,6 +1226,15 @@ TA_RetCode TA_KST_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_KST_FramePPLB( const TA_ParamHolderPriv *params )
 ;
 
+TA_RetCode TA_KSTEXT_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+;
+unsigned int TA_KSTEXT_FramePPLB( const TA_ParamHolderPriv *params )
+;
+
 TA_RetCode TA_KURTOSIS_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

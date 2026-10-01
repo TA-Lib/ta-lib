@@ -1,0 +1,88 @@
+name: KSTEXT
+group: Momentum Indicators
+hint: Know Sure Thing with controllable MA type
+flags: [stream]
+inputs:
+  - name: inReal
+    type: real
+optional_inputs:
+  - name: optInROC1Period
+    type: integer
+    display_name: ROC-1 Period
+    hint: Rate-of-change period of leg 1
+    range: [1, 100000]
+    default: 10
+    suggested: [1, 200, 1]
+  - name: optInROC2Period
+    type: integer
+    display_name: ROC-2 Period
+    hint: Rate-of-change period of leg 2
+    range: [1, 100000]
+    default: 15
+    suggested: [1, 200, 1]
+  - name: optInROC3Period
+    type: integer
+    display_name: ROC-3 Period
+    hint: Rate-of-change period of leg 3
+    range: [1, 100000]
+    default: 20
+    suggested: [1, 200, 1]
+  - name: optInROC4Period
+    type: integer
+    display_name: ROC-4 Period
+    hint: Rate-of-change period of leg 4
+    range: [1, 100000]
+    default: 30
+    suggested: [1, 200, 1]
+  - name: optInMA1Period
+    type: integer
+    display_name: MA-1 Period
+    hint: Smoothing period of leg 1
+    range: [1, 100000]
+    default: 10
+    suggested: [1, 200, 1]
+  - name: optInMA2Period
+    type: integer
+    display_name: MA-2 Period
+    hint: Smoothing period of leg 2
+    range: [1, 100000]
+    default: 10
+    suggested: [1, 200, 1]
+  - name: optInMA3Period
+    type: integer
+    display_name: MA-3 Period
+    hint: Smoothing period of leg 3
+    range: [1, 100000]
+    default: 10
+    suggested: [1, 200, 1]
+  - name: optInMA4Period
+    type: integer
+    display_name: MA-4 Period
+    hint: Smoothing period of leg 4
+    range: [1, 100000]
+    default: 15
+    suggested: [1, 200, 1]
+  - name: optInSignalPeriod
+    type: integer
+    display_name: Signal Period
+    hint: Smoothing period of the signal line
+    range: [1, 100000]
+    default: 9
+    suggested: [1, 200, 1]
+  - name: optInROCMAType
+    type: enum:MAType
+    display_name: ROC MA
+    hint: Type of Moving Average smoothing the four legs
+    default: 0
+  - name: optInSignalMAType
+    type: enum:MAType
+    display_name: Signal MA
+    hint: Type of Moving Average for signal line
+    default: 0
+outputs:
+  - name: outKST
+    type: real
+    flags: [line]
+  - name: outKSTSignal
+    type: real
+    flags: [dash_line]

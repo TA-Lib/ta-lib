@@ -248,7 +248,9 @@ fn no_throwing_sub_call_follows_the_cur_capture_in_a_managed_step() {
         let shipped: std::collections::BTreeSet<&str> =
             with_subs.iter().map(String::as_str).filter(|n| !n.starts_with("synth")).collect();
         let expected: std::collections::BTreeSet<&str> =
-            ["bbands", "kc", "kdj", "macdext", "stoch", "stochf", "stochrsi"].into_iter().collect();
+            ["bbands", "kc", "kdj", "kstext", "macdext", "stoch", "stochf", "stochrsi"]
+                .into_iter()
+                .collect();
         assert_eq!(
             shipped, expected,
             "the set of multi-output handles driving a sub-stream moved in {lang} — the pin is \

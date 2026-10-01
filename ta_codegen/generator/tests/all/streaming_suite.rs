@@ -1967,7 +1967,7 @@ fn composed_sub_call_destination_funcs() {
     // Membership alone would not tell the next author WHICH invariant to keep:
     // no two of these are safe for the same reason. The reason is recorded with
     // each entry and printed on failure. (Reasons proved by kevinlincg, #205.)
-    let expected: [(&str, &str); 14] = [
+    let expected: [(&str, &str); 15] = [
         ("APO", "sub-call uses optInSlowPeriod and the body swaps so slow == max(slow,fast); \
                  the swap is load-bearing -- see apo_family_period_swap_is_a_write_bound_precondition"),
         ("BBW", "as KDJ -- var is handed outBegIdx/outNBElement themselves and BBW returns them \
@@ -1986,6 +1986,11 @@ fn composed_sub_call_destination_funcs() {
                  themselves and KDJ returns them unmodified, so the final count IS the \
                  callee's count rather than a quantity derived from it. kdj_lookback \
                  delegates to stoch_lookback, so the two anchors agree by construction too"),
+        ("KSTEXT", "the signal average writes outKSTSignal and KSTEXT returns its count unmodified. \
+                 Every leg average lands its first output on startIdx-lookbackSignal, so the line \
+                 buffer begins exactly ma_lookback(signal) bars before startIdx: entered at 0 the \
+                 signal average clamps to that lookback and its count is endIdx-startIdx+1, the \
+                 length the memmove gives outKST"),
         ("MACDEXT", "the body RUNTIME-CHECKS the premise (outNbElement1 == endIdx-startIdx+1+lookbackSignal) \
                  and bails otherwise, so signal count == N_MACDEXT"),
         ("PERCENTB", "as BBW, in the STREAM alternate every backend streams from -- its var \

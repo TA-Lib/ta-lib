@@ -175,7 +175,7 @@
 //! * [`TAN`](Core::tan) — Vector Trigonometric Tan
 //! * [`TANH`](Core::tanh) — Vector Trigonometric Tanh
 //!
-//! ## Momentum Indicators (57)
+//! ## Momentum Indicators (58)
 //!
 //! * [`AC`](Core::ac) — Accelerator/Decelerator Oscillator
 //! * [`ADX`](Core::adx) — Average Directional Movement Index
@@ -205,6 +205,7 @@
 //! * [`IMI`](Core::imi) — Intraday Momentum Index
 //! * [`KDJ`](Core::kdj) — KDJ Stochastic
 //! * [`KST`](Core::kst) — Know Sure Thing (Pring)
+//! * [`KSTEXT`](Core::kstext) — Know Sure Thing with controllable MA type
 //! * [`MACD`](Core::macd) — Moving Average Convergence/Divergence
 //! * [`MACDEXT`](Core::macdext) — MACD with controllable MA type
 //! * [`MACDFIX`](Core::macdfix) — Moving Average Convergence/Divergence Fix 12/26

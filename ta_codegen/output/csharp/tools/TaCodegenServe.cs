@@ -252,6 +252,7 @@ public class TaCodegenServe {
             else if (method == "TA_KC") return Handle_KC(p, startIdx, endIdx);
             else if (method == "TA_KDJ") return Handle_KDJ(p, startIdx, endIdx);
             else if (method == "TA_KST") return Handle_KST(p, startIdx, endIdx);
+            else if (method == "TA_KSTEXT") return Handle_KSTEXT(p, startIdx, endIdx);
             else if (method == "TA_KURTOSIS") return Handle_KURTOSIS(p, startIdx, endIdx);
             else if (method == "TA_LINEARREG") return Handle_LINEARREG(p, startIdx, endIdx);
             else if (method == "TA_LINEARREG_ANGLE") return Handle_LINEARREG_ANGLE(p, startIdx, endIdx);
@@ -606,6 +607,8 @@ public class TaCodegenServe {
                 sb.Append("\"TA_KDJ\"");
                 sb.Append(",");
                 sb.Append("\"TA_KST\"");
+                sb.Append(",");
+                sb.Append("\"TA_KSTEXT\"");
                 sb.Append(",");
                 sb.Append("\"TA_KURTOSIS\"");
                 sb.Append(",");
@@ -29176,6 +29179,263 @@ public class TaCodegenServe {
         return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
+    static string Sv_KSTEXT(JsonElement req) {
+        int svShape = GetInt(req, "gen_shape", 0);
+        int svSeed = GetInt(req, "gen_seed", 0);
+        int svN = GetInt(req, "gen_n", 0);
+        if (svN < 2) svN = 2;
+        if (svN > 256) svN = 256;
+        int svK = GetInt(req, "unstablePeriod", 0);
+        int optInROC1Period = GetInt(req, "optInROC1Period", 10);
+        int optInROC2Period = GetInt(req, "optInROC2Period", 15);
+        int optInROC3Period = GetInt(req, "optInROC3Period", 20);
+        int optInROC4Period = GetInt(req, "optInROC4Period", 30);
+        int optInMA1Period = GetInt(req, "optInMA1Period", 10);
+        int optInMA2Period = GetInt(req, "optInMA2Period", 10);
+        int optInMA3Period = GetInt(req, "optInMA3Period", 10);
+        int optInMA4Period = GetInt(req, "optInMA4Period", 15);
+        int optInSignalPeriod = GetInt(req, "optInSignalPeriod", 9);
+        int _raw_optInROCMAType = GetInt(req, "optInROCMAType", (int)MAType.DEFAULT);
+        MAType optInROCMAType = (MAType)_raw_optInROCMAType;
+        int _raw_optInSignalMAType = GetInt(req, "optInSignalMAType", (int)MAType.DEFAULT);
+        MAType optInSignalMAType = (MAType)_raw_optInSignalMAType;
+        double[] fz_o = new double[svN];
+        double[] fz_h = new double[svN];
+        double[] fz_l = new double[svN];
+        double[] fz_c = new double[svN];
+        double[] fz_v = new double[svN];
+        double[] fz_oi = new double[svN];
+        FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
+        double[] b0 = new double[svN];
+        double[] b1 = new double[svN];
+        long legs = 0;
+        bool allOk = true;
+        bool peekAll = true;
+        long peekReps = 0;
+        long peekRejects = 0;
+        bool peekRepAll = true;
+        int fillChecked = 0;
+        bool fillOk = true;
+        int beg = 0, nb = 0;
+        string diag = "";
+        int rangeChecked = 0;
+        bool rangeOk = true;
+        long rangeLegs = 0;
+        int rangeSites = 0;
+        long zsign = 0;
+        long updAlloc = 0;
+        Core c0 = new Core();
+        if (!Enum.IsDefined(optInROCMAType) || !Enum.IsDefined(optInSignalMAType)) {
+            bool eOpen, eFill;
+            try { _ = c0.KstextOpen(fz_c, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType); eOpen = false; }
+            catch (ArgumentException) { eOpen = true; }
+            double[] f0 = new double[svN];
+            Array.Fill(f0, (double)-1.2345678901234e300);
+            double[] f1 = new double[svN];
+            Array.Fill(f1, (double)-1.2345678901234e300);
+            try { _ = c0.KstextOpenAndFill(fz_c, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, f0, f1); eFill = false; }
+            catch (ArgumentException) { eFill = true; }
+            bool eOk = eOpen && eFill;
+            return "{\"retCode\":2,\"legs\":0,\"nb\":0,\"openRejects\":" + (eOk ? 1 : 0) + ",\"enumRejects\":" + ((eOpen ? 1 : 0) + (eFill ? 1 : 0)) + ",\"ok\":" + (eOk ? 1 : 0) + ",\"peek_ok\":1}";
+        }
+        int rounds = 1;
+        for (int rd = 0; rd < rounds; rd++) {
+            CoreBuilder cb = Core.Builder();
+            cb = cb.UnstablePeriod((FuncUnstId)29, svK);
+            cb = cb.UnstablePeriod((FuncUnstId)24, svK);
+            cb = cb.UnstablePeriod((FuncUnstId)5, svK);
+            cb = cb.UnstablePeriod((FuncUnstId)23, svK);
+            cb = cb.UnstablePeriod((FuncUnstId)14, svK);
+            cb = cb.UnstablePeriod((FuncUnstId)13, svK);
+            Core c2;
+            try { c2 = cb.Build(); }
+            catch (ArgumentOutOfRangeException) {
+                return "{\"error\":\"unstablePeriod out of range\"}";
+            }
+            RetCode rc;
+            try { rc = c2.KstextImpl(0, svN - 1, fz_c, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, out beg, out nb, b0, b1); }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            int lb = c2.KstextLookback(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType);
+            if (rc != RetCode.Success || nb == 0) {
+                bool openRejects;
+                try { _ = c2.KstextOpen(fz_c, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType); openRejects = false; }
+                catch (ArgumentException) { openRejects = true; }
+                return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
+            }
+            fillChecked = 1;
+            try {
+                double[] f0 = new double[svN];
+                Array.Fill(f0, (double)-1.2345678901234e300);
+                double[] f1 = new double[svN];
+                Array.Fill(f1, (double)-1.2345678901234e300);
+                Core.KstextStream _fh = c2.KstextOpenAndFill(fz_c, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, f0, f1);
+                OutRange _fr = _fh.OutRange;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
+                if (_fr.BegIdx != beg || _fr.Count != nb) rangeOk = false;
+                if (_fr.BegIdx != beg || _fr.Count != nb) fillOk = false;
+                else {
+                    for (int bi = 0; bi < nb; bi++) if (SvXtierNe(f0[bi], b0[bi], ref zsign)) fillOk = false;
+                    for (int bi = 0; bi < nb; bi++) if (SvXtierNe(f1[bi], b1[bi], ref zsign)) fillOk = false;
+                    for (int bi = nb; bi < svN; bi++) if (f0[bi] != (double)-1.2345678901234e300) fillOk = false;
+                    for (int bi = nb; bi < svN; bi++) if (f1[bi] != (double)-1.2345678901234e300) fillOk = false;
+                }
+                /* R2: aliasing cross product -- every real output x every input,
+                   then every same-typed output pair. Each must throw. */
+                try { _ = c2.KstextOpenAndFill(fz_c, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, fz_c, f1); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                try { _ = c2.KstextOpenAndFill(fz_c, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, f0, fz_c); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 1 aliases input inReal */ }
+                try { _ = c2.KstextOpenAndFill(fz_c, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, f0, f0); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 1 aliases output 0 */ }
+                double[] ovD = new double[svN + 1];
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.KstextOpenAndFill(fz_c, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, ovD.AsSpan(0, svN), ovD.AsSpan(1, svN)); fillOk = false; }
+                catch (ArgumentException) { /* expected: outputs 0/1 partially overlap (offset) */ }
+                try { _ = c2.KstextOpenAndFill(fz_c, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, ovD.AsSpan(0, svN), ovD.AsSpan(0, svN + 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: outputs 0/1 partially overlap (same start, longer) */ }
+                try { _ = c2.KstextOpenAndFill(ovIn.AsSpan(0, svN), optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, ovIn.AsSpan(1, svN), f1); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
+                try { _ = c2.KstextOpenAndFill(ovIn.AsSpan(0, svN), optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, f0, ovIn.AsSpan(1, svN)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 1 partially overlaps an input */ }
+            } catch (ArgumentException) { fillOk = false; }
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
+            Array.Sort(pcs);
+            int prevP = -1;
+            for (int pi = 0; pi < pcs.Length; pi++) {
+                int p = pcs[pi];
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
+                prevP = p;
+                Core.KstextStream st;
+                try { st = c2.KstextOpen(fz_c[..p], optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType); }
+                catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
+                legs++;
+                Core.KstextValue v0 = st.Value;
+                if (SvXtierNe(v0.KST, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                if (SvXtierNe(v0.KSTSignal, b1[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
+                for (int t = p; t < svN; t++) {
+                    bool pkTook = true;
+                    Core.KstextValue pk = default;
+                    try { pk = st.Peek(fz_c[t]); } catch (ArgumentException) { pkTook = false; peekRejects++; }
+                    if (t % 7 == 0) {
+                        bool rpTook = pkTook;
+                        try { _ = st.Peek(fz_c[t - 1]); } catch (ArgumentException) { peekRejects++; }
+                        Core.KstextValue rp = default;
+                        try { rp = st.Peek(fz_c[t]); } catch (ArgumentException) { rpTook = false; }
+                        if (rpTook) {
+                            peekReps++;
+                            if (SvBne(rp.KST, pk.KST)) peekRepAll = false;
+                            if (SvBne(rp.KSTSignal, pk.KSTSignal)) peekRepAll = false;
+                        } else { peekRejects++; }
+                    }
+                    Core.KstextValue up = st.Update(fz_c[t]);
+                    if (pkTook && (SvBne(pk.KST, up.KST))) peekAll = false;
+                    if (pkTook && (SvBne(pk.KSTSignal, up.KSTSignal))) peekAll = false;
+                    try { _ = st.Peek(fz_c[t - 1]); } catch (ArgumentException) { peekRejects++; }
+                    Core.KstextValue vc = st.Value;
+                    if (SvBne(vc.KST, up.KST)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvBne(vc.KSTSignal, up.KSTSignal)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up.KST, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.KST).ToString("x16") + "\""; }
+                    if (SvXtierNe(up.KSTSignal, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b1[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.KSTSignal).ToString("x16") + "\""; }
+                }
+                if (allOk) {
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
+                    if (st.OutRange.BegIdx != beg || st.OutRange.Count != nb) rangeOk = false;
+                    rangeLegs++; rangeSites |= 16;
+                    st.Advance();
+                    if (st.OutRange.BegIdx != beg || st.OutRange.Count != nb + 1) rangeOk = false;
+                }
+            }
+            {
+                int p0 = lb + 1;
+                if (p0 <= svN - 1) {
+                    try {
+                        Core.KstextStream sA = c2.KstextOpen(fz_c[..p0], optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType);
+                        int mid = (p0 + svN) / 2;
+                        for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
+                        Core.KstextStream sB = sA.Clone();
+                        var fk = new Core.KstextValue[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t].KST, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                            if (SvXtierNe(fk[t].KSTSignal, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
+                        for (int t = mid; t < svN; t++) {
+                            Core.KstextValue uA = sA.Update(fz_c[t]);
+                            if (SvBne(uA.KST, fk[t].KST) || SvXtierNe(uA.KST, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA.KSTSignal, fk[t].KSTSignal) || SvXtierNe(uA.KSTSignal, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        if (allOk) {
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 8;
+                            if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                        }
+                    } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
+                }
+            }
+            {
+                int pa = lb + 1;
+                if (pa <= svN - 1) {
+                    try {
+                        Core.KstextStream sQ = c2.KstextOpen(fz_c[..pa], optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType);
+                        double sink = 0.0;
+                        long a0 = GC.GetAllocatedBytesForCurrentThread();
+                        for (int t = pa; t < svN; t++) {
+                            Core.KstextValue uq = sQ.Update(fz_c[t]);
+                            sink += uq.KST;
+                        }
+                        long ad = GC.GetAllocatedBytesForCurrentThread() - a0;
+                        svUpdSink += sink;
+                        if (ad > updAlloc) updAlloc = ad;
+                        if (ad != 0) { allOk = false; if (diag.Length == 0) diag = ",\"updAllocBytes\":" + ad; }
+                    } catch (ArgumentException) { /* open rejects here -- nothing to measure */ }
+                }
+            }
+            if (lb >= 1 && lb < svN) {
+                try { _ = c2.KstextOpen(fz_c[..lb], optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
+                catch (InsufficientHistoryException) { /* expected, typed */ }
+                catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    double[] f1 = new double[svN];
+                    Array.Fill(f1, (double)-1.2345678901234e300);
+                    try { _ = c2.KstextOpenAndFill(fz_c[..lb], optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, f0, f1); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
+            }
+            try {
+                Core.KstextStream sD = c2.KstextOpen(fz_c, int.MinValue, int.MinValue, int.MinValue, int.MinValue, int.MinValue, int.MinValue, int.MinValue, int.MinValue, int.MinValue, optInROCMAType, optInSignalMAType);
+                Core.KstextStream sE = c2.KstextOpen(fz_c, 10, 15, 20, 30, 10, 10, 10, 15, 9, optInROCMAType, optInSignalMAType);
+                Core.KstextValue vD = sD.Value;
+                Core.KstextValue vE = sE.Value;
+                if (SvBne(vD.KST, vE.KST)) { allOk = false; if (diag.Length == 0) diag = ",\"minValueDefault\":1"; }
+                if (SvBne(vD.KSTSignal, vE.KSTSignal)) { allOk = false; if (diag.Length == 0) diag = ",\"minValueDefault\":1"; }
+            } catch (ArgumentException) { /* defaults need more history than svN -- skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    int begS = 0, nbS = 0;
+                    RetCode rcS;
+                    try { rcS = c2.KstextImpl(Sidx, svN - 1, fz_c, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, out begS, out nbS, b0, b1); }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
+                    if (rcS == RetCode.Success && nbS > 0) {
+                        try {
+                            Core.KstextStream stA = c2.KstextOpenInternal(fz_c[..svN], Sidx, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.OutRange.BegIdx != begS || stA.OutRange.Count != nbS) rangeOk = false;
+                        } catch (ArgumentException) { rangeOk = false; if (diag.Length == 0) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
+        }
+        string extra = ",\"updAlloc\":" + updAlloc;
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+    }
+
     static string Sv_KURTOSIS(JsonElement req) {
         int svShape = GetInt(req, "gen_shape", 0);
         int svSeed = GetInt(req, "gen_seed", 0);
@@ -48012,6 +48272,7 @@ public class TaCodegenServe {
         case "TA_KC": return Sv_KC(req);
         case "TA_KDJ": return Sv_KDJ(req);
         case "TA_KST": return Sv_KST(req);
+        case "TA_KSTEXT": return Sv_KSTEXT(req);
         case "TA_KURTOSIS": return Sv_KURTOSIS(req);
         case "TA_LINEARREG": return Sv_LINEARREG(req);
         case "TA_LINEARREG_ANGLE": return Sv_LINEARREG_ANGLE(req);
@@ -62912,6 +63173,130 @@ public class TaCodegenServe {
         }
     }
 
+    static void RideKstext(Core core, JsonElement p, int endIdx, double[] inReal, int optInROC1Period, int optInROC2Period, int optInROC3Period, int optInROC4Period, int optInMA1Period, int optInMA2Period, int optInMA3Period, int optInMA4Period, int optInSignalPeriod, MAType optInROCMAType, MAType optInSignalMAType, System.Text.StringBuilder sb)
+    {
+        if (!RideGate(p)) return;
+        RideResult r = new RideResult();
+        RideBodyKstext(core, p, endIdx, inReal, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, r);
+        r.Emit(sb);
+    }
+
+    static void RideBodyKstext(Core core, JsonElement p, int endIdx, double[] inReal, int optInROC1Period, int optInROC2Period, int optInROC3Period, int optInROC4Period, int optInMA1Period, int optInMA2Period, int optInMA3Period, int optInMA4Period, int optInSignalPeriod, MAType optInROCMAType, MAType optInSignalMAType, RideResult r)
+    {
+        try { r.Lb = core.KstextLookback(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType); } catch (Exception) { r.Lb = -1; }
+        int lb = r.Lb;
+        int navail = endIdx + 1;
+        if (inReal.Length < navail) navail = inReal.Length;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
+        if (m > navail) m = navail;
+        r.M = m;
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
+        if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
+
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_KSTEXT");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInROC1Period);
+        hash = RideMix(hash, (ulong)(long) optInROC2Period);
+        hash = RideMix(hash, (ulong)(long) optInROC3Period);
+        hash = RideMix(hash, (ulong)(long) optInROC4Period);
+        hash = RideMix(hash, (ulong)(long) optInMA1Period);
+        hash = RideMix(hash, (ulong)(long) optInMA2Period);
+        hash = RideMix(hash, (ulong)(long) optInMA3Period);
+        hash = RideMix(hash, (ulong)(long) optInMA4Period);
+        hash = RideMix(hash, (ulong)(long) optInSignalPeriod);
+        hash = RideMix(hash, (ulong)(long) optInROCMAType);
+        hash = RideMix(hash, (ulong)(long) optInSignalMAType);
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
+        {
+            r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
+        }
+
+        double[] rb0 = new double[m];
+        double[] rb1 = new double[m];
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
+        try { OutRange _rr = core.Kstext(0, m - 1, inReal.AsSpan(0, m), optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, rb0, rb1); beg = _rr.BegIdx; nb = _rr.Count; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.KstextOpen(inReal.AsSpan(0, m), optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            double[] fb1 = new double[m];
+            try { core.KstextOpenAndFill(inReal.AsSpan(0, m), optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, fb0, fb1); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
+        if (nb == 0) { r.Skip = 5; return; }
+        if (beg != lb) { r.Skip = 6; return; }
+
+        try
+        {
+            bool cmp;
+            var st = core.KstextOpen(inReal.AsSpan(0, lb + 1), optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType);
+            var uv = st.Value;
+            cmp = true;
+            if (cmp && SvXtierNe(rb0[lb - beg], uv.KST, ref r.Benign[0])) { cmp = false; r.Out = 0; r.Batch = BitConverter.DoubleToInt64Bits(rb0[lb - beg]); r.Stream = BitConverter.DoubleToInt64Bits(uv.KST); }
+            if (cmp && SvXtierNe(rb1[lb - beg], uv.KSTSignal, ref r.Benign[0])) { cmp = false; r.Out = 1; r.Batch = BitConverter.DoubleToInt64Bits(rb1[lb - beg]); r.Stream = BitConverter.DoubleToInt64Bits(uv.KSTSignal); }
+            if (cmp) r.OpenBars++;
+            if (!cmp) { r.Ok = false; r.Leg = 1; r.Bar = lb; }
+            for (int t = lb + 1; r.Ok && t < m; t++)
+            {
+                uv = st.Update(inReal[t]);
+                cmp = true;
+                if (cmp && SvXtierNe(rb0[t - beg], uv.KST, ref r.Benign[0])) { cmp = false; r.Out = 0; r.Batch = BitConverter.DoubleToInt64Bits(rb0[t - beg]); r.Stream = BitConverter.DoubleToInt64Bits(uv.KST); }
+                if (cmp && SvXtierNe(rb1[t - beg], uv.KSTSignal, ref r.Benign[0])) { cmp = false; r.Out = 1; r.Batch = BitConverter.DoubleToInt64Bits(rb1[t - beg]); r.Stream = BitConverter.DoubleToInt64Bits(uv.KSTSignal); }
+                if (cmp) r.OpenBars++;
+                if (!cmp) { r.Ok = false; r.Leg = 1; r.Bar = t; }
+            }
+        }
+        catch (Exception) { r.Ok = false; r.Leg = 1; }
+
+        if (r.Ok)
+        {
+            double[] fb0 = new double[m];
+            double[] fb1 = new double[m];
+            try
+            {
+                var st2 = core.KstextOpenAndFill(inReal.AsSpan(0, m), optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, fb0, fb1);
+                if (st2.OutRange.BegIdx != beg || st2.OutRange.Count != nb) { r.Ok = false; r.Leg = 2; }
+                if (r.Ok)
+                {
+                    for (int k = 0; k < nb; k++)
+                    {
+                        bool cmp = true;
+                        if (cmp && SvXtierNe(rb0[k], fb0[k], ref r.Benign[0])) { cmp = false; r.Out = 0; r.Batch = BitConverter.DoubleToInt64Bits(rb0[k]); r.Stream = BitConverter.DoubleToInt64Bits(fb0[k]); }
+                        if (cmp && SvXtierNe(rb1[k], fb1[k], ref r.Benign[0])) { cmp = false; r.Out = 1; r.Batch = BitConverter.DoubleToInt64Bits(rb1[k]); r.Stream = BitConverter.DoubleToInt64Bits(fb1[k]); }
+                        if (cmp) r.FillBars++;
+                        if (!cmp) { r.Ok = false; r.Leg = 2; r.Bar = beg + k; break; }
+                    }
+                }
+            }
+            catch (Exception) { r.Ok = false; r.Leg = 2; }
+        }
+
+        if (r.Ok)
+        {
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
+            rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
+        }
+    }
+
     static void RideKurtosis(Core core, JsonElement p, int endIdx, double[] inReal, int optInTimePeriod, System.Text.StringBuilder sb)
     {
         if (!RideGate(p)) return;
@@ -73460,6 +73845,20 @@ public class TaCodegenServe {
             int optInSMA4Period = GetInt(p, "optInSMA4Period", 0);
             int optInSignalPeriod = GetInt(p, "optInSignalPeriod", 0);
             return core.KstLookback(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod);
+        }
+        case "KSTEXT": {
+            int optInROC1Period = GetInt(p, "optInROC1Period", 0);
+            int optInROC2Period = GetInt(p, "optInROC2Period", 0);
+            int optInROC3Period = GetInt(p, "optInROC3Period", 0);
+            int optInROC4Period = GetInt(p, "optInROC4Period", 0);
+            int optInMA1Period = GetInt(p, "optInMA1Period", 0);
+            int optInMA2Period = GetInt(p, "optInMA2Period", 0);
+            int optInMA3Period = GetInt(p, "optInMA3Period", 0);
+            int optInMA4Period = GetInt(p, "optInMA4Period", 0);
+            int optInSignalPeriod = GetInt(p, "optInSignalPeriod", 0);
+            MAType optInROCMAType = (MAType)GetInt(p, "optInROCMAType", (int)MAType.DEFAULT);
+            MAType optInSignalMAType = (MAType)GetInt(p, "optInSignalMAType", (int)MAType.DEFAULT);
+            return core.KstextLookback(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType);
         }
         case "KURTOSIS": {
             int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
@@ -92142,6 +92541,147 @@ public class TaCodegenServe {
         sb.Append($",\"used_float\":{usedFloat}");
         sb.Append($",\"timing_ns\":{elapsedNs}");
         RideKst(core, p, endIdx, inReal, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, sb);
+        sb.Append("}");
+        return sb.ToString();
+    }
+
+    static string Handle_KSTEXT(JsonElement p, int startIdx, int endIdx) {
+        int use_preloaded = GetInt(p, "use_preloaded", 0);
+        int bench_iters = GetInt(p, "iters", 1);
+        if (bench_iters < 1) bench_iters = 1;
+        int bench_mode = GetInt(p, "bench_mode", 0);
+        double[] inReal;
+        if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[refN]; Array.Copy(refClose, inReal, refN);
+        } else {
+            inReal = GetDoubleArray(p, "inReal");
+        }
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
+        int optInROC1Period = GetInt(p, "optInROC1Period", 0);
+        int optInROC2Period = GetInt(p, "optInROC2Period", 0);
+        int optInROC3Period = GetInt(p, "optInROC3Period", 0);
+        int optInROC4Period = GetInt(p, "optInROC4Period", 0);
+        int optInMA1Period = GetInt(p, "optInMA1Period", 0);
+        int optInMA2Period = GetInt(p, "optInMA2Period", 0);
+        int optInMA3Period = GetInt(p, "optInMA3Period", 0);
+        int optInMA4Period = GetInt(p, "optInMA4Period", 0);
+        int optInSignalPeriod = GetInt(p, "optInSignalPeriod", 0);
+        MAType optInROCMAType = (MAType)GetInt(p, "optInROCMAType", (int)MAType.DEFAULT);
+        MAType optInSignalMAType = (MAType)GetInt(p, "optInSignalMAType", (int)MAType.DEFAULT);
+        // The output buffers are sized to the count the call actually PRODUCES --
+        // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
+        // never below one. Not to the width of the requested range: that is the bound the
+        // managed backends check and the Rust asserts state, and at the range width it was
+        // slack by exactly the lookback, so no call could ever approach it.
+        // The pad is there because a bound is a MINIMUM, never an equality. A caller
+        // re-using a pre-allocated buffer passes a larger one, and that is not an error --
+        // the reported OutRange is what says which part was written. So the harness sends
+        // both: the startIdx axis sends no pad (the bound is reachable) while the
+        // full-range value comparison sends one (slack is legal). Sizing every call one way
+        // would silently drop the other property.
+        // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
+        // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
+        // for a range shorter than the lookback, where the output bound switches off and
+        // the spec says any length will do, including none. It does not: two EMPTY output
+        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
+        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
+        // accepted by C and Java -- a four-way divergence on a call the specification says
+        // all four accept. Sizing to zero here would reach it on every multi-output
+        // function, which is a semantic question, not a harness one. Recorded as
+        // error-handling-spec, open item 11.
+        // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
+        // sizes and cannot make the check, so an exact buffer would test nothing there.
+        int _lb = core.KstextLookback(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType);
+        int _cs = startIdx > _lb ? startIdx : _lb;
+        int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
+        double[] outArr0 = new double[_outLen];
+        double[] outArr1 = new double[_outLen];
+        int outBegIdx = 0, outNBElement = 0;
+        RetCode rc = RetCode.Success;
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
+            if (bench_mode == 0) {
+            if (GetInt(p, "timed", 0) != 0) {
+                try {
+                    rc = core.KstextImpl(startIdx, endIdx, inReal, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, out outBegIdx, out outNBElement, outArr0, outArr1);
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
+            } else {
+                try {
+                    OutRange _pr = core.Kstext(startIdx, endIdx, inReal, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, outArr0, outArr1);
+                    outBegIdx = _pr.BegIdx;
+                    outNBElement = _pr.Count;
+                    rc = RetCode.Success;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
+            }
+            } else if (bench_mode == 1) {
+                try {
+                    core.KstextOpen(_warm_inReal, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType);
+                    rc = RetCode.Success;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
+                }
+            } else {
+                try {
+                    Core.KstextStream _wh = core.KstextOpenAndFill(_warm_inReal, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, outArr0, outArr1);
+                    outBegIdx = _wh.OutRange.BegIdx;
+                    outNBElement = _wh.OutRange.Count;
+                    rc = RetCode.Success;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
+            }
+        }
+        long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+        int usedFloat = 0;
+        if (GetInt(p, "use_float", 0) != 0) {
+            var f_inReal = new float[inReal.Length];
+            for (int _fi = 0; _fi < inReal.Length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            try {
+                OutRange _fr = core.Kstext(startIdx, endIdx, f_inReal, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, outArr0, outArr1);
+                outBegIdx = _fr.BegIdx;
+                outNBElement = _fr.Count;
+                rc = RetCode.Success;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
+                outBegIdx = 0;
+                outNBElement = 0;
+            }
+            usedFloat = 1;
+        }
+        if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
+            ulong _h = SvHashInit();
+            if (rc == RetCode.Success && outNBElement > 0) {
+                _h = SvHashF64(_h, outArr0, outNBElement);
+                _h = SvHashF64(_h, outArr1, outNBElement);
+            }
+            _h = SvHashFin(_h);
+            var hb = new System.Text.StringBuilder();
+            hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            RideKstext(core, p, endIdx, inReal, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, hb);
+            hb.Append("}");
+            return hb.ToString();
+        }
+        var sb = new System.Text.StringBuilder();
+        sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
+        sb.Append($",\"out_len\":{_outLen}");
+        if (GetInt(p, "no_output", 0) == 0) {
+            sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
+            sb.Append(",\"outReal1\":"); sb.Append(FormatArray(outArr1, outNBElement));
+        }
+        sb.Append($",\"used_float\":{usedFloat}");
+        sb.Append($",\"timing_ns\":{elapsedNs}");
+        RideKstext(core, p, endIdx, inReal, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, sb);
         sb.Append("}");
         return sb.ToString();
     }

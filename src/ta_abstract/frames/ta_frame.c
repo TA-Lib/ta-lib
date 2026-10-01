@@ -3010,6 +3010,47 @@ unsigned int TA_KST_FramePPLB( const TA_ParamHolderPriv *params )
                     params->optIn[7].data.optInInteger, /* optInSMA4Period*/
                     params->optIn[8].data.optInInteger /* optInSignalPeriod*/ );
 }
+TA_RetCode TA_KSTEXT_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+{
+   return TA_KSTEXT(
+               startIdx,
+               endIdx,
+               params->in[0].data.inReal, /* inReal */
+               params->optIn[0].data.optInInteger, /* optInROC1Period*/
+               params->optIn[1].data.optInInteger, /* optInROC2Period*/
+               params->optIn[2].data.optInInteger, /* optInROC3Period*/
+               params->optIn[3].data.optInInteger, /* optInROC4Period*/
+               params->optIn[4].data.optInInteger, /* optInMA1Period*/
+               params->optIn[5].data.optInInteger, /* optInMA2Period*/
+               params->optIn[6].data.optInInteger, /* optInMA3Period*/
+               params->optIn[7].data.optInInteger, /* optInMA4Period*/
+               params->optIn[8].data.optInInteger, /* optInSignalPeriod*/
+               (TA_MAType)params->optIn[9].data.optInInteger, /* optInROCMAType*/
+               (TA_MAType)params->optIn[10].data.optInInteger, /* optInSignalMAType*/
+               outBegIdx, 
+               outNBElement, 
+               params->out[0].data.outReal, /*  outKST */
+               params->out[1].data.outReal /*  outKSTSignal */
+               );
+}
+unsigned int TA_KSTEXT_FramePPLB( const TA_ParamHolderPriv *params )
+{
+   return TA_KSTEXT_Lookback(params->optIn[0].data.optInInteger, /* optInROC1Period*/
+                    params->optIn[1].data.optInInteger, /* optInROC2Period*/
+                    params->optIn[2].data.optInInteger, /* optInROC3Period*/
+                    params->optIn[3].data.optInInteger, /* optInROC4Period*/
+                    params->optIn[4].data.optInInteger, /* optInMA1Period*/
+                    params->optIn[5].data.optInInteger, /* optInMA2Period*/
+                    params->optIn[6].data.optInInteger, /* optInMA3Period*/
+                    params->optIn[7].data.optInInteger, /* optInMA4Period*/
+                    params->optIn[8].data.optInInteger, /* optInSignalPeriod*/
+                    (TA_MAType)params->optIn[9].data.optInInteger, /* optInROCMAType*/
+                    (TA_MAType)params->optIn[10].data.optInInteger /* optInSignalMAType*/ );
+}
 TA_RetCode TA_KURTOSIS_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

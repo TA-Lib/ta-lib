@@ -76,6 +76,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 - [IMI](/functions/imi.md) — Intraday Momentum Index
 - [KDJ](/functions/kdj.md) — KDJ Stochastic
 - [KST](/functions/kst.md) — Know Sure Thing (Pring)
+- [KSTEXT](/functions/kstext.md) — Know Sure Thing with controllable MA type
 - [MACD](/functions/macd.md) — Moving Average Convergence/Divergence
 - [MACDEXT](/functions/macdext.md) — MACD with controllable MA type
 - [MACDFIX](/functions/macdfix.md) — Moving Average Convergence/Divergence Fix 12/26

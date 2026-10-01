@@ -26,6 +26,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   - FRAMA: Fractal Adaptive Moving Average, Ehlers' adaptive EMA driven by the window's fractal dimension (#464)
   - IBS: Internal Bar Strength, where the close sits inside its own bar range (#468)
   - KST: Know Sure Thing (#472)
+  - KSTEXT: Know Sure Thing with selectable MA types for the legs and the signal line (#491)
   - KURTOSIS: Rolling Excess Kurtosis (#433)
   - MCGD: McGinley Dynamic, a moving average whose step adapts to the price-to-line ratio (#471)
   - MEDIAN: Rolling Median (#432)

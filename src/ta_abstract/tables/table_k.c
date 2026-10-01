@@ -429,6 +429,202 @@ DEF_FUNCTION( KST,
              );
 /* KST END */
 
+/* KSTEXT BEGIN */
+static const TA_OptInputParameterInfo TA_DEF_UI_D_KSTEXT_ROC1Period =
+{
+   TA_OptInput_IntegerRange,
+   "optInROC1Period",
+   0,
+
+   "ROC-1 Period",
+   (const void *)&TA_DEF_TimePeriod_Positive,
+   10,
+   "Rate-of-change period of leg 1",
+
+   NULL
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_KSTEXT_ROC2Period =
+{
+   TA_OptInput_IntegerRange,
+   "optInROC2Period",
+   0,
+
+   "ROC-2 Period",
+   (const void *)&TA_DEF_TimePeriod_Positive,
+   15,
+   "Rate-of-change period of leg 2",
+
+   NULL
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_KSTEXT_ROC3Period =
+{
+   TA_OptInput_IntegerRange,
+   "optInROC3Period",
+   0,
+
+   "ROC-3 Period",
+   (const void *)&TA_DEF_TimePeriod_Positive,
+   20,
+   "Rate-of-change period of leg 3",
+
+   NULL
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_KSTEXT_ROC4Period =
+{
+   TA_OptInput_IntegerRange,
+   "optInROC4Period",
+   0,
+
+   "ROC-4 Period",
+   (const void *)&TA_DEF_TimePeriod_Positive,
+   30,
+   "Rate-of-change period of leg 4",
+
+   NULL
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_KSTEXT_MA1Period =
+{
+   TA_OptInput_IntegerRange,
+   "optInMA1Period",
+   0,
+
+   "MA-1 Period",
+   (const void *)&TA_DEF_TimePeriod_Positive,
+   10,
+   "Smoothing period of leg 1",
+
+   NULL
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_KSTEXT_MA2Period =
+{
+   TA_OptInput_IntegerRange,
+   "optInMA2Period",
+   0,
+
+   "MA-2 Period",
+   (const void *)&TA_DEF_TimePeriod_Positive,
+   10,
+   "Smoothing period of leg 2",
+
+   NULL
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_KSTEXT_MA3Period =
+{
+   TA_OptInput_IntegerRange,
+   "optInMA3Period",
+   0,
+
+   "MA-3 Period",
+   (const void *)&TA_DEF_TimePeriod_Positive,
+   10,
+   "Smoothing period of leg 3",
+
+   NULL
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_KSTEXT_MA4Period =
+{
+   TA_OptInput_IntegerRange,
+   "optInMA4Period",
+   0,
+
+   "MA-4 Period",
+   (const void *)&TA_DEF_TimePeriod_Positive,
+   15,
+   "Smoothing period of leg 4",
+
+   NULL
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_KSTEXT_SignalPeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInSignalPeriod",
+   0,
+
+   "Signal Period",
+   (const void *)&TA_DEF_TimePeriod_Positive,
+   9,
+   "Smoothing period of the signal line",
+
+   NULL
+};
+
+const TA_OptInputParameterInfo TA_DEF_UI_D_KSTEXT_ROCMAType =
+{
+   TA_OptInput_IntegerList,
+   "optInROCMAType",
+   0,
+
+   "ROC MA",
+   (const void *)&TA_MA_TypeList,
+   0,
+   "Type of Moving Average smoothing the four legs",
+
+   NULL
+};
+
+const TA_OptInputParameterInfo TA_DEF_UI_D_KSTEXT_SignalMAType =
+{
+   TA_OptInput_IntegerList,
+   "optInSignalMAType",
+   0,
+
+   "Signal MA",
+   (const void *)&TA_MA_TypeList,
+   0,
+   "Type of Moving Average for signal line",
+
+   NULL
+};
+
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_KSTEXT_outKST =
+                               { TA_Output_Real, "outKST", TA_OUT_LINE };
+
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_KSTEXT_outKSTSignal =
+                               { TA_Output_Real, "outKSTSignal", TA_OUT_DASH_LINE };
+
+static const TA_InputParameterInfo    *TA_KSTEXT_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Real,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_KSTEXT_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real_KSTEXT_outKST,
+  &TA_DEF_UI_Output_Real_KSTEXT_outKSTSignal,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_KSTEXT_OptInputs[] =
+{ &TA_DEF_UI_D_KSTEXT_ROC1Period,
+  &TA_DEF_UI_D_KSTEXT_ROC2Period,
+  &TA_DEF_UI_D_KSTEXT_ROC3Period,
+  &TA_DEF_UI_D_KSTEXT_ROC4Period,
+  &TA_DEF_UI_D_KSTEXT_MA1Period,
+  &TA_DEF_UI_D_KSTEXT_MA2Period,
+  &TA_DEF_UI_D_KSTEXT_MA3Period,
+  &TA_DEF_UI_D_KSTEXT_MA4Period,
+  &TA_DEF_UI_D_KSTEXT_SignalPeriod,
+  &TA_DEF_UI_D_KSTEXT_ROCMAType,
+  &TA_DEF_UI_D_KSTEXT_SignalMAType,
+  NULL
+};
+
+DEF_FUNCTION( KSTEXT,
+              TA_GroupId_MomentumIndicators,
+              "Know Sure Thing with controllable MA type",
+              TA_FUNC_FLG_STREAM
+             );
+/* KSTEXT END */
+
 /* KURTOSIS BEGIN */
 static const TA_IntegerRange TA_DEF_KURTOSIS_TimePeriod =
 {
@@ -487,6 +683,7 @@ const TA_FuncDef *TA_DEF_TableK[] =
    ADD_TO_TABLE(KC),
    ADD_TO_TABLE(KDJ),
    ADD_TO_TABLE(KST),
+   ADD_TO_TABLE(KSTEXT),
    ADD_TO_TABLE(KURTOSIS),
    NULL
 };

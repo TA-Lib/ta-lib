@@ -710,6 +710,7 @@ static const UnstableLookup UNSTABLE_MAP[] = {
     {"TRIX",         TA_FUNC_UNST_EMA},
     {"MACD",         TA_FUNC_UNST_EMA},
     {"MACDEXT",      TA_FUNC_UNST_EMA},
+    {"KSTEXT",       TA_FUNC_UNST_EMA},
     {"MACDFIX",      TA_FUNC_UNST_EMA},
     /* APO/PPO default to EMA (#120) -> EMA-converging, like MACDEXT. PVO is
      * PPO over volume and defaults to EMA the same way, so it belongs here for
@@ -3033,10 +3034,10 @@ static void sweep_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
 /* Sized for the widest stream-vector enumeration: MACDEXT carries 3 MAType
  * params, so its count is 8*M-1 in the MAType-list length M (base 4 + 3 params *
  * (2 base-vector crosses * (M-1) non-default arms + 1 out-of-list) + the 2 *
- * (M-1) multi-enum diagonal, #181). M=13 today (#93 added DISABLED, #182
- * DEFAULT, #347 ZLEMA) => 103; 128 keeps runway for 3 more MATypes before
- * MACDEXT reaches it again. Overflow is a hard failure, never a skip. */
-#define STREAM_MAX_VEC 128
+ * (M-1) multi-enum diagonal, #181). M=16 today => 127; 160 keeps runway for
+ * 4 more MATypes before MACDEXT reaches it again. Overflow is a hard failure,
+ * never a skip. */
+#define STREAM_MAX_VEC 160
 #define STREAM_N       240
 /* Stream-leg variants: 0 = ambient defaults, 1 = unstable period, then one per
  * data shape from MONO_UP up (FUZZ_NSHAPES - 1 of them). */
@@ -5260,7 +5261,7 @@ static void write_markdown_report(const char *filepath, const char *languageFilt
                              * counted into *overflow so it fails the run LOUDLY —
                              * without this the MAType sweep would truncate
                              * silently (it never reaches the FUZZ_MAX_VEC guard). */
-#define FUZZ_MAX_VEC  128   /* parameter vectors per function: each integer range
+#define FUZZ_MAX_VEC  160   /* parameter vectors per function: each integer range
                              * takes <= 8 candidates + 2 reject + 1 sentinel, each
                              * MAType list M-1 values + 1 sentinel (#162), plus the
                              * defaults vector. Keep it within STREAM_MAX_VEC.

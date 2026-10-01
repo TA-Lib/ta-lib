@@ -122544,6 +122544,1242 @@ class Core {
      *
      *  Initial  Name/description
      *  -------------------------------------------------------------------
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
+     *
+     * Change history:
+     *
+     *  MMDDYY BY     Description
+     *  -------------------------------------------------------------------
+     *  100126 MF,CC  First version (#491).
+     */
+
+       /**
+        * Number of leading input bars {@link Core#kstext} consumes before it can
+        * produce its first value.
+        * <p>Equivalently, the index of the first bar with a value when the whole
+        * series is requested. Feed at least {@code lookback + 1} bars to get any
+        * output.
+        *
+        * @param optInROC1Period Rate-of-change period of leg 1 (weight 1) (default
+        *        10; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInROC2Period Rate-of-change period of leg 2 (weight 2) (default
+        *        15; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInROC3Period Rate-of-change period of leg 3 (weight 3) (default
+        *        20; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInROC4Period Rate-of-change period of leg 4 (weight 4) (default
+        *        30; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInMA1Period Period of the MA smoothing leg 1 (default 10; range
+        *        1..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInMA2Period Period of the MA smoothing leg 2 (default 10; range
+        *        1..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInMA3Period Period of the MA smoothing leg 3 (default 10; range
+        *        1..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInMA4Period Period of the MA smoothing leg 4 (default 15; range
+        *        1..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInSignalPeriod Period of the signal-line MA (default 9; range
+        *        1..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInROCMAType MA type smoothing the four legs (default 0 = SMA;
+        *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+        *        {@code MAType.DEFAULT} selects the default).
+        * @param optInSignalMAType MA type for the signal line (default 0 = SMA;
+        *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+        *        {@code MAType.DEFAULT} selects the default).
+        * @return The lookback, or {@code -1} if a parameter is out of range.
+        */
+       public int kstextLookback( int optInROC1Period, int optInROC2Period, int optInROC3Period, int optInROC4Period, int optInMA1Period, int optInMA2Period, int optInMA3Period, int optInMA4Period, int optInSignalPeriod, MAType optInROCMAType, MAType optInSignalMAType )
+       {
+          if( optInROC1Period == Integer.MIN_VALUE ) {
+             optInROC1Period = 10;
+          } else if( optInROC1Period < 1 || optInROC1Period > 100000 ) {
+             return -1;
+          }
+          if( optInROC2Period == Integer.MIN_VALUE ) {
+             optInROC2Period = 15;
+          } else if( optInROC2Period < 1 || optInROC2Period > 100000 ) {
+             return -1;
+          }
+          if( optInROC3Period == Integer.MIN_VALUE ) {
+             optInROC3Period = 20;
+          } else if( optInROC3Period < 1 || optInROC3Period > 100000 ) {
+             return -1;
+          }
+          if( optInROC4Period == Integer.MIN_VALUE ) {
+             optInROC4Period = 30;
+          } else if( optInROC4Period < 1 || optInROC4Period > 100000 ) {
+             return -1;
+          }
+          if( optInMA1Period == Integer.MIN_VALUE ) {
+             optInMA1Period = 10;
+          } else if( optInMA1Period < 1 || optInMA1Period > 100000 ) {
+             return -1;
+          }
+          if( optInMA2Period == Integer.MIN_VALUE ) {
+             optInMA2Period = 10;
+          } else if( optInMA2Period < 1 || optInMA2Period > 100000 ) {
+             return -1;
+          }
+          if( optInMA3Period == Integer.MIN_VALUE ) {
+             optInMA3Period = 10;
+          } else if( optInMA3Period < 1 || optInMA3Period > 100000 ) {
+             return -1;
+          }
+          if( optInMA4Period == Integer.MIN_VALUE ) {
+             optInMA4Period = 15;
+          } else if( optInMA4Period < 1 || optInMA4Period > 100000 ) {
+             return -1;
+          }
+          if( optInSignalPeriod == Integer.MIN_VALUE ) {
+             optInSignalPeriod = 9;
+          } else if( optInSignalPeriod < 1 || optInSignalPeriod > 100000 ) {
+             return -1;
+          }
+          if( optInROCMAType == MAType.DEFAULT ) {
+             optInROCMAType = MAType.SMA;
+          }
+          if( optInSignalMAType == MAType.DEFAULT ) {
+             optInSignalMAType = MAType.SMA;
+          }
+          int legMax;
+          int leg;
+          legMax = optInROC1Period + maLookback(optInMA1Period, optInROCMAType);
+          leg = optInROC2Period + maLookback(optInMA2Period, optInROCMAType);
+          if( leg > legMax ) {
+             legMax = leg;
+          }
+          leg = optInROC3Period + maLookback(optInMA3Period, optInROCMAType);
+          if( leg > legMax ) {
+             legMax = leg;
+          }
+          leg = optInROC4Period + maLookback(optInMA4Period, optInROCMAType);
+          if( leg > legMax ) {
+             legMax = leg;
+          }
+          return legMax + maLookback(optInSignalPeriod, optInSignalMAType) ;
+
+       }
+       RetCode kstextImpl( int startIdx,
+                           int endIdx,
+                           double inReal[],
+                           int optInROC1Period,
+                           int optInROC2Period,
+                           int optInROC3Period,
+                           int optInROC4Period,
+                           int optInMA1Period,
+                           int optInMA2Period,
+                           int optInMA3Period,
+                           int optInMA4Period,
+                           int optInSignalPeriod,
+                           MAType optInROCMAType,
+                           MAType optInSignalMAType,
+                           MInteger outBegIdx,
+                           MInteger outNBElement,
+                           double outKST[],
+                           double outKSTSignal[] )
+       {
+          double[] kstBuffer;
+          double[] tempBuffer;
+          RetCode retCode;
+          int lookbackTotal = 0;
+          int lookbackSignal = 0;
+          int lookbackMA = 0;
+          int sigStart = 0;
+          int tempInteger = 0;
+          MInteger tempBegIdx = new MInteger();
+          MInteger rocNb = new MInteger();
+          MInteger kstNb = new MInteger();
+          MInteger legNb = new MInteger();
+          MInteger sigNb = new MInteger();
+          int i = 0;
+          if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX ;
+          }
+          if( (endIdx < 0) || (endIdx > INDEX_MAX) || (endIdx < startIdx)) {
+             return RetCode.OUT_OF_RANGE_END_INDEX ;
+          }
+          if( optInROC1Period == Integer.MIN_VALUE ) {
+             optInROC1Period = 10;
+          } else if( optInROC1Period < 1 || optInROC1Period > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInROC2Period == Integer.MIN_VALUE ) {
+             optInROC2Period = 15;
+          } else if( optInROC2Period < 1 || optInROC2Period > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInROC3Period == Integer.MIN_VALUE ) {
+             optInROC3Period = 20;
+          } else if( optInROC3Period < 1 || optInROC3Period > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInROC4Period == Integer.MIN_VALUE ) {
+             optInROC4Period = 30;
+          } else if( optInROC4Period < 1 || optInROC4Period > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInMA1Period == Integer.MIN_VALUE ) {
+             optInMA1Period = 10;
+          } else if( optInMA1Period < 1 || optInMA1Period > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInMA2Period == Integer.MIN_VALUE ) {
+             optInMA2Period = 10;
+          } else if( optInMA2Period < 1 || optInMA2Period > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInMA3Period == Integer.MIN_VALUE ) {
+             optInMA3Period = 10;
+          } else if( optInMA3Period < 1 || optInMA3Period > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInMA4Period == Integer.MIN_VALUE ) {
+             optInMA4Period = 15;
+          } else if( optInMA4Period < 1 || optInMA4Period > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInSignalPeriod == Integer.MIN_VALUE ) {
+             optInSignalPeriod = 9;
+          } else if( optInSignalPeriod < 1 || optInSignalPeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInROCMAType == MAType.DEFAULT ) {
+             optInROCMAType = MAType.SMA;
+          }
+          if( optInSignalMAType == MAType.DEFAULT ) {
+             optInSignalMAType = MAType.SMA;
+          }
+          if( outKST == outKSTSignal ) {
+             return RetCode.BAD_PARAM ;
+          }
+          /* With every type SMA this is bit-exact with kst(): each leg's average
+           * starts on the first bar the signal consumes, and the line accumulates
+           * its legs left to right. Changing either breaks the equality.
+           */
+          outBegIdx.value = 0;
+          outNBElement.value = 0;
+          lookbackSignal = maLookback(optInSignalPeriod, optInSignalMAType);
+          lookbackTotal = kstextLookback(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType);
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             return RetCode.SUCCESS ;
+          }
+          sigStart = startIdx - lookbackSignal;
+          /* A leg's rate of change runs its average's lookback ahead of sigStart. */
+          lookbackMA = maLookback(optInMA1Period, optInROCMAType);
+          tempInteger = maLookback(optInMA2Period, optInROCMAType);
+          if( tempInteger > lookbackMA ) {
+             lookbackMA = tempInteger;
+          }
+          tempInteger = maLookback(optInMA3Period, optInROCMAType);
+          if( tempInteger > lookbackMA ) {
+             lookbackMA = tempInteger;
+          }
+          tempInteger = maLookback(optInMA4Period, optInROCMAType);
+          if( tempInteger > lookbackMA ) {
+             lookbackMA = tempInteger;
+          }
+          tempInteger = endIdx - sigStart + 1 + lookbackMA;
+          kstBuffer = new double[(int)(tempInteger * 1)];
+          tempBuffer = new double[(int)(tempInteger * 1)];
+          OutRange _xr0 = roc(sigStart - maLookback(optInMA1Period, optInROCMAType), endIdx, inReal, optInROC1Period, kstBuffer);
+          tempBegIdx.value = _xr0.begIdx();
+          rocNb.value = _xr0.count();
+          retCode = RetCode.SUCCESS;
+          OutRange _xr1 = ma(0, rocNb.value - 1, kstBuffer, optInMA1Period, optInROCMAType, kstBuffer);
+          tempBegIdx.value = _xr1.begIdx();
+          kstNb.value = _xr1.count();
+          retCode = RetCode.SUCCESS;
+          OutRange _xr2 = roc(sigStart - maLookback(optInMA2Period, optInROCMAType), endIdx, inReal, optInROC2Period, tempBuffer);
+          tempBegIdx.value = _xr2.begIdx();
+          rocNb.value = _xr2.count();
+          retCode = RetCode.SUCCESS;
+          OutRange _xr3 = ma(0, rocNb.value - 1, tempBuffer, optInMA2Period, optInROCMAType, tempBuffer);
+          tempBegIdx.value = _xr3.begIdx();
+          legNb.value = _xr3.count();
+          retCode = RetCode.SUCCESS;
+          for( i = 0; i < kstNb.value; i += 1 ) {
+             kstBuffer[i] = Math.fma(2.0, tempBuffer[i], kstBuffer[i]);
+          }
+          OutRange _xr4 = roc(sigStart - maLookback(optInMA3Period, optInROCMAType), endIdx, inReal, optInROC3Period, tempBuffer);
+          tempBegIdx.value = _xr4.begIdx();
+          rocNb.value = _xr4.count();
+          retCode = RetCode.SUCCESS;
+          OutRange _xr5 = ma(0, rocNb.value - 1, tempBuffer, optInMA3Period, optInROCMAType, tempBuffer);
+          tempBegIdx.value = _xr5.begIdx();
+          legNb.value = _xr5.count();
+          retCode = RetCode.SUCCESS;
+          for( i = 0; i < kstNb.value; i += 1 ) {
+             kstBuffer[i] = Math.fma(3.0, tempBuffer[i], kstBuffer[i]);
+          }
+          OutRange _xr6 = roc(sigStart - maLookback(optInMA4Period, optInROCMAType), endIdx, inReal, optInROC4Period, tempBuffer);
+          tempBegIdx.value = _xr6.begIdx();
+          rocNb.value = _xr6.count();
+          retCode = RetCode.SUCCESS;
+          OutRange _xr7 = ma(0, rocNb.value - 1, tempBuffer, optInMA4Period, optInROCMAType, tempBuffer);
+          tempBegIdx.value = _xr7.begIdx();
+          legNb.value = _xr7.count();
+          retCode = RetCode.SUCCESS;
+          for( i = 0; i < kstNb.value; i += 1 ) {
+             kstBuffer[i] = Math.fma(4.0, tempBuffer[i], kstBuffer[i]);
+          }
+          /* Every read of inReal is done: an output may alias it. */
+          System.arraycopy(kstBuffer, lookbackSignal, outKST, 0, (endIdx - startIdx + 1) * 1);
+          OutRange _xr8 = ma(0, kstNb.value - 1, kstBuffer, optInSignalPeriod, optInSignalMAType, outKSTSignal);
+          tempBegIdx.value = _xr8.begIdx();
+          sigNb.value = _xr8.count();
+          retCode = RetCode.SUCCESS;
+          outBegIdx.value = startIdx;
+          outNBElement.value = sigNb.value;
+          return RetCode.SUCCESS ;
+       }
+       RetCode kstextImpl( int startIdx,
+                           int endIdx,
+                           float inReal[],
+                           int optInROC1Period,
+                           int optInROC2Period,
+                           int optInROC3Period,
+                           int optInROC4Period,
+                           int optInMA1Period,
+                           int optInMA2Period,
+                           int optInMA3Period,
+                           int optInMA4Period,
+                           int optInSignalPeriod,
+                           MAType optInROCMAType,
+                           MAType optInSignalMAType,
+                           MInteger outBegIdx,
+                           MInteger outNBElement,
+                           double outKST[],
+                           double outKSTSignal[] )
+       {
+          double[] kstBuffer;
+          double[] tempBuffer;
+          RetCode retCode;
+          int lookbackTotal = 0;
+          int lookbackSignal = 0;
+          int lookbackMA = 0;
+          int sigStart = 0;
+          int tempInteger = 0;
+          MInteger tempBegIdx = new MInteger();
+          MInteger rocNb = new MInteger();
+          MInteger kstNb = new MInteger();
+          MInteger legNb = new MInteger();
+          MInteger sigNb = new MInteger();
+          int i = 0;
+          if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX ;
+          }
+          if( (endIdx < 0) || (endIdx > INDEX_MAX) || (endIdx < startIdx)) {
+             return RetCode.OUT_OF_RANGE_END_INDEX ;
+          }
+          if( optInROC1Period == Integer.MIN_VALUE ) {
+             optInROC1Period = 10;
+          } else if( optInROC1Period < 1 || optInROC1Period > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInROC2Period == Integer.MIN_VALUE ) {
+             optInROC2Period = 15;
+          } else if( optInROC2Period < 1 || optInROC2Period > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInROC3Period == Integer.MIN_VALUE ) {
+             optInROC3Period = 20;
+          } else if( optInROC3Period < 1 || optInROC3Period > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInROC4Period == Integer.MIN_VALUE ) {
+             optInROC4Period = 30;
+          } else if( optInROC4Period < 1 || optInROC4Period > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInMA1Period == Integer.MIN_VALUE ) {
+             optInMA1Period = 10;
+          } else if( optInMA1Period < 1 || optInMA1Period > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInMA2Period == Integer.MIN_VALUE ) {
+             optInMA2Period = 10;
+          } else if( optInMA2Period < 1 || optInMA2Period > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInMA3Period == Integer.MIN_VALUE ) {
+             optInMA3Period = 10;
+          } else if( optInMA3Period < 1 || optInMA3Period > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInMA4Period == Integer.MIN_VALUE ) {
+             optInMA4Period = 15;
+          } else if( optInMA4Period < 1 || optInMA4Period > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInSignalPeriod == Integer.MIN_VALUE ) {
+             optInSignalPeriod = 9;
+          } else if( optInSignalPeriod < 1 || optInSignalPeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInROCMAType == MAType.DEFAULT ) {
+             optInROCMAType = MAType.SMA;
+          }
+          if( optInSignalMAType == MAType.DEFAULT ) {
+             optInSignalMAType = MAType.SMA;
+          }
+          if( outKST == outKSTSignal ) {
+             return RetCode.BAD_PARAM ;
+          }
+          outBegIdx.value = 0;
+          outNBElement.value = 0;
+          lookbackSignal = maLookback(optInSignalPeriod, optInSignalMAType);
+          lookbackTotal = kstextLookback(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType);
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             return RetCode.SUCCESS ;
+          }
+          sigStart = startIdx - lookbackSignal;
+          lookbackMA = maLookback(optInMA1Period, optInROCMAType);
+          tempInteger = maLookback(optInMA2Period, optInROCMAType);
+          if( tempInteger > lookbackMA ) {
+             lookbackMA = tempInteger;
+          }
+          tempInteger = maLookback(optInMA3Period, optInROCMAType);
+          if( tempInteger > lookbackMA ) {
+             lookbackMA = tempInteger;
+          }
+          tempInteger = maLookback(optInMA4Period, optInROCMAType);
+          if( tempInteger > lookbackMA ) {
+             lookbackMA = tempInteger;
+          }
+          tempInteger = endIdx - sigStart + 1 + lookbackMA;
+          kstBuffer = new double[(int)(tempInteger * 1)];
+          tempBuffer = new double[(int)(tempInteger * 1)];
+          OutRange _xr0 = roc(sigStart - maLookback(optInMA1Period, optInROCMAType), endIdx, inReal, optInROC1Period, kstBuffer);
+          tempBegIdx.value = _xr0.begIdx();
+          rocNb.value = _xr0.count();
+          retCode = RetCode.SUCCESS;
+          OutRange _xr1 = ma(0, rocNb.value - 1, kstBuffer, optInMA1Period, optInROCMAType, kstBuffer);
+          tempBegIdx.value = _xr1.begIdx();
+          kstNb.value = _xr1.count();
+          retCode = RetCode.SUCCESS;
+          OutRange _xr2 = roc(sigStart - maLookback(optInMA2Period, optInROCMAType), endIdx, inReal, optInROC2Period, tempBuffer);
+          tempBegIdx.value = _xr2.begIdx();
+          rocNb.value = _xr2.count();
+          retCode = RetCode.SUCCESS;
+          OutRange _xr3 = ma(0, rocNb.value - 1, tempBuffer, optInMA2Period, optInROCMAType, tempBuffer);
+          tempBegIdx.value = _xr3.begIdx();
+          legNb.value = _xr3.count();
+          retCode = RetCode.SUCCESS;
+          for( i = 0; i < kstNb.value; i += 1 ) {
+             kstBuffer[i] = Math.fma(2.0, tempBuffer[i], kstBuffer[i]);
+          }
+          OutRange _xr4 = roc(sigStart - maLookback(optInMA3Period, optInROCMAType), endIdx, inReal, optInROC3Period, tempBuffer);
+          tempBegIdx.value = _xr4.begIdx();
+          rocNb.value = _xr4.count();
+          retCode = RetCode.SUCCESS;
+          OutRange _xr5 = ma(0, rocNb.value - 1, tempBuffer, optInMA3Period, optInROCMAType, tempBuffer);
+          tempBegIdx.value = _xr5.begIdx();
+          legNb.value = _xr5.count();
+          retCode = RetCode.SUCCESS;
+          for( i = 0; i < kstNb.value; i += 1 ) {
+             kstBuffer[i] = Math.fma(3.0, tempBuffer[i], kstBuffer[i]);
+          }
+          OutRange _xr6 = roc(sigStart - maLookback(optInMA4Period, optInROCMAType), endIdx, inReal, optInROC4Period, tempBuffer);
+          tempBegIdx.value = _xr6.begIdx();
+          rocNb.value = _xr6.count();
+          retCode = RetCode.SUCCESS;
+          OutRange _xr7 = ma(0, rocNb.value - 1, tempBuffer, optInMA4Period, optInROCMAType, tempBuffer);
+          tempBegIdx.value = _xr7.begIdx();
+          legNb.value = _xr7.count();
+          retCode = RetCode.SUCCESS;
+          for( i = 0; i < kstNb.value; i += 1 ) {
+             kstBuffer[i] = Math.fma(4.0, tempBuffer[i], kstBuffer[i]);
+          }
+          System.arraycopy(kstBuffer, lookbackSignal, outKST, 0, (endIdx - startIdx + 1) * 1);
+          OutRange _xr8 = ma(0, kstNb.value - 1, kstBuffer, optInSignalPeriod, optInSignalMAType, outKSTSignal);
+          tempBegIdx.value = _xr8.begIdx();
+          sigNb.value = _xr8.count();
+          retCode = RetCode.SUCCESS;
+          outBegIdx.value = startIdx;
+          outNBElement.value = sigNb.value;
+          return RetCode.SUCCESS ;
+       }
+       /**
+        * Know Sure Thing with selectable moving averages: Martin J. Pring's
+        * weighted sum of four smoothed rates of change, where one MA type smooths
+        * the four legs and another the signal line. {@code KST} is Pring's
+        * definition, with simple averages throughout. Formulas published since then
+        * smooth the legs exponentially, and Pring allows a simple or an exponential
+        * signal line. The reading is the same as {@code KST}'s: above zero the
+        * combined momentum is positive, and the usual signals are the line crossing
+        * its signal line and the line changing direction.
+        * <p>Formula and more info at <a
+        * href="https://ta-lib.org/functions/kstext">ta-lib.org/functions/kstext</a>.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>With both MA types set to {@code TA_MAType_SMA} the outputs are those of {@code KST}.</li>
+        * <li>Both outputs start at the first bar where the signal line exists. A signal period of 1 disables signal-line smoothing for every signal MAType: the signal is then a copy of the line.</li>
+        * <li>An MA type with an unstable period lengthens the lookback by it, on the legs and on the signal line separately.</li>
+        * <li>{@code TA_MAType_MAMA} ignores its period argument, so the four leg periods, or the signal period, have no effect where it is selected.</li>
+        * <li>Each rate of change follows {@code ROC}: a zero price in the denominator makes that term 0.</li>
+        * <li>The weights go with leg position, not with the length of the rate of change.</li>
+        * </ul>
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are; nothing
+        * outside that range is touched, and the library never pads with NaN. A
+        * valid range that ends before {@link Core#kstextLookback} is a <b>success
+        * with no values</b> ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inReal Source price series (canonically the close)
+        * @param optInROC1Period Rate-of-change period of leg 1 (weight 1) (default
+        *        10; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInROC2Period Rate-of-change period of leg 2 (weight 2) (default
+        *        15; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInROC3Period Rate-of-change period of leg 3 (weight 3) (default
+        *        20; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInROC4Period Rate-of-change period of leg 4 (weight 4) (default
+        *        30; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInMA1Period Period of the MA smoothing leg 1 (default 10; range
+        *        1..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInMA2Period Period of the MA smoothing leg 2 (default 10; range
+        *        1..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInMA3Period Period of the MA smoothing leg 3 (default 10; range
+        *        1..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInMA4Period Period of the MA smoothing leg 4 (default 15; range
+        *        1..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInSignalPeriod Period of the signal-line MA (default 9; range
+        *        1..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInROCMAType MA type smoothing the four legs (default 0 = SMA;
+        *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+        *        {@code MAType.DEFAULT} selects the default).
+        * @param optInSignalMAType MA type for the signal line (default 0 = SMA;
+        *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+        *        {@code MAType.DEFAULT} selects the default).
+        * @param outKST Know Sure Thing line. Must hold at least
+        *        {@code endIdx - max(startIdx, kstextLookback(...)) + 1} values, the count
+        *        the call produces (none when that is not positive).
+        * @param outKSTSignal Signal line: MA of the line. Must hold at least
+        *        {@code endIdx - max(startIdx, kstextLookback(...)) + 1} values, the count
+        *        the call produces (none when that is not positive).
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#INDEX_MAX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. An output this function documents as declinable is the one
+        *        exception: {@code null} is how you decline it. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
+        *
+        * @see Core#kst
+        * @see Core#roc
+        * @see Core#ma
+        * @see Core#macdext
+        * @see Core#coppock
+        */
+       public OutRange kstext( int startIdx,
+                               int endIdx,
+                               double inReal[],
+                               int optInROC1Period,
+                               int optInROC2Period,
+                               int optInROC3Period,
+                               int optInROC4Period,
+                               int optInMA1Period,
+                               int optInMA2Period,
+                               int optInMA3Period,
+                               int optInMA4Period,
+                               int optInSignalPeriod,
+                               MAType optInROCMAType,
+                               MAType optInSignalMAType,
+                               double outKST[],
+                               double outKSTSignal[] )
+       {
+          requireIndexRange("KSTEXT", startIdx, endIdx);
+          requireArgument("KSTEXT", "optInROCMAType", optInROCMAType);
+          requireArgument("KSTEXT", "optInSignalMAType", optInSignalMAType);
+          int guardStart = clampedStart("KSTEXT", startIdx, kstextLookback(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType));
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("KSTEXT", "inReal", inReal, guardInLen);
+          requireLength("KSTEXT", "outKST", outKST, guardOutLen);
+          requireLength("KSTEXT", "outKSTSignal", outKSTSignal, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = kstextImpl(startIdx, endIdx, inReal, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, outBegIdx, outNBElement, outKST, outKSTSignal);
+          if( retCode != RetCode.SUCCESS ) {
+             throw failure("KSTEXT", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+       /**
+        * Know Sure Thing with selectable moving averages: Martin J. Pring's
+        * weighted sum of four smoothed rates of change, where one MA type smooths
+        * the four legs and another the signal line. {@code KST} is Pring's
+        * definition, with simple averages throughout. Formulas published since then
+        * smooth the legs exponentially, and Pring allows a simple or an exponential
+        * signal line. The reading is the same as {@code KST}'s: above zero the
+        * combined momentum is positive, and the usual signals are the line crossing
+        * its signal line and the line changing direction.
+        * <p>Formula and more info at <a
+        * href="https://ta-lib.org/functions/kstext">ta-lib.org/functions/kstext</a>.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>With both MA types set to {@code TA_MAType_SMA} the outputs are those of {@code KST}.</li>
+        * <li>Both outputs start at the first bar where the signal line exists. A signal period of 1 disables signal-line smoothing for every signal MAType: the signal is then a copy of the line.</li>
+        * <li>An MA type with an unstable period lengthens the lookback by it, on the legs and on the signal line separately.</li>
+        * <li>{@code TA_MAType_MAMA} ignores its period argument, so the four leg periods, or the signal period, have no effect where it is selected.</li>
+        * <li>Each rate of change follows {@code ROC}: a zero price in the denominator makes that term 0.</li>
+        * <li>The weights go with leg position, not with the length of the rate of change.</li>
+        * </ul>
+        * <p>This is the {@code float[]} overload. The arithmetic is performed in
+        * {@code double} before being written to the {@code double[]} output, so a
+        * result beyond {@code float} range is still representable.
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are; nothing
+        * outside that range is touched, and the library never pads with NaN. A
+        * valid range that ends before {@link Core#kstextLookback} is a <b>success
+        * with no values</b> ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inReal Source price series (canonically the close)
+        * @param optInROC1Period Rate-of-change period of leg 1 (weight 1) (default
+        *        10; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInROC2Period Rate-of-change period of leg 2 (weight 2) (default
+        *        15; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInROC3Period Rate-of-change period of leg 3 (weight 3) (default
+        *        20; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInROC4Period Rate-of-change period of leg 4 (weight 4) (default
+        *        30; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInMA1Period Period of the MA smoothing leg 1 (default 10; range
+        *        1..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInMA2Period Period of the MA smoothing leg 2 (default 10; range
+        *        1..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInMA3Period Period of the MA smoothing leg 3 (default 10; range
+        *        1..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInMA4Period Period of the MA smoothing leg 4 (default 15; range
+        *        1..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInSignalPeriod Period of the signal-line MA (default 9; range
+        *        1..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInROCMAType MA type smoothing the four legs (default 0 = SMA;
+        *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+        *        {@code MAType.DEFAULT} selects the default).
+        * @param optInSignalMAType MA type for the signal line (default 0 = SMA;
+        *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+        *        {@code MAType.DEFAULT} selects the default).
+        * @param outKST Know Sure Thing line. Must hold at least
+        *        {@code endIdx - max(startIdx, kstextLookback(...)) + 1} values, the count
+        *        the call produces (none when that is not positive).
+        * @param outKSTSignal Signal line: MA of the line. Must hold at least
+        *        {@code endIdx - max(startIdx, kstextLookback(...)) + 1} values, the count
+        *        the call produces (none when that is not positive).
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#INDEX_MAX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. An output this function documents as declinable is the one
+        *        exception: {@code null} is how you decline it. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
+        *
+        * @see Core#kst
+        * @see Core#roc
+        * @see Core#ma
+        * @see Core#macdext
+        * @see Core#coppock
+        */
+       public OutRange kstext( int startIdx,
+                               int endIdx,
+                               float inReal[],
+                               int optInROC1Period,
+                               int optInROC2Period,
+                               int optInROC3Period,
+                               int optInROC4Period,
+                               int optInMA1Period,
+                               int optInMA2Period,
+                               int optInMA3Period,
+                               int optInMA4Period,
+                               int optInSignalPeriod,
+                               MAType optInROCMAType,
+                               MAType optInSignalMAType,
+                               double outKST[],
+                               double outKSTSignal[] )
+       {
+          requireIndexRange("KSTEXT", startIdx, endIdx);
+          requireArgument("KSTEXT", "optInROCMAType", optInROCMAType);
+          requireArgument("KSTEXT", "optInSignalMAType", optInSignalMAType);
+          int guardStart = clampedStart("KSTEXT", startIdx, kstextLookback(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType));
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("KSTEXT", "inReal", inReal, guardInLen);
+          requireLength("KSTEXT", "outKST", outKST, guardOutLen);
+          requireLength("KSTEXT", "outKSTSignal", outKSTSignal, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = kstextImpl(startIdx, endIdx, inReal, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, outBegIdx, outNBElement, outKST, outKSTSignal);
+          if( retCode != RetCode.SUCCESS ) {
+             throw failure("KSTEXT", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+    /**** Streaming API *****/
+
+       /**
+        * A live KSTEXT stream (unrelated to {@code java.util.stream}): one value per
+        * closed bar, bit-identical to {@link Core#kstext} over the same series.
+        * Open with {@link Core#kstextOpen}; there is no close — the handle is
+        * ordinary heap state, unreferenced handles are simply garbage-collected.
+        * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
+        * {@code value} and {@code clone} must not race with an {@code update} on
+        * the same handle. With no concurrent {@code update}, {@code peek}/
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
+        * <p>Not serializable by design: to checkpoint, retain the history and
+        * re-open — the result is bit-identical by contract.
+        */
+       public static final class KstextStream {
+          private Core core;
+          private int optInROC1Period;
+          private int optInROC2Period;
+          private int optInROC3Period;
+          private int optInROC4Period;
+          private int optInMA1Period;
+          private int optInMA2Period;
+          private int optInMA3Period;
+          private int optInMA4Period;
+          private int optInSignalPeriod;
+          private MAType optInROCMAType;
+          private MAType optInSignalMAType;
+          private double cur_outKST;
+          private double cur_outKSTSignal;
+          private RocStream sub0;
+          private MaStream sub1;
+          private RocStream sub2;
+          private MaStream sub3;
+          private RocStream sub4;
+          private MaStream sub5;
+          private RocStream sub6;
+          private MaStream sub7;
+          private MaStream sub8;
+          private int outRangeBegIdx;
+          private int outRangeCount;
+
+          private KstextStream( Core core ) { this.core = core; }
+
+          /**
+           * The bars this stream has an output for, in the input series'
+           * coordinates: {@code [begIdx, begIdx + count)}.
+           * <p>It is what {@link Core#kstext} reports over the same bars: the
+           * opener sets it to {@code (lookback, historyLen - lookback)}, every
+           * accepted {@code update} adds one to the count — a rejected one
+           * changes nothing, and neither does {@code peek} — and
+           * {@code clone()} carries it verbatim. A plain
+           * {@code open} hands back only the last value, a subset of this range,
+           * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#INDEX_MAX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
+           */
+          public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
+
+          /**
+           * Count one bar this stream was not fed: {@link #outRange()} advances
+           * by one and nothing else moves — {@link #value(KstextOut)} keeps answering the previous
+           * output, which is this bar's output too.
+           * <p>For a bar the caller leaves out: one an {@code update} rejected
+           * and that will not be re-fed, or a session with no print. Without it
+           * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#INDEX_MAX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
+           */
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
+                throw failure("KSTEXT advance", RetCode.OUT_OF_RANGE_END_INDEX);
+             this.outRangeCount++;
+          }
+
+          private KstextStream( KstextStream other ) {
+             this.core = other.core;
+             this.optInROC1Period = other.optInROC1Period;
+             this.optInROC2Period = other.optInROC2Period;
+             this.optInROC3Period = other.optInROC3Period;
+             this.optInROC4Period = other.optInROC4Period;
+             this.optInMA1Period = other.optInMA1Period;
+             this.optInMA2Period = other.optInMA2Period;
+             this.optInMA3Period = other.optInMA3Period;
+             this.optInMA4Period = other.optInMA4Period;
+             this.optInSignalPeriod = other.optInSignalPeriod;
+             this.optInROCMAType = other.optInROCMAType;
+             this.optInSignalMAType = other.optInSignalMAType;
+             this.cur_outKST = other.cur_outKST;
+             this.cur_outKSTSignal = other.cur_outKSTSignal;
+             this.sub0 = new RocStream(other.sub0);
+             this.sub1 = new MaStream(other.sub1);
+             this.sub2 = new RocStream(other.sub2);
+             this.sub3 = new MaStream(other.sub3);
+             this.sub4 = new RocStream(other.sub4);
+             this.sub5 = new MaStream(other.sub5);
+             this.sub6 = new RocStream(other.sub6);
+             this.sub7 = new MaStream(other.sub7);
+             this.sub8 = new MaStream(other.sub8);
+             this.outRangeBegIdx = other.outRangeBegIdx;
+             this.outRangeCount = other.outRangeCount;
+          }
+
+          /**
+           * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
+           * <p>Throws {@link IllegalArgumentException} if any bar value is not
+           * finite (NaN or an infinity). That check runs before anything is
+           * written, so nothing moves — {@link #outRange()} included — and
+           * {@link #value(KstextOut)} still answers the previous value. Re-feed the bar when a
+           * corrected value arrives, or call {@link #advance()} to count it and
+           * carry on; two handles on one feed drift a bar apart if neither
+           * happens.
+           * This is the one place the streaming tier is stricter than
+           * the batch API, which computes on whatever it is given: a handle
+           * retains its state, so a single non-finite bar would poison every
+           * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#INDEX_MAX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
+           */
+          public void update( double inReal, KstextOut out ) {
+             if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
+                throw failure("KSTEXT update", RetCode.OUT_OF_RANGE_END_INDEX);
+             requireArgument("KSTEXT update", "out", out);
+             if( !Double.isFinite(inReal) )
+                throw nonFiniteBar("KSTEXT update", "inReal");
+             core.kstextStepImpl(this, inReal);
+             this.outRangeCount++;
+             out.kst = this.cur_outKST;
+             out.kstSignal = this.cur_outKSTSignal;
+          }
+
+          /**
+           * Evaluate a forming bar without committing — bit-identical to what the
+           * next {@code update} with the same bar would write — the same
+           * transition, with every store it would make carried in a local instead.
+           * Never writes this handle, so peeks may run concurrently with each other.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
+           */
+          public void peek( double inReal, KstextOut out ) {
+             requireArgument("KSTEXT peek", "out", out);
+             if( !Double.isFinite(inReal) )
+                throw nonFiniteBar("KSTEXT peek", "inReal");
+             KstextStream sp = this;
+             double cur_kstBuffer = 0.0;
+             double cur_tempBuffer = 0.0;
+             double cur_outKSTSignal = 0.0;
+             double cur_outKST = 0.0;
+             /* Pipeline the new bar through the sub-streams (batch tail order). */
+             cur_kstBuffer = sp.sub0.peek(inReal);
+             cur_kstBuffer = sp.sub1.peek(cur_kstBuffer);
+             cur_tempBuffer = sp.sub2.peek(inReal);
+             cur_tempBuffer = sp.sub3.peek(cur_tempBuffer);
+             /* Combine map (batch tail, per bar). */
+             cur_kstBuffer = Math.fma(2.0, cur_tempBuffer, cur_kstBuffer);
+             cur_tempBuffer = sp.sub4.peek(inReal);
+             cur_tempBuffer = sp.sub5.peek(cur_tempBuffer);
+             /* Combine map (batch tail, per bar). */
+             cur_kstBuffer = Math.fma(3.0, cur_tempBuffer, cur_kstBuffer);
+             cur_tempBuffer = sp.sub6.peek(inReal);
+             cur_tempBuffer = sp.sub7.peek(cur_tempBuffer);
+             /* Combine map (batch tail, per bar). */
+             cur_kstBuffer = Math.fma(4.0, cur_tempBuffer, cur_kstBuffer);
+             cur_outKSTSignal = sp.sub8.peek(cur_kstBuffer);
+             cur_outKST = cur_kstBuffer;
+             out.kst = cur_outKST;
+             out.kstSignal = cur_outKSTSignal;
+          }
+
+          /**
+           * The value at the last bar this stream counted — the bar
+           * {@link #outRange()} ends on. The last history bar right after open,
+           * then whatever the latest accepted {@code update} wrote.
+           * A pure field read; {@code peek} does not change it. Overwrites {@code out}.
+           */
+          public void value( KstextOut out ) {
+             requireArgument("KSTEXT value", "out", out);
+             out.kst = this.cur_outKST;
+             out.kstSignal = this.cur_outKSTSignal;
+          }
+
+          /**
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
+           */
+          @Override
+          public KstextStream clone() {
+             return new KstextStream(this);
+          }
+       }
+
+       /**
+        * The outputs of one KSTEXT bar, written by the stream into an object the
+        * CALLER owns. Allocate one and reuse it: {@code update}, {@code peek}
+        * and {@code value} overwrite its fields, so the sink itself costs
+        * nothing per bar.
+        *
+        * <p><b>Its contents are only valid until the next call that writes it.</b>
+        * It is a mutable buffer, not a reading: a reference kept past that call,
+        * or one put in a collection, sees the value change underneath it. Copy the
+        * fields out if the reading has to outlive the call.
+        *
+        * <p>Deliberately no {@code equals} or {@code hashCode}: a mutable type
+        * with value equality breaks the {@code HashMap}/{@code HashSet}
+        * invariant the moment a reused instance becomes a key. Compare the fields.
+        */
+       public static final class KstextOut {
+          /** Know Sure Thing line. */
+          public double kst;
+          /** Signal line: MA of the line. */
+          public double kstSignal;
+       }
+       private void kstextStepImpl( KstextStream sp, double inReal )
+       {
+          double cur_kstBuffer = 0.0;
+          double cur_tempBuffer = 0.0;
+          double cur_outKSTSignal = 0.0;
+          /* Pipeline the new bar through the sub-streams (batch tail order). */
+          cur_kstBuffer = sp.sub0.update(inReal);
+          cur_kstBuffer = sp.sub1.update(cur_kstBuffer);
+          cur_tempBuffer = sp.sub2.update(inReal);
+          cur_tempBuffer = sp.sub3.update(cur_tempBuffer);
+          /* Combine map (batch tail, per bar). */
+          cur_kstBuffer = Math.fma(2.0, cur_tempBuffer, cur_kstBuffer);
+          cur_tempBuffer = sp.sub4.update(inReal);
+          cur_tempBuffer = sp.sub5.update(cur_tempBuffer);
+          /* Combine map (batch tail, per bar). */
+          cur_kstBuffer = Math.fma(3.0, cur_tempBuffer, cur_kstBuffer);
+          cur_tempBuffer = sp.sub6.update(inReal);
+          cur_tempBuffer = sp.sub7.update(cur_tempBuffer);
+          /* Combine map (batch tail, per bar). */
+          cur_kstBuffer = Math.fma(4.0, cur_tempBuffer, cur_kstBuffer);
+          cur_outKSTSignal = sp.sub8.update(cur_kstBuffer);
+          sp.cur_outKST = cur_kstBuffer;
+          sp.cur_outKSTSignal = cur_outKSTSignal;
+       }
+       private RetCode kstextOpenImpl( KstextStream sp, double inReal[], int startIdx, int optInROC1Period, int optInROC2Period, int optInROC3Period, int optInROC4Period, int optInMA1Period, int optInMA2Period, int optInMA3Period, int optInMA4Period, int optInSignalPeriod, MAType optInROCMAType, MAType optInSignalMAType, MInteger outBegIdx, MInteger outNBElement, double outKST[], double outKSTSignal[], int outStride )
+       {
+          double[] kstBuffer;
+          double[] tempBuffer;
+          RetCode retCode;
+          int lookbackTotal = 0;
+          int lookbackSignal = 0;
+          int lookbackMA = 0;
+          int sigStart = 0;
+          int tempInteger = 0;
+          MInteger tempBegIdx = new MInteger();
+          MInteger rocNb = new MInteger();
+          MInteger kstNb = new MInteger();
+          MInteger legNb = new MInteger();
+          MInteger sigNb = new MInteger();
+          int i = 0;
+          int historyLen = inReal.length;
+          int endIdx = historyLen - 1;
+          if( historyLen < 1 ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX;
+          }
+          if( historyLen > INDEX_MAX + 1 ) {
+             return RetCode.OUT_OF_RANGE_END_INDEX;
+          }
+          if( optInROC1Period == Integer.MIN_VALUE ) {
+             optInROC1Period = 10;
+          } else if( optInROC1Period < 1 || optInROC1Period > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInROC2Period == Integer.MIN_VALUE ) {
+             optInROC2Period = 15;
+          } else if( optInROC2Period < 1 || optInROC2Period > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInROC3Period == Integer.MIN_VALUE ) {
+             optInROC3Period = 20;
+          } else if( optInROC3Period < 1 || optInROC3Period > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInROC4Period == Integer.MIN_VALUE ) {
+             optInROC4Period = 30;
+          } else if( optInROC4Period < 1 || optInROC4Period > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInMA1Period == Integer.MIN_VALUE ) {
+             optInMA1Period = 10;
+          } else if( optInMA1Period < 1 || optInMA1Period > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInMA2Period == Integer.MIN_VALUE ) {
+             optInMA2Period = 10;
+          } else if( optInMA2Period < 1 || optInMA2Period > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInMA3Period == Integer.MIN_VALUE ) {
+             optInMA3Period = 10;
+          } else if( optInMA3Period < 1 || optInMA3Period > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInMA4Period == Integer.MIN_VALUE ) {
+             optInMA4Period = 15;
+          } else if( optInMA4Period < 1 || optInMA4Period > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInSignalPeriod == Integer.MIN_VALUE ) {
+             optInSignalPeriod = 9;
+          } else if( optInSignalPeriod < 1 || optInSignalPeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInROCMAType == MAType.DEFAULT ) {
+             optInROCMAType = MAType.SMA;
+          }
+          if( optInSignalMAType == MAType.DEFAULT ) {
+             optInSignalMAType = MAType.SMA;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.INSUFFICIENT_HISTORY;
+          }
+          if( historyLen < kstextLookback(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType) + 1 ) {
+             return RetCode.INSUFFICIENT_HISTORY;
+          }
+          double[] sc_outKST = outStride == 1 ? outKST : new double[historyLen];
+          double[] sc_outKSTSignal = outStride == 1 ? outKSTSignal : new double[historyLen];
+          /* With every type SMA this is bit-exact with kst(): each leg's average
+           * starts on the first bar the signal consumes, and the line accumulates
+           * its legs left to right. Changing either breaks the equality.
+           */
+          outBegIdx.value = 0;
+          outNBElement.value = 0;
+          lookbackSignal = maLookback(optInSignalPeriod, optInSignalMAType);
+          lookbackTotal = kstextLookback(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType);
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             return RetCode.INSUFFICIENT_HISTORY ;
+          }
+          sigStart = startIdx - lookbackSignal;
+          /* A leg's rate of change runs its average's lookback ahead of sigStart. */
+          lookbackMA = maLookback(optInMA1Period, optInROCMAType);
+          tempInteger = maLookback(optInMA2Period, optInROCMAType);
+          if( tempInteger > lookbackMA ) {
+             lookbackMA = tempInteger;
+          }
+          tempInteger = maLookback(optInMA3Period, optInROCMAType);
+          if( tempInteger > lookbackMA ) {
+             lookbackMA = tempInteger;
+          }
+          tempInteger = maLookback(optInMA4Period, optInROCMAType);
+          if( tempInteger > lookbackMA ) {
+             lookbackMA = tempInteger;
+          }
+          tempInteger = endIdx - sigStart + 1 + lookbackMA;
+          kstBuffer = new double[(int)(tempInteger * 1)];
+          tempBuffer = new double[(int)(tempInteger * 1)];
+          /* Sub-stream 0: roc over `inReal`, warmed from bar 0 up to the
+           * sub-call's own startIdx (the seeding point). */
+          RocStream sub0 = rocOpenAndFillInternal(inReal, sigStart - maLookback(optInMA1Period, optInROCMAType), optInROC1Period, tempBegIdx, rocNb, kstBuffer);
+          retCode = RetCode.SUCCESS;
+          /* Sub-stream 1: ma over `kstBuffer`, warmed from bar 0 up to the
+           * sub-call's own startIdx (the seeding point). */
+          MaStream sub1 = maOpenInternal(java.util.Arrays.copyOfRange(kstBuffer, 0, (rocNb.value - 1) + 1), 0, optInMA1Period, optInROCMAType);
+          OutRange _xr0 = ma(0, rocNb.value - 1, kstBuffer, optInMA1Period, optInROCMAType, kstBuffer);
+          tempBegIdx.value = _xr0.begIdx();
+          kstNb.value = _xr0.count();
+          retCode = RetCode.SUCCESS;
+          /* Sub-stream 2: roc over `inReal`, warmed from bar 0 up to the
+           * sub-call's own startIdx (the seeding point). */
+          RocStream sub2 = rocOpenAndFillInternal(inReal, sigStart - maLookback(optInMA2Period, optInROCMAType), optInROC2Period, tempBegIdx, rocNb, tempBuffer);
+          retCode = RetCode.SUCCESS;
+          /* Sub-stream 3: ma over `tempBuffer`, warmed from bar 0 up to the
+           * sub-call's own startIdx (the seeding point). */
+          MaStream sub3 = maOpenInternal(java.util.Arrays.copyOfRange(tempBuffer, 0, (rocNb.value - 1) + 1), 0, optInMA2Period, optInROCMAType);
+          OutRange _xr1 = ma(0, rocNb.value - 1, tempBuffer, optInMA2Period, optInROCMAType, tempBuffer);
+          tempBegIdx.value = _xr1.begIdx();
+          legNb.value = _xr1.count();
+          retCode = RetCode.SUCCESS;
+          for( i = 0; i < kstNb.value; i += 1 ) {
+             kstBuffer[i] = Math.fma(2.0, tempBuffer[i], kstBuffer[i]);
+          }
+          /* Sub-stream 4: roc over `inReal`, warmed from bar 0 up to the
+           * sub-call's own startIdx (the seeding point). */
+          RocStream sub4 = rocOpenAndFillInternal(inReal, sigStart - maLookback(optInMA3Period, optInROCMAType), optInROC3Period, tempBegIdx, rocNb, tempBuffer);
+          retCode = RetCode.SUCCESS;
+          /* Sub-stream 5: ma over `tempBuffer`, warmed from bar 0 up to the
+           * sub-call's own startIdx (the seeding point). */
+          MaStream sub5 = maOpenInternal(java.util.Arrays.copyOfRange(tempBuffer, 0, (rocNb.value - 1) + 1), 0, optInMA3Period, optInROCMAType);
+          OutRange _xr2 = ma(0, rocNb.value - 1, tempBuffer, optInMA3Period, optInROCMAType, tempBuffer);
+          tempBegIdx.value = _xr2.begIdx();
+          legNb.value = _xr2.count();
+          retCode = RetCode.SUCCESS;
+          for( i = 0; i < kstNb.value; i += 1 ) {
+             kstBuffer[i] = Math.fma(3.0, tempBuffer[i], kstBuffer[i]);
+          }
+          /* Sub-stream 6: roc over `inReal`, warmed from bar 0 up to the
+           * sub-call's own startIdx (the seeding point). */
+          RocStream sub6 = rocOpenAndFillInternal(inReal, sigStart - maLookback(optInMA4Period, optInROCMAType), optInROC4Period, tempBegIdx, rocNb, tempBuffer);
+          retCode = RetCode.SUCCESS;
+          /* Sub-stream 7: ma over `tempBuffer`, warmed from bar 0 up to the
+           * sub-call's own startIdx (the seeding point). */
+          MaStream sub7 = maOpenInternal(java.util.Arrays.copyOfRange(tempBuffer, 0, (rocNb.value - 1) + 1), 0, optInMA4Period, optInROCMAType);
+          OutRange _xr3 = ma(0, rocNb.value - 1, tempBuffer, optInMA4Period, optInROCMAType, tempBuffer);
+          tempBegIdx.value = _xr3.begIdx();
+          legNb.value = _xr3.count();
+          retCode = RetCode.SUCCESS;
+          for( i = 0; i < kstNb.value; i += 1 ) {
+             kstBuffer[i] = Math.fma(4.0, tempBuffer[i], kstBuffer[i]);
+          }
+          /* Every read of inReal is done: an output may alias it. */
+          System.arraycopy(kstBuffer, lookbackSignal, sc_outKST, 0, (endIdx - startIdx + 1) * 1);
+          /* Sub-stream 8: ma over `kstBuffer`, warmed from bar 0 up to the
+           * sub-call's own startIdx (the seeding point). */
+          MaStream sub8 = maOpenAndFillInternal(java.util.Arrays.copyOfRange(kstBuffer, 0, (kstNb.value - 1) + 1), 0, optInSignalPeriod, optInSignalMAType, tempBegIdx, sigNb, sc_outKSTSignal);
+          retCode = RetCode.SUCCESS;
+          outBegIdx.value = startIdx;
+          outNBElement.value = sigNb.value;
+          /* Capture the live producer state + sub handles. */
+          if( outNBElement.value < 1 ) {
+             return RetCode.INSUFFICIENT_HISTORY;
+          }
+          sp.optInROC1Period = optInROC1Period;
+          sp.optInROC2Period = optInROC2Period;
+          sp.optInROC3Period = optInROC3Period;
+          sp.optInROC4Period = optInROC4Period;
+          sp.optInMA1Period = optInMA1Period;
+          sp.optInMA2Period = optInMA2Period;
+          sp.optInMA3Period = optInMA3Period;
+          sp.optInMA4Period = optInMA4Period;
+          sp.optInSignalPeriod = optInSignalPeriod;
+          sp.optInROCMAType = optInROCMAType;
+          sp.optInSignalMAType = optInSignalMAType;
+          sp.sub0 = sub0;
+          sp.sub1 = sub1;
+          sp.sub2 = sub2;
+          sp.sub3 = sub3;
+          sp.sub4 = sub4;
+          sp.sub5 = sub5;
+          sp.sub6 = sub6;
+          sp.sub7 = sub7;
+          sp.sub8 = sub8;
+          sp.cur_outKST = sc_outKST[outNBElement.value - 1];
+          sp.cur_outKSTSignal = sc_outKSTSignal[outNBElement.value - 1];
+          return RetCode.SUCCESS;
+       }
+       /* kstextOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+       KstextStream kstextOpenAndFillInternal( double inReal[], int startIdx, int optInROC1Period, int optInROC2Period, int optInROC3Period, int optInROC4Period, int optInMA1Period, int optInMA2Period, int optInMA3Period, int optInMA4Period, int optInSignalPeriod, MAType optInROCMAType, MAType optInSignalMAType, MInteger outBegIdx, MInteger outNBElement, double outKST[], double outKSTSignal[] )
+       {
+          KstextStream sp = new KstextStream(this);
+          RetCode retCode = kstextOpenImpl(sp, inReal, startIdx, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, outBegIdx, outNBElement, outKST, outKSTSignal, 1);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.SUCCESS ) {
+             return sp;
+          }
+          if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
+             throw insufficientHistory("KSTEXT openAndFill", inReal.length, startIdx, kstextLookback(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType));
+          }
+          throw streamFailure("KSTEXT openAndFill", retCode);
+       }
+       /* Internal startIdx-anchored open behind kstextOpen (composition seam). */
+       KstextStream kstextOpenInternal( double inReal[], int startIdx, int optInROC1Period, int optInROC2Period, int optInROC3Period, int optInROC4Period, int optInMA1Period, int optInMA2Period, int optInMA3Period, int optInMA4Period, int optInSignalPeriod, MAType optInROCMAType, MAType optInSignalMAType )
+       {
+          KstextStream sp = new KstextStream(this);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          double[] sink_outKST = new double[1];
+          double[] sink_outKSTSignal = new double[1];
+          RetCode retCode = kstextOpenImpl(sp, inReal, startIdx, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, outBegIdx, outNBElement, sink_outKST, sink_outKSTSignal, 0);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.SUCCESS ) {
+             return sp;
+          }
+          if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
+             throw insufficientHistory("KSTEXT open", inReal.length, startIdx, kstextLookback(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType));
+          }
+          throw streamFailure("KSTEXT open", retCode);
+       }
+       /**
+        * Open a live KSTEXT stream over the warm-up history; the handle's
+        * {@code value()} starts at the last history bar's value — bit-identical
+        * to {@link Core#kstext} at that bar.
+        * <p>The history must hold at least {@code kstextLookback(...) + 1} bars
+        * (unstable-period aware), or {@link InsufficientHistoryException} is
+        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * ({@link Integer#MIN_VALUE} and {@link MAType#DEFAULT} select a
+        * parameter's documented default, as in the batch API). An EMPTY history throws
+        * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+        * names no bar — and a null argument {@link IllegalArgumentException},
+        * both ahead of everything above.
+        */
+       public KstextStream kstextOpen( double inReal[], int optInROC1Period, int optInROC2Period, int optInROC3Period, int optInROC4Period, int optInMA1Period, int optInMA2Period, int optInMA3Period, int optInMA4Period, int optInSignalPeriod, MAType optInROCMAType, MAType optInSignalMAType )
+       {
+          requireArgument("KSTEXT open", "inReal", inReal);
+          requireHistory("KSTEXT open", inReal.length);
+          requireArgument("KSTEXT open", "optInROCMAType", optInROCMAType);
+          requireArgument("KSTEXT open", "optInSignalMAType", optInSignalMAType);
+          return kstextOpenInternal(inReal, 0, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType);
+       }
+       /**
+        * {@link Core#kstextOpen} that also fills the output array(s) bit-identically
+        * to {@link Core#kstext} over the whole history in the same single pass
+        * (no separate batch call needed for the warm-up plot). Output arrays must
+        * not alias the inputs or each other, and must hold
+        * {@code historyLen - lookback} values — both checked before anything is
+        * written, so an undersized array is an {@link IllegalArgumentException}
+        * naming it rather than a fault from inside the fill.
+        * <p>The range written is on the returned handle:
+        * {@link KstextStream#outRange()}.
+        */
+       public KstextStream kstextOpenAndFill( double inReal[], int optInROC1Period, int optInROC2Period, int optInROC3Period, int optInROC4Period, int optInMA1Period, int optInMA2Period, int optInMA3Period, int optInMA4Period, int optInSignalPeriod, MAType optInROCMAType, MAType optInSignalMAType, double outKST[], double outKSTSignal[] )
+       {
+          requireArgument("KSTEXT openAndFill", "inReal", inReal);
+          requireHistory("KSTEXT openAndFill", inReal.length);
+          requireArgument("KSTEXT openAndFill", "optInROCMAType", optInROCMAType);
+          requireArgument("KSTEXT openAndFill", "optInSignalMAType", optInSignalMAType);
+          int guardOutLen = openFillCount("KSTEXT openAndFill", inReal.length, kstextLookback(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType));
+          requireLength("KSTEXT openAndFill", "outKST", outKST, guardOutLen);
+          requireLength("KSTEXT openAndFill", "outKSTSignal", outKSTSignal, guardOutLen);
+          if( (Object)outKST == (Object)inReal || (Object)outKSTSignal == (Object)inReal || (Object)outKST == (Object)outKSTSignal ) {
+             throw streamFailure("KSTEXT openAndFill", RetCode.BAD_PARAM);
+          }
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          return kstextOpenAndFillInternal(inReal, 0, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, outBegIdx, outNBElement, outKST, outKSTSignal);
+       }
+    /* List of contributors:
+     *
+     *  Initial  Name/description
+     *  -------------------------------------------------------------------
      *  KL       Kevin Lin
      *  MF       Mario Fortier
      *  CC       Claude Code (AI assistant)
@@ -207663,7 +208899,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "217433a94d879e20";
+    static final String SPLICED_GENCODE_DIGEST = "6a8d6358f2eb4d27";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];
@@ -208351,6 +209587,10 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInROC1Period",0,"ROC-1 Period","Rate-of-change period of leg 1",10.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInROC2Period",0,"ROC-2 Period","Rate-of-change period of leg 2",15.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInROC3Period",0,"ROC-3 Period","Rate-of-change period of leg 3",20.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInROC4Period",0,"ROC-4 Period","Rate-of-change period of leg 4",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInSMA1Period",0,"SMA-1 Period","Smoothing period of leg 1",10.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInSMA2Period",0,"SMA-2 Period","Smoothing period of leg 2",10.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInSMA3Period",0,"SMA-3 Period","Smoothing period of leg 3",10.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInSMA4Period",0,"SMA-4 Period","Smoothing period of leg 4",15.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInSignalPeriod",0,"Signal Period","Smoothing period of the signal line",9.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outKST",1), new AbsOut(0,"outKSTSignal",4) }));
+        ABSTRACT.put("KSTEXT", new AbsFunc("KSTEXT", "Momentum Indicators", "Know Sure Thing with controllable MA type", 33554432,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{ new AbsOpt(2,"optInROC1Period",0,"ROC-1 Period","Rate-of-change period of leg 1",10.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInROC2Period",0,"ROC-2 Period","Rate-of-change period of leg 2",15.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInROC3Period",0,"ROC-3 Period","Rate-of-change period of leg 3",20.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInROC4Period",0,"ROC-4 Period","Rate-of-change period of leg 4",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInMA1Period",0,"MA-1 Period","Smoothing period of leg 1",10.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInMA2Period",0,"MA-2 Period","Smoothing period of leg 2",10.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInMA3Period",0,"MA-3 Period","Smoothing period of leg 3",10.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInMA4Period",0,"MA-4 Period","Smoothing period of leg 4",15.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInSignalPeriod",0,"Signal Period","Smoothing period of the signal line",9.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInROCMAType",0,"ROC MA","Type of Moving Average smoothing the four legs",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA"), new AbsOpt(3,"optInSignalMAType",0,"Signal MA","Type of Moving Average for signal line",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA") },
+            new AbsOut[]{ new AbsOut(0,"outKST",1), new AbsOut(0,"outKSTSignal",4) }));
         ABSTRACT.put("KURTOSIS", new AbsFunc("KURTOSIS", "Statistic Functions", "Rolling Excess Kurtosis", 1107296256,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",30.0, 0,0,0,0,0,0, 4,10000,10,200,5, null) },
@@ -208954,6 +210194,7 @@ public class TaCodegenServe {
         "TA_KC",
         "TA_KDJ",
         "TA_KST",
+        "TA_KSTEXT",
         "TA_KURTOSIS",
         "TA_LINEARREG",
         "TA_LINEARREG_ANGLE",
@@ -209182,97 +210423,98 @@ public class TaCodegenServe {
             case 128: return handle_KC(json);
             case 129: return handle_KDJ(json);
             case 130: return handle_KST(json);
-            case 131: return handle_KURTOSIS(json);
-            case 132: return handle_LINEARREG(json);
-            case 133: return handle_LINEARREG_ANGLE(json);
-            case 134: return handle_LINEARREG_INTERCEPT(json);
-            case 135: return handle_LINEARREG_SLOPE(json);
-            case 136: return handle_LN(json);
-            case 137: return handle_LOG10(json);
-            case 138: return handle_MA(json);
-            case 139: return handle_MACD(json);
-            case 140: return handle_MACDEXT(json);
-            case 141: return handle_MACDFIX(json);
-            case 142: return handle_MAMA(json);
-            case 143: return handle_MARKETFI(json);
-            case 144: return handle_MASSI(json);
-            case 145: return handle_MAVP(json);
-            case 146: return handle_MAX(json);
-            case 147: return handle_MAXINDEX(json);
-            case 148: return handle_MCGD(json);
-            case 149: return handle_MEDIAN(json);
-            case 150: return handle_MEDPRICE(json);
-            case 151: return handle_MFI(json);
-            case 152: return handle_MIDPOINT(json);
-            case 153: return handle_MIDPRICE(json);
-            case 154: return handle_MIN(json);
-            case 155: return handle_MININDEX(json);
-            case 156: return handle_MINMAX(json);
-            case 157: return handle_MINMAXINDEX(json);
-            case 158: return handle_MINUS_DI(json);
-            case 159: return handle_MINUS_DM(json);
-            case 160: return handle_MOM(json);
-            case 161: return handle_MULT(json);
-            case 162: return handle_NATR(json);
-            case 163: return handle_NVI(json);
-            case 164: return handle_OBV(json);
-            case 165: return handle_PERCENTB(json);
-            case 166: return handle_PERCENTILE(json);
-            case 167: return handle_PERCENTRANK(json);
-            case 168: return handle_PLUS_DI(json);
-            case 169: return handle_PLUS_DM(json);
-            case 170: return handle_PPO(json);
-            case 171: return handle_PVI(json);
-            case 172: return handle_PVO(json);
-            case 173: return handle_PVT(json);
-            case 174: return handle_QSTICK(json);
-            case 175: return handle_RMA(json);
-            case 176: return handle_ROC(json);
-            case 177: return handle_ROCP(json);
-            case 178: return handle_ROCR(json);
-            case 179: return handle_ROCR100(json);
-            case 180: return handle_RSI(json);
-            case 181: return handle_RVI(json);
-            case 182: return handle_RVIR(json);
-            case 183: return handle_RVOL(json);
-            case 184: return handle_SAR(json);
-            case 185: return handle_SAREXT(json);
-            case 186: return handle_SI(json);
-            case 187: return handle_SIN(json);
-            case 188: return handle_SINH(json);
-            case 189: return handle_SMA(json);
-            case 190: return handle_SMI(json);
-            case 191: return handle_SQRT(json);
-            case 192: return handle_STC(json);
-            case 193: return handle_STDDEV(json);
-            case 194: return handle_STOCH(json);
-            case 195: return handle_STOCHF(json);
-            case 196: return handle_STOCHRSI(json);
-            case 197: return handle_SUB(json);
-            case 198: return handle_SUM(json);
-            case 199: return handle_SUPERTREND(json);
-            case 200: return handle_T3(json);
-            case 201: return handle_TAN(json);
-            case 202: return handle_TANH(json);
-            case 203: return handle_TEMA(json);
-            case 204: return handle_TRANGE(json);
-            case 205: return handle_TRIMA(json);
-            case 206: return handle_TRIX(json);
-            case 207: return handle_TSF(json);
-            case 208: return handle_TSI(json);
-            case 209: return handle_TYPPRICE(json);
-            case 210: return handle_ULTOSC(json);
-            case 211: return handle_VAR(json);
-            case 212: return handle_VHF(json);
-            case 213: return handle_VIDYA(json);
-            case 214: return handle_VORTEX(json);
-            case 215: return handle_VWAP(json);
-            case 216: return handle_VWMA(json);
-            case 217: return handle_WAD(json);
-            case 218: return handle_WCLPRICE(json);
-            case 219: return handle_WILLR(json);
-            case 220: return handle_WMA(json);
-            case 221: return handle_ZLEMA(json);
+            case 131: return handle_KSTEXT(json);
+            case 132: return handle_KURTOSIS(json);
+            case 133: return handle_LINEARREG(json);
+            case 134: return handle_LINEARREG_ANGLE(json);
+            case 135: return handle_LINEARREG_INTERCEPT(json);
+            case 136: return handle_LINEARREG_SLOPE(json);
+            case 137: return handle_LN(json);
+            case 138: return handle_LOG10(json);
+            case 139: return handle_MA(json);
+            case 140: return handle_MACD(json);
+            case 141: return handle_MACDEXT(json);
+            case 142: return handle_MACDFIX(json);
+            case 143: return handle_MAMA(json);
+            case 144: return handle_MARKETFI(json);
+            case 145: return handle_MASSI(json);
+            case 146: return handle_MAVP(json);
+            case 147: return handle_MAX(json);
+            case 148: return handle_MAXINDEX(json);
+            case 149: return handle_MCGD(json);
+            case 150: return handle_MEDIAN(json);
+            case 151: return handle_MEDPRICE(json);
+            case 152: return handle_MFI(json);
+            case 153: return handle_MIDPOINT(json);
+            case 154: return handle_MIDPRICE(json);
+            case 155: return handle_MIN(json);
+            case 156: return handle_MININDEX(json);
+            case 157: return handle_MINMAX(json);
+            case 158: return handle_MINMAXINDEX(json);
+            case 159: return handle_MINUS_DI(json);
+            case 160: return handle_MINUS_DM(json);
+            case 161: return handle_MOM(json);
+            case 162: return handle_MULT(json);
+            case 163: return handle_NATR(json);
+            case 164: return handle_NVI(json);
+            case 165: return handle_OBV(json);
+            case 166: return handle_PERCENTB(json);
+            case 167: return handle_PERCENTILE(json);
+            case 168: return handle_PERCENTRANK(json);
+            case 169: return handle_PLUS_DI(json);
+            case 170: return handle_PLUS_DM(json);
+            case 171: return handle_PPO(json);
+            case 172: return handle_PVI(json);
+            case 173: return handle_PVO(json);
+            case 174: return handle_PVT(json);
+            case 175: return handle_QSTICK(json);
+            case 176: return handle_RMA(json);
+            case 177: return handle_ROC(json);
+            case 178: return handle_ROCP(json);
+            case 179: return handle_ROCR(json);
+            case 180: return handle_ROCR100(json);
+            case 181: return handle_RSI(json);
+            case 182: return handle_RVI(json);
+            case 183: return handle_RVIR(json);
+            case 184: return handle_RVOL(json);
+            case 185: return handle_SAR(json);
+            case 186: return handle_SAREXT(json);
+            case 187: return handle_SI(json);
+            case 188: return handle_SIN(json);
+            case 189: return handle_SINH(json);
+            case 190: return handle_SMA(json);
+            case 191: return handle_SMI(json);
+            case 192: return handle_SQRT(json);
+            case 193: return handle_STC(json);
+            case 194: return handle_STDDEV(json);
+            case 195: return handle_STOCH(json);
+            case 196: return handle_STOCHF(json);
+            case 197: return handle_STOCHRSI(json);
+            case 198: return handle_SUB(json);
+            case 199: return handle_SUM(json);
+            case 200: return handle_SUPERTREND(json);
+            case 201: return handle_T3(json);
+            case 202: return handle_TAN(json);
+            case 203: return handle_TANH(json);
+            case 204: return handle_TEMA(json);
+            case 205: return handle_TRANGE(json);
+            case 206: return handle_TRIMA(json);
+            case 207: return handle_TRIX(json);
+            case 208: return handle_TSF(json);
+            case 209: return handle_TSI(json);
+            case 210: return handle_TYPPRICE(json);
+            case 211: return handle_ULTOSC(json);
+            case 212: return handle_VAR(json);
+            case 213: return handle_VHF(json);
+            case 214: return handle_VIDYA(json);
+            case 215: return handle_VORTEX(json);
+            case 216: return handle_VWAP(json);
+            case 217: return handle_VWMA(json);
+            case 218: return handle_WAD(json);
+            case 219: return handle_WCLPRICE(json);
+            case 220: return handle_WILLR(json);
+            case 221: return handle_WMA(json);
+            case 222: return handle_ZLEMA(json);
             default: return null;
         }
     }
@@ -230422,6 +231664,170 @@ public class TaCodegenServe {
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         rideKst(core, json, endIdx, inReal, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, sb);
+        sb.append("}");
+        return sb.toString();
+    }
+
+    static String handle_KSTEXT(String json) {
+        int startIdx = jsonInt(json, "startIdx");
+        int endIdx = jsonInt(json, "endIdx");
+        int use_preloaded = jsonInt(json, "use_preloaded");
+        int bench_iters = jsonInt(json, "iters");
+        if (bench_iters < 1) bench_iters = 1;
+        double[] inReal;
+        if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
+            System.arraycopy(refClose, 0, inReal, 0, refN);
+        } else {
+            inReal = jsonDoubleArray(json, "inReal");
+        }
+        boolean _optRejected = false;
+        int optInROC1Period = jsonInt(json, "optInROC1Period");
+        int optInROC2Period = jsonInt(json, "optInROC2Period");
+        int optInROC3Period = jsonInt(json, "optInROC3Period");
+        int optInROC4Period = jsonInt(json, "optInROC4Period");
+        int optInMA1Period = jsonInt(json, "optInMA1Period");
+        int optInMA2Period = jsonInt(json, "optInMA2Period");
+        int optInMA3Period = jsonInt(json, "optInMA3Period");
+        int optInMA4Period = jsonInt(json, "optInMA4Period");
+        int optInSignalPeriod = jsonInt(json, "optInSignalPeriod");
+        int _raw_optInROCMAType = json.contains("\"optInROCMAType\"") ? jsonInt(json, "optInROCMAType") : MAType.DEFAULT.ordinal();
+        if (_raw_optInROCMAType < 0 || _raw_optInROCMAType >= MAType.values().length) _optRejected = true;
+        MAType optInROCMAType = MAType.values()[_optRejected ? 0 : _raw_optInROCMAType];
+        int _raw_optInSignalMAType = json.contains("\"optInSignalMAType\"") ? jsonInt(json, "optInSignalMAType") : MAType.DEFAULT.ordinal();
+        if (_raw_optInSignalMAType < 0 || _raw_optInSignalMAType >= MAType.values().length) _optRejected = true;
+        MAType optInSignalMAType = MAType.values()[_optRejected ? 0 : _raw_optInSignalMAType];
+        // The output buffers are sized to the count the call actually PRODUCES --
+        // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
+        // never below one. Not to the width of the requested range: that is the bound the
+        // managed backends check and the Rust asserts state, and at the range width it was
+        // slack by exactly the lookback, so no call could ever approach it.
+        // The pad is there because a bound is a MINIMUM, never an equality. A caller
+        // re-using a pre-allocated buffer passes a larger one, and that is not an error --
+        // the reported OutRange is what says which part was written. So the harness sends
+        // both: the startIdx axis sends no pad (the bound is reachable) while the
+        // full-range value comparison sends one (slack is legal). Sizing every call one way
+        // would silently drop the other property.
+        // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
+        // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
+        // for a range shorter than the lookback, where the output bound switches off and
+        // the spec says any length will do, including none. It does not: two EMPTY output
+        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
+        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
+        // accepted by C and Java -- a four-way divergence on a call the specification says
+        // all four accept. Sizing to zero here would reach it on every multi-output
+        // function, which is a semantic question, not a harness one. Recorded as
+        // error-handling-spec, open item 11.
+        // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
+        // sizes and cannot make the check, so an exact buffer would test nothing there.
+        int _lb = core.kstextLookback(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType);
+        int _cs = startIdx > _lb ? startIdx : _lb;
+        int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
+        double[] outArr0 = new double[_outLen];
+        double[] outArr1 = new double[_outLen];
+        MInteger outBegIdx = new MInteger();
+        MInteger outNBElement = new MInteger();
+        RetCode rc = RetCode.SUCCESS;
+        int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        long startNs = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+        if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                rc = core.kstextImpl(startIdx, endIdx, inReal, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, outBegIdx, outNBElement, outArr0, outArr1);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        } else {
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _pr = core.kstext(startIdx, endIdx, inReal, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, outArr0, outArr1);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.SUCCESS;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        }
+        }
+        else if (_optRejected) { rc = RetCode.BAD_PARAM; }
+        else { try {
+            if (bench_mode == 1) {
+                core.kstextOpen(_warm_inReal, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType);
+            } else {
+                Core.KstextStream _wh = core.kstextOpenAndFill(_warm_inReal, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, outArr0, outArr1);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
+            }
+            rc = RetCode.SUCCESS;
+        } catch (RuntimeException _e) { rc = _e instanceof TALibFailure ? ((TALibFailure)_e).retCode() : RetCode.BAD_PARAM; } }
+        }
+        long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _fr = core.kstext(startIdx, endIdx, f_inReal, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, outArr0, outArr1);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.SUCCESS;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+            usedFloat = 1;
+        }
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+                _h = svHashF64(_h, outArr1, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            StringBuilder hb = new StringBuilder();
+            hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            rideKstext(core, json, endIdx, inReal, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, hb);
+            hb.append("}");
+            return hb.toString();
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"retCode\":").append(rc.toInt());
+        sb.append(",\"outBegIdx\":").append(outBegIdx.value);
+        sb.append(",\"outNBElement\":").append(outNBElement.value);
+        sb.append(",\"out_len\":").append(_outLen);
+        sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"outReal1\":").append(doubleArrayToJson(outArr1, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
+        sb.append(",\"timing_ns\":").append(elapsedNs);
+        rideKstext(core, json, endIdx, inReal, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -266065,6 +267471,223 @@ public class TaCodegenServe {
         return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
+    static String sv_KSTEXT(String json) {
+        int svShape = jsonInt(json, "gen_shape");
+        int svSeed = jsonInt(json, "gen_seed");
+        int svN = jsonInt(json, "gen_n");
+        if (svN < 2) svN = 2;
+        if (svN > 256) svN = 256;
+        int svK = jsonInt(json, "unstablePeriod");
+        int optInROC1Period = json.contains("\"optInROC1Period\"") ? jsonInt(json, "optInROC1Period") : 10;
+        int optInROC2Period = json.contains("\"optInROC2Period\"") ? jsonInt(json, "optInROC2Period") : 15;
+        int optInROC3Period = json.contains("\"optInROC3Period\"") ? jsonInt(json, "optInROC3Period") : 20;
+        int optInROC4Period = json.contains("\"optInROC4Period\"") ? jsonInt(json, "optInROC4Period") : 30;
+        int optInMA1Period = json.contains("\"optInMA1Period\"") ? jsonInt(json, "optInMA1Period") : 10;
+        int optInMA2Period = json.contains("\"optInMA2Period\"") ? jsonInt(json, "optInMA2Period") : 10;
+        int optInMA3Period = json.contains("\"optInMA3Period\"") ? jsonInt(json, "optInMA3Period") : 10;
+        int optInMA4Period = json.contains("\"optInMA4Period\"") ? jsonInt(json, "optInMA4Period") : 15;
+        int optInSignalPeriod = json.contains("\"optInSignalPeriod\"") ? jsonInt(json, "optInSignalPeriod") : 9;
+        int _raw_optInROCMAType = json.contains("\"optInROCMAType\"") ? jsonInt(json, "optInROCMAType") : MAType.DEFAULT.ordinal();
+        if (_raw_optInROCMAType < 0 || _raw_optInROCMAType >= MAType.values().length) {
+            /* Out-of-list enum: unrepresentable in the type-safe Java surface —
+             * batch and stream both reject at the type level (reject parity). */
+            return "{\"retCode\":2,\"legs\":0,\"nb\":0,\"openRejects\":1,\"ok\":1,\"peek_ok\":1}";
+        }
+        MAType optInROCMAType = MAType.values()[_raw_optInROCMAType];
+        int _raw_optInSignalMAType = json.contains("\"optInSignalMAType\"") ? jsonInt(json, "optInSignalMAType") : MAType.DEFAULT.ordinal();
+        if (_raw_optInSignalMAType < 0 || _raw_optInSignalMAType >= MAType.values().length) {
+            /* Out-of-list enum: unrepresentable in the type-safe Java surface —
+             * batch and stream both reject at the type level (reject parity). */
+            return "{\"retCode\":2,\"legs\":0,\"nb\":0,\"openRejects\":1,\"ok\":1,\"peek_ok\":1}";
+        }
+        MAType optInSignalMAType = MAType.values()[_raw_optInSignalMAType];
+        double[] fz_o = new double[svN];
+        double[] fz_h = new double[svN];
+        double[] fz_l = new double[svN];
+        double[] fz_c = new double[svN];
+        double[] fz_v = new double[svN];
+        double[] fz_oi = new double[svN];
+        FuzzData.fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
+        double[] b0 = new double[svN];
+        double[] b1 = new double[svN];
+        long legs = 0;
+        boolean allOk = true;
+        boolean peekAll = true;
+        long peekReps = 0;
+        long peekRejects = 0;
+        boolean peekRepAll = true;
+        int fillChecked = 0;
+        boolean fillOk = true;
+        MInteger beg = new MInteger();
+        MInteger nb = new MInteger();
+        String diag = "";
+        int rangeChecked = 0;
+        boolean rangeOk = true;
+        long rangeLegs = 0;
+        int rangeSites = 0;
+        long[] zsign = { 0 };
+        int rounds = 1;
+        for (int rd = 0; rd < rounds; rd++) {
+            Core c2 = new Core();
+            c2.unstablePeriod[29] = svK;
+            c2.unstablePeriod[24] = svK;
+            c2.unstablePeriod[5] = svK;
+            c2.unstablePeriod[23] = svK;
+            c2.unstablePeriod[14] = svK;
+            c2.unstablePeriod[13] = svK;
+            RetCode rc;
+            try { rc = c2.kstextImpl(0, svN - 1, fz_c, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, beg, nb, b0, b1); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
+            int lb = c2.kstextLookback(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType);
+            if (rc != RetCode.SUCCESS || nb.value == 0) {
+                boolean openRejects;
+                try { c2.kstextOpen(fz_c, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType); openRejects = false; } catch (IllegalArgumentException _e) { openRejects = true; }
+                return "{\"retCode\":" + rc.toInt() + ",\"legs\":0,\"nb\":" + nb.value + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
+            }
+            fillChecked = 1;
+            try {
+                double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                double[] f1 = new double[svN];
+                java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
+                Core.KstextStream _fh = c2.kstextOpenAndFill(fz_c, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, f0, f1);
+                OutRange _fr = _fh.outRange();
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
+                else {
+                    for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = 0; i < nb.value; i++) if (svXtierNe(f1[i], b1[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f1[i] != (double)-1.2345678901234e300) fillOk = false;
+                }
+                try { c2.kstextOpenAndFill(fz_c, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, fz_c, f1); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
+                try { c2.kstextOpenAndFill(fz_c, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, f0, f0); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases output */ }
+            } catch (IllegalArgumentException _e) { fillOk = false; }
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
+            java.util.Arrays.sort(pcs);
+            int prevP = -1;
+            for (int pi = 0; pi < pcs.length; pi++) {
+                int p = pcs[pi];
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
+                prevP = p;
+                Core.KstextStream st;
+                try { st = c2.kstextOpen(java.util.Arrays.copyOf(fz_c, p), optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType); }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
+                legs++;
+                Core.KstextOut v0 = new Core.KstextOut(); st.value(v0);
+                if (svXtierNe(v0.kst, b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                if (svXtierNe(v0.kstSignal, b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
+                Core.KstextOut pk = new Core.KstextOut();
+                Core.KstextOut up = new Core.KstextOut();
+                Core.KstextOut vc = new Core.KstextOut();
+                Core.KstextOut rp = new Core.KstextOut();
+                for (int t = p; t < svN; t++) {
+                    boolean pkTook = true;
+                    try { st.peek(fz_c[t], pk); } catch (IllegalArgumentException _e) { pkTook = false; peekRejects++; }
+                    if (t % 7 == 0) {
+                        boolean rpTook = pkTook;
+                        try { st.peek(fz_c[t - 1], rp); } catch (IllegalArgumentException _e) { peekRejects++; }
+                        try { st.peek(fz_c[t], rp); } catch (IllegalArgumentException _e) { rpTook = false; }
+                        if (rpTook) {
+                            peekReps++;
+                            if (svBne(rp.kst, pk.kst)) peekRepAll = false;
+                            if (svBne(rp.kstSignal, pk.kstSignal)) peekRepAll = false;
+                        } else { peekRejects++; }
+                    }
+                    st.update(fz_c[t], up);
+                    if (pkTook && svBne(pk.kst, up.kst)) peekAll = false;
+                    if (pkTook && svBne(pk.kstSignal, up.kstSignal)) peekAll = false;
+                    try { st.peek(fz_c[t - 1], pk); } catch (IllegalArgumentException _e) { peekRejects++; }
+                    st.value(vc);
+                    if (svBne(vc.kst, up.kst)) allOk = false;
+                    if (svBne(vc.kstSignal, up.kstSignal)) allOk = false;
+                    if (svXtierNe(up.kst, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.kst)) + "\""; }
+                    if (svXtierNe(up.kstSignal, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.kstSignal)) + "\""; }
+                }
+                if (allOk) {
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
+                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
+                    rangeLegs++; rangeSites |= 16;
+                    st.advance();
+                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value + 1) rangeOk = false;
+                }
+            }
+            {
+                int p0 = lb + 1;
+                if (p0 <= svN - 1) {
+                    try {
+                        Core.KstextStream sA = c2.kstextOpen(java.util.Arrays.copyOf(fz_c, p0), optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType);
+                        int mid = (p0 + svN) / 2;
+                        Core.KstextOut uA = new Core.KstextOut();
+                        Core.KstextOut uB = new Core.KstextOut();
+                        for (int t = p0; t < mid; t++) sA.update(fz_c[t], uA);
+                        Core.KstextStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        double[] fk1 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            sB.update(fz_c[t], uB);
+                            fk0[t] = uB.kst;
+                            if (svXtierNe(uB.kst, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            fk1[t] = uB.kstSignal;
+                            if (svXtierNe(uB.kstSignal, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        for (int t = mid; t < svN; t++) {
+                            sA.update(fz_c[t], uA);
+                            if (svBne(uA.kst, fk0[t]) || svXtierNe(uA.kst, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.kstSignal, fk1[t]) || svXtierNe(uA.kstSignal, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        if (allOk) {
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 8;
+                            if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                        }
+                    } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
+                }
+            }
+            if (lb >= 1 && lb < svN) {
+                try { c2.kstextOpen(java.util.Arrays.copyOf(fz_c, lb), optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
+                catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    double[] f1 = new double[svN];
+                    java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
+                    try { c2.kstextOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, f0, f1); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
+            }
+            try {
+                Core.KstextStream sD = c2.kstextOpen(fz_c, Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE, optInROCMAType, optInSignalMAType);
+                Core.KstextStream sE = c2.kstextOpen(fz_c, 10, 15, 20, 30, 10, 10, 10, 15, 9, optInROCMAType, optInSignalMAType);
+                Core.KstextOut vD = new Core.KstextOut(); sD.value(vD);
+                Core.KstextOut vE = new Core.KstextOut(); sE.value(vE);
+                if (svBne(vD.kst, vE.kst)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                if (svBne(vD.kstSignal, vE.kstSignal)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+            } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.kstextImpl(Sidx, svN - 1, fz_c, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, begS, nbS, b0, b1); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rcS = ((TALibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.SUCCESS && nbS.value > 0) {
+                        try {
+                            Core.KstextStream stA = c2.kstextOpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
+        }
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign[0] + diag + "}";
+    }
+
     static String sv_KURTOSIS(String json) {
         int svShape = jsonInt(json, "gen_shape");
         int svSeed = jsonInt(json, "gen_seed");
@@ -281471,6 +283094,7 @@ public class TaCodegenServe {
         case "TA_KC": return sv_KC(json);
         case "TA_KDJ": return sv_KDJ(json);
         case "TA_KST": return sv_KST(json);
+        case "TA_KSTEXT": return sv_KSTEXT(json);
         case "TA_KURTOSIS": return sv_KURTOSIS(json);
         case "TA_LINEARREG": return sv_LINEARREG(json);
         case "TA_LINEARREG_ANGLE": return sv_LINEARREG_ANGLE(json);
@@ -294901,6 +296525,118 @@ public class TaCodegenServe {
             double[] fb1 = new double[m];
             try {
                 Core.KstStream st2 = core.kstOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, fb0, fb1);
+                if (st2.outRange().begIdx() != beg || st2.outRange().count() != nb) { r.ok = false; r.leg = 2; }
+                if (r.ok) {
+                    for (int k = 0; k < nb; k++) {
+                        boolean cmp = true;
+                        if (cmp && svXtierNe(rb0[k], fb0[k], r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[k]); r.stream = Double.doubleToRawLongBits(fb0[k]); }
+                        if (cmp && svXtierNe(rb1[k], fb1[k], r.benign)) { cmp = false; r.out = 1; r.batch = Double.doubleToRawLongBits(rb1[k]); r.stream = Double.doubleToRawLongBits(fb1[k]); }
+                        if (cmp) r.fillBars++;
+                        if (!cmp) { r.ok = false; r.leg = 2; r.bar = beg + k; break; }
+                    }
+                }
+            } catch (RuntimeException _e) { r.ok = false; r.leg = 2; }
+        }
+
+        if (r.ok) {
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
+            rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
+        }
+    }
+
+    static void rideKstext(Core core, String json, int endIdx, double[] inReal, int optInROC1Period, int optInROC2Period, int optInROC3Period, int optInROC4Period, int optInMA1Period, int optInMA2Period, int optInMA3Period, int optInMA4Period, int optInSignalPeriod, MAType optInROCMAType, MAType optInSignalMAType, StringBuilder sb) {
+        if (!rideGate(json)) return;
+        RideResult r = new RideResult();
+        rideBodyKstext(core, json, endIdx, inReal, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, r);
+        r.emit(sb);
+    }
+
+    @SuppressWarnings("unused")
+    static void rideBodyKstext(Core core, String json, int endIdx, double[] inReal, int optInROC1Period, int optInROC2Period, int optInROC3Period, int optInROC4Period, int optInMA1Period, int optInMA2Period, int optInMA3Period, int optInMA4Period, int optInSignalPeriod, MAType optInROCMAType, MAType optInSignalMAType, RideResult r) {
+        try { r.lb = core.kstextLookback(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType); } catch (RuntimeException _e) { r.lb = -1; }
+        int lb = r.lb;
+        int navail = endIdx + 1;
+        if (inReal.length < navail) navail = inReal.length;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
+        if (m > navail) m = navail;
+        r.m = m;
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
+        if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
+
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_KSTEXT");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInROC1Period);
+        hash = rideMix(hash, optInROC2Period);
+        hash = rideMix(hash, optInROC3Period);
+        hash = rideMix(hash, optInROC4Period);
+        hash = rideMix(hash, optInMA1Period);
+        hash = rideMix(hash, optInMA2Period);
+        hash = rideMix(hash, optInMA3Period);
+        hash = rideMix(hash, optInMA4Period);
+        hash = rideMix(hash, optInSignalPeriod);
+        hash = rideMix(hash, optInROCMAType.ordinal());
+        hash = rideMix(hash, optInSignalMAType.ordinal());
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
+            r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
+        }
+
+        double[] rb0 = new double[m];
+        double[] rb1 = new double[m];
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
+        try { OutRange _rr = core.kstext(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, rb0, rb1); beg = _rr.begIdx(); nb = _rr.count(); }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.kstextOpen(java.util.Arrays.copyOf(inReal, m), optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            double[] fb1 = new double[m];
+            try { core.kstextOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, fb0, fb1); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
+        if (nb == 0) { r.skip = 5; return; }
+        if (beg != lb) { r.skip = 6; return; }
+
+        try {
+            boolean cmp;
+            Core.KstextStream st = core.kstextOpen(java.util.Arrays.copyOf(inReal, lb + 1), optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType);
+            Core.KstextOut uo = new Core.KstextOut(); st.value(uo);
+            cmp = true;
+            if (cmp && svXtierNe(rb0[lb - beg], uo.kst, r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[lb - beg]); r.stream = Double.doubleToRawLongBits(uo.kst); }
+            if (cmp && svXtierNe(rb1[lb - beg], uo.kstSignal, r.benign)) { cmp = false; r.out = 1; r.batch = Double.doubleToRawLongBits(rb1[lb - beg]); r.stream = Double.doubleToRawLongBits(uo.kstSignal); }
+            if (cmp) r.openBars++;
+            if (!cmp) { r.ok = false; r.leg = 1; r.bar = lb; }
+            for (int t = lb + 1; r.ok && t < m; t++) {
+                st.update(inReal[t], uo);
+                cmp = true;
+                if (cmp && svXtierNe(rb0[t - beg], uo.kst, r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[t - beg]); r.stream = Double.doubleToRawLongBits(uo.kst); }
+                if (cmp && svXtierNe(rb1[t - beg], uo.kstSignal, r.benign)) { cmp = false; r.out = 1; r.batch = Double.doubleToRawLongBits(rb1[t - beg]); r.stream = Double.doubleToRawLongBits(uo.kstSignal); }
+                if (cmp) r.openBars++;
+                if (!cmp) { r.ok = false; r.leg = 1; r.bar = t; }
+            }
+        } catch (RuntimeException _e) { r.ok = false; r.leg = 1; }
+
+        if (r.ok) {
+            double[] fb0 = new double[m];
+            double[] fb1 = new double[m];
+            try {
+                Core.KstextStream st2 = core.kstextOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, fb0, fb1);
                 if (st2.outRange().begIdx() != beg || st2.outRange().count() != nb) { r.ok = false; r.leg = 2; }
                 if (r.ok) {
                     for (int k = 0; k < nb; k++) {

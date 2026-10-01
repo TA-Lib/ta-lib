@@ -171,6 +171,7 @@ extern const TA_FuncDef TA_DEF_KAMA;
 extern const TA_FuncDef TA_DEF_KC;
 extern const TA_FuncDef TA_DEF_KDJ;
 extern const TA_FuncDef TA_DEF_KST;
+extern const TA_FuncDef TA_DEF_KSTEXT;
 extern const TA_FuncDef TA_DEF_KURTOSIS;
 extern const TA_FuncDef TA_DEF_LINEARREG;
 extern const TA_FuncDef TA_DEF_LINEARREG_ANGLE;
@@ -375,6 +376,7 @@ const TA_FuncDef *TA_PerGroupFunc_4[] = {
 &TA_DEF_IMI,
 &TA_DEF_KDJ,
 &TA_DEF_KST,
+&TA_DEF_KSTEXT,
 &TA_DEF_MACD,
 &TA_DEF_MACDEXT,
 &TA_DEF_MACDFIX,

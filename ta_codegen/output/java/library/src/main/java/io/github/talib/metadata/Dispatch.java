@@ -449,6 +449,9 @@ final class Dispatch {
          case "KST":
             return core.kst(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.intOpt(1), h.intOpt(2), h.intOpt(3), h.intOpt(4), h.intOpt(5), h.intOpt(6), h.intOpt(7), h.intOpt(8), h.realOutput(0), h.realOutput(1));
+         case "KSTEXT":
+            return core.kstext(
+               startIdx, endIdx, h.realInput(0), h.intOpt(0), h.intOpt(1), h.intOpt(2), h.intOpt(3), h.intOpt(4), h.intOpt(5), h.intOpt(6), h.intOpt(7), h.intOpt(8), h.maTypeOpt(9), h.maTypeOpt(10), h.realOutput(0), h.realOutput(1));
          case "KURTOSIS":
             return core.kurtosis(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
@@ -995,6 +998,8 @@ final class Dispatch {
             return core.kdjLookback(h.intOpt(0), h.intOpt(1), h.maTypeOpt(2), h.intOpt(3), h.maTypeOpt(4));
          case "KST":
             return core.kstLookback(h.intOpt(0), h.intOpt(1), h.intOpt(2), h.intOpt(3), h.intOpt(4), h.intOpt(5), h.intOpt(6), h.intOpt(7), h.intOpt(8));
+         case "KSTEXT":
+            return core.kstextLookback(h.intOpt(0), h.intOpt(1), h.intOpt(2), h.intOpt(3), h.intOpt(4), h.intOpt(5), h.intOpt(6), h.intOpt(7), h.intOpt(8), h.maTypeOpt(9), h.maTypeOpt(10));
          case "KURTOSIS":
             return core.kurtosisLookback(h.intOpt(0));
          case "LINEARREG":
