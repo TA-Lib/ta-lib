@@ -133,7 +133,7 @@ def main():
             "per-bar time. An N-way switch cannot stay under a fixed budget as N "
             "grows, so the fix is to split it: keep the common MATypes in this "
             "frame and delegate the rest to a second method that may grow freely. "
-            "For the tape frames that is TAPE_FRAME_ARMS. Emitter: "
+            "That split point is FRAME_ARMS. Emitter: "
             "build_dispatch_peek_frame / emit_dispatch / emit_dispatch_tape in "
             "ta_codegen/generator/src/backends/java_stream.rs."
             % ("Frame" if len(over) == 1 else "Frames", BUDGET,

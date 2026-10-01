@@ -3224,18 +3224,15 @@ fn dispatch_store_sub(
     }
 }
 
-/// How many dispatch arms, in enum order, a dispatcher's committing step routes
-/// itself before handing the rest to a second frame -- the `TAPE_FRAME_ARMS`
-/// split, applied to `maStepImpl`, which every caller holding an MA sub-handle
-/// runs once a bar.
-///
-/// Its own number because the arms cost differently: about 20 bytes here
-/// against the tape's 30, measured as the step frame went 325 -> 345 when ALMA
-/// became the fourteenth MAType (#475) and left C2's 325-byte `FreqInlineSize`.
-/// Seven holds the MATypes the enum opens with -- SMA through KAMA -- and
-/// leaves the frame at 195, room for six more before this has to move again;
-/// `scripts/check_java_inline_budget.py` is what says when.
-const STEP_FRAME_ARMS: usize = 7;
+/// How many dispatch arms, in enum order, a dispatcher's committing step and
+/// its tape step and peek route themselves before handing the rest to a second
+/// frame. C2 inlines no frame past `FreqInlineSize` (325 bytes by default), and
+/// an arm costs 20 to 30 of them.
+const FRAME_ARMS: usize = 7;
+
+fn split_frame<T>(arms: &[T]) -> (&[T], &[T]) {
+    arms.split_at(arms.len().min(FRAME_ARMS))
+}
 
 #[allow(clippy::too_many_lines, clippy::too_many_arguments)]
 fn emit_dispatch(
@@ -3312,9 +3309,7 @@ fn emit_dispatch(
         let _ = writeln!(o, "         return;");
         let _ = writeln!(o, "      }}");
     }
-    // One arm's case. `sp.cur_*` is written in place, so the two frames below
-    // emit the same text -- only which arms land in which frame differs.
-    let emit_step_arm = |o: &mut String, arm: &streaming::DispatchArm| {
+    let emit_step_case = |o: &mut String, arm: &streaming::DispatchArm| {
         let label = super::java::render_java_switch_label(&arm.label, enums);
         let cls = callee_stream_class(registry, &arm.callee);
         let _ = writeln!(o, "      case {label}: {{");
@@ -3355,42 +3350,30 @@ fn emit_dispatch(
         // there: the arms are the only writers of `sp.cur_*` and a tail would
         // be dead on every real MAType, reached only by the unreachable
         // default. Keep the two in step -- a `break` default silently restores
-        // the trap, at no saving. The delegating default below returns too, so
-        // the split does not reopen it.
+        // the trap, at no saving. The head frame's delegating default returns
+        // for the same reason.
         let _ = writeln!(o, "         return;");
         let _ = writeln!(o, "      }}");
     };
+    let unreachable = "return; /* unreachable: open rejects arms without a sub-stream */";
     let step_arms: Vec<_> = dp.arms.iter().filter(|a| a.supported).collect();
-    let (step_head, step_rest) = step_arms.split_at(step_arms.len().min(STEP_FRAME_ARMS));
-    let _ = writeln!(o, "      switch( sp.{} )", dp.param);
-    let _ = writeln!(o, "      {{");
-    for arm in step_head {
-        emit_step_arm(o, arm);
+    let (head, rest) = split_frame(&step_arms);
+    let rest_call = format!("{}StepImplRest(sp, {bar_args});", method_base(func));
+    let _ = writeln!(o, "      switch( sp.{} )\n      {{", dp.param);
+    for arm in head {
+        emit_step_case(o, arm);
     }
-    let _ = writeln!(o, "      default:");
-    if step_rest.is_empty() {
-        let _ = writeln!(o, "         return; /* unreachable: open rejects arms without a sub-stream */");
-    } else {
-        let (_, step_bar_args) = bar_params(func);
-        let _ = writeln!(o, "         {}StepImplRest(sp{}{step_bar_args});", method_base(func), if step_bar_args.is_empty() { "" } else { ", " });
-        let _ = writeln!(o, "         return;");
-    }
-    let _ = writeln!(o, "      }}");
-    let _ = writeln!(o, "   }}");
-    // The second frame: the arms past the first, which may grow freely.
-    if !step_rest.is_empty() {
-        let class = stream_class_name(func);
+    let default = if rest.is_empty() { unreachable.to_string() } else { format!("{rest_call}\n         return;") };
+    let _ = writeln!(o, "      default:\n         {default}\n      }}\n   }}");
+    if !rest.is_empty() {
         let (sig_bars, _) = bar_params(func);
+        let class = stream_class_name(func);
         let _ = writeln!(o, "   private void {}StepImplRest( {class} sp, {sig_bars} )\n   {{", method_base(func));
-        let _ = writeln!(o, "      switch( sp.{} )", dp.param);
-        let _ = writeln!(o, "      {{");
-        for arm in step_rest {
-            emit_step_arm(o, arm);
+        let _ = writeln!(o, "      switch( sp.{} )\n      {{", dp.param);
+        for arm in rest {
+            emit_step_case(o, arm);
         }
-        let _ = writeln!(o, "      default:");
-        let _ = writeln!(o, "         return; /* unreachable: open rejects arms without a sub-stream */");
-        let _ = writeln!(o, "      }}");
-        let _ = writeln!(o, "   }}");
+        let _ = writeln!(o, "      default:\n         {unreachable}\n      }}\n   }}");
     }
 
     // --- open bodies (Scalar delegates to openInternal; Fill to openAndFill) -
@@ -3568,12 +3551,6 @@ fn emit_dispatch(
     }
 }
 
-/// How many dispatch arms, in enum order, a dispatcher's tape step and peek route
-/// themselves before handing the rest to a second frame. C2 inlines neither
-/// frame past `FreqInlineSize` (325 bytes by default), and each arm costs about
-/// 30 of them.
-const TAPE_FRAME_ARMS: usize = 7;
-
 /// A dispatcher's tape entries (#445): route each to the arm's own, and answer
 /// the identity path here, which is why the arms' tape frames drop theirs.
 #[allow(clippy::too_many_lines)]
@@ -3597,7 +3574,7 @@ fn emit_dispatch_tape(
         (cond, inp.clone())
     });
     let arms: Vec<_> = dp.arms.iter().filter(|a| a.supported && !a.callee.is_empty()).collect();
-    let (head, rest) = arms.split_at(arms.len().min(TAPE_FRAME_ARMS));
+    let (head, rest) = split_frame(&arms);
     let label = |arm: &streaming::DispatchArm| super::java::render_java_switch_label(&arm.label, enums);
     let tape_args = format!("tape, tapeBase, tapeMask, {bar_args}");
     let params = format!("{class} sp, {TAPE_PARAMS}, {sig_bars}");
