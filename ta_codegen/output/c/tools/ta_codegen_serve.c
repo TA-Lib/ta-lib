@@ -3520,30 +3520,36 @@ static int sv_steq_TA_CKSP( const struct TA_CKSP_Stream *a, const struct TA_CKSP
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( sv_xtier_ne(a->optInMultiplier, b->optInMultiplier, z) ) { *w = "optInMultiplier"; return 1; }
    if( a->optInStopPeriod != b->optInStopPeriod ) { *w = "optInStopPeriod"; return 1; }
+   if( a->lastP != b->lastP ) { *w = "lastP"; return 1; }
+   if( a->lastQ != b->lastQ ) { *w = "lastQ"; return 1; }
    if( sv_xtier_ne(a->prevATR, b->prevATR, z) ) { *w = "prevATR"; return 1; }
    if( sv_xtier_ne(a->wAlpha, b->wAlpha, z) ) { *w = "wAlpha"; return 1; }
    if( sv_xtier_ne(a->wBeta, b->wBeta, z) ) { *w = "wBeta"; return 1; }
-   if( a->hRing_Idx != b->hRing_Idx ) { *w = "hRing_Idx"; return 1; }
-   if( a->lRing_Idx != b->lRing_Idx ) { *w = "lRing_Idx"; return 1; }
-   if( a->fhRing_Idx != b->fhRing_Idx ) { *w = "fhRing_Idx"; return 1; }
-   if( a->flRing_Idx != b->flRing_Idx ) { *w = "flRing_Idx"; return 1; }
-   if( a->maxIdx_hRing != b->maxIdx_hRing ) { *w = "maxIdx_hRing"; return 1; }
-   if( a->maxIdx_lRing != b->maxIdx_lRing ) { *w = "maxIdx_lRing"; return 1; }
-   if( a->maxIdx_fhRing != b->maxIdx_fhRing ) { *w = "maxIdx_fhRing"; return 1; }
-   if( a->maxIdx_flRing != b->maxIdx_flRing ) { *w = "maxIdx_flRing"; return 1; }
+   if( sv_xtier_ne(a->hhPre, b->hhPre, z) ) { *w = "hhPre"; return 1; }
+   if( sv_xtier_ne(a->llPre, b->llPre, z) ) { *w = "llPre"; return 1; }
+   if( sv_xtier_ne(a->hsPre, b->hsPre, z) ) { *w = "hsPre"; return 1; }
+   if( sv_xtier_ne(a->lsPre, b->lsPre, z) ) { *w = "lsPre"; return 1; }
+   if( a->hhBuf_Idx != b->hhBuf_Idx ) { *w = "hhBuf_Idx"; return 1; }
+   if( a->hsBuf_Idx != b->hsBuf_Idx ) { *w = "hsBuf_Idx"; return 1; }
+   if( a->maxIdx_hhBuf != b->maxIdx_hhBuf ) { *w = "maxIdx_hhBuf"; return 1; }
+   if( a->llBuf_Idx != b->llBuf_Idx ) { *w = "llBuf_Idx"; return 1; }
+   if( a->maxIdx_llBuf != b->maxIdx_llBuf ) { *w = "maxIdx_llBuf"; return 1; }
+   if( a->maxIdx_hsBuf != b->maxIdx_hsBuf ) { *w = "maxIdx_hsBuf"; return 1; }
+   if( a->lsBuf_Idx != b->lsBuf_Idx ) { *w = "lsBuf_Idx"; return 1; }
+   if( a->maxIdx_lsBuf != b->maxIdx_lsBuf ) { *w = "maxIdx_lsBuf"; return 1; }
    if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
-   if( a->cbSize_hRing != b->cbSize_hRing ) { *w = "cbSize_hRing"; return 1; }
-   if( (a->cb_hRing == NULL) != (b->cb_hRing == NULL) ) { *w = "cb_hRing"; return 1; }
-   if( a->cb_hRing ) for( k = 0; k < a->cbSize_hRing; k++ ) if( sv_xtier_ne(a->cb_hRing[k], b->cb_hRing[k], z) ) { *w = "cb_hRing"; return 1; }
-   if( a->cbSize_lRing != b->cbSize_lRing ) { *w = "cbSize_lRing"; return 1; }
-   if( (a->cb_lRing == NULL) != (b->cb_lRing == NULL) ) { *w = "cb_lRing"; return 1; }
-   if( a->cb_lRing ) for( k = 0; k < a->cbSize_lRing; k++ ) if( sv_xtier_ne(a->cb_lRing[k], b->cb_lRing[k], z) ) { *w = "cb_lRing"; return 1; }
-   if( a->cbSize_fhRing != b->cbSize_fhRing ) { *w = "cbSize_fhRing"; return 1; }
-   if( (a->cb_fhRing == NULL) != (b->cb_fhRing == NULL) ) { *w = "cb_fhRing"; return 1; }
-   if( a->cb_fhRing ) for( k = 0; k < a->cbSize_fhRing; k++ ) if( sv_xtier_ne(a->cb_fhRing[k], b->cb_fhRing[k], z) ) { *w = "cb_fhRing"; return 1; }
-   if( a->cbSize_flRing != b->cbSize_flRing ) { *w = "cbSize_flRing"; return 1; }
-   if( (a->cb_flRing == NULL) != (b->cb_flRing == NULL) ) { *w = "cb_flRing"; return 1; }
-   if( a->cb_flRing ) for( k = 0; k < a->cbSize_flRing; k++ ) if( sv_xtier_ne(a->cb_flRing[k], b->cb_flRing[k], z) ) { *w = "cb_flRing"; return 1; }
+   if( a->cbSize_hhBuf != b->cbSize_hhBuf ) { *w = "cbSize_hhBuf"; return 1; }
+   if( (a->cb_hhBuf == NULL) != (b->cb_hhBuf == NULL) ) { *w = "cb_hhBuf"; return 1; }
+   if( a->cb_hhBuf ) for( k = 0; k < a->cbSize_hhBuf; k++ ) if( sv_xtier_ne(a->cb_hhBuf[k], b->cb_hhBuf[k], z) ) { *w = "cb_hhBuf"; return 1; }
+   if( a->cbSize_llBuf != b->cbSize_llBuf ) { *w = "cbSize_llBuf"; return 1; }
+   if( (a->cb_llBuf == NULL) != (b->cb_llBuf == NULL) ) { *w = "cb_llBuf"; return 1; }
+   if( a->cb_llBuf ) for( k = 0; k < a->cbSize_llBuf; k++ ) if( sv_xtier_ne(a->cb_llBuf[k], b->cb_llBuf[k], z) ) { *w = "cb_llBuf"; return 1; }
+   if( a->cbSize_hsBuf != b->cbSize_hsBuf ) { *w = "cbSize_hsBuf"; return 1; }
+   if( (a->cb_hsBuf == NULL) != (b->cb_hsBuf == NULL) ) { *w = "cb_hsBuf"; return 1; }
+   if( a->cb_hsBuf ) for( k = 0; k < a->cbSize_hsBuf; k++ ) if( sv_xtier_ne(a->cb_hsBuf[k], b->cb_hsBuf[k], z) ) { *w = "cb_hsBuf"; return 1; }
+   if( a->cbSize_lsBuf != b->cbSize_lsBuf ) { *w = "cbSize_lsBuf"; return 1; }
+   if( (a->cb_lsBuf == NULL) != (b->cb_lsBuf == NULL) ) { *w = "cb_lsBuf"; return 1; }
+   if( a->cb_lsBuf ) for( k = 0; k < a->cbSize_lsBuf; k++ ) if( sv_xtier_ne(a->cb_lsBuf[k], b->cb_lsBuf[k], z) ) { *w = "cb_lsBuf"; return 1; }
    return 0;
 }
 

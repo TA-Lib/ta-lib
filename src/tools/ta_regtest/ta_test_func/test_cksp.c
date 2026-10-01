@@ -11,6 +11,8 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  093026 KL,CC  First version (#477).
+ *  093026 MF,CC  Frozen pandas-ta-classic rows; composite at a heap-sized
+ *                window and under a non-zero unstable period.
  */
 
 /* Description:
@@ -31,6 +33,8 @@
  *     4. DEGENERATE: a flat series, where both stops equal the price.
  *     5. ALIASING of each output over its own natural input.
  *     6. The generic start/end range sweep.
+ *     7. GOLDEN rows from pandas-ta-classic, the one external implementation
+ *        that seeds its ATR on TA_ATR's bar.
  */
 
 /**** Headers ****/
@@ -55,7 +59,9 @@ static const CkspCfg ckspCfg[] = {
    { 22, 3.0,  1 },
    {  2, 0.0,  1 },
    { 10, 0.0,  9 },
-   {  2, 1.5,  2 }
+   {  2, 1.5,  2 },
+   { 40, 2.0, 35 },
+   {  5, 2.0,  9 }
 };
 #define NB_CKSP_CFG (int)(sizeof(ckspCfg)/sizeof(ckspCfg[0]))
 
@@ -65,6 +71,7 @@ static ErrorNumber test_cksp_lookback  ( const TA_History *history );
 static ErrorNumber test_cksp_flat      ( void );
 static ErrorNumber test_cksp_aliasing  ( const TA_History *history );
 static ErrorNumber test_cksp_range     ( const TA_History *history );
+static ErrorNumber test_cksp_golden    ( const TA_History *history );
 
 /**** Global functions definitions.   ****/
 ErrorNumber test_func_cksp( TA_History *history )
@@ -93,13 +100,17 @@ ErrorNumber test_func_cksp( TA_History *history )
    if( retValue != TA_TEST_PASS )
       return retValue;
 
-   return test_cksp_range( history );
+   retValue = test_cksp_range( history );
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
+   return test_cksp_golden( history );
 }
 
 /**** Local functions definitions.     ****/
 
 /* (1) Bitwise against the composition, from several starts. */
-static ErrorNumber test_cksp_composite( const TA_History *history )
+static ErrorNumber cksp_composite_at( const TA_History *history, int route )
 {
    static TA_Real gotH[CKSP_CAP], gotL[CKSP_CAP];
    static TA_Real atr[CKSP_CAP], hh[CKSP_CAP], ll[CKSP_CAP];
@@ -183,10 +194,49 @@ static ErrorNumber test_cksp_composite( const TA_History *history )
                return TA_TESTUTIL_TFRR_BAD_CALCULATION;
             }
          }
+
+         /* Two or three parameters off their defaults at once, which the
+          * sweep never sends.
+          */
+         if( route && startBump[s] == 0 && server_verify_active() )
+         {
+            double optIn[3];
+            ErrorNumber e;
+
+            optIn[0] = (double)p;
+            optIn[1] = x;
+            optIn[2] = (double)q;
+            e = server_verify( "CKSP", startIdx, nb-1, nb,
+                               rc, begIdx, nbElement,
+                               (const TA_Real*[]){ history->high, history->low,
+                                                   history->close, NULL },
+                               optIn, 3,
+                               (const TA_Real*[]){ gotH, gotL, NULL }, NULL );
+            if( e != TA_TEST_PASS )
+               return e;
+         }
       }
    }
 
    return TA_TEST_PASS;
+}
+
+/* The composition holds at any unstable period, the legs being entered with
+ * the same setting; a non-zero one is what runs the warm-up loop between the
+ * seed and the first stop.
+ */
+static ErrorNumber test_cksp_composite( const TA_History *history )
+{
+   ErrorNumber retValue;
+
+   retValue = cksp_composite_at( history, 1 );
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
+   TA_SetUnstablePeriod( TA_FUNC_UNST_ATR, 7 );
+   retValue = cksp_composite_at( history, 0 );
+   TA_SetUnstablePeriod( TA_FUNC_UNST_ATR, 0 );
+   return retValue;
 }
 
 /* (2) At a multiplier of 0 the ATR term vanishes and the two stages collapse
@@ -415,12 +465,9 @@ static ErrorNumber test_cksp_aliasing( const TA_History *history )
 
 /* (6) The generic start/end sweep.
  *
- * CONVERGING, not EPSILON. The extremes are finite windows, but the Average
- * True Range under them is a recursion seeded at this call's own start, so two
- * calls entered at different bars hold different residues and only converge as
- * the unstable period is warmed. doRangeTestEx cross-checks the pair: EPSILON
- * with a non-NONE id is rejected, which is what caught this classification
- * (test_cvi.c:722-726 records the same rule).
+ * CONVERGING, not EPSILON: the extremes are finite windows, but the Average
+ * True Range under them is a recursion seeded at this call's own start, so
+ * two calls entered at different bars agree only as the unstable period warms.
  */
 static TA_RetCode ckspRangeTestFunction( TA_Integer startIdx, TA_Integer endIdx,
                                          TA_Real *outputBuffer, TA_Integer *outputBufferInt,
@@ -454,4 +501,79 @@ static ErrorNumber test_cksp_range( const TA_History *history )
    return doRangeTestEx( ckspRangeTestFunction,
                          TA_STABLE_CONVERGING, TA_FUNC_UNST_ATR,
                          (void *)history, 2, 0 );
+}
+
+/* (7) pandas-ta-classic 0.6.52 `cksp(high, low, close, p, x, q, tvmode=True)`
+ * (pandas 3.0.3, numpy 2.5.1) on this corpus, run through ta-lib-oracles
+ * `capture_477_cksp.py` at 2e5f2701; its CKSPl column is the high stop and its
+ * CKSPs column the low one. Chosen because its Wilder average is seeded on
+ * TA_ATR's bar, so it is comparable from the first output: the bar-0 true
+ * range implementations (TradingView, LEAN, talipp, trading-signals) are
+ * 3e-4 away there and need about 300 bars to converge.
+ *
+ * 1e-14 relative. The two are the same arithmetic in a different order, and
+ * the measured gap is a few ulps.
+ */
+typedef struct { int p; double x; int q; int bar; double high; double low; } CkspGolden;
+
+static const CkspGolden ckspGolden[] = {
+   { 10, 1.0,  9,  18, 96.642499999999998, 90.186049708750005 },
+   { 10, 1.0,  9,  19, 96.642499999999998, 90.092444737874999 },
+   { 10, 1.0,  9, 100, 119.41407380766739, 107.7801244599106  },
+   { 10, 1.0,  9, 180, 134.28803829751402, 125.84778404797029 },
+   { 10, 1.0,  9, 251, 118.29444999590379, 107.66719935768752 },
+   { 10, 3.0, 20,  29, 90.677499999999995, 90.593205103140775 },
+   { 10, 3.0, 20, 100, 112.24222142300219, 93.552482782139862 },
+   { 10, 3.0, 20, 180, 127.48411489254205, 131.17182796378751 },
+   { 10, 3.0, 20, 251, 110.64334998771135, 109.33664333744092 },
+   {  5, 2.0,  3,   7, 91.272999999999996, 95.563279999999992 },
+   {  5, 2.0,  3,   8, 91.093400000000003, 95.414624000000003 },
+   {  5, 2.0,  3, 100, 112.78832187955533, 117.08667812044467 },
+   {  5, 2.0,  3, 251, 105.98763882594199, 111.58188893924643 },
+   { 22, 3.0,  1,  22, 89.746818181818185, 94.503181818181815 },
+   { 22, 3.0,  1,  23, 89.756735537190082, 92.148264462809919 },
+   { 22, 3.0,  1, 251, 111.62064300832449, 112.74935699167551 },
+   { 14, 2.5, 14,  27, 91.634603751840331, 88.987752511356774 },
+   { 14, 2.5, 14, 180, 128.98162040702482, 129.78855916697415 },
+   { 14, 2.5, 14, 251, 113.63510860489713, 112.65202370292035 },
+   {  2, 0.5,  2,   3, 94.995000000000005, 92.819999999999993 },
+   {  2, 0.5,  2,   4, 94.995000000000005, 94.301249999999996 },
+   {  2, 0.5,  2, 251, 109.55575020732381, 107.8121248963381  }
+};
+
+static ErrorNumber test_cksp_golden( const TA_History *history )
+{
+   static TA_Real gotH[CKSP_CAP], gotL[CKSP_CAP];
+   TA_Integer begIdx, nbElement;
+   int nb = (int)history->nbBars;
+   int g;
+
+   for( g = 0; g < (int)(sizeof(ckspGolden)/sizeof(ckspGolden[0])); g++ )
+   {
+      const CkspGolden *row = &ckspGolden[g];
+      double h, l;
+
+      if( TA_CKSP( 0, nb-1, history->high, history->low, history->close,
+                   row->p, row->x, row->q, &begIdx, &nbElement, gotH, gotL )
+             != TA_SUCCESS
+          || row->bar < begIdx || row->bar >= begIdx + nbElement )
+      {
+         printf( "Fail: TA_CKSP golden %d/%g/%d: bar %d is outside the output\n",
+                 row->p, row->x, row->q, row->bar );
+         return TA_TESTUTIL_TFRR_BAD_RETCODE;
+      }
+
+      h = gotH[row->bar - begIdx];
+      l = gotL[row->bar - begIdx];
+      if( !(fabs( h - row->high ) <= 1e-14 * fabs( row->high ))
+          || !(fabs( l - row->low ) <= 1e-14 * fabs( row->low )) )
+      {
+         printf( "Fail: TA_CKSP golden %d/%g/%d bar %d: high %.17g vs %.17g, "
+                 "low %.17g vs %.17g\n", row->p, row->x, row->q, row->bar,
+                 h, row->high, l, row->low );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+   }
+
+   return TA_TEST_PASS;
 }

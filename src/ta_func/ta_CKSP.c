@@ -55,6 +55,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  093026 KL,CC  Creation (#477).
+ *  093026 MF,CC  Rolling extrema in a fixed number of comparisons per bar.
  */
 
 TA_LIB_API int TA_CKSP_Lookback( int optInTimePeriod, double optInMultiplier, int optInStopPeriod )
@@ -71,16 +72,12 @@ TA_LIB_API int TA_CKSP_Lookback( int optInTimePeriod, double optInMultiplier, in
       optInStopPeriod = 9;
    else if( (int)optInStopPeriod < 1 || (int)optInStopPeriod > 100000 )
       return -1;
-   /* Two stages. The first needs the Average True Range at its bar and the
-    * extreme of the p bars ending there; atr_lookback(p) is p + unst, which is
-    * never below max_lookback(p) = p - 1, so it covers both. The second adds
-    * the q - 1 earlier first-stage bars its own window reads.
-    *
-    * The ATR term is written as the callee's lookback and never restated, which
-    * is what makes CKSP inherit TA_FUNC_UNST_ATR rather than own an unstable
-    * period of its own (supertrend.c:16-25).
+   /* The first stops need the Average True Range at their own bar, and the
+    * stop window reaches optInStopPeriod-1 first stops further back. The ATR
+    * term is never restated here, which is what makes CKSP inherit
+    * TA_FUNC_UNST_ATR.
     */
-   return TA_ATR_Lookback(optInTimePeriod) + (optInStopPeriod - 1);
+   return TA_ATR_Lookback(optInTimePeriod) + optInStopPeriod - 1;
 }
 
 TA_FMA_MULTIVERSION
@@ -97,15 +94,26 @@ TA_LIB_API TA_RetCode TA_CKSP( int    startIdx,
                                double        outHighStop[],
                                double        outLowStop[] )
 {
+   double local_hhBuf[30];
+   double *hhBuf = &local_hhBuf[0];
+   int hhBuf_Idx;
+   int maxIdx_hhBuf;
+   double local_llBuf[30];
+   double *llBuf = &local_llBuf[0];
+   double local_hsBuf[30];
+   double *hsBuf = &local_hsBuf[0];
+   int hsBuf_Idx;
+   int maxIdx_hsBuf;
+   double local_lsBuf[30];
+   double *lsBuf = &local_lsBuf[0];
    int i;
-   int jh;
-   int jl;
-   int kh;
-   int kl;
+   int ip;
+   int iq;
    int today;
    int outIdx;
    int lookbackTotal;
-   int stageOneIdx;
+   int lastP;
+   int lastQ;
    double prevATR;
    double periodTotal;
    double wAlpha;
@@ -116,25 +124,18 @@ TA_LIB_API TA_RetCode TA_CKSP( int    startIdx,
    double tempCY;
    double tempLT;
    double tempHT;
-   double hh;
-   double ll;
-   double best;
-   double local_hRing[50];
-   double *hRing = &local_hRing[0];
-   int hRing_Idx;
-   int maxIdx_hRing;
-   double local_lRing[50];
-   double *lRing = &local_lRing[0];
-   int lRing_Idx;
-   int maxIdx_lRing;
-   double local_fhRing[50];
-   double *fhRing = &local_fhRing[0];
-   int fhRing_Idx;
-   int maxIdx_fhRing;
-   double local_flRing[50];
-   double *flRing = &local_flRing[0];
-   int flRing_Idx;
-   int maxIdx_flRing;
+   double tempReal;
+   double hhPre;
+   double llPre;
+   double hsPre;
+   double lsPre;
+   double sufHi;
+   double sufLo;
+   double highest;
+   double lowest;
+   double band;
+   double highStop;
+   double lowStop;
 
    if( (startIdx < 0) || (startIdx > TA_INDEX_MAX) )
       return TA_OUT_OF_RANGE_START_INDEX;
@@ -168,11 +169,6 @@ TA_LIB_API TA_RetCode TA_CKSP( int    startIdx,
    if( outHighStop == outLowStop )
       return TA_BAD_PARAM;
 
-   /* Four windows, all carried as rings and all walked oldest-first, the
-    * cci.c:112-117 shape: an index that wrapped would be one more thing the
-    * stream derivation has to prove, and the walk is the same values either
-    * way.
-    */
    *outBegIdx= 0;
    *outNBElement= 0;
    lookbackTotal = TA_CKSP_Lookback(optInTimePeriod,optInMultiplier,optInStopPeriod);
@@ -180,95 +176,99 @@ TA_LIB_API TA_RetCode TA_CKSP( int    startIdx,
    {
       startIdx = lookbackTotal;
    }
+   /* Make sure there is still something to evaluate. */
    if( startIdx > endIdx )
    {
       return TA_SUCCESS;
    }
-   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(462);
-   if( (int)optInTimePeriod > (int)(sizeof(local_hRing)/sizeof(double)) )
-   {
-      hRing = TA_Malloc( sizeof(double)*optInTimePeriod );
-      if( !hRing )
-      {
-         return TA_ALLOC_ERR;
-      }
-   }
-   else
-   {
-      hRing = &local_hRing[0];
-   }
-   maxIdx_hRing = (optInTimePeriod-1);
-   hRing_Idx = 0;
-   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(463);
-   if( (int)optInTimePeriod > (int)(sizeof(local_lRing)/sizeof(double)) )
-   {
-      lRing = TA_Malloc( sizeof(double)*optInTimePeriod );
-      if( !lRing )
-      {
-         if( hRing != &local_hRing[0] ) TA_Free( hRing );
-         return TA_ALLOC_ERR;
-      }
-   }
-   else
-   {
-      lRing = &local_lRing[0];
-   }
-   maxIdx_lRing = (optInTimePeriod-1);
-   lRing_Idx = 0;
-   if( optInStopPeriod < 1 ) return TA_INTERNAL_ERROR(464);
-   if( (int)optInStopPeriod > (int)(sizeof(local_fhRing)/sizeof(double)) )
-   {
-      fhRing = TA_Malloc( sizeof(double)*optInStopPeriod );
-      if( !fhRing )
-      {
-         if( hRing != &local_hRing[0] ) TA_Free( hRing );
-         if( lRing != &local_lRing[0] ) TA_Free( lRing );
-         return TA_ALLOC_ERR;
-      }
-   }
-   else
-   {
-      fhRing = &local_fhRing[0];
-   }
-   maxIdx_fhRing = (optInStopPeriod-1);
-   fhRing_Idx = 0;
-   if( optInStopPeriod < 1 ) return TA_INTERNAL_ERROR(465);
-   if( (int)optInStopPeriod > (int)(sizeof(local_flRing)/sizeof(double)) )
-   {
-      flRing = TA_Malloc( sizeof(double)*optInStopPeriod );
-      if( !flRing )
-      {
-         if( hRing != &local_hRing[0] ) TA_Free( hRing );
-         if( lRing != &local_lRing[0] ) TA_Free( lRing );
-         if( fhRing != &local_fhRing[0] ) TA_Free( fhRing );
-         return TA_ALLOC_ERR;
-      }
-   }
-   else
-   {
-      flRing = &local_flRing[0];
-   }
-   maxIdx_flRing = (optInStopPeriod-1);
-   flRing_Idx = 0;
-   /* The first stage is entered q-1 bars before the first output, because the
-    * second stage's window reaches that far back. Each leg is anchored on its
-    * own bar rather than on the caller's startIdx (the kc.c:73-77 rule): the
-    * Average True Range is seeded as if TA_ATR had been entered here, and the
-    * extremes are the p-windows ending on these same bars.
-    */
-   stageOneIdx = startIdx - (optInStopPeriod - 1);
-   /* The Average True Range, carried inline rather than taken from a call: the
-    * two stages advance together one bar at a time and a whole-range buffer
-    * between them would not stream (supertrend.c:47-50).
+   /* Four rolling extrema, van Herk / Gil-Werman, one buffer each: the window
+    * ending in slot j is the current block's prefix extremum joined with the
+    * previous block's suffix extremum from slot j+1. A slot holds the raw value
+    * while its block is filling and is turned into the suffix extremum, in
+    * place, when the block completes; slot j+1 is always still the previous
+    * block's when slot j is filled. The high and low sides share an index.
     *
-    * The arithmetic order is the bit-exactness contract with TA_ATR and is not
-    * to be reordered: the range first, then the two previous-close distances in
-    * that order; the seed summed from 0.0 over the first optInTimePeriod True
-    * Ranges and divided once; wBeta rounded first and wAlpha derived from it.
+    * The extrema are exact, so both outputs must stay bit-identical to
+    * TA_MAX( TA_MAX(high) - x*TA_ATR ) and its mirror, whatever the block
+    * phase; only the sign of a zero tied between +0.0 and -0.0 is free.
+    */
+   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(474);
+   if( (int)optInTimePeriod > (int)(sizeof(local_hhBuf)/sizeof(double)) )
+   {
+      hhBuf = TA_Malloc( sizeof(double)*optInTimePeriod );
+      if( !hhBuf )
+      {
+         return TA_ALLOC_ERR;
+      }
+   }
+   else
+   {
+      hhBuf = &local_hhBuf[0];
+   }
+   maxIdx_hhBuf = (optInTimePeriod-1);
+   hhBuf_Idx = 0;
+   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(475);
+   if( (int)optInTimePeriod > (int)(sizeof(local_llBuf)/sizeof(double)) )
+   {
+      llBuf = TA_Malloc( sizeof(double)*optInTimePeriod );
+      if( !llBuf )
+      {
+         if( hhBuf != &local_hhBuf[0] ) TA_Free( hhBuf );
+         return TA_ALLOC_ERR;
+      }
+   }
+   else
+   {
+      llBuf = &local_llBuf[0];
+   }
+   if( optInStopPeriod < 1 ) return TA_INTERNAL_ERROR(476);
+   if( (int)optInStopPeriod > (int)(sizeof(local_hsBuf)/sizeof(double)) )
+   {
+      hsBuf = TA_Malloc( sizeof(double)*optInStopPeriod );
+      if( !hsBuf )
+      {
+         if( hhBuf != &local_hhBuf[0] ) TA_Free( hhBuf );
+         if( llBuf != &local_llBuf[0] ) TA_Free( llBuf );
+         return TA_ALLOC_ERR;
+      }
+   }
+   else
+   {
+      hsBuf = &local_hsBuf[0];
+   }
+   maxIdx_hsBuf = (optInStopPeriod-1);
+   hsBuf_Idx = 0;
+   if( optInStopPeriod < 1 ) return TA_INTERNAL_ERROR(477);
+   if( (int)optInStopPeriod > (int)(sizeof(local_lsBuf)/sizeof(double)) )
+   {
+      lsBuf = TA_Malloc( sizeof(double)*optInStopPeriod );
+      if( !lsBuf )
+      {
+         if( hhBuf != &local_hhBuf[0] ) TA_Free( hhBuf );
+         if( llBuf != &local_llBuf[0] ) TA_Free( llBuf );
+         if( hsBuf != &local_hsBuf[0] ) TA_Free( hsBuf );
+         return TA_ALLOC_ERR;
+      }
+   }
+   else
+   {
+      lsBuf = &local_lsBuf[0];
+   }
+   lastP = optInTimePeriod - 1;
+   lastQ = optInStopPeriod - 1;
+   /* The Average True Range is carried inline rather than taken from a call,
+    * because the two stages advance together one bar at a time and a
+    * whole-range buffer between them would not stream.
+    *
+    * The arithmetic order below is the bit-exactness contract with TA_ATR (do
+    * not reorder): True Range from high-low, then the two previous-close
+    * distances in that order; the seed summed from 0.0 over the first 'period'
+    * True Ranges and divided once; the same two Wilder coefficients, wBeta
+    * rounded and wAlpha derived from it, in one fused statement.
     */
    wBeta = (double)(optInTimePeriod - 1) / (double)optInTimePeriod;
    wAlpha = 1.0 - wBeta;
-   today = stageOneIdx - TA_ATR_Lookback(optInTimePeriod) + 1;
+   today = startIdx - lookbackTotal + 1;
    periodTotal = 0.0;
    i = optInTimePeriod;
    while( i-- > 0 )
@@ -277,6 +277,7 @@ TA_LIB_API TA_RetCode TA_CKSP( int    startIdx,
       tempHT = inHigh[today];
       tempCY = inClose[today - 1];
       greatest = tempHT - tempLT;
+      /* val1 */
       val2 = fabs(tempCY - tempHT);
       if( val2 > greatest )
       {
@@ -291,16 +292,17 @@ TA_LIB_API TA_RetCode TA_CKSP( int    startIdx,
       today += 1;
    }
    prevATR = periodTotal / optInTimePeriod;
-   /* Skip the Average True Range's unstable period. The count comes from the
-    * lookback rather than from the setting, so the two cannot disagree.
+   /* Skip the Average True Range's unstable period. Taking the count from the
+    * lookback rather than naming the setting keeps the two from disagreeing.
     */
-   i = TA_ATR_Lookback(optInTimePeriod) - optInTimePeriod;
+   i = lookbackTotal - lastQ - optInTimePeriod;
    while( i != 0 )
    {
       tempLT = inLow[today];
       tempHT = inHigh[today];
       tempCY = inClose[today - 1];
       greatest = tempHT - tempLT;
+      /* val1 */
       val2 = fabs(tempCY - tempHT);
       if( val2 > greatest )
       {
@@ -315,88 +317,54 @@ TA_LIB_API TA_RetCode TA_CKSP( int    startIdx,
       today += 1;
       i -= 1;
    }
-   /* `today` is now stageOneIdx and prevATR is the Average True Range of the
-    * bar before it. Seed the price rings with the p-1 bars the first extreme
-    * window needs behind that bar.
+   /* prevATR is now the Average True Range of bar today-1, the first bar with
+    * a first stop. Its extreme window is one whole block, taken straight from
+    * the input.
     */
-   i = stageOneIdx - optInTimePeriod + 1;
-   while( i < stageOneIdx )
+   highest = inHigh[today - 1];
+   lowest = inLow[today - 1];
+   hhBuf[lastP] = highest;
+   llBuf[lastP] = lowest;
+   ip = lastP;
+   while( ip > 0 )
    {
-      hRing[hRing_Idx] = inHigh[i];
-      lRing[lRing_Idx] = inLow[i];
-      i += 1;
-      hRing_Idx++;
-      if( hRing_Idx > maxIdx_hRing ) hRing_Idx = 0;
-      lRing_Idx++;
-      if( lRing_Idx > maxIdx_lRing ) lRing_Idx = 0;
+      ip -= 1;
+      tempHT = inHigh[today - 1 - lastP + ip];
+      tempLT = inLow[today - 1 - lastP + ip];
+      if( tempHT > highest )
+      {
+         highest = tempHT;
+      }
+      if( tempLT < lowest )
+      {
+         lowest = tempLT;
+      }
+      hhBuf[ip] = highest;
+      llBuf[ip] = lowest;
    }
-   /* The prologue leaves prevATR as the Average True Range of stageOneIdx and
-    * `today` one past it, so that bar is finished here rather than in the loop:
-    * entering the loop with it would apply a second Wilder update and shift the
-    * whole series one bar early. supertrend.c takes the same step for the same
-    * reason.
+   hhPre = highest;
+   llPre = lowest;
+   /* The multiple of the ATR is formed on its own, never fused into the
+    * offset, so that each first stop is TA_MAX - x*TA_ATR (or its mirror) as a
+    * caller composing the three functions would compute it.
     */
-   today = stageOneIdx;
-   hRing[hRing_Idx] = inHigh[today];
-   lRing[lRing_Idx] = inLow[today];
-   hh = hRing[hRing_Idx];
-   for( jh = hRing_Idx + 1; jh < optInTimePeriod; jh += 1 )
-   {
-      best = hRing[jh];
-      if( best > hh )
-      {
-         hh = best;
-      }
-   }
-   for( jh = 0; jh < hRing_Idx; jh += 1 )
-   {
-      best = hRing[jh];
-      if( best > hh )
-      {
-         hh = best;
-      }
-   }
-   ll = lRing[lRing_Idx];
-   for( jl = lRing_Idx + 1; jl < optInTimePeriod; jl += 1 )
-   {
-      best = lRing[jl];
-      if( best < ll )
-      {
-         ll = best;
-      }
-   }
-   for( jl = 0; jl < lRing_Idx; jl += 1 )
-   {
-      best = lRing[jl];
-      if( best < ll )
-      {
-         ll = best;
-      }
-   }
-   fhRing[fhRing_Idx] = hh - optInMultiplier * prevATR;
-   flRing[flRing_Idx] = ll + optInMultiplier * prevATR;
-   outIdx = 0;
-   if( today >= startIdx )
-   {
-      outHighStop[outIdx] = fhRing[fhRing_Idx];
-      outLowStop[outIdx] = flRing[flRing_Idx];
-      outIdx = outIdx + 1;
-   }
-   today += 1;
-   hRing_Idx++;
-   if( hRing_Idx > maxIdx_hRing ) hRing_Idx = 0;
-   lRing_Idx++;
-   if( lRing_Idx > maxIdx_lRing ) lRing_Idx = 0;
-   fhRing_Idx++;
-   if( fhRing_Idx > maxIdx_fhRing ) fhRing_Idx = 0;
-   flRing_Idx++;
-   if( flRing_Idx > maxIdx_flRing ) flRing_Idx = 0;
-   while( today <= endIdx )
+   band = optInMultiplier * prevATR;
+   highStop = highest - band;
+   lowStop = lowest + band;
+   hsPre = highStop;
+   lsPre = lowStop;
+   hsBuf[hsBuf_Idx] = highStop;
+   lsBuf[hsBuf_Idx] = lowStop;
+   hsBuf_Idx++;
+   if( hsBuf_Idx > maxIdx_hsBuf ) hsBuf_Idx = 0;
+   /* Fill the first stop window, through startIdx inclusive. */
+   while( today <= startIdx )
    {
       tempLT = inLow[today];
       tempHT = inHigh[today];
       tempCY = inClose[today - 1];
       greatest = tempHT - tempLT;
+      /* val1 */
       val2 = fabs(tempCY - tempHT);
       if( val2 > greatest )
       {
@@ -408,108 +376,258 @@ TA_LIB_API TA_RetCode TA_CKSP( int    startIdx,
          greatest = val3;
       }
       prevATR = fma(wBeta, prevATR, wAlpha * greatest);
-      hRing[hRing_Idx] = tempHT;
-      lRing[lRing_Idx] = tempLT;
-      /* The extremes of the p bars ending here. The newest sits at the ring's
-       * own index, so the oldest is the slot after it and the walk is two
-       * straight runs.
+      /* Keep this shape: the prefix extreme selected in a local, the
+       * block-start override after it, one store. A store made only when the
+       * bar sets a new extreme, or the override ahead of the select, compiles
+       * to a data-dependent branch in the stream step, where the prefix lives
+       * in the handle.
        */
-      hh = hRing[hRing_Idx];
-      for( jh = hRing_Idx + 1; jh < optInTimePeriod; jh += 1 )
+      highest = hhPre;
+      lowest = llPre;
+      if( tempHT > highest )
       {
-         best = hRing[jh];
-         if( best > hh )
+         highest = tempHT;
+      }
+      if( tempLT < lowest )
+      {
+         lowest = tempLT;
+      }
+      if( hhBuf_Idx == 0 )
+      {
+         highest = tempHT;
+         lowest = tempLT;
+      }
+      hhPre = highest;
+      llPre = lowest;
+      if( hhBuf_Idx < lastP )
+      {
+         tempReal = hhBuf[hhBuf_Idx + 1];
+         if( tempReal > highest )
          {
-            hh = best;
+            highest = tempReal;
+         }
+         tempReal = llBuf[hhBuf_Idx + 1];
+         if( tempReal < lowest )
+         {
+            lowest = tempReal;
          }
       }
-      for( jh = 0; jh < hRing_Idx; jh += 1 )
+      hhBuf[hhBuf_Idx] = tempHT;
+      llBuf[hhBuf_Idx] = tempLT;
+      hhBuf_Idx++;
+      if( hhBuf_Idx > maxIdx_hhBuf ) hhBuf_Idx = 0;
+      if( hhBuf_Idx == 0 )
       {
-         best = hRing[jh];
-         if( best > hh )
+         sufHi = hhBuf[lastP];
+         sufLo = llBuf[lastP];
+         ip = lastP;
+         while( ip > 1 )
          {
-            hh = best;
-         }
-      }
-      ll = lRing[lRing_Idx];
-      for( jl = lRing_Idx + 1; jl < optInTimePeriod; jl += 1 )
-      {
-         best = lRing[jl];
-         if( best < ll )
-         {
-            ll = best;
-         }
-      }
-      for( jl = 0; jl < lRing_Idx; jl += 1 )
-      {
-         best = lRing[jl];
-         if( best < ll )
-         {
-            ll = best;
-         }
-      }
-      fhRing[fhRing_Idx] = hh - optInMultiplier * prevATR;
-      flRing[flRing_Idx] = ll + optInMultiplier * prevATR;
-      if( today >= startIdx )
-      {
-         /* The second stage, over the q first-stage bars ending here. At q = 1
-          * both runs are empty and the value is the bar's own, which is the
-          * Chandelier Exit form.
-          */
-         hh = fhRing[fhRing_Idx];
-         for( kh = fhRing_Idx + 1; kh < optInStopPeriod; kh += 1 )
-         {
-            best = fhRing[kh];
-            if( best > hh )
+            ip -= 1;
+            tempReal = hhBuf[ip];
+            if( tempReal > sufHi )
             {
-               hh = best;
+               sufHi = tempReal;
             }
-         }
-         for( kh = 0; kh < fhRing_Idx; kh += 1 )
-         {
-            best = fhRing[kh];
-            if( best > hh )
+            hhBuf[ip] = sufHi;
+            tempReal = llBuf[ip];
+            if( tempReal < sufLo )
             {
-               hh = best;
+               sufLo = tempReal;
             }
+            llBuf[ip] = sufLo;
          }
-         ll = flRing[flRing_Idx];
-         for( kl = flRing_Idx + 1; kl < optInStopPeriod; kl += 1 )
-         {
-            best = flRing[kl];
-            if( best < ll )
-            {
-               ll = best;
-            }
-         }
-         for( kl = 0; kl < flRing_Idx; kl += 1 )
-         {
-            best = flRing[kl];
-            if( best < ll )
-            {
-               ll = best;
-            }
-         }
-         outHighStop[outIdx] = hh;
-         outLowStop[outIdx] = ll;
-         outIdx = outIdx + 1;
       }
+      band = optInMultiplier * prevATR;
+      highStop = highest - band;
+      lowStop = lowest + band;
+      if( highStop > hsPre )
+      {
+         hsPre = highStop;
+      }
+      if( lowStop < lsPre )
+      {
+         lsPre = lowStop;
+      }
+      hsBuf[hsBuf_Idx] = highStop;
+      lsBuf[hsBuf_Idx] = lowStop;
+      hsBuf_Idx++;
+      if( hsBuf_Idx > maxIdx_hsBuf ) hsBuf_Idx = 0;
       today += 1;
-      hRing_Idx++;
-      if( hRing_Idx > maxIdx_hRing ) hRing_Idx = 0;
-      lRing_Idx++;
-      if( lRing_Idx > maxIdx_lRing ) lRing_Idx = 0;
-      fhRing_Idx++;
-      if( fhRing_Idx > maxIdx_fhRing ) fhRing_Idx = 0;
-      flRing_Idx++;
-      if( flRing_Idx > maxIdx_flRing ) flRing_Idx = 0;
    }
-   if( flRing != &local_flRing[0] ) { TA_Free( flRing ); flRing = &local_flRing[0]; }
-   if( fhRing != &local_fhRing[0] ) { TA_Free( fhRing ); fhRing = &local_fhRing[0]; }
-   if( lRing != &local_lRing[0] ) { TA_Free( lRing ); lRing = &local_lRing[0]; }
-   if( hRing != &local_hRing[0] ) { TA_Free( hRing ); hRing = &local_hRing[0]; }
-   *outNBElement= outIdx;
+   /* The first stop window is one whole block as well: its extremes are the
+    * prefix extremes, and the block is complete.
+    */
+   sufHi = hsBuf[lastQ];
+   sufLo = lsBuf[lastQ];
+   iq = lastQ;
+   while( iq > 1 )
+   {
+      iq -= 1;
+      tempReal = hsBuf[iq];
+      if( tempReal > sufHi )
+      {
+         sufHi = tempReal;
+      }
+      hsBuf[iq] = sufHi;
+      tempReal = lsBuf[iq];
+      if( tempReal < sufLo )
+      {
+         sufLo = tempReal;
+      }
+      lsBuf[iq] = sufLo;
+   }
+   outHighStop[0] = hsPre;
+   outLowStop[0] = lsPre;
+   outIdx = 1;
+   while( today <= endIdx )
+   {
+      tempLT = inLow[today];
+      tempHT = inHigh[today];
+      tempCY = inClose[today - 1];
+      greatest = tempHT - tempLT;
+      /* val1 */
+      val2 = fabs(tempCY - tempHT);
+      if( val2 > greatest )
+      {
+         greatest = val2;
+      }
+      val3 = fabs(tempCY - tempLT);
+      if( val3 > greatest )
+      {
+         greatest = val3;
+      }
+      prevATR = fma(wBeta, prevATR, wAlpha * greatest);
+      highest = hhPre;
+      lowest = llPre;
+      if( tempHT > highest )
+      {
+         highest = tempHT;
+      }
+      if( tempLT < lowest )
+      {
+         lowest = tempLT;
+      }
+      if( hhBuf_Idx == 0 )
+      {
+         highest = tempHT;
+         lowest = tempLT;
+      }
+      hhPre = highest;
+      llPre = lowest;
+      if( hhBuf_Idx < lastP )
+      {
+         tempReal = hhBuf[hhBuf_Idx + 1];
+         if( tempReal > highest )
+         {
+            highest = tempReal;
+         }
+         tempReal = llBuf[hhBuf_Idx + 1];
+         if( tempReal < lowest )
+         {
+            lowest = tempReal;
+         }
+      }
+      hhBuf[hhBuf_Idx] = tempHT;
+      llBuf[hhBuf_Idx] = tempLT;
+      hhBuf_Idx++;
+      if( hhBuf_Idx > maxIdx_hhBuf ) hhBuf_Idx = 0;
+      band = optInMultiplier * prevATR;
+      highStop = highest - band;
+      lowStop = lowest + band;
+      highest = hsPre;
+      lowest = lsPre;
+      if( highStop > highest )
+      {
+         highest = highStop;
+      }
+      if( lowStop < lowest )
+      {
+         lowest = lowStop;
+      }
+      if( hsBuf_Idx == 0 )
+      {
+         highest = highStop;
+         lowest = lowStop;
+      }
+      hsPre = highest;
+      lsPre = lowest;
+      if( hsBuf_Idx < lastQ )
+      {
+         tempReal = hsBuf[hsBuf_Idx + 1];
+         if( tempReal > highest )
+         {
+            highest = tempReal;
+         }
+         tempReal = lsBuf[hsBuf_Idx + 1];
+         if( tempReal < lowest )
+         {
+            lowest = tempReal;
+         }
+      }
+      hsBuf[hsBuf_Idx] = highStop;
+      lsBuf[hsBuf_Idx] = lowStop;
+      hsBuf_Idx++;
+      if( hsBuf_Idx > maxIdx_hsBuf ) hsBuf_Idx = 0;
+      outHighStop[outIdx] = highest;
+      outLowStop[outIdx] = lowest;
+      /* A completed block becomes its suffix extrema. Nothing this bar reads
+       * them, so both passes stay below the output stores, where the peek
+       * frame never runs them.
+       */
+      if( hhBuf_Idx == 0 )
+      {
+         sufHi = hhBuf[lastP];
+         sufLo = llBuf[lastP];
+         ip = lastP;
+         while( ip > 1 )
+         {
+            ip -= 1;
+            tempReal = hhBuf[ip];
+            if( tempReal > sufHi )
+            {
+               sufHi = tempReal;
+            }
+            hhBuf[ip] = sufHi;
+            tempReal = llBuf[ip];
+            if( tempReal < sufLo )
+            {
+               sufLo = tempReal;
+            }
+            llBuf[ip] = sufLo;
+         }
+      }
+      if( hsBuf_Idx == 0 )
+      {
+         sufHi = hsBuf[lastQ];
+         sufLo = lsBuf[lastQ];
+         iq = lastQ;
+         while( iq > 1 )
+         {
+            iq -= 1;
+            tempReal = hsBuf[iq];
+            if( tempReal > sufHi )
+            {
+               sufHi = tempReal;
+            }
+            hsBuf[iq] = sufHi;
+            tempReal = lsBuf[iq];
+            if( tempReal < sufLo )
+            {
+               sufLo = tempReal;
+            }
+            lsBuf[iq] = sufLo;
+         }
+      }
+      outIdx += 1;
+      today += 1;
+   }
+   if( hhBuf != &local_hhBuf[0] ) { TA_Free( hhBuf ); hhBuf = &local_hhBuf[0]; }
+   if( llBuf != &local_llBuf[0] ) { TA_Free( llBuf ); llBuf = &local_llBuf[0]; }
+   if( hsBuf != &local_hsBuf[0] ) { TA_Free( hsBuf ); hsBuf = &local_hsBuf[0]; }
+   if( lsBuf != &local_lsBuf[0] ) { TA_Free( lsBuf ); lsBuf = &local_lsBuf[0]; }
    *outBegIdx= startIdx;
+   *outNBElement= outIdx;
    return TA_SUCCESS;
 }
 
@@ -527,15 +645,26 @@ TA_RetCode TA_S_CKSP( int    startIdx,
                       double        outHighStop[],
                       double        outLowStop[] )
 {
+   double local_hhBuf[30];
+   double *hhBuf = &local_hhBuf[0];
+   int hhBuf_Idx;
+   int maxIdx_hhBuf;
+   double local_llBuf[30];
+   double *llBuf = &local_llBuf[0];
+   double local_hsBuf[30];
+   double *hsBuf = &local_hsBuf[0];
+   int hsBuf_Idx;
+   int maxIdx_hsBuf;
+   double local_lsBuf[30];
+   double *lsBuf = &local_lsBuf[0];
    int i;
-   int jh;
-   int jl;
-   int kh;
-   int kl;
+   int ip;
+   int iq;
    int today;
    int outIdx;
    int lookbackTotal;
-   int stageOneIdx;
+   int lastP;
+   int lastQ;
    double prevATR;
    double periodTotal;
    double wAlpha;
@@ -546,25 +675,18 @@ TA_RetCode TA_S_CKSP( int    startIdx,
    double tempCY;
    double tempLT;
    double tempHT;
-   double hh;
-   double ll;
-   double best;
-   double local_hRing[50];
-   double *hRing = &local_hRing[0];
-   int hRing_Idx;
-   int maxIdx_hRing;
-   double local_lRing[50];
-   double *lRing = &local_lRing[0];
-   int lRing_Idx;
-   int maxIdx_lRing;
-   double local_fhRing[50];
-   double *fhRing = &local_fhRing[0];
-   int fhRing_Idx;
-   int maxIdx_fhRing;
-   double local_flRing[50];
-   double *flRing = &local_flRing[0];
-   int flRing_Idx;
-   int maxIdx_flRing;
+   double tempReal;
+   double hhPre;
+   double llPre;
+   double hsPre;
+   double lsPre;
+   double sufHi;
+   double sufLo;
+   double highest;
+   double lowest;
+   double band;
+   double highStop;
+   double lowStop;
 
    if( (startIdx < 0) || (startIdx > TA_INDEX_MAX) )
       return TA_OUT_OF_RANGE_START_INDEX;
@@ -609,76 +731,73 @@ TA_RetCode TA_S_CKSP( int    startIdx,
    {
       return TA_SUCCESS;
    }
-   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(462);
-   if( (int)optInTimePeriod > (int)(sizeof(local_hRing)/sizeof(double)) )
+   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(474);
+   if( (int)optInTimePeriod > (int)(sizeof(local_hhBuf)/sizeof(double)) )
    {
-      hRing = TA_Malloc( sizeof(double)*optInTimePeriod );
-      if( !hRing )
+      hhBuf = TA_Malloc( sizeof(double)*optInTimePeriod );
+      if( !hhBuf )
       {
          return TA_ALLOC_ERR;
       }
    }
    else
    {
-      hRing = &local_hRing[0];
+      hhBuf = &local_hhBuf[0];
    }
-   maxIdx_hRing = (optInTimePeriod-1);
-   hRing_Idx = 0;
-   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(463);
-   if( (int)optInTimePeriod > (int)(sizeof(local_lRing)/sizeof(double)) )
+   maxIdx_hhBuf = (optInTimePeriod-1);
+   hhBuf_Idx = 0;
+   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(475);
+   if( (int)optInTimePeriod > (int)(sizeof(local_llBuf)/sizeof(double)) )
    {
-      lRing = TA_Malloc( sizeof(double)*optInTimePeriod );
-      if( !lRing )
+      llBuf = TA_Malloc( sizeof(double)*optInTimePeriod );
+      if( !llBuf )
       {
-         if( hRing != &local_hRing[0] ) TA_Free( hRing );
+         if( hhBuf != &local_hhBuf[0] ) TA_Free( hhBuf );
          return TA_ALLOC_ERR;
       }
    }
    else
    {
-      lRing = &local_lRing[0];
+      llBuf = &local_llBuf[0];
    }
-   maxIdx_lRing = (optInTimePeriod-1);
-   lRing_Idx = 0;
-   if( optInStopPeriod < 1 ) return TA_INTERNAL_ERROR(464);
-   if( (int)optInStopPeriod > (int)(sizeof(local_fhRing)/sizeof(double)) )
+   if( optInStopPeriod < 1 ) return TA_INTERNAL_ERROR(476);
+   if( (int)optInStopPeriod > (int)(sizeof(local_hsBuf)/sizeof(double)) )
    {
-      fhRing = TA_Malloc( sizeof(double)*optInStopPeriod );
-      if( !fhRing )
+      hsBuf = TA_Malloc( sizeof(double)*optInStopPeriod );
+      if( !hsBuf )
       {
-         if( hRing != &local_hRing[0] ) TA_Free( hRing );
-         if( lRing != &local_lRing[0] ) TA_Free( lRing );
+         if( hhBuf != &local_hhBuf[0] ) TA_Free( hhBuf );
+         if( llBuf != &local_llBuf[0] ) TA_Free( llBuf );
          return TA_ALLOC_ERR;
       }
    }
    else
    {
-      fhRing = &local_fhRing[0];
+      hsBuf = &local_hsBuf[0];
    }
-   maxIdx_fhRing = (optInStopPeriod-1);
-   fhRing_Idx = 0;
-   if( optInStopPeriod < 1 ) return TA_INTERNAL_ERROR(465);
-   if( (int)optInStopPeriod > (int)(sizeof(local_flRing)/sizeof(double)) )
+   maxIdx_hsBuf = (optInStopPeriod-1);
+   hsBuf_Idx = 0;
+   if( optInStopPeriod < 1 ) return TA_INTERNAL_ERROR(477);
+   if( (int)optInStopPeriod > (int)(sizeof(local_lsBuf)/sizeof(double)) )
    {
-      flRing = TA_Malloc( sizeof(double)*optInStopPeriod );
-      if( !flRing )
+      lsBuf = TA_Malloc( sizeof(double)*optInStopPeriod );
+      if( !lsBuf )
       {
-         if( hRing != &local_hRing[0] ) TA_Free( hRing );
-         if( lRing != &local_lRing[0] ) TA_Free( lRing );
-         if( fhRing != &local_fhRing[0] ) TA_Free( fhRing );
+         if( hhBuf != &local_hhBuf[0] ) TA_Free( hhBuf );
+         if( llBuf != &local_llBuf[0] ) TA_Free( llBuf );
+         if( hsBuf != &local_hsBuf[0] ) TA_Free( hsBuf );
          return TA_ALLOC_ERR;
       }
    }
    else
    {
-      flRing = &local_flRing[0];
+      lsBuf = &local_lsBuf[0];
    }
-   maxIdx_flRing = (optInStopPeriod-1);
-   flRing_Idx = 0;
-   stageOneIdx = startIdx - (optInStopPeriod - 1);
+   lastP = optInTimePeriod - 1;
+   lastQ = optInStopPeriod - 1;
    wBeta = (double)(optInTimePeriod - 1) / (double)optInTimePeriod;
    wAlpha = 1.0 - wBeta;
-   today = stageOneIdx - TA_ATR_Lookback(optInTimePeriod) + 1;
+   today = startIdx - lookbackTotal + 1;
    periodTotal = 0.0;
    i = optInTimePeriod;
    while( i-- > 0 )
@@ -701,7 +820,7 @@ TA_RetCode TA_S_CKSP( int    startIdx,
       today += 1;
    }
    prevATR = periodTotal / optInTimePeriod;
-   i = TA_ATR_Lookback(optInTimePeriod) - optInTimePeriod;
+   i = lookbackTotal - lastQ - optInTimePeriod;
    while( i != 0 )
    {
       tempLT = (double)inLow[today];
@@ -722,72 +841,150 @@ TA_RetCode TA_S_CKSP( int    startIdx,
       today += 1;
       i -= 1;
    }
-   i = stageOneIdx - optInTimePeriod + 1;
-   while( i < stageOneIdx )
+   highest = (double)inHigh[today - 1];
+   lowest = (double)inLow[today - 1];
+   hhBuf[lastP] = highest;
+   llBuf[lastP] = lowest;
+   ip = lastP;
+   while( ip > 0 )
    {
-      hRing[hRing_Idx] = (double)inHigh[i];
-      lRing[lRing_Idx] = (double)inLow[i];
-      i += 1;
-      hRing_Idx++;
-      if( hRing_Idx > maxIdx_hRing ) hRing_Idx = 0;
-      lRing_Idx++;
-      if( lRing_Idx > maxIdx_lRing ) lRing_Idx = 0;
-   }
-   today = stageOneIdx;
-   hRing[hRing_Idx] = (double)inHigh[today];
-   lRing[lRing_Idx] = (double)inLow[today];
-   hh = hRing[hRing_Idx];
-   for( jh = hRing_Idx + 1; jh < optInTimePeriod; jh += 1 )
-   {
-      best = hRing[jh];
-      if( best > hh )
+      ip -= 1;
+      tempHT = (double)inHigh[today - 1 - lastP + ip];
+      tempLT = (double)inLow[today - 1 - lastP + ip];
+      if( tempHT > highest )
       {
-         hh = best;
+         highest = tempHT;
       }
-   }
-   for( jh = 0; jh < hRing_Idx; jh += 1 )
-   {
-      best = hRing[jh];
-      if( best > hh )
+      if( tempLT < lowest )
       {
-         hh = best;
+         lowest = tempLT;
       }
+      hhBuf[ip] = highest;
+      llBuf[ip] = lowest;
    }
-   ll = lRing[lRing_Idx];
-   for( jl = lRing_Idx + 1; jl < optInTimePeriod; jl += 1 )
+   hhPre = highest;
+   llPre = lowest;
+   band = optInMultiplier * prevATR;
+   highStop = highest - band;
+   lowStop = lowest + band;
+   hsPre = highStop;
+   lsPre = lowStop;
+   hsBuf[hsBuf_Idx] = highStop;
+   lsBuf[hsBuf_Idx] = lowStop;
+   hsBuf_Idx++;
+   if( hsBuf_Idx > maxIdx_hsBuf ) hsBuf_Idx = 0;
+   while( today <= startIdx )
    {
-      best = lRing[jl];
-      if( best < ll )
+      tempLT = (double)inLow[today];
+      tempHT = (double)inHigh[today];
+      tempCY = (double)inClose[today - 1];
+      greatest = tempHT - tempLT;
+      val2 = fabs(tempCY - tempHT);
+      if( val2 > greatest )
       {
-         ll = best;
+         greatest = val2;
       }
-   }
-   for( jl = 0; jl < lRing_Idx; jl += 1 )
-   {
-      best = lRing[jl];
-      if( best < ll )
+      val3 = fabs(tempCY - tempLT);
+      if( val3 > greatest )
       {
-         ll = best;
+         greatest = val3;
       }
+      prevATR = fma(wBeta, prevATR, wAlpha * greatest);
+      highest = hhPre;
+      lowest = llPre;
+      if( tempHT > highest )
+      {
+         highest = tempHT;
+      }
+      if( tempLT < lowest )
+      {
+         lowest = tempLT;
+      }
+      if( hhBuf_Idx == 0 )
+      {
+         highest = tempHT;
+         lowest = tempLT;
+      }
+      hhPre = highest;
+      llPre = lowest;
+      if( hhBuf_Idx < lastP )
+      {
+         tempReal = hhBuf[hhBuf_Idx + 1];
+         if( tempReal > highest )
+         {
+            highest = tempReal;
+         }
+         tempReal = llBuf[hhBuf_Idx + 1];
+         if( tempReal < lowest )
+         {
+            lowest = tempReal;
+         }
+      }
+      hhBuf[hhBuf_Idx] = tempHT;
+      llBuf[hhBuf_Idx] = tempLT;
+      hhBuf_Idx++;
+      if( hhBuf_Idx > maxIdx_hhBuf ) hhBuf_Idx = 0;
+      if( hhBuf_Idx == 0 )
+      {
+         sufHi = hhBuf[lastP];
+         sufLo = llBuf[lastP];
+         ip = lastP;
+         while( ip > 1 )
+         {
+            ip -= 1;
+            tempReal = hhBuf[ip];
+            if( tempReal > sufHi )
+            {
+               sufHi = tempReal;
+            }
+            hhBuf[ip] = sufHi;
+            tempReal = llBuf[ip];
+            if( tempReal < sufLo )
+            {
+               sufLo = tempReal;
+            }
+            llBuf[ip] = sufLo;
+         }
+      }
+      band = optInMultiplier * prevATR;
+      highStop = highest - band;
+      lowStop = lowest + band;
+      if( highStop > hsPre )
+      {
+         hsPre = highStop;
+      }
+      if( lowStop < lsPre )
+      {
+         lsPre = lowStop;
+      }
+      hsBuf[hsBuf_Idx] = highStop;
+      lsBuf[hsBuf_Idx] = lowStop;
+      hsBuf_Idx++;
+      if( hsBuf_Idx > maxIdx_hsBuf ) hsBuf_Idx = 0;
+      today += 1;
    }
-   fhRing[fhRing_Idx] = hh - optInMultiplier * prevATR;
-   flRing[flRing_Idx] = ll + optInMultiplier * prevATR;
-   outIdx = 0;
-   if( today >= startIdx )
+   sufHi = hsBuf[lastQ];
+   sufLo = lsBuf[lastQ];
+   iq = lastQ;
+   while( iq > 1 )
    {
-      outHighStop[outIdx] = fhRing[fhRing_Idx];
-      outLowStop[outIdx] = flRing[flRing_Idx];
-      outIdx = outIdx + 1;
+      iq -= 1;
+      tempReal = hsBuf[iq];
+      if( tempReal > sufHi )
+      {
+         sufHi = tempReal;
+      }
+      hsBuf[iq] = sufHi;
+      tempReal = lsBuf[iq];
+      if( tempReal < sufLo )
+      {
+         sufLo = tempReal;
+      }
+      lsBuf[iq] = sufLo;
    }
-   today += 1;
-   hRing_Idx++;
-   if( hRing_Idx > maxIdx_hRing ) hRing_Idx = 0;
-   lRing_Idx++;
-   if( lRing_Idx > maxIdx_lRing ) lRing_Idx = 0;
-   fhRing_Idx++;
-   if( fhRing_Idx > maxIdx_fhRing ) fhRing_Idx = 0;
-   flRing_Idx++;
-   if( flRing_Idx > maxIdx_flRing ) flRing_Idx = 0;
+   outHighStop[0] = hsPre;
+   outLowStop[0] = lsPre;
+   outIdx = 1;
    while( today <= endIdx )
    {
       tempLT = (double)inLow[today];
@@ -805,100 +1002,132 @@ TA_RetCode TA_S_CKSP( int    startIdx,
          greatest = val3;
       }
       prevATR = fma(wBeta, prevATR, wAlpha * greatest);
-      hRing[hRing_Idx] = tempHT;
-      lRing[lRing_Idx] = tempLT;
-      hh = hRing[hRing_Idx];
-      for( jh = hRing_Idx + 1; jh < optInTimePeriod; jh += 1 )
+      highest = hhPre;
+      lowest = llPre;
+      if( tempHT > highest )
       {
-         best = hRing[jh];
-         if( best > hh )
+         highest = tempHT;
+      }
+      if( tempLT < lowest )
+      {
+         lowest = tempLT;
+      }
+      if( hhBuf_Idx == 0 )
+      {
+         highest = tempHT;
+         lowest = tempLT;
+      }
+      hhPre = highest;
+      llPre = lowest;
+      if( hhBuf_Idx < lastP )
+      {
+         tempReal = hhBuf[hhBuf_Idx + 1];
+         if( tempReal > highest )
          {
-            hh = best;
+            highest = tempReal;
+         }
+         tempReal = llBuf[hhBuf_Idx + 1];
+         if( tempReal < lowest )
+         {
+            lowest = tempReal;
          }
       }
-      for( jh = 0; jh < hRing_Idx; jh += 1 )
+      hhBuf[hhBuf_Idx] = tempHT;
+      llBuf[hhBuf_Idx] = tempLT;
+      hhBuf_Idx++;
+      if( hhBuf_Idx > maxIdx_hhBuf ) hhBuf_Idx = 0;
+      band = optInMultiplier * prevATR;
+      highStop = highest - band;
+      lowStop = lowest + band;
+      highest = hsPre;
+      lowest = lsPre;
+      if( highStop > highest )
       {
-         best = hRing[jh];
-         if( best > hh )
+         highest = highStop;
+      }
+      if( lowStop < lowest )
+      {
+         lowest = lowStop;
+      }
+      if( hsBuf_Idx == 0 )
+      {
+         highest = highStop;
+         lowest = lowStop;
+      }
+      hsPre = highest;
+      lsPre = lowest;
+      if( hsBuf_Idx < lastQ )
+      {
+         tempReal = hsBuf[hsBuf_Idx + 1];
+         if( tempReal > highest )
          {
-            hh = best;
+            highest = tempReal;
+         }
+         tempReal = lsBuf[hsBuf_Idx + 1];
+         if( tempReal < lowest )
+         {
+            lowest = tempReal;
          }
       }
-      ll = lRing[lRing_Idx];
-      for( jl = lRing_Idx + 1; jl < optInTimePeriod; jl += 1 )
+      hsBuf[hsBuf_Idx] = highStop;
+      lsBuf[hsBuf_Idx] = lowStop;
+      hsBuf_Idx++;
+      if( hsBuf_Idx > maxIdx_hsBuf ) hsBuf_Idx = 0;
+      outHighStop[outIdx] = highest;
+      outLowStop[outIdx] = lowest;
+      if( hhBuf_Idx == 0 )
       {
-         best = lRing[jl];
-         if( best < ll )
+         sufHi = hhBuf[lastP];
+         sufLo = llBuf[lastP];
+         ip = lastP;
+         while( ip > 1 )
          {
-            ll = best;
-         }
-      }
-      for( jl = 0; jl < lRing_Idx; jl += 1 )
-      {
-         best = lRing[jl];
-         if( best < ll )
-         {
-            ll = best;
-         }
-      }
-      fhRing[fhRing_Idx] = hh - optInMultiplier * prevATR;
-      flRing[flRing_Idx] = ll + optInMultiplier * prevATR;
-      if( today >= startIdx )
-      {
-         hh = fhRing[fhRing_Idx];
-         for( kh = fhRing_Idx + 1; kh < optInStopPeriod; kh += 1 )
-         {
-            best = fhRing[kh];
-            if( best > hh )
+            ip -= 1;
+            tempReal = hhBuf[ip];
+            if( tempReal > sufHi )
             {
-               hh = best;
+               sufHi = tempReal;
             }
-         }
-         for( kh = 0; kh < fhRing_Idx; kh += 1 )
-         {
-            best = fhRing[kh];
-            if( best > hh )
+            hhBuf[ip] = sufHi;
+            tempReal = llBuf[ip];
+            if( tempReal < sufLo )
             {
-               hh = best;
+               sufLo = tempReal;
             }
+            llBuf[ip] = sufLo;
          }
-         ll = flRing[flRing_Idx];
-         for( kl = flRing_Idx + 1; kl < optInStopPeriod; kl += 1 )
-         {
-            best = flRing[kl];
-            if( best < ll )
-            {
-               ll = best;
-            }
-         }
-         for( kl = 0; kl < flRing_Idx; kl += 1 )
-         {
-            best = flRing[kl];
-            if( best < ll )
-            {
-               ll = best;
-            }
-         }
-         outHighStop[outIdx] = hh;
-         outLowStop[outIdx] = ll;
-         outIdx = outIdx + 1;
       }
+      if( hsBuf_Idx == 0 )
+      {
+         sufHi = hsBuf[lastQ];
+         sufLo = lsBuf[lastQ];
+         iq = lastQ;
+         while( iq > 1 )
+         {
+            iq -= 1;
+            tempReal = hsBuf[iq];
+            if( tempReal > sufHi )
+            {
+               sufHi = tempReal;
+            }
+            hsBuf[iq] = sufHi;
+            tempReal = lsBuf[iq];
+            if( tempReal < sufLo )
+            {
+               sufLo = tempReal;
+            }
+            lsBuf[iq] = sufLo;
+         }
+      }
+      outIdx += 1;
       today += 1;
-      hRing_Idx++;
-      if( hRing_Idx > maxIdx_hRing ) hRing_Idx = 0;
-      lRing_Idx++;
-      if( lRing_Idx > maxIdx_lRing ) lRing_Idx = 0;
-      fhRing_Idx++;
-      if( fhRing_Idx > maxIdx_fhRing ) fhRing_Idx = 0;
-      flRing_Idx++;
-      if( flRing_Idx > maxIdx_flRing ) flRing_Idx = 0;
    }
-   if( flRing != &local_flRing[0] ) { TA_Free( flRing ); flRing = &local_flRing[0]; }
-   if( fhRing != &local_fhRing[0] ) { TA_Free( fhRing ); fhRing = &local_fhRing[0]; }
-   if( lRing != &local_lRing[0] ) { TA_Free( lRing ); lRing = &local_lRing[0]; }
-   if( hRing != &local_hRing[0] ) { TA_Free( hRing ); hRing = &local_hRing[0]; }
-   *outNBElement= outIdx;
+   if( hhBuf != &local_hhBuf[0] ) { TA_Free( hhBuf ); hhBuf = &local_hhBuf[0]; }
+   if( llBuf != &local_llBuf[0] ) { TA_Free( llBuf ); llBuf = &local_llBuf[0]; }
+   if( hsBuf != &local_hsBuf[0] ) { TA_Free( hsBuf ); hsBuf = &local_hsBuf[0]; }
+   if( lsBuf != &local_lsBuf[0] ) { TA_Free( lsBuf ); lsBuf = &local_lsBuf[0]; }
    *outBegIdx= startIdx;
+   *outNBElement= outIdx;
    return TA_SUCCESS;
 }
 
@@ -914,56 +1143,66 @@ struct TA_CKSP_Stream {
    int optInTimePeriod;
    double optInMultiplier;
    int optInStopPeriod;
+   int lastP;
+   int lastQ;
    double prevATR;
    double pad_0;
    double wAlpha;
    double wBeta;
-   int hRing_Idx;
-   int lRing_Idx;
-   int fhRing_Idx;
-   int flRing_Idx;
-   int maxIdx_hRing;
-   int maxIdx_lRing;
-   int maxIdx_fhRing;
-   int maxIdx_flRing;
+   double pad_1;
+   double hhPre;
+   double llPre;
+   double hsPre;
+   double lsPre;
+   int hhBuf_Idx;
+   int hsBuf_Idx;
+   int maxIdx_hhBuf;
+   int llBuf_Idx;
+   int maxIdx_llBuf;
+   int maxIdx_hsBuf;
+   int lsBuf_Idx;
+   int maxIdx_lsBuf;
    double lag1_inClose;
-   int cbSize_hRing;
-   double *cb_hRing;
-   int cbSize_lRing;
-   double *cb_lRing;
-   int cbSize_fhRing;
-   double *cb_fhRing;
-   int cbSize_flRing;
-   double *cb_flRing;
+   int cbSize_hhBuf;
+   double *cb_hhBuf;
+   int cbSize_llBuf;
+   double *cb_llBuf;
+   int cbSize_hsBuf;
+   double *cb_hsBuf;
+   int cbSize_lsBuf;
+   double *cb_lsBuf;
 };
 
 /* Private function, not in public API. */
 static void TA_CKSP_ReleaseImpl( struct TA_CKSP_Stream *sp )
 {
    if( !sp ) return;
-   if( sp->cb_hRing ) TA_Free( sp->cb_hRing );
-   if( sp->cb_lRing ) TA_Free( sp->cb_lRing );
-   if( sp->cb_fhRing ) TA_Free( sp->cb_fhRing );
-   if( sp->cb_flRing ) TA_Free( sp->cb_flRing );
+   if( sp->cb_hhBuf ) TA_Free( sp->cb_hhBuf );
+   if( sp->cb_llBuf ) TA_Free( sp->cb_llBuf );
+   if( sp->cb_hsBuf ) TA_Free( sp->cb_hsBuf );
+   if( sp->cb_lsBuf ) TA_Free( sp->cb_lsBuf );
    TA_Free( sp );
 }
 
 /* Private function, not in public API. */
 static TA_FMA_STEP_INLINE void TA_CKSP_StepImpl( struct TA_CKSP_Stream *sp, double inHigh, double inLow, double inClose, double *outHighStop, double *outLowStop )
 {
-   int jh;
-   int jl;
-   int kh;
-   int kl;
+   int ip;
+   int iq;
    double val2;
    double val3;
    double greatest;
    double tempCY;
    double tempLT;
    double tempHT;
-   double hh;
-   double ll;
-   double best;
+   double tempReal;
+   double sufHi;
+   double sufLo;
+   double highest;
+   double lowest;
+   double band;
+   double highStop;
+   double lowStop;
    double prevATR;
 
    prevATR = sp->prevATR;
@@ -971,6 +1210,7 @@ static TA_FMA_STEP_INLINE void TA_CKSP_StepImpl( struct TA_CKSP_Stream *sp, doub
    tempHT = inHigh;
    tempCY = sp->lag1_inClose;
    greatest = tempHT - tempLT;
+   /* val1 */
    val2 = fabs(tempCY - tempHT);
    if( val2 > greatest )
    {
@@ -982,107 +1222,132 @@ static TA_FMA_STEP_INLINE void TA_CKSP_StepImpl( struct TA_CKSP_Stream *sp, doub
       greatest = val3;
    }
    prevATR = fma(sp->wBeta, prevATR, sp->wAlpha * greatest);
-   sp->cb_hRing[sp->hRing_Idx] = tempHT;
-   sp->cb_lRing[sp->lRing_Idx] = tempLT;
-   /* The extremes of the p bars ending here. The newest sits at the ring's
-    * own index, so the oldest is the slot after it and the walk is two
-    * straight runs.
+   highest = sp->hhPre;
+   lowest = sp->llPre;
+   if( tempHT > highest )
+   {
+      highest = tempHT;
+   }
+   if( tempLT < lowest )
+   {
+      lowest = tempLT;
+   }
+   if( sp->hhBuf_Idx == 0 )
+   {
+      highest = tempHT;
+      lowest = tempLT;
+   }
+   sp->hhPre = highest;
+   sp->llPre = lowest;
+   if( sp->hhBuf_Idx < sp->lastP )
+   {
+      tempReal = sp->cb_hhBuf[sp->hhBuf_Idx + 1];
+      if( tempReal > highest )
+      {
+         highest = tempReal;
+      }
+      tempReal = sp->cb_llBuf[sp->hhBuf_Idx + 1];
+      if( tempReal < lowest )
+      {
+         lowest = tempReal;
+      }
+   }
+   sp->cb_hhBuf[sp->hhBuf_Idx] = tempHT;
+   sp->cb_llBuf[sp->hhBuf_Idx] = tempLT;
+   sp->hhBuf_Idx = sp->hhBuf_Idx + 1;
+   if( sp->hhBuf_Idx > sp->maxIdx_hhBuf )
+   {
+      sp->hhBuf_Idx = 0;
+   }
+   band = sp->optInMultiplier * prevATR;
+   highStop = highest - band;
+   lowStop = lowest + band;
+   highest = sp->hsPre;
+   lowest = sp->lsPre;
+   if( highStop > highest )
+   {
+      highest = highStop;
+   }
+   if( lowStop < lowest )
+   {
+      lowest = lowStop;
+   }
+   if( sp->hsBuf_Idx == 0 )
+   {
+      highest = highStop;
+      lowest = lowStop;
+   }
+   sp->hsPre = highest;
+   sp->lsPre = lowest;
+   if( sp->hsBuf_Idx < sp->lastQ )
+   {
+      tempReal = sp->cb_hsBuf[sp->hsBuf_Idx + 1];
+      if( tempReal > highest )
+      {
+         highest = tempReal;
+      }
+      tempReal = sp->cb_lsBuf[sp->hsBuf_Idx + 1];
+      if( tempReal < lowest )
+      {
+         lowest = tempReal;
+      }
+   }
+   sp->cb_hsBuf[sp->hsBuf_Idx] = highStop;
+   sp->cb_lsBuf[sp->hsBuf_Idx] = lowStop;
+   sp->hsBuf_Idx = sp->hsBuf_Idx + 1;
+   if( sp->hsBuf_Idx > sp->maxIdx_hsBuf )
+   {
+      sp->hsBuf_Idx = 0;
+   }
+   *outHighStop= highest;
+   *outLowStop= lowest;
+   /* A completed block becomes its suffix extrema. Nothing this bar reads
+    * them, so both passes stay below the output stores, where the peek
+    * frame never runs them.
     */
-   hh = sp->cb_hRing[sp->hRing_Idx];
-   for( jh = sp->hRing_Idx + 1; jh < sp->optInTimePeriod; jh += 1 )
+   if( sp->hhBuf_Idx == 0 )
    {
-      best = sp->cb_hRing[jh];
-      if( best > hh )
+      sufHi = sp->cb_hhBuf[sp->lastP];
+      sufLo = sp->cb_llBuf[sp->lastP];
+      ip = sp->lastP;
+      while( ip > 1 )
       {
-         hh = best;
+         ip -= 1;
+         tempReal = sp->cb_hhBuf[ip];
+         if( tempReal > sufHi )
+         {
+            sufHi = tempReal;
+         }
+         sp->cb_hhBuf[ip] = sufHi;
+         tempReal = sp->cb_llBuf[ip];
+         if( tempReal < sufLo )
+         {
+            sufLo = tempReal;
+         }
+         sp->cb_llBuf[ip] = sufLo;
       }
    }
-   for( jh = 0; jh < sp->hRing_Idx; jh += 1 )
+   if( sp->hsBuf_Idx == 0 )
    {
-      best = sp->cb_hRing[jh];
-      if( best > hh )
+      sufHi = sp->cb_hsBuf[sp->lastQ];
+      sufLo = sp->cb_lsBuf[sp->lastQ];
+      iq = sp->lastQ;
+      while( iq > 1 )
       {
-         hh = best;
+         iq -= 1;
+         tempReal = sp->cb_hsBuf[iq];
+         if( tempReal > sufHi )
+         {
+            sufHi = tempReal;
+         }
+         sp->cb_hsBuf[iq] = sufHi;
+         tempReal = sp->cb_lsBuf[iq];
+         if( tempReal < sufLo )
+         {
+            sufLo = tempReal;
+         }
+         sp->cb_lsBuf[iq] = sufLo;
       }
-   }
-   ll = sp->cb_lRing[sp->lRing_Idx];
-   for( jl = sp->lRing_Idx + 1; jl < sp->optInTimePeriod; jl += 1 )
-   {
-      best = sp->cb_lRing[jl];
-      if( best < ll )
-      {
-         ll = best;
-      }
-   }
-   for( jl = 0; jl < sp->lRing_Idx; jl += 1 )
-   {
-      best = sp->cb_lRing[jl];
-      if( best < ll )
-      {
-         ll = best;
-      }
-   }
-   sp->cb_fhRing[sp->fhRing_Idx] = hh - sp->optInMultiplier * prevATR;
-   sp->cb_flRing[sp->flRing_Idx] = ll + sp->optInMultiplier * prevATR;
-   /* The second stage, over the q first-stage bars ending here. At q = 1
-    * both runs are empty and the value is the bar's own, which is the
-    * Chandelier Exit form.
-    */
-   hh = sp->cb_fhRing[sp->fhRing_Idx];
-   for( kh = sp->fhRing_Idx + 1; kh < sp->optInStopPeriod; kh += 1 )
-   {
-      best = sp->cb_fhRing[kh];
-      if( best > hh )
-      {
-         hh = best;
-      }
-   }
-   for( kh = 0; kh < sp->fhRing_Idx; kh += 1 )
-   {
-      best = sp->cb_fhRing[kh];
-      if( best > hh )
-      {
-         hh = best;
-      }
-   }
-   ll = sp->cb_flRing[sp->flRing_Idx];
-   for( kl = sp->flRing_Idx + 1; kl < sp->optInStopPeriod; kl += 1 )
-   {
-      best = sp->cb_flRing[kl];
-      if( best < ll )
-      {
-         ll = best;
-      }
-   }
-   for( kl = 0; kl < sp->flRing_Idx; kl += 1 )
-   {
-      best = sp->cb_flRing[kl];
-      if( best < ll )
-      {
-         ll = best;
-      }
-   }
-   *outHighStop= hh;
-   *outLowStop= ll;
-   sp->hRing_Idx = sp->hRing_Idx + 1;
-   if( sp->hRing_Idx > sp->maxIdx_hRing )
-   {
-      sp->hRing_Idx = 0;
-   }
-   sp->lRing_Idx = sp->lRing_Idx + 1;
-   if( sp->lRing_Idx > sp->maxIdx_lRing )
-   {
-      sp->lRing_Idx = 0;
-   }
-   sp->fhRing_Idx = sp->fhRing_Idx + 1;
-   if( sp->fhRing_Idx > sp->maxIdx_fhRing )
-   {
-      sp->fhRing_Idx = 0;
-   }
-   sp->flRing_Idx = sp->flRing_Idx + 1;
-   if( sp->flRing_Idx > sp->maxIdx_flRing )
-   {
-      sp->flRing_Idx = 0;
    }
    sp->cur_outHighStop = *outHighStop;
    sp->cur_outLowStop = *outLowStop;
@@ -1093,22 +1358,22 @@ static TA_FMA_STEP_INLINE void TA_CKSP_StepImpl( struct TA_CKSP_Stream *sp, doub
 static TA_RetCode TA_CKSP_OpenImpl( struct TA_CKSP_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, double optInMultiplier, int optInStopPeriod, int *outBegIdx, int *outNBElement, double outHighStop[], double outLowStop[], int outStride )
 {
    struct TA_CKSP_Stream *sp;
-   double local_hRing[50];
-   double *hRing;
-   int hRing_Idx;
-   int maxIdx_hRing;
-   double local_lRing[50];
-   double *lRing;
-   int lRing_Idx;
-   int maxIdx_lRing;
-   double local_fhRing[50];
-   double *fhRing;
-   int fhRing_Idx;
-   int maxIdx_fhRing;
-   double local_flRing[50];
-   double *flRing;
-   int flRing_Idx;
-   int maxIdx_flRing;
+   double local_hhBuf[30];
+   double *hhBuf;
+   int hhBuf_Idx;
+   int maxIdx_hhBuf;
+   double local_llBuf[30];
+   double *llBuf;
+   int llBuf_Idx;
+   int maxIdx_llBuf;
+   double local_hsBuf[30];
+   double *hsBuf;
+   int hsBuf_Idx;
+   int maxIdx_hsBuf;
+   double local_lsBuf[30];
+   double *lsBuf;
+   int lsBuf_Idx;
+   int maxIdx_lsBuf;
    int endIdx;
 
    if( !stream ) return TA_BAD_PARAM;
@@ -1139,14 +1404,13 @@ static TA_RetCode TA_CKSP_OpenImpl( struct TA_CKSP_Stream **stream, const double
 
    {
       int i;
-      int jh;
-      int jl;
-      int kh;
-      int kl;
+      int ip;
+      int iq;
       int today;
       int outIdx;
       int lookbackTotal;
-      int stageOneIdx;
+      int lastP = 0;
+      int lastQ = 0;
       double prevATR = 0.0;
       double periodTotal;
       double wAlpha = 0.0;
@@ -1157,14 +1421,18 @@ static TA_RetCode TA_CKSP_OpenImpl( struct TA_CKSP_Stream **stream, const double
       double tempCY;
       double tempLT;
       double tempHT;
-      double hh;
-      double ll;
-      double best;
-      /* Four windows, all carried as rings and all walked oldest-first, the
-       * cci.c:112-117 shape: an index that wrapped would be one more thing the
-       * stream derivation has to prove, and the walk is the same values either
-       * way.
-       */
+      double tempReal;
+      double hhPre = 0.0;
+      double llPre = 0.0;
+      double hsPre = 0.0;
+      double lsPre = 0.0;
+      double sufHi;
+      double sufLo;
+      double highest;
+      double lowest;
+      double band;
+      double highStop;
+      double lowStop;
       *outBegIdx= 0;
       *outNBElement= 0;
       lookbackTotal = TA_CKSP_Lookback(optInTimePeriod,optInMultiplier,optInStopPeriod);
@@ -1172,95 +1440,103 @@ static TA_RetCode TA_CKSP_OpenImpl( struct TA_CKSP_Stream **stream, const double
       {
          startIdx = lookbackTotal;
       }
+      /* Make sure there is still something to evaluate. */
       if( startIdx > endIdx )
       {
          return TA_INSUFFICIENT_HISTORY;
       }
-      if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(462);
-      if( (int)optInTimePeriod > (int)(sizeof(local_hRing)/sizeof(double)) )
-      {
-         hRing = TA_Malloc( sizeof(double)*optInTimePeriod );
-         if( !hRing )
-         {
-            return TA_ALLOC_ERR;
-         }
-      }
-      else
-      {
-         hRing = &local_hRing[0];
-      }
-      maxIdx_hRing = (optInTimePeriod-1);
-      hRing_Idx = 0;
-      if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(463);
-      if( (int)optInTimePeriod > (int)(sizeof(local_lRing)/sizeof(double)) )
-      {
-         lRing = TA_Malloc( sizeof(double)*optInTimePeriod );
-         if( !lRing )
-         {
-            if( hRing != &local_hRing[0] ) TA_Free( hRing );
-            return TA_ALLOC_ERR;
-         }
-      }
-      else
-      {
-         lRing = &local_lRing[0];
-      }
-      maxIdx_lRing = (optInTimePeriod-1);
-      lRing_Idx = 0;
-      if( optInStopPeriod < 1 ) return TA_INTERNAL_ERROR(464);
-      if( (int)optInStopPeriod > (int)(sizeof(local_fhRing)/sizeof(double)) )
-      {
-         fhRing = TA_Malloc( sizeof(double)*optInStopPeriod );
-         if( !fhRing )
-         {
-            if( hRing != &local_hRing[0] ) TA_Free( hRing );
-            if( lRing != &local_lRing[0] ) TA_Free( lRing );
-            return TA_ALLOC_ERR;
-         }
-      }
-      else
-      {
-         fhRing = &local_fhRing[0];
-      }
-      maxIdx_fhRing = (optInStopPeriod-1);
-      fhRing_Idx = 0;
-      if( optInStopPeriod < 1 ) return TA_INTERNAL_ERROR(465);
-      if( (int)optInStopPeriod > (int)(sizeof(local_flRing)/sizeof(double)) )
-      {
-         flRing = TA_Malloc( sizeof(double)*optInStopPeriod );
-         if( !flRing )
-         {
-            if( hRing != &local_hRing[0] ) TA_Free( hRing );
-            if( lRing != &local_lRing[0] ) TA_Free( lRing );
-            if( fhRing != &local_fhRing[0] ) TA_Free( fhRing );
-            return TA_ALLOC_ERR;
-         }
-      }
-      else
-      {
-         flRing = &local_flRing[0];
-      }
-      maxIdx_flRing = (optInStopPeriod-1);
-      flRing_Idx = 0;
-      /* The first stage is entered q-1 bars before the first output, because the
-       * second stage's window reaches that far back. Each leg is anchored on its
-       * own bar rather than on the caller's startIdx (the kc.c:73-77 rule): the
-       * Average True Range is seeded as if TA_ATR had been entered here, and the
-       * extremes are the p-windows ending on these same bars.
-       */
-      stageOneIdx = startIdx - (optInStopPeriod - 1);
-      /* The Average True Range, carried inline rather than taken from a call: the
-       * two stages advance together one bar at a time and a whole-range buffer
-       * between them would not stream (supertrend.c:47-50).
+      /* Four rolling extrema, van Herk / Gil-Werman, one buffer each: the window
+       * ending in slot j is the current block's prefix extremum joined with the
+       * previous block's suffix extremum from slot j+1. A slot holds the raw value
+       * while its block is filling and is turned into the suffix extremum, in
+       * place, when the block completes; slot j+1 is always still the previous
+       * block's when slot j is filled. The high and low sides share an index.
        *
-       * The arithmetic order is the bit-exactness contract with TA_ATR and is not
-       * to be reordered: the range first, then the two previous-close distances in
-       * that order; the seed summed from 0.0 over the first optInTimePeriod True
-       * Ranges and divided once; wBeta rounded first and wAlpha derived from it.
+       * The extrema are exact, so both outputs must stay bit-identical to
+       * TA_MAX( TA_MAX(high) - x*TA_ATR ) and its mirror, whatever the block
+       * phase; only the sign of a zero tied between +0.0 and -0.0 is free.
+       */
+      if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(474);
+      if( (int)optInTimePeriod > (int)(sizeof(local_hhBuf)/sizeof(double)) )
+      {
+         hhBuf = TA_Malloc( sizeof(double)*optInTimePeriod );
+         if( !hhBuf )
+         {
+            return TA_ALLOC_ERR;
+         }
+      }
+      else
+      {
+         hhBuf = &local_hhBuf[0];
+      }
+      maxIdx_hhBuf = (optInTimePeriod-1);
+      hhBuf_Idx = 0;
+      if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(475);
+      if( (int)optInTimePeriod > (int)(sizeof(local_llBuf)/sizeof(double)) )
+      {
+         llBuf = TA_Malloc( sizeof(double)*optInTimePeriod );
+         if( !llBuf )
+         {
+            if( hhBuf != &local_hhBuf[0] ) TA_Free( hhBuf );
+            return TA_ALLOC_ERR;
+         }
+      }
+      else
+      {
+         llBuf = &local_llBuf[0];
+      }
+      maxIdx_llBuf = (optInTimePeriod-1);
+      llBuf_Idx = 0;
+      if( optInStopPeriod < 1 ) return TA_INTERNAL_ERROR(476);
+      if( (int)optInStopPeriod > (int)(sizeof(local_hsBuf)/sizeof(double)) )
+      {
+         hsBuf = TA_Malloc( sizeof(double)*optInStopPeriod );
+         if( !hsBuf )
+         {
+            if( hhBuf != &local_hhBuf[0] ) TA_Free( hhBuf );
+            if( llBuf != &local_llBuf[0] ) TA_Free( llBuf );
+            return TA_ALLOC_ERR;
+         }
+      }
+      else
+      {
+         hsBuf = &local_hsBuf[0];
+      }
+      maxIdx_hsBuf = (optInStopPeriod-1);
+      hsBuf_Idx = 0;
+      if( optInStopPeriod < 1 ) return TA_INTERNAL_ERROR(477);
+      if( (int)optInStopPeriod > (int)(sizeof(local_lsBuf)/sizeof(double)) )
+      {
+         lsBuf = TA_Malloc( sizeof(double)*optInStopPeriod );
+         if( !lsBuf )
+         {
+            if( hhBuf != &local_hhBuf[0] ) TA_Free( hhBuf );
+            if( llBuf != &local_llBuf[0] ) TA_Free( llBuf );
+            if( hsBuf != &local_hsBuf[0] ) TA_Free( hsBuf );
+            return TA_ALLOC_ERR;
+         }
+      }
+      else
+      {
+         lsBuf = &local_lsBuf[0];
+      }
+      maxIdx_lsBuf = (optInStopPeriod-1);
+      lsBuf_Idx = 0;
+      lastP = optInTimePeriod - 1;
+      lastQ = optInStopPeriod - 1;
+      /* The Average True Range is carried inline rather than taken from a call,
+       * because the two stages advance together one bar at a time and a
+       * whole-range buffer between them would not stream.
+       *
+       * The arithmetic order below is the bit-exactness contract with TA_ATR (do
+       * not reorder): True Range from high-low, then the two previous-close
+       * distances in that order; the seed summed from 0.0 over the first 'period'
+       * True Ranges and divided once; the same two Wilder coefficients, wBeta
+       * rounded and wAlpha derived from it, in one fused statement.
        */
       wBeta = (double)(optInTimePeriod - 1) / (double)optInTimePeriod;
       wAlpha = 1.0 - wBeta;
-      today = stageOneIdx - TA_ATR_Lookback(optInTimePeriod) + 1;
+      today = startIdx - lookbackTotal + 1;
       periodTotal = 0.0;
       i = optInTimePeriod;
       while( i-- > 0 )
@@ -1269,6 +1545,7 @@ static TA_RetCode TA_CKSP_OpenImpl( struct TA_CKSP_Stream **stream, const double
          tempHT = inHigh[today];
          tempCY = inClose[today - 1];
          greatest = tempHT - tempLT;
+         /* val1 */
          val2 = fabs(tempCY - tempHT);
          if( val2 > greatest )
          {
@@ -1283,16 +1560,17 @@ static TA_RetCode TA_CKSP_OpenImpl( struct TA_CKSP_Stream **stream, const double
          today += 1;
       }
       prevATR = periodTotal / optInTimePeriod;
-      /* Skip the Average True Range's unstable period. The count comes from the
-       * lookback rather than from the setting, so the two cannot disagree.
+      /* Skip the Average True Range's unstable period. Taking the count from the
+       * lookback rather than naming the setting keeps the two from disagreeing.
        */
-      i = TA_ATR_Lookback(optInTimePeriod) - optInTimePeriod;
+      i = lookbackTotal - lastQ - optInTimePeriod;
       while( i != 0 )
       {
          tempLT = inLow[today];
          tempHT = inHigh[today];
          tempCY = inClose[today - 1];
          greatest = tempHT - tempLT;
+         /* val1 */
          val2 = fabs(tempCY - tempHT);
          if( val2 > greatest )
          {
@@ -1307,88 +1585,54 @@ static TA_RetCode TA_CKSP_OpenImpl( struct TA_CKSP_Stream **stream, const double
          today += 1;
          i -= 1;
       }
-      /* `today` is now stageOneIdx and prevATR is the Average True Range of the
-       * bar before it. Seed the price rings with the p-1 bars the first extreme
-       * window needs behind that bar.
+      /* prevATR is now the Average True Range of bar today-1, the first bar with
+       * a first stop. Its extreme window is one whole block, taken straight from
+       * the input.
        */
-      i = stageOneIdx - optInTimePeriod + 1;
-      while( i < stageOneIdx )
+      highest = inHigh[today - 1];
+      lowest = inLow[today - 1];
+      hhBuf[lastP] = highest;
+      llBuf[lastP] = lowest;
+      ip = lastP;
+      while( ip > 0 )
       {
-         hRing[hRing_Idx] = inHigh[i];
-         lRing[lRing_Idx] = inLow[i];
-         i += 1;
-         hRing_Idx++;
-         if( hRing_Idx > maxIdx_hRing ) hRing_Idx = 0;
-         lRing_Idx++;
-         if( lRing_Idx > maxIdx_lRing ) lRing_Idx = 0;
+         ip -= 1;
+         tempHT = inHigh[today - 1 - lastP + ip];
+         tempLT = inLow[today - 1 - lastP + ip];
+         if( tempHT > highest )
+         {
+            highest = tempHT;
+         }
+         if( tempLT < lowest )
+         {
+            lowest = tempLT;
+         }
+         hhBuf[ip] = highest;
+         llBuf[ip] = lowest;
       }
-      /* The prologue leaves prevATR as the Average True Range of stageOneIdx and
-       * `today` one past it, so that bar is finished here rather than in the loop:
-       * entering the loop with it would apply a second Wilder update and shift the
-       * whole series one bar early. supertrend.c takes the same step for the same
-       * reason.
+      hhPre = highest;
+      llPre = lowest;
+      /* The multiple of the ATR is formed on its own, never fused into the
+       * offset, so that each first stop is TA_MAX - x*TA_ATR (or its mirror) as a
+       * caller composing the three functions would compute it.
        */
-      today = stageOneIdx;
-      hRing[hRing_Idx] = inHigh[today];
-      lRing[lRing_Idx] = inLow[today];
-      hh = hRing[hRing_Idx];
-      for( jh = hRing_Idx + 1; jh < optInTimePeriod; jh += 1 )
-      {
-         best = hRing[jh];
-         if( best > hh )
-         {
-            hh = best;
-         }
-      }
-      for( jh = 0; jh < hRing_Idx; jh += 1 )
-      {
-         best = hRing[jh];
-         if( best > hh )
-         {
-            hh = best;
-         }
-      }
-      ll = lRing[lRing_Idx];
-      for( jl = lRing_Idx + 1; jl < optInTimePeriod; jl += 1 )
-      {
-         best = lRing[jl];
-         if( best < ll )
-         {
-            ll = best;
-         }
-      }
-      for( jl = 0; jl < lRing_Idx; jl += 1 )
-      {
-         best = lRing[jl];
-         if( best < ll )
-         {
-            ll = best;
-         }
-      }
-      fhRing[fhRing_Idx] = hh - optInMultiplier * prevATR;
-      flRing[flRing_Idx] = ll + optInMultiplier * prevATR;
-      outIdx = 0;
-      if( today >= startIdx )
-      {
-         outHighStop[outIdx * outStride] = fhRing[fhRing_Idx];
-         outLowStop[outIdx * outStride] = flRing[flRing_Idx];
-         outIdx = outIdx + 1;
-      }
-      today += 1;
-      hRing_Idx++;
-      if( hRing_Idx > maxIdx_hRing ) hRing_Idx = 0;
-      lRing_Idx++;
-      if( lRing_Idx > maxIdx_lRing ) lRing_Idx = 0;
-      fhRing_Idx++;
-      if( fhRing_Idx > maxIdx_fhRing ) fhRing_Idx = 0;
-      flRing_Idx++;
-      if( flRing_Idx > maxIdx_flRing ) flRing_Idx = 0;
-      while( today <= endIdx )
+      band = optInMultiplier * prevATR;
+      highStop = highest - band;
+      lowStop = lowest + band;
+      hsPre = highStop;
+      lsPre = lowStop;
+      hsBuf[hsBuf_Idx] = highStop;
+      lsBuf[hsBuf_Idx] = lowStop;
+      hsBuf_Idx++;
+      if( hsBuf_Idx > maxIdx_hsBuf ) hsBuf_Idx = 0;
+      /* Fill the first stop window, through startIdx inclusive. */
+      while( today <= startIdx )
       {
          tempLT = inLow[today];
          tempHT = inHigh[today];
          tempCY = inClose[today - 1];
          greatest = tempHT - tempLT;
+         /* val1 */
          val2 = fabs(tempCY - tempHT);
          if( val2 > greatest )
          {
@@ -1400,145 +1644,301 @@ static TA_RetCode TA_CKSP_OpenImpl( struct TA_CKSP_Stream **stream, const double
             greatest = val3;
          }
          prevATR = fma(wBeta, prevATR, wAlpha * greatest);
-         hRing[hRing_Idx] = tempHT;
-         lRing[lRing_Idx] = tempLT;
-         /* The extremes of the p bars ending here. The newest sits at the ring's
-          * own index, so the oldest is the slot after it and the walk is two
-          * straight runs.
+         /* Keep this shape: the prefix extreme selected in a local, the
+          * block-start override after it, one store. A store made only when the
+          * bar sets a new extreme, or the override ahead of the select, compiles
+          * to a data-dependent branch in the stream step, where the prefix lives
+          * in the handle.
           */
-         hh = hRing[hRing_Idx];
-         for( jh = hRing_Idx + 1; jh < optInTimePeriod; jh += 1 )
+         highest = hhPre;
+         lowest = llPre;
+         if( tempHT > highest )
          {
-            best = hRing[jh];
-            if( best > hh )
+            highest = tempHT;
+         }
+         if( tempLT < lowest )
+         {
+            lowest = tempLT;
+         }
+         if( hhBuf_Idx == 0 )
+         {
+            highest = tempHT;
+            lowest = tempLT;
+         }
+         hhPre = highest;
+         llPre = lowest;
+         if( hhBuf_Idx < lastP )
+         {
+            tempReal = hhBuf[hhBuf_Idx + 1];
+            if( tempReal > highest )
             {
-               hh = best;
+               highest = tempReal;
+            }
+            tempReal = llBuf[hhBuf_Idx + 1];
+            if( tempReal < lowest )
+            {
+               lowest = tempReal;
             }
          }
-         for( jh = 0; jh < hRing_Idx; jh += 1 )
+         hhBuf[hhBuf_Idx] = tempHT;
+         llBuf[hhBuf_Idx] = tempLT;
+         hhBuf_Idx++;
+         if( hhBuf_Idx > maxIdx_hhBuf ) hhBuf_Idx = 0;
+         if( hhBuf_Idx == 0 )
          {
-            best = hRing[jh];
-            if( best > hh )
+            sufHi = hhBuf[lastP];
+            sufLo = llBuf[lastP];
+            ip = lastP;
+            while( ip > 1 )
             {
-               hh = best;
-            }
-         }
-         ll = lRing[lRing_Idx];
-         for( jl = lRing_Idx + 1; jl < optInTimePeriod; jl += 1 )
-         {
-            best = lRing[jl];
-            if( best < ll )
-            {
-               ll = best;
-            }
-         }
-         for( jl = 0; jl < lRing_Idx; jl += 1 )
-         {
-            best = lRing[jl];
-            if( best < ll )
-            {
-               ll = best;
-            }
-         }
-         fhRing[fhRing_Idx] = hh - optInMultiplier * prevATR;
-         flRing[flRing_Idx] = ll + optInMultiplier * prevATR;
-         if( today >= startIdx )
-         {
-            /* The second stage, over the q first-stage bars ending here. At q = 1
-             * both runs are empty and the value is the bar's own, which is the
-             * Chandelier Exit form.
-             */
-            hh = fhRing[fhRing_Idx];
-            for( kh = fhRing_Idx + 1; kh < optInStopPeriod; kh += 1 )
-            {
-               best = fhRing[kh];
-               if( best > hh )
+               ip -= 1;
+               tempReal = hhBuf[ip];
+               if( tempReal > sufHi )
                {
-                  hh = best;
+                  sufHi = tempReal;
                }
-            }
-            for( kh = 0; kh < fhRing_Idx; kh += 1 )
-            {
-               best = fhRing[kh];
-               if( best > hh )
+               hhBuf[ip] = sufHi;
+               tempReal = llBuf[ip];
+               if( tempReal < sufLo )
                {
-                  hh = best;
+                  sufLo = tempReal;
                }
+               llBuf[ip] = sufLo;
             }
-            ll = flRing[flRing_Idx];
-            for( kl = flRing_Idx + 1; kl < optInStopPeriod; kl += 1 )
-            {
-               best = flRing[kl];
-               if( best < ll )
-               {
-                  ll = best;
-               }
-            }
-            for( kl = 0; kl < flRing_Idx; kl += 1 )
-            {
-               best = flRing[kl];
-               if( best < ll )
-               {
-                  ll = best;
-               }
-            }
-            outHighStop[outIdx * outStride] = hh;
-            outLowStop[outIdx * outStride] = ll;
-            outIdx = outIdx + 1;
          }
+         band = optInMultiplier * prevATR;
+         highStop = highest - band;
+         lowStop = lowest + band;
+         if( highStop > hsPre )
+         {
+            hsPre = highStop;
+         }
+         if( lowStop < lsPre )
+         {
+            lsPre = lowStop;
+         }
+         hsBuf[hsBuf_Idx] = highStop;
+         lsBuf[hsBuf_Idx] = lowStop;
+         hsBuf_Idx++;
+         if( hsBuf_Idx > maxIdx_hsBuf ) hsBuf_Idx = 0;
          today += 1;
-         hRing_Idx++;
-         if( hRing_Idx > maxIdx_hRing ) hRing_Idx = 0;
-         lRing_Idx++;
-         if( lRing_Idx > maxIdx_lRing ) lRing_Idx = 0;
-         fhRing_Idx++;
-         if( fhRing_Idx > maxIdx_fhRing ) fhRing_Idx = 0;
-         flRing_Idx++;
-         if( flRing_Idx > maxIdx_flRing ) flRing_Idx = 0;
       }
-      *outNBElement= outIdx;
+      /* The first stop window is one whole block as well: its extremes are the
+       * prefix extremes, and the block is complete.
+       */
+      sufHi = hsBuf[lastQ];
+      sufLo = lsBuf[lastQ];
+      iq = lastQ;
+      while( iq > 1 )
+      {
+         iq -= 1;
+         tempReal = hsBuf[iq];
+         if( tempReal > sufHi )
+         {
+            sufHi = tempReal;
+         }
+         hsBuf[iq] = sufHi;
+         tempReal = lsBuf[iq];
+         if( tempReal < sufLo )
+         {
+            sufLo = tempReal;
+         }
+         lsBuf[iq] = sufLo;
+      }
+      outHighStop[0 * outStride] = hsPre;
+      outLowStop[0 * outStride] = lsPre;
+      outIdx = 1;
+      while( today <= endIdx )
+      {
+         tempLT = inLow[today];
+         tempHT = inHigh[today];
+         tempCY = inClose[today - 1];
+         greatest = tempHT - tempLT;
+         /* val1 */
+         val2 = fabs(tempCY - tempHT);
+         if( val2 > greatest )
+         {
+            greatest = val2;
+         }
+         val3 = fabs(tempCY - tempLT);
+         if( val3 > greatest )
+         {
+            greatest = val3;
+         }
+         prevATR = fma(wBeta, prevATR, wAlpha * greatest);
+         highest = hhPre;
+         lowest = llPre;
+         if( tempHT > highest )
+         {
+            highest = tempHT;
+         }
+         if( tempLT < lowest )
+         {
+            lowest = tempLT;
+         }
+         if( hhBuf_Idx == 0 )
+         {
+            highest = tempHT;
+            lowest = tempLT;
+         }
+         hhPre = highest;
+         llPre = lowest;
+         if( hhBuf_Idx < lastP )
+         {
+            tempReal = hhBuf[hhBuf_Idx + 1];
+            if( tempReal > highest )
+            {
+               highest = tempReal;
+            }
+            tempReal = llBuf[hhBuf_Idx + 1];
+            if( tempReal < lowest )
+            {
+               lowest = tempReal;
+            }
+         }
+         hhBuf[hhBuf_Idx] = tempHT;
+         llBuf[hhBuf_Idx] = tempLT;
+         hhBuf_Idx++;
+         if( hhBuf_Idx > maxIdx_hhBuf ) hhBuf_Idx = 0;
+         band = optInMultiplier * prevATR;
+         highStop = highest - band;
+         lowStop = lowest + band;
+         highest = hsPre;
+         lowest = lsPre;
+         if( highStop > highest )
+         {
+            highest = highStop;
+         }
+         if( lowStop < lowest )
+         {
+            lowest = lowStop;
+         }
+         if( hsBuf_Idx == 0 )
+         {
+            highest = highStop;
+            lowest = lowStop;
+         }
+         hsPre = highest;
+         lsPre = lowest;
+         if( hsBuf_Idx < lastQ )
+         {
+            tempReal = hsBuf[hsBuf_Idx + 1];
+            if( tempReal > highest )
+            {
+               highest = tempReal;
+            }
+            tempReal = lsBuf[hsBuf_Idx + 1];
+            if( tempReal < lowest )
+            {
+               lowest = tempReal;
+            }
+         }
+         hsBuf[hsBuf_Idx] = highStop;
+         lsBuf[hsBuf_Idx] = lowStop;
+         hsBuf_Idx++;
+         if( hsBuf_Idx > maxIdx_hsBuf ) hsBuf_Idx = 0;
+         outHighStop[outIdx * outStride] = highest;
+         outLowStop[outIdx * outStride] = lowest;
+         /* A completed block becomes its suffix extrema. Nothing this bar reads
+          * them, so both passes stay below the output stores, where the peek
+          * frame never runs them.
+          */
+         if( hhBuf_Idx == 0 )
+         {
+            sufHi = hhBuf[lastP];
+            sufLo = llBuf[lastP];
+            ip = lastP;
+            while( ip > 1 )
+            {
+               ip -= 1;
+               tempReal = hhBuf[ip];
+               if( tempReal > sufHi )
+               {
+                  sufHi = tempReal;
+               }
+               hhBuf[ip] = sufHi;
+               tempReal = llBuf[ip];
+               if( tempReal < sufLo )
+               {
+                  sufLo = tempReal;
+               }
+               llBuf[ip] = sufLo;
+            }
+         }
+         if( hsBuf_Idx == 0 )
+         {
+            sufHi = hsBuf[lastQ];
+            sufLo = lsBuf[lastQ];
+            iq = lastQ;
+            while( iq > 1 )
+            {
+               iq -= 1;
+               tempReal = hsBuf[iq];
+               if( tempReal > sufHi )
+               {
+                  sufHi = tempReal;
+               }
+               hsBuf[iq] = sufHi;
+               tempReal = lsBuf[iq];
+               if( tempReal < sufLo )
+               {
+                  sufLo = tempReal;
+               }
+               lsBuf[iq] = sufLo;
+            }
+         }
+         outIdx += 1;
+         today += 1;
+      }
       *outBegIdx= startIdx;
+      *outNBElement= outIdx;
 
       /* Capture the live batch state into the handle. */
       sp = (struct TA_CKSP_Stream *)TA_Malloc( sizeof(*sp) );
-      if( !sp ) { if( hRing != &local_hRing[0] ) { TA_Free( hRing ); } if( lRing != &local_lRing[0] ) { TA_Free( lRing ); } if( fhRing != &local_fhRing[0] ) { TA_Free( fhRing ); } if( flRing != &local_flRing[0] ) { TA_Free( flRing ); } return TA_ALLOC_ERR; }
+      if( !sp ) { if( hhBuf != &local_hhBuf[0] ) { TA_Free( hhBuf ); } if( llBuf != &local_llBuf[0] ) { TA_Free( llBuf ); } if( hsBuf != &local_hsBuf[0] ) { TA_Free( hsBuf ); } if( lsBuf != &local_lsBuf[0] ) { TA_Free( lsBuf ); } return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );
       sp->optInTimePeriod = optInTimePeriod;
       sp->optInMultiplier = optInMultiplier;
       sp->optInStopPeriod = optInStopPeriod;
+      sp->lastP = lastP;
+      sp->lastQ = lastQ;
       sp->prevATR = prevATR;
       sp->wAlpha = wAlpha;
       sp->wBeta = wBeta;
-      sp->hRing_Idx = hRing_Idx;
-      sp->lRing_Idx = lRing_Idx;
-      sp->fhRing_Idx = fhRing_Idx;
-      sp->flRing_Idx = flRing_Idx;
-      sp->maxIdx_hRing = maxIdx_hRing;
-      sp->maxIdx_lRing = maxIdx_lRing;
-      sp->maxIdx_fhRing = maxIdx_fhRing;
-      sp->maxIdx_flRing = maxIdx_flRing;
+      sp->hhPre = hhPre;
+      sp->llPre = llPre;
+      sp->hsPre = hsPre;
+      sp->lsPre = lsPre;
+      sp->hhBuf_Idx = hhBuf_Idx;
+      sp->hsBuf_Idx = hsBuf_Idx;
+      sp->maxIdx_hhBuf = maxIdx_hhBuf;
+      sp->llBuf_Idx = llBuf_Idx;
+      sp->maxIdx_llBuf = maxIdx_llBuf;
+      sp->maxIdx_hsBuf = maxIdx_hsBuf;
+      sp->lsBuf_Idx = lsBuf_Idx;
+      sp->maxIdx_lsBuf = maxIdx_lsBuf;
       sp->lag1_inClose = inClose[historyLen - 1];
-      sp->cbSize_hRing = maxIdx_hRing + 1;
-      if( sp->cbSize_hRing < 1 || sp->cbSize_hRing > historyLen + 1 ) { if( hRing != &local_hRing[0] ) { TA_Free( hRing ); } if( lRing != &local_lRing[0] ) { TA_Free( lRing ); } if( fhRing != &local_fhRing[0] ) { TA_Free( fhRing ); } if( flRing != &local_flRing[0] ) { TA_Free( flRing ); } TA_CKSP_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(466); }
-      sp->cb_hRing = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_hRing );
-      if( !sp->cb_hRing ) { if( hRing != &local_hRing[0] ) { TA_Free( hRing ); } if( lRing != &local_lRing[0] ) { TA_Free( lRing ); } if( fhRing != &local_fhRing[0] ) { TA_Free( fhRing ); } if( flRing != &local_flRing[0] ) { TA_Free( flRing ); } TA_CKSP_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
-      memcpy( sp->cb_hRing, hRing, sizeof(double) * (size_t)sp->cbSize_hRing );
-      sp->cbSize_lRing = maxIdx_lRing + 1;
-      if( sp->cbSize_lRing < 1 || sp->cbSize_lRing > historyLen + 1 ) { if( hRing != &local_hRing[0] ) { TA_Free( hRing ); } if( lRing != &local_lRing[0] ) { TA_Free( lRing ); } if( fhRing != &local_fhRing[0] ) { TA_Free( fhRing ); } if( flRing != &local_flRing[0] ) { TA_Free( flRing ); } TA_CKSP_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(467); }
-      sp->cb_lRing = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_lRing );
-      if( !sp->cb_lRing ) { if( hRing != &local_hRing[0] ) { TA_Free( hRing ); } if( lRing != &local_lRing[0] ) { TA_Free( lRing ); } if( fhRing != &local_fhRing[0] ) { TA_Free( fhRing ); } if( flRing != &local_flRing[0] ) { TA_Free( flRing ); } TA_CKSP_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
-      memcpy( sp->cb_lRing, lRing, sizeof(double) * (size_t)sp->cbSize_lRing );
-      sp->cbSize_fhRing = maxIdx_fhRing + 1;
-      if( sp->cbSize_fhRing < 1 || sp->cbSize_fhRing > historyLen + 1 ) { if( hRing != &local_hRing[0] ) { TA_Free( hRing ); } if( lRing != &local_lRing[0] ) { TA_Free( lRing ); } if( fhRing != &local_fhRing[0] ) { TA_Free( fhRing ); } if( flRing != &local_flRing[0] ) { TA_Free( flRing ); } TA_CKSP_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(468); }
-      sp->cb_fhRing = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_fhRing );
-      if( !sp->cb_fhRing ) { if( hRing != &local_hRing[0] ) { TA_Free( hRing ); } if( lRing != &local_lRing[0] ) { TA_Free( lRing ); } if( fhRing != &local_fhRing[0] ) { TA_Free( fhRing ); } if( flRing != &local_flRing[0] ) { TA_Free( flRing ); } TA_CKSP_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
-      memcpy( sp->cb_fhRing, fhRing, sizeof(double) * (size_t)sp->cbSize_fhRing );
-      sp->cbSize_flRing = maxIdx_flRing + 1;
-      if( sp->cbSize_flRing < 1 || sp->cbSize_flRing > historyLen + 1 ) { if( hRing != &local_hRing[0] ) { TA_Free( hRing ); } if( lRing != &local_lRing[0] ) { TA_Free( lRing ); } if( fhRing != &local_fhRing[0] ) { TA_Free( fhRing ); } if( flRing != &local_flRing[0] ) { TA_Free( flRing ); } TA_CKSP_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(469); }
-      sp->cb_flRing = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_flRing );
-      if( !sp->cb_flRing ) { if( hRing != &local_hRing[0] ) { TA_Free( hRing ); } if( lRing != &local_lRing[0] ) { TA_Free( lRing ); } if( fhRing != &local_fhRing[0] ) { TA_Free( fhRing ); } if( flRing != &local_flRing[0] ) { TA_Free( flRing ); } TA_CKSP_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
-      memcpy( sp->cb_flRing, flRing, sizeof(double) * (size_t)sp->cbSize_flRing );
-      if( hRing != &local_hRing[0] ) { TA_Free( hRing ); } if( lRing != &local_lRing[0] ) { TA_Free( lRing ); } if( fhRing != &local_fhRing[0] ) { TA_Free( fhRing ); } if( flRing != &local_flRing[0] ) { TA_Free( flRing ); } 
+      sp->cbSize_hhBuf = maxIdx_hhBuf + 1;
+      if( sp->cbSize_hhBuf < 1 || sp->cbSize_hhBuf > historyLen + 1 ) { if( hhBuf != &local_hhBuf[0] ) { TA_Free( hhBuf ); } if( llBuf != &local_llBuf[0] ) { TA_Free( llBuf ); } if( hsBuf != &local_hsBuf[0] ) { TA_Free( hsBuf ); } if( lsBuf != &local_lsBuf[0] ) { TA_Free( lsBuf ); } TA_CKSP_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(478); }
+      sp->cb_hhBuf = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_hhBuf );
+      if( !sp->cb_hhBuf ) { if( hhBuf != &local_hhBuf[0] ) { TA_Free( hhBuf ); } if( llBuf != &local_llBuf[0] ) { TA_Free( llBuf ); } if( hsBuf != &local_hsBuf[0] ) { TA_Free( hsBuf ); } if( lsBuf != &local_lsBuf[0] ) { TA_Free( lsBuf ); } TA_CKSP_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
+      memcpy( sp->cb_hhBuf, hhBuf, sizeof(double) * (size_t)sp->cbSize_hhBuf );
+      sp->cbSize_llBuf = maxIdx_llBuf + 1;
+      if( sp->cbSize_llBuf < 1 || sp->cbSize_llBuf > historyLen + 1 ) { if( hhBuf != &local_hhBuf[0] ) { TA_Free( hhBuf ); } if( llBuf != &local_llBuf[0] ) { TA_Free( llBuf ); } if( hsBuf != &local_hsBuf[0] ) { TA_Free( hsBuf ); } if( lsBuf != &local_lsBuf[0] ) { TA_Free( lsBuf ); } TA_CKSP_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(479); }
+      sp->cb_llBuf = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_llBuf );
+      if( !sp->cb_llBuf ) { if( hhBuf != &local_hhBuf[0] ) { TA_Free( hhBuf ); } if( llBuf != &local_llBuf[0] ) { TA_Free( llBuf ); } if( hsBuf != &local_hsBuf[0] ) { TA_Free( hsBuf ); } if( lsBuf != &local_lsBuf[0] ) { TA_Free( lsBuf ); } TA_CKSP_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
+      memcpy( sp->cb_llBuf, llBuf, sizeof(double) * (size_t)sp->cbSize_llBuf );
+      sp->cbSize_hsBuf = maxIdx_hsBuf + 1;
+      if( sp->cbSize_hsBuf < 1 || sp->cbSize_hsBuf > historyLen + 1 ) { if( hhBuf != &local_hhBuf[0] ) { TA_Free( hhBuf ); } if( llBuf != &local_llBuf[0] ) { TA_Free( llBuf ); } if( hsBuf != &local_hsBuf[0] ) { TA_Free( hsBuf ); } if( lsBuf != &local_lsBuf[0] ) { TA_Free( lsBuf ); } TA_CKSP_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(480); }
+      sp->cb_hsBuf = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_hsBuf );
+      if( !sp->cb_hsBuf ) { if( hhBuf != &local_hhBuf[0] ) { TA_Free( hhBuf ); } if( llBuf != &local_llBuf[0] ) { TA_Free( llBuf ); } if( hsBuf != &local_hsBuf[0] ) { TA_Free( hsBuf ); } if( lsBuf != &local_lsBuf[0] ) { TA_Free( lsBuf ); } TA_CKSP_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
+      memcpy( sp->cb_hsBuf, hsBuf, sizeof(double) * (size_t)sp->cbSize_hsBuf );
+      sp->cbSize_lsBuf = maxIdx_lsBuf + 1;
+      if( sp->cbSize_lsBuf < 1 || sp->cbSize_lsBuf > historyLen + 1 ) { if( hhBuf != &local_hhBuf[0] ) { TA_Free( hhBuf ); } if( llBuf != &local_llBuf[0] ) { TA_Free( llBuf ); } if( hsBuf != &local_hsBuf[0] ) { TA_Free( hsBuf ); } if( lsBuf != &local_lsBuf[0] ) { TA_Free( lsBuf ); } TA_CKSP_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(481); }
+      sp->cb_lsBuf = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_lsBuf );
+      if( !sp->cb_lsBuf ) { if( hhBuf != &local_hhBuf[0] ) { TA_Free( hhBuf ); } if( llBuf != &local_llBuf[0] ) { TA_Free( llBuf ); } if( hsBuf != &local_hsBuf[0] ) { TA_Free( hsBuf ); } if( lsBuf != &local_lsBuf[0] ) { TA_Free( lsBuf ); } TA_CKSP_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
+      memcpy( sp->cb_lsBuf, lsBuf, sizeof(double) * (size_t)sp->cbSize_lsBuf );
+      if( hhBuf != &local_hhBuf[0] ) { TA_Free( hhBuf ); } if( llBuf != &local_llBuf[0] ) { TA_Free( llBuf ); } if( hsBuf != &local_hsBuf[0] ) { TA_Free( hsBuf ); } if( lsBuf != &local_lsBuf[0] ) { TA_Free( lsBuf ); } 
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
       sp->cur_outHighStop = outHighStop[(*outNBElement - 1) * outStride];
@@ -1609,44 +2009,48 @@ TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_CKSP_Peek( const TA_CKSP_Stream *stream, double inHigh, double inLow, double inClose, double *outHighStop, double *outLowStop )
 {
    const struct TA_CKSP_Stream *sp = stream;
-   int jh;
-   int jl;
-   int kh;
-   int kl;
    double val2;
    double val3;
    double greatest;
    double tempCY;
    double tempLT;
    double tempHT;
-   double hh;
-   double ll;
-   double best;
+   double tempReal;
+   double highest;
+   double lowest;
+   double band;
+   double highStop;
+   double lowStop;
+   int hhBuf_Idx;
+   double hhPre;
+   int hsBuf_Idx;
+   double hsPre;
+   double llPre;
+   double lsPre;
    double prevATR;
-   double *cb_fhRing;
-   double *cb_flRing;
-   double *cb_hRing;
-   double *cb_lRing;
-   int pkSlot0 = -1;
-   double pkVal0 = 0.0;
-   int pkSlot1 = -1;
-   double pkVal1 = 0.0;
-   int pkSlot2 = -1;
-   double pkVal2 = 0.0;
-   int pkSlot3 = -1;
-   double pkVal3 = 0.0;
+   double *cb_hhBuf;
+   double *cb_hsBuf;
+   double *cb_llBuf;
+   double *cb_lsBuf;
 
    if( !stream || !outHighStop || !outLowStop ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
+   hhBuf_Idx = sp->hhBuf_Idx;
+   hhPre = sp->hhPre;
+   hsBuf_Idx = sp->hsBuf_Idx;
+   hsPre = sp->hsPre;
+   llPre = sp->llPre;
+   lsPre = sp->lsPre;
    prevATR = sp->prevATR;
-   cb_fhRing = sp->cb_fhRing;
-   cb_flRing = sp->cb_flRing;
-   cb_hRing = sp->cb_hRing;
-   cb_lRing = sp->cb_lRing;
+   cb_hhBuf = sp->cb_hhBuf;
+   cb_hsBuf = sp->cb_hsBuf;
+   cb_llBuf = sp->cb_llBuf;
+   cb_lsBuf = sp->cb_lsBuf;
    tempLT = inLow;
    tempHT = inHigh;
    tempCY = sp->lag1_inClose;
    greatest = tempHT - tempLT;
+   /* val1 */
    val2 = fabs(tempCY - tempHT);
    if( val2 > greatest )
    {
@@ -1658,92 +2062,81 @@ TA_LIB_API TA_RetCode TA_CKSP_Peek( const TA_CKSP_Stream *stream, double inHigh,
       greatest = val3;
    }
    prevATR = fma(sp->wBeta, prevATR, sp->wAlpha * greatest);
-   pkSlot0 = sp->hRing_Idx;
-   pkVal0 = tempHT;
-   pkSlot1 = sp->lRing_Idx;
-   pkVal1 = tempLT;
-   /* The extremes of the p bars ending here. The newest sits at the ring's
-    * own index, so the oldest is the slot after it and the walk is two
-    * straight runs.
-    */
-   hh = (sp->hRing_Idx != pkSlot0) ? cb_hRing[sp->hRing_Idx] : pkVal0;
-   for( jh = sp->hRing_Idx + 1; jh < sp->optInTimePeriod; jh += 1 )
+   highest = hhPre;
+   lowest = llPre;
+   if( tempHT > highest )
    {
-      best = cb_hRing[jh];
-      if( best > hh )
+      highest = tempHT;
+   }
+   if( tempLT < lowest )
+   {
+      lowest = tempLT;
+   }
+   if( hhBuf_Idx == 0 )
+   {
+      highest = tempHT;
+      lowest = tempLT;
+   }
+   hhPre = highest;
+   llPre = lowest;
+   if( hhBuf_Idx < sp->lastP )
+   {
+      tempReal = cb_hhBuf[hhBuf_Idx + 1];
+      if( tempReal > highest )
       {
-         hh = best;
+         highest = tempReal;
+      }
+      tempReal = cb_llBuf[hhBuf_Idx + 1];
+      if( tempReal < lowest )
+      {
+         lowest = tempReal;
       }
    }
-   for( jh = 0; jh < sp->hRing_Idx; jh += 1 )
+   hhBuf_Idx = hhBuf_Idx + 1;
+   if( hhBuf_Idx > sp->maxIdx_hhBuf )
    {
-      best = cb_hRing[jh];
-      if( best > hh )
+      hhBuf_Idx = 0;
+   }
+   band = sp->optInMultiplier * prevATR;
+   highStop = highest - band;
+   lowStop = lowest + band;
+   highest = hsPre;
+   lowest = lsPre;
+   if( highStop > highest )
+   {
+      highest = highStop;
+   }
+   if( lowStop < lowest )
+   {
+      lowest = lowStop;
+   }
+   if( hsBuf_Idx == 0 )
+   {
+      highest = highStop;
+      lowest = lowStop;
+   }
+   hsPre = highest;
+   lsPre = lowest;
+   if( hsBuf_Idx < sp->lastQ )
+   {
+      tempReal = cb_hsBuf[hsBuf_Idx + 1];
+      if( tempReal > highest )
       {
-         hh = best;
+         highest = tempReal;
+      }
+      tempReal = cb_lsBuf[hsBuf_Idx + 1];
+      if( tempReal < lowest )
+      {
+         lowest = tempReal;
       }
    }
-   ll = (sp->lRing_Idx != pkSlot1) ? cb_lRing[sp->lRing_Idx] : pkVal1;
-   for( jl = sp->lRing_Idx + 1; jl < sp->optInTimePeriod; jl += 1 )
+   hsBuf_Idx = hsBuf_Idx + 1;
+   if( hsBuf_Idx > sp->maxIdx_hsBuf )
    {
-      best = cb_lRing[jl];
-      if( best < ll )
-      {
-         ll = best;
-      }
+      hsBuf_Idx = 0;
    }
-   for( jl = 0; jl < sp->lRing_Idx; jl += 1 )
-   {
-      best = cb_lRing[jl];
-      if( best < ll )
-      {
-         ll = best;
-      }
-   }
-   pkSlot2 = sp->fhRing_Idx;
-   pkVal2 = hh - sp->optInMultiplier * prevATR;
-   pkSlot3 = sp->flRing_Idx;
-   pkVal3 = ll + sp->optInMultiplier * prevATR;
-   /* The second stage, over the q first-stage bars ending here. At q = 1
-    * both runs are empty and the value is the bar's own, which is the
-    * Chandelier Exit form.
-    */
-   hh = (sp->fhRing_Idx != pkSlot2) ? cb_fhRing[sp->fhRing_Idx] : pkVal2;
-   for( kh = sp->fhRing_Idx + 1; kh < sp->optInStopPeriod; kh += 1 )
-   {
-      best = cb_fhRing[kh];
-      if( best > hh )
-      {
-         hh = best;
-      }
-   }
-   for( kh = 0; kh < sp->fhRing_Idx; kh += 1 )
-   {
-      best = cb_fhRing[kh];
-      if( best > hh )
-      {
-         hh = best;
-      }
-   }
-   ll = (sp->flRing_Idx != pkSlot3) ? cb_flRing[sp->flRing_Idx] : pkVal3;
-   for( kl = sp->flRing_Idx + 1; kl < sp->optInStopPeriod; kl += 1 )
-   {
-      best = cb_flRing[kl];
-      if( best < ll )
-      {
-         ll = best;
-      }
-   }
-   for( kl = 0; kl < sp->flRing_Idx; kl += 1 )
-   {
-      best = cb_flRing[kl];
-      if( best < ll )
-      {
-         ll = best;
-      }
-   }
-   *outHighStop= hh;
-   *outLowStop= ll;
+   *outHighStop= highest;
+   *outLowStop= lowest;
    return TA_SUCCESS;
 }
 
@@ -1788,30 +2181,30 @@ TA_LIB_API TA_RetCode TA_CKSP_Clone( const TA_CKSP_Stream *stream, TA_CKSP_Strea
    sp = (struct TA_CKSP_Stream *)TA_Malloc( sizeof(*sp) );
    if( !sp ) return TA_ALLOC_ERR;
    *sp = *stream;
-   sp->cb_hRing = NULL;
-   sp->cb_lRing = NULL;
-   sp->cb_fhRing = NULL;
-   sp->cb_flRing = NULL;
-   if( stream->cb_hRing )
-   { size_t copyN = (size_t)(sp->cbSize_hRing);
-     sp->cb_hRing = (double *)TA_Malloc( sizeof(double) * copyN );
-     if( !sp->cb_hRing ) { TA_CKSP_Close( sp ); return TA_ALLOC_ERR; }
-     memcpy( sp->cb_hRing, stream->cb_hRing, sizeof(double) * copyN ); }
-   if( stream->cb_lRing )
-   { size_t copyN = (size_t)(sp->cbSize_lRing);
-     sp->cb_lRing = (double *)TA_Malloc( sizeof(double) * copyN );
-     if( !sp->cb_lRing ) { TA_CKSP_Close( sp ); return TA_ALLOC_ERR; }
-     memcpy( sp->cb_lRing, stream->cb_lRing, sizeof(double) * copyN ); }
-   if( stream->cb_fhRing )
-   { size_t copyN = (size_t)(sp->cbSize_fhRing);
-     sp->cb_fhRing = (double *)TA_Malloc( sizeof(double) * copyN );
-     if( !sp->cb_fhRing ) { TA_CKSP_Close( sp ); return TA_ALLOC_ERR; }
-     memcpy( sp->cb_fhRing, stream->cb_fhRing, sizeof(double) * copyN ); }
-   if( stream->cb_flRing )
-   { size_t copyN = (size_t)(sp->cbSize_flRing);
-     sp->cb_flRing = (double *)TA_Malloc( sizeof(double) * copyN );
-     if( !sp->cb_flRing ) { TA_CKSP_Close( sp ); return TA_ALLOC_ERR; }
-     memcpy( sp->cb_flRing, stream->cb_flRing, sizeof(double) * copyN ); }
+   sp->cb_hhBuf = NULL;
+   sp->cb_llBuf = NULL;
+   sp->cb_hsBuf = NULL;
+   sp->cb_lsBuf = NULL;
+   if( stream->cb_hhBuf )
+   { size_t copyN = (size_t)(sp->cbSize_hhBuf);
+     sp->cb_hhBuf = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->cb_hhBuf ) { TA_CKSP_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->cb_hhBuf, stream->cb_hhBuf, sizeof(double) * copyN ); }
+   if( stream->cb_llBuf )
+   { size_t copyN = (size_t)(sp->cbSize_llBuf);
+     sp->cb_llBuf = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->cb_llBuf ) { TA_CKSP_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->cb_llBuf, stream->cb_llBuf, sizeof(double) * copyN ); }
+   if( stream->cb_hsBuf )
+   { size_t copyN = (size_t)(sp->cbSize_hsBuf);
+     sp->cb_hsBuf = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->cb_hsBuf ) { TA_CKSP_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->cb_hsBuf, stream->cb_hsBuf, sizeof(double) * copyN ); }
+   if( stream->cb_lsBuf )
+   { size_t copyN = (size_t)(sp->cbSize_lsBuf);
+     sp->cb_lsBuf = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->cb_lsBuf ) { TA_CKSP_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->cb_lsBuf, stream->cb_lsBuf, sizeof(double) * copyN ); }
    *clone = sp;
    return TA_SUCCESS;
 }

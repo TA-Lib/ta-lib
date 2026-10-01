@@ -11,22 +11,19 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  093026 KL,CC  Creation (#477).
+ *  093026 MF,CC  Rolling extrema in a fixed number of comparisons per bar.
  */
 
 int cksp_lookback(int optInTimePeriod, double optInMultiplier, int optInStopPeriod)
 {
    (void)optInMultiplier;
 
-   /* Two stages. The first needs the Average True Range at its bar and the
-    * extreme of the p bars ending there; atr_lookback(p) is p + unst, which is
-    * never below max_lookback(p) = p - 1, so it covers both. The second adds
-    * the q - 1 earlier first-stage bars its own window reads.
-    *
-    * The ATR term is written as the callee's lookback and never restated, which
-    * is what makes CKSP inherit TA_FUNC_UNST_ATR rather than own an unstable
-    * period of its own (supertrend.c:16-25).
+   /* The first stops need the Average True Range at their own bar, and the
+    * stop window reaches optInStopPeriod-1 first stops further back. The ATR
+    * term is never restated here, which is what makes CKSP inherit
+    * TA_FUNC_UNST_ATR.
     */
-   return atr_lookback( optInTimePeriod ) + (optInStopPeriod - 1);
+   return atr_lookback( optInTimePeriod ) + optInStopPeriod - 1;
 }
 
 TA_RetCode cksp(int startIdx, int endIdx,
@@ -40,20 +37,17 @@ TA_RetCode cksp(int startIdx, int endIdx,
    double outHighStop[],
    double outLowStop[])
 {
-   int i, jh, jl, kh, kl, today, outIdx, lookbackTotal, stageOneIdx;
-   double prevATR, periodTotal, wAlpha, wBeta;
-   double val2, val3, greatest, tempCY, tempLT, tempHT;
-   double hh, ll, best;
+   CIRCBUF_PROLOG(hhBuf,double,30);
+   CIRCBUF_PROLOG(llBuf,double,30);
+   CIRCBUF_PROLOG(hsBuf,double,30);
+   CIRCBUF_PROLOG(lsBuf,double,30);
+   int i, ip, iq, today, outIdx, lookbackTotal, lastP, lastQ;
 
-   /* Four windows, all carried as rings and all walked oldest-first, the
-    * cci.c:112-117 shape: an index that wrapped would be one more thing the
-    * stream derivation has to prove, and the walk is the same values either
-    * way.
-    */
-   CIRCBUF_PROLOG(hRing,double,50);
-   CIRCBUF_PROLOG(lRing,double,50);
-   CIRCBUF_PROLOG(fhRing,double,50);
-   CIRCBUF_PROLOG(flRing,double,50);
+   double prevATR, periodTotal, wAlpha, wBeta;
+   double val2, val3, greatest;
+   double tempCY, tempLT, tempHT, tempReal;
+   double hhPre, llPre, hsPre, lsPre, sufHi, sufLo;
+   double highest, lowest, band, highStop, lowStop;
 
    *outBegIdx = 0;
    *outNBElement = 0;
@@ -63,35 +57,42 @@ TA_RetCode cksp(int startIdx, int endIdx,
    if( startIdx < lookbackTotal )
       startIdx = lookbackTotal;
 
+   /* Make sure there is still something to evaluate. */
    if( startIdx > endIdx )
       return TA_SUCCESS;
 
-   CIRCBUF_INIT( hRing, double, optInTimePeriod );
-   CIRCBUF_INIT( lRing, double, optInTimePeriod );
-   CIRCBUF_INIT( fhRing, double, optInStopPeriod );
-   CIRCBUF_INIT( flRing, double, optInStopPeriod );
-
-   /* The first stage is entered q-1 bars before the first output, because the
-    * second stage's window reaches that far back. Each leg is anchored on its
-    * own bar rather than on the caller's startIdx (the kc.c:73-77 rule): the
-    * Average True Range is seeded as if TA_ATR had been entered here, and the
-    * extremes are the p-windows ending on these same bars.
-    */
-   stageOneIdx = startIdx - (optInStopPeriod - 1);
-
-   /* The Average True Range, carried inline rather than taken from a call: the
-    * two stages advance together one bar at a time and a whole-range buffer
-    * between them would not stream (supertrend.c:47-50).
+   /* Four rolling extrema, van Herk / Gil-Werman, one buffer each: the window
+    * ending in slot j is the current block's prefix extremum joined with the
+    * previous block's suffix extremum from slot j+1. A slot holds the raw value
+    * while its block is filling and is turned into the suffix extremum, in
+    * place, when the block completes; slot j+1 is always still the previous
+    * block's when slot j is filled. The high and low sides share an index.
     *
-    * The arithmetic order is the bit-exactness contract with TA_ATR and is not
-    * to be reordered: the range first, then the two previous-close distances in
-    * that order; the seed summed from 0.0 over the first optInTimePeriod True
-    * Ranges and divided once; wBeta rounded first and wAlpha derived from it.
+    * The extrema are exact, so both outputs must stay bit-identical to
+    * TA_MAX( TA_MAX(high) - x*TA_ATR ) and its mirror, whatever the block
+    * phase; only the sign of a zero tied between +0.0 and -0.0 is free.
+    */
+   CIRCBUF_INIT(hhBuf,double,optInTimePeriod);
+   CIRCBUF_INIT(llBuf,double,optInTimePeriod);
+   CIRCBUF_INIT(hsBuf,double,optInStopPeriod);
+   CIRCBUF_INIT(lsBuf,double,optInStopPeriod);
+   lastP = optInTimePeriod - 1;
+   lastQ = optInStopPeriod - 1;
+
+   /* The Average True Range is carried inline rather than taken from a call,
+    * because the two stages advance together one bar at a time and a
+    * whole-range buffer between them would not stream.
+    *
+    * The arithmetic order below is the bit-exactness contract with TA_ATR (do
+    * not reorder): True Range from high-low, then the two previous-close
+    * distances in that order; the seed summed from 0.0 over the first 'period'
+    * True Ranges and divided once; the same two Wilder coefficients, wBeta
+    * rounded and wAlpha derived from it, in one fused statement.
     */
    wBeta  = (double)(optInTimePeriod - 1) / (double)optInTimePeriod;
    wAlpha = 1.0 - wBeta;
 
-   today = stageOneIdx - atr_lookback( optInTimePeriod ) + 1;
+   today = startIdx - lookbackTotal + 1;
 
    periodTotal = 0.0;
    i = optInTimePeriod;
@@ -100,7 +101,7 @@ TA_RetCode cksp(int startIdx, int endIdx,
       tempLT = inLow[today];
       tempHT = inHigh[today];
       tempCY = inClose[today-1];
-      greatest = tempHT - tempLT;
+      greatest = tempHT - tempLT; /* val1 */
 
       val2 = fabs( tempCY - tempHT );
       if( val2 > greatest )
@@ -115,16 +116,16 @@ TA_RetCode cksp(int startIdx, int endIdx,
    }
    prevATR = periodTotal / optInTimePeriod;
 
-   /* Skip the Average True Range's unstable period. The count comes from the
-    * lookback rather than from the setting, so the two cannot disagree.
+   /* Skip the Average True Range's unstable period. Taking the count from the
+    * lookback rather than naming the setting keeps the two from disagreeing.
     */
-   i = atr_lookback( optInTimePeriod ) - optInTimePeriod;
+   i = lookbackTotal - lastQ - optInTimePeriod;
    while( i != 0 )
    {
       tempLT = inLow[today];
       tempHT = inHigh[today];
       tempCY = inClose[today-1];
-      greatest = tempHT - tempLT;
+      greatest = tempHT - tempLT; /* val1 */
 
       val2 = fabs( tempCY - tempHT );
       if( val2 > greatest )
@@ -139,82 +140,50 @@ TA_RetCode cksp(int startIdx, int endIdx,
       i--;
    }
 
-   /* `today` is now stageOneIdx and prevATR is the Average True Range of the
-    * bar before it. Seed the price rings with the p-1 bars the first extreme
-    * window needs behind that bar.
+   /* prevATR is now the Average True Range of bar today-1, the first bar with
+    * a first stop. Its extreme window is one whole block, taken straight from
+    * the input.
     */
-   i = stageOneIdx - optInTimePeriod + 1;
-   while( i < stageOneIdx )
+   highest = inHigh[today-1];
+   lowest  = inLow[today-1];
+   hhBuf[lastP] = highest;
+   llBuf[lastP] = lowest;
+   ip = lastP;
+   while( ip > 0 )
    {
-      hRing[hRing_Idx] = inHigh[i];
-      lRing[lRing_Idx] = inLow[i];
-      i++;
-      CIRCBUF_NEXT(hRing);
-      CIRCBUF_NEXT(lRing);
+      ip--;
+      tempHT = inHigh[today-1-lastP+ip];
+      tempLT = inLow[today-1-lastP+ip];
+      if( tempHT > highest )
+         highest = tempHT;
+      if( tempLT < lowest )
+         lowest = tempLT;
+      hhBuf[ip] = highest;
+      llBuf[ip] = lowest;
    }
+   hhPre = highest;
+   llPre = lowest;
 
-   /* The prologue leaves prevATR as the Average True Range of stageOneIdx and
-    * `today` one past it, so that bar is finished here rather than in the loop:
-    * entering the loop with it would apply a second Wilder update and shift the
-    * whole series one bar early. supertrend.c takes the same step for the same
-    * reason.
+   /* The multiple of the ATR is formed on its own, never fused into the
+    * offset, so that each first stop is TA_MAX - x*TA_ATR (or its mirror) as a
+    * caller composing the three functions would compute it.
     */
-   today = stageOneIdx;
+   band = optInMultiplier * prevATR;
+   highStop = highest - band;
+   lowStop  = lowest + band;
+   hsPre = highStop;
+   lsPre = lowStop;
+   hsBuf[hsBuf_Idx] = highStop;
+   lsBuf[hsBuf_Idx] = lowStop;
+   CIRCBUF_NEXT(hsBuf);
 
-   hRing[hRing_Idx] = inHigh[today];
-   lRing[lRing_Idx] = inLow[today];
-
-   hh = hRing[hRing_Idx];
-   for( jh = hRing_Idx+1; jh < optInTimePeriod; jh++ )
-   {
-      best = hRing[jh];
-      if( best > hh )
-         hh = best;
-   }
-   for( jh = 0; jh < hRing_Idx; jh++ )
-   {
-      best = hRing[jh];
-      if( best > hh )
-         hh = best;
-   }
-
-   ll = lRing[lRing_Idx];
-   for( jl = lRing_Idx+1; jl < optInTimePeriod; jl++ )
-   {
-      best = lRing[jl];
-      if( best < ll )
-         ll = best;
-   }
-   for( jl = 0; jl < lRing_Idx; jl++ )
-   {
-      best = lRing[jl];
-      if( best < ll )
-         ll = best;
-   }
-
-   fhRing[fhRing_Idx] = hh - optInMultiplier * prevATR;
-   flRing[flRing_Idx] = ll + optInMultiplier * prevATR;
-
-   outIdx = 0;
-   if( today >= startIdx )
-   {
-      outHighStop[outIdx] = fhRing[fhRing_Idx];
-      outLowStop[outIdx] = flRing[flRing_Idx];
-      outIdx = outIdx + 1;
-   }
-
-   today++;
-   CIRCBUF_NEXT(hRing);
-   CIRCBUF_NEXT(lRing);
-   CIRCBUF_NEXT(fhRing);
-   CIRCBUF_NEXT(flRing);
-
-   while( today <= endIdx )
+   /* Fill the first stop window, through startIdx inclusive. */
+   while( today <= startIdx )
    {
       tempLT = inLow[today];
       tempHT = inHigh[today];
       tempCY = inClose[today-1];
-      greatest = tempHT - tempLT;
+      greatest = tempHT - tempLT; /* val1 */
 
       val2 = fabs( tempCY - tempHT );
       if( val2 > greatest )
@@ -226,97 +195,220 @@ TA_RetCode cksp(int startIdx, int endIdx,
 
       prevATR = wAlpha * greatest + wBeta * prevATR;
 
-      hRing[hRing_Idx] = tempHT;
-      lRing[lRing_Idx] = tempLT;
-
-      /* The extremes of the p bars ending here. The newest sits at the ring's
-       * own index, so the oldest is the slot after it and the walk is two
-       * straight runs.
+      /* Keep this shape: the prefix extreme selected in a local, the
+       * block-start override after it, one store. A store made only when the
+       * bar sets a new extreme, or the override ahead of the select, compiles
+       * to a data-dependent branch in the stream step, where the prefix lives
+       * in the handle.
        */
-      hh = hRing[hRing_Idx];
-      for( jh = hRing_Idx+1; jh < optInTimePeriod; jh++ )
+      highest = hhPre;
+      lowest  = llPre;
+      if( tempHT > highest )
+         highest = tempHT;
+      if( tempLT < lowest )
+         lowest = tempLT;
+      if( hhBuf_Idx == 0 )
       {
-         best = hRing[jh];
-         if( best > hh )
-            hh = best;
+         highest = tempHT;
+         lowest  = tempLT;
       }
-      for( jh = 0; jh < hRing_Idx; jh++ )
+      hhPre = highest;
+      llPre = lowest;
+      if( hhBuf_Idx < lastP )
       {
-         best = hRing[jh];
-         if( best > hh )
-            hh = best;
+         tempReal = hhBuf[hhBuf_Idx + 1];
+         if( tempReal > highest )
+            highest = tempReal;
+         tempReal = llBuf[hhBuf_Idx + 1];
+         if( tempReal < lowest )
+            lowest = tempReal;
       }
-
-      ll = lRing[lRing_Idx];
-      for( jl = lRing_Idx+1; jl < optInTimePeriod; jl++ )
+      hhBuf[hhBuf_Idx] = tempHT;
+      llBuf[hhBuf_Idx] = tempLT;
+      CIRCBUF_NEXT(hhBuf);
+      if( hhBuf_Idx == 0 )
       {
-         best = lRing[jl];
-         if( best < ll )
-            ll = best;
-      }
-      for( jl = 0; jl < lRing_Idx; jl++ )
-      {
-         best = lRing[jl];
-         if( best < ll )
-            ll = best;
-      }
-
-      fhRing[fhRing_Idx] = hh - optInMultiplier * prevATR;
-      flRing[flRing_Idx] = ll + optInMultiplier * prevATR;
-
-      if( today >= startIdx )
-      {
-         /* The second stage, over the q first-stage bars ending here. At q = 1
-          * both runs are empty and the value is the bar's own, which is the
-          * Chandelier Exit form.
-          */
-         hh = fhRing[fhRing_Idx];
-         for( kh = fhRing_Idx+1; kh < optInStopPeriod; kh++ )
+         sufHi = hhBuf[lastP];
+         sufLo = llBuf[lastP];
+         ip = lastP;
+         while( ip > 1 )
          {
-            best = fhRing[kh];
-            if( best > hh )
-               hh = best;
+            ip--;
+            tempReal = hhBuf[ip];
+            if( tempReal > sufHi )
+               sufHi = tempReal;
+            hhBuf[ip] = sufHi;
+            tempReal = llBuf[ip];
+            if( tempReal < sufLo )
+               sufLo = tempReal;
+            llBuf[ip] = sufLo;
          }
-         for( kh = 0; kh < fhRing_Idx; kh++ )
-         {
-            best = fhRing[kh];
-            if( best > hh )
-               hh = best;
-         }
-
-         ll = flRing[flRing_Idx];
-         for( kl = flRing_Idx+1; kl < optInStopPeriod; kl++ )
-         {
-            best = flRing[kl];
-            if( best < ll )
-               ll = best;
-         }
-         for( kl = 0; kl < flRing_Idx; kl++ )
-         {
-            best = flRing[kl];
-            if( best < ll )
-               ll = best;
-         }
-
-         outHighStop[outIdx] = hh;
-         outLowStop[outIdx] = ll;
-         outIdx = outIdx + 1;
       }
+
+      band = optInMultiplier * prevATR;
+      highStop = highest - band;
+      lowStop  = lowest + band;
+      if( highStop > hsPre )
+         hsPre = highStop;
+      if( lowStop < lsPre )
+         lsPre = lowStop;
+      hsBuf[hsBuf_Idx] = highStop;
+      lsBuf[hsBuf_Idx] = lowStop;
+      CIRCBUF_NEXT(hsBuf);
 
       today++;
-      CIRCBUF_NEXT(hRing);
-      CIRCBUF_NEXT(lRing);
-      CIRCBUF_NEXT(fhRing);
-      CIRCBUF_NEXT(flRing);
    }
 
-   CIRCBUF_DESTROY(flRing);
-   CIRCBUF_DESTROY(fhRing);
-   CIRCBUF_DESTROY(lRing);
-   CIRCBUF_DESTROY(hRing);
+   /* The first stop window is one whole block as well: its extremes are the
+    * prefix extremes, and the block is complete.
+    */
+   sufHi = hsBuf[lastQ];
+   sufLo = lsBuf[lastQ];
+   iq = lastQ;
+   while( iq > 1 )
+   {
+      iq--;
+      tempReal = hsBuf[iq];
+      if( tempReal > sufHi )
+         sufHi = tempReal;
+      hsBuf[iq] = sufHi;
+      tempReal = lsBuf[iq];
+      if( tempReal < sufLo )
+         sufLo = tempReal;
+      lsBuf[iq] = sufLo;
+   }
 
-   *outNBElement = outIdx;
+   outHighStop[0] = hsPre;
+   outLowStop[0]  = lsPre;
+   outIdx = 1;
+
+   while( today <= endIdx )
+   {
+      tempLT = inLow[today];
+      tempHT = inHigh[today];
+      tempCY = inClose[today-1];
+      greatest = tempHT - tempLT; /* val1 */
+
+      val2 = fabs( tempCY - tempHT );
+      if( val2 > greatest )
+         greatest = val2;
+
+      val3 = fabs( tempCY - tempLT );
+      if( val3 > greatest )
+         greatest = val3;
+
+      prevATR = wAlpha * greatest + wBeta * prevATR;
+
+      highest = hhPre;
+      lowest  = llPre;
+      if( tempHT > highest )
+         highest = tempHT;
+      if( tempLT < lowest )
+         lowest = tempLT;
+      if( hhBuf_Idx == 0 )
+      {
+         highest = tempHT;
+         lowest  = tempLT;
+      }
+      hhPre = highest;
+      llPre = lowest;
+      if( hhBuf_Idx < lastP )
+      {
+         tempReal = hhBuf[hhBuf_Idx + 1];
+         if( tempReal > highest )
+            highest = tempReal;
+         tempReal = llBuf[hhBuf_Idx + 1];
+         if( tempReal < lowest )
+            lowest = tempReal;
+      }
+      hhBuf[hhBuf_Idx] = tempHT;
+      llBuf[hhBuf_Idx] = tempLT;
+      CIRCBUF_NEXT(hhBuf);
+
+      band = optInMultiplier * prevATR;
+      highStop = highest - band;
+      lowStop  = lowest + band;
+
+      highest = hsPre;
+      lowest  = lsPre;
+      if( highStop > highest )
+         highest = highStop;
+      if( lowStop < lowest )
+         lowest = lowStop;
+      if( hsBuf_Idx == 0 )
+      {
+         highest = highStop;
+         lowest  = lowStop;
+      }
+      hsPre = highest;
+      lsPre = lowest;
+      if( hsBuf_Idx < lastQ )
+      {
+         tempReal = hsBuf[hsBuf_Idx + 1];
+         if( tempReal > highest )
+            highest = tempReal;
+         tempReal = lsBuf[hsBuf_Idx + 1];
+         if( tempReal < lowest )
+            lowest = tempReal;
+      }
+      hsBuf[hsBuf_Idx] = highStop;
+      lsBuf[hsBuf_Idx] = lowStop;
+      CIRCBUF_NEXT(hsBuf);
+
+      outHighStop[outIdx] = highest;
+      outLowStop[outIdx]  = lowest;
+
+      /* A completed block becomes its suffix extrema. Nothing this bar reads
+       * them, so both passes stay below the output stores, where the peek
+       * frame never runs them.
+       */
+      if( hhBuf_Idx == 0 )
+      {
+         sufHi = hhBuf[lastP];
+         sufLo = llBuf[lastP];
+         ip = lastP;
+         while( ip > 1 )
+         {
+            ip--;
+            tempReal = hhBuf[ip];
+            if( tempReal > sufHi )
+               sufHi = tempReal;
+            hhBuf[ip] = sufHi;
+            tempReal = llBuf[ip];
+            if( tempReal < sufLo )
+               sufLo = tempReal;
+            llBuf[ip] = sufLo;
+         }
+      }
+      if( hsBuf_Idx == 0 )
+      {
+         sufHi = hsBuf[lastQ];
+         sufLo = lsBuf[lastQ];
+         iq = lastQ;
+         while( iq > 1 )
+         {
+            iq--;
+            tempReal = hsBuf[iq];
+            if( tempReal > sufHi )
+               sufHi = tempReal;
+            hsBuf[iq] = sufHi;
+            tempReal = lsBuf[iq];
+            if( tempReal < sufLo )
+               sufLo = tempReal;
+            lsBuf[iq] = sufLo;
+         }
+      }
+      outIdx++;
+      today++;
+   }
+
+   CIRCBUF_DESTROY(hhBuf);
+   CIRCBUF_DESTROY(llBuf);
+   CIRCBUF_DESTROY(hsBuf);
+   CIRCBUF_DESTROY(lsBuf);
+
    *outBegIdx    = startIdx;
+   *outNBElement = outIdx;
 
    return TA_SUCCESS;
 }

@@ -769,6 +769,7 @@ static const UnstableLookup UNSTABLE_MAP[] = {
      * ~1e-13. Without this row it classifies EPSILON and the range gate fails
      * it by 5.8%. */
     {"RVIR",         TA_FUNC_UNST_RVI},
+    {"CKSP",         TA_FUNC_UNST_ATR},
     /* SUPERTREND is listed for the SECOND consumer of this map, not the first.
      * It carries `path_dependent`, so stability_class() answers SKIP before it
      * ever asks about an unstable id and the range envelope is not what this row
@@ -777,7 +778,6 @@ static const UnstableLookup UNSTABLE_MAP[] = {
      * here stream_verify runs every language at K == 0 only -- and the ATR
      * warm-up loop the body carries for exactly that setting is never entered on
      * the streaming path in any of the four. */
-    {"CKSP",         TA_FUNC_UNST_ATR},
     {"SUPERTREND",   TA_FUNC_UNST_ATR},
     /* KDJ declares no unstable flag of its own -- its instability arrives
      * through the MA type its two smoothing hops select, and the default is

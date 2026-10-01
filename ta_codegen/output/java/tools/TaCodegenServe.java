@@ -76713,6 +76713,7 @@ class Core {
      *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
      *  093026 KL,CC  Creation (#477).
+     *  093026 MF,CC  Rolling extrema in a fixed number of comparisons per bar.
      */
 
        /**
@@ -76722,12 +76723,15 @@ class Core {
         * series is requested. Feed at least {@code lookback + 1} bars to get any
         * output.
         *
-        * @param optInTimePeriod ATR and extreme window (default 10; range
-        *        2..100000; {@code Integer.MIN_VALUE} selects the default).
-        * @param optInMultiplier ATR multiplier (default 1; minimum 0;
-        *        {@link Core#REAL_DEFAULT} selects the default).
-        * @param optInStopPeriod Stop window (default 9; range 1..100000;
+        * @param optInTimePeriod Window of the highest high and lowest low, and
+        *        smoothing period of the Average True Range (default 10; range 2..100000;
         *        {@code Integer.MIN_VALUE} selects the default).
+        * @param optInMultiplier Multiplier applied to the Average True Range to
+        *        offset the first stops (default 1; minimum 0; {@link Core#REAL_DEFAULT}
+        *        selects the default).
+        * @param optInStopPeriod Window over which each first stop takes its extreme
+        *        (default 9; range 1..100000; {@code Integer.MIN_VALUE} selects the
+        *        default).
         * @return The lookback, or {@code -1} if a parameter is out of range.
         */
        public int ckspLookback( int optInTimePeriod, double optInMultiplier, int optInStopPeriod )
@@ -76747,16 +76751,12 @@ class Core {
           } else if( optInStopPeriod < 1 || optInStopPeriod > 100000 ) {
              return -1;
           }
-          /* Two stages. The first needs the Average True Range at its bar and the
-           * extreme of the p bars ending there; atr_lookback(p) is p + unst, which is
-           * never below max_lookback(p) = p - 1, so it covers both. The second adds
-           * the q - 1 earlier first-stage bars its own window reads.
-           *
-           * The ATR term is written as the callee's lookback and never restated, which
-           * is what makes CKSP inherit TA_FUNC_UNST_ATR rather than own an unstable
-           * period of its own (supertrend.c:16-25).
+          /* The first stops need the Average True Range at their own bar, and the
+           * stop window reaches optInStopPeriod-1 first stops further back. The ATR
+           * term is never restated here, which is what makes CKSP inherit
+           * TA_FUNC_UNST_ATR.
            */
-          return atrLookback(optInTimePeriod) + (optInStopPeriod - 1) ;
+          return atrLookback(optInTimePeriod) + optInStopPeriod - 1 ;
 
        }
        RetCode ckspImpl( int startIdx,
@@ -76772,15 +76772,26 @@ class Core {
                          double outHighStop[],
                          double outLowStop[] )
        {
+          double[] hhBuf;
+          int hhBuf_Idx = 0;
+          int maxIdx_hhBuf = (30)-1;
+          double[] llBuf;
+          int llBuf_Idx = 0;
+          int maxIdx_llBuf = (30)-1;
+          double[] hsBuf;
+          int hsBuf_Idx = 0;
+          int maxIdx_hsBuf = (30)-1;
+          double[] lsBuf;
+          int lsBuf_Idx = 0;
+          int maxIdx_lsBuf = (30)-1;
           int i = 0;
-          int jh = 0;
-          int jl = 0;
-          int kh = 0;
-          int kl = 0;
+          int ip = 0;
+          int iq = 0;
           int today = 0;
           int outIdx = 0;
           int lookbackTotal = 0;
-          int stageOneIdx = 0;
+          int lastP = 0;
+          int lastQ = 0;
           double prevATR = 0;
           double periodTotal = 0;
           double wAlpha = 0;
@@ -76791,21 +76802,18 @@ class Core {
           double tempCY = 0;
           double tempLT = 0;
           double tempHT = 0;
-          double hh = 0;
-          double ll = 0;
-          double best = 0;
-          double[] hRing;
-          int hRing_Idx = 0;
-          int maxIdx_hRing = (50)-1;
-          double[] lRing;
-          int lRing_Idx = 0;
-          int maxIdx_lRing = (50)-1;
-          double[] fhRing;
-          int fhRing_Idx = 0;
-          int maxIdx_fhRing = (50)-1;
-          double[] flRing;
-          int flRing_Idx = 0;
-          int maxIdx_flRing = (50)-1;
+          double tempReal = 0;
+          double hhPre = 0;
+          double llPre = 0;
+          double hsPre = 0;
+          double lsPre = 0;
+          double sufHi = 0;
+          double sufLo = 0;
+          double highest = 0;
+          double lowest = 0;
+          double band = 0;
+          double highStop = 0;
+          double lowStop = 0;
           if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
              return RetCode.OUT_OF_RANGE_START_INDEX ;
           }
@@ -76830,55 +76838,58 @@ class Core {
           if( outHighStop == outLowStop ) {
              return RetCode.BAD_PARAM ;
           }
-          /* Four windows, all carried as rings and all walked oldest-first, the
-           * cci.c:112-117 shape: an index that wrapped would be one more thing the
-           * stream derivation has to prove, and the walk is the same values either
-           * way.
-           */
           outBegIdx.value = 0;
           outNBElement.value = 0;
           lookbackTotal = ckspLookback(optInTimePeriod, optInMultiplier, optInStopPeriod);
           if( startIdx < lookbackTotal ) {
              startIdx = lookbackTotal;
           }
+          /* Make sure there is still something to evaluate. */
           if( startIdx > endIdx ) {
              return RetCode.SUCCESS ;
           }
-          if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
-          hRing = new double[optInTimePeriod];
-          maxIdx_hRing = (optInTimePeriod)-1;
-          hRing_Idx = 0;
-          if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
-          lRing = new double[optInTimePeriod];
-          maxIdx_lRing = (optInTimePeriod)-1;
-          lRing_Idx = 0;
-          if( optInStopPeriod < 1 ) return RetCode.INTERNAL_ERROR;
-          fhRing = new double[optInStopPeriod];
-          maxIdx_fhRing = (optInStopPeriod)-1;
-          fhRing_Idx = 0;
-          if( optInStopPeriod < 1 ) return RetCode.INTERNAL_ERROR;
-          flRing = new double[optInStopPeriod];
-          maxIdx_flRing = (optInStopPeriod)-1;
-          flRing_Idx = 0;
-          /* The first stage is entered q-1 bars before the first output, because the
-           * second stage's window reaches that far back. Each leg is anchored on its
-           * own bar rather than on the caller's startIdx (the kc.c:73-77 rule): the
-           * Average True Range is seeded as if TA_ATR had been entered here, and the
-           * extremes are the p-windows ending on these same bars.
-           */
-          stageOneIdx = startIdx - (optInStopPeriod - 1);
-          /* The Average True Range, carried inline rather than taken from a call: the
-           * two stages advance together one bar at a time and a whole-range buffer
-           * between them would not stream (supertrend.c:47-50).
+          /* Four rolling extrema, van Herk / Gil-Werman, one buffer each: the window
+           * ending in slot j is the current block's prefix extremum joined with the
+           * previous block's suffix extremum from slot j+1. A slot holds the raw value
+           * while its block is filling and is turned into the suffix extremum, in
+           * place, when the block completes; slot j+1 is always still the previous
+           * block's when slot j is filled. The high and low sides share an index.
            *
-           * The arithmetic order is the bit-exactness contract with TA_ATR and is not
-           * to be reordered: the range first, then the two previous-close distances in
-           * that order; the seed summed from 0.0 over the first optInTimePeriod True
-           * Ranges and divided once; wBeta rounded first and wAlpha derived from it.
+           * The extrema are exact, so both outputs must stay bit-identical to
+           * TA_MAX( TA_MAX(high) - x*TA_ATR ) and its mirror, whatever the block
+           * phase; only the sign of a zero tied between +0.0 and -0.0 is free.
+           */
+          if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
+          hhBuf = new double[optInTimePeriod];
+          maxIdx_hhBuf = (optInTimePeriod)-1;
+          hhBuf_Idx = 0;
+          if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
+          llBuf = new double[optInTimePeriod];
+          maxIdx_llBuf = (optInTimePeriod)-1;
+          llBuf_Idx = 0;
+          if( optInStopPeriod < 1 ) return RetCode.INTERNAL_ERROR;
+          hsBuf = new double[optInStopPeriod];
+          maxIdx_hsBuf = (optInStopPeriod)-1;
+          hsBuf_Idx = 0;
+          if( optInStopPeriod < 1 ) return RetCode.INTERNAL_ERROR;
+          lsBuf = new double[optInStopPeriod];
+          maxIdx_lsBuf = (optInStopPeriod)-1;
+          lsBuf_Idx = 0;
+          lastP = optInTimePeriod - 1;
+          lastQ = optInStopPeriod - 1;
+          /* The Average True Range is carried inline rather than taken from a call,
+           * because the two stages advance together one bar at a time and a
+           * whole-range buffer between them would not stream.
+           *
+           * The arithmetic order below is the bit-exactness contract with TA_ATR (do
+           * not reorder): True Range from high-low, then the two previous-close
+           * distances in that order; the seed summed from 0.0 over the first 'period'
+           * True Ranges and divided once; the same two Wilder coefficients, wBeta
+           * rounded and wAlpha derived from it, in one fused statement.
            */
           wBeta = (double)(optInTimePeriod - 1) / (double)optInTimePeriod;
           wAlpha = 1.0 - wBeta;
-          today = stageOneIdx - atrLookback(optInTimePeriod) + 1;
+          today = startIdx - lookbackTotal + 1;
           periodTotal = 0.0;
           i = optInTimePeriod;
           while( i-- > 0 ) {
@@ -76886,6 +76897,7 @@ class Core {
              tempHT = inHigh[today];
              tempCY = inClose[today - 1];
              greatest = tempHT - tempLT;
+             /* val1 */
              val2 = Math.abs(tempCY - tempHT);
              if( val2 > greatest ) {
                 greatest = val2;
@@ -76898,15 +76910,16 @@ class Core {
              today += 1;
           }
           prevATR = periodTotal / optInTimePeriod;
-          /* Skip the Average True Range's unstable period. The count comes from the
-           * lookback rather than from the setting, so the two cannot disagree.
+          /* Skip the Average True Range's unstable period. Taking the count from the
+           * lookback rather than naming the setting keeps the two from disagreeing.
            */
-          i = atrLookback(optInTimePeriod) - optInTimePeriod;
+          i = lookbackTotal - lastQ - optInTimePeriod;
           while( i != 0 ) {
              tempLT = inLow[today];
              tempHT = inHigh[today];
              tempCY = inClose[today - 1];
              greatest = tempHT - tempLT;
+             /* val1 */
              val2 = Math.abs(tempCY - tempHT);
              if( val2 > greatest ) {
                 greatest = val2;
@@ -76919,77 +76932,50 @@ class Core {
              today += 1;
              i -= 1;
           }
-          /* `today` is now stageOneIdx and prevATR is the Average True Range of the
-           * bar before it. Seed the price rings with the p-1 bars the first extreme
-           * window needs behind that bar.
+          /* prevATR is now the Average True Range of bar today-1, the first bar with
+           * a first stop. Its extreme window is one whole block, taken straight from
+           * the input.
            */
-          i = stageOneIdx - optInTimePeriod + 1;
-          while( i < stageOneIdx ) {
-             hRing[hRing_Idx] = inHigh[i];
-             lRing[lRing_Idx] = inLow[i];
-             i += 1;
-             hRing_Idx++;
-             if( hRing_Idx > maxIdx_hRing ) { hRing_Idx = 0; }
-             lRing_Idx++;
-             if( lRing_Idx > maxIdx_lRing ) { lRing_Idx = 0; }
+          highest = inHigh[today - 1];
+          lowest = inLow[today - 1];
+          hhBuf[lastP] = highest;
+          llBuf[lastP] = lowest;
+          ip = lastP;
+          while( ip > 0 ) {
+             ip -= 1;
+             tempHT = inHigh[today - 1 - lastP + ip];
+             tempLT = inLow[today - 1 - lastP + ip];
+             if( tempHT > highest ) {
+                highest = tempHT;
+             }
+             if( tempLT < lowest ) {
+                lowest = tempLT;
+             }
+             hhBuf[ip] = highest;
+             llBuf[ip] = lowest;
           }
-          /* The prologue leaves prevATR as the Average True Range of stageOneIdx and
-           * `today` one past it, so that bar is finished here rather than in the loop:
-           * entering the loop with it would apply a second Wilder update and shift the
-           * whole series one bar early. supertrend.c takes the same step for the same
-           * reason.
+          hhPre = highest;
+          llPre = lowest;
+          /* The multiple of the ATR is formed on its own, never fused into the
+           * offset, so that each first stop is TA_MAX - x*TA_ATR (or its mirror) as a
+           * caller composing the three functions would compute it.
            */
-          today = stageOneIdx;
-          hRing[hRing_Idx] = inHigh[today];
-          lRing[lRing_Idx] = inLow[today];
-          hh = hRing[hRing_Idx];
-          for( jh = hRing_Idx + 1; jh < optInTimePeriod; jh += 1 ) {
-             best = hRing[jh];
-             if( best > hh ) {
-                hh = best;
-             }
-          }
-          for( jh = 0; jh < hRing_Idx; jh += 1 ) {
-             best = hRing[jh];
-             if( best > hh ) {
-                hh = best;
-             }
-          }
-          ll = lRing[lRing_Idx];
-          for( jl = lRing_Idx + 1; jl < optInTimePeriod; jl += 1 ) {
-             best = lRing[jl];
-             if( best < ll ) {
-                ll = best;
-             }
-          }
-          for( jl = 0; jl < lRing_Idx; jl += 1 ) {
-             best = lRing[jl];
-             if( best < ll ) {
-                ll = best;
-             }
-          }
-          fhRing[fhRing_Idx] = hh - optInMultiplier * prevATR;
-          flRing[flRing_Idx] = ll + optInMultiplier * prevATR;
-          outIdx = 0;
-          if( today >= startIdx ) {
-             outHighStop[outIdx] = fhRing[fhRing_Idx];
-             outLowStop[outIdx] = flRing[flRing_Idx];
-             outIdx = outIdx + 1;
-          }
-          today += 1;
-          hRing_Idx++;
-          if( hRing_Idx > maxIdx_hRing ) { hRing_Idx = 0; }
-          lRing_Idx++;
-          if( lRing_Idx > maxIdx_lRing ) { lRing_Idx = 0; }
-          fhRing_Idx++;
-          if( fhRing_Idx > maxIdx_fhRing ) { fhRing_Idx = 0; }
-          flRing_Idx++;
-          if( flRing_Idx > maxIdx_flRing ) { flRing_Idx = 0; }
-          while( today <= endIdx ) {
+          band = optInMultiplier * prevATR;
+          highStop = highest - band;
+          lowStop = lowest + band;
+          hsPre = highStop;
+          lsPre = lowStop;
+          hsBuf[hsBuf_Idx] = highStop;
+          lsBuf[hsBuf_Idx] = lowStop;
+          hsBuf_Idx++;
+          if( hsBuf_Idx > maxIdx_hsBuf ) { hsBuf_Idx = 0; }
+          /* Fill the first stop window, through startIdx inclusive. */
+          while( today <= startIdx ) {
              tempLT = inLow[today];
              tempHT = inHigh[today];
              tempCY = inClose[today - 1];
              greatest = tempHT - tempLT;
+             /* val1 */
              val2 = Math.abs(tempCY - tempHT);
              if( val2 > greatest ) {
                 greatest = val2;
@@ -76999,87 +76985,216 @@ class Core {
                 greatest = val3;
              }
              prevATR = Math.fma(wBeta, prevATR, wAlpha * greatest);
-             hRing[hRing_Idx] = tempHT;
-             lRing[lRing_Idx] = tempLT;
-             /* The extremes of the p bars ending here. The newest sits at the ring's
-              * own index, so the oldest is the slot after it and the walk is two
-              * straight runs.
+             /* Keep this shape: the prefix extreme selected in a local, the
+              * block-start override after it, one store. A store made only when the
+              * bar sets a new extreme, or the override ahead of the select, compiles
+              * to a data-dependent branch in the stream step, where the prefix lives
+              * in the handle.
               */
-             hh = hRing[hRing_Idx];
-             for( jh = hRing_Idx + 1; jh < optInTimePeriod; jh += 1 ) {
-                best = hRing[jh];
-                if( best > hh ) {
-                   hh = best;
+             highest = hhPre;
+             lowest = llPre;
+             if( tempHT > highest ) {
+                highest = tempHT;
+             }
+             if( tempLT < lowest ) {
+                lowest = tempLT;
+             }
+             if( hhBuf_Idx == 0 ) {
+                highest = tempHT;
+                lowest = tempLT;
+             }
+             hhPre = highest;
+             llPre = lowest;
+             if( hhBuf_Idx < lastP ) {
+                tempReal = hhBuf[hhBuf_Idx + 1];
+                if( tempReal > highest ) {
+                   highest = tempReal;
+                }
+                tempReal = llBuf[hhBuf_Idx + 1];
+                if( tempReal < lowest ) {
+                   lowest = tempReal;
                 }
              }
-             for( jh = 0; jh < hRing_Idx; jh += 1 ) {
-                best = hRing[jh];
-                if( best > hh ) {
-                   hh = best;
-                }
-             }
-             ll = lRing[lRing_Idx];
-             for( jl = lRing_Idx + 1; jl < optInTimePeriod; jl += 1 ) {
-                best = lRing[jl];
-                if( best < ll ) {
-                   ll = best;
-                }
-             }
-             for( jl = 0; jl < lRing_Idx; jl += 1 ) {
-                best = lRing[jl];
-                if( best < ll ) {
-                   ll = best;
-                }
-             }
-             fhRing[fhRing_Idx] = hh - optInMultiplier * prevATR;
-             flRing[flRing_Idx] = ll + optInMultiplier * prevATR;
-             if( today >= startIdx ) {
-                /* The second stage, over the q first-stage bars ending here. At q = 1
-                 * both runs are empty and the value is the bar's own, which is the
-                 * Chandelier Exit form.
-                 */
-                hh = fhRing[fhRing_Idx];
-                for( kh = fhRing_Idx + 1; kh < optInStopPeriod; kh += 1 ) {
-                   best = fhRing[kh];
-                   if( best > hh ) {
-                      hh = best;
+             hhBuf[hhBuf_Idx] = tempHT;
+             llBuf[hhBuf_Idx] = tempLT;
+             hhBuf_Idx++;
+             if( hhBuf_Idx > maxIdx_hhBuf ) { hhBuf_Idx = 0; }
+             if( hhBuf_Idx == 0 ) {
+                sufHi = hhBuf[lastP];
+                sufLo = llBuf[lastP];
+                ip = lastP;
+                while( ip > 1 ) {
+                   ip -= 1;
+                   tempReal = hhBuf[ip];
+                   if( tempReal > sufHi ) {
+                      sufHi = tempReal;
                    }
-                }
-                for( kh = 0; kh < fhRing_Idx; kh += 1 ) {
-                   best = fhRing[kh];
-                   if( best > hh ) {
-                      hh = best;
+                   hhBuf[ip] = sufHi;
+                   tempReal = llBuf[ip];
+                   if( tempReal < sufLo ) {
+                      sufLo = tempReal;
                    }
+                   llBuf[ip] = sufLo;
                 }
-                ll = flRing[flRing_Idx];
-                for( kl = flRing_Idx + 1; kl < optInStopPeriod; kl += 1 ) {
-                   best = flRing[kl];
-                   if( best < ll ) {
-                      ll = best;
-                   }
-                }
-                for( kl = 0; kl < flRing_Idx; kl += 1 ) {
-                   best = flRing[kl];
-                   if( best < ll ) {
-                      ll = best;
-                   }
-                }
-                outHighStop[outIdx] = hh;
-                outLowStop[outIdx] = ll;
-                outIdx = outIdx + 1;
              }
+             band = optInMultiplier * prevATR;
+             highStop = highest - band;
+             lowStop = lowest + band;
+             if( highStop > hsPre ) {
+                hsPre = highStop;
+             }
+             if( lowStop < lsPre ) {
+                lsPre = lowStop;
+             }
+             hsBuf[hsBuf_Idx] = highStop;
+             lsBuf[hsBuf_Idx] = lowStop;
+             hsBuf_Idx++;
+             if( hsBuf_Idx > maxIdx_hsBuf ) { hsBuf_Idx = 0; }
              today += 1;
-             hRing_Idx++;
-             if( hRing_Idx > maxIdx_hRing ) { hRing_Idx = 0; }
-             lRing_Idx++;
-             if( lRing_Idx > maxIdx_lRing ) { lRing_Idx = 0; }
-             fhRing_Idx++;
-             if( fhRing_Idx > maxIdx_fhRing ) { fhRing_Idx = 0; }
-             flRing_Idx++;
-             if( flRing_Idx > maxIdx_flRing ) { flRing_Idx = 0; }
           }
-          outNBElement.value = outIdx;
+          /* The first stop window is one whole block as well: its extremes are the
+           * prefix extremes, and the block is complete.
+           */
+          sufHi = hsBuf[lastQ];
+          sufLo = lsBuf[lastQ];
+          iq = lastQ;
+          while( iq > 1 ) {
+             iq -= 1;
+             tempReal = hsBuf[iq];
+             if( tempReal > sufHi ) {
+                sufHi = tempReal;
+             }
+             hsBuf[iq] = sufHi;
+             tempReal = lsBuf[iq];
+             if( tempReal < sufLo ) {
+                sufLo = tempReal;
+             }
+             lsBuf[iq] = sufLo;
+          }
+          outHighStop[0] = hsPre;
+          outLowStop[0] = lsPre;
+          outIdx = 1;
+          while( today <= endIdx ) {
+             tempLT = inLow[today];
+             tempHT = inHigh[today];
+             tempCY = inClose[today - 1];
+             greatest = tempHT - tempLT;
+             /* val1 */
+             val2 = Math.abs(tempCY - tempHT);
+             if( val2 > greatest ) {
+                greatest = val2;
+             }
+             val3 = Math.abs(tempCY - tempLT);
+             if( val3 > greatest ) {
+                greatest = val3;
+             }
+             prevATR = Math.fma(wBeta, prevATR, wAlpha * greatest);
+             highest = hhPre;
+             lowest = llPre;
+             if( tempHT > highest ) {
+                highest = tempHT;
+             }
+             if( tempLT < lowest ) {
+                lowest = tempLT;
+             }
+             if( hhBuf_Idx == 0 ) {
+                highest = tempHT;
+                lowest = tempLT;
+             }
+             hhPre = highest;
+             llPre = lowest;
+             if( hhBuf_Idx < lastP ) {
+                tempReal = hhBuf[hhBuf_Idx + 1];
+                if( tempReal > highest ) {
+                   highest = tempReal;
+                }
+                tempReal = llBuf[hhBuf_Idx + 1];
+                if( tempReal < lowest ) {
+                   lowest = tempReal;
+                }
+             }
+             hhBuf[hhBuf_Idx] = tempHT;
+             llBuf[hhBuf_Idx] = tempLT;
+             hhBuf_Idx++;
+             if( hhBuf_Idx > maxIdx_hhBuf ) { hhBuf_Idx = 0; }
+             band = optInMultiplier * prevATR;
+             highStop = highest - band;
+             lowStop = lowest + band;
+             highest = hsPre;
+             lowest = lsPre;
+             if( highStop > highest ) {
+                highest = highStop;
+             }
+             if( lowStop < lowest ) {
+                lowest = lowStop;
+             }
+             if( hsBuf_Idx == 0 ) {
+                highest = highStop;
+                lowest = lowStop;
+             }
+             hsPre = highest;
+             lsPre = lowest;
+             if( hsBuf_Idx < lastQ ) {
+                tempReal = hsBuf[hsBuf_Idx + 1];
+                if( tempReal > highest ) {
+                   highest = tempReal;
+                }
+                tempReal = lsBuf[hsBuf_Idx + 1];
+                if( tempReal < lowest ) {
+                   lowest = tempReal;
+                }
+             }
+             hsBuf[hsBuf_Idx] = highStop;
+             lsBuf[hsBuf_Idx] = lowStop;
+             hsBuf_Idx++;
+             if( hsBuf_Idx > maxIdx_hsBuf ) { hsBuf_Idx = 0; }
+             outHighStop[outIdx] = highest;
+             outLowStop[outIdx] = lowest;
+             /* A completed block becomes its suffix extrema. Nothing this bar reads
+              * them, so both passes stay below the output stores, where the peek
+              * frame never runs them.
+              */
+             if( hhBuf_Idx == 0 ) {
+                sufHi = hhBuf[lastP];
+                sufLo = llBuf[lastP];
+                ip = lastP;
+                while( ip > 1 ) {
+                   ip -= 1;
+                   tempReal = hhBuf[ip];
+                   if( tempReal > sufHi ) {
+                      sufHi = tempReal;
+                   }
+                   hhBuf[ip] = sufHi;
+                   tempReal = llBuf[ip];
+                   if( tempReal < sufLo ) {
+                      sufLo = tempReal;
+                   }
+                   llBuf[ip] = sufLo;
+                }
+             }
+             if( hsBuf_Idx == 0 ) {
+                sufHi = hsBuf[lastQ];
+                sufLo = lsBuf[lastQ];
+                iq = lastQ;
+                while( iq > 1 ) {
+                   iq -= 1;
+                   tempReal = hsBuf[iq];
+                   if( tempReal > sufHi ) {
+                      sufHi = tempReal;
+                   }
+                   hsBuf[iq] = sufHi;
+                   tempReal = lsBuf[iq];
+                   if( tempReal < sufLo ) {
+                      sufLo = tempReal;
+                   }
+                   lsBuf[iq] = sufLo;
+                }
+             }
+             outIdx += 1;
+             today += 1;
+          }
           outBegIdx.value = startIdx;
+          outNBElement.value = outIdx;
           return RetCode.SUCCESS ;
        }
        RetCode ckspImpl( int startIdx,
@@ -77095,15 +77210,26 @@ class Core {
                          double outHighStop[],
                          double outLowStop[] )
        {
+          double[] hhBuf;
+          int hhBuf_Idx = 0;
+          int maxIdx_hhBuf = (30)-1;
+          double[] llBuf;
+          int llBuf_Idx = 0;
+          int maxIdx_llBuf = (30)-1;
+          double[] hsBuf;
+          int hsBuf_Idx = 0;
+          int maxIdx_hsBuf = (30)-1;
+          double[] lsBuf;
+          int lsBuf_Idx = 0;
+          int maxIdx_lsBuf = (30)-1;
           int i = 0;
-          int jh = 0;
-          int jl = 0;
-          int kh = 0;
-          int kl = 0;
+          int ip = 0;
+          int iq = 0;
           int today = 0;
           int outIdx = 0;
           int lookbackTotal = 0;
-          int stageOneIdx = 0;
+          int lastP = 0;
+          int lastQ = 0;
           double prevATR = 0;
           double periodTotal = 0;
           double wAlpha = 0;
@@ -77114,21 +77240,18 @@ class Core {
           double tempCY = 0;
           double tempLT = 0;
           double tempHT = 0;
-          double hh = 0;
-          double ll = 0;
-          double best = 0;
-          double[] hRing;
-          int hRing_Idx = 0;
-          int maxIdx_hRing = (50)-1;
-          double[] lRing;
-          int lRing_Idx = 0;
-          int maxIdx_lRing = (50)-1;
-          double[] fhRing;
-          int fhRing_Idx = 0;
-          int maxIdx_fhRing = (50)-1;
-          double[] flRing;
-          int flRing_Idx = 0;
-          int maxIdx_flRing = (50)-1;
+          double tempReal = 0;
+          double hhPre = 0;
+          double llPre = 0;
+          double hsPre = 0;
+          double lsPre = 0;
+          double sufHi = 0;
+          double sufLo = 0;
+          double highest = 0;
+          double lowest = 0;
+          double band = 0;
+          double highStop = 0;
+          double lowStop = 0;
           if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
              return RetCode.OUT_OF_RANGE_START_INDEX ;
           }
@@ -77163,25 +77286,26 @@ class Core {
              return RetCode.SUCCESS ;
           }
           if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
-          hRing = new double[optInTimePeriod];
-          maxIdx_hRing = (optInTimePeriod)-1;
-          hRing_Idx = 0;
+          hhBuf = new double[optInTimePeriod];
+          maxIdx_hhBuf = (optInTimePeriod)-1;
+          hhBuf_Idx = 0;
           if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
-          lRing = new double[optInTimePeriod];
-          maxIdx_lRing = (optInTimePeriod)-1;
-          lRing_Idx = 0;
+          llBuf = new double[optInTimePeriod];
+          maxIdx_llBuf = (optInTimePeriod)-1;
+          llBuf_Idx = 0;
           if( optInStopPeriod < 1 ) return RetCode.INTERNAL_ERROR;
-          fhRing = new double[optInStopPeriod];
-          maxIdx_fhRing = (optInStopPeriod)-1;
-          fhRing_Idx = 0;
+          hsBuf = new double[optInStopPeriod];
+          maxIdx_hsBuf = (optInStopPeriod)-1;
+          hsBuf_Idx = 0;
           if( optInStopPeriod < 1 ) return RetCode.INTERNAL_ERROR;
-          flRing = new double[optInStopPeriod];
-          maxIdx_flRing = (optInStopPeriod)-1;
-          flRing_Idx = 0;
-          stageOneIdx = startIdx - (optInStopPeriod - 1);
+          lsBuf = new double[optInStopPeriod];
+          maxIdx_lsBuf = (optInStopPeriod)-1;
+          lsBuf_Idx = 0;
+          lastP = optInTimePeriod - 1;
+          lastQ = optInStopPeriod - 1;
           wBeta = (double)(optInTimePeriod - 1) / (double)optInTimePeriod;
           wAlpha = 1.0 - wBeta;
-          today = stageOneIdx - atrLookback(optInTimePeriod) + 1;
+          today = startIdx - lookbackTotal + 1;
           periodTotal = 0.0;
           i = optInTimePeriod;
           while( i-- > 0 ) {
@@ -77201,7 +77325,7 @@ class Core {
              today += 1;
           }
           prevATR = periodTotal / optInTimePeriod;
-          i = atrLookback(optInTimePeriod) - optInTimePeriod;
+          i = lookbackTotal - lastQ - optInTimePeriod;
           while( i != 0 ) {
              tempLT = (double)inLow[today];
              tempHT = (double)inHigh[today];
@@ -77219,62 +77343,129 @@ class Core {
              today += 1;
              i -= 1;
           }
-          i = stageOneIdx - optInTimePeriod + 1;
-          while( i < stageOneIdx ) {
-             hRing[hRing_Idx] = (double)inHigh[i];
-             lRing[lRing_Idx] = (double)inLow[i];
-             i += 1;
-             hRing_Idx++;
-             if( hRing_Idx > maxIdx_hRing ) { hRing_Idx = 0; }
-             lRing_Idx++;
-             if( lRing_Idx > maxIdx_lRing ) { lRing_Idx = 0; }
-          }
-          today = stageOneIdx;
-          hRing[hRing_Idx] = (double)inHigh[today];
-          lRing[lRing_Idx] = (double)inLow[today];
-          hh = hRing[hRing_Idx];
-          for( jh = hRing_Idx + 1; jh < optInTimePeriod; jh += 1 ) {
-             best = hRing[jh];
-             if( best > hh ) {
-                hh = best;
+          highest = (double)inHigh[today - 1];
+          lowest = (double)inLow[today - 1];
+          hhBuf[lastP] = highest;
+          llBuf[lastP] = lowest;
+          ip = lastP;
+          while( ip > 0 ) {
+             ip -= 1;
+             tempHT = (double)inHigh[today - 1 - lastP + ip];
+             tempLT = (double)inLow[today - 1 - lastP + ip];
+             if( tempHT > highest ) {
+                highest = tempHT;
              }
-          }
-          for( jh = 0; jh < hRing_Idx; jh += 1 ) {
-             best = hRing[jh];
-             if( best > hh ) {
-                hh = best;
+             if( tempLT < lowest ) {
+                lowest = tempLT;
              }
+             hhBuf[ip] = highest;
+             llBuf[ip] = lowest;
           }
-          ll = lRing[lRing_Idx];
-          for( jl = lRing_Idx + 1; jl < optInTimePeriod; jl += 1 ) {
-             best = lRing[jl];
-             if( best < ll ) {
-                ll = best;
+          hhPre = highest;
+          llPre = lowest;
+          band = optInMultiplier * prevATR;
+          highStop = highest - band;
+          lowStop = lowest + band;
+          hsPre = highStop;
+          lsPre = lowStop;
+          hsBuf[hsBuf_Idx] = highStop;
+          lsBuf[hsBuf_Idx] = lowStop;
+          hsBuf_Idx++;
+          if( hsBuf_Idx > maxIdx_hsBuf ) { hsBuf_Idx = 0; }
+          while( today <= startIdx ) {
+             tempLT = (double)inLow[today];
+             tempHT = (double)inHigh[today];
+             tempCY = (double)inClose[today - 1];
+             greatest = tempHT - tempLT;
+             val2 = Math.abs(tempCY - tempHT);
+             if( val2 > greatest ) {
+                greatest = val2;
              }
-          }
-          for( jl = 0; jl < lRing_Idx; jl += 1 ) {
-             best = lRing[jl];
-             if( best < ll ) {
-                ll = best;
+             val3 = Math.abs(tempCY - tempLT);
+             if( val3 > greatest ) {
+                greatest = val3;
              }
+             prevATR = Math.fma(wBeta, prevATR, wAlpha * greatest);
+             highest = hhPre;
+             lowest = llPre;
+             if( tempHT > highest ) {
+                highest = tempHT;
+             }
+             if( tempLT < lowest ) {
+                lowest = tempLT;
+             }
+             if( hhBuf_Idx == 0 ) {
+                highest = tempHT;
+                lowest = tempLT;
+             }
+             hhPre = highest;
+             llPre = lowest;
+             if( hhBuf_Idx < lastP ) {
+                tempReal = hhBuf[hhBuf_Idx + 1];
+                if( tempReal > highest ) {
+                   highest = tempReal;
+                }
+                tempReal = llBuf[hhBuf_Idx + 1];
+                if( tempReal < lowest ) {
+                   lowest = tempReal;
+                }
+             }
+             hhBuf[hhBuf_Idx] = tempHT;
+             llBuf[hhBuf_Idx] = tempLT;
+             hhBuf_Idx++;
+             if( hhBuf_Idx > maxIdx_hhBuf ) { hhBuf_Idx = 0; }
+             if( hhBuf_Idx == 0 ) {
+                sufHi = hhBuf[lastP];
+                sufLo = llBuf[lastP];
+                ip = lastP;
+                while( ip > 1 ) {
+                   ip -= 1;
+                   tempReal = hhBuf[ip];
+                   if( tempReal > sufHi ) {
+                      sufHi = tempReal;
+                   }
+                   hhBuf[ip] = sufHi;
+                   tempReal = llBuf[ip];
+                   if( tempReal < sufLo ) {
+                      sufLo = tempReal;
+                   }
+                   llBuf[ip] = sufLo;
+                }
+             }
+             band = optInMultiplier * prevATR;
+             highStop = highest - band;
+             lowStop = lowest + band;
+             if( highStop > hsPre ) {
+                hsPre = highStop;
+             }
+             if( lowStop < lsPre ) {
+                lsPre = lowStop;
+             }
+             hsBuf[hsBuf_Idx] = highStop;
+             lsBuf[hsBuf_Idx] = lowStop;
+             hsBuf_Idx++;
+             if( hsBuf_Idx > maxIdx_hsBuf ) { hsBuf_Idx = 0; }
+             today += 1;
           }
-          fhRing[fhRing_Idx] = hh - optInMultiplier * prevATR;
-          flRing[flRing_Idx] = ll + optInMultiplier * prevATR;
-          outIdx = 0;
-          if( today >= startIdx ) {
-             outHighStop[outIdx] = fhRing[fhRing_Idx];
-             outLowStop[outIdx] = flRing[flRing_Idx];
-             outIdx = outIdx + 1;
+          sufHi = hsBuf[lastQ];
+          sufLo = lsBuf[lastQ];
+          iq = lastQ;
+          while( iq > 1 ) {
+             iq -= 1;
+             tempReal = hsBuf[iq];
+             if( tempReal > sufHi ) {
+                sufHi = tempReal;
+             }
+             hsBuf[iq] = sufHi;
+             tempReal = lsBuf[iq];
+             if( tempReal < sufLo ) {
+                sufLo = tempReal;
+             }
+             lsBuf[iq] = sufLo;
           }
-          today += 1;
-          hRing_Idx++;
-          if( hRing_Idx > maxIdx_hRing ) { hRing_Idx = 0; }
-          lRing_Idx++;
-          if( lRing_Idx > maxIdx_lRing ) { lRing_Idx = 0; }
-          fhRing_Idx++;
-          if( fhRing_Idx > maxIdx_fhRing ) { fhRing_Idx = 0; }
-          flRing_Idx++;
-          if( flRing_Idx > maxIdx_flRing ) { flRing_Idx = 0; }
+          outHighStop[0] = hsPre;
+          outLowStop[0] = lsPre;
+          outIdx = 1;
           while( today <= endIdx ) {
              tempLT = (double)inLow[today];
              tempHT = (double)inHigh[today];
@@ -77289,93 +77480,128 @@ class Core {
                 greatest = val3;
              }
              prevATR = Math.fma(wBeta, prevATR, wAlpha * greatest);
-             hRing[hRing_Idx] = tempHT;
-             lRing[lRing_Idx] = tempLT;
-             hh = hRing[hRing_Idx];
-             for( jh = hRing_Idx + 1; jh < optInTimePeriod; jh += 1 ) {
-                best = hRing[jh];
-                if( best > hh ) {
-                   hh = best;
+             highest = hhPre;
+             lowest = llPre;
+             if( tempHT > highest ) {
+                highest = tempHT;
+             }
+             if( tempLT < lowest ) {
+                lowest = tempLT;
+             }
+             if( hhBuf_Idx == 0 ) {
+                highest = tempHT;
+                lowest = tempLT;
+             }
+             hhPre = highest;
+             llPre = lowest;
+             if( hhBuf_Idx < lastP ) {
+                tempReal = hhBuf[hhBuf_Idx + 1];
+                if( tempReal > highest ) {
+                   highest = tempReal;
+                }
+                tempReal = llBuf[hhBuf_Idx + 1];
+                if( tempReal < lowest ) {
+                   lowest = tempReal;
                 }
              }
-             for( jh = 0; jh < hRing_Idx; jh += 1 ) {
-                best = hRing[jh];
-                if( best > hh ) {
-                   hh = best;
+             hhBuf[hhBuf_Idx] = tempHT;
+             llBuf[hhBuf_Idx] = tempLT;
+             hhBuf_Idx++;
+             if( hhBuf_Idx > maxIdx_hhBuf ) { hhBuf_Idx = 0; }
+             band = optInMultiplier * prevATR;
+             highStop = highest - band;
+             lowStop = lowest + band;
+             highest = hsPre;
+             lowest = lsPre;
+             if( highStop > highest ) {
+                highest = highStop;
+             }
+             if( lowStop < lowest ) {
+                lowest = lowStop;
+             }
+             if( hsBuf_Idx == 0 ) {
+                highest = highStop;
+                lowest = lowStop;
+             }
+             hsPre = highest;
+             lsPre = lowest;
+             if( hsBuf_Idx < lastQ ) {
+                tempReal = hsBuf[hsBuf_Idx + 1];
+                if( tempReal > highest ) {
+                   highest = tempReal;
+                }
+                tempReal = lsBuf[hsBuf_Idx + 1];
+                if( tempReal < lowest ) {
+                   lowest = tempReal;
                 }
              }
-             ll = lRing[lRing_Idx];
-             for( jl = lRing_Idx + 1; jl < optInTimePeriod; jl += 1 ) {
-                best = lRing[jl];
-                if( best < ll ) {
-                   ll = best;
-                }
-             }
-             for( jl = 0; jl < lRing_Idx; jl += 1 ) {
-                best = lRing[jl];
-                if( best < ll ) {
-                   ll = best;
-                }
-             }
-             fhRing[fhRing_Idx] = hh - optInMultiplier * prevATR;
-             flRing[flRing_Idx] = ll + optInMultiplier * prevATR;
-             if( today >= startIdx ) {
-                hh = fhRing[fhRing_Idx];
-                for( kh = fhRing_Idx + 1; kh < optInStopPeriod; kh += 1 ) {
-                   best = fhRing[kh];
-                   if( best > hh ) {
-                      hh = best;
+             hsBuf[hsBuf_Idx] = highStop;
+             lsBuf[hsBuf_Idx] = lowStop;
+             hsBuf_Idx++;
+             if( hsBuf_Idx > maxIdx_hsBuf ) { hsBuf_Idx = 0; }
+             outHighStop[outIdx] = highest;
+             outLowStop[outIdx] = lowest;
+             if( hhBuf_Idx == 0 ) {
+                sufHi = hhBuf[lastP];
+                sufLo = llBuf[lastP];
+                ip = lastP;
+                while( ip > 1 ) {
+                   ip -= 1;
+                   tempReal = hhBuf[ip];
+                   if( tempReal > sufHi ) {
+                      sufHi = tempReal;
                    }
-                }
-                for( kh = 0; kh < fhRing_Idx; kh += 1 ) {
-                   best = fhRing[kh];
-                   if( best > hh ) {
-                      hh = best;
+                   hhBuf[ip] = sufHi;
+                   tempReal = llBuf[ip];
+                   if( tempReal < sufLo ) {
+                      sufLo = tempReal;
                    }
+                   llBuf[ip] = sufLo;
                 }
-                ll = flRing[flRing_Idx];
-                for( kl = flRing_Idx + 1; kl < optInStopPeriod; kl += 1 ) {
-                   best = flRing[kl];
-                   if( best < ll ) {
-                      ll = best;
-                   }
-                }
-                for( kl = 0; kl < flRing_Idx; kl += 1 ) {
-                   best = flRing[kl];
-                   if( best < ll ) {
-                      ll = best;
-                   }
-                }
-                outHighStop[outIdx] = hh;
-                outLowStop[outIdx] = ll;
-                outIdx = outIdx + 1;
              }
+             if( hsBuf_Idx == 0 ) {
+                sufHi = hsBuf[lastQ];
+                sufLo = lsBuf[lastQ];
+                iq = lastQ;
+                while( iq > 1 ) {
+                   iq -= 1;
+                   tempReal = hsBuf[iq];
+                   if( tempReal > sufHi ) {
+                      sufHi = tempReal;
+                   }
+                   hsBuf[iq] = sufHi;
+                   tempReal = lsBuf[iq];
+                   if( tempReal < sufLo ) {
+                      sufLo = tempReal;
+                   }
+                   lsBuf[iq] = sufLo;
+                }
+             }
+             outIdx += 1;
              today += 1;
-             hRing_Idx++;
-             if( hRing_Idx > maxIdx_hRing ) { hRing_Idx = 0; }
-             lRing_Idx++;
-             if( lRing_Idx > maxIdx_lRing ) { lRing_Idx = 0; }
-             fhRing_Idx++;
-             if( fhRing_Idx > maxIdx_fhRing ) { fhRing_Idx = 0; }
-             flRing_Idx++;
-             if( flRing_Idx > maxIdx_flRing ) { flRing_Idx = 0; }
           }
-          outNBElement.value = outIdx;
           outBegIdx.value = startIdx;
+          outNBElement.value = outIdx;
           return RetCode.SUCCESS ;
        }
        /**
-        * Chande Kroll Stop places a pair of trailing stops a multiple of the
-        * Average True Range away from the recent extremes, then takes the extreme
-        * of those stops over a second, usually longer, window. The result is a stop
-        * that follows price but only ratchets after the shorter stop has held for a
-        * while. The high stop sits below price and is the level a long position
-        * would give up at; the low stop sits above price and is the short side's.
-        * Neither line is always above the other: when the multiplier is large
-        * enough the two cross, which is the signal that the range has widened past
-        * what the stops can straddle.
+        * Chande and Kroll's two-line volatility stop. The highest high is offset
+        * down, and the lowest low up, by a multiple of the Average True Range, and
+        * each line then takes the extreme of its own recent values, so it moves
+        * only when a new extreme enters the stop window or an old one leaves it.
+        * Price above both lines reads as an uptrend and price below both as a
+        * downtrend.
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/cksp">ta-lib.org/functions/cksp</a>.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>The two lines are named for how they are built, not for the position they protect, because published implementations give "long stop" and "short stop" to opposite lines. {@code outHighStop} is the line most platforms plot as the short stop, {@code outLowStop} the one they plot as the long stop.</li>
+        * <li>Neither line is always above the other: a large multiplier pushes the high line below the low one.</li>
+        * <li>The Average True Range is this library's, whose first value is the average of the first full period of true ranges that have a previous close. Platforms that start the true range on the very first bar give slightly different values on early bars; the difference decays as the average warms up.</li>
+        * <li>The book's own settings are reported as a multiplier of 3 and a stop period of 20; the defaults here are the ones charting platforms ship.</li>
+        * <li>A stop period of 1 leaves the first stops unchanged, which is the Chandelier Exit on both sides.</li>
+        * <li>Both lines inherit the Average True Range's warm-up, so a caller who wants them converged sets {@code TA_FUNC_UNST_ATR}, exactly as when calling that function directly.</li>
+        * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are; nothing
         * outside that range is touched, and the library never pads with NaN. A
@@ -77386,19 +77612,24 @@ class Core {
         * @param endIdx Last bar of the requested range (inclusive).
         * @param inHigh High price of each bar.
         * @param inLow Low price of each bar.
-        * @param inClose Close price of each bar, read only by the True Range.
-        * @param optInTimePeriod ATR and extreme window (default 10; range
-        *        2..100000; {@code Integer.MIN_VALUE} selects the default).
-        * @param optInMultiplier ATR multiplier (default 1; minimum 0;
-        *        {@link Core#REAL_DEFAULT} selects the default).
-        * @param optInStopPeriod Stop window (default 9; range 1..100000;
+        * @param inClose Close price of each bar.
+        * @param optInTimePeriod Window of the highest high and lowest low, and
+        *        smoothing period of the Average True Range (default 10; range 2..100000;
         *        {@code Integer.MIN_VALUE} selects the default).
-        * @param outHighStop Trailing stop below price, the high side. Must hold at
-        *        least {@code endIdx - max(startIdx, ckspLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
-        * @param outLowStop Trailing stop above price, the low side. Must hold at
-        *        least {@code endIdx - max(startIdx, ckspLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        * @param optInMultiplier Multiplier applied to the Average True Range to
+        *        offset the first stops (default 1; minimum 0; {@link Core#REAL_DEFAULT}
+        *        selects the default).
+        * @param optInStopPeriod Window over which each first stop takes its extreme
+        *        (default 9; range 1..100000; {@code Integer.MIN_VALUE} selects the
+        *        default).
+        * @param outHighStop Highest of the recent first high stops; usually plotted
+        *        as the short stop. Must hold at least
+        *        {@code endIdx - max(startIdx, ckspLookback(...)) + 1} values, the count
+        *        the call produces (none when that is not positive).
+        * @param outLowStop Lowest of the recent first low stops; usually plotted as
+        *        the long stop. Must hold at least
+        *        {@code endIdx - max(startIdx, ckspLookback(...)) + 1} values, the count
+        *        the call produces (none when that is not positive).
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -77412,6 +77643,13 @@ class Core {
         *        same. An output this function documents as declinable is the one
         *        exception: {@code null} is how you decline it. Checked before anything is
         *        written, so a rejected call leaves every buffer untouched.
+        *
+        * @see Core#atr
+        * @see Core#max
+        * @see Core#min
+        * @see Core#supertrend
+        * @see Core#kc
+        * @see Core#donchian
         */
        public OutRange cksp( int startIdx,
                              int endIdx,
@@ -77442,17 +77680,23 @@ class Core {
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
        /**
-        * Chande Kroll Stop places a pair of trailing stops a multiple of the
-        * Average True Range away from the recent extremes, then takes the extreme
-        * of those stops over a second, usually longer, window. The result is a stop
-        * that follows price but only ratchets after the shorter stop has held for a
-        * while. The high stop sits below price and is the level a long position
-        * would give up at; the low stop sits above price and is the short side's.
-        * Neither line is always above the other: when the multiplier is large
-        * enough the two cross, which is the signal that the range has widened past
-        * what the stops can straddle.
+        * Chande and Kroll's two-line volatility stop. The highest high is offset
+        * down, and the lowest low up, by a multiple of the Average True Range, and
+        * each line then takes the extreme of its own recent values, so it moves
+        * only when a new extreme enters the stop window or an old one leaves it.
+        * Price above both lines reads as an uptrend and price below both as a
+        * downtrend.
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/cksp">ta-lib.org/functions/cksp</a>.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>The two lines are named for how they are built, not for the position they protect, because published implementations give "long stop" and "short stop" to opposite lines. {@code outHighStop} is the line most platforms plot as the short stop, {@code outLowStop} the one they plot as the long stop.</li>
+        * <li>Neither line is always above the other: a large multiplier pushes the high line below the low one.</li>
+        * <li>The Average True Range is this library's, whose first value is the average of the first full period of true ranges that have a previous close. Platforms that start the true range on the very first bar give slightly different values on early bars; the difference decays as the average warms up.</li>
+        * <li>The book's own settings are reported as a multiplier of 3 and a stop period of 20; the defaults here are the ones charting platforms ship.</li>
+        * <li>A stop period of 1 leaves the first stops unchanged, which is the Chandelier Exit on both sides.</li>
+        * <li>Both lines inherit the Average True Range's warm-up, so a caller who wants them converged sets {@code TA_FUNC_UNST_ATR}, exactly as when calling that function directly.</li>
+        * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
@@ -77466,19 +77710,24 @@ class Core {
         * @param endIdx Last bar of the requested range (inclusive).
         * @param inHigh High price of each bar.
         * @param inLow Low price of each bar.
-        * @param inClose Close price of each bar, read only by the True Range.
-        * @param optInTimePeriod ATR and extreme window (default 10; range
-        *        2..100000; {@code Integer.MIN_VALUE} selects the default).
-        * @param optInMultiplier ATR multiplier (default 1; minimum 0;
-        *        {@link Core#REAL_DEFAULT} selects the default).
-        * @param optInStopPeriod Stop window (default 9; range 1..100000;
+        * @param inClose Close price of each bar.
+        * @param optInTimePeriod Window of the highest high and lowest low, and
+        *        smoothing period of the Average True Range (default 10; range 2..100000;
         *        {@code Integer.MIN_VALUE} selects the default).
-        * @param outHighStop Trailing stop below price, the high side. Must hold at
-        *        least {@code endIdx - max(startIdx, ckspLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
-        * @param outLowStop Trailing stop above price, the low side. Must hold at
-        *        least {@code endIdx - max(startIdx, ckspLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        * @param optInMultiplier Multiplier applied to the Average True Range to
+        *        offset the first stops (default 1; minimum 0; {@link Core#REAL_DEFAULT}
+        *        selects the default).
+        * @param optInStopPeriod Window over which each first stop takes its extreme
+        *        (default 9; range 1..100000; {@code Integer.MIN_VALUE} selects the
+        *        default).
+        * @param outHighStop Highest of the recent first high stops; usually plotted
+        *        as the short stop. Must hold at least
+        *        {@code endIdx - max(startIdx, ckspLookback(...)) + 1} values, the count
+        *        the call produces (none when that is not positive).
+        * @param outLowStop Lowest of the recent first low stops; usually plotted as
+        *        the long stop. Must hold at least
+        *        {@code endIdx - max(startIdx, ckspLookback(...)) + 1} values, the count
+        *        the call produces (none when that is not positive).
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -77492,6 +77741,13 @@ class Core {
         *        same. An output this function documents as declinable is the one
         *        exception: {@code null} is how you decline it. Checked before anything is
         *        written, so a rejected call leaves every buffer untouched.
+        *
+        * @see Core#atr
+        * @see Core#max
+        * @see Core#min
+        * @see Core#supertrend
+        * @see Core#kc
+        * @see Core#donchian
         */
        public OutRange cksp( int startIdx,
                              int endIdx,
@@ -77542,26 +77798,32 @@ class Core {
           private int optInTimePeriod;
           private double optInMultiplier;
           private int optInStopPeriod;
+          private int lastP;
+          private int lastQ;
           private double prevATR;
           private double wAlpha;
           private double wBeta;
-          private int hRing_Idx;
-          private int lRing_Idx;
-          private int fhRing_Idx;
-          private int flRing_Idx;
-          private int maxIdx_hRing;
-          private int maxIdx_lRing;
-          private int maxIdx_fhRing;
-          private int maxIdx_flRing;
+          private double hhPre;
+          private double llPre;
+          private double hsPre;
+          private double lsPre;
+          private int hhBuf_Idx;
+          private int hsBuf_Idx;
+          private int maxIdx_hhBuf;
+          private int llBuf_Idx;
+          private int maxIdx_llBuf;
+          private int maxIdx_hsBuf;
+          private int lsBuf_Idx;
+          private int maxIdx_lsBuf;
           private double lag1_inClose;
-          private int cbSize_hRing;
-          private double[] cb_hRing;
-          private int cbSize_lRing;
-          private double[] cb_lRing;
-          private int cbSize_fhRing;
-          private double[] cb_fhRing;
-          private int cbSize_flRing;
-          private double[] cb_flRing;
+          private int cbSize_hhBuf;
+          private double[] cb_hhBuf;
+          private int cbSize_llBuf;
+          private double[] cb_llBuf;
+          private int cbSize_hsBuf;
+          private double[] cb_hsBuf;
+          private int cbSize_lsBuf;
+          private double[] cb_lsBuf;
           private double cur_outHighStop;
           private double cur_outLowStop;
           private int outRangeBegIdx;
@@ -77608,26 +77870,32 @@ class Core {
              this.optInTimePeriod = other.optInTimePeriod;
              this.optInMultiplier = other.optInMultiplier;
              this.optInStopPeriod = other.optInStopPeriod;
+             this.lastP = other.lastP;
+             this.lastQ = other.lastQ;
              this.prevATR = other.prevATR;
              this.wAlpha = other.wAlpha;
              this.wBeta = other.wBeta;
-             this.hRing_Idx = other.hRing_Idx;
-             this.lRing_Idx = other.lRing_Idx;
-             this.fhRing_Idx = other.fhRing_Idx;
-             this.flRing_Idx = other.flRing_Idx;
-             this.maxIdx_hRing = other.maxIdx_hRing;
-             this.maxIdx_lRing = other.maxIdx_lRing;
-             this.maxIdx_fhRing = other.maxIdx_fhRing;
-             this.maxIdx_flRing = other.maxIdx_flRing;
+             this.hhPre = other.hhPre;
+             this.llPre = other.llPre;
+             this.hsPre = other.hsPre;
+             this.lsPre = other.lsPre;
+             this.hhBuf_Idx = other.hhBuf_Idx;
+             this.hsBuf_Idx = other.hsBuf_Idx;
+             this.maxIdx_hhBuf = other.maxIdx_hhBuf;
+             this.llBuf_Idx = other.llBuf_Idx;
+             this.maxIdx_llBuf = other.maxIdx_llBuf;
+             this.maxIdx_hsBuf = other.maxIdx_hsBuf;
+             this.lsBuf_Idx = other.lsBuf_Idx;
+             this.maxIdx_lsBuf = other.maxIdx_lsBuf;
              this.lag1_inClose = other.lag1_inClose;
-             this.cbSize_hRing = other.cbSize_hRing;
-             this.cb_hRing = other.cb_hRing.clone();
-             this.cbSize_lRing = other.cbSize_lRing;
-             this.cb_lRing = other.cb_lRing.clone();
-             this.cbSize_fhRing = other.cbSize_fhRing;
-             this.cb_fhRing = other.cb_fhRing.clone();
-             this.cbSize_flRing = other.cbSize_flRing;
-             this.cb_flRing = other.cb_flRing.clone();
+             this.cbSize_hhBuf = other.cbSize_hhBuf;
+             this.cb_hhBuf = other.cb_hhBuf.clone();
+             this.cbSize_llBuf = other.cbSize_llBuf;
+             this.cb_llBuf = other.cb_llBuf.clone();
+             this.cbSize_hsBuf = other.cbSize_hsBuf;
+             this.cb_hsBuf = other.cb_hsBuf.clone();
+             this.cbSize_lsBuf = other.cbSize_lsBuf;
+             this.cb_lsBuf = other.cb_lsBuf.clone();
              this.cur_outHighStop = other.cur_outHighStop;
              this.cur_outLowStop = other.cur_outLowStop;
              this.outRangeBegIdx = other.outRangeBegIdx;
@@ -77677,34 +77945,32 @@ class Core {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw nonFiniteBar("CKSP peek", !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
              CkspStream sp = this;
-             int jh = 0;
-             int jl = 0;
-             int kh = 0;
-             int kl = 0;
              double val2 = 0.0;
              double val3 = 0.0;
              double greatest = 0.0;
              double tempCY = 0.0;
              double tempLT = 0.0;
              double tempHT = 0.0;
-             double hh = 0.0;
-             double ll = 0.0;
-             double best = 0.0;
+             double tempReal = 0.0;
+             double highest = 0.0;
+             double lowest = 0.0;
+             double band = 0.0;
+             double highStop = 0.0;
+             double lowStop = 0.0;
              double cur_outHighStop = 0.0;
              double cur_outLowStop = 0.0;
+             int hhBuf_Idx = sp.hhBuf_Idx;
+             double hhPre = sp.hhPre;
+             int hsBuf_Idx = sp.hsBuf_Idx;
+             double hsPre = sp.hsPre;
+             double llPre = sp.llPre;
+             double lsPre = sp.lsPre;
              double prevATR = sp.prevATR;
-             int pkSlot0 = -1;
-             double pkVal0 = 0.0;
-             int pkSlot1 = -1;
-             double pkVal1 = 0.0;
-             int pkSlot2 = -1;
-             double pkVal2 = 0.0;
-             int pkSlot3 = -1;
-             double pkVal3 = 0.0;
              tempLT = inLow;
              tempHT = inHigh;
              tempCY = sp.lag1_inClose;
              greatest = tempHT - tempLT;
+             /* val1 */
              val2 = Math.abs(tempCY - tempHT);
              if( val2 > greatest ) {
                 greatest = val2;
@@ -77714,76 +77980,67 @@ class Core {
                 greatest = val3;
              }
              prevATR = Math.fma(sp.wBeta, prevATR, sp.wAlpha * greatest);
-             pkSlot0 = sp.hRing_Idx;
-             pkVal0 = tempHT;
-             pkSlot1 = sp.lRing_Idx;
-             pkVal1 = tempLT;
-             /* The extremes of the p bars ending here. The newest sits at the ring's
-              * own index, so the oldest is the slot after it and the walk is two
-              * straight runs.
-              */
-             hh = (sp.hRing_Idx != pkSlot0) ? sp.cb_hRing[sp.hRing_Idx] : pkVal0;
-             for( jh = sp.hRing_Idx + 1; jh < sp.optInTimePeriod; jh += 1 ) {
-                best = sp.cb_hRing[jh];
-                if( best > hh ) {
-                   hh = best;
+             highest = hhPre;
+             lowest = llPre;
+             if( tempHT > highest ) {
+                highest = tempHT;
+             }
+             if( tempLT < lowest ) {
+                lowest = tempLT;
+             }
+             if( hhBuf_Idx == 0 ) {
+                highest = tempHT;
+                lowest = tempLT;
+             }
+             hhPre = highest;
+             llPre = lowest;
+             if( hhBuf_Idx < sp.lastP ) {
+                tempReal = sp.cb_hhBuf[hhBuf_Idx + 1];
+                if( tempReal > highest ) {
+                   highest = tempReal;
+                }
+                tempReal = sp.cb_llBuf[hhBuf_Idx + 1];
+                if( tempReal < lowest ) {
+                   lowest = tempReal;
                 }
              }
-             for( jh = 0; jh < sp.hRing_Idx; jh += 1 ) {
-                best = sp.cb_hRing[jh];
-                if( best > hh ) {
-                   hh = best;
+             hhBuf_Idx = hhBuf_Idx + 1;
+             if( hhBuf_Idx > sp.maxIdx_hhBuf ) {
+                hhBuf_Idx = 0;
+             }
+             band = sp.optInMultiplier * prevATR;
+             highStop = highest - band;
+             lowStop = lowest + band;
+             highest = hsPre;
+             lowest = lsPre;
+             if( highStop > highest ) {
+                highest = highStop;
+             }
+             if( lowStop < lowest ) {
+                lowest = lowStop;
+             }
+             if( hsBuf_Idx == 0 ) {
+                highest = highStop;
+                lowest = lowStop;
+             }
+             hsPre = highest;
+             lsPre = lowest;
+             if( hsBuf_Idx < sp.lastQ ) {
+                tempReal = sp.cb_hsBuf[hsBuf_Idx + 1];
+                if( tempReal > highest ) {
+                   highest = tempReal;
+                }
+                tempReal = sp.cb_lsBuf[hsBuf_Idx + 1];
+                if( tempReal < lowest ) {
+                   lowest = tempReal;
                 }
              }
-             ll = (sp.lRing_Idx != pkSlot1) ? sp.cb_lRing[sp.lRing_Idx] : pkVal1;
-             for( jl = sp.lRing_Idx + 1; jl < sp.optInTimePeriod; jl += 1 ) {
-                best = sp.cb_lRing[jl];
-                if( best < ll ) {
-                   ll = best;
-                }
+             hsBuf_Idx = hsBuf_Idx + 1;
+             if( hsBuf_Idx > sp.maxIdx_hsBuf ) {
+                hsBuf_Idx = 0;
              }
-             for( jl = 0; jl < sp.lRing_Idx; jl += 1 ) {
-                best = sp.cb_lRing[jl];
-                if( best < ll ) {
-                   ll = best;
-                }
-             }
-             pkSlot2 = sp.fhRing_Idx;
-             pkVal2 = hh - sp.optInMultiplier * prevATR;
-             pkSlot3 = sp.flRing_Idx;
-             pkVal3 = ll + sp.optInMultiplier * prevATR;
-             /* The second stage, over the q first-stage bars ending here. At q = 1
-              * both runs are empty and the value is the bar's own, which is the
-              * Chandelier Exit form.
-              */
-             hh = (sp.fhRing_Idx != pkSlot2) ? sp.cb_fhRing[sp.fhRing_Idx] : pkVal2;
-             for( kh = sp.fhRing_Idx + 1; kh < sp.optInStopPeriod; kh += 1 ) {
-                best = sp.cb_fhRing[kh];
-                if( best > hh ) {
-                   hh = best;
-                }
-             }
-             for( kh = 0; kh < sp.fhRing_Idx; kh += 1 ) {
-                best = sp.cb_fhRing[kh];
-                if( best > hh ) {
-                   hh = best;
-                }
-             }
-             ll = (sp.flRing_Idx != pkSlot3) ? sp.cb_flRing[sp.flRing_Idx] : pkVal3;
-             for( kl = sp.flRing_Idx + 1; kl < sp.optInStopPeriod; kl += 1 ) {
-                best = sp.cb_flRing[kl];
-                if( best < ll ) {
-                   ll = best;
-                }
-             }
-             for( kl = 0; kl < sp.flRing_Idx; kl += 1 ) {
-                best = sp.cb_flRing[kl];
-                if( best < ll ) {
-                   ll = best;
-                }
-             }
-             cur_outHighStop = hh;
-             cur_outLowStop = ll;
+             cur_outHighStop = highest;
+             cur_outLowStop = lowest;
              out.highStop = cur_outHighStop;
              out.lowStop = cur_outLowStop;
           }
@@ -77833,30 +78090,34 @@ class Core {
         * invariant the moment a reused instance becomes a key. Compare the fields.
         */
        public static final class CkspOut {
-          /** Trailing stop below price, the high side. */
+          /** Highest of the recent first high stops; usually plotted as the short stop. */
           public double highStop;
-          /** Trailing stop above price, the low side. */
+          /** Lowest of the recent first low stops; usually plotted as the long stop. */
           public double lowStop;
        }
        private void ckspStepImpl( CkspStream sp, double inHigh, double inLow, double inClose )
        {
-          int jh = 0;
-          int jl = 0;
-          int kh = 0;
-          int kl = 0;
+          int ip = 0;
+          int iq = 0;
           double val2 = 0.0;
           double val3 = 0.0;
           double greatest = 0.0;
           double tempCY = 0.0;
           double tempLT = 0.0;
           double tempHT = 0.0;
-          double hh = 0.0;
-          double ll = 0.0;
-          double best = 0.0;
+          double tempReal = 0.0;
+          double sufHi = 0.0;
+          double sufLo = 0.0;
+          double highest = 0.0;
+          double lowest = 0.0;
+          double band = 0.0;
+          double highStop = 0.0;
+          double lowStop = 0.0;
           tempLT = inLow;
           tempHT = inHigh;
           tempCY = sp.lag1_inClose;
           greatest = tempHT - tempLT;
+          /* val1 */
           val2 = Math.abs(tempCY - tempHT);
           if( val2 > greatest ) {
              greatest = val2;
@@ -77866,101 +78127,135 @@ class Core {
              greatest = val3;
           }
           sp.prevATR = Math.fma(sp.wBeta, sp.prevATR, sp.wAlpha * greatest);
-          sp.cb_hRing[sp.hRing_Idx] = tempHT;
-          sp.cb_lRing[sp.lRing_Idx] = tempLT;
-          /* The extremes of the p bars ending here. The newest sits at the ring's
-           * own index, so the oldest is the slot after it and the walk is two
-           * straight runs.
+          highest = sp.hhPre;
+          lowest = sp.llPre;
+          if( tempHT > highest ) {
+             highest = tempHT;
+          }
+          if( tempLT < lowest ) {
+             lowest = tempLT;
+          }
+          if( sp.hhBuf_Idx == 0 ) {
+             highest = tempHT;
+             lowest = tempLT;
+          }
+          sp.hhPre = highest;
+          sp.llPre = lowest;
+          if( sp.hhBuf_Idx < sp.lastP ) {
+             tempReal = sp.cb_hhBuf[sp.hhBuf_Idx + 1];
+             if( tempReal > highest ) {
+                highest = tempReal;
+             }
+             tempReal = sp.cb_llBuf[sp.hhBuf_Idx + 1];
+             if( tempReal < lowest ) {
+                lowest = tempReal;
+             }
+          }
+          sp.cb_hhBuf[sp.hhBuf_Idx] = tempHT;
+          sp.cb_llBuf[sp.hhBuf_Idx] = tempLT;
+          sp.hhBuf_Idx = sp.hhBuf_Idx + 1;
+          if( sp.hhBuf_Idx > sp.maxIdx_hhBuf ) {
+             sp.hhBuf_Idx = 0;
+          }
+          band = sp.optInMultiplier * sp.prevATR;
+          highStop = highest - band;
+          lowStop = lowest + band;
+          highest = sp.hsPre;
+          lowest = sp.lsPre;
+          if( highStop > highest ) {
+             highest = highStop;
+          }
+          if( lowStop < lowest ) {
+             lowest = lowStop;
+          }
+          if( sp.hsBuf_Idx == 0 ) {
+             highest = highStop;
+             lowest = lowStop;
+          }
+          sp.hsPre = highest;
+          sp.lsPre = lowest;
+          if( sp.hsBuf_Idx < sp.lastQ ) {
+             tempReal = sp.cb_hsBuf[sp.hsBuf_Idx + 1];
+             if( tempReal > highest ) {
+                highest = tempReal;
+             }
+             tempReal = sp.cb_lsBuf[sp.hsBuf_Idx + 1];
+             if( tempReal < lowest ) {
+                lowest = tempReal;
+             }
+          }
+          sp.cb_hsBuf[sp.hsBuf_Idx] = highStop;
+          sp.cb_lsBuf[sp.hsBuf_Idx] = lowStop;
+          sp.hsBuf_Idx = sp.hsBuf_Idx + 1;
+          if( sp.hsBuf_Idx > sp.maxIdx_hsBuf ) {
+             sp.hsBuf_Idx = 0;
+          }
+          sp.cur_outHighStop = highest;
+          sp.cur_outLowStop = lowest;
+          /* A completed block becomes its suffix extrema. Nothing this bar reads
+           * them, so both passes stay below the output stores, where the peek
+           * frame never runs them.
            */
-          hh = sp.cb_hRing[sp.hRing_Idx];
-          for( jh = sp.hRing_Idx + 1; jh < sp.optInTimePeriod; jh += 1 ) {
-             best = sp.cb_hRing[jh];
-             if( best > hh ) {
-                hh = best;
+          if( sp.hhBuf_Idx == 0 ) {
+             sufHi = sp.cb_hhBuf[sp.lastP];
+             sufLo = sp.cb_llBuf[sp.lastP];
+             ip = sp.lastP;
+             while( ip > 1 ) {
+                ip -= 1;
+                tempReal = sp.cb_hhBuf[ip];
+                if( tempReal > sufHi ) {
+                   sufHi = tempReal;
+                }
+                sp.cb_hhBuf[ip] = sufHi;
+                tempReal = sp.cb_llBuf[ip];
+                if( tempReal < sufLo ) {
+                   sufLo = tempReal;
+                }
+                sp.cb_llBuf[ip] = sufLo;
              }
           }
-          for( jh = 0; jh < sp.hRing_Idx; jh += 1 ) {
-             best = sp.cb_hRing[jh];
-             if( best > hh ) {
-                hh = best;
+          if( sp.hsBuf_Idx == 0 ) {
+             sufHi = sp.cb_hsBuf[sp.lastQ];
+             sufLo = sp.cb_lsBuf[sp.lastQ];
+             iq = sp.lastQ;
+             while( iq > 1 ) {
+                iq -= 1;
+                tempReal = sp.cb_hsBuf[iq];
+                if( tempReal > sufHi ) {
+                   sufHi = tempReal;
+                }
+                sp.cb_hsBuf[iq] = sufHi;
+                tempReal = sp.cb_lsBuf[iq];
+                if( tempReal < sufLo ) {
+                   sufLo = tempReal;
+                }
+                sp.cb_lsBuf[iq] = sufLo;
              }
-          }
-          ll = sp.cb_lRing[sp.lRing_Idx];
-          for( jl = sp.lRing_Idx + 1; jl < sp.optInTimePeriod; jl += 1 ) {
-             best = sp.cb_lRing[jl];
-             if( best < ll ) {
-                ll = best;
-             }
-          }
-          for( jl = 0; jl < sp.lRing_Idx; jl += 1 ) {
-             best = sp.cb_lRing[jl];
-             if( best < ll ) {
-                ll = best;
-             }
-          }
-          sp.cb_fhRing[sp.fhRing_Idx] = hh - sp.optInMultiplier * sp.prevATR;
-          sp.cb_flRing[sp.flRing_Idx] = ll + sp.optInMultiplier * sp.prevATR;
-          /* The second stage, over the q first-stage bars ending here. At q = 1
-           * both runs are empty and the value is the bar's own, which is the
-           * Chandelier Exit form.
-           */
-          hh = sp.cb_fhRing[sp.fhRing_Idx];
-          for( kh = sp.fhRing_Idx + 1; kh < sp.optInStopPeriod; kh += 1 ) {
-             best = sp.cb_fhRing[kh];
-             if( best > hh ) {
-                hh = best;
-             }
-          }
-          for( kh = 0; kh < sp.fhRing_Idx; kh += 1 ) {
-             best = sp.cb_fhRing[kh];
-             if( best > hh ) {
-                hh = best;
-             }
-          }
-          ll = sp.cb_flRing[sp.flRing_Idx];
-          for( kl = sp.flRing_Idx + 1; kl < sp.optInStopPeriod; kl += 1 ) {
-             best = sp.cb_flRing[kl];
-             if( best < ll ) {
-                ll = best;
-             }
-          }
-          for( kl = 0; kl < sp.flRing_Idx; kl += 1 ) {
-             best = sp.cb_flRing[kl];
-             if( best < ll ) {
-                ll = best;
-             }
-          }
-          sp.cur_outHighStop = hh;
-          sp.cur_outLowStop = ll;
-          sp.hRing_Idx = sp.hRing_Idx + 1;
-          if( sp.hRing_Idx > sp.maxIdx_hRing ) {
-             sp.hRing_Idx = 0;
-          }
-          sp.lRing_Idx = sp.lRing_Idx + 1;
-          if( sp.lRing_Idx > sp.maxIdx_lRing ) {
-             sp.lRing_Idx = 0;
-          }
-          sp.fhRing_Idx = sp.fhRing_Idx + 1;
-          if( sp.fhRing_Idx > sp.maxIdx_fhRing ) {
-             sp.fhRing_Idx = 0;
-          }
-          sp.flRing_Idx = sp.flRing_Idx + 1;
-          if( sp.flRing_Idx > sp.maxIdx_flRing ) {
-             sp.flRing_Idx = 0;
           }
           sp.lag1_inClose = inClose;
        }
        private RetCode ckspOpenImpl( CkspStream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, double optInMultiplier, int optInStopPeriod, MInteger outBegIdx, MInteger outNBElement, double outHighStop[], double outLowStop[], int outStride )
        {
+          double[] hhBuf;
+          int hhBuf_Idx = 0;
+          int maxIdx_hhBuf = (30)-1;
+          double[] llBuf;
+          int llBuf_Idx = 0;
+          int maxIdx_llBuf = (30)-1;
+          double[] hsBuf;
+          int hsBuf_Idx = 0;
+          int maxIdx_hsBuf = (30)-1;
+          double[] lsBuf;
+          int lsBuf_Idx = 0;
+          int maxIdx_lsBuf = (30)-1;
           int i = 0;
-          int jh = 0;
-          int jl = 0;
-          int kh = 0;
-          int kl = 0;
+          int ip = 0;
+          int iq = 0;
           int today = 0;
           int outIdx = 0;
           int lookbackTotal = 0;
-          int stageOneIdx = 0;
+          int lastP = 0;
+          int lastQ = 0;
           double prevATR = 0;
           double periodTotal = 0;
           double wAlpha = 0;
@@ -77971,21 +78266,18 @@ class Core {
           double tempCY = 0;
           double tempLT = 0;
           double tempHT = 0;
-          double hh = 0;
-          double ll = 0;
-          double best = 0;
-          double[] hRing;
-          int hRing_Idx = 0;
-          int maxIdx_hRing = (50)-1;
-          double[] lRing;
-          int lRing_Idx = 0;
-          int maxIdx_lRing = (50)-1;
-          double[] fhRing;
-          int fhRing_Idx = 0;
-          int maxIdx_fhRing = (50)-1;
-          double[] flRing;
-          int flRing_Idx = 0;
-          int maxIdx_flRing = (50)-1;
+          double tempReal = 0;
+          double hhPre = 0;
+          double llPre = 0;
+          double hsPre = 0;
+          double lsPre = 0;
+          double sufHi = 0;
+          double sufLo = 0;
+          double highest = 0;
+          double lowest = 0;
+          double band = 0;
+          double highStop = 0;
+          double lowStop = 0;
           int historyLen = inHigh.length;
           int endIdx = historyLen - 1;
           if( historyLen < 1 ) {
@@ -78017,55 +78309,58 @@ class Core {
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
           }
-          /* Four windows, all carried as rings and all walked oldest-first, the
-           * cci.c:112-117 shape: an index that wrapped would be one more thing the
-           * stream derivation has to prove, and the walk is the same values either
-           * way.
-           */
           outBegIdx.value = 0;
           outNBElement.value = 0;
           lookbackTotal = ckspLookback(optInTimePeriod, optInMultiplier, optInStopPeriod);
           if( startIdx < lookbackTotal ) {
              startIdx = lookbackTotal;
           }
+          /* Make sure there is still something to evaluate. */
           if( startIdx > endIdx ) {
              return RetCode.INSUFFICIENT_HISTORY ;
           }
-          if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
-          hRing = new double[optInTimePeriod];
-          maxIdx_hRing = (optInTimePeriod)-1;
-          hRing_Idx = 0;
-          if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
-          lRing = new double[optInTimePeriod];
-          maxIdx_lRing = (optInTimePeriod)-1;
-          lRing_Idx = 0;
-          if( optInStopPeriod < 1 ) return RetCode.INTERNAL_ERROR;
-          fhRing = new double[optInStopPeriod];
-          maxIdx_fhRing = (optInStopPeriod)-1;
-          fhRing_Idx = 0;
-          if( optInStopPeriod < 1 ) return RetCode.INTERNAL_ERROR;
-          flRing = new double[optInStopPeriod];
-          maxIdx_flRing = (optInStopPeriod)-1;
-          flRing_Idx = 0;
-          /* The first stage is entered q-1 bars before the first output, because the
-           * second stage's window reaches that far back. Each leg is anchored on its
-           * own bar rather than on the caller's startIdx (the kc.c:73-77 rule): the
-           * Average True Range is seeded as if TA_ATR had been entered here, and the
-           * extremes are the p-windows ending on these same bars.
-           */
-          stageOneIdx = startIdx - (optInStopPeriod - 1);
-          /* The Average True Range, carried inline rather than taken from a call: the
-           * two stages advance together one bar at a time and a whole-range buffer
-           * between them would not stream (supertrend.c:47-50).
+          /* Four rolling extrema, van Herk / Gil-Werman, one buffer each: the window
+           * ending in slot j is the current block's prefix extremum joined with the
+           * previous block's suffix extremum from slot j+1. A slot holds the raw value
+           * while its block is filling and is turned into the suffix extremum, in
+           * place, when the block completes; slot j+1 is always still the previous
+           * block's when slot j is filled. The high and low sides share an index.
            *
-           * The arithmetic order is the bit-exactness contract with TA_ATR and is not
-           * to be reordered: the range first, then the two previous-close distances in
-           * that order; the seed summed from 0.0 over the first optInTimePeriod True
-           * Ranges and divided once; wBeta rounded first and wAlpha derived from it.
+           * The extrema are exact, so both outputs must stay bit-identical to
+           * TA_MAX( TA_MAX(high) - x*TA_ATR ) and its mirror, whatever the block
+           * phase; only the sign of a zero tied between +0.0 and -0.0 is free.
+           */
+          if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
+          hhBuf = new double[optInTimePeriod];
+          maxIdx_hhBuf = (optInTimePeriod)-1;
+          hhBuf_Idx = 0;
+          if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
+          llBuf = new double[optInTimePeriod];
+          maxIdx_llBuf = (optInTimePeriod)-1;
+          llBuf_Idx = 0;
+          if( optInStopPeriod < 1 ) return RetCode.INTERNAL_ERROR;
+          hsBuf = new double[optInStopPeriod];
+          maxIdx_hsBuf = (optInStopPeriod)-1;
+          hsBuf_Idx = 0;
+          if( optInStopPeriod < 1 ) return RetCode.INTERNAL_ERROR;
+          lsBuf = new double[optInStopPeriod];
+          maxIdx_lsBuf = (optInStopPeriod)-1;
+          lsBuf_Idx = 0;
+          lastP = optInTimePeriod - 1;
+          lastQ = optInStopPeriod - 1;
+          /* The Average True Range is carried inline rather than taken from a call,
+           * because the two stages advance together one bar at a time and a
+           * whole-range buffer between them would not stream.
+           *
+           * The arithmetic order below is the bit-exactness contract with TA_ATR (do
+           * not reorder): True Range from high-low, then the two previous-close
+           * distances in that order; the seed summed from 0.0 over the first 'period'
+           * True Ranges and divided once; the same two Wilder coefficients, wBeta
+           * rounded and wAlpha derived from it, in one fused statement.
            */
           wBeta = (double)(optInTimePeriod - 1) / (double)optInTimePeriod;
           wAlpha = 1.0 - wBeta;
-          today = stageOneIdx - atrLookback(optInTimePeriod) + 1;
+          today = startIdx - lookbackTotal + 1;
           periodTotal = 0.0;
           i = optInTimePeriod;
           while( i-- > 0 ) {
@@ -78073,6 +78368,7 @@ class Core {
              tempHT = inHigh[today];
              tempCY = inClose[today - 1];
              greatest = tempHT - tempLT;
+             /* val1 */
              val2 = Math.abs(tempCY - tempHT);
              if( val2 > greatest ) {
                 greatest = val2;
@@ -78085,15 +78381,16 @@ class Core {
              today += 1;
           }
           prevATR = periodTotal / optInTimePeriod;
-          /* Skip the Average True Range's unstable period. The count comes from the
-           * lookback rather than from the setting, so the two cannot disagree.
+          /* Skip the Average True Range's unstable period. Taking the count from the
+           * lookback rather than naming the setting keeps the two from disagreeing.
            */
-          i = atrLookback(optInTimePeriod) - optInTimePeriod;
+          i = lookbackTotal - lastQ - optInTimePeriod;
           while( i != 0 ) {
              tempLT = inLow[today];
              tempHT = inHigh[today];
              tempCY = inClose[today - 1];
              greatest = tempHT - tempLT;
+             /* val1 */
              val2 = Math.abs(tempCY - tempHT);
              if( val2 > greatest ) {
                 greatest = val2;
@@ -78106,77 +78403,50 @@ class Core {
              today += 1;
              i -= 1;
           }
-          /* `today` is now stageOneIdx and prevATR is the Average True Range of the
-           * bar before it. Seed the price rings with the p-1 bars the first extreme
-           * window needs behind that bar.
+          /* prevATR is now the Average True Range of bar today-1, the first bar with
+           * a first stop. Its extreme window is one whole block, taken straight from
+           * the input.
            */
-          i = stageOneIdx - optInTimePeriod + 1;
-          while( i < stageOneIdx ) {
-             hRing[hRing_Idx] = inHigh[i];
-             lRing[lRing_Idx] = inLow[i];
-             i += 1;
-             hRing_Idx++;
-             if( hRing_Idx > maxIdx_hRing ) { hRing_Idx = 0; }
-             lRing_Idx++;
-             if( lRing_Idx > maxIdx_lRing ) { lRing_Idx = 0; }
+          highest = inHigh[today - 1];
+          lowest = inLow[today - 1];
+          hhBuf[lastP] = highest;
+          llBuf[lastP] = lowest;
+          ip = lastP;
+          while( ip > 0 ) {
+             ip -= 1;
+             tempHT = inHigh[today - 1 - lastP + ip];
+             tempLT = inLow[today - 1 - lastP + ip];
+             if( tempHT > highest ) {
+                highest = tempHT;
+             }
+             if( tempLT < lowest ) {
+                lowest = tempLT;
+             }
+             hhBuf[ip] = highest;
+             llBuf[ip] = lowest;
           }
-          /* The prologue leaves prevATR as the Average True Range of stageOneIdx and
-           * `today` one past it, so that bar is finished here rather than in the loop:
-           * entering the loop with it would apply a second Wilder update and shift the
-           * whole series one bar early. supertrend.c takes the same step for the same
-           * reason.
+          hhPre = highest;
+          llPre = lowest;
+          /* The multiple of the ATR is formed on its own, never fused into the
+           * offset, so that each first stop is TA_MAX - x*TA_ATR (or its mirror) as a
+           * caller composing the three functions would compute it.
            */
-          today = stageOneIdx;
-          hRing[hRing_Idx] = inHigh[today];
-          lRing[lRing_Idx] = inLow[today];
-          hh = hRing[hRing_Idx];
-          for( jh = hRing_Idx + 1; jh < optInTimePeriod; jh += 1 ) {
-             best = hRing[jh];
-             if( best > hh ) {
-                hh = best;
-             }
-          }
-          for( jh = 0; jh < hRing_Idx; jh += 1 ) {
-             best = hRing[jh];
-             if( best > hh ) {
-                hh = best;
-             }
-          }
-          ll = lRing[lRing_Idx];
-          for( jl = lRing_Idx + 1; jl < optInTimePeriod; jl += 1 ) {
-             best = lRing[jl];
-             if( best < ll ) {
-                ll = best;
-             }
-          }
-          for( jl = 0; jl < lRing_Idx; jl += 1 ) {
-             best = lRing[jl];
-             if( best < ll ) {
-                ll = best;
-             }
-          }
-          fhRing[fhRing_Idx] = hh - optInMultiplier * prevATR;
-          flRing[flRing_Idx] = ll + optInMultiplier * prevATR;
-          outIdx = 0;
-          if( today >= startIdx ) {
-             outHighStop[outIdx * outStride] = fhRing[fhRing_Idx];
-             outLowStop[outIdx * outStride] = flRing[flRing_Idx];
-             outIdx = outIdx + 1;
-          }
-          today += 1;
-          hRing_Idx++;
-          if( hRing_Idx > maxIdx_hRing ) { hRing_Idx = 0; }
-          lRing_Idx++;
-          if( lRing_Idx > maxIdx_lRing ) { lRing_Idx = 0; }
-          fhRing_Idx++;
-          if( fhRing_Idx > maxIdx_fhRing ) { fhRing_Idx = 0; }
-          flRing_Idx++;
-          if( flRing_Idx > maxIdx_flRing ) { flRing_Idx = 0; }
-          while( today <= endIdx ) {
+          band = optInMultiplier * prevATR;
+          highStop = highest - band;
+          lowStop = lowest + band;
+          hsPre = highStop;
+          lsPre = lowStop;
+          hsBuf[hsBuf_Idx] = highStop;
+          lsBuf[hsBuf_Idx] = lowStop;
+          hsBuf_Idx++;
+          if( hsBuf_Idx > maxIdx_hsBuf ) { hsBuf_Idx = 0; }
+          /* Fill the first stop window, through startIdx inclusive. */
+          while( today <= startIdx ) {
              tempLT = inLow[today];
              tempHT = inHigh[today];
              tempCY = inClose[today - 1];
              greatest = tempHT - tempLT;
+             /* val1 */
              val2 = Math.abs(tempCY - tempHT);
              if( val2 > greatest ) {
                 greatest = val2;
@@ -78186,127 +78456,262 @@ class Core {
                 greatest = val3;
              }
              prevATR = Math.fma(wBeta, prevATR, wAlpha * greatest);
-             hRing[hRing_Idx] = tempHT;
-             lRing[lRing_Idx] = tempLT;
-             /* The extremes of the p bars ending here. The newest sits at the ring's
-              * own index, so the oldest is the slot after it and the walk is two
-              * straight runs.
+             /* Keep this shape: the prefix extreme selected in a local, the
+              * block-start override after it, one store. A store made only when the
+              * bar sets a new extreme, or the override ahead of the select, compiles
+              * to a data-dependent branch in the stream step, where the prefix lives
+              * in the handle.
               */
-             hh = hRing[hRing_Idx];
-             for( jh = hRing_Idx + 1; jh < optInTimePeriod; jh += 1 ) {
-                best = hRing[jh];
-                if( best > hh ) {
-                   hh = best;
+             highest = hhPre;
+             lowest = llPre;
+             if( tempHT > highest ) {
+                highest = tempHT;
+             }
+             if( tempLT < lowest ) {
+                lowest = tempLT;
+             }
+             if( hhBuf_Idx == 0 ) {
+                highest = tempHT;
+                lowest = tempLT;
+             }
+             hhPre = highest;
+             llPre = lowest;
+             if( hhBuf_Idx < lastP ) {
+                tempReal = hhBuf[hhBuf_Idx + 1];
+                if( tempReal > highest ) {
+                   highest = tempReal;
+                }
+                tempReal = llBuf[hhBuf_Idx + 1];
+                if( tempReal < lowest ) {
+                   lowest = tempReal;
                 }
              }
-             for( jh = 0; jh < hRing_Idx; jh += 1 ) {
-                best = hRing[jh];
-                if( best > hh ) {
-                   hh = best;
-                }
-             }
-             ll = lRing[lRing_Idx];
-             for( jl = lRing_Idx + 1; jl < optInTimePeriod; jl += 1 ) {
-                best = lRing[jl];
-                if( best < ll ) {
-                   ll = best;
-                }
-             }
-             for( jl = 0; jl < lRing_Idx; jl += 1 ) {
-                best = lRing[jl];
-                if( best < ll ) {
-                   ll = best;
-                }
-             }
-             fhRing[fhRing_Idx] = hh - optInMultiplier * prevATR;
-             flRing[flRing_Idx] = ll + optInMultiplier * prevATR;
-             if( today >= startIdx ) {
-                /* The second stage, over the q first-stage bars ending here. At q = 1
-                 * both runs are empty and the value is the bar's own, which is the
-                 * Chandelier Exit form.
-                 */
-                hh = fhRing[fhRing_Idx];
-                for( kh = fhRing_Idx + 1; kh < optInStopPeriod; kh += 1 ) {
-                   best = fhRing[kh];
-                   if( best > hh ) {
-                      hh = best;
+             hhBuf[hhBuf_Idx] = tempHT;
+             llBuf[hhBuf_Idx] = tempLT;
+             hhBuf_Idx++;
+             if( hhBuf_Idx > maxIdx_hhBuf ) { hhBuf_Idx = 0; }
+             if( hhBuf_Idx == 0 ) {
+                sufHi = hhBuf[lastP];
+                sufLo = llBuf[lastP];
+                ip = lastP;
+                while( ip > 1 ) {
+                   ip -= 1;
+                   tempReal = hhBuf[ip];
+                   if( tempReal > sufHi ) {
+                      sufHi = tempReal;
                    }
-                }
-                for( kh = 0; kh < fhRing_Idx; kh += 1 ) {
-                   best = fhRing[kh];
-                   if( best > hh ) {
-                      hh = best;
+                   hhBuf[ip] = sufHi;
+                   tempReal = llBuf[ip];
+                   if( tempReal < sufLo ) {
+                      sufLo = tempReal;
                    }
+                   llBuf[ip] = sufLo;
                 }
-                ll = flRing[flRing_Idx];
-                for( kl = flRing_Idx + 1; kl < optInStopPeriod; kl += 1 ) {
-                   best = flRing[kl];
-                   if( best < ll ) {
-                      ll = best;
-                   }
-                }
-                for( kl = 0; kl < flRing_Idx; kl += 1 ) {
-                   best = flRing[kl];
-                   if( best < ll ) {
-                      ll = best;
-                   }
-                }
-                outHighStop[outIdx * outStride] = hh;
-                outLowStop[outIdx * outStride] = ll;
-                outIdx = outIdx + 1;
              }
+             band = optInMultiplier * prevATR;
+             highStop = highest - band;
+             lowStop = lowest + band;
+             if( highStop > hsPre ) {
+                hsPre = highStop;
+             }
+             if( lowStop < lsPre ) {
+                lsPre = lowStop;
+             }
+             hsBuf[hsBuf_Idx] = highStop;
+             lsBuf[hsBuf_Idx] = lowStop;
+             hsBuf_Idx++;
+             if( hsBuf_Idx > maxIdx_hsBuf ) { hsBuf_Idx = 0; }
              today += 1;
-             hRing_Idx++;
-             if( hRing_Idx > maxIdx_hRing ) { hRing_Idx = 0; }
-             lRing_Idx++;
-             if( lRing_Idx > maxIdx_lRing ) { lRing_Idx = 0; }
-             fhRing_Idx++;
-             if( fhRing_Idx > maxIdx_fhRing ) { fhRing_Idx = 0; }
-             flRing_Idx++;
-             if( flRing_Idx > maxIdx_flRing ) { flRing_Idx = 0; }
           }
-          outNBElement.value = outIdx;
+          /* The first stop window is one whole block as well: its extremes are the
+           * prefix extremes, and the block is complete.
+           */
+          sufHi = hsBuf[lastQ];
+          sufLo = lsBuf[lastQ];
+          iq = lastQ;
+          while( iq > 1 ) {
+             iq -= 1;
+             tempReal = hsBuf[iq];
+             if( tempReal > sufHi ) {
+                sufHi = tempReal;
+             }
+             hsBuf[iq] = sufHi;
+             tempReal = lsBuf[iq];
+             if( tempReal < sufLo ) {
+                sufLo = tempReal;
+             }
+             lsBuf[iq] = sufLo;
+          }
+          outHighStop[0 * outStride] = hsPre;
+          outLowStop[0 * outStride] = lsPre;
+          outIdx = 1;
+          while( today <= endIdx ) {
+             tempLT = inLow[today];
+             tempHT = inHigh[today];
+             tempCY = inClose[today - 1];
+             greatest = tempHT - tempLT;
+             /* val1 */
+             val2 = Math.abs(tempCY - tempHT);
+             if( val2 > greatest ) {
+                greatest = val2;
+             }
+             val3 = Math.abs(tempCY - tempLT);
+             if( val3 > greatest ) {
+                greatest = val3;
+             }
+             prevATR = Math.fma(wBeta, prevATR, wAlpha * greatest);
+             highest = hhPre;
+             lowest = llPre;
+             if( tempHT > highest ) {
+                highest = tempHT;
+             }
+             if( tempLT < lowest ) {
+                lowest = tempLT;
+             }
+             if( hhBuf_Idx == 0 ) {
+                highest = tempHT;
+                lowest = tempLT;
+             }
+             hhPre = highest;
+             llPre = lowest;
+             if( hhBuf_Idx < lastP ) {
+                tempReal = hhBuf[hhBuf_Idx + 1];
+                if( tempReal > highest ) {
+                   highest = tempReal;
+                }
+                tempReal = llBuf[hhBuf_Idx + 1];
+                if( tempReal < lowest ) {
+                   lowest = tempReal;
+                }
+             }
+             hhBuf[hhBuf_Idx] = tempHT;
+             llBuf[hhBuf_Idx] = tempLT;
+             hhBuf_Idx++;
+             if( hhBuf_Idx > maxIdx_hhBuf ) { hhBuf_Idx = 0; }
+             band = optInMultiplier * prevATR;
+             highStop = highest - band;
+             lowStop = lowest + band;
+             highest = hsPre;
+             lowest = lsPre;
+             if( highStop > highest ) {
+                highest = highStop;
+             }
+             if( lowStop < lowest ) {
+                lowest = lowStop;
+             }
+             if( hsBuf_Idx == 0 ) {
+                highest = highStop;
+                lowest = lowStop;
+             }
+             hsPre = highest;
+             lsPre = lowest;
+             if( hsBuf_Idx < lastQ ) {
+                tempReal = hsBuf[hsBuf_Idx + 1];
+                if( tempReal > highest ) {
+                   highest = tempReal;
+                }
+                tempReal = lsBuf[hsBuf_Idx + 1];
+                if( tempReal < lowest ) {
+                   lowest = tempReal;
+                }
+             }
+             hsBuf[hsBuf_Idx] = highStop;
+             lsBuf[hsBuf_Idx] = lowStop;
+             hsBuf_Idx++;
+             if( hsBuf_Idx > maxIdx_hsBuf ) { hsBuf_Idx = 0; }
+             outHighStop[outIdx * outStride] = highest;
+             outLowStop[outIdx * outStride] = lowest;
+             /* A completed block becomes its suffix extrema. Nothing this bar reads
+              * them, so both passes stay below the output stores, where the peek
+              * frame never runs them.
+              */
+             if( hhBuf_Idx == 0 ) {
+                sufHi = hhBuf[lastP];
+                sufLo = llBuf[lastP];
+                ip = lastP;
+                while( ip > 1 ) {
+                   ip -= 1;
+                   tempReal = hhBuf[ip];
+                   if( tempReal > sufHi ) {
+                      sufHi = tempReal;
+                   }
+                   hhBuf[ip] = sufHi;
+                   tempReal = llBuf[ip];
+                   if( tempReal < sufLo ) {
+                      sufLo = tempReal;
+                   }
+                   llBuf[ip] = sufLo;
+                }
+             }
+             if( hsBuf_Idx == 0 ) {
+                sufHi = hsBuf[lastQ];
+                sufLo = lsBuf[lastQ];
+                iq = lastQ;
+                while( iq > 1 ) {
+                   iq -= 1;
+                   tempReal = hsBuf[iq];
+                   if( tempReal > sufHi ) {
+                      sufHi = tempReal;
+                   }
+                   hsBuf[iq] = sufHi;
+                   tempReal = lsBuf[iq];
+                   if( tempReal < sufLo ) {
+                      sufLo = tempReal;
+                   }
+                   lsBuf[iq] = sufLo;
+                }
+             }
+             outIdx += 1;
+             today += 1;
+          }
           outBegIdx.value = startIdx;
+          outNBElement.value = outIdx;
           /* Capture the live batch state into the handle. */
-          int capCb_hRing = maxIdx_hRing + 1;
-          if( capCb_hRing > historyLen + 1 ) {
+          int capCb_hhBuf = maxIdx_hhBuf + 1;
+          if( capCb_hhBuf > historyLen + 1 ) {
              return RetCode.INTERNAL_ERROR;
           }
-          int capCb_lRing = maxIdx_lRing + 1;
-          if( capCb_lRing > historyLen + 1 ) {
+          int capCb_llBuf = maxIdx_llBuf + 1;
+          if( capCb_llBuf > historyLen + 1 ) {
              return RetCode.INTERNAL_ERROR;
           }
-          int capCb_fhRing = maxIdx_fhRing + 1;
-          if( capCb_fhRing > historyLen + 1 ) {
+          int capCb_hsBuf = maxIdx_hsBuf + 1;
+          if( capCb_hsBuf > historyLen + 1 ) {
              return RetCode.INTERNAL_ERROR;
           }
-          int capCb_flRing = maxIdx_flRing + 1;
-          if( capCb_flRing > historyLen + 1 ) {
+          int capCb_lsBuf = maxIdx_lsBuf + 1;
+          if( capCb_lsBuf > historyLen + 1 ) {
              return RetCode.INTERNAL_ERROR;
           }
           sp.optInTimePeriod = optInTimePeriod;
           sp.optInMultiplier = optInMultiplier;
           sp.optInStopPeriod = optInStopPeriod;
+          sp.lastP = lastP;
+          sp.lastQ = lastQ;
           sp.prevATR = prevATR;
           sp.wAlpha = wAlpha;
           sp.wBeta = wBeta;
-          sp.hRing_Idx = hRing_Idx;
-          sp.lRing_Idx = lRing_Idx;
-          sp.fhRing_Idx = fhRing_Idx;
-          sp.flRing_Idx = flRing_Idx;
-          sp.maxIdx_hRing = maxIdx_hRing;
-          sp.maxIdx_lRing = maxIdx_lRing;
-          sp.maxIdx_fhRing = maxIdx_fhRing;
-          sp.maxIdx_flRing = maxIdx_flRing;
+          sp.hhPre = hhPre;
+          sp.llPre = llPre;
+          sp.hsPre = hsPre;
+          sp.lsPre = lsPre;
+          sp.hhBuf_Idx = hhBuf_Idx;
+          sp.hsBuf_Idx = hsBuf_Idx;
+          sp.maxIdx_hhBuf = maxIdx_hhBuf;
+          sp.llBuf_Idx = llBuf_Idx;
+          sp.maxIdx_llBuf = maxIdx_llBuf;
+          sp.maxIdx_hsBuf = maxIdx_hsBuf;
+          sp.lsBuf_Idx = lsBuf_Idx;
+          sp.maxIdx_lsBuf = maxIdx_lsBuf;
           sp.lag1_inClose = inClose[historyLen - 1];
-          sp.cbSize_hRing = capCb_hRing;
-          sp.cb_hRing = hRing;
-          sp.cbSize_lRing = capCb_lRing;
-          sp.cb_lRing = lRing;
-          sp.cbSize_fhRing = capCb_fhRing;
-          sp.cb_fhRing = fhRing;
-          sp.cbSize_flRing = capCb_flRing;
-          sp.cb_flRing = flRing;
+          sp.cbSize_hhBuf = capCb_hhBuf;
+          sp.cb_hhBuf = hhBuf;
+          sp.cbSize_llBuf = capCb_llBuf;
+          sp.cb_llBuf = llBuf;
+          sp.cbSize_hsBuf = capCb_hsBuf;
+          sp.cb_hsBuf = hsBuf;
+          sp.cbSize_lsBuf = capCb_lsBuf;
+          sp.cb_lsBuf = lsBuf;
           sp.cur_outHighStop = outHighStop[(outNBElement.value - 1) * outStride];
           sp.cur_outLowStop = outLowStop[(outNBElement.value - 1) * outStride];
           return RetCode.SUCCESS;
@@ -207238,7 +207643,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "0b3533743e5e5544";
+    static final String SPLICED_GENCODE_DIGEST = "8db942e6587ee85e";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];

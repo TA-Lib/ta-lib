@@ -1,56 +1,47 @@
 ---
 title: "Chande Kroll Stop (CKSP)"
-description: "Chande Kroll Stop places a pair of trailing stops a multiple of the Average True Range away from the recent extremes, then takes the extreme of those…"
+description: "Chande and Kroll's two-line volatility stop."
 ---
 
 ## Summary
 
-Chande Kroll Stop places a pair of trailing stops a multiple of the Average True Range away from the recent extremes, then takes the extreme of those stops over a second, usually longer, window. The result is a stop that follows price but only ratchets after the shorter stop has held for a while.
-
-The high stop sits below price and is the level a long position would give up at; the low stop sits above price and is the short side's. Neither line is always above the other: when the multiplier is large enough the two cross, which is the signal that the range has widened past what the stops can straddle.
+Chande and Kroll's two-line volatility stop. The highest high is offset down, and the lowest low up, by a multiple of the Average True Range, and each line then takes the extreme of its own recent values, so it moves only when a new extreme enters the stop window or an old one leaves it. Price above both lines reads as an uptrend and price below both as a downtrend.
 
 ## Formula
 
-ATR[i] = Wilder Average True Range of period p at bar i
+FirstHighStop = MAX(High, TimePeriod) - Multiplier * ATR(TimePeriod)
+FirstLowStop = MIN(Low, TimePeriod) + Multiplier * ATR(TimePeriod)
 
-FHS[i] = MAX( high[i-p+1 .. i] ) - x * ATR[i]
-
-FLS[i] = MIN( low[i-p+1 .. i] ) + x * ATR[i]
-
-outHighStop[i] = MAX( FHS[i-q+1 .. i] )
-
-outLowStop[i] = MIN( FLS[i-q+1 .. i] )
-
-p = optInTimePeriod, x = optInMultiplier, q = optInStopPeriod
+HighStop = MAX(FirstHighStop, StopPeriod)
+LowStop = MIN(FirstLowStop, StopPeriod)
 
 ## Notes
 
-The Average True Range is this library's, seeded the way `ATR` seeds it. Implementations that start their range at the first bar instead differ over the early bars and converge afterwards; the difference is a seeding convention, not a different indicator.
-
-Each stage is anchored on its own bars. The second stage reads the q-1 first-stage bars before the first output, and those in turn are computed from their own Average True Range and their own extreme windows, so a call started late gives the same values as the tail of a call started at the beginning.
-
-At a multiplier of 0 the two outputs collapse to the plain extremes of the whole p+q-1 span: the highest high and the lowest low.
-
-At a stop period of 1 the second stage is the identity and the outputs are the first-stage stops, which is the Chandelier Exit form.
+- The two lines are named for how they are built, not for the position they protect, because published implementations give "long stop" and "short stop" to opposite lines. `outHighStop` is the line most platforms plot as the short stop, `outLowStop` the one they plot as the long stop.
+- Neither line is always above the other: a large multiplier pushes the high line below the low one.
+- The Average True Range is this library's, whose first value is the average of the first full period of true ranges that have a previous close. Platforms that start the true range on the very first bar give slightly different values on early bars; the difference decays as the average warms up.
+- The book's own settings are reported as a multiplier of 3 and a stop period of 20; the defaults here are the ones charting platforms ship.
+- A stop period of 1 leaves the first stops unchanged, which is the Chandelier Exit on both sides.
+- Both lines inherit the Average True Range's warm-up, so a caller who wants them converged sets `TA_FUNC_UNST_ATR`, exactly as when calling that function directly.
 
 ## Inputs
 
 - `inHigh` — High price of each bar
 - `inLow` — Low price of each bar
-- `inClose` — Close price of each bar, read only by the True Range
+- `inClose` — Close price of each bar
 
 ## Outputs
 
-- `outHighStop` — Trailing stop below price, the high side
-- `outLowStop` — Trailing stop above price, the low side
+- `outHighStop` — Highest of the recent first high stops; usually plotted as the short stop
+- `outLowStop` — Lowest of the recent first low stops; usually plotted as the long stop
 
 ## Parameters
 
 | Parameter | Type | Default | Accepted values | Description |
 | --- | --- | --- | --- | --- |
-| `optInTimePeriod` | integer | 10 | 2–100000 | ATR and extreme window |
-| `optInMultiplier` | real | 1 | ≥ 0 | ATR multiplier |
-| `optInStopPeriod` | integer | 9 | 1–100000 | Stop window |
+| `optInTimePeriod` | integer | 10 | 2–100000 | Window of the highest high and lowest low, and smoothing period of the Average True Range |
+| `optInMultiplier` | real | 1 | ≥ 0 | Multiplier applied to the Average True Range to offset the first stops |
+| `optInStopPeriod` | integer | 9 | 1–100000 | Window over which each first stop takes its extreme |
 
 ## Properties
 
@@ -83,14 +74,13 @@ TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrap
 
 ## Aliases
 
-Chande Kroll Stop
+Chande Kroll Stop, CKS, Chande-Kroll Stop
 
 ## See Also
 
-- [ATR](atr.md) — the range measure the stop distance is built from
-- [SUPERTREND](supertrend.md) — the other Overlap Study that offsets a band by a multiple of the ATR
-- [MAX](max.md), [MIN](min.md) — the rolling extremes each stage takes
+[ATR](/functions/atr.md) · [MAX](/functions/max.md) · [MIN](/functions/min.md) · [SUPERTREND](/functions/supertrend.md) · [KC](/functions/kc.md) · [DONCHIAN](/functions/donchian.md)
 
 ## References
 
-- Tushar Chande and Stanley Kroll, *The New Technical Trader*, Wiley, 1994.
+- Tushar S. Chande and Stanley Kroll, *The New Technical Trader*, John Wiley & Sons, 1994
+- [Chande Kroll Stop (TradingView)](https://www.tradingview.com/support/solutions/43000589105-chande-kroll-stop/)

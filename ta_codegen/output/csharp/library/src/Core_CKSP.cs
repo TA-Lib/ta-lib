@@ -55,6 +55,7 @@ public partial class Core
     *  MMDDYY BY     Description
     *  -------------------------------------------------------------------
     *  093026 KL,CC  Creation (#477).
+    *  093026 MF,CC  Rolling extrema in a fixed number of comparisons per bar.
     */
    /// <summary>
    /// Number of leading input bars <c>Cksp</c> consumes before it can produce
@@ -65,12 +66,14 @@ public partial class Core
    /// series is requested. Feed at least <c>lookback + 1</c> bars to get any
    /// output.
    /// </remarks>
-   /// <param name="optInTimePeriod">ATR and extreme window (default 10; range 2..100000; <c>int.MinValue</c>
+   /// <param name="optInTimePeriod">Window of the highest high and lowest low, and smoothing period of the
+   /// Average True Range (default 10; range 2..100000; <c>int.MinValue</c>
    /// selects the default).</param>
-   /// <param name="optInMultiplier">ATR multiplier (default 1; minimum 0; <see cref="Core.RealDefault"/>
-   /// selects the default).</param>
-   /// <param name="optInStopPeriod">Stop window (default 9; range 1..100000; <c>int.MinValue</c> selects the
+   /// <param name="optInMultiplier">Multiplier applied to the Average True Range to offset the first stops
+   /// (default 1; minimum 0; <see cref="Core.RealDefault"/> selects the
    /// default).</param>
+   /// <param name="optInStopPeriod">Window over which each first stop takes its extreme (default 9; range
+   /// 1..100000; <c>int.MinValue</c> selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
    public int CkspLookback( int optInTimePeriod, double optInMultiplier, int optInStopPeriod )
    {
@@ -89,16 +92,12 @@ public partial class Core
       } else if( optInStopPeriod < 1 || optInStopPeriod > 100000 ) {
          return -1;
       }
-      /* Two stages. The first needs the Average True Range at its bar and the
-       * extreme of the p bars ending there; atr_lookback(p) is p + unst, which is
-       * never below max_lookback(p) = p - 1, so it covers both. The second adds
-       * the q - 1 earlier first-stage bars its own window reads.
-       *
-       * The ATR term is written as the callee's lookback and never restated, which
-       * is what makes CKSP inherit TA_FUNC_UNST_ATR rather than own an unstable
-       * period of its own (supertrend.c:16-25).
+      /* The first stops need the Average True Range at their own bar, and the
+       * stop window reaches optInStopPeriod-1 first stops further back. The ATR
+       * term is never restated here, which is what makes CKSP inherit
+       * TA_FUNC_UNST_ATR.
        */
-      return AtrLookback(optInTimePeriod) + (optInStopPeriod - 1) ;
+      return AtrLookback(optInTimePeriod) + optInStopPeriod - 1 ;
 
    }
    internal RetCode CkspImpl( int startIdx,
@@ -116,15 +115,26 @@ public partial class Core
    {
       outBegIdx = 0;
       outNBElement = 0;
+      double[] hhBuf;
+      int hhBuf_Idx = 0;
+      int maxIdx_hhBuf = (30)-1;
+      double[] llBuf;
+      int llBuf_Idx = 0;
+      int maxIdx_llBuf = (30)-1;
+      double[] hsBuf;
+      int hsBuf_Idx = 0;
+      int maxIdx_hsBuf = (30)-1;
+      double[] lsBuf;
+      int lsBuf_Idx = 0;
+      int maxIdx_lsBuf = (30)-1;
       int i = 0;
-      int jh = 0;
-      int jl = 0;
-      int kh = 0;
-      int kl = 0;
+      int ip = 0;
+      int iq = 0;
       int today = 0;
       int outIdx = 0;
       int lookbackTotal = 0;
-      int stageOneIdx = 0;
+      int lastP = 0;
+      int lastQ = 0;
       double prevATR = 0;
       double periodTotal = 0;
       double wAlpha = 0;
@@ -135,21 +145,18 @@ public partial class Core
       double tempCY = 0;
       double tempLT = 0;
       double tempHT = 0;
-      double hh = 0;
-      double ll = 0;
-      double best = 0;
-      double[] hRing;
-      int hRing_Idx = 0;
-      int maxIdx_hRing = (50)-1;
-      double[] lRing;
-      int lRing_Idx = 0;
-      int maxIdx_lRing = (50)-1;
-      double[] fhRing;
-      int fhRing_Idx = 0;
-      int maxIdx_fhRing = (50)-1;
-      double[] flRing;
-      int flRing_Idx = 0;
-      int maxIdx_flRing = (50)-1;
+      double tempReal = 0;
+      double hhPre = 0;
+      double llPre = 0;
+      double hsPre = 0;
+      double lsPre = 0;
+      double sufHi = 0;
+      double sufLo = 0;
+      double highest = 0;
+      double lowest = 0;
+      double band = 0;
+      double highStop = 0;
+      double lowStop = 0;
       if( (startIdx < 0) || (startIdx > IndexMax) ) {
          return RetCode.OutOfRangeStartIndex ;
       }
@@ -177,55 +184,58 @@ public partial class Core
       if( (outHighStop.Overlaps(inHigh) && outHighStop != inHigh) || (outHighStop.Overlaps(inLow) && outHighStop != inLow) || (outHighStop.Overlaps(inClose) && outHighStop != inClose) || (outLowStop.Overlaps(inHigh) && outLowStop != inHigh) || (outLowStop.Overlaps(inLow) && outLowStop != inLow) || (outLowStop.Overlaps(inClose) && outLowStop != inClose) ) {
          return RetCode.BadParam ;
       }
-      /* Four windows, all carried as rings and all walked oldest-first, the
-       * cci.c:112-117 shape: an index that wrapped would be one more thing the
-       * stream derivation has to prove, and the walk is the same values either
-       * way.
-       */
       outBegIdx = 0;
       outNBElement = 0;
       lookbackTotal = CkspLookback(optInTimePeriod, optInMultiplier, optInStopPeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
+      /* Make sure there is still something to evaluate. */
       if( startIdx > endIdx ) {
          return RetCode.Success ;
       }
-      if( optInTimePeriod < 1 ) return RetCode.InternalError;
-      hRing = new double[optInTimePeriod];
-      maxIdx_hRing = (optInTimePeriod)-1;
-      hRing_Idx = 0;
-      if( optInTimePeriod < 1 ) return RetCode.InternalError;
-      lRing = new double[optInTimePeriod];
-      maxIdx_lRing = (optInTimePeriod)-1;
-      lRing_Idx = 0;
-      if( optInStopPeriod < 1 ) return RetCode.InternalError;
-      fhRing = new double[optInStopPeriod];
-      maxIdx_fhRing = (optInStopPeriod)-1;
-      fhRing_Idx = 0;
-      if( optInStopPeriod < 1 ) return RetCode.InternalError;
-      flRing = new double[optInStopPeriod];
-      maxIdx_flRing = (optInStopPeriod)-1;
-      flRing_Idx = 0;
-      /* The first stage is entered q-1 bars before the first output, because the
-       * second stage's window reaches that far back. Each leg is anchored on its
-       * own bar rather than on the caller's startIdx (the kc.c:73-77 rule): the
-       * Average True Range is seeded as if TA_ATR had been entered here, and the
-       * extremes are the p-windows ending on these same bars.
-       */
-      stageOneIdx = startIdx - (optInStopPeriod - 1);
-      /* The Average True Range, carried inline rather than taken from a call: the
-       * two stages advance together one bar at a time and a whole-range buffer
-       * between them would not stream (supertrend.c:47-50).
+      /* Four rolling extrema, van Herk / Gil-Werman, one buffer each: the window
+       * ending in slot j is the current block's prefix extremum joined with the
+       * previous block's suffix extremum from slot j+1. A slot holds the raw value
+       * while its block is filling and is turned into the suffix extremum, in
+       * place, when the block completes; slot j+1 is always still the previous
+       * block's when slot j is filled. The high and low sides share an index.
        *
-       * The arithmetic order is the bit-exactness contract with TA_ATR and is not
-       * to be reordered: the range first, then the two previous-close distances in
-       * that order; the seed summed from 0.0 over the first optInTimePeriod True
-       * Ranges and divided once; wBeta rounded first and wAlpha derived from it.
+       * The extrema are exact, so both outputs must stay bit-identical to
+       * TA_MAX( TA_MAX(high) - x*TA_ATR ) and its mirror, whatever the block
+       * phase; only the sign of a zero tied between +0.0 and -0.0 is free.
+       */
+      if( optInTimePeriod < 1 ) return RetCode.InternalError;
+      hhBuf = new double[optInTimePeriod];
+      maxIdx_hhBuf = (optInTimePeriod)-1;
+      hhBuf_Idx = 0;
+      if( optInTimePeriod < 1 ) return RetCode.InternalError;
+      llBuf = new double[optInTimePeriod];
+      maxIdx_llBuf = (optInTimePeriod)-1;
+      llBuf_Idx = 0;
+      if( optInStopPeriod < 1 ) return RetCode.InternalError;
+      hsBuf = new double[optInStopPeriod];
+      maxIdx_hsBuf = (optInStopPeriod)-1;
+      hsBuf_Idx = 0;
+      if( optInStopPeriod < 1 ) return RetCode.InternalError;
+      lsBuf = new double[optInStopPeriod];
+      maxIdx_lsBuf = (optInStopPeriod)-1;
+      lsBuf_Idx = 0;
+      lastP = optInTimePeriod - 1;
+      lastQ = optInStopPeriod - 1;
+      /* The Average True Range is carried inline rather than taken from a call,
+       * because the two stages advance together one bar at a time and a
+       * whole-range buffer between them would not stream.
+       *
+       * The arithmetic order below is the bit-exactness contract with TA_ATR (do
+       * not reorder): True Range from high-low, then the two previous-close
+       * distances in that order; the seed summed from 0.0 over the first 'period'
+       * True Ranges and divided once; the same two Wilder coefficients, wBeta
+       * rounded and wAlpha derived from it, in one fused statement.
        */
       wBeta = (double)(optInTimePeriod - 1) / (double)optInTimePeriod;
       wAlpha = 1.0 - wBeta;
-      today = stageOneIdx - AtrLookback(optInTimePeriod) + 1;
+      today = startIdx - lookbackTotal + 1;
       periodTotal = 0.0;
       i = optInTimePeriod;
       while( i-- > 0 ) {
@@ -233,6 +243,7 @@ public partial class Core
          tempHT = inHigh[today];
          tempCY = inClose[today - 1];
          greatest = tempHT - tempLT;
+         /* val1 */
          val2 = Math.Abs(tempCY - tempHT);
          greatest = MaxGt(val2, greatest);
          val3 = Math.Abs(tempCY - tempLT);
@@ -241,15 +252,16 @@ public partial class Core
          today += 1;
       }
       prevATR = periodTotal / optInTimePeriod;
-      /* Skip the Average True Range's unstable period. The count comes from the
-       * lookback rather than from the setting, so the two cannot disagree.
+      /* Skip the Average True Range's unstable period. Taking the count from the
+       * lookback rather than naming the setting keeps the two from disagreeing.
        */
-      i = AtrLookback(optInTimePeriod) - optInTimePeriod;
+      i = lookbackTotal - lastQ - optInTimePeriod;
       while( i != 0 ) {
          tempLT = inLow[today];
          tempHT = inHigh[today];
          tempCY = inClose[today - 1];
          greatest = tempHT - tempLT;
+         /* val1 */
          val2 = Math.Abs(tempCY - tempHT);
          greatest = MaxGt(val2, greatest);
          val3 = Math.Abs(tempCY - tempLT);
@@ -258,139 +270,213 @@ public partial class Core
          today += 1;
          i -= 1;
       }
-      /* `today` is now stageOneIdx and prevATR is the Average True Range of the
-       * bar before it. Seed the price rings with the p-1 bars the first extreme
-       * window needs behind that bar.
+      /* prevATR is now the Average True Range of bar today-1, the first bar with
+       * a first stop. Its extreme window is one whole block, taken straight from
+       * the input.
        */
-      i = stageOneIdx - optInTimePeriod + 1;
-      while( i < stageOneIdx ) {
-         hRing[hRing_Idx] = inHigh[i];
-         lRing[lRing_Idx] = inLow[i];
-         i += 1;
-         hRing_Idx++;
-         if( hRing_Idx > maxIdx_hRing ) { hRing_Idx = 0; }
-         lRing_Idx++;
-         if( lRing_Idx > maxIdx_lRing ) { lRing_Idx = 0; }
+      highest = inHigh[today - 1];
+      lowest = inLow[today - 1];
+      hhBuf[lastP] = highest;
+      llBuf[lastP] = lowest;
+      ip = lastP;
+      while( ip > 0 ) {
+         ip -= 1;
+         tempHT = inHigh[today - 1 - lastP + ip];
+         tempLT = inLow[today - 1 - lastP + ip];
+         highest = MaxGt(tempHT, highest);
+         lowest = MinLt(tempLT, lowest);
+         hhBuf[ip] = highest;
+         llBuf[ip] = lowest;
       }
-      /* The prologue leaves prevATR as the Average True Range of stageOneIdx and
-       * `today` one past it, so that bar is finished here rather than in the loop:
-       * entering the loop with it would apply a second Wilder update and shift the
-       * whole series one bar early. supertrend.c takes the same step for the same
-       * reason.
+      hhPre = highest;
+      llPre = lowest;
+      /* The multiple of the ATR is formed on its own, never fused into the
+       * offset, so that each first stop is TA_MAX - x*TA_ATR (or its mirror) as a
+       * caller composing the three functions would compute it.
        */
-      today = stageOneIdx;
-      hRing[hRing_Idx] = inHigh[today];
-      lRing[lRing_Idx] = inLow[today];
-      hh = hRing[hRing_Idx];
-      for( jh = hRing_Idx + 1; jh < optInTimePeriod; jh += 1 ) {
-         best = hRing[jh];
-         hh = MaxGt(best, hh);
-      }
-      for( jh = 0; jh < hRing_Idx; jh += 1 ) {
-         best = hRing[jh];
-         hh = MaxGt(best, hh);
-      }
-      ll = lRing[lRing_Idx];
-      for( jl = lRing_Idx + 1; jl < optInTimePeriod; jl += 1 ) {
-         best = lRing[jl];
-         ll = MinLt(best, ll);
-      }
-      for( jl = 0; jl < lRing_Idx; jl += 1 ) {
-         best = lRing[jl];
-         ll = MinLt(best, ll);
-      }
-      fhRing[fhRing_Idx] = hh - optInMultiplier * prevATR;
-      flRing[flRing_Idx] = ll + optInMultiplier * prevATR;
-      outIdx = 0;
-      if( today >= startIdx ) {
-         outHighStop[outIdx] = fhRing[fhRing_Idx];
-         outLowStop[outIdx] = flRing[flRing_Idx];
-         outIdx = outIdx + 1;
-      }
-      today += 1;
-      hRing_Idx++;
-      if( hRing_Idx > maxIdx_hRing ) { hRing_Idx = 0; }
-      lRing_Idx++;
-      if( lRing_Idx > maxIdx_lRing ) { lRing_Idx = 0; }
-      fhRing_Idx++;
-      if( fhRing_Idx > maxIdx_fhRing ) { fhRing_Idx = 0; }
-      flRing_Idx++;
-      if( flRing_Idx > maxIdx_flRing ) { flRing_Idx = 0; }
-      while( today <= endIdx ) {
+      band = optInMultiplier * prevATR;
+      highStop = highest - band;
+      lowStop = lowest + band;
+      hsPre = highStop;
+      lsPre = lowStop;
+      hsBuf[hsBuf_Idx] = highStop;
+      lsBuf[hsBuf_Idx] = lowStop;
+      hsBuf_Idx++;
+      if( hsBuf_Idx > maxIdx_hsBuf ) { hsBuf_Idx = 0; }
+      /* Fill the first stop window, through startIdx inclusive. */
+      while( today <= startIdx ) {
          tempLT = inLow[today];
          tempHT = inHigh[today];
          tempCY = inClose[today - 1];
          greatest = tempHT - tempLT;
+         /* val1 */
          val2 = Math.Abs(tempCY - tempHT);
          greatest = MaxGt(val2, greatest);
          val3 = Math.Abs(tempCY - tempLT);
          greatest = MaxGt(val3, greatest);
          prevATR = Math.FusedMultiplyAdd(wBeta, prevATR, wAlpha * greatest);
-         hRing[hRing_Idx] = tempHT;
-         lRing[lRing_Idx] = tempLT;
-         /* The extremes of the p bars ending here. The newest sits at the ring's
-          * own index, so the oldest is the slot after it and the walk is two
-          * straight runs.
+         /* Keep this shape: the prefix extreme selected in a local, the
+          * block-start override after it, one store. A store made only when the
+          * bar sets a new extreme, or the override ahead of the select, compiles
+          * to a data-dependent branch in the stream step, where the prefix lives
+          * in the handle.
           */
-         hh = hRing[hRing_Idx];
-         for( jh = hRing_Idx + 1; jh < optInTimePeriod; jh += 1 ) {
-            best = hRing[jh];
-            hh = MaxGt(best, hh);
+         highest = hhPre;
+         lowest = llPre;
+         highest = MaxGt(tempHT, highest);
+         lowest = MinLt(tempLT, lowest);
+         if( hhBuf_Idx == 0 ) {
+            highest = tempHT;
+            lowest = tempLT;
          }
-         for( jh = 0; jh < hRing_Idx; jh += 1 ) {
-            best = hRing[jh];
-            hh = MaxGt(best, hh);
+         hhPre = highest;
+         llPre = lowest;
+         if( hhBuf_Idx < lastP ) {
+            tempReal = hhBuf[hhBuf_Idx + 1];
+            highest = MaxGt(tempReal, highest);
+            tempReal = llBuf[hhBuf_Idx + 1];
+            lowest = MinLt(tempReal, lowest);
          }
-         ll = lRing[lRing_Idx];
-         for( jl = lRing_Idx + 1; jl < optInTimePeriod; jl += 1 ) {
-            best = lRing[jl];
-            ll = MinLt(best, ll);
-         }
-         for( jl = 0; jl < lRing_Idx; jl += 1 ) {
-            best = lRing[jl];
-            ll = MinLt(best, ll);
-         }
-         fhRing[fhRing_Idx] = hh - optInMultiplier * prevATR;
-         flRing[flRing_Idx] = ll + optInMultiplier * prevATR;
-         if( today >= startIdx ) {
-            /* The second stage, over the q first-stage bars ending here. At q = 1
-             * both runs are empty and the value is the bar's own, which is the
-             * Chandelier Exit form.
-             */
-            hh = fhRing[fhRing_Idx];
-            for( kh = fhRing_Idx + 1; kh < optInStopPeriod; kh += 1 ) {
-               best = fhRing[kh];
-               hh = MaxGt(best, hh);
+         hhBuf[hhBuf_Idx] = tempHT;
+         llBuf[hhBuf_Idx] = tempLT;
+         hhBuf_Idx++;
+         if( hhBuf_Idx > maxIdx_hhBuf ) { hhBuf_Idx = 0; }
+         if( hhBuf_Idx == 0 ) {
+            sufHi = hhBuf[lastP];
+            sufLo = llBuf[lastP];
+            ip = lastP;
+            while( ip > 1 ) {
+               ip -= 1;
+               tempReal = hhBuf[ip];
+               sufHi = MaxGt(tempReal, sufHi);
+               hhBuf[ip] = sufHi;
+               tempReal = llBuf[ip];
+               sufLo = MinLt(tempReal, sufLo);
+               llBuf[ip] = sufLo;
             }
-            for( kh = 0; kh < fhRing_Idx; kh += 1 ) {
-               best = fhRing[kh];
-               hh = MaxGt(best, hh);
-            }
-            ll = flRing[flRing_Idx];
-            for( kl = flRing_Idx + 1; kl < optInStopPeriod; kl += 1 ) {
-               best = flRing[kl];
-               ll = MinLt(best, ll);
-            }
-            for( kl = 0; kl < flRing_Idx; kl += 1 ) {
-               best = flRing[kl];
-               ll = MinLt(best, ll);
-            }
-            outHighStop[outIdx] = hh;
-            outLowStop[outIdx] = ll;
-            outIdx = outIdx + 1;
          }
+         band = optInMultiplier * prevATR;
+         highStop = highest - band;
+         lowStop = lowest + band;
+         hsPre = MaxGt(highStop, hsPre);
+         lsPre = MinLt(lowStop, lsPre);
+         hsBuf[hsBuf_Idx] = highStop;
+         lsBuf[hsBuf_Idx] = lowStop;
+         hsBuf_Idx++;
+         if( hsBuf_Idx > maxIdx_hsBuf ) { hsBuf_Idx = 0; }
          today += 1;
-         hRing_Idx++;
-         if( hRing_Idx > maxIdx_hRing ) { hRing_Idx = 0; }
-         lRing_Idx++;
-         if( lRing_Idx > maxIdx_lRing ) { lRing_Idx = 0; }
-         fhRing_Idx++;
-         if( fhRing_Idx > maxIdx_fhRing ) { fhRing_Idx = 0; }
-         flRing_Idx++;
-         if( flRing_Idx > maxIdx_flRing ) { flRing_Idx = 0; }
       }
-      outNBElement = outIdx;
+      /* The first stop window is one whole block as well: its extremes are the
+       * prefix extremes, and the block is complete.
+       */
+      sufHi = hsBuf[lastQ];
+      sufLo = lsBuf[lastQ];
+      iq = lastQ;
+      while( iq > 1 ) {
+         iq -= 1;
+         tempReal = hsBuf[iq];
+         sufHi = MaxGt(tempReal, sufHi);
+         hsBuf[iq] = sufHi;
+         tempReal = lsBuf[iq];
+         sufLo = MinLt(tempReal, sufLo);
+         lsBuf[iq] = sufLo;
+      }
+      outHighStop[0] = hsPre;
+      outLowStop[0] = lsPre;
+      outIdx = 1;
+      while( today <= endIdx ) {
+         tempLT = inLow[today];
+         tempHT = inHigh[today];
+         tempCY = inClose[today - 1];
+         greatest = tempHT - tempLT;
+         /* val1 */
+         val2 = Math.Abs(tempCY - tempHT);
+         greatest = MaxGt(val2, greatest);
+         val3 = Math.Abs(tempCY - tempLT);
+         greatest = MaxGt(val3, greatest);
+         prevATR = Math.FusedMultiplyAdd(wBeta, prevATR, wAlpha * greatest);
+         highest = hhPre;
+         lowest = llPre;
+         highest = MaxGt(tempHT, highest);
+         lowest = MinLt(tempLT, lowest);
+         if( hhBuf_Idx == 0 ) {
+            highest = tempHT;
+            lowest = tempLT;
+         }
+         hhPre = highest;
+         llPre = lowest;
+         if( hhBuf_Idx < lastP ) {
+            tempReal = hhBuf[hhBuf_Idx + 1];
+            highest = MaxGt(tempReal, highest);
+            tempReal = llBuf[hhBuf_Idx + 1];
+            lowest = MinLt(tempReal, lowest);
+         }
+         hhBuf[hhBuf_Idx] = tempHT;
+         llBuf[hhBuf_Idx] = tempLT;
+         hhBuf_Idx++;
+         if( hhBuf_Idx > maxIdx_hhBuf ) { hhBuf_Idx = 0; }
+         band = optInMultiplier * prevATR;
+         highStop = highest - band;
+         lowStop = lowest + band;
+         highest = hsPre;
+         lowest = lsPre;
+         highest = MaxGt(highStop, highest);
+         lowest = MinLt(lowStop, lowest);
+         if( hsBuf_Idx == 0 ) {
+            highest = highStop;
+            lowest = lowStop;
+         }
+         hsPre = highest;
+         lsPre = lowest;
+         if( hsBuf_Idx < lastQ ) {
+            tempReal = hsBuf[hsBuf_Idx + 1];
+            highest = MaxGt(tempReal, highest);
+            tempReal = lsBuf[hsBuf_Idx + 1];
+            lowest = MinLt(tempReal, lowest);
+         }
+         hsBuf[hsBuf_Idx] = highStop;
+         lsBuf[hsBuf_Idx] = lowStop;
+         hsBuf_Idx++;
+         if( hsBuf_Idx > maxIdx_hsBuf ) { hsBuf_Idx = 0; }
+         outHighStop[outIdx] = highest;
+         outLowStop[outIdx] = lowest;
+         /* A completed block becomes its suffix extrema. Nothing this bar reads
+          * them, so both passes stay below the output stores, where the peek
+          * frame never runs them.
+          */
+         if( hhBuf_Idx == 0 ) {
+            sufHi = hhBuf[lastP];
+            sufLo = llBuf[lastP];
+            ip = lastP;
+            while( ip > 1 ) {
+               ip -= 1;
+               tempReal = hhBuf[ip];
+               sufHi = MaxGt(tempReal, sufHi);
+               hhBuf[ip] = sufHi;
+               tempReal = llBuf[ip];
+               sufLo = MinLt(tempReal, sufLo);
+               llBuf[ip] = sufLo;
+            }
+         }
+         if( hsBuf_Idx == 0 ) {
+            sufHi = hsBuf[lastQ];
+            sufLo = lsBuf[lastQ];
+            iq = lastQ;
+            while( iq > 1 ) {
+               iq -= 1;
+               tempReal = hsBuf[iq];
+               sufHi = MaxGt(tempReal, sufHi);
+               hsBuf[iq] = sufHi;
+               tempReal = lsBuf[iq];
+               sufLo = MinLt(tempReal, sufLo);
+               lsBuf[iq] = sufLo;
+            }
+         }
+         outIdx += 1;
+         today += 1;
+      }
       outBegIdx = startIdx;
+      outNBElement = outIdx;
       return RetCode.Success ;
    }
    internal RetCode CkspImpl( int startIdx,
@@ -408,15 +494,26 @@ public partial class Core
    {
       outBegIdx = 0;
       outNBElement = 0;
+      double[] hhBuf;
+      int hhBuf_Idx = 0;
+      int maxIdx_hhBuf = (30)-1;
+      double[] llBuf;
+      int llBuf_Idx = 0;
+      int maxIdx_llBuf = (30)-1;
+      double[] hsBuf;
+      int hsBuf_Idx = 0;
+      int maxIdx_hsBuf = (30)-1;
+      double[] lsBuf;
+      int lsBuf_Idx = 0;
+      int maxIdx_lsBuf = (30)-1;
       int i = 0;
-      int jh = 0;
-      int jl = 0;
-      int kh = 0;
-      int kl = 0;
+      int ip = 0;
+      int iq = 0;
       int today = 0;
       int outIdx = 0;
       int lookbackTotal = 0;
-      int stageOneIdx = 0;
+      int lastP = 0;
+      int lastQ = 0;
       double prevATR = 0;
       double periodTotal = 0;
       double wAlpha = 0;
@@ -427,21 +524,18 @@ public partial class Core
       double tempCY = 0;
       double tempLT = 0;
       double tempHT = 0;
-      double hh = 0;
-      double ll = 0;
-      double best = 0;
-      double[] hRing;
-      int hRing_Idx = 0;
-      int maxIdx_hRing = (50)-1;
-      double[] lRing;
-      int lRing_Idx = 0;
-      int maxIdx_lRing = (50)-1;
-      double[] fhRing;
-      int fhRing_Idx = 0;
-      int maxIdx_fhRing = (50)-1;
-      double[] flRing;
-      int flRing_Idx = 0;
-      int maxIdx_flRing = (50)-1;
+      double tempReal = 0;
+      double hhPre = 0;
+      double llPre = 0;
+      double hsPre = 0;
+      double lsPre = 0;
+      double sufHi = 0;
+      double sufLo = 0;
+      double highest = 0;
+      double lowest = 0;
+      double band = 0;
+      double highStop = 0;
+      double lowStop = 0;
       if( (startIdx < 0) || (startIdx > IndexMax) ) {
          return RetCode.OutOfRangeStartIndex ;
       }
@@ -479,25 +573,26 @@ public partial class Core
          return RetCode.Success ;
       }
       if( optInTimePeriod < 1 ) return RetCode.InternalError;
-      hRing = new double[optInTimePeriod];
-      maxIdx_hRing = (optInTimePeriod)-1;
-      hRing_Idx = 0;
+      hhBuf = new double[optInTimePeriod];
+      maxIdx_hhBuf = (optInTimePeriod)-1;
+      hhBuf_Idx = 0;
       if( optInTimePeriod < 1 ) return RetCode.InternalError;
-      lRing = new double[optInTimePeriod];
-      maxIdx_lRing = (optInTimePeriod)-1;
-      lRing_Idx = 0;
+      llBuf = new double[optInTimePeriod];
+      maxIdx_llBuf = (optInTimePeriod)-1;
+      llBuf_Idx = 0;
       if( optInStopPeriod < 1 ) return RetCode.InternalError;
-      fhRing = new double[optInStopPeriod];
-      maxIdx_fhRing = (optInStopPeriod)-1;
-      fhRing_Idx = 0;
+      hsBuf = new double[optInStopPeriod];
+      maxIdx_hsBuf = (optInStopPeriod)-1;
+      hsBuf_Idx = 0;
       if( optInStopPeriod < 1 ) return RetCode.InternalError;
-      flRing = new double[optInStopPeriod];
-      maxIdx_flRing = (optInStopPeriod)-1;
-      flRing_Idx = 0;
-      stageOneIdx = startIdx - (optInStopPeriod - 1);
+      lsBuf = new double[optInStopPeriod];
+      maxIdx_lsBuf = (optInStopPeriod)-1;
+      lsBuf_Idx = 0;
+      lastP = optInTimePeriod - 1;
+      lastQ = optInStopPeriod - 1;
       wBeta = (double)(optInTimePeriod - 1) / (double)optInTimePeriod;
       wAlpha = 1.0 - wBeta;
-      today = stageOneIdx - AtrLookback(optInTimePeriod) + 1;
+      today = startIdx - lookbackTotal + 1;
       periodTotal = 0.0;
       i = optInTimePeriod;
       while( i-- > 0 ) {
@@ -513,7 +608,7 @@ public partial class Core
          today += 1;
       }
       prevATR = periodTotal / optInTimePeriod;
-      i = AtrLookback(optInTimePeriod) - optInTimePeriod;
+      i = lookbackTotal - lastQ - optInTimePeriod;
       while( i != 0 ) {
          tempLT = (double)inLow[today];
          tempHT = (double)inHigh[today];
@@ -527,54 +622,101 @@ public partial class Core
          today += 1;
          i -= 1;
       }
-      i = stageOneIdx - optInTimePeriod + 1;
-      while( i < stageOneIdx ) {
-         hRing[hRing_Idx] = (double)inHigh[i];
-         lRing[lRing_Idx] = (double)inLow[i];
-         i += 1;
-         hRing_Idx++;
-         if( hRing_Idx > maxIdx_hRing ) { hRing_Idx = 0; }
-         lRing_Idx++;
-         if( lRing_Idx > maxIdx_lRing ) { lRing_Idx = 0; }
+      highest = (double)inHigh[today - 1];
+      lowest = (double)inLow[today - 1];
+      hhBuf[lastP] = highest;
+      llBuf[lastP] = lowest;
+      ip = lastP;
+      while( ip > 0 ) {
+         ip -= 1;
+         tempHT = (double)inHigh[today - 1 - lastP + ip];
+         tempLT = (double)inLow[today - 1 - lastP + ip];
+         highest = MaxGt(tempHT, highest);
+         lowest = MinLt(tempLT, lowest);
+         hhBuf[ip] = highest;
+         llBuf[ip] = lowest;
       }
-      today = stageOneIdx;
-      hRing[hRing_Idx] = (double)inHigh[today];
-      lRing[lRing_Idx] = (double)inLow[today];
-      hh = hRing[hRing_Idx];
-      for( jh = hRing_Idx + 1; jh < optInTimePeriod; jh += 1 ) {
-         best = hRing[jh];
-         hh = MaxGt(best, hh);
+      hhPre = highest;
+      llPre = lowest;
+      band = optInMultiplier * prevATR;
+      highStop = highest - band;
+      lowStop = lowest + band;
+      hsPre = highStop;
+      lsPre = lowStop;
+      hsBuf[hsBuf_Idx] = highStop;
+      lsBuf[hsBuf_Idx] = lowStop;
+      hsBuf_Idx++;
+      if( hsBuf_Idx > maxIdx_hsBuf ) { hsBuf_Idx = 0; }
+      while( today <= startIdx ) {
+         tempLT = (double)inLow[today];
+         tempHT = (double)inHigh[today];
+         tempCY = (double)inClose[today - 1];
+         greatest = tempHT - tempLT;
+         val2 = Math.Abs(tempCY - tempHT);
+         greatest = MaxGt(val2, greatest);
+         val3 = Math.Abs(tempCY - tempLT);
+         greatest = MaxGt(val3, greatest);
+         prevATR = Math.FusedMultiplyAdd(wBeta, prevATR, wAlpha * greatest);
+         highest = hhPre;
+         lowest = llPre;
+         highest = MaxGt(tempHT, highest);
+         lowest = MinLt(tempLT, lowest);
+         if( hhBuf_Idx == 0 ) {
+            highest = tempHT;
+            lowest = tempLT;
+         }
+         hhPre = highest;
+         llPre = lowest;
+         if( hhBuf_Idx < lastP ) {
+            tempReal = hhBuf[hhBuf_Idx + 1];
+            highest = MaxGt(tempReal, highest);
+            tempReal = llBuf[hhBuf_Idx + 1];
+            lowest = MinLt(tempReal, lowest);
+         }
+         hhBuf[hhBuf_Idx] = tempHT;
+         llBuf[hhBuf_Idx] = tempLT;
+         hhBuf_Idx++;
+         if( hhBuf_Idx > maxIdx_hhBuf ) { hhBuf_Idx = 0; }
+         if( hhBuf_Idx == 0 ) {
+            sufHi = hhBuf[lastP];
+            sufLo = llBuf[lastP];
+            ip = lastP;
+            while( ip > 1 ) {
+               ip -= 1;
+               tempReal = hhBuf[ip];
+               sufHi = MaxGt(tempReal, sufHi);
+               hhBuf[ip] = sufHi;
+               tempReal = llBuf[ip];
+               sufLo = MinLt(tempReal, sufLo);
+               llBuf[ip] = sufLo;
+            }
+         }
+         band = optInMultiplier * prevATR;
+         highStop = highest - band;
+         lowStop = lowest + band;
+         hsPre = MaxGt(highStop, hsPre);
+         lsPre = MinLt(lowStop, lsPre);
+         hsBuf[hsBuf_Idx] = highStop;
+         lsBuf[hsBuf_Idx] = lowStop;
+         hsBuf_Idx++;
+         if( hsBuf_Idx > maxIdx_hsBuf ) { hsBuf_Idx = 0; }
+         today += 1;
       }
-      for( jh = 0; jh < hRing_Idx; jh += 1 ) {
-         best = hRing[jh];
-         hh = MaxGt(best, hh);
+      sufHi = hsBuf[lastQ];
+      sufLo = lsBuf[lastQ];
+      iq = lastQ;
+      while( iq > 1 ) {
+         iq -= 1;
+         tempReal = hsBuf[iq];
+         sufHi = MaxGt(tempReal, sufHi);
+         hsBuf[iq] = sufHi;
+         tempReal = lsBuf[iq];
+         sufLo = MinLt(tempReal, sufLo);
+         lsBuf[iq] = sufLo;
       }
-      ll = lRing[lRing_Idx];
-      for( jl = lRing_Idx + 1; jl < optInTimePeriod; jl += 1 ) {
-         best = lRing[jl];
-         ll = MinLt(best, ll);
-      }
-      for( jl = 0; jl < lRing_Idx; jl += 1 ) {
-         best = lRing[jl];
-         ll = MinLt(best, ll);
-      }
-      fhRing[fhRing_Idx] = hh - optInMultiplier * prevATR;
-      flRing[flRing_Idx] = ll + optInMultiplier * prevATR;
-      outIdx = 0;
-      if( today >= startIdx ) {
-         outHighStop[outIdx] = fhRing[fhRing_Idx];
-         outLowStop[outIdx] = flRing[flRing_Idx];
-         outIdx = outIdx + 1;
-      }
-      today += 1;
-      hRing_Idx++;
-      if( hRing_Idx > maxIdx_hRing ) { hRing_Idx = 0; }
-      lRing_Idx++;
-      if( lRing_Idx > maxIdx_lRing ) { lRing_Idx = 0; }
-      fhRing_Idx++;
-      if( fhRing_Idx > maxIdx_fhRing ) { fhRing_Idx = 0; }
-      flRing_Idx++;
-      if( flRing_Idx > maxIdx_flRing ) { flRing_Idx = 0; }
+      outHighStop[0] = hsPre;
+      outLowStop[0] = lsPre;
+      outIdx = 1;
       while( today <= endIdx ) {
          tempLT = (double)inLow[today];
          tempHT = (double)inHigh[today];
@@ -585,81 +727,107 @@ public partial class Core
          val3 = Math.Abs(tempCY - tempLT);
          greatest = MaxGt(val3, greatest);
          prevATR = Math.FusedMultiplyAdd(wBeta, prevATR, wAlpha * greatest);
-         hRing[hRing_Idx] = tempHT;
-         lRing[lRing_Idx] = tempLT;
-         hh = hRing[hRing_Idx];
-         for( jh = hRing_Idx + 1; jh < optInTimePeriod; jh += 1 ) {
-            best = hRing[jh];
-            hh = MaxGt(best, hh);
+         highest = hhPre;
+         lowest = llPre;
+         highest = MaxGt(tempHT, highest);
+         lowest = MinLt(tempLT, lowest);
+         if( hhBuf_Idx == 0 ) {
+            highest = tempHT;
+            lowest = tempLT;
          }
-         for( jh = 0; jh < hRing_Idx; jh += 1 ) {
-            best = hRing[jh];
-            hh = MaxGt(best, hh);
+         hhPre = highest;
+         llPre = lowest;
+         if( hhBuf_Idx < lastP ) {
+            tempReal = hhBuf[hhBuf_Idx + 1];
+            highest = MaxGt(tempReal, highest);
+            tempReal = llBuf[hhBuf_Idx + 1];
+            lowest = MinLt(tempReal, lowest);
          }
-         ll = lRing[lRing_Idx];
-         for( jl = lRing_Idx + 1; jl < optInTimePeriod; jl += 1 ) {
-            best = lRing[jl];
-            ll = MinLt(best, ll);
+         hhBuf[hhBuf_Idx] = tempHT;
+         llBuf[hhBuf_Idx] = tempLT;
+         hhBuf_Idx++;
+         if( hhBuf_Idx > maxIdx_hhBuf ) { hhBuf_Idx = 0; }
+         band = optInMultiplier * prevATR;
+         highStop = highest - band;
+         lowStop = lowest + band;
+         highest = hsPre;
+         lowest = lsPre;
+         highest = MaxGt(highStop, highest);
+         lowest = MinLt(lowStop, lowest);
+         if( hsBuf_Idx == 0 ) {
+            highest = highStop;
+            lowest = lowStop;
          }
-         for( jl = 0; jl < lRing_Idx; jl += 1 ) {
-            best = lRing[jl];
-            ll = MinLt(best, ll);
+         hsPre = highest;
+         lsPre = lowest;
+         if( hsBuf_Idx < lastQ ) {
+            tempReal = hsBuf[hsBuf_Idx + 1];
+            highest = MaxGt(tempReal, highest);
+            tempReal = lsBuf[hsBuf_Idx + 1];
+            lowest = MinLt(tempReal, lowest);
          }
-         fhRing[fhRing_Idx] = hh - optInMultiplier * prevATR;
-         flRing[flRing_Idx] = ll + optInMultiplier * prevATR;
-         if( today >= startIdx ) {
-            hh = fhRing[fhRing_Idx];
-            for( kh = fhRing_Idx + 1; kh < optInStopPeriod; kh += 1 ) {
-               best = fhRing[kh];
-               hh = MaxGt(best, hh);
+         hsBuf[hsBuf_Idx] = highStop;
+         lsBuf[hsBuf_Idx] = lowStop;
+         hsBuf_Idx++;
+         if( hsBuf_Idx > maxIdx_hsBuf ) { hsBuf_Idx = 0; }
+         outHighStop[outIdx] = highest;
+         outLowStop[outIdx] = lowest;
+         if( hhBuf_Idx == 0 ) {
+            sufHi = hhBuf[lastP];
+            sufLo = llBuf[lastP];
+            ip = lastP;
+            while( ip > 1 ) {
+               ip -= 1;
+               tempReal = hhBuf[ip];
+               sufHi = MaxGt(tempReal, sufHi);
+               hhBuf[ip] = sufHi;
+               tempReal = llBuf[ip];
+               sufLo = MinLt(tempReal, sufLo);
+               llBuf[ip] = sufLo;
             }
-            for( kh = 0; kh < fhRing_Idx; kh += 1 ) {
-               best = fhRing[kh];
-               hh = MaxGt(best, hh);
-            }
-            ll = flRing[flRing_Idx];
-            for( kl = flRing_Idx + 1; kl < optInStopPeriod; kl += 1 ) {
-               best = flRing[kl];
-               ll = MinLt(best, ll);
-            }
-            for( kl = 0; kl < flRing_Idx; kl += 1 ) {
-               best = flRing[kl];
-               ll = MinLt(best, ll);
-            }
-            outHighStop[outIdx] = hh;
-            outLowStop[outIdx] = ll;
-            outIdx = outIdx + 1;
          }
+         if( hsBuf_Idx == 0 ) {
+            sufHi = hsBuf[lastQ];
+            sufLo = lsBuf[lastQ];
+            iq = lastQ;
+            while( iq > 1 ) {
+               iq -= 1;
+               tempReal = hsBuf[iq];
+               sufHi = MaxGt(tempReal, sufHi);
+               hsBuf[iq] = sufHi;
+               tempReal = lsBuf[iq];
+               sufLo = MinLt(tempReal, sufLo);
+               lsBuf[iq] = sufLo;
+            }
+         }
+         outIdx += 1;
          today += 1;
-         hRing_Idx++;
-         if( hRing_Idx > maxIdx_hRing ) { hRing_Idx = 0; }
-         lRing_Idx++;
-         if( lRing_Idx > maxIdx_lRing ) { lRing_Idx = 0; }
-         fhRing_Idx++;
-         if( fhRing_Idx > maxIdx_fhRing ) { fhRing_Idx = 0; }
-         flRing_Idx++;
-         if( flRing_Idx > maxIdx_flRing ) { flRing_Idx = 0; }
       }
-      outNBElement = outIdx;
       outBegIdx = startIdx;
+      outNBElement = outIdx;
       return RetCode.Success ;
    }
    /// <summary>
-   /// Chande Kroll Stop places a pair of trailing stops a multiple of the
-   /// Average True Range away from the recent extremes, then takes the extreme
-   /// of those stops over a second, usually longer, window. The result is a stop
-   /// that follows price but only ratchets after the shorter stop has held for a
-   /// while. The high stop sits below price and is the level a long position
-   /// would give up at; the low stop sits above price and is the short side's.
-   /// Neither line is always above the other: when the multiplier is large
-   /// enough the two cross, which is the signal that the range has widened past
-   /// what the stops can straddle.
+   /// Chande and Kroll's two-line volatility stop. The highest high is offset
+   /// down, and the lowest low up, by a multiple of the Average True Range, and
+   /// each line then takes the extreme of its own recent values, so it moves
+   /// only when a new extreme enters the stop window or an old one leaves it.
+   /// Price above both lines reads as an uptrend and price below both as a
+   /// downtrend.
    /// </summary>
    /// <remarks>
    /// <para>
    /// Formula and more info at
    /// <see href="https://ta-lib.org/functions/cksp">ta-lib.org/functions/cksp</see>.
    /// </para>
+   /// <list type="bullet">
+   /// <item><description>The two lines are named for how they are built, not for the position they protect, because published implementations give "long stop" and "short stop" to opposite lines. <c>outHighStop</c> is the line most platforms plot as the short stop, <c>outLowStop</c> the one they plot as the long stop.</description></item>
+   /// <item><description>Neither line is always above the other: a large multiplier pushes the high line below the low one.</description></item>
+   /// <item><description>The Average True Range is this library's, whose first value is the average of the first full period of true ranges that have a previous close. Platforms that start the true range on the very first bar give slightly different values on early bars; the difference decays as the average warms up.</description></item>
+   /// <item><description>The book's own settings are reported as a multiplier of 3 and a stop period of 20; the defaults here are the ones charting platforms ship.</description></item>
+   /// <item><description>A stop period of 1 leaves the first stops unchanged, which is the Chandelier Exit on both sides.</description></item>
+   /// <item><description>Both lines inherit the Average True Range's warm-up, so a caller who wants them converged sets <c>TA_FUNC_UNST_ATR</c>, exactly as when calling that function directly.</description></item>
+   /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
@@ -677,19 +845,21 @@ public partial class Core
    /// <param name="endIdx">Last bar of the requested range (inclusive).</param>
    /// <param name="inHigh">High price of each bar.</param>
    /// <param name="inLow">Low price of each bar.</param>
-   /// <param name="inClose">Close price of each bar, read only by the True Range.</param>
-   /// <param name="optInTimePeriod">ATR and extreme window (default 10; range 2..100000; <c>int.MinValue</c>
+   /// <param name="inClose">Close price of each bar.</param>
+   /// <param name="optInTimePeriod">Window of the highest high and lowest low, and smoothing period of the
+   /// Average True Range (default 10; range 2..100000; <c>int.MinValue</c>
    /// selects the default).</param>
-   /// <param name="optInMultiplier">ATR multiplier (default 1; minimum 0; <see cref="Core.RealDefault"/>
-   /// selects the default).</param>
-   /// <param name="optInStopPeriod">Stop window (default 9; range 1..100000; <c>int.MinValue</c> selects the
+   /// <param name="optInMultiplier">Multiplier applied to the Average True Range to offset the first stops
+   /// (default 1; minimum 0; <see cref="Core.RealDefault"/> selects the
    /// default).</param>
-   /// <param name="outHighStop">Trailing stop below price, the high side. Must hold at least <c>endIdx -
-   /// max(startIdx, CkspLookback(...)) + 1</c> values, the count the call
-   /// produces (none when that is not positive).</param>
-   /// <param name="outLowStop">Trailing stop above price, the low side. Must hold at least <c>endIdx -
-   /// max(startIdx, CkspLookback(...)) + 1</c> values, the count the call
-   /// produces (none when that is not positive).</param>
+   /// <param name="optInStopPeriod">Window over which each first stop takes its extreme (default 9; range
+   /// 1..100000; <c>int.MinValue</c> selects the default).</param>
+   /// <param name="outHighStop">Highest of the recent first high stops; usually plotted as the short stop.
+   /// Must hold at least <c>endIdx - max(startIdx, CkspLookback(...)) + 1</c>
+   /// values, the count the call produces (none when that is not positive).</param>
+   /// <param name="outLowStop">Lowest of the recent first low stops; usually plotted as the long stop.
+   /// Must hold at least <c>endIdx - max(startIdx, CkspLookback(...)) + 1</c>
+   /// values, the count the call produces (none when that is not positive).</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
    /// <c>Count</c> how many were written.</returns>
    /// <exception cref="System.ArgumentOutOfRangeException"><c>startIdx</c> or <c>endIdx</c> is negative or above
@@ -712,6 +882,12 @@ public partial class Core
    /// Computing wholly in place (an output that IS an input) is allowed.</description></item>
    /// </list>
    /// </exception>
+   /// <seealso cref="Core.Atr(int, int, ReadOnlySpan{double}, ReadOnlySpan{double}, ReadOnlySpan{double}, int, Span{double})"/>
+   /// <seealso cref="Core.Max(int, int, ReadOnlySpan{double}, int, Span{double})"/>
+   /// <seealso cref="Core.Min(int, int, ReadOnlySpan{double}, int, Span{double})"/>
+   /// <seealso cref="Core.Supertrend(int, int, ReadOnlySpan{double}, ReadOnlySpan{double}, ReadOnlySpan{double}, int, double, Span{double}, Span{int})"/>
+   /// <seealso cref="Core.Kc(int, int, ReadOnlySpan{double}, ReadOnlySpan{double}, ReadOnlySpan{double}, int, int, double, Span{double}, Span{double}, Span{double})"/>
+   /// <seealso cref="Core.Donchian(int, int, ReadOnlySpan{double}, ReadOnlySpan{double}, int, Span{double}, Span{double}, Span{double})"/>
    public OutRange Cksp( int startIdx,
                          int endIdx,
                          ReadOnlySpan<double> inHigh,
@@ -738,21 +914,26 @@ public partial class Core
       return new OutRange(outBegIdx, outNBElement);
    }
    /// <summary>
-   /// Chande Kroll Stop places a pair of trailing stops a multiple of the
-   /// Average True Range away from the recent extremes, then takes the extreme
-   /// of those stops over a second, usually longer, window. The result is a stop
-   /// that follows price but only ratchets after the shorter stop has held for a
-   /// while. The high stop sits below price and is the level a long position
-   /// would give up at; the low stop sits above price and is the short side's.
-   /// Neither line is always above the other: when the multiplier is large
-   /// enough the two cross, which is the signal that the range has widened past
-   /// what the stops can straddle.
+   /// Chande and Kroll's two-line volatility stop. The highest high is offset
+   /// down, and the lowest low up, by a multiple of the Average True Range, and
+   /// each line then takes the extreme of its own recent values, so it moves
+   /// only when a new extreme enters the stop window or an old one leaves it.
+   /// Price above both lines reads as an uptrend and price below both as a
+   /// downtrend.
    /// </summary>
    /// <remarks>
    /// <para>
    /// Formula and more info at
    /// <see href="https://ta-lib.org/functions/cksp">ta-lib.org/functions/cksp</see>.
    /// </para>
+   /// <list type="bullet">
+   /// <item><description>The two lines are named for how they are built, not for the position they protect, because published implementations give "long stop" and "short stop" to opposite lines. <c>outHighStop</c> is the line most platforms plot as the short stop, <c>outLowStop</c> the one they plot as the long stop.</description></item>
+   /// <item><description>Neither line is always above the other: a large multiplier pushes the high line below the low one.</description></item>
+   /// <item><description>The Average True Range is this library's, whose first value is the average of the first full period of true ranges that have a previous close. Platforms that start the true range on the very first bar give slightly different values on early bars; the difference decays as the average warms up.</description></item>
+   /// <item><description>The book's own settings are reported as a multiplier of 3 and a stop period of 20; the defaults here are the ones charting platforms ship.</description></item>
+   /// <item><description>A stop period of 1 leaves the first stops unchanged, which is the Chandelier Exit on both sides.</description></item>
+   /// <item><description>Both lines inherit the Average True Range's warm-up, so a caller who wants them converged sets <c>TA_FUNC_UNST_ATR</c>, exactly as when calling that function directly.</description></item>
+   /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
    /// <c>double</c> as they are read and all arithmetic is performed in
@@ -776,19 +957,21 @@ public partial class Core
    /// <param name="endIdx">Last bar of the requested range (inclusive).</param>
    /// <param name="inHigh">High price of each bar.</param>
    /// <param name="inLow">Low price of each bar.</param>
-   /// <param name="inClose">Close price of each bar, read only by the True Range.</param>
-   /// <param name="optInTimePeriod">ATR and extreme window (default 10; range 2..100000; <c>int.MinValue</c>
+   /// <param name="inClose">Close price of each bar.</param>
+   /// <param name="optInTimePeriod">Window of the highest high and lowest low, and smoothing period of the
+   /// Average True Range (default 10; range 2..100000; <c>int.MinValue</c>
    /// selects the default).</param>
-   /// <param name="optInMultiplier">ATR multiplier (default 1; minimum 0; <see cref="Core.RealDefault"/>
-   /// selects the default).</param>
-   /// <param name="optInStopPeriod">Stop window (default 9; range 1..100000; <c>int.MinValue</c> selects the
+   /// <param name="optInMultiplier">Multiplier applied to the Average True Range to offset the first stops
+   /// (default 1; minimum 0; <see cref="Core.RealDefault"/> selects the
    /// default).</param>
-   /// <param name="outHighStop">Trailing stop below price, the high side. Must hold at least <c>endIdx -
-   /// max(startIdx, CkspLookback(...)) + 1</c> values, the count the call
-   /// produces (none when that is not positive).</param>
-   /// <param name="outLowStop">Trailing stop above price, the low side. Must hold at least <c>endIdx -
-   /// max(startIdx, CkspLookback(...)) + 1</c> values, the count the call
-   /// produces (none when that is not positive).</param>
+   /// <param name="optInStopPeriod">Window over which each first stop takes its extreme (default 9; range
+   /// 1..100000; <c>int.MinValue</c> selects the default).</param>
+   /// <param name="outHighStop">Highest of the recent first high stops; usually plotted as the short stop.
+   /// Must hold at least <c>endIdx - max(startIdx, CkspLookback(...)) + 1</c>
+   /// values, the count the call produces (none when that is not positive).</param>
+   /// <param name="outLowStop">Lowest of the recent first low stops; usually plotted as the long stop.
+   /// Must hold at least <c>endIdx - max(startIdx, CkspLookback(...)) + 1</c>
+   /// values, the count the call produces (none when that is not positive).</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
    /// <c>Count</c> how many were written.</returns>
    /// <exception cref="System.ArgumentOutOfRangeException"><c>startIdx</c> or <c>endIdx</c> is negative or above
@@ -813,6 +996,12 @@ public partial class Core
    /// overlap of their byte ranges is rejected.</description></item>
    /// </list>
    /// </exception>
+   /// <seealso cref="Core.Atr(int, int, ReadOnlySpan{double}, ReadOnlySpan{double}, ReadOnlySpan{double}, int, Span{double})"/>
+   /// <seealso cref="Core.Max(int, int, ReadOnlySpan{double}, int, Span{double})"/>
+   /// <seealso cref="Core.Min(int, int, ReadOnlySpan{double}, int, Span{double})"/>
+   /// <seealso cref="Core.Supertrend(int, int, ReadOnlySpan{double}, ReadOnlySpan{double}, ReadOnlySpan{double}, int, double, Span{double}, Span{int})"/>
+   /// <seealso cref="Core.Kc(int, int, ReadOnlySpan{double}, ReadOnlySpan{double}, ReadOnlySpan{double}, int, int, double, Span{double}, Span{double}, Span{double})"/>
+   /// <seealso cref="Core.Donchian(int, int, ReadOnlySpan{double}, ReadOnlySpan{double}, int, Span{double}, Span{double}, Span{double})"/>
    public OutRange Cksp( int startIdx,
                          int endIdx,
                          ReadOnlySpan<float> inHigh,
@@ -849,8 +1038,8 @@ public partial class Core
    /// <see cref="System.BitConverter.DoubleToInt64Bits(double)"/> per component
    /// when bit-level identity is what you mean.</para>
    /// </remarks>
-   /// <param name="HighStop">Trailing stop below price, the high side.</param>
-   /// <param name="LowStop">Trailing stop above price, the low side.</param>
+   /// <param name="HighStop">Highest of the recent first high stops; usually plotted as the short stop.</param>
+   /// <param name="LowStop">Lowest of the recent first low stops; usually plotted as the long stop.</param>
    public readonly record struct CkspValue( double HighStop, double LowStop );
 
    /// <summary>A live <c>CKSP</c> stream: one value per closed bar, bit-identical to
@@ -875,26 +1064,32 @@ public partial class Core
       internal int optInTimePeriod;
       internal double optInMultiplier;
       internal int optInStopPeriod;
+      internal int lastP;
+      internal int lastQ;
       internal double prevATR;
       internal double wAlpha;
       internal double wBeta;
-      internal int hRing_Idx;
-      internal int lRing_Idx;
-      internal int fhRing_Idx;
-      internal int flRing_Idx;
-      internal int maxIdx_hRing;
-      internal int maxIdx_lRing;
-      internal int maxIdx_fhRing;
-      internal int maxIdx_flRing;
+      internal double hhPre;
+      internal double llPre;
+      internal double hsPre;
+      internal double lsPre;
+      internal int hhBuf_Idx;
+      internal int hsBuf_Idx;
+      internal int maxIdx_hhBuf;
+      internal int llBuf_Idx;
+      internal int maxIdx_llBuf;
+      internal int maxIdx_hsBuf;
+      internal int lsBuf_Idx;
+      internal int maxIdx_lsBuf;
       internal double lag1_inClose;
-      internal int cbSize_hRing;
-      internal double[] cb_hRing = [];
-      internal int cbSize_lRing;
-      internal double[] cb_lRing = [];
-      internal int cbSize_fhRing;
-      internal double[] cb_fhRing = [];
-      internal int cbSize_flRing;
-      internal double[] cb_flRing = [];
+      internal int cbSize_hhBuf;
+      internal double[] cb_hhBuf = [];
+      internal int cbSize_llBuf;
+      internal double[] cb_llBuf = [];
+      internal int cbSize_hsBuf;
+      internal double[] cb_hsBuf = [];
+      internal int cbSize_lsBuf;
+      internal double[] cb_lsBuf = [];
       internal double cur_outHighStop;
       internal double cur_outLowStop;
       internal int outRangeBegIdx;
@@ -941,30 +1136,36 @@ public partial class Core
          this.optInTimePeriod = other.optInTimePeriod;
          this.optInMultiplier = other.optInMultiplier;
          this.optInStopPeriod = other.optInStopPeriod;
+         this.lastP = other.lastP;
+         this.lastQ = other.lastQ;
          this.prevATR = other.prevATR;
          this.wAlpha = other.wAlpha;
          this.wBeta = other.wBeta;
-         this.hRing_Idx = other.hRing_Idx;
-         this.lRing_Idx = other.lRing_Idx;
-         this.fhRing_Idx = other.fhRing_Idx;
-         this.flRing_Idx = other.flRing_Idx;
-         this.maxIdx_hRing = other.maxIdx_hRing;
-         this.maxIdx_lRing = other.maxIdx_lRing;
-         this.maxIdx_fhRing = other.maxIdx_fhRing;
-         this.maxIdx_flRing = other.maxIdx_flRing;
+         this.hhPre = other.hhPre;
+         this.llPre = other.llPre;
+         this.hsPre = other.hsPre;
+         this.lsPre = other.lsPre;
+         this.hhBuf_Idx = other.hhBuf_Idx;
+         this.hsBuf_Idx = other.hsBuf_Idx;
+         this.maxIdx_hhBuf = other.maxIdx_hhBuf;
+         this.llBuf_Idx = other.llBuf_Idx;
+         this.maxIdx_llBuf = other.maxIdx_llBuf;
+         this.maxIdx_hsBuf = other.maxIdx_hsBuf;
+         this.lsBuf_Idx = other.lsBuf_Idx;
+         this.maxIdx_lsBuf = other.maxIdx_lsBuf;
          this.lag1_inClose = other.lag1_inClose;
-         this.cbSize_hRing = other.cbSize_hRing;
-         this.cb_hRing = new double[other.cb_hRing.Length];
-         Array.Copy( other.cb_hRing, this.cb_hRing, other.cb_hRing.Length );
-         this.cbSize_lRing = other.cbSize_lRing;
-         this.cb_lRing = new double[other.cb_lRing.Length];
-         Array.Copy( other.cb_lRing, this.cb_lRing, other.cb_lRing.Length );
-         this.cbSize_fhRing = other.cbSize_fhRing;
-         this.cb_fhRing = new double[other.cb_fhRing.Length];
-         Array.Copy( other.cb_fhRing, this.cb_fhRing, other.cb_fhRing.Length );
-         this.cbSize_flRing = other.cbSize_flRing;
-         this.cb_flRing = new double[other.cb_flRing.Length];
-         Array.Copy( other.cb_flRing, this.cb_flRing, other.cb_flRing.Length );
+         this.cbSize_hhBuf = other.cbSize_hhBuf;
+         this.cb_hhBuf = new double[other.cb_hhBuf.Length];
+         Array.Copy( other.cb_hhBuf, this.cb_hhBuf, other.cb_hhBuf.Length );
+         this.cbSize_llBuf = other.cbSize_llBuf;
+         this.cb_llBuf = new double[other.cb_llBuf.Length];
+         Array.Copy( other.cb_llBuf, this.cb_llBuf, other.cb_llBuf.Length );
+         this.cbSize_hsBuf = other.cbSize_hsBuf;
+         this.cb_hsBuf = new double[other.cb_hsBuf.Length];
+         Array.Copy( other.cb_hsBuf, this.cb_hsBuf, other.cb_hsBuf.Length );
+         this.cbSize_lsBuf = other.cbSize_lsBuf;
+         this.cb_lsBuf = new double[other.cb_lsBuf.Length];
+         Array.Copy( other.cb_lsBuf, this.cb_lsBuf, other.cb_lsBuf.Length );
          this.cur_outHighStop = other.cur_outHighStop;
          this.cur_outLowStop = other.cur_outLowStop;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -1019,93 +1220,82 @@ public partial class Core
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.NonFiniteBar("CKSP", "peek", !double.IsFinite(inHigh) ? nameof(inHigh) : !double.IsFinite(inLow) ? nameof(inLow) : nameof(inClose));
          CkspStream sp = this;
-         int jh = 0;
-         int jl = 0;
-         int kh = 0;
-         int kl = 0;
          double val2 = 0.0;
          double val3 = 0.0;
          double greatest = 0.0;
          double tempCY = 0.0;
          double tempLT = 0.0;
          double tempHT = 0.0;
-         double hh = 0.0;
-         double ll = 0.0;
-         double best = 0.0;
+         double tempReal = 0.0;
+         double highest = 0.0;
+         double lowest = 0.0;
+         double band = 0.0;
+         double highStop = 0.0;
+         double lowStop = 0.0;
          double cur_outHighStop = 0.0;
          double cur_outLowStop = 0.0;
+         int hhBuf_Idx = sp.hhBuf_Idx;
+         double hhPre = sp.hhPre;
+         int hsBuf_Idx = sp.hsBuf_Idx;
+         double hsPre = sp.hsPre;
+         double llPre = sp.llPre;
+         double lsPre = sp.lsPre;
          double prevATR = sp.prevATR;
-         int pkSlot0 = -1;
-         double pkVal0 = 0.0;
-         int pkSlot1 = -1;
-         double pkVal1 = 0.0;
-         int pkSlot2 = -1;
-         double pkVal2 = 0.0;
-         int pkSlot3 = -1;
-         double pkVal3 = 0.0;
          tempLT = inLow;
          tempHT = inHigh;
          tempCY = sp.lag1_inClose;
          greatest = tempHT - tempLT;
+         /* val1 */
          val2 = Math.Abs(tempCY - tempHT);
          greatest = MaxGt(val2, greatest);
          val3 = Math.Abs(tempCY - tempLT);
          greatest = MaxGt(val3, greatest);
          prevATR = Math.FusedMultiplyAdd(sp.wBeta, prevATR, sp.wAlpha * greatest);
-         pkSlot0 = sp.hRing_Idx;
-         pkVal0 = tempHT;
-         pkSlot1 = sp.lRing_Idx;
-         pkVal1 = tempLT;
-         /* The extremes of the p bars ending here. The newest sits at the ring's
-          * own index, so the oldest is the slot after it and the walk is two
-          * straight runs.
-          */
-         hh = (sp.hRing_Idx != pkSlot0) ? sp.cb_hRing[sp.hRing_Idx] : pkVal0;
-         for( jh = sp.hRing_Idx + 1; jh < sp.optInTimePeriod; jh += 1 ) {
-            best = sp.cb_hRing[jh];
-            hh = MaxGt(best, hh);
+         highest = hhPre;
+         lowest = llPre;
+         highest = MaxGt(tempHT, highest);
+         lowest = MinLt(tempLT, lowest);
+         if( hhBuf_Idx == 0 ) {
+            highest = tempHT;
+            lowest = tempLT;
          }
-         for( jh = 0; jh < sp.hRing_Idx; jh += 1 ) {
-            best = sp.cb_hRing[jh];
-            hh = MaxGt(best, hh);
+         hhPre = highest;
+         llPre = lowest;
+         if( hhBuf_Idx < sp.lastP ) {
+            tempReal = sp.cb_hhBuf[hhBuf_Idx + 1];
+            highest = MaxGt(tempReal, highest);
+            tempReal = sp.cb_llBuf[hhBuf_Idx + 1];
+            lowest = MinLt(tempReal, lowest);
          }
-         ll = (sp.lRing_Idx != pkSlot1) ? sp.cb_lRing[sp.lRing_Idx] : pkVal1;
-         for( jl = sp.lRing_Idx + 1; jl < sp.optInTimePeriod; jl += 1 ) {
-            best = sp.cb_lRing[jl];
-            ll = MinLt(best, ll);
+         hhBuf_Idx = hhBuf_Idx + 1;
+         if( hhBuf_Idx > sp.maxIdx_hhBuf ) {
+            hhBuf_Idx = 0;
          }
-         for( jl = 0; jl < sp.lRing_Idx; jl += 1 ) {
-            best = sp.cb_lRing[jl];
-            ll = MinLt(best, ll);
+         band = sp.optInMultiplier * prevATR;
+         highStop = highest - band;
+         lowStop = lowest + band;
+         highest = hsPre;
+         lowest = lsPre;
+         highest = MaxGt(highStop, highest);
+         lowest = MinLt(lowStop, lowest);
+         if( hsBuf_Idx == 0 ) {
+            highest = highStop;
+            lowest = lowStop;
          }
-         pkSlot2 = sp.fhRing_Idx;
-         pkVal2 = hh - sp.optInMultiplier * prevATR;
-         pkSlot3 = sp.flRing_Idx;
-         pkVal3 = ll + sp.optInMultiplier * prevATR;
-         /* The second stage, over the q first-stage bars ending here. At q = 1
-          * both runs are empty and the value is the bar's own, which is the
-          * Chandelier Exit form.
-          */
-         hh = (sp.fhRing_Idx != pkSlot2) ? sp.cb_fhRing[sp.fhRing_Idx] : pkVal2;
-         for( kh = sp.fhRing_Idx + 1; kh < sp.optInStopPeriod; kh += 1 ) {
-            best = sp.cb_fhRing[kh];
-            hh = MaxGt(best, hh);
+         hsPre = highest;
+         lsPre = lowest;
+         if( hsBuf_Idx < sp.lastQ ) {
+            tempReal = sp.cb_hsBuf[hsBuf_Idx + 1];
+            highest = MaxGt(tempReal, highest);
+            tempReal = sp.cb_lsBuf[hsBuf_Idx + 1];
+            lowest = MinLt(tempReal, lowest);
          }
-         for( kh = 0; kh < sp.fhRing_Idx; kh += 1 ) {
-            best = sp.cb_fhRing[kh];
-            hh = MaxGt(best, hh);
+         hsBuf_Idx = hsBuf_Idx + 1;
+         if( hsBuf_Idx > sp.maxIdx_hsBuf ) {
+            hsBuf_Idx = 0;
          }
-         ll = (sp.flRing_Idx != pkSlot3) ? sp.cb_flRing[sp.flRing_Idx] : pkVal3;
-         for( kl = sp.flRing_Idx + 1; kl < sp.optInStopPeriod; kl += 1 ) {
-            best = sp.cb_flRing[kl];
-            ll = MinLt(best, ll);
-         }
-         for( kl = 0; kl < sp.flRing_Idx; kl += 1 ) {
-            best = sp.cb_flRing[kl];
-            ll = MinLt(best, ll);
-         }
-         cur_outHighStop = hh;
-         cur_outLowStop = ll;
+         cur_outHighStop = highest;
+         cur_outLowStop = lowest;
          return new CkspValue(cur_outHighStop, cur_outLowStop);
       }
 
@@ -1128,93 +1318,112 @@ public partial class Core
 
    private void CkspStepImpl( CkspStream sp, double inHigh, double inLow, double inClose )
    {
-      int jh = 0;
-      int jl = 0;
-      int kh = 0;
-      int kl = 0;
+      int ip = 0;
+      int iq = 0;
       double val2 = 0.0;
       double val3 = 0.0;
       double greatest = 0.0;
       double tempCY = 0.0;
       double tempLT = 0.0;
       double tempHT = 0.0;
-      double hh = 0.0;
-      double ll = 0.0;
-      double best = 0.0;
+      double tempReal = 0.0;
+      double sufHi = 0.0;
+      double sufLo = 0.0;
+      double highest = 0.0;
+      double lowest = 0.0;
+      double band = 0.0;
+      double highStop = 0.0;
+      double lowStop = 0.0;
       tempLT = inLow;
       tempHT = inHigh;
       tempCY = sp.lag1_inClose;
       greatest = tempHT - tempLT;
+      /* val1 */
       val2 = Math.Abs(tempCY - tempHT);
       greatest = MaxGt(val2, greatest);
       val3 = Math.Abs(tempCY - tempLT);
       greatest = MaxGt(val3, greatest);
       sp.prevATR = Math.FusedMultiplyAdd(sp.wBeta, sp.prevATR, sp.wAlpha * greatest);
-      sp.cb_hRing[sp.hRing_Idx] = tempHT;
-      sp.cb_lRing[sp.lRing_Idx] = tempLT;
-      /* The extremes of the p bars ending here. The newest sits at the ring's
-       * own index, so the oldest is the slot after it and the walk is two
-       * straight runs.
+      highest = sp.hhPre;
+      lowest = sp.llPre;
+      highest = MaxGt(tempHT, highest);
+      lowest = MinLt(tempLT, lowest);
+      if( sp.hhBuf_Idx == 0 ) {
+         highest = tempHT;
+         lowest = tempLT;
+      }
+      sp.hhPre = highest;
+      sp.llPre = lowest;
+      if( sp.hhBuf_Idx < sp.lastP ) {
+         tempReal = sp.cb_hhBuf[sp.hhBuf_Idx + 1];
+         highest = MaxGt(tempReal, highest);
+         tempReal = sp.cb_llBuf[sp.hhBuf_Idx + 1];
+         lowest = MinLt(tempReal, lowest);
+      }
+      sp.cb_hhBuf[sp.hhBuf_Idx] = tempHT;
+      sp.cb_llBuf[sp.hhBuf_Idx] = tempLT;
+      sp.hhBuf_Idx = sp.hhBuf_Idx + 1;
+      if( sp.hhBuf_Idx > sp.maxIdx_hhBuf ) {
+         sp.hhBuf_Idx = 0;
+      }
+      band = sp.optInMultiplier * sp.prevATR;
+      highStop = highest - band;
+      lowStop = lowest + band;
+      highest = sp.hsPre;
+      lowest = sp.lsPre;
+      highest = MaxGt(highStop, highest);
+      lowest = MinLt(lowStop, lowest);
+      if( sp.hsBuf_Idx == 0 ) {
+         highest = highStop;
+         lowest = lowStop;
+      }
+      sp.hsPre = highest;
+      sp.lsPre = lowest;
+      if( sp.hsBuf_Idx < sp.lastQ ) {
+         tempReal = sp.cb_hsBuf[sp.hsBuf_Idx + 1];
+         highest = MaxGt(tempReal, highest);
+         tempReal = sp.cb_lsBuf[sp.hsBuf_Idx + 1];
+         lowest = MinLt(tempReal, lowest);
+      }
+      sp.cb_hsBuf[sp.hsBuf_Idx] = highStop;
+      sp.cb_lsBuf[sp.hsBuf_Idx] = lowStop;
+      sp.hsBuf_Idx = sp.hsBuf_Idx + 1;
+      if( sp.hsBuf_Idx > sp.maxIdx_hsBuf ) {
+         sp.hsBuf_Idx = 0;
+      }
+      sp.cur_outHighStop = highest;
+      sp.cur_outLowStop = lowest;
+      /* A completed block becomes its suffix extrema. Nothing this bar reads
+       * them, so both passes stay below the output stores, where the peek
+       * frame never runs them.
        */
-      hh = sp.cb_hRing[sp.hRing_Idx];
-      for( jh = sp.hRing_Idx + 1; jh < sp.optInTimePeriod; jh += 1 ) {
-         best = sp.cb_hRing[jh];
-         hh = MaxGt(best, hh);
+      if( sp.hhBuf_Idx == 0 ) {
+         sufHi = sp.cb_hhBuf[sp.lastP];
+         sufLo = sp.cb_llBuf[sp.lastP];
+         ip = sp.lastP;
+         while( ip > 1 ) {
+            ip -= 1;
+            tempReal = sp.cb_hhBuf[ip];
+            sufHi = MaxGt(tempReal, sufHi);
+            sp.cb_hhBuf[ip] = sufHi;
+            tempReal = sp.cb_llBuf[ip];
+            sufLo = MinLt(tempReal, sufLo);
+            sp.cb_llBuf[ip] = sufLo;
+         }
       }
-      for( jh = 0; jh < sp.hRing_Idx; jh += 1 ) {
-         best = sp.cb_hRing[jh];
-         hh = MaxGt(best, hh);
-      }
-      ll = sp.cb_lRing[sp.lRing_Idx];
-      for( jl = sp.lRing_Idx + 1; jl < sp.optInTimePeriod; jl += 1 ) {
-         best = sp.cb_lRing[jl];
-         ll = MinLt(best, ll);
-      }
-      for( jl = 0; jl < sp.lRing_Idx; jl += 1 ) {
-         best = sp.cb_lRing[jl];
-         ll = MinLt(best, ll);
-      }
-      sp.cb_fhRing[sp.fhRing_Idx] = hh - sp.optInMultiplier * sp.prevATR;
-      sp.cb_flRing[sp.flRing_Idx] = ll + sp.optInMultiplier * sp.prevATR;
-      /* The second stage, over the q first-stage bars ending here. At q = 1
-       * both runs are empty and the value is the bar's own, which is the
-       * Chandelier Exit form.
-       */
-      hh = sp.cb_fhRing[sp.fhRing_Idx];
-      for( kh = sp.fhRing_Idx + 1; kh < sp.optInStopPeriod; kh += 1 ) {
-         best = sp.cb_fhRing[kh];
-         hh = MaxGt(best, hh);
-      }
-      for( kh = 0; kh < sp.fhRing_Idx; kh += 1 ) {
-         best = sp.cb_fhRing[kh];
-         hh = MaxGt(best, hh);
-      }
-      ll = sp.cb_flRing[sp.flRing_Idx];
-      for( kl = sp.flRing_Idx + 1; kl < sp.optInStopPeriod; kl += 1 ) {
-         best = sp.cb_flRing[kl];
-         ll = MinLt(best, ll);
-      }
-      for( kl = 0; kl < sp.flRing_Idx; kl += 1 ) {
-         best = sp.cb_flRing[kl];
-         ll = MinLt(best, ll);
-      }
-      sp.cur_outHighStop = hh;
-      sp.cur_outLowStop = ll;
-      sp.hRing_Idx = sp.hRing_Idx + 1;
-      if( sp.hRing_Idx > sp.maxIdx_hRing ) {
-         sp.hRing_Idx = 0;
-      }
-      sp.lRing_Idx = sp.lRing_Idx + 1;
-      if( sp.lRing_Idx > sp.maxIdx_lRing ) {
-         sp.lRing_Idx = 0;
-      }
-      sp.fhRing_Idx = sp.fhRing_Idx + 1;
-      if( sp.fhRing_Idx > sp.maxIdx_fhRing ) {
-         sp.fhRing_Idx = 0;
-      }
-      sp.flRing_Idx = sp.flRing_Idx + 1;
-      if( sp.flRing_Idx > sp.maxIdx_flRing ) {
-         sp.flRing_Idx = 0;
+      if( sp.hsBuf_Idx == 0 ) {
+         sufHi = sp.cb_hsBuf[sp.lastQ];
+         sufLo = sp.cb_lsBuf[sp.lastQ];
+         iq = sp.lastQ;
+         while( iq > 1 ) {
+            iq -= 1;
+            tempReal = sp.cb_hsBuf[iq];
+            sufHi = MaxGt(tempReal, sufHi);
+            sp.cb_hsBuf[iq] = sufHi;
+            tempReal = sp.cb_lsBuf[iq];
+            sufLo = MinLt(tempReal, sufLo);
+            sp.cb_lsBuf[iq] = sufLo;
+         }
       }
       sp.lag1_inClose = inClose;
    }
@@ -1223,15 +1432,26 @@ public partial class Core
    {
       outBegIdx = 0;
       outNBElement = 0;
+      double[] hhBuf = [];
+      int hhBuf_Idx = 0;
+      int maxIdx_hhBuf = (30)-1;
+      double[] llBuf = [];
+      int llBuf_Idx = 0;
+      int maxIdx_llBuf = (30)-1;
+      double[] hsBuf = [];
+      int hsBuf_Idx = 0;
+      int maxIdx_hsBuf = (30)-1;
+      double[] lsBuf = [];
+      int lsBuf_Idx = 0;
+      int maxIdx_lsBuf = (30)-1;
       int i = 0;
-      int jh = 0;
-      int jl = 0;
-      int kh = 0;
-      int kl = 0;
+      int ip = 0;
+      int iq = 0;
       int today = 0;
       int outIdx = 0;
       int lookbackTotal = 0;
-      int stageOneIdx = 0;
+      int lastP = 0;
+      int lastQ = 0;
       double prevATR = 0;
       double periodTotal = 0;
       double wAlpha = 0;
@@ -1242,21 +1462,18 @@ public partial class Core
       double tempCY = 0;
       double tempLT = 0;
       double tempHT = 0;
-      double hh = 0;
-      double ll = 0;
-      double best = 0;
-      double[] hRing = [];
-      int hRing_Idx = 0;
-      int maxIdx_hRing = (50)-1;
-      double[] lRing = [];
-      int lRing_Idx = 0;
-      int maxIdx_lRing = (50)-1;
-      double[] fhRing = [];
-      int fhRing_Idx = 0;
-      int maxIdx_fhRing = (50)-1;
-      double[] flRing = [];
-      int flRing_Idx = 0;
-      int maxIdx_flRing = (50)-1;
+      double tempReal = 0;
+      double hhPre = 0;
+      double llPre = 0;
+      double hsPre = 0;
+      double lsPre = 0;
+      double sufHi = 0;
+      double sufLo = 0;
+      double highest = 0;
+      double lowest = 0;
+      double band = 0;
+      double highStop = 0;
+      double lowStop = 0;
       int historyLen = inHigh.Length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
@@ -1288,55 +1505,58 @@ public partial class Core
          outNBElement = 0;
          return RetCode.InsufficientHistory;
       }
-      /* Four windows, all carried as rings and all walked oldest-first, the
-       * cci.c:112-117 shape: an index that wrapped would be one more thing the
-       * stream derivation has to prove, and the walk is the same values either
-       * way.
-       */
       outBegIdx = 0;
       outNBElement = 0;
       lookbackTotal = CkspLookback(optInTimePeriod, optInMultiplier, optInStopPeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
+      /* Make sure there is still something to evaluate. */
       if( startIdx > endIdx ) {
          return RetCode.InsufficientHistory ;
       }
-      if( optInTimePeriod < 1 ) return RetCode.InternalError;
-      hRing = new double[optInTimePeriod];
-      maxIdx_hRing = (optInTimePeriod)-1;
-      hRing_Idx = 0;
-      if( optInTimePeriod < 1 ) return RetCode.InternalError;
-      lRing = new double[optInTimePeriod];
-      maxIdx_lRing = (optInTimePeriod)-1;
-      lRing_Idx = 0;
-      if( optInStopPeriod < 1 ) return RetCode.InternalError;
-      fhRing = new double[optInStopPeriod];
-      maxIdx_fhRing = (optInStopPeriod)-1;
-      fhRing_Idx = 0;
-      if( optInStopPeriod < 1 ) return RetCode.InternalError;
-      flRing = new double[optInStopPeriod];
-      maxIdx_flRing = (optInStopPeriod)-1;
-      flRing_Idx = 0;
-      /* The first stage is entered q-1 bars before the first output, because the
-       * second stage's window reaches that far back. Each leg is anchored on its
-       * own bar rather than on the caller's startIdx (the kc.c:73-77 rule): the
-       * Average True Range is seeded as if TA_ATR had been entered here, and the
-       * extremes are the p-windows ending on these same bars.
-       */
-      stageOneIdx = startIdx - (optInStopPeriod - 1);
-      /* The Average True Range, carried inline rather than taken from a call: the
-       * two stages advance together one bar at a time and a whole-range buffer
-       * between them would not stream (supertrend.c:47-50).
+      /* Four rolling extrema, van Herk / Gil-Werman, one buffer each: the window
+       * ending in slot j is the current block's prefix extremum joined with the
+       * previous block's suffix extremum from slot j+1. A slot holds the raw value
+       * while its block is filling and is turned into the suffix extremum, in
+       * place, when the block completes; slot j+1 is always still the previous
+       * block's when slot j is filled. The high and low sides share an index.
        *
-       * The arithmetic order is the bit-exactness contract with TA_ATR and is not
-       * to be reordered: the range first, then the two previous-close distances in
-       * that order; the seed summed from 0.0 over the first optInTimePeriod True
-       * Ranges and divided once; wBeta rounded first and wAlpha derived from it.
+       * The extrema are exact, so both outputs must stay bit-identical to
+       * TA_MAX( TA_MAX(high) - x*TA_ATR ) and its mirror, whatever the block
+       * phase; only the sign of a zero tied between +0.0 and -0.0 is free.
+       */
+      if( optInTimePeriod < 1 ) return RetCode.InternalError;
+      hhBuf = new double[optInTimePeriod];
+      maxIdx_hhBuf = (optInTimePeriod)-1;
+      hhBuf_Idx = 0;
+      if( optInTimePeriod < 1 ) return RetCode.InternalError;
+      llBuf = new double[optInTimePeriod];
+      maxIdx_llBuf = (optInTimePeriod)-1;
+      llBuf_Idx = 0;
+      if( optInStopPeriod < 1 ) return RetCode.InternalError;
+      hsBuf = new double[optInStopPeriod];
+      maxIdx_hsBuf = (optInStopPeriod)-1;
+      hsBuf_Idx = 0;
+      if( optInStopPeriod < 1 ) return RetCode.InternalError;
+      lsBuf = new double[optInStopPeriod];
+      maxIdx_lsBuf = (optInStopPeriod)-1;
+      lsBuf_Idx = 0;
+      lastP = optInTimePeriod - 1;
+      lastQ = optInStopPeriod - 1;
+      /* The Average True Range is carried inline rather than taken from a call,
+       * because the two stages advance together one bar at a time and a
+       * whole-range buffer between them would not stream.
+       *
+       * The arithmetic order below is the bit-exactness contract with TA_ATR (do
+       * not reorder): True Range from high-low, then the two previous-close
+       * distances in that order; the seed summed from 0.0 over the first 'period'
+       * True Ranges and divided once; the same two Wilder coefficients, wBeta
+       * rounded and wAlpha derived from it, in one fused statement.
        */
       wBeta = (double)(optInTimePeriod - 1) / (double)optInTimePeriod;
       wAlpha = 1.0 - wBeta;
-      today = stageOneIdx - AtrLookback(optInTimePeriod) + 1;
+      today = startIdx - lookbackTotal + 1;
       periodTotal = 0.0;
       i = optInTimePeriod;
       while( i-- > 0 ) {
@@ -1344,6 +1564,7 @@ public partial class Core
          tempHT = inHigh[today];
          tempCY = inClose[today - 1];
          greatest = tempHT - tempLT;
+         /* val1 */
          val2 = Math.Abs(tempCY - tempHT);
          greatest = MaxGt(val2, greatest);
          val3 = Math.Abs(tempCY - tempLT);
@@ -1352,15 +1573,16 @@ public partial class Core
          today += 1;
       }
       prevATR = periodTotal / optInTimePeriod;
-      /* Skip the Average True Range's unstable period. The count comes from the
-       * lookback rather than from the setting, so the two cannot disagree.
+      /* Skip the Average True Range's unstable period. Taking the count from the
+       * lookback rather than naming the setting keeps the two from disagreeing.
        */
-      i = AtrLookback(optInTimePeriod) - optInTimePeriod;
+      i = lookbackTotal - lastQ - optInTimePeriod;
       while( i != 0 ) {
          tempLT = inLow[today];
          tempHT = inHigh[today];
          tempCY = inClose[today - 1];
          greatest = tempHT - tempLT;
+         /* val1 */
          val2 = Math.Abs(tempCY - tempHT);
          greatest = MaxGt(val2, greatest);
          val3 = Math.Abs(tempCY - tempLT);
@@ -1369,179 +1591,259 @@ public partial class Core
          today += 1;
          i -= 1;
       }
-      /* `today` is now stageOneIdx and prevATR is the Average True Range of the
-       * bar before it. Seed the price rings with the p-1 bars the first extreme
-       * window needs behind that bar.
+      /* prevATR is now the Average True Range of bar today-1, the first bar with
+       * a first stop. Its extreme window is one whole block, taken straight from
+       * the input.
        */
-      i = stageOneIdx - optInTimePeriod + 1;
-      while( i < stageOneIdx ) {
-         hRing[hRing_Idx] = inHigh[i];
-         lRing[lRing_Idx] = inLow[i];
-         i += 1;
-         hRing_Idx++;
-         if( hRing_Idx > maxIdx_hRing ) { hRing_Idx = 0; }
-         lRing_Idx++;
-         if( lRing_Idx > maxIdx_lRing ) { lRing_Idx = 0; }
+      highest = inHigh[today - 1];
+      lowest = inLow[today - 1];
+      hhBuf[lastP] = highest;
+      llBuf[lastP] = lowest;
+      ip = lastP;
+      while( ip > 0 ) {
+         ip -= 1;
+         tempHT = inHigh[today - 1 - lastP + ip];
+         tempLT = inLow[today - 1 - lastP + ip];
+         highest = MaxGt(tempHT, highest);
+         lowest = MinLt(tempLT, lowest);
+         hhBuf[ip] = highest;
+         llBuf[ip] = lowest;
       }
-      /* The prologue leaves prevATR as the Average True Range of stageOneIdx and
-       * `today` one past it, so that bar is finished here rather than in the loop:
-       * entering the loop with it would apply a second Wilder update and shift the
-       * whole series one bar early. supertrend.c takes the same step for the same
-       * reason.
+      hhPre = highest;
+      llPre = lowest;
+      /* The multiple of the ATR is formed on its own, never fused into the
+       * offset, so that each first stop is TA_MAX - x*TA_ATR (or its mirror) as a
+       * caller composing the three functions would compute it.
        */
-      today = stageOneIdx;
-      hRing[hRing_Idx] = inHigh[today];
-      lRing[lRing_Idx] = inLow[today];
-      hh = hRing[hRing_Idx];
-      for( jh = hRing_Idx + 1; jh < optInTimePeriod; jh += 1 ) {
-         best = hRing[jh];
-         hh = MaxGt(best, hh);
-      }
-      for( jh = 0; jh < hRing_Idx; jh += 1 ) {
-         best = hRing[jh];
-         hh = MaxGt(best, hh);
-      }
-      ll = lRing[lRing_Idx];
-      for( jl = lRing_Idx + 1; jl < optInTimePeriod; jl += 1 ) {
-         best = lRing[jl];
-         ll = MinLt(best, ll);
-      }
-      for( jl = 0; jl < lRing_Idx; jl += 1 ) {
-         best = lRing[jl];
-         ll = MinLt(best, ll);
-      }
-      fhRing[fhRing_Idx] = hh - optInMultiplier * prevATR;
-      flRing[flRing_Idx] = ll + optInMultiplier * prevATR;
-      outIdx = 0;
-      if( today >= startIdx ) {
-         outHighStop[outIdx * outStride] = fhRing[fhRing_Idx];
-         outLowStop[outIdx * outStride] = flRing[flRing_Idx];
-         outIdx = outIdx + 1;
-      }
-      today += 1;
-      hRing_Idx++;
-      if( hRing_Idx > maxIdx_hRing ) { hRing_Idx = 0; }
-      lRing_Idx++;
-      if( lRing_Idx > maxIdx_lRing ) { lRing_Idx = 0; }
-      fhRing_Idx++;
-      if( fhRing_Idx > maxIdx_fhRing ) { fhRing_Idx = 0; }
-      flRing_Idx++;
-      if( flRing_Idx > maxIdx_flRing ) { flRing_Idx = 0; }
-      while( today <= endIdx ) {
+      band = optInMultiplier * prevATR;
+      highStop = highest - band;
+      lowStop = lowest + band;
+      hsPre = highStop;
+      lsPre = lowStop;
+      hsBuf[hsBuf_Idx] = highStop;
+      lsBuf[hsBuf_Idx] = lowStop;
+      hsBuf_Idx++;
+      if( hsBuf_Idx > maxIdx_hsBuf ) { hsBuf_Idx = 0; }
+      /* Fill the first stop window, through startIdx inclusive. */
+      while( today <= startIdx ) {
          tempLT = inLow[today];
          tempHT = inHigh[today];
          tempCY = inClose[today - 1];
          greatest = tempHT - tempLT;
+         /* val1 */
          val2 = Math.Abs(tempCY - tempHT);
          greatest = MaxGt(val2, greatest);
          val3 = Math.Abs(tempCY - tempLT);
          greatest = MaxGt(val3, greatest);
          prevATR = Math.FusedMultiplyAdd(wBeta, prevATR, wAlpha * greatest);
-         hRing[hRing_Idx] = tempHT;
-         lRing[lRing_Idx] = tempLT;
-         /* The extremes of the p bars ending here. The newest sits at the ring's
-          * own index, so the oldest is the slot after it and the walk is two
-          * straight runs.
+         /* Keep this shape: the prefix extreme selected in a local, the
+          * block-start override after it, one store. A store made only when the
+          * bar sets a new extreme, or the override ahead of the select, compiles
+          * to a data-dependent branch in the stream step, where the prefix lives
+          * in the handle.
           */
-         hh = hRing[hRing_Idx];
-         for( jh = hRing_Idx + 1; jh < optInTimePeriod; jh += 1 ) {
-            best = hRing[jh];
-            hh = MaxGt(best, hh);
+         highest = hhPre;
+         lowest = llPre;
+         highest = MaxGt(tempHT, highest);
+         lowest = MinLt(tempLT, lowest);
+         if( hhBuf_Idx == 0 ) {
+            highest = tempHT;
+            lowest = tempLT;
          }
-         for( jh = 0; jh < hRing_Idx; jh += 1 ) {
-            best = hRing[jh];
-            hh = MaxGt(best, hh);
+         hhPre = highest;
+         llPre = lowest;
+         if( hhBuf_Idx < lastP ) {
+            tempReal = hhBuf[hhBuf_Idx + 1];
+            highest = MaxGt(tempReal, highest);
+            tempReal = llBuf[hhBuf_Idx + 1];
+            lowest = MinLt(tempReal, lowest);
          }
-         ll = lRing[lRing_Idx];
-         for( jl = lRing_Idx + 1; jl < optInTimePeriod; jl += 1 ) {
-            best = lRing[jl];
-            ll = MinLt(best, ll);
-         }
-         for( jl = 0; jl < lRing_Idx; jl += 1 ) {
-            best = lRing[jl];
-            ll = MinLt(best, ll);
-         }
-         fhRing[fhRing_Idx] = hh - optInMultiplier * prevATR;
-         flRing[flRing_Idx] = ll + optInMultiplier * prevATR;
-         if( today >= startIdx ) {
-            /* The second stage, over the q first-stage bars ending here. At q = 1
-             * both runs are empty and the value is the bar's own, which is the
-             * Chandelier Exit form.
-             */
-            hh = fhRing[fhRing_Idx];
-            for( kh = fhRing_Idx + 1; kh < optInStopPeriod; kh += 1 ) {
-               best = fhRing[kh];
-               hh = MaxGt(best, hh);
+         hhBuf[hhBuf_Idx] = tempHT;
+         llBuf[hhBuf_Idx] = tempLT;
+         hhBuf_Idx++;
+         if( hhBuf_Idx > maxIdx_hhBuf ) { hhBuf_Idx = 0; }
+         if( hhBuf_Idx == 0 ) {
+            sufHi = hhBuf[lastP];
+            sufLo = llBuf[lastP];
+            ip = lastP;
+            while( ip > 1 ) {
+               ip -= 1;
+               tempReal = hhBuf[ip];
+               sufHi = MaxGt(tempReal, sufHi);
+               hhBuf[ip] = sufHi;
+               tempReal = llBuf[ip];
+               sufLo = MinLt(tempReal, sufLo);
+               llBuf[ip] = sufLo;
             }
-            for( kh = 0; kh < fhRing_Idx; kh += 1 ) {
-               best = fhRing[kh];
-               hh = MaxGt(best, hh);
-            }
-            ll = flRing[flRing_Idx];
-            for( kl = flRing_Idx + 1; kl < optInStopPeriod; kl += 1 ) {
-               best = flRing[kl];
-               ll = MinLt(best, ll);
-            }
-            for( kl = 0; kl < flRing_Idx; kl += 1 ) {
-               best = flRing[kl];
-               ll = MinLt(best, ll);
-            }
-            outHighStop[outIdx * outStride] = hh;
-            outLowStop[outIdx * outStride] = ll;
-            outIdx = outIdx + 1;
          }
+         band = optInMultiplier * prevATR;
+         highStop = highest - band;
+         lowStop = lowest + band;
+         hsPre = MaxGt(highStop, hsPre);
+         lsPre = MinLt(lowStop, lsPre);
+         hsBuf[hsBuf_Idx] = highStop;
+         lsBuf[hsBuf_Idx] = lowStop;
+         hsBuf_Idx++;
+         if( hsBuf_Idx > maxIdx_hsBuf ) { hsBuf_Idx = 0; }
          today += 1;
-         hRing_Idx++;
-         if( hRing_Idx > maxIdx_hRing ) { hRing_Idx = 0; }
-         lRing_Idx++;
-         if( lRing_Idx > maxIdx_lRing ) { lRing_Idx = 0; }
-         fhRing_Idx++;
-         if( fhRing_Idx > maxIdx_fhRing ) { fhRing_Idx = 0; }
-         flRing_Idx++;
-         if( flRing_Idx > maxIdx_flRing ) { flRing_Idx = 0; }
       }
-      outNBElement = outIdx;
+      /* The first stop window is one whole block as well: its extremes are the
+       * prefix extremes, and the block is complete.
+       */
+      sufHi = hsBuf[lastQ];
+      sufLo = lsBuf[lastQ];
+      iq = lastQ;
+      while( iq > 1 ) {
+         iq -= 1;
+         tempReal = hsBuf[iq];
+         sufHi = MaxGt(tempReal, sufHi);
+         hsBuf[iq] = sufHi;
+         tempReal = lsBuf[iq];
+         sufLo = MinLt(tempReal, sufLo);
+         lsBuf[iq] = sufLo;
+      }
+      outHighStop[0 * outStride] = hsPre;
+      outLowStop[0 * outStride] = lsPre;
+      outIdx = 1;
+      while( today <= endIdx ) {
+         tempLT = inLow[today];
+         tempHT = inHigh[today];
+         tempCY = inClose[today - 1];
+         greatest = tempHT - tempLT;
+         /* val1 */
+         val2 = Math.Abs(tempCY - tempHT);
+         greatest = MaxGt(val2, greatest);
+         val3 = Math.Abs(tempCY - tempLT);
+         greatest = MaxGt(val3, greatest);
+         prevATR = Math.FusedMultiplyAdd(wBeta, prevATR, wAlpha * greatest);
+         highest = hhPre;
+         lowest = llPre;
+         highest = MaxGt(tempHT, highest);
+         lowest = MinLt(tempLT, lowest);
+         if( hhBuf_Idx == 0 ) {
+            highest = tempHT;
+            lowest = tempLT;
+         }
+         hhPre = highest;
+         llPre = lowest;
+         if( hhBuf_Idx < lastP ) {
+            tempReal = hhBuf[hhBuf_Idx + 1];
+            highest = MaxGt(tempReal, highest);
+            tempReal = llBuf[hhBuf_Idx + 1];
+            lowest = MinLt(tempReal, lowest);
+         }
+         hhBuf[hhBuf_Idx] = tempHT;
+         llBuf[hhBuf_Idx] = tempLT;
+         hhBuf_Idx++;
+         if( hhBuf_Idx > maxIdx_hhBuf ) { hhBuf_Idx = 0; }
+         band = optInMultiplier * prevATR;
+         highStop = highest - band;
+         lowStop = lowest + band;
+         highest = hsPre;
+         lowest = lsPre;
+         highest = MaxGt(highStop, highest);
+         lowest = MinLt(lowStop, lowest);
+         if( hsBuf_Idx == 0 ) {
+            highest = highStop;
+            lowest = lowStop;
+         }
+         hsPre = highest;
+         lsPre = lowest;
+         if( hsBuf_Idx < lastQ ) {
+            tempReal = hsBuf[hsBuf_Idx + 1];
+            highest = MaxGt(tempReal, highest);
+            tempReal = lsBuf[hsBuf_Idx + 1];
+            lowest = MinLt(tempReal, lowest);
+         }
+         hsBuf[hsBuf_Idx] = highStop;
+         lsBuf[hsBuf_Idx] = lowStop;
+         hsBuf_Idx++;
+         if( hsBuf_Idx > maxIdx_hsBuf ) { hsBuf_Idx = 0; }
+         outHighStop[outIdx * outStride] = highest;
+         outLowStop[outIdx * outStride] = lowest;
+         /* A completed block becomes its suffix extrema. Nothing this bar reads
+          * them, so both passes stay below the output stores, where the peek
+          * frame never runs them.
+          */
+         if( hhBuf_Idx == 0 ) {
+            sufHi = hhBuf[lastP];
+            sufLo = llBuf[lastP];
+            ip = lastP;
+            while( ip > 1 ) {
+               ip -= 1;
+               tempReal = hhBuf[ip];
+               sufHi = MaxGt(tempReal, sufHi);
+               hhBuf[ip] = sufHi;
+               tempReal = llBuf[ip];
+               sufLo = MinLt(tempReal, sufLo);
+               llBuf[ip] = sufLo;
+            }
+         }
+         if( hsBuf_Idx == 0 ) {
+            sufHi = hsBuf[lastQ];
+            sufLo = lsBuf[lastQ];
+            iq = lastQ;
+            while( iq > 1 ) {
+               iq -= 1;
+               tempReal = hsBuf[iq];
+               sufHi = MaxGt(tempReal, sufHi);
+               hsBuf[iq] = sufHi;
+               tempReal = lsBuf[iq];
+               sufLo = MinLt(tempReal, sufLo);
+               lsBuf[iq] = sufLo;
+            }
+         }
+         outIdx += 1;
+         today += 1;
+      }
       outBegIdx = startIdx;
+      outNBElement = outIdx;
       /* Capture the live batch state into the handle. */
-      int capCb_hRing = maxIdx_hRing + 1;
-      if( capCb_hRing > historyLen + 1 ) {
+      int capCb_hhBuf = maxIdx_hhBuf + 1;
+      if( capCb_hhBuf > historyLen + 1 ) {
          return RetCode.InternalError;
       }
-      int capCb_lRing = maxIdx_lRing + 1;
-      if( capCb_lRing > historyLen + 1 ) {
+      int capCb_llBuf = maxIdx_llBuf + 1;
+      if( capCb_llBuf > historyLen + 1 ) {
          return RetCode.InternalError;
       }
-      int capCb_fhRing = maxIdx_fhRing + 1;
-      if( capCb_fhRing > historyLen + 1 ) {
+      int capCb_hsBuf = maxIdx_hsBuf + 1;
+      if( capCb_hsBuf > historyLen + 1 ) {
          return RetCode.InternalError;
       }
-      int capCb_flRing = maxIdx_flRing + 1;
-      if( capCb_flRing > historyLen + 1 ) {
+      int capCb_lsBuf = maxIdx_lsBuf + 1;
+      if( capCb_lsBuf > historyLen + 1 ) {
          return RetCode.InternalError;
       }
       sp.optInTimePeriod = optInTimePeriod;
       sp.optInMultiplier = optInMultiplier;
       sp.optInStopPeriod = optInStopPeriod;
+      sp.lastP = lastP;
+      sp.lastQ = lastQ;
       sp.prevATR = prevATR;
       sp.wAlpha = wAlpha;
       sp.wBeta = wBeta;
-      sp.hRing_Idx = hRing_Idx;
-      sp.lRing_Idx = lRing_Idx;
-      sp.fhRing_Idx = fhRing_Idx;
-      sp.flRing_Idx = flRing_Idx;
-      sp.maxIdx_hRing = maxIdx_hRing;
-      sp.maxIdx_lRing = maxIdx_lRing;
-      sp.maxIdx_fhRing = maxIdx_fhRing;
-      sp.maxIdx_flRing = maxIdx_flRing;
+      sp.hhPre = hhPre;
+      sp.llPre = llPre;
+      sp.hsPre = hsPre;
+      sp.lsPre = lsPre;
+      sp.hhBuf_Idx = hhBuf_Idx;
+      sp.hsBuf_Idx = hsBuf_Idx;
+      sp.maxIdx_hhBuf = maxIdx_hhBuf;
+      sp.llBuf_Idx = llBuf_Idx;
+      sp.maxIdx_llBuf = maxIdx_llBuf;
+      sp.maxIdx_hsBuf = maxIdx_hsBuf;
+      sp.lsBuf_Idx = lsBuf_Idx;
+      sp.maxIdx_lsBuf = maxIdx_lsBuf;
       sp.lag1_inClose = inClose[historyLen - 1];
-      sp.cbSize_hRing = capCb_hRing;
-      sp.cb_hRing = hRing;
-      sp.cbSize_lRing = capCb_lRing;
-      sp.cb_lRing = lRing;
-      sp.cbSize_fhRing = capCb_fhRing;
-      sp.cb_fhRing = fhRing;
-      sp.cbSize_flRing = capCb_flRing;
-      sp.cb_flRing = flRing;
+      sp.cbSize_hhBuf = capCb_hhBuf;
+      sp.cb_hhBuf = hhBuf;
+      sp.cbSize_llBuf = capCb_llBuf;
+      sp.cb_llBuf = llBuf;
+      sp.cbSize_hsBuf = capCb_hsBuf;
+      sp.cb_hsBuf = hsBuf;
+      sp.cbSize_lsBuf = capCb_lsBuf;
+      sp.cb_lsBuf = lsBuf;
       sp.cur_outHighStop = outHighStop[(outNBElement - 1) * outStride];
       sp.cur_outLowStop = outLowStop[(outNBElement - 1) * outStride];
       return RetCode.Success;
@@ -1591,8 +1893,7 @@ public partial class Core
    /// </remarks>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
-   /// <param name="inClose">Close price of each bar, read only by the True Range. The warm-up history,
-   /// oldest bar first.</param>
+   /// <param name="inClose">Close price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="optInTimePeriod">As in the batch call; see <see cref="CkspLookback"/> for its default and
    /// range (<c>int.MinValue</c> selects the default).</param>
    /// <param name="optInMultiplier">As in the batch call; see <see cref="CkspLookback"/> for its default and
@@ -1633,18 +1934,17 @@ public partial class Core
    /// </remarks>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
-   /// <param name="inClose">Close price of each bar, read only by the True Range. The warm-up history,
-   /// oldest bar first.</param>
+   /// <param name="inClose">Close price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="optInTimePeriod">As in the batch call; see <see cref="CkspLookback"/> for its default and
    /// range (<c>int.MinValue</c> selects the default).</param>
    /// <param name="optInMultiplier">As in the batch call; see <see cref="CkspLookback"/> for its default and
    /// range (<see cref="Core.RealDefault"/> selects the default).</param>
    /// <param name="optInStopPeriod">As in the batch call; see <see cref="CkspLookback"/> for its default and
    /// range (<c>int.MinValue</c> selects the default).</param>
-   /// <param name="outHighStop">Trailing stop below price, the high side. Must hold at least <c>historyLen
-   /// - CkspLookback(...)</c> values.</param>
-   /// <param name="outLowStop">Trailing stop above price, the low side. Must hold at least <c>historyLen
-   /// - CkspLookback(...)</c> values.</param>
+   /// <param name="outHighStop">Highest of the recent first high stops; usually plotted as the short stop.
+   /// Must hold at least <c>historyLen - CkspLookback(...)</c> values.</param>
+   /// <param name="outLowStop">Lowest of the recent first low stops; usually plotted as the long stop.
+   /// Must hold at least <c>historyLen - CkspLookback(...)</c> values.</param>
    /// <returns>The open stream handle, with its fill range set.</returns>
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>CkspLookback(...) + 1</c> bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
