@@ -90,6 +90,9 @@ outputs:
 ```
 
 There is **no `lookback:` field** — lookback is a C function in the `.c` file (below).
+A function whose definition draws an output ahead of or behind the computing bar
+still emits it at that bar: flag the output `display_shift` and define
+`<name>_display_shift` in the `.c` (`docs/ta_codegen_input_code.md`).
 Use `hint:` for the short description (not `description:`). The parser is
 `#[serde(deny_unknown_fields)]`, so a stray key is a hard failure, and the directory
 name must equal `name` lower-cased.

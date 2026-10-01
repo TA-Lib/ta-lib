@@ -130,6 +130,44 @@ public partial class Core
       return lookbackLargest + MaLookback(optInSignalPeriod, optInSignalMAType) ;
 
    }
+   /// <summary>
+   /// How many bars ahead (positive) or behind (negative) of the bar that
+   /// computed it a chart draws one output of <c>Macdext</c>.
+   /// </summary>
+   /// <remarks>
+   /// Every output of this function is drawn at its own bar, so the answer is 0.
+   /// </remarks>
+   /// <param name="optInFastPeriod">Period of the fast MA (default 12; range 2..100000; <c>int.MinValue</c>
+   /// selects the default).</param>
+   /// <param name="optInFastMAType">MA type for the fast MA (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA,
+   /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
+   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA; <c>MAType.DEFAULT</c> (or
+   /// <c>(MAType)int.MinValue</c>) selects the default).</param>
+   /// <param name="optInSlowPeriod">Period of the slow MA (default 26; range 2..100000; <c>int.MinValue</c>
+   /// selects the default).</param>
+   /// <param name="optInSlowMAType">MA type for the slow MA (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA,
+   /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
+   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA; <c>MAType.DEFAULT</c> (or
+   /// <c>(MAType)int.MinValue</c>) selects the default).</param>
+   /// <param name="optInSignalPeriod">Period of the signal-line MA (default 9; range 1..100000;
+   /// <c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInSignalMAType">MA type for the signal line (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA,
+   /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
+   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA; <c>MAType.DEFAULT</c> (or
+   /// <c>(MAType)int.MinValue</c>) selects the default).</param>
+   /// <param name="outputIdx">Position of the output in the batch signature, from 0.</param>
+   /// <returns>The display shift, or <c>int.MinValue</c> if a parameter is out of range
+   /// or the index names no output.</returns>
+   public int MacdextDisplayShift( int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType, int outputIdx )
+   {
+      if( MacdextLookback( optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType ) < 0 ) {
+         return int.MinValue;
+      }
+      if( outputIdx < 0 || outputIdx >= 3 ) {
+         return int.MinValue;
+      }
+      return 0;
+   }
    internal RetCode MacdextImpl( int startIdx,
                                  int endIdx,
                                  ReadOnlySpan<double> inReal,

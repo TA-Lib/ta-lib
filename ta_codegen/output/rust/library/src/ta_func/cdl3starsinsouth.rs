@@ -94,6 +94,26 @@ impl Core {
         let ShadowVeryShort_factor: f64 = self.candle_settings.shadow_very_short.factor;
         return Ok((((ShadowVeryShort_avgPeriod).max(ShadowLong_avgPeriod)).max((BodyLong_avgPeriod).max(BodyShort_avgPeriod)) + 2) as usize);
     }
+    /// Display shift of one output of [`Core::cdl3starsinsouth`]: how many bars ahead (positive) or
+    /// behind (negative) of the bar that computed it a chart draws that output. The values are
+    /// never shifted.
+    ///
+    /// Every output of this function is drawn at its own bar, so the answer is 0.
+    ///
+    /// # Arguments
+    ///
+    /// * `outputIdx` — Position of the output in the batch signature, from 0
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output.
+    #[doc(alias = "TA_CDL3STARSINSOUTH_DisplayShift")]
+    pub fn cdl3starsinsouth_display_shift(&self, outputIdx: usize) -> Result<i32, RetCode> {
+        if outputIdx >= 1 {
+            return Err(RetCode::BadParam);
+        }
+        return Ok(0);
+    }
     /// C-shaped body behind [`Core::cdl3starsinsouth`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.

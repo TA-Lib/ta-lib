@@ -103,6 +103,34 @@ impl Core {
         // function they come from, so neither is restated here.
         return Ok((self.ao_lookback(optInFastPeriod, optInSlowPeriod)? + self.sma_lookback(optInSignalPeriod)?) as usize);
     }
+    /// Display shift of one output of [`Core::ac`]: how many bars ahead (positive) or behind
+    /// (negative) of the bar that computed it a chart draws that output. The values are never
+    /// shifted.
+    ///
+    /// Every output of this function is drawn at its own bar, so the answer is 0.
+    ///
+    /// # Arguments
+    ///
+    /// * `optInFastPeriod` — Number of bars in the short moving average of the median price.
+    ///   (default 5, range 2..=100000)
+    /// * `optInSlowPeriod` — Number of bars in the long moving average of the median price.
+    ///   (default 34, range 2..=100000)
+    /// * `optInSignalPeriod` — Number of bars in the moving average taken over the oscillator.
+    ///   (default 5, range 2..=100000)
+    /// * `outputIdx` — Position of the output in the batch signature, from 0
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
+    /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
+    #[doc(alias = "TA_AC_DisplayShift")]
+    pub fn ac_display_shift(&self, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInSignalPeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+        self.ac_lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod)?;
+        if outputIdx >= 1 {
+            return Err(RetCode::BadParam);
+        }
+        return Ok(0);
+    }
     /// C-shaped body behind [`Core::ac`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.

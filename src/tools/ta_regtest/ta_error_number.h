@@ -232,6 +232,8 @@ typedef enum
   TA_ABS_TST_FAIL_INDEX_RANGE           = 625,
   TA_ABS_TST_FAIL_HOLDER_NOT_REUSABLE   = 626,
   TA_ABS_TST_FAIL_NAME_CASE_FOLD        = 627,
+  TA_ABS_TST_FAIL_DISPLAY_SHIFT         = 628,
+  TA_ABS_TST_FAIL_DISPLAY_SHIFT_VACUOUS = 629,
 
   /* Error code related to internal tests. */
   TA_INTERNAL_CIRC_BUFF_FAIL_0      = 700,
@@ -354,6 +356,7 @@ typedef enum
   TA_ABSTRACT_FOR_EACH_MISMATCH      = 1201,
   TA_ABSTRACT_CALL_MISMATCH          = 1202,
   TA_ABSTRACT_SERVER_ERROR           = 1203,
+  TA_ABSTRACT_DISPLAY_SHIFT_MISMATCH = 1204,
 
   /* Server verify errors (server_verify.c) */
   TA_SV_RETCODE_MISMATCH             = 1300,

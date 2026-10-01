@@ -91,6 +91,7 @@ mod tests {
             "TA_OUT_UPPER_LIMIT" => "upper_limit",
             "TA_OUT_LOWER_LIMIT" => "lower_limit",
             "TA_OUT_NULLABLE" => "nullable",
+            "TA_FUNC_FLG_DISPLAY_SHIFT" | "TA_OUT_DISPLAY_SHIFT" => "display_shift",
             _ => return None,
         })
     }

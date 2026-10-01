@@ -467,6 +467,7 @@ pub fn generate(
         out.push_str(&format!("/* {m} */\n\n"));
     }
     out.push_str(&gen_lookback(func, enums, registry, helpers));
+    out.push_str(&gen_display_shift(func, enums, registry, helpers));
     if func.has_explicit_private {
         out.push_str(&gen_private(func, enums, registry, helpers)); // Private method (double)
         out.push_str(&gen_private_sp(func, enums, registry, helpers)); // Private method (float overload)
@@ -638,6 +639,69 @@ fn gen_lookback(
          \x20  {{\n\
          {body}\n\
          \x20  }}\n"
+    )
+}
+
+fn gen_display_shift(
+    func: &FuncDef,
+    enums: &HashMap<String, EnumDef>,
+    registry: &Registry,
+    helpers: &HelperRegistry,
+) -> String {
+    let name = super::common::camel_words(&func.name);
+    let idx = crate::ir::DISPLAY_SHIFT_INDEX_PARAM;
+    let mut params: Vec<String> = func
+        .optional_inputs
+        .iter()
+        .map(|opt| {
+            let java_type = match &opt.param_type {
+                ParamType::Real => "double",
+                ParamType::Integer => "int",
+                ParamType::Enum(ref name) => name.as_str(),
+                ParamType::Price(_) => unreachable!("Price expanded during parsing"),
+            };
+            format!("{} {}", java_type, opt.name)
+        })
+        .collect();
+    params.push(format!("int {idx}"));
+
+    let mut validation = String::new();
+    if !func.optional_inputs.is_empty() {
+        let args: Vec<&str> = func.optional_inputs.iter().map(|o| o.name.as_str()).collect();
+        validation.push_str(&format!(
+            "      if( {name}Lookback( {} ) < 0 ) {{\n         return Integer.MIN_VALUE;\n      }}\n",
+            args.join(", ")
+        ));
+    }
+    if func.display_shift.is_some() {
+        validation.push_str(&emit_opt_param_validation(func, "Integer.MIN_VALUE", enums));
+    }
+    validation.push_str(&format!(
+        "      if( {idx} < 0 || {idx} >= {} ) {{\n         return Integer.MIN_VALUE;\n      }}\n",
+        func.outputs.len()
+    ));
+    let unshifted = func.unshifted_outputs();
+    if func.display_shift.is_some() && !unshifted.is_empty() {
+        let tests: Vec<String> = unshifted.iter().map(|i| format!("{idx} == {i}")).collect();
+        validation.push_str(&format!(
+            "      if( {} ) {{\n         return 0;\n      }}\n",
+            tests.join(" || ")
+        ));
+    }
+    let body = match &func.display_shift {
+        Some(stmts) => {
+            format!("{validation}{}", render_lookback_code(stmts, enums, registry, helpers))
+        }
+        None => format!("{validation}      return 0;"),
+    };
+
+    let docs = super::java_doc::display_shift_docs(func, &name, enums);
+    format!(
+        "{docs}   public int {name}DisplayShift( {} )\n\
+         \x20  {{\n\
+         {body}\n\
+         \x20  }}\n",
+        params.join(", ")
     )
 }
 

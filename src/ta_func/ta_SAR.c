@@ -76,6 +76,15 @@ TA_LIB_API int TA_SAR_Lookback( double optInAcceleration, double optInMaximum )
    return 1;
 }
 
+TA_LIB_API int TA_SAR_DisplayShift( double optInAcceleration, double optInMaximum, int outputIdx )
+{
+   if( TA_SAR_Lookback( optInAcceleration, optInMaximum ) < 0 )
+      return INT_MIN;
+   if( outputIdx < 0 || outputIdx >= 1 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_SAR( int    startIdx,
                               int    endIdx,

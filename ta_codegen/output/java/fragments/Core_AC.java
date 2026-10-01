@@ -54,6 +54,35 @@
       return aoLookback(optInFastPeriod, optInSlowPeriod) + smaLookback(optInSignalPeriod) ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#ac}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInFastPeriod Number of bars in the short moving average of the
+    *        median price (default 5; range 2..100000; {@code Integer.MIN_VALUE}
+    *        selects the default).
+    * @param optInSlowPeriod Number of bars in the long moving average of the
+    *        median price (default 34; range 2..100000; {@code Integer.MIN_VALUE}
+    *        selects the default).
+    * @param optInSignalPeriod Number of bars in the moving average taken over
+    *        the oscillator (default 5; range 2..100000; {@code Integer.MIN_VALUE}
+    *        selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int acDisplayShift( int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, int outputIdx )
+   {
+      if( acLookback( optInFastPeriod, optInSlowPeriod, optInSignalPeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode acImpl( int startIdx,
                    int endIdx,
                    double inHigh[],

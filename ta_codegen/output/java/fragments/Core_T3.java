@@ -55,6 +55,31 @@
       return 6 * (optInTimePeriod - 1) + this.unstablePeriod[FuncUnstId.T3.ordinal()] ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#t3}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod EMA period for each of the six stages (default 5;
+    *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInVFactor Volume factor weighting the coefficients (0 = plain
+    *        triple EMA, higher = more DEMA-like sharpening) (default 0.7; range 0..1;
+    *        {@link Core#REAL_DEFAULT} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int t3DisplayShift( int optInTimePeriod, double optInVFactor, int outputIdx )
+   {
+      if( t3Lookback( optInTimePeriod, optInVFactor ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode t3Impl( int startIdx,
                    int endIdx,
                    double inReal[],

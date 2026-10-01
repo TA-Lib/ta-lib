@@ -72,6 +72,7 @@ pub(crate) const FUNC_FLAGS: &[(&str, &str)] = &[
     ("path_dependent", "Path Dependent"),
     ("nan_inf_output", "Can Output NaN or +/-Inf"),
     ("period1_identity", "Period 1 Identity"),
+    ("display_shift", "Display Shift"),
 ];
 
 fn write_func_flags(out: &mut String, flags: &[String]) {
@@ -322,6 +323,7 @@ pub(crate) const OUTPUT_FLAGS: &[(&str, &str)] = &[
     ("upper_limit", "Upper Limit"),
     ("lower_limit", "Lower Limit"),
     ("nullable", "Nullable"),
+    ("display_shift", "Display Shift"),
 ];
 
 fn write_outputs(out: &mut String, func: &FuncDef) {

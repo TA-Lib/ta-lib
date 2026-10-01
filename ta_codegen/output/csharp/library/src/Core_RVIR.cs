@@ -88,6 +88,30 @@ public partial class Core
       return RviLookback(optInTimePeriod, optInStdDevPeriod) ;
 
    }
+   /// <summary>
+   /// How many bars ahead (positive) or behind (negative) of the bar that
+   /// computed it a chart draws one output of <c>Rvir</c>.
+   /// </summary>
+   /// <remarks>
+   /// Every output of this function is drawn at its own bar, so the answer is 0.
+   /// </remarks>
+   /// <param name="optInTimePeriod">Wilder smoothing period applied to both legs of both indices (default 14;
+   /// range 1..100000; <c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInStdDevPeriod">Number of trailing values each standard deviation spans (default 10; range
+   /// 2..100000; <c>int.MinValue</c> selects the default).</param>
+   /// <param name="outputIdx">Position of the output in the batch signature, from 0.</param>
+   /// <returns>The display shift, or <c>int.MinValue</c> if a parameter is out of range
+   /// or the index names no output.</returns>
+   public int RvirDisplayShift( int optInTimePeriod, int optInStdDevPeriod, int outputIdx )
+   {
+      if( RvirLookback( optInTimePeriod, optInStdDevPeriod ) < 0 ) {
+         return int.MinValue;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return int.MinValue;
+      }
+      return 0;
+   }
    internal RetCode RvirImpl( int startIdx,
                               int endIdx,
                               ReadOnlySpan<double> inHigh,

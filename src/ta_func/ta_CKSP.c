@@ -80,6 +80,15 @@ TA_LIB_API int TA_CKSP_Lookback( int optInTimePeriod, double optInMultiplier, in
    return TA_ATR_Lookback(optInTimePeriod) + optInStopPeriod - 1;
 }
 
+TA_LIB_API int TA_CKSP_DisplayShift( int optInTimePeriod, double optInMultiplier, int optInStopPeriod, int outputIdx )
+{
+   if( TA_CKSP_Lookback( optInTimePeriod, optInMultiplier, optInStopPeriod ) < 0 )
+      return INT_MIN;
+   if( outputIdx < 0 || outputIdx >= 2 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_CKSP( int    startIdx,
                                int    endIdx,

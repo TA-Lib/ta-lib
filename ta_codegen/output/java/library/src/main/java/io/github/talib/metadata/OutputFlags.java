@@ -87,4 +87,7 @@ public final class OutputFlags {
    /** Discardable: C accepts NULL for it. Java still requires an array. */
    public static final int NULLABLE = 0x00002000;
 
+   /** A chart draws it ahead of or behind the bar that computed it, by the bars {@code ParamHolder.displayShift} reports. The values are never shifted. */
+   public static final int DISPLAY_SHIFT = 0x00004000;
+
 }

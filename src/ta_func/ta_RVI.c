@@ -70,6 +70,15 @@ TA_LIB_API int TA_RVI_Lookback( int optInTimePeriod, int optInStdDevPeriod )
    return optInStdDevPeriod - 1 + (optInTimePeriod - 1) + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_RVI,Rvi);
 }
 
+TA_LIB_API int TA_RVI_DisplayShift( int optInTimePeriod, int optInStdDevPeriod, int outputIdx )
+{
+   if( TA_RVI_Lookback( optInTimePeriod, optInStdDevPeriod ) < 0 )
+      return INT_MIN;
+   if( outputIdx < 0 || outputIdx >= 1 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_RVI( int    startIdx,
                               int    endIdx,

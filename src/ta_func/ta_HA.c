@@ -61,6 +61,13 @@ TA_LIB_API int TA_HA_Lookback( void )
    return TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_HA,Ha);
 }
 
+TA_LIB_API int TA_HA_DisplayShift( int outputIdx )
+{
+   if( outputIdx < 0 || outputIdx >= 4 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_LIB_API TA_RetCode TA_HA( int    startIdx,
                              int    endIdx,
                              const double inOpen[],

@@ -78,6 +78,13 @@ TA_LIB_API int TA_HT_TRENDMODE_Lookback( void )
    return 63 + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_HT_TRENDMODE,Ht_trendmode);
 }
 
+TA_LIB_API int TA_HT_TRENDMODE_DisplayShift( int outputIdx )
+{
+   if( outputIdx < 0 || outputIdx >= 1 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_HT_TRENDMODE( int    startIdx,
                                        int    endIdx,

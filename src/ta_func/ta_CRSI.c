@@ -77,6 +77,15 @@ TA_LIB_API int TA_CRSI_Lookback( int optInTimePeriod, int optInStreakPeriod, int
    return retValue;
 }
 
+TA_LIB_API int TA_CRSI_DisplayShift( int optInTimePeriod, int optInStreakPeriod, int optInRankPeriod, int outputIdx )
+{
+   if( TA_CRSI_Lookback( optInTimePeriod, optInStreakPeriod, optInRankPeriod ) < 0 )
+      return INT_MIN;
+   if( outputIdx < 0 || outputIdx >= 1 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_LIB_API TA_RetCode TA_CRSI( int    startIdx,
                                int    endIdx,
                                const double inReal[],

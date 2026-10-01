@@ -104,6 +104,30 @@ impl Core {
         let BodyShort_factor: f64 = self.candle_settings.body_short.factor;
         return Ok((((BodyDoji_avgPeriod).max(BodyLong_avgPeriod)).max(BodyShort_avgPeriod) + 2) as usize);
     }
+    /// Display shift of one output of [`Core::cdleveningdojistar`]: how many bars ahead (positive)
+    /// or behind (negative) of the bar that computed it a chart draws that output. The values are
+    /// never shifted.
+    ///
+    /// Every output of this function is drawn at its own bar, so the answer is 0.
+    ///
+    /// # Arguments
+    ///
+    /// * `optInPenetration` — Fraction of the 1st real body the 3rd candle's close must
+    ///   penetrate; larger demands a deeper close into the first body (default 0.3, minimum 0)
+    /// * `outputIdx` — Position of the output in the batch signature, from 0
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Real
+    /// parameters accept [`Core::REAL_DEFAULT`] to select their default value.
+    #[doc(alias = "TA_CDLEVENINGDOJISTAR_DisplayShift")]
+    pub fn cdleveningdojistar_display_shift(&self, mut optInPenetration: f64, outputIdx: usize) -> Result<i32, RetCode> {
+        self.cdleveningdojistar_lookback(optInPenetration)?;
+        if outputIdx >= 1 {
+            return Err(RetCode::BadParam);
+        }
+        return Ok(0);
+    }
     /// C-shaped body behind [`Core::cdleveningdojistar`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.

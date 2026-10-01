@@ -351,8 +351,9 @@ fn flag_cell(label: &str, on: bool, tip: &str) -> String {
 ///   one of the two is always checked — plus `Candlestick` (integer pattern signal),
 ///   `Can Output NaN or ±Inf` (`nan_inf_output`; a value the chart has no
 ///   point to plot, so the caller has to decide what to draw there — the page's
-///   `## Notes` say which inputs cause it) and `Identity at Period 1`
-///   (`period1_identity`). Not all of them are display hints, which is why the
+///   `## Notes` say which inputs cause it), `Identity at Period 1`
+///   (`period1_identity`) and `Display Shift` (`display_shift`, derived from
+///   the output flags). Not all of them are display hints, which is why the
 ///   list carries no header: they are per-function properties of one shape — a
 ///   checkbox a caller reads off the page.
 ///
@@ -399,6 +400,12 @@ fn inject_flags(
             has("period1_identity"),
             "A period of 1 performs no smoothing: the lookback is 0 and every output value is \
              a bit-exact copy of its input value.",
+        ),
+        (
+            "Display Shift",
+            has("display_shift"),
+            "A chart draws at least one output ahead of or behind the bar that computed it. \
+             The display-shift query gives the number of bars; the values are not shifted.",
         ),
     ];
 
@@ -1206,6 +1213,7 @@ mod tests {
             optional_inputs: opts,
             outputs: vec![],
             lookback: None,
+            display_shift: None,
             body: vec![],
             private_body: vec![],
             private_extra_params: vec![],

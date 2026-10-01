@@ -52,6 +52,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  090426 MF,CC  Initial version (#363).
+ *  100126 MF,CC  Display shift (#489).
  */
 
 // Import types from parent module
@@ -89,6 +90,36 @@ impl Core {
         // optInTimePeriod-1 at a period of 2, and a bare optInTimePeriod-1 would
         // then read inReal[-1].
         return Ok(((optInTimePeriod - 1).max(optInTimePeriod / 2 + 1)) as usize);
+    }
+    /// Display shift of one output of [`Core::dpo`]: how many bars ahead (positive) or behind
+    /// (negative) of the bar that computed it a chart draws that output. The values are never
+    /// shifted.
+    ///
+    /// # Arguments
+    ///
+    /// * `optInTimePeriod` — Number of bars spanned by the moving average being removed; the
+    ///   displacement is derived from it (default 20, range 2..=100000)
+    /// * `outputIdx` — Position of the output in the batch signature, from 0
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
+    /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
+    #[doc(alias = "TA_DPO_DisplayShift")]
+    pub fn dpo_display_shift(&self, mut optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+        self.dpo_lookback(optInTimePeriod)?;
+        if ((optInTimePeriod) as i32) == (i32::MIN) {
+            optInTimePeriod = 20;
+        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+            return Err(RetCode::BadParam);
+        }
+        if outputIdx >= 1 {
+            return Err(RetCode::BadParam);
+        }
+        let outputIdx: i32 = outputIdx as i32;
+        // The value computed at a bar detrends the price this many bars back,
+        // which is where a chart draws it.
+        return Ok(-(optInTimePeriod / 2 + 1));
     }
     /// C-shaped body behind [`Core::dpo`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only

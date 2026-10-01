@@ -91,6 +91,15 @@ TA_LIB_API int TA_MAMA_Lookback( double optInFastLimit, double optInSlowLimit )
    return 32 + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_MAMA,Mama);
 }
 
+TA_LIB_API int TA_MAMA_DisplayShift( double optInFastLimit, double optInSlowLimit, int outputIdx )
+{
+   if( TA_MAMA_Lookback( optInFastLimit, optInSlowLimit ) < 0 )
+      return INT_MIN;
+   if( outputIdx < 0 || outputIdx >= 2 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_MAMA( int    startIdx,
                                int    endIdx,

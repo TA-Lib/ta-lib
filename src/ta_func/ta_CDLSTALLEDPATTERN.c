@@ -65,6 +65,13 @@ TA_LIB_API int TA_CDLSTALLEDPATTERN_Lookback( void )
    return max(max(BodyLong_avgPeriod,BodyShort_avgPeriod),max(ShadowVeryShort_avgPeriod,Near_avgPeriod)) + 2;
 }
 
+TA_LIB_API int TA_CDLSTALLEDPATTERN_DisplayShift( int outputIdx )
+{
+   if( outputIdx < 0 || outputIdx >= 1 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_LIB_API TA_RetCode TA_CDLSTALLEDPATTERN( int    startIdx,
                                             int    endIdx,
                                             const double inOpen[],

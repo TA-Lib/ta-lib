@@ -73,6 +73,15 @@ TA_LIB_API int TA_PERCENTILE_Lookback( int optInTimePeriod, double optInPercenti
    return optInTimePeriod - 1;
 }
 
+TA_LIB_API int TA_PERCENTILE_DisplayShift( int optInTimePeriod, double optInPercentile, int outputIdx )
+{
+   if( TA_PERCENTILE_Lookback( optInTimePeriod, optInPercentile ) < 0 )
+      return INT_MIN;
+   if( outputIdx < 0 || outputIdx >= 1 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_LIB_API TA_RetCode TA_PERCENTILE( int    startIdx,
                                      int    endIdx,
                                      const double inReal[],

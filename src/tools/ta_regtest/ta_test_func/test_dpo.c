@@ -250,6 +250,15 @@ static const struct { int period; int lookback; } dpoLookback[] =
 };
 #define NB_DPO_LOOKBACK ((int)(sizeof(dpoLookback)/sizeof(dpoLookback[0])))
 
+/* The display shift is minus the displacement t = n/2 + 1: the value computed at
+ * bar i detrends the price of bar i - t, which is where a chart draws it. */
+static const struct { int period; int shift; } dpoShift[] =
+{
+   { 2, -2 }, { 3, -2 }, { 4, -3 }, { 5, -3 }, { 20, -11 }, { 21, -11 },
+   { 100, -51 }, { 100000, -50001 }, { TA_INTEGER_DEFAULT, -11 },
+};
+#define NB_DPO_SHIFT ((int)(sizeof(dpoShift)/sizeof(dpoShift[0])))
+
 /* Coverage counters. Every leg is silent on success, so a count that reached
  * zero is the only remaining way one could run while comparing nothing. The
  * three sweeps below are fixed grids over fixed-length corpora, so their totals
@@ -257,6 +266,7 @@ static const struct { int period; int lookback; } dpoLookback[] =
 #define DPO_DIFF_CHECKS  334426
 #define DPO_EDGE_CHECKS  8536
 #define DPO_ALIAS_CHECKS 70326
+#define DPO_SHIFT_CHECKS 1267
 
 /* Coverage counters. Every leg is silent on success, so a count that reached
  * zero is the only remaining way one could run while comparing nothing. */
@@ -265,12 +275,14 @@ static int g_dpoOracleCmp;
 static int g_dpoBookCmp;
 static int g_dpoEdgeCmp;
 static int g_dpoAliasCmp;
+static int g_dpoShiftCmp;
 
 /**** Local functions declarations. ****/
 static ErrorNumber test_dpo_differential( const char *tag, const TA_Real *in, int nbBars );
 static ErrorNumber test_dpo_oracle( const TA_History *history );
 static ErrorNumber test_dpo_published( void );
 static ErrorNumber test_dpo_edges( void );
+static ErrorNumber test_dpo_display_shift( void );
 static ErrorNumber test_dpo_aliasing( const char *tag, const TA_Real *in, int nbBars );
 static ErrorNumber test_dpo_range( const TA_Real *in );
 
@@ -285,7 +297,7 @@ ErrorNumber test_func_dpo( TA_History *history )
    TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
 
    g_dpoDiffCmp = g_dpoOracleCmp = g_dpoBookCmp = 0;
-   g_dpoEdgeCmp = g_dpoAliasCmp = 0;
+   g_dpoEdgeCmp = g_dpoAliasCmp = g_dpoShiftCmp = 0;
 
    err = test_dpo_differential( "TA_SREF close", history->close, nbBars );
    if( err != TA_TEST_PASS )
@@ -307,6 +319,10 @@ ErrorNumber test_func_dpo( TA_History *history )
    if( err != TA_TEST_PASS )
       return err;
 
+   err = test_dpo_display_shift();
+   if( err != TA_TEST_PASS )
+      return err;
+
    err = test_dpo_aliasing( "TA_SREF close", history->close, nbBars );
    if( err != TA_TEST_PASS )
       return err;
@@ -324,14 +340,15 @@ ErrorNumber test_func_dpo( TA_History *history )
    if( nbBars == 252
        && ( g_dpoDiffCmp != DPO_DIFF_CHECKS || g_dpoOracleCmp != 2 * NB_DPO_ORACLE
             || g_dpoBookCmp != 20 || g_dpoEdgeCmp != DPO_EDGE_CHECKS
-            || g_dpoAliasCmp != DPO_ALIAS_CHECKS ) )
+            || g_dpoAliasCmp != DPO_ALIAS_CHECKS
+            || g_dpoShiftCmp != DPO_SHIFT_CHECKS ) )
    {
       printf( "DPO Fail: coverage counters (diff %d, oracle %d, published %d, "
-              "edges %d, alias %d) are not what this file was written with "
-              "(%d, %d, 20, %d, %d)\n",
+              "edges %d, alias %d, shift %d) are not what this file was written "
+              "with (%d, %d, 20, %d, %d, %d)\n",
               g_dpoDiffCmp, g_dpoOracleCmp, g_dpoBookCmp, g_dpoEdgeCmp,
-              g_dpoAliasCmp, DPO_DIFF_CHECKS, 2 * NB_DPO_ORACLE,
-              DPO_EDGE_CHECKS, DPO_ALIAS_CHECKS );
+              g_dpoAliasCmp, g_dpoShiftCmp, DPO_DIFF_CHECKS, 2 * NB_DPO_ORACLE,
+              DPO_EDGE_CHECKS, DPO_ALIAS_CHECKS, DPO_SHIFT_CHECKS );
       return TA_DPO_VACUOUS;
    }
 
@@ -668,6 +685,97 @@ static ErrorNumber test_dpo_edges( void )
       }
    }
 
+   return TA_TEST_PASS;
+}
+
+/* The abstract query's answer, or 12345 when the call fails or writes nothing. */
+static int dpo_abstract_shift( TA_ParamHolder *holder, int period, unsigned int outputIdx )
+{
+   TA_Integer shift = 12345;
+
+   if( TA_SetOptInputParamInteger( holder, 0, period ) != TA_SUCCESS
+       || TA_GetDisplayShift( holder, outputIdx, &shift ) != TA_SUCCESS )
+      return 12345;
+   return shift;
+}
+
+/* The shift is checked against the values, not only as a number: out[i] must
+ * be in[i + shift] minus the moving average at i, and on the ramp one bar off
+ * is 0.5. */
+static ErrorNumber test_dpo_display_shift( void )
+{
+   static TA_Real in[200], out[200], sma[200];
+   const TA_FuncHandle *handle;
+   TA_ParamHolder *holder;
+   TA_Integer begIdx, nbElement, smaBeg, smaNb, abstractShift;
+   int k, i, period, shift, lookback;
+
+   for( i = 0; i < 200; i++ )
+      in[i] = 64.0 + 0.5 * (double)i;
+
+   if( TA_GetFuncHandle( "DPO", &handle ) != TA_SUCCESS
+       || TA_ParamHolderAlloc( handle, &holder ) != TA_SUCCESS )
+   {
+      printf( "DPO display shift Fail: no abstract handle\n" );
+      return TA_TESTUTIL_TFRR_BAD_RETCODE;
+   }
+
+   for( k = 0; k < NB_DPO_SHIFT; k++ )
+   {
+      period = dpoShift[k].period;
+      shift = TA_DPO_DisplayShift( period, 0 );
+      abstractShift = dpo_abstract_shift( holder, period, 0 );
+      g_dpoShiftCmp++;
+      if( shift != dpoShift[k].shift || abstractShift != shift )
+      {
+         printf( "DPO display shift Fail [N=%d]: direct %d, abstract %d, "
+                 "expected %d\n", period, shift, (int)abstractShift,
+                 dpoShift[k].shift );
+         TA_ParamHolderFree( holder );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+
+      if( period == TA_INTEGER_DEFAULT || period > 100 )
+         continue;
+      lookback = TA_DPO_Lookback( period );
+      if( TA_DPO( 0, 199, in, period, &begIdx, &nbElement, out ) != TA_SUCCESS
+          || TA_SMA( lookback, 199, in, period, &smaBeg, &smaNb, sma ) != TA_SUCCESS
+          || begIdx != smaBeg || nbElement != smaNb )
+      {
+         printf( "DPO display shift Fail [N=%d]: the reference calls disagree\n", period );
+         TA_ParamHolderFree( holder );
+         return TA_TESTUTIL_TFRR_BAD_RETCODE;
+      }
+      for( i = 0; i < nbElement; i++ )
+      {
+         g_dpoShiftCmp++;
+         if( out[i] != in[begIdx + i + shift] - sma[i] )
+         {
+            printf( "DPO display shift Fail [N=%d] bar %d: the value is not the "
+                    "price %d bars back minus the average\n",
+                    period, begIdx + i, -shift );
+            TA_ParamHolderFree( holder );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+      }
+   }
+
+   g_dpoShiftCmp += 7;
+   if( TA_DPO_DisplayShift( 1, 0 ) != INT_MIN
+       || TA_DPO_DisplayShift( 100001, 0 ) != INT_MIN
+       || TA_DPO_DisplayShift( 20, 1 ) != INT_MIN
+       || TA_DPO_DisplayShift( 20, -1 ) != INT_MIN
+       || dpo_abstract_shift( holder, 1, 0 ) != INT_MIN
+       || dpo_abstract_shift( holder, 20, 1 ) != INT_MIN
+       || dpo_abstract_shift( holder, 20, (unsigned int)-1 ) != INT_MIN )
+   {
+      printf( "DPO display shift Fail: an out-of-range period or an index that "
+              "names no output did not answer INT_MIN\n" );
+      TA_ParamHolderFree( holder );
+      return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+   }
+
+   TA_ParamHolderFree( holder );
    return TA_TEST_PASS;
 }
 

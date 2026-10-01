@@ -68,6 +68,15 @@ TA_LIB_API int TA_CDLMORNINGDOJISTAR_Lookback( double optInPenetration )
    return max(max(BodyDoji_avgPeriod,BodyLong_avgPeriod),BodyShort_avgPeriod) + 2;
 }
 
+TA_LIB_API int TA_CDLMORNINGDOJISTAR_DisplayShift( double optInPenetration, int outputIdx )
+{
+   if( TA_CDLMORNINGDOJISTAR_Lookback( optInPenetration ) < 0 )
+      return INT_MIN;
+   if( outputIdx < 0 || outputIdx >= 1 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_CDLMORNINGDOJISTAR( int    startIdx,
                                              int    endIdx,

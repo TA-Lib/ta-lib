@@ -153,6 +153,32 @@ impl Core {
         }
         return Ok(retValue);
     }
+    /// Display shift of one output of [`Core::ma`]: how many bars ahead (positive) or behind
+    /// (negative) of the bar that computed it a chart draws that output. The values are never
+    /// shifted.
+    ///
+    /// Every output of this function is drawn at its own bar, so the answer is 0.
+    ///
+    /// # Arguments
+    ///
+    /// * `optInTimePeriod` — Averaging window length (default 30, range 1..=100000)
+    /// * `optInMAType` — Which moving-average algorithm to dispatch to (default 0 = SMA, values:
+    ///   0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
+    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, `MAType::DEFAULT` selects the default)
+    /// * `outputIdx` — Position of the output in the batch signature, from 0
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
+    /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
+    #[doc(alias = "TA_MA_DisplayShift")]
+    pub fn ma_display_shift(&self, mut optInTimePeriod: i32, mut optInMAType: MAType, outputIdx: usize) -> Result<i32, RetCode> {
+        self.ma_lookback(optInTimePeriod, optInMAType)?;
+        if outputIdx >= 1 {
+            return Err(RetCode::BadParam);
+        }
+        return Ok(0);
+    }
     /// C-shaped body behind [`Core::ma`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.

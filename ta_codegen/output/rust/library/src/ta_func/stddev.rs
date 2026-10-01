@@ -97,6 +97,31 @@ impl Core {
         // Lookback is driven by the variance.
         return Ok(self.var_lookback(optInTimePeriod, optInNbDev)?);
     }
+    /// Display shift of one output of [`Core::stddev`]: how many bars ahead (positive) or behind
+    /// (negative) of the bar that computed it a chart draws that output. The values are never
+    /// shifted.
+    ///
+    /// Every output of this function is drawn at its own bar, so the answer is 0.
+    ///
+    /// # Arguments
+    ///
+    /// * `optInTimePeriod` — Window length (default 5, range 2..=100000)
+    /// * `optInNbDev` — Multiplier applied to the standard deviation (default 1)
+    /// * `outputIdx` — Position of the output in the batch signature, from 0
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
+    /// parameters accept [`Core::INTEGER_DEFAULT`], and real parameters [`Core::REAL_DEFAULT`], to
+    /// select their default value.
+    #[doc(alias = "TA_STDDEV_DisplayShift")]
+    pub fn stddev_display_shift(&self, mut optInTimePeriod: i32, mut optInNbDev: f64, outputIdx: usize) -> Result<i32, RetCode> {
+        self.stddev_lookback(optInTimePeriod, optInNbDev)?;
+        if outputIdx >= 1 {
+            return Err(RetCode::BadParam);
+        }
+        return Ok(0);
+    }
     /// C-shaped body behind [`Core::stddev`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.

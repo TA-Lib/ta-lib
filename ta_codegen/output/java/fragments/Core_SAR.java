@@ -48,6 +48,31 @@
       return 1 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#sar}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInAcceleration Step added to the acceleration factor on each new
+    *        extreme point (default 0.02; minimum 0; {@link Core#REAL_DEFAULT} selects
+    *        the default).
+    * @param optInMaximum Ceiling on the acceleration factor (default 0.2;
+    *        minimum 0; {@link Core#REAL_DEFAULT} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int sarDisplayShift( double optInAcceleration, double optInMaximum, int outputIdx )
+   {
+      if( sarLookback( optInAcceleration, optInMaximum ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode sarImpl( int startIdx,
                     int endIdx,
                     double inHigh[],

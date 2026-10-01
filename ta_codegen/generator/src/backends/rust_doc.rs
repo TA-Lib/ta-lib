@@ -258,6 +258,48 @@ pub fn lookback_docs(func: &FuncDef, snake: &str, enums: &HashMap<String, EnumDe
     out
 }
 
+#[allow(clippy::implicit_hasher)]
+pub fn display_shift_docs(func: &FuncDef, snake: &str, enums: &HashMap<String, EnumDef>) -> String {
+    let empty = DocDef::default();
+    let doc = func.doc.as_ref().unwrap_or(&empty);
+    let mut d = DocWriter::new("    ");
+
+    d.paragraph(&format!(
+        "Display shift of one output of [`Core::{snake}`]: how many bars ahead (positive) or \
+         behind (negative) of the bar that computed it a chart draws that output. The values \
+         are never shifted."
+    ));
+    if !func.has_display_shift() {
+        d.blank();
+        d.paragraph("Every output of this function is drawn at its own bar, so the answer is 0.");
+    }
+    d.blank();
+    d.paragraph("# Arguments");
+    d.blank();
+    for opt in &func.optional_inputs {
+        d.bullet(&param_doc(opt, doc, enums));
+    }
+    d.bullet(&format!(
+        "`{}` — Position of the output in the batch signature, from 0",
+        crate::ir::DISPLAY_SHIFT_INDEX_PARAM
+    ));
+    d.blank();
+    d.paragraph("# Errors");
+    d.blank();
+    let mut sentence = String::from(
+        "[`RetCode::BadParam`] when a parameter is out of range or the index names no output.",
+    );
+    if let Some(extra) = default_sentinel_sentence(func) {
+        sentence.push(' ');
+        sentence.push_str(extra);
+    }
+    d.paragraph(&sentence);
+
+    let mut out = d.finish();
+    out.push_str(&format!("    #[doc(alias = \"TA_{}_DisplayShift\")]\n", func.name));
+    out
+}
+
 /// How a caller asks for a parameter's default value, phrased for whichever kinds
 /// the function actually takes. Gated per kind because the two sentinels differ and
 /// several functions take only one kind: SAR and MAMA have no integer optional
@@ -1125,6 +1167,7 @@ mod tests {
                 out("outInteger", ParamType::Integer),
             ],
             lookback: None,
+            display_shift: None,
             body: vec![],
             private_body: vec![],
             private_extra_params: vec![],

@@ -67,6 +67,15 @@ TA_LIB_API int TA_CDLMATHOLD_Lookback( double optInPenetration )
    return max(BodyShort_avgPeriod,BodyLong_avgPeriod) + 4;
 }
 
+TA_LIB_API int TA_CDLMATHOLD_DisplayShift( double optInPenetration, int outputIdx )
+{
+   if( TA_CDLMATHOLD_Lookback( optInPenetration ) < 0 )
+      return INT_MIN;
+   if( outputIdx < 0 || outputIdx >= 1 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_LIB_API TA_RetCode TA_CDLMATHOLD( int    startIdx,
                                      int    endIdx,
                                      const double inOpen[],

@@ -49,6 +49,30 @@
       return emaLookback(slowestPeriod) ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#adosc}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInFastPeriod Period of the fast A/D EMA (default 3; range
+    *        2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInSlowPeriod Period of the slow A/D EMA (default 10; range
+    *        2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int adoscDisplayShift( int optInFastPeriod, int optInSlowPeriod, int outputIdx )
+   {
+      if( adoscLookback( optInFastPeriod, optInSlowPeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode adoscImpl( int startIdx,
                       int endIdx,
                       double inHigh[],

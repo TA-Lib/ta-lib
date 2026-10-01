@@ -63,6 +63,13 @@ TA_LIB_API int TA_CDLGRAVESTONEDOJI_Lookback( void )
    return max(BodyDoji_avgPeriod,ShadowVeryShort_avgPeriod);
 }
 
+TA_LIB_API int TA_CDLGRAVESTONEDOJI_DisplayShift( int outputIdx )
+{
+   if( outputIdx < 0 || outputIdx >= 1 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_LIB_API TA_RetCode TA_CDLGRAVESTONEDOJI( int    startIdx,
                                             int    endIdx,
                                             const double inOpen[],

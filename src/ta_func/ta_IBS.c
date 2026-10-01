@@ -67,6 +67,13 @@ TA_LIB_API int TA_IBS_Lookback( void )
    return 0;
 }
 
+TA_LIB_API int TA_IBS_DisplayShift( int outputIdx )
+{
+   if( outputIdx < 0 || outputIdx >= 1 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_LIB_API TA_RetCode TA_IBS( int    startIdx,
                               int    endIdx,
                               const double inHigh[],

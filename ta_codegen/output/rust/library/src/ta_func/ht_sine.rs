@@ -78,6 +78,26 @@ impl Core {
         // See mama_lookback for an explanation of the "32".
         return Ok((63 + self.unstable_period[FuncUnstId::HT_SINE as usize]) as usize);
     }
+    /// Display shift of one output of [`Core::ht_sine`]: how many bars ahead (positive) or behind
+    /// (negative) of the bar that computed it a chart draws that output. The values are never
+    /// shifted.
+    ///
+    /// Every output of this function is drawn at its own bar, so the answer is 0.
+    ///
+    /// # Arguments
+    ///
+    /// * `outputIdx` — Position of the output in the batch signature, from 0
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output.
+    #[doc(alias = "TA_HT_SINE_DisplayShift")]
+    pub fn ht_sine_display_shift(&self, outputIdx: usize) -> Result<i32, RetCode> {
+        if outputIdx >= 2 {
+            return Err(RetCode::BadParam);
+        }
+        return Ok(0);
+    }
     /// C-shaped body behind [`Core::ht_sine`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.

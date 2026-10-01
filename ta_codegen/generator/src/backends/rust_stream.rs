@@ -320,6 +320,7 @@ fn build_typing_from(func: &FuncDef, body: &[Statement], models: &[&StreamModel]
             int_output_names,
             int_vec_vars,
             is_lookback: false,
+            signed_query: false,
             sentinel_vars,
             result_error_returns: true,
             // Stream bodies dispatch MA-type structurally (case labels /
@@ -3877,6 +3878,7 @@ fn plan_ctx(func: &FuncDef, enums: &HashMap<String, EnumDef>) -> RustRenderCtx {
             .collect(),
         int_vec_vars: HashSet::new(),
         is_lookback: false,
+        signed_query: false,
         sentinel_vars: HashSet::new(),
         result_error_returns: true,
         // The dispatch identity guard can compare `optInMAType == TA_MAType_*`

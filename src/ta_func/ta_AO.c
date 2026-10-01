@@ -73,6 +73,15 @@ TA_LIB_API int TA_AO_Lookback( int optInFastPeriod, int optInSlowPeriod )
    return TA_SMA_Lookback(max(optInFastPeriod,optInSlowPeriod));
 }
 
+TA_LIB_API int TA_AO_DisplayShift( int optInFastPeriod, int optInSlowPeriod, int outputIdx )
+{
+   if( TA_AO_Lookback( optInFastPeriod, optInSlowPeriod ) < 0 )
+      return INT_MIN;
+   if( outputIdx < 0 || outputIdx >= 1 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_LIB_API TA_RetCode TA_AO( int    startIdx,
                              int    endIdx,
                              const double inHigh[],

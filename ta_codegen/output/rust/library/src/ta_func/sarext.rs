@@ -142,6 +142,42 @@ impl Core {
         // initial extreme price.
         return Ok((1) as usize);
     }
+    /// Display shift of one output of [`Core::sarext`]: how many bars ahead (positive) or behind
+    /// (negative) of the bar that computed it a chart draws that output. The values are never
+    /// shifted.
+    ///
+    /// Every output of this function is drawn at its own bar, so the answer is 0.
+    ///
+    /// # Arguments
+    ///
+    /// * `optInStartValue` — Initial SAR/direction: 0 auto, >0 start long at value, \<0 start
+    ///   short at -value (default 0)
+    /// * `optInOffsetOnReverse` — Fractional offset applied to the stop on each reversal (default
+    ///   0, minimum 0)
+    /// * `optInAccelerationInitLong` — Initial acceleration factor when long (default 0.02,
+    ///   minimum 0)
+    /// * `optInAccelerationLong` — AF increment per new long extreme (default 0.02, minimum 0)
+    /// * `optInAccelerationMaxLong` — Cap on the long acceleration factor (default 0.2, minimum
+    ///   0)
+    /// * `optInAccelerationInitShort` — Initial acceleration factor when short (default 0.02,
+    ///   minimum 0)
+    /// * `optInAccelerationShort` — AF increment per new short extreme (default 0.02, minimum 0)
+    /// * `optInAccelerationMaxShort` — Cap on the short acceleration factor (default 0.2, minimum
+    ///   0)
+    /// * `outputIdx` — Position of the output in the batch signature, from 0
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Real
+    /// parameters accept [`Core::REAL_DEFAULT`] to select their default value.
+    #[doc(alias = "TA_SAREXT_DisplayShift")]
+    pub fn sarext_display_shift(&self, mut optInStartValue: f64, mut optInOffsetOnReverse: f64, mut optInAccelerationInitLong: f64, mut optInAccelerationLong: f64, mut optInAccelerationMaxLong: f64, mut optInAccelerationInitShort: f64, mut optInAccelerationShort: f64, mut optInAccelerationMaxShort: f64, outputIdx: usize) -> Result<i32, RetCode> {
+        self.sarext_lookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort)?;
+        if outputIdx >= 1 {
+            return Err(RetCode::BadParam);
+        }
+        return Ok(0);
+    }
     /// C-shaped body behind [`Core::sarext`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.

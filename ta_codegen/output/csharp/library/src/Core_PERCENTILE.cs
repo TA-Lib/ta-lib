@@ -90,6 +90,30 @@ public partial class Core
       return optInTimePeriod - 1 ;
 
    }
+   /// <summary>
+   /// How many bars ahead (positive) or behind (negative) of the bar that
+   /// computed it a chart draws one output of <c>Percentile</c>.
+   /// </summary>
+   /// <remarks>
+   /// Every output of this function is drawn at its own bar, so the answer is 0.
+   /// </remarks>
+   /// <param name="optInTimePeriod">Number of bars in the trailing window (default 100; range 2..10000;
+   /// <c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInPercentile">Percentage position within the sorted window (default 50; range 0..100;
+   /// <see cref="Core.RealDefault"/> selects the default).</param>
+   /// <param name="outputIdx">Position of the output in the batch signature, from 0.</param>
+   /// <returns>The display shift, or <c>int.MinValue</c> if a parameter is out of range
+   /// or the index names no output.</returns>
+   public int PercentileDisplayShift( int optInTimePeriod, double optInPercentile, int outputIdx )
+   {
+      if( PercentileLookback( optInTimePeriod, optInPercentile ) < 0 ) {
+         return int.MinValue;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return int.MinValue;
+      }
+      return 0;
+   }
    internal RetCode PercentileImpl( int startIdx,
                                     int endIdx,
                                     ReadOnlySpan<double> inReal,

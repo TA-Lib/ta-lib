@@ -97,7 +97,8 @@ fn attrs_above(src: &str, sig: &str) -> Vec<String> {
 /// else.
 fn expected(func: &ir::FuncDef) -> BTreeSet<String> {
     let n = &func.name;
-    let mut want: BTreeSet<String> = [format!("TA_{n}"), format!("TA_{n}_Lookback")].into();
+    let mut want: BTreeSet<String> =
+        [format!("TA_{n}"), format!("TA_{n}_Lookback"), format!("TA_{n}_DisplayShift")].into();
     if func.streaming {
         for verb in ["Stream", "Open", "OpenAndFill", "Update", "Peek", "Value", "OutRange", "Advance"] {
             want.insert(format!("TA_{n}_{verb}"));

@@ -83,6 +83,15 @@ TA_LIB_API int TA_STOCHRSI_Lookback( int optInTimePeriod, int optInFastK_Period,
    return retValue;
 }
 
+TA_LIB_API int TA_STOCHRSI_DisplayShift( int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, TA_MAType optInFastD_MAType, int outputIdx )
+{
+   if( TA_STOCHRSI_Lookback( optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType ) < 0 )
+      return INT_MIN;
+   if( outputIdx < 0 || outputIdx >= 2 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_LIB_API TA_RetCode TA_STOCHRSI( int    startIdx,
                                    int    endIdx,
                                    const double inReal[],

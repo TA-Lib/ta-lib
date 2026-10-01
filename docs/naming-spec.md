@@ -40,6 +40,7 @@ UpperCamel for both.
 |---|---|---|---|---|
 | batch | `TA_SMA` | `sma` | `sma` | `Sma` |
 | lookback | `TA_SMA_Lookback` | `sma_lookback` | `smaLookback` | `SmaLookback` |
+| display shift | `TA_SMA_DisplayShift` | `sma_display_shift` | `smaDisplayShift` | `SmaDisplayShift` |
 | numerics tier (not public) | body of `TA_SMA` | `sma_impl` | `smaImpl` | `SmaImpl` |
 | opener | `TA_SMA_Open` | `sma_open` | `smaOpen` | `SmaOpen` |
 | filling opener | `TA_SMA_OpenAndFill` | `sma_open_and_fill` | `smaOpenAndFill` | `SmaOpenAndFill` |
@@ -133,6 +134,7 @@ a namespace named by the same acronym.
 | set parameter | `TA_SetOptInputParamInteger` | `set_opt_input` | `setOptInput` | `SetOptInput` |
 | set output | `TA_SetOutputParamRealPtr` | `set_output` | `setOutput` | `SetOutput` |
 | lookback | `TA_GetLookback` | `lookback` | `lookback` | `Lookback` |
+| display shift | `TA_GetDisplayShift` | `display_shift` | `displayShift` | `DisplayShift` |
 | invoke | `TA_CallFunc` | `call` | `call` | `Call`, `TryCall` |
 | descriptor | `TA_FuncInfo` | `FuncInfo` | `FuncInfo` | `FuncInfo` |
 | flags | `TA_FuncFlags`, `TA_InputFlags` | `FuncFlags`, `InputFlags` | `FuncFlags`, `InputFlags` | `FuncFlags` |

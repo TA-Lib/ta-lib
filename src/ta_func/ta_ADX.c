@@ -76,6 +76,15 @@ TA_LIB_API int TA_ADX_Lookback( int optInTimePeriod )
    return 2 * optInTimePeriod + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_ADX,Adx) - 1;
 }
 
+TA_LIB_API int TA_ADX_DisplayShift( int optInTimePeriod, int outputIdx )
+{
+   if( TA_ADX_Lookback( optInTimePeriod ) < 0 )
+      return INT_MIN;
+   if( outputIdx < 0 || outputIdx >= 1 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_LIB_API TA_RetCode TA_ADX( int    startIdx,
                               int    endIdx,
                               const double inHigh[],

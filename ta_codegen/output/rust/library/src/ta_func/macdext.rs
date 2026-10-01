@@ -127,6 +127,40 @@ impl Core {
         // Add to the largest MA lookback the signal line lookback
         return Ok((lookbackLargest + self.ma_lookback(optInSignalPeriod, optInSignalMAType)?) as usize);
     }
+    /// Display shift of one output of [`Core::macdext`]: how many bars ahead (positive) or behind
+    /// (negative) of the bar that computed it a chart draws that output. The values are never
+    /// shifted.
+    ///
+    /// Every output of this function is drawn at its own bar, so the answer is 0.
+    ///
+    /// # Arguments
+    ///
+    /// * `optInFastPeriod` — Period of the fast MA (default 12, range 2..=100000)
+    /// * `optInFastMAType` — MA type for the fast MA (default 0 = SMA, values: 0=SMA, 1=EMA,
+    ///   2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT,
+    ///   12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, `MAType::DEFAULT` selects the default)
+    /// * `optInSlowPeriod` — Period of the slow MA (default 26, range 2..=100000)
+    /// * `optInSlowMAType` — MA type for the slow MA (default 0 = SMA, values: 0=SMA, 1=EMA,
+    ///   2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT,
+    ///   12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, `MAType::DEFAULT` selects the default)
+    /// * `optInSignalPeriod` — Period of the signal-line MA (default 9, range 1..=100000)
+    /// * `optInSignalMAType` — MA type for the signal line (default 0 = SMA, values: 0=SMA,
+    ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
+    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, `MAType::DEFAULT` selects the default)
+    /// * `outputIdx` — Position of the output in the batch signature, from 0
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
+    /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
+    #[doc(alias = "TA_MACDEXT_DisplayShift")]
+    pub fn macdext_display_shift(&self, mut optInFastPeriod: i32, mut optInFastMAType: MAType, mut optInSlowPeriod: i32, mut optInSlowMAType: MAType, mut optInSignalPeriod: i32, mut optInSignalMAType: MAType, outputIdx: usize) -> Result<i32, RetCode> {
+        self.macdext_lookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType)?;
+        if outputIdx >= 3 {
+            return Err(RetCode::BadParam);
+        }
+        return Ok(0);
+    }
     /// C-shaped body behind [`Core::macdext`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.

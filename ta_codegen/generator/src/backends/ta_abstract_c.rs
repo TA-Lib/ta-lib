@@ -250,6 +250,7 @@ fn gen_def_ui_h() -> String {
          \x20  const TA_OutputParameterInfo   * const output;\n\
          \x20  const TA_FrameFunction function;\n\
          \x20  const TA_FrameLookback lookback;\n\
+         \x20  const TA_FrameDisplayShift displayShift;\n\
          } TA_FuncDef;\n\n",
     );
 
@@ -272,7 +273,8 @@ fn gen_def_ui_h() -> String {
          \x20     (const TA_OptInputParameterInfo * const)&TA_##name##_OptInputs[0], \\\n\
          \x20     (const TA_OutputParameterInfo   * const)&TA_##name##_Outputs[0],   \\\n\
          \x20     TA_##name##_FramePP, \\\n\
-         \x20     TA_##name##_FramePPLB \\\n\
+         \x20     TA_##name##_FramePPLB, \\\n\
+         \x20     TA_##name##_FramePPDS \\\n\
          \x20  }; \\\n\
          \x20  TA_FuncInfo TA_INFO_##name = \\\n\
          \x20  { \\\n\
@@ -301,6 +303,7 @@ fn gen_def_ui_h() -> String {
          \x20     (const TA_InputParameterInfo    * const)&TA_##name##_Inputs[0],    \\\n\
          \x20     (const TA_OptInputParameterInfo * const)&TA_##name##_OptInputs[0], \\\n\
          \x20     (const TA_OutputParameterInfo   * const)&TA_##name##_Outputs[0],   \\\n\
+         \x20     NULL, \\\n\
          \x20     NULL, \\\n\
          \x20     NULL \\\n\
          \x20  }; \\\n\
@@ -888,6 +891,10 @@ fn gen_frame_priv_h() -> String {
         "typedef unsigned int (*TA_FrameLookback)( const TA_ParamHolderPriv *params );\n\n",
     );
 
+    o.push_str(
+        "typedef int (*TA_FrameDisplayShift)( const TA_ParamHolderPriv *params, int outputIdx );\n\n",
+    );
+
     o.push_str("#endif\n");
     o
 }
@@ -916,7 +923,8 @@ fn gen_frame_h(funcs: &[&FuncDef]) -> String {
              \x20                          int            endIdx,\n\
              \x20                          int           *outBegIdx,\n\
              \x20                          int           *outNBElement )\n;\n\
-             unsigned int TA_{name}_FramePPLB( const TA_ParamHolderPriv *params )\n;\n"
+             unsigned int TA_{name}_FramePPLB( const TA_ParamHolderPriv *params )\n;\n\
+             int TA_{name}_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )\n;\n"
         );
     }
 
@@ -943,6 +951,7 @@ fn gen_frame_c(funcs: &[&FuncDef]) -> String {
     for func in funcs {
         emit_frame_pp(&mut o, func);
         emit_frame_pp_lb(&mut o, func);
+        emit_frame_pp_ds(&mut o, func);
     }
 
     o
@@ -1054,6 +1063,28 @@ fn emit_frame_pp_lb(o: &mut String, func: &FuncDef) {
         let _ = writeln!(o, " );");
     }
 
+    o.push_str("}\n");
+}
+
+fn emit_frame_pp_ds(o: &mut String, func: &FuncDef) {
+    let name = &func.name;
+    let idx = crate::ir::DISPLAY_SHIFT_INDEX_PARAM;
+    let _ = writeln!(
+        o,
+        "int TA_{name}_FramePPDS( const TA_ParamHolderPriv *params, int {idx} )\n\
+         {{"
+    );
+    if func.optional_inputs.is_empty() {
+        let _ = writeln!(o, "   (void)params;");
+    }
+    let mut args: Vec<String> = func
+        .optional_inputs
+        .iter()
+        .enumerate()
+        .map(|(i, opt)| opt_input_accessor(opt, i))
+        .collect();
+    args.push(idx.to_string());
+    let _ = writeln!(o, "   return TA_{name}_DisplayShift( {} );", args.join(", "));
     o.push_str("}\n");
 }
 
@@ -1377,6 +1408,7 @@ pub(crate) fn output_flag_to_c(flag: &str) -> Option<&'static str> {
         "upper_limit" => Some("TA_OUT_UPPER_LIMIT"),
         "lower_limit" => Some("TA_OUT_LOWER_LIMIT"),
         "nullable" => Some("TA_OUT_NULLABLE"),
+        "display_shift" => Some("TA_OUT_DISPLAY_SHIFT"),
         _ => None,
     }
 }
@@ -1630,6 +1662,7 @@ pub(crate) fn func_flag_to_c(flag: &str) -> Option<&'static str> {
         "path_dependent" => Some("TA_FUNC_FLG_PATH_DEP"),
         "nan_inf_output" => Some("TA_FUNC_FLG_NAN_INF_OUT"),
         "period1_identity" => Some("TA_FUNC_FLG_PERIOD1_IDENTITY"),
+        "display_shift" => Some("TA_FUNC_FLG_DISPLAY_SHIFT"),
         _ => None,
     }
 }
@@ -2770,6 +2803,39 @@ fn gen_ta_abstract_c() -> String {
          }\n\n",
     );
 
+    // --- TA_GetDisplayShift ---
+    o.push_str(
+        "TA_RetCode TA_GetDisplayShift( const TA_ParamHolder *param,\n\
+         \x20                              unsigned int outputIdx,\n\
+         \x20                              TA_Integer *displayShift )\n\
+         {\n\
+         \x20  const TA_ParamHolderPriv *paramHolderPriv;\n\n\
+         \x20  const TA_FuncDef *funcDef;\n\
+         \x20  const TA_FuncInfo *funcInfo;\n\
+         \x20  TA_FrameDisplayShift displayShiftFunction;\n\n\
+         \x20  if( (param == NULL) || (displayShift == NULL))\n\
+         \x20  {\n\
+         \x20     return TA_BAD_PARAM;\n\
+         \x20  }\n\n\
+         \x20  paramHolderPriv = (TA_ParamHolderPriv *)(param->hiddenData);\n\
+         \x20  if( paramHolderPriv->magicNumber != TA_PARAM_HOLDER_PRIV_MAGIC_NB )\n\
+         \x20  {\n\
+         \x20     return TA_INVALID_PARAM_HOLDER;\n\
+         \x20  }\n\n\
+         \x20  funcInfo = paramHolderPriv->funcInfo;\n\
+         \x20  if( !funcInfo ) return TA_INVALID_HANDLE;\n\n\
+         \x20  funcDef = (const TA_FuncDef *)funcInfo->handle;\n\
+         \x20  if( !funcDef ) return TA_INTERNAL_ERROR(2);\n\
+         \x20  displayShiftFunction = funcDef->displayShift;\n\
+         \x20  if( !displayShiftFunction ) return TA_INTERNAL_ERROR(2);\n\n\
+         \x20  /* An index past INT_MAX lands negative and is rejected like any\n\
+         \x20   * other index that names no output.\n\
+         \x20   */\n\
+         \x20  *displayShift = (*displayShiftFunction)( paramHolderPriv, (int)outputIdx );\n\n\
+         \x20  return TA_SUCCESS;\n\
+         }\n\n",
+    );
+
     // --- TA_CallFunc ---
     o.push_str(
         "TA_RetCode TA_CallFunc( const TA_ParamHolder *param,\n\
@@ -3158,6 +3224,7 @@ fn emit_func_h_block(o: &mut String, func: &FuncDef, lookup: &dyn crate::streami
 
     // --- Lookback prototype: TA_XXX_Lookback ---
     emit_lookback_prototype(o, name, func);
+    emit_display_shift_prototype(o, name, func);
     // Match gen_code spacing: 2 blank lines after lookback, except when
     // the last opt param is TA_MAType (Enum) which gets only 1 blank line.
     let last_is_enum = func
@@ -3340,6 +3407,19 @@ fn emit_func_s_prototype(o: &mut String, name: &str, func: &FuncDef) {
     }
 }
 
+fn emit_display_shift_prototype(o: &mut String, name: &str, func: &FuncDef) {
+    let mut params: Vec<String> = func
+        .optional_inputs
+        .iter()
+        .map(|opt| {
+            let (type_str, name_str) = opt_param_type_and_name(opt);
+            format!("{} {name_str}", type_str.trim_end())
+        })
+        .collect();
+    params.push(format!("int {}", crate::ir::DISPLAY_SHIFT_INDEX_PARAM));
+    let _ = writeln!(o, "TA_LIB_API int TA_{name}_DisplayShift( {} );", params.join(", "));
+}
+
 /// Emit the lookback prototype: `TA_LIB_API int TA_XXX_Lookback(...)`.
 fn emit_lookback_prototype(o: &mut String, name: &str, func: &FuncDef) {
     let prefix = format!("TA_LIB_API int TA_{name}_Lookback( ");
@@ -3488,6 +3568,7 @@ mod predef_tests {
             optional_inputs: vec![],
             outputs: vec![],
             lookback: None,
+            display_shift: None,
             body: vec![],
             private_body: vec![],
             private_extra_params: vec![],

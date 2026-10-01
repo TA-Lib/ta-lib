@@ -115,6 +115,15 @@ TA_LIB_API int TA_KST_Lookback( int optInROC1Period, int optInROC2Period, int op
    return legMax + optInSignalPeriod - 1;
 }
 
+TA_LIB_API int TA_KST_DisplayShift( int optInROC1Period, int optInROC2Period, int optInROC3Period, int optInROC4Period, int optInSMA1Period, int optInSMA2Period, int optInSMA3Period, int optInSMA4Period, int optInSignalPeriod, int outputIdx )
+{
+   if( TA_KST_Lookback( optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod ) < 0 )
+      return INT_MIN;
+   if( outputIdx < 0 || outputIdx >= 2 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_KST( int    startIdx,
                               int    endIdx,

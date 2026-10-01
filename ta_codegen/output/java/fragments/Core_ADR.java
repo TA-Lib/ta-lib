@@ -37,6 +37,32 @@
       return optInTimePeriod - 1 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#adr}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Number of bar ranges averaged. Published
+    *        conventions differ and none is authoritative: TradingView's ADR indicator
+    *        page works its example over 7 bars, TC2000's over 10, and the Qullamaggie
+    *        screener community reads "ADR" as 20. The value shipped here is ATR's, so
+    *        the two volatility measures are comparable out of the box (default 14;
+    *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int adrDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( adrLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode adrImpl( int startIdx,
                     int endIdx,
                     double inHigh[],

@@ -69,4 +69,7 @@ public final class FuncFlags {
    /** A period of 1 performs no smoothing: the lookback is 0 and the output is a bit-exact copy of the input. */
    public static final int PERIOD1_IDENTITY = 0x00000001;
 
+   /** At least one output carries {@code OutputFlags.DISPLAY_SHIFT}; without it every output's display shift is 0. */
+   public static final int DISPLAY_SHIFT = 0x00000002;
+
 }

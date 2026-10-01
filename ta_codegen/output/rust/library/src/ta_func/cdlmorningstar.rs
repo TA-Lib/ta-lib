@@ -98,6 +98,30 @@ impl Core {
         let BodyShort_factor: f64 = self.candle_settings.body_short.factor;
         return Ok(((BodyShort_avgPeriod).max(BodyLong_avgPeriod) + 2) as usize);
     }
+    /// Display shift of one output of [`Core::cdlmorningstar`]: how many bars ahead (positive) or
+    /// behind (negative) of the bar that computed it a chart draws that output. The values are
+    /// never shifted.
+    ///
+    /// Every output of this function is drawn at its own bar, so the answer is 0.
+    ///
+    /// # Arguments
+    ///
+    /// * `optInPenetration` — Fraction of the 1st candle's body the 3rd close must exceed above
+    ///   the 1st close; larger = deeper penetration required (default 0.3, minimum 0)
+    /// * `outputIdx` — Position of the output in the batch signature, from 0
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Real
+    /// parameters accept [`Core::REAL_DEFAULT`] to select their default value.
+    #[doc(alias = "TA_CDLMORNINGSTAR_DisplayShift")]
+    pub fn cdlmorningstar_display_shift(&self, mut optInPenetration: f64, outputIdx: usize) -> Result<i32, RetCode> {
+        self.cdlmorningstar_lookback(optInPenetration)?;
+        if outputIdx >= 1 {
+            return Err(RetCode::BadParam);
+        }
+        return Ok(0);
+    }
     /// C-shaped body behind [`Core::cdlmorningstar`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.

@@ -26,7 +26,7 @@ TA-Lib generates all of its per-function code from a single source of truth. One
 | File | Contains |
 | --- | --- |
 | `<name>.yaml` | Metadata: inputs, outputs, parameters, defaults, group, flags. Data only, never logic. |
-| `<name>.c` | The algorithm: a `<name>_lookback()` and a `<name>()` batch function, in plain portable C. |
+| `<name>.c` | The algorithm: a `<name>_lookback()` and a `<name>()` batch function, in plain portable C. Optionally a `<name>_display_shift()`, for an output a chart draws at another bar. |
 | `<name>.md` | Documentation: summary, the formula in its original algebraic form, references. |
 
 From these three files, the `ta_codegen` generator produces everything the project ships: the C library, native Rust, Java and .NET implementations, streaming variants, the test servers, benchmarks, and this website's function page. You never write Rust, Java or C# by hand, and you never edit generated files.

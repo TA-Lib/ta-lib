@@ -66,6 +66,13 @@ TA_LIB_API int TA_CDLADVANCEBLOCK_Lookback( void )
    return max(max(max(ShadowLong_avgPeriod,ShadowShort_avgPeriod),max(Far_avgPeriod,Near_avgPeriod)),BodyLong_avgPeriod) + 2;
 }
 
+TA_LIB_API int TA_CDLADVANCEBLOCK_DisplayShift( int outputIdx )
+{
+   if( outputIdx < 0 || outputIdx >= 1 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_LIB_API TA_RetCode TA_CDLADVANCEBLOCK( int    startIdx,
                                           int    endIdx,
                                           const double inOpen[],

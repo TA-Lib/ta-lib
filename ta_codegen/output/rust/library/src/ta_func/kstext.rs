@@ -164,6 +164,47 @@ impl Core {
         }
         return Ok((legMax + self.ma_lookback(optInSignalPeriod, optInSignalMAType)?) as usize);
     }
+    /// Display shift of one output of [`Core::kstext`]: how many bars ahead (positive) or behind
+    /// (negative) of the bar that computed it a chart draws that output. The values are never
+    /// shifted.
+    ///
+    /// Every output of this function is drawn at its own bar, so the answer is 0.
+    ///
+    /// # Arguments
+    ///
+    /// * `optInROC1Period` — Rate-of-change period of leg 1 (weight 1) (default 10, range
+    ///   1..=100000)
+    /// * `optInROC2Period` — Rate-of-change period of leg 2 (weight 2) (default 15, range
+    ///   1..=100000)
+    /// * `optInROC3Period` — Rate-of-change period of leg 3 (weight 3) (default 20, range
+    ///   1..=100000)
+    /// * `optInROC4Period` — Rate-of-change period of leg 4 (weight 4) (default 30, range
+    ///   1..=100000)
+    /// * `optInMA1Period` — Period of the MA smoothing leg 1 (default 10, range 1..=100000)
+    /// * `optInMA2Period` — Period of the MA smoothing leg 2 (default 10, range 1..=100000)
+    /// * `optInMA3Period` — Period of the MA smoothing leg 3 (default 10, range 1..=100000)
+    /// * `optInMA4Period` — Period of the MA smoothing leg 4 (default 15, range 1..=100000)
+    /// * `optInSignalPeriod` — Period of the signal-line MA (default 9, range 1..=100000)
+    /// * `optInROCMAType` — MA type smoothing the four legs (default 0 = SMA, values: 0=SMA,
+    ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
+    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, `MAType::DEFAULT` selects the default)
+    /// * `optInSignalMAType` — MA type for the signal line (default 0 = SMA, values: 0=SMA,
+    ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
+    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, `MAType::DEFAULT` selects the default)
+    /// * `outputIdx` — Position of the output in the batch signature, from 0
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
+    /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
+    #[doc(alias = "TA_KSTEXT_DisplayShift")]
+    pub fn kstext_display_shift(&self, mut optInROC1Period: i32, mut optInROC2Period: i32, mut optInROC3Period: i32, mut optInROC4Period: i32, mut optInMA1Period: i32, mut optInMA2Period: i32, mut optInMA3Period: i32, mut optInMA4Period: i32, mut optInSignalPeriod: i32, mut optInROCMAType: MAType, mut optInSignalMAType: MAType, outputIdx: usize) -> Result<i32, RetCode> {
+        self.kstext_lookback(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType)?;
+        if outputIdx >= 2 {
+            return Err(RetCode::BadParam);
+        }
+        return Ok(0);
+    }
     /// C-shaped body behind [`Core::kstext`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.

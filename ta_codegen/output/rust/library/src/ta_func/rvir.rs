@@ -96,6 +96,32 @@ impl Core {
         // function inherit TA_FUNC_UNST_RVI the way KC inherits its two (kc.c).
         return Ok(self.rvi_lookback(optInTimePeriod, optInStdDevPeriod)?);
     }
+    /// Display shift of one output of [`Core::rvir`]: how many bars ahead (positive) or behind
+    /// (negative) of the bar that computed it a chart draws that output. The values are never
+    /// shifted.
+    ///
+    /// Every output of this function is drawn at its own bar, so the answer is 0.
+    ///
+    /// # Arguments
+    ///
+    /// * `optInTimePeriod` — Wilder smoothing period applied to both legs of both indices
+    ///   (default 14, range 1..=100000)
+    /// * `optInStdDevPeriod` — Number of trailing values each standard deviation spans (default
+    ///   10, range 2..=100000)
+    /// * `outputIdx` — Position of the output in the batch signature, from 0
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
+    /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
+    #[doc(alias = "TA_RVIR_DisplayShift")]
+    pub fn rvir_display_shift(&self, mut optInTimePeriod: i32, mut optInStdDevPeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+        self.rvir_lookback(optInTimePeriod, optInStdDevPeriod)?;
+        if outputIdx >= 1 {
+            return Err(RetCode::BadParam);
+        }
+        return Ok(0);
+    }
     /// C-shaped body behind [`Core::rvir`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.

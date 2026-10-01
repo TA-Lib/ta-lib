@@ -45,6 +45,31 @@
       return emaLookback(optInFastPeriod) * 2 + (optInSlowPeriod - 1) ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#massi}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInFastPeriod Number of bars in each of the two exponential
+    *        averages of the high-low range (default 9; range 2..100000;
+    *        {@code Integer.MIN_VALUE} selects the default).
+    * @param optInSlowPeriod Number of bars the ratio is summed over (default
+    *        25; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int massiDisplayShift( int optInFastPeriod, int optInSlowPeriod, int outputIdx )
+   {
+      if( massiLookback( optInFastPeriod, optInSlowPeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode massiImpl( int startIdx,
                       int endIdx,
                       double inHigh[],

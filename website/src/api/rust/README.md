@@ -17,7 +17,8 @@ The Rust API is not yet released. Estimated release: **Q1 2027**.
 <blockquote>
 <p><a href="#direct_call">3.1 Batch Processing</a><br>
 <a href="#output_size">3.2 Output Size and Lookback</a><br>
-<a href="#retcode">3.3 Results and Return Codes</a><br></p>
+<a href="#display_shift">3.3 Display Shift</a><br>
+<a href="#retcode">3.4 Results and Return Codes</a><br></p>
 </blockquote>
 
 <p><a href="#advanced">4.0 Advanced Features</a></p>
@@ -157,7 +158,17 @@ let mut out = vec![0.0; allocation_size];
 
 Too little data is a success, not an error: a range that ends before the lookback simply produces no values, and the returned range is empty (`count == 0`).
 
-### 3.3 Results and Return Codes {#retcode}
+### 3.3 Display Shift {#display_shift}
+
+A few indicators are conventionally drawn at another bar than the one that computes them. The values are never moved: the matching `<name>_display_shift` method gives the number of bars to shift one output when charting it, positive ahead and negative behind. It is 0 for almost every function.
+
+```rust
+let shift = core.dpo_display_shift(20, 0)?;   // period 20, first output: -11
+```
+
+The same answer comes from the [abstraction layer](/api/abstract/). The rules are in the [specification](/spec/lookback/#display-shift).
+
+### 3.4 Results and Return Codes {#retcode}
 
 Every TA function returns `Result<OutRange, RetCode>`, so it composes with `?`. `RetCode` implements `std::error::Error`.
 
@@ -179,43 +190,9 @@ A `NaN` or `±Inf` inside an input series is not detected, and nothing is promis
 
 ### 4.1 Abstraction Layer {#abstract}
 
-`ta_lib::abstract_api` describes every function at run time and calls it without naming it at compile time — the Rust equivalent of C's [abstraction layer](/api/#abstract). Useful for a UI, a scripting bridge, or anything that enumerates indicators.
+`ta_lib::abstract_api` describes every function at run time and calls it without naming it at compile time. Useful for a UI, a scripting bridge, or anything that enumerates indicators. See the [Abstraction Layer](/api/abstract/) page.
 
-```rust
-use ta_lib::abstract_api::{for_each_func, get_func_handle};
-
-// Look one up by name, or walk them all (FuncId::COUNT of them).
-let id = get_func_handle("SMA").expect("unknown function");
-let info = id.info();
-
-info.name;        // "SMA"
-info.group;       // Group::OverlapStudies
-info.hint;        // one-line description
-info.inputs;      // &[InputInfo]     -- param_name, kind, flags
-info.opt_inputs;  // &[OptInputInfo]  -- display_name, hint, kind
-info.outputs;     // &[OutputInfo]    -- param_name, kind, flags
-
-for_each_func(|f| println!("{} ({:?})", f.name, f.group));
-```
-
-Each optional parameter carries a typed `OptInputType` — `RealRange`, `IntegerRange`, `RealList` or `IntegerList` — with its bounds, default and suggested values, so a UI can build the right control without a lookup table of its own. It replaces C's type tag plus `void* dataSet` — two separate fields there, with the cast done by hand.
-
-Binding arguments at run time goes through a `ParamHolder`:
-
-```rust
-let core = Core::new();
-let mut out = vec![0.0; close.len()];
-
-let mut call = id.new_call(&core);
-call.set_input(0, &close)?;          // set_price_input / set_int_input also exist
-call.set_opt_input(0, 30)?;                // takes i32 or f64
-call.set_output(0, &mut out)?;
-
-let range = call.call(0, close.len() - 1)?;
-println!("{} values from bar {}", range.count, range.beg_idx);
-```
-
-Optional parameters left unset carry the same default sentinel an omitted argument does in C, so "unset" and "explicitly the default" are one code path. `FuncId::COUNT` is the registry size, and `MAX_INPUTS` / `MAX_OPT_INPUTS` / `MAX_OUTPUTS` bound the slots.
+Each optional parameter carries a typed `OptInputType` (`RealRange`, `IntegerRange`, `RealList` or `IntegerList`) with its bounds, default and suggested values, so a UI can build the right control without a lookup table of its own.
 
 ### 4.2 Numerical Stability {#numerical_stability}
 

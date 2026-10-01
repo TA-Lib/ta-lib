@@ -516,6 +516,7 @@ pub fn func_flag_bits(flags: &[String]) -> u32 {
             "nan_inf_output" => b |= 0x4000_0000, // TA_FUNC_FLG_NAN_INF_OUT
             // The top byte is full bar the sign bit; new flags start from bit 0.
             "period1_identity" => b |= 0x0000_0001, // TA_FUNC_FLG_PERIOD1_IDENTITY
+            "display_shift" => b |= 0x0000_0002, // TA_FUNC_FLG_DISPLAY_SHIFT
             _ => {}
         }
     }
@@ -560,6 +561,7 @@ pub fn output_flag_bits(flags: &[String]) -> u32 {
             "upper_limit" => b |= 0x0000_0800,
             "lower_limit" => b |= 0x0000_1000,
             "nullable" => b |= OUT_NULLABLE,
+            "display_shift" => b |= 0x0000_4000, // TA_OUT_DISPLAY_SHIFT
             _ => {}
         }
     }

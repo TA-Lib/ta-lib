@@ -65,6 +65,13 @@ TA_LIB_API int TA_CDL3STARSINSOUTH_Lookback( void )
    return max(max(ShadowVeryShort_avgPeriod,ShadowLong_avgPeriod),max(BodyLong_avgPeriod,BodyShort_avgPeriod)) + 2;
 }
 
+TA_LIB_API int TA_CDL3STARSINSOUTH_DisplayShift( int outputIdx )
+{
+   if( outputIdx < 0 || outputIdx >= 1 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_LIB_API TA_RetCode TA_CDL3STARSINSOUTH( int    startIdx,
                                            int    endIdx,
                                            const double inOpen[],

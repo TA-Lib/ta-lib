@@ -84,6 +84,15 @@ TA_LIB_API int TA_KC_Lookback( int optInTimePeriod, int optInATRPeriod, double o
    return (emaLookback > atrLookback) ? emaLookback : atrLookback;
 }
 
+TA_LIB_API int TA_KC_DisplayShift( int optInTimePeriod, int optInATRPeriod, double optInNbDev, int outputIdx )
+{
+   if( TA_KC_Lookback( optInTimePeriod, optInATRPeriod, optInNbDev ) < 0 )
+      return INT_MIN;
+   if( outputIdx < 0 || outputIdx >= 3 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_LIB_API TA_RetCode TA_KC( int    startIdx,
                              int    endIdx,
                              const double inHigh[],

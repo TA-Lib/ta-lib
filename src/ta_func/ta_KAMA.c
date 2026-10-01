@@ -85,6 +85,15 @@ TA_LIB_API int TA_KAMA_Lookback( int optInTimePeriod )
    return optInTimePeriod + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_KAMA,Kama);
 }
 
+TA_LIB_API int TA_KAMA_DisplayShift( int optInTimePeriod, int outputIdx )
+{
+   if( TA_KAMA_Lookback( optInTimePeriod ) < 0 )
+      return INT_MIN;
+   if( outputIdx < 0 || outputIdx >= 1 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_KAMA( int    startIdx,
                                int    endIdx,

@@ -81,6 +81,15 @@ TA_LIB_API int TA_NATR_Lookback( int optInTimePeriod )
    return optInTimePeriod + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_NATR,Natr);
 }
 
+TA_LIB_API int TA_NATR_DisplayShift( int optInTimePeriod, int outputIdx )
+{
+   if( TA_NATR_Lookback( optInTimePeriod ) < 0 )
+      return INT_MIN;
+   if( outputIdx < 0 || outputIdx >= 1 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_NATR( int    startIdx,
                                int    endIdx,

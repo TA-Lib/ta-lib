@@ -11,6 +11,7 @@ mod candle_range_suite;
 mod circbuf_suite;
 mod cond_comment_suite;
 mod csharp_stream_suite;
+mod display_shift_suite;
 mod divisor_guard_suite;
 mod doc_emphasis_suite;
 mod enums_suite;

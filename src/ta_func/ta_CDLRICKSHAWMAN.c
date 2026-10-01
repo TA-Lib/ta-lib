@@ -64,6 +64,13 @@ TA_LIB_API int TA_CDLRICKSHAWMAN_Lookback( void )
    return max(max(BodyDoji_avgPeriod,ShadowLong_avgPeriod),Near_avgPeriod);
 }
 
+TA_LIB_API int TA_CDLRICKSHAWMAN_DisplayShift( int outputIdx )
+{
+   if( outputIdx < 0 || outputIdx >= 1 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_LIB_API TA_RetCode TA_CDLRICKSHAWMAN( int    startIdx,
                                          int    endIdx,
                                          const double inOpen[],

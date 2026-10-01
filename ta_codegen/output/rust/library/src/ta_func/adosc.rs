@@ -100,6 +100,30 @@ impl Core {
         // Adjust startIdx to account for the lookback period.
         return Ok(self.ema_lookback((slowestPeriod) as i32)?);
     }
+    /// Display shift of one output of [`Core::adosc`]: how many bars ahead (positive) or behind
+    /// (negative) of the bar that computed it a chart draws that output. The values are never
+    /// shifted.
+    ///
+    /// Every output of this function is drawn at its own bar, so the answer is 0.
+    ///
+    /// # Arguments
+    ///
+    /// * `optInFastPeriod` — Period of the fast A/D EMA (default 3, range 2..=100000)
+    /// * `optInSlowPeriod` — Period of the slow A/D EMA (default 10, range 2..=100000)
+    /// * `outputIdx` — Position of the output in the batch signature, from 0
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
+    /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
+    #[doc(alias = "TA_ADOSC_DisplayShift")]
+    pub fn adosc_display_shift(&self, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+        self.adosc_lookback(optInFastPeriod, optInSlowPeriod)?;
+        if outputIdx >= 1 {
+            return Err(RetCode::BadParam);
+        }
+        return Ok(0);
+    }
     /// C-shaped body behind [`Core::adosc`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.

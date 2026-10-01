@@ -37,6 +37,7 @@ retired footnote leaves a gap, so a citation of `[4]` keeps its meaning.
 | L2 | [agrees with batch and Open](https://ta-lib.org/spec/lookback/#l2) | ✅ | ✅ | ❌<br>[18] | ✅ |
 | L3 | [agrees with C](https://ta-lib.org/spec/lookback/#l3) | — | ✅ | ✅ | ✅ |
 | L4 | [nothing else fails](https://ta-lib.org/spec/lookback/#l4) | ✅ | ✅ | ❌<br>[18] | ✅ |
+| L12 | [display shift rejects what the lookback rejects](https://ta-lib.org/spec/lookback/#l12) | ✅ | ✅ | ❌<br>[18] | ✅ |
 
 [18] A null MA type: Appendix D item 14.
 
@@ -160,6 +161,11 @@ rejection.
 
 `xlang_lookback_leg`, `xlang_tier_native_check`, `xlang_tier_gold_check`
 (regtest `--xlang-hash`).
+
+### L12
+
+`abstract_check_display_shift` (`test_abstract.c`; against each server under
+regtest `--codegen`, in-process in a bare run).
 
 ### B1 to B8
 

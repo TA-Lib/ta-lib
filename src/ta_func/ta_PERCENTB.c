@@ -77,6 +77,15 @@ TA_LIB_API int TA_PERCENTB_Lookback( int optInTimePeriod, double optInNbDevUp, d
    return TA_BBANDS_Lookback(optInTimePeriod,optInNbDevUp,optInNbDevDn,optInMAType);
 }
 
+TA_LIB_API int TA_PERCENTB_DisplayShift( int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, TA_MAType optInMAType, int outputIdx )
+{
+   if( TA_PERCENTB_Lookback( optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType ) < 0 )
+      return INT_MIN;
+   if( outputIdx < 0 || outputIdx >= 1 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_PERCENTB( int    startIdx,
                                    int    endIdx,

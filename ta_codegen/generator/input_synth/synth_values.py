@@ -63,6 +63,8 @@ CLOSE = [11.5, 11.55, 22.0, 5.05, 95.0, 51.0, 29.2, 8.8, 63.0, 40.2, 26.5, 71.5,
 
 PERIOD = 4   # optInTimePeriod for the fixtures that take one
 
+INT_MIN = -2**31   # what a rejected display-shift query answers on the wire
+
 # --------------------------------------------------------------------------- #
 # The golden table.
 #
@@ -248,6 +250,20 @@ GOLDEN = {
         params={"inReal": IN_REAL}, beg=0,
         outs={"outReal": [-0.0, -0.0, 0.0, -0.0, -0.0, -0.0, 0.0, -0.0,
                           -0.0, -0.0, -0.0, -0.0, -0.0, -0.0, -0.0, -0.0]}),
+
+    # `shifts` is the display shift per output index, asked at each listed
+    # period; None is a rejected query (a period or an index out of range).
+    "TA_SYNTH24": dict(
+        params={"inReal": IN_REAL, "optInTimePeriod": PERIOD}, beg=0,
+        outs={"outOwnBar": IN_REAL,
+              "outAhead": [200.0, 501.0, -60.0, 4000000.0, 0.0, 100.5, -0.002, 11.0,
+                           600.0, 1400.0, 24.0, 176.0, 3000.0, 90.0, 1999.8, 440.0],
+              "outBehind": [400.0, 1002.0, -120.0, 8000000.0, 0.0, 201.0, -0.004, 22.0,
+                            1200.0, 2800.0, 48.0, 352.0, 6000.0, 180.0, 3999.6, 880.0]},
+        shifts={4: [None, 0, 4, -3, None],
+                7: [None, 0, 7, -4, None],
+                100000: [None, 0, 100000, -50001, None],
+                0: [None, None, None, None, None]}),
 }
 
 
@@ -470,6 +486,18 @@ def main():
                             break
                     if bad:
                         break
+                # Indices -1 .. nbOutput: the two ends name no output.
+                for period, want in g.get("shifts", {}).items():
+                    for idx, w in zip(range(-1, len(names) + 1), want):
+                        compared += 1
+                        got = srv.call("abstract_get_display_shift",
+                                       {"funcName": method[3:], "optInTimePeriod": period,
+                                        "outputIdx": idx}).get("displayShift")
+                        if got != (INT_MIN if w is None else w):
+                            print(f"  [{FAIL}] {lang} {method}: display shift of output "
+                                  f"{idx} at period {period} got {got!r} expected {w!r}")
+                            fails += 1
+                            bad = True
                 if not bad:
                     print(f"  [{OK}] {lang} {method}")
         finally:
@@ -479,7 +507,9 @@ def main():
     # silently stopped comparing cannot leave this looking the same. That the
     # table covers every fixture is a separate check, above — this one can only
     # speak for what the table lists.
-    want_elems = sum(len(v) for g in GOLDEN.values() for v in g["outs"].values()) * len(servers)
+    want_elems = sum(len(v) for g in GOLDEN.values()
+                     for v in list(g["outs"].values()) + list(g.get("shifts", {}).values())
+                     ) * len(servers)
     print(f"\nsynth_values: compared {compared} element(s) across {len(fixtures)} "
           f"fixture(s) x {len(servers)} server(s)")
     if compared != want_elems and fails == 0:

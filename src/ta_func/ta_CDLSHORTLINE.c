@@ -63,6 +63,13 @@ TA_LIB_API int TA_CDLSHORTLINE_Lookback( void )
    return max(BodyShort_avgPeriod,ShadowShort_avgPeriod);
 }
 
+TA_LIB_API int TA_CDLSHORTLINE_DisplayShift( int outputIdx )
+{
+   if( outputIdx < 0 || outputIdx >= 1 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_LIB_API TA_RetCode TA_CDLSHORTLINE( int    startIdx,
                                        int    endIdx,
                                        const double inOpen[],

@@ -73,6 +73,15 @@ TA_LIB_API int TA_VIDYA_Lookback( int optInTimePeriod, int optInCMOPeriod )
    return optInCMOPeriod + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_VIDYA,Vidya);
 }
 
+TA_LIB_API int TA_VIDYA_DisplayShift( int optInTimePeriod, int optInCMOPeriod, int outputIdx )
+{
+   if( TA_VIDYA_Lookback( optInTimePeriod, optInCMOPeriod ) < 0 )
+      return INT_MIN;
+   if( outputIdx < 0 || outputIdx >= 1 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_VIDYA( int    startIdx,
                                 int    endIdx,

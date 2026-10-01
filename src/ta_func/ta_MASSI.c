@@ -73,6 +73,15 @@ TA_LIB_API int TA_MASSI_Lookback( int optInFastPeriod, int optInSlowPeriod )
    return TA_EMA_Lookback(optInFastPeriod) * 2 + (optInSlowPeriod - 1);
 }
 
+TA_LIB_API int TA_MASSI_DisplayShift( int optInFastPeriod, int optInSlowPeriod, int outputIdx )
+{
+   if( TA_MASSI_Lookback( optInFastPeriod, optInSlowPeriod ) < 0 )
+      return INT_MIN;
+   if( outputIdx < 0 || outputIdx >= 1 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_MASSI( int    startIdx,
                                 int    endIdx,

@@ -1,11 +1,11 @@
 ---
 title: Lookback
-description: "How the lookback is defined and queried, how the unstable period, candle averaging and a period of 1 enter it, and how to tell from metadata whether the start of the series matters."
+description: "How the lookback is defined and queried, the display shift a chart applies to an output, how the unstable period, candle averaging and a period of 1 enter the lookback, and how to tell from metadata whether the start of the series matters."
 ---
 
 *Part of TA-Lib's exhaustive [specifications](/spec/), intended for precise AI-agent-driven integration with TA-Lib, to minimize errors.*
 
-The lookback is how many input bars a function consumes before its first output, set by the optional parameters and the settings in effect, never by the input values. This page owns the lookback call, how the unstable period, candle averaging and a period of 1 enter it, and how to tell whether a value depends on where the series starts.
+The lookback is how many input bars a function consumes before its first output, set by the optional parameters and the settings in effect, never by the input values. This page owns the lookback call, the display-shift call, how the unstable period, candle averaging and a period of 1 enter it, and how to tell whether a value depends on where the series starts.
 
 ## Definition {#definition}
 
@@ -27,6 +27,18 @@ Every function has a lookback call. It takes exactly the batch call's optional p
 <a id="l6"></a>**L6** A lookback depends only on the optional parameters and on the settings in effect at the call: the unstable periods ([L7](/spec/lookback/#l7)) and the candle averaging periods ([L8](/spec/lookback/#l8)). C reads them from the process globals ([T2](/spec/settings-threads/#t2)); Rust, Java and C# from the `Core` the call is made on ([T3](/spec/settings-threads/#t3)). It never depends on an input value.
 
 **Current behaviour**: a lookback other than the rejection signal is in `[0, INT_MAX]`, settings at `TA_INDEX_MAX` included. One above `TA_INDEX_MAX` leaves no call able to produce a value.
+
+## Display shift {#display-shift}
+
+Every function has a display-shift call. It takes the lookback call's parameters followed by the index of one output, counted from 0 over every output in the batch call's output order. Its name and return type in each language: [names](/spec/#names). The abstraction layer's holder answers the same query ([abstraction layer](/spec/#abstraction)); in C that call returns `TA_SUCCESS` and carries a rejection in the value, as `TA_GetLookback` does.
+
+| Rule | Statement |
+|---|---|
+| <a id="l10"></a>**L10** | A display shift of `s` means a chart draws the value computed at bar `i` at bar `i + s`. It describes drawing only: every output value is written at the bar that computed it, and no value, lookback, `outBegIdx` or `outNBElement` depends on it. It depends only on the optional parameters and the output index, never on a setting or an input value. |
+| <a id="l11"></a>**L11** | An output without `TA_OUT_DISPLAY_SHIFT` (Rust `OutputFlags::DISPLAY_SHIFT`, Java `OutputFlags.DISPLAY_SHIFT`, C# `OutputFlags.DisplayShift`) has a display shift of 0; a flagged output can report 0 for some parameters. A function carries `TA_FUNC_FLG_DISPLAY_SHIFT` (Rust `FuncFlags::DISPLAY_SHIFT`, Java `FuncFlags.DISPLAY_SHIFT`, C# `FuncFlags.DisplayShift`) exactly when at least one of its outputs carries the output flag. |
+| <a id="l12"></a>**L12** | The call returns its rejection signal ([per language](/spec/#failures)) exactly when the lookback call rejects the same parameters ([L1](/spec/lookback/#l1)) or the index names no output. Rust, Java and C# reach the same decision as C and, wherever both accept, return the same shift. Nothing else in this tier fails. |
+
+**[Current behaviour](/spec/#reading)**: Java's display-shift calls throw `NullPointerException` for a null MA type wherever the lookback call does ([L4](/spec/lookback/#l4)).
 
 ## Unstable period {#unstable-period}
 

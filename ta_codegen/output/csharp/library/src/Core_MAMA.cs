@@ -110,6 +110,30 @@ public partial class Core
       return 32 + this._unstablePeriod[(int)FuncUnstId.MAMA] ;
 
    }
+   /// <summary>
+   /// How many bars ahead (positive) or behind (negative) of the bar that
+   /// computed it a chart draws one output of <c>Mama</c>.
+   /// </summary>
+   /// <remarks>
+   /// Every output of this function is drawn at its own bar, so the answer is 0.
+   /// </remarks>
+   /// <param name="optInFastLimit">Upper bound on the adaptive smoothing factor (default 0.5; range
+   /// 0.01..0.99; <see cref="Core.RealDefault"/> selects the default).</param>
+   /// <param name="optInSlowLimit">Lower bound on the adaptive smoothing factor (default 0.05; range
+   /// 0.01..0.99; <see cref="Core.RealDefault"/> selects the default).</param>
+   /// <param name="outputIdx">Position of the output in the batch signature, from 0.</param>
+   /// <returns>The display shift, or <c>int.MinValue</c> if a parameter is out of range
+   /// or the index names no output.</returns>
+   public int MamaDisplayShift( double optInFastLimit, double optInSlowLimit, int outputIdx )
+   {
+      if( MamaLookback( optInFastLimit, optInSlowLimit ) < 0 ) {
+         return int.MinValue;
+      }
+      if( outputIdx < 0 || outputIdx >= 2 ) {
+         return int.MinValue;
+      }
+      return 0;
+   }
    internal RetCode MamaImpl( int startIdx,
                               int endIdx,
                               ReadOnlySpan<double> inReal,

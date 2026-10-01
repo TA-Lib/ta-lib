@@ -61,6 +61,37 @@
       return retValue ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#stochrsi}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod RSI period (default 14; range 2..100000;
+    *        {@code Integer.MIN_VALUE} selects the default).
+    * @param optInFastK_Period Lookback window for the RSI min/max stochastic
+    *        (default 5; range 1..100000; {@code Integer.MIN_VALUE} selects the
+    *        default).
+    * @param optInFastD_Period Smoothing period for %D (default 3; range
+    *        1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInFastD_MAType MA type used to smooth %D (default 0 = SMA;
+    *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+    *        {@code MAType.DEFAULT} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int stochrsiDisplayShift( int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, int outputIdx )
+   {
+      if( stochrsiLookback( optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 2 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode stochrsiImpl( int startIdx,
                          int endIdx,
                          double inReal[],

@@ -244,6 +244,13 @@ typedef int TA_FuncFlags;
                                           * carrying this flag and holds it to the
                                           * copy on every API tier.
                                           */
+#define TA_FUNC_FLG_DISPLAY_SHIFT 0x00000002
+                                         /* At least one output carries
+                                          * TA_OUT_DISPLAY_SHIFT: a chart draws it
+                                          * ahead of or behind the bar that
+                                          * computed it. Without this flag every
+                                          * output's display shift is 0. e.g. DPO.
+                                          */
 
 typedef struct TA_FuncInfo
 {
@@ -432,6 +439,10 @@ typedef int TA_OutputFlags;
 #define TA_OUT_NULLABLE          0x00002000 /* The output pointer may be NULL: the caller can discard
                                              * this output (it is computed but not written). E.g. MAMA's
                                              * FAMA line when only the MAMA line is wanted. */
+#define TA_OUT_DISPLAY_SHIFT     0x00004000 /* A chart draws this output ahead of or behind the bar
+                                             * that computed it, by the number of bars
+                                             * TA_GetDisplayShift reports. The values themselves are
+                                             * never shifted. */
 
 
 /* The following 3 structures will exist for each input, optional
@@ -593,6 +604,18 @@ TA_LIB_API TA_RetCode TA_SetOutputParamRealPtr( TA_ParamHolder *params,
  */
 TA_LIB_API TA_RetCode TA_GetLookback( const TA_ParamHolder *params,
                                       TA_Integer *lookback );
+
+/* Where a chart draws one output: the value computed at bar i is drawn at
+ * bar i + displayShift. The values themselves are never shifted.
+ *
+ * outputIdx is zero for the first output. As with TA_GetLookback, a
+ * rejection is reported in the value, not the return code: displayShift is
+ * INT_MIN for parameters the lookback rejects and for an outputIdx that
+ * names no output.
+ */
+TA_LIB_API TA_RetCode TA_GetDisplayShift( const TA_ParamHolder *params,
+                                          unsigned int outputIdx,
+                                          TA_Integer *displayShift );
 
 /* Finally, call the TA function with the parameters.
  *

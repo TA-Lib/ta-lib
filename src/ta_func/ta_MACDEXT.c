@@ -98,6 +98,15 @@ TA_LIB_API int TA_MACDEXT_Lookback( int optInFastPeriod, TA_MAType optInFastMATy
    return lookbackLargest + TA_MA_Lookback(optInSignalPeriod,optInSignalMAType);
 }
 
+TA_LIB_API int TA_MACDEXT_DisplayShift( int optInFastPeriod, TA_MAType optInFastMAType, int optInSlowPeriod, TA_MAType optInSlowMAType, int optInSignalPeriod, TA_MAType optInSignalMAType, int outputIdx )
+{
+   if( TA_MACDEXT_Lookback( optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType ) < 0 )
+      return INT_MIN;
+   if( outputIdx < 0 || outputIdx >= 3 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_LIB_API TA_RetCode TA_MACDEXT( int    startIdx,
                                   int    endIdx,
                                   const double inReal[],

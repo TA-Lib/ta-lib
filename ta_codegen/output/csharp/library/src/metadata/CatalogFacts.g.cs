@@ -52,10 +52,10 @@ namespace TALib.Metadata;
 internal static class CatalogFacts
 {
     internal const int FunctionCount = 223;
-    internal const uint AllFunctionFlags = 0x7B000001U;
+    internal const uint AllFunctionFlags = 0x7B000003U;
     internal const uint AllPriceComponents = 0x0000001FU;
     internal const uint AllOptInputFlags = 0x00100000U;
-    internal const uint AllOutputFlags = 0x00003815U;
+    internal const uint AllOutputFlags = 0x00007815U;
 
     /* Flag members no shipped function sets. Pinned rather than deleted:
       these are the C vocabulary, and the day a definition starts using

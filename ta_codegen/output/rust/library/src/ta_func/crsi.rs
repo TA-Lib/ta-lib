@@ -103,6 +103,33 @@ impl Core {
         retValue = (retValue).max(self.percentrank_lookback(optInRankPeriod)? + self.rocp_lookback(1)?);
         return Ok(retValue);
     }
+    /// Display shift of one output of [`Core::crsi`]: how many bars ahead (positive) or behind
+    /// (negative) of the bar that computed it a chart draws that output. The values are never
+    /// shifted.
+    ///
+    /// Every output of this function is drawn at its own bar, so the answer is 0.
+    ///
+    /// # Arguments
+    ///
+    /// * `optInTimePeriod` — Period of the RSI of the closes (default 3, range 2..=100000)
+    /// * `optInStreakPeriod` — Period of the RSI of the up/down streak (default 2, range
+    ///   2..=100000)
+    /// * `optInRankPeriod` — Number of earlier one-bar returns each return is ranked against
+    ///   (default 100, range 2..=10000)
+    /// * `outputIdx` — Position of the output in the batch signature, from 0
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
+    /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
+    #[doc(alias = "TA_CRSI_DisplayShift")]
+    pub fn crsi_display_shift(&self, mut optInTimePeriod: i32, mut optInStreakPeriod: i32, mut optInRankPeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+        self.crsi_lookback(optInTimePeriod, optInStreakPeriod, optInRankPeriod)?;
+        if outputIdx >= 1 {
+            return Err(RetCode::BadParam);
+        }
+        return Ok(0);
+    }
     /// C-shaped body behind [`Core::crsi`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.

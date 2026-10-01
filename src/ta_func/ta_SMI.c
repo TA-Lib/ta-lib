@@ -86,6 +86,15 @@ TA_LIB_API int TA_SMI_Lookback( int optInTimePeriod, int optInFastPeriod, int op
    return optInTimePeriod - 1 + TA_EMA_Lookback(optInSlowPeriod) + TA_EMA_Lookback(optInFastPeriod) + TA_EMA_Lookback(optInSignalPeriod);
 }
 
+TA_LIB_API int TA_SMI_DisplayShift( int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, int outputIdx )
+{
+   if( TA_SMI_Lookback( optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod ) < 0 )
+      return INT_MIN;
+   if( outputIdx < 0 || outputIdx >= 2 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_SMI( int    startIdx,
                               int    endIdx,

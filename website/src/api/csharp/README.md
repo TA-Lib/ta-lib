@@ -17,7 +17,8 @@ The C# API is not yet released. Estimated release: **Q1 2027**.
 <blockquote>
 <p><a href="#direct_call">3.1 Batch Processing</a><br>
 <a href="#output_size">3.2 Output Size and Lookback</a><br>
-<a href="#retcode">3.3 Errors</a><br></p>
+<a href="#display_shift">3.3 Display Shift</a><br>
+<a href="#retcode">3.4 Errors</a><br></p>
 </blockquote>
 
 <p><a href="#advanced">4.0 Advanced Features</a></p>
@@ -133,7 +134,17 @@ int lookback = core.SmaLookback(30);   // 29
 
 Output is written only where the indicator is defined: `outReal[0]` corresponds to input bar `r.BegIdx`, and nothing outside `0 .. r.Count - 1` is touched. The library never pads with `NaN`. A range that ends before the lookback is a **success with no values** (`r.Count == 0`), not an error.
 
-### 3.3 Errors {#retcode}
+### 3.3 Display Shift {#display_shift}
+
+A few indicators are conventionally drawn at another bar than the one that computes them. The values are never moved: the matching `<Name>DisplayShift` method gives the number of bars to shift one output when charting it, positive ahead and negative behind. It is 0 for almost every function.
+
+```csharp
+int shift = core.DpoDisplayShift(20, 0);   // period 20, first output: -11
+```
+
+The same answer comes from the [abstraction layer](/api/abstract/). The rules are in the [specification](/spec/lookback/#display-shift).
+
+### 3.4 Errors {#retcode}
 
 The public methods throw rather than return a status code:
 
@@ -159,32 +170,9 @@ A batch call may allocate managed scratch, sized by a period (MFI, ULTOSC) or, f
 
 ### 4.1 Abstraction Layer {#abstract}
 
-`TALib.Metadata.FunctionCatalog` describes every function at run time and calls it without naming it at compile time — the C# equivalent of C's [abstraction layer](/api/#abstract). It exists because a span cannot be boxed: the API cannot be invoked through `MethodInfo.Invoke`, so calling a function chosen at run time needs a typed path instead of reflection — which is also faster.
+`TALib.Metadata.FunctionCatalog` describes every function at run time and calls it without naming it at compile time. A span cannot be boxed, so the API cannot be invoked through `MethodInfo.Invoke`: calling a function chosen at run time needs this typed path instead of reflection. See the [Abstraction Layer](/api/abstract/) page.
 
-```csharp
-using TALib;
-using TALib.Metadata;
-
-foreach (var f in Core.Functions.Where(f => f.Flags.HasFlag(FuncFlags.Candlestick)))
-{
-    Console.WriteLine($"{f.Name}: {f.Hint}");
-}
-```
-
-`Core.Functions` (an alias for `FunctionCatalog.Default`) implements `IReadOnlyList<FuncInfo>`, so it is directly enumerable and LINQ-able, and is indexable by position or by name (`Core.Functions["SMA"]`). The name is matched with `StringComparer.OrdinalIgnoreCase`, so `"SMA"`, `"sma"` and `"Sma"` all resolve to the same function; `FuncInfo.Name` stays the canonical `"SMA"`. Streamable functions carry `FuncFlags.Stream`.
-
-Binding arguments at run time goes through a `ParamHolder`, obtained from `FuncInfo.CreateCall()`:
-
-```csharp
-var f = Core.Functions["SMA"];
-var range = f.CreateCall()
-    .SetInput(0, close)
-    .SetOptInput(0, 30)
-    .SetOutput(0, outReal)
-    .Call(0, close.Length - 1);
-```
-
-An index out of range, a type that does not match the declared parameter, or an unbound input or output at call time throws `ArgumentException`. Optional parameters left unbound take their documented defaults. A `ParamHolder` is not thread-safe: confine one to one thread, or build one per call. The `FunctionCatalog` it comes from is immutable and shared freely.
+`Core.Functions` implements `IReadOnlyList<FuncInfo>`, so it is enumerable, LINQ-able, and indexable by position or by name. A misused holder (an index out of range, a mismatched type, an unbound input or output at call time) throws `ArgumentException`.
 
 ### 4.2 Numerical Stability {#numerical_stability}
 

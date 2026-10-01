@@ -96,6 +96,32 @@ impl Core {
         // taken over the periods exactly as the caller gave them.
         return Ok(self.sma_lookback((optInFastPeriod).max(optInSlowPeriod))?);
     }
+    /// Display shift of one output of [`Core::ao`]: how many bars ahead (positive) or behind
+    /// (negative) of the bar that computed it a chart draws that output. The values are never
+    /// shifted.
+    ///
+    /// Every output of this function is drawn at its own bar, so the answer is 0.
+    ///
+    /// # Arguments
+    ///
+    /// * `optInFastPeriod` — Number of bars in the short moving average. (default 5, range
+    ///   2..=100000)
+    /// * `optInSlowPeriod` — Number of bars in the long moving average. (default 34, range
+    ///   2..=100000)
+    /// * `outputIdx` — Position of the output in the batch signature, from 0
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
+    /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
+    #[doc(alias = "TA_AO_DisplayShift")]
+    pub fn ao_display_shift(&self, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+        self.ao_lookback(optInFastPeriod, optInSlowPeriod)?;
+        if outputIdx >= 1 {
+            return Err(RetCode::BadParam);
+        }
+        return Ok(0);
+    }
     /// C-shaped body behind [`Core::ao`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.

@@ -133,6 +133,40 @@ impl Core {
         retValue += self.ma_lookback(optInSlowD_Period, optInSlowD_MAType)?;
         return Ok(retValue);
     }
+    /// Display shift of one output of [`Core::stoch`]: how many bars ahead (positive) or behind
+    /// (negative) of the bar that computed it a chart draws that output. The values are never
+    /// shifted.
+    ///
+    /// Every output of this function is drawn at its own bar, so the answer is 0.
+    ///
+    /// # Arguments
+    ///
+    /// * `optInFastK_Period` — Lookback window for the raw %K high-low range (default 5, range
+    ///   1..=100000)
+    /// * `optInSlowK_Period` — Smoothing period turning FastK into SlowK (default 3, range
+    ///   1..=100000)
+    /// * `optInSlowK_MAType` — MA type used to smooth into SlowK (default 0 = SMA, values: 0=SMA,
+    ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
+    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, `MAType::DEFAULT` selects the default)
+    /// * `optInSlowD_Period` — Smoothing period for the SlowD signal line (default 3, range
+    ///   1..=100000)
+    /// * `optInSlowD_MAType` — MA type used for the SlowD line (default 0 = SMA, values: 0=SMA,
+    ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
+    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, `MAType::DEFAULT` selects the default)
+    /// * `outputIdx` — Position of the output in the batch signature, from 0
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
+    /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
+    #[doc(alias = "TA_STOCH_DisplayShift")]
+    pub fn stoch_display_shift(&self, mut optInFastK_Period: i32, mut optInSlowK_Period: i32, mut optInSlowK_MAType: MAType, mut optInSlowD_Period: i32, mut optInSlowD_MAType: MAType, outputIdx: usize) -> Result<i32, RetCode> {
+        self.stoch_lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType)?;
+        if outputIdx >= 2 {
+            return Err(RetCode::BadParam);
+        }
+        return Ok(0);
+    }
     /// C-shaped body behind [`Core::stoch`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.

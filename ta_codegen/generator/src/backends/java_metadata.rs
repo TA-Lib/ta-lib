@@ -418,6 +418,12 @@ fn func_flags_class() -> String {
                 "A period of 1 performs no smoothing: the lookback is 0 and the output is a \
                  bit-exact copy of the input.",
             ),
+            (
+                "DISPLAY_SHIFT",
+                0x0000_0002,
+                "At least one output carries {@code OutputFlags.DISPLAY_SHIFT}; without it every \
+                 output's display shift is 0.",
+            ),
         ],
     )
 }
@@ -475,6 +481,12 @@ fn output_flags_class() -> String {
                 "NULLABLE",
                 0x0000_2000,
                 "Discardable: C accepts NULL for it. Java still requires an array.",
+            ),
+            (
+                "DISPLAY_SHIFT",
+                0x0000_4000,
+                "A chart draws it ahead of or behind the bar that computed it, by the bars \
+                 {@code ParamHolder.displayShift} reports. The values are never shifted.",
             ),
         ],
     )
@@ -887,8 +899,8 @@ import io.github.talib.OutRange;
  * }</pre>
  *
  * <p>Everything is validated against the {@link FuncInfo} row: an index out
- * of bounds, a type that does not match the declared parameter, or an unset
- * parameter at {@link #call} time throws {@link IllegalArgumentException}. The
+ * of bounds, a type that does not match the declared parameter, or an unbound
+ * input or output at {@link #call} time throws {@link IllegalArgumentException}. The
  * call itself then behaves exactly like the typed method — including throwing
  * on misuse and returning an empty {@link OutRange} when the range is shorter
  * than the lookback.
@@ -1100,6 +1112,23 @@ public final class ParamHolder {
    }
 
    /**
+    * How many bars ahead (positive) or behind (negative) of the bar that computed
+    * it a chart draws one output, for the optional parameters bound so far.
+    *
+    * <p>The counterpart of C's {@code TA_GetDisplayShift}. It is 0 for an output
+    * without {@link OutputFlags#DISPLAY_SHIFT}, and describes the drawing only:
+    * the values are never shifted.
+    *
+    * @param outputIdx position of the output in the function's signature, from 0
+    * @return the display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *         out of range or the index names no output
+    */
+   public int displayShift(int outputIdx) {
+      resolveUnsetOptInputs();
+      return Dispatch.displayShift(this, outputIdx);
+   }
+
+   /**
     * Calls the function over {@code [startIdx, endIdx]}.
     *
     * <p>Unbound parameters that carry a documented default are filled in with it;
@@ -1183,6 +1212,19 @@ public final class ParamHolder {
 "#,
     );
     s
+}
+
+/// Each optional parameter read back out of the holder, in call order.
+fn opt_holder_args(f: &FuncRow) -> Vec<String> {
+    f.opt_inputs
+        .iter()
+        .enumerate()
+        .map(|(k, opt)| match &opt.domain {
+            OptDomain::RealRange { .. } | OptDomain::RealList { .. } => format!("h.realOpt({k})"),
+            OptDomain::IntegerList { .. } => format!("h.maTypeOpt({k})"),
+            OptDomain::IntegerRange { .. } => format!("h.intOpt({k})"),
+        })
+        .collect()
 }
 
 /// The generated `switch` from a function name onto its typed public wrapper.
@@ -1273,18 +1315,29 @@ final class Dispatch {
 
     for f in rows {
         let camel = super::common::camel_words(&f.name);
-        let mut args: Vec<String> = Vec::new();
-        for (k, opt) in f.opt_inputs.iter().enumerate() {
-            match &opt.domain {
-                OptDomain::RealRange { .. } | OptDomain::RealList { .. } => {
-                    args.push(format!("h.realOpt({k})"));
-                }
-                OptDomain::IntegerList { .. } => args.push(format!("h.maTypeOpt({k})")),
-                OptDomain::IntegerRange { .. } => args.push(format!("h.intOpt({k})")),
-            }
-        }
+        let args = opt_holder_args(f);
         let _ = writeln!(s, "         case {}:", js(&f.name));
         let _ = writeln!(s, "            return core.{camel}Lookback({});", args.join(", "));
+    }
+
+    s.push_str(
+        r#"         default:
+            throw new IllegalArgumentException("no such function: " + h.info().name());
+      }
+   }
+
+   static int displayShift(ParamHolder h, int outputIdx) {
+      Core core = h.core();
+      switch (h.info().name()) {
+"#,
+    );
+
+    for f in rows {
+        let camel = super::common::camel_words(&f.name);
+        let mut args = opt_holder_args(f);
+        args.push("outputIdx".into());
+        let _ = writeln!(s, "         case {}:", js(&f.name));
+        let _ = writeln!(s, "            return core.{camel}DisplayShift({});", args.join(", "));
     }
 
     s.push_str(

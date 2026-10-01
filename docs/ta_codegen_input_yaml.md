@@ -157,6 +157,7 @@ Each backend renders enums appropriately:
 | `path_dependent` | Absolute output depends on `startIdx` and never converges across ranges (a running accumulation seeded at the first bar, or a path-dependent state machine); the same bar computed from a different `startIdx` can differ | `TA_FUNC_FLG_PATH_DEP` |
 | `nan_inf_output` | Some inputs of ordinary magnitude have no finite result, so a successful call can write NaN or ±Inf | `TA_FUNC_FLG_NAN_INF_OUT` |
 | `period1_identity` | A period of 1 performs no smoothing: the lookback is 0 and every output value is a bit-exact copy of its input value | `TA_FUNC_FLG_PERIOD1_IDENTITY` |
+| `display_shift` | **Derived, never written.** Set when an output carries the `display_shift` output flag | `TA_FUNC_FLG_DISPLAY_SHIFT` |
 
 ```yaml
 flags: [overlap, unstable_period]
@@ -269,6 +270,12 @@ server still passes, 0 against 0.
 | `zero` | Output can be zero | `TA_OUT_ZERO` |
 | `upper_limit` | Values are upper bounds (e.g., upper Bollinger Band) | `TA_OUT_UPPER_LIMIT` |
 | `lower_limit` | Values are lower bounds (e.g., lower Bollinger Band) | `TA_OUT_LOWER_LIMIT` |
+
+**Chart placement**:
+
+| Flag | Description | C equivalent |
+|------|-------------|--------------|
+| `display_shift` | A chart draws the output ahead of or behind the bar that computed it. The number of bars comes from the `<name>_display_shift` the `.c` must then define (see `docs/ta_codegen_input_code.md`); the values are never shifted | `TA_OUT_DISPLAY_SHIFT` |
 
 Multiple flags combine in a list:
 

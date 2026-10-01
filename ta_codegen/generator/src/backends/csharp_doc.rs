@@ -225,6 +225,40 @@ pub fn lookback_docs(func: &FuncDef, cs_name: &str, enums: &HashMap<String, Enum
     b.render()
 }
 
+#[allow(clippy::implicit_hasher)]
+pub fn display_shift_docs(func: &FuncDef, cs_name: &str, enums: &HashMap<String, EnumDef>) -> String {
+    let empty = DocDef::default();
+    let doc = func.doc.as_ref().unwrap_or(&empty);
+    let mut b = Block::new();
+
+    b.open("summary");
+    b.text(&format!(
+        "How many bars ahead (positive) or behind (negative) of the bar that computed it a \
+         chart draws one output of <c>{cs_name}</c>."
+    ));
+    b.close("summary");
+    b.open("remarks");
+    b.text(if func.has_display_shift() {
+        "The values are never shifted: this describes the drawing only."
+    } else {
+        "Every output of this function is drawn at its own bar, so the answer is 0."
+    });
+    b.close("remarks");
+    for opt in &func.optional_inputs {
+        b.param(&opt.name, &param_doc(opt, doc, enums));
+    }
+    b.param(
+        crate::ir::DISPLAY_SHIFT_INDEX_PARAM,
+        "Position of the output in the batch signature, from 0.",
+    );
+    b.tag(
+        "returns",
+        "The display shift, or <c>int.MinValue</c> if a parameter is out of range or the \
+         index names no output.",
+    );
+    b.render()
+}
+
 // ---------------------------------------------------------------------------
 // Pieces
 // ---------------------------------------------------------------------------

@@ -133,6 +133,15 @@ TA_LIB_API int TA_MA_Lookback( int optInTimePeriod, TA_MAType optInMAType )
    return retValue;
 }
 
+TA_LIB_API int TA_MA_DisplayShift( int optInTimePeriod, TA_MAType optInMAType, int outputIdx )
+{
+   if( TA_MA_Lookback( optInTimePeriod, optInMAType ) < 0 )
+      return INT_MIN;
+   if( outputIdx < 0 || outputIdx >= 1 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_LIB_API TA_RetCode TA_MA( int    startIdx,
                              int    endIdx,
                              const double inReal[],

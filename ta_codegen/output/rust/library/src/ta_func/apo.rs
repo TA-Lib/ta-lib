@@ -109,6 +109,33 @@ impl Core {
         // The slow MA is the key factor determining the lookback period.
         return Ok(self.ma_lookback((optInSlowPeriod).max(optInFastPeriod), optInMAType)?);
     }
+    /// Display shift of one output of [`Core::apo`]: how many bars ahead (positive) or behind
+    /// (negative) of the bar that computed it a chart draws that output. The values are never
+    /// shifted.
+    ///
+    /// Every output of this function is drawn at its own bar, so the answer is 0.
+    ///
+    /// # Arguments
+    ///
+    /// * `optInFastPeriod` — Period of the fast moving average (default 12, range 2..=100000)
+    /// * `optInSlowPeriod` — Period of the slow moving average (default 26, range 2..=100000)
+    /// * `optInMAType` — Moving-average type used for both MAs (default 1 = EMA, values: 0=SMA,
+    ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
+    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, `MAType::DEFAULT` selects the default)
+    /// * `outputIdx` — Position of the output in the batch signature, from 0
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
+    /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
+    #[doc(alias = "TA_APO_DisplayShift")]
+    pub fn apo_display_shift(&self, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInMAType: MAType, outputIdx: usize) -> Result<i32, RetCode> {
+        self.apo_lookback(optInFastPeriod, optInSlowPeriod, optInMAType)?;
+        if outputIdx >= 1 {
+            return Err(RetCode::BadParam);
+        }
+        return Ok(0);
+    }
     /// C-shaped body behind [`Core::apo`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.

@@ -56,6 +56,36 @@
       return bbandsLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType) ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#percentb}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Periods for the MA and standard deviation (default
+    *        20; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInNbDevUp Standard-deviation multiplier for the upper band
+    *        (default 2; {@link Core#REAL_DEFAULT} selects the default).
+    * @param optInNbDevDn Standard-deviation multiplier for the lower band
+    *        (default 2; {@link Core#REAL_DEFAULT} selects the default).
+    * @param optInMAType Moving-average type for the middle band (default 0 =
+    *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+    *        {@code MAType.DEFAULT} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int percentbDisplayShift( int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType, int outputIdx )
+   {
+      if( percentbLookback( optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode percentbImpl( int startIdx,
                          int endIdx,
                          double inReal[],

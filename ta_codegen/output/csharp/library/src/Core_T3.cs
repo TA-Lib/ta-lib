@@ -100,6 +100,31 @@ public partial class Core
       return 6 * (optInTimePeriod - 1) + this._unstablePeriod[(int)FuncUnstId.T3] ;
 
    }
+   /// <summary>
+   /// How many bars ahead (positive) or behind (negative) of the bar that
+   /// computed it a chart draws one output of <c>T3</c>.
+   /// </summary>
+   /// <remarks>
+   /// Every output of this function is drawn at its own bar, so the answer is 0.
+   /// </remarks>
+   /// <param name="optInTimePeriod">EMA period for each of the six stages (default 5; range 1..100000;
+   /// <c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInVFactor">Volume factor weighting the coefficients (0 = plain triple EMA, higher =
+   /// more DEMA-like sharpening) (default 0.7; range 0..1;
+   /// <see cref="Core.RealDefault"/> selects the default).</param>
+   /// <param name="outputIdx">Position of the output in the batch signature, from 0.</param>
+   /// <returns>The display shift, or <c>int.MinValue</c> if a parameter is out of range
+   /// or the index names no output.</returns>
+   public int T3DisplayShift( int optInTimePeriod, double optInVFactor, int outputIdx )
+   {
+      if( T3Lookback( optInTimePeriod, optInVFactor ) < 0 ) {
+         return int.MinValue;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return int.MinValue;
+      }
+      return 0;
+   }
    internal RetCode T3Impl( int startIdx,
                             int endIdx,
                             ReadOnlySpan<double> inReal,

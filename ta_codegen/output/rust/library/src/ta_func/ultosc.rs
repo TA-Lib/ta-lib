@@ -109,6 +109,31 @@ impl Core {
         maxPeriod = (((optInTimePeriod1).max(optInTimePeriod2)).max(optInTimePeriod3)) as usize;
         return Ok((self.sma_lookback((maxPeriod) as i32)? + 1) as usize);
     }
+    /// Display shift of one output of [`Core::ultosc`]: how many bars ahead (positive) or behind
+    /// (negative) of the bar that computed it a chart draws that output. The values are never
+    /// shifted.
+    ///
+    /// Every output of this function is drawn at its own bar, so the answer is 0.
+    ///
+    /// # Arguments
+    ///
+    /// * `optInTimePeriod1` — Bars for one averaging window (default 7, range 1..=100000)
+    /// * `optInTimePeriod2` — Bars for another averaging window (default 14, range 1..=100000)
+    /// * `optInTimePeriod3` — Bars for another averaging window (default 28, range 1..=100000)
+    /// * `outputIdx` — Position of the output in the batch signature, from 0
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
+    /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
+    #[doc(alias = "TA_ULTOSC_DisplayShift")]
+    pub fn ultosc_display_shift(&self, mut optInTimePeriod1: i32, mut optInTimePeriod2: i32, mut optInTimePeriod3: i32, outputIdx: usize) -> Result<i32, RetCode> {
+        self.ultosc_lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3)?;
+        if outputIdx >= 1 {
+            return Err(RetCode::BadParam);
+        }
+        return Ok(0);
+    }
     /// C-shaped body behind [`Core::ultosc`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.

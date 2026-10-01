@@ -4693,6 +4693,7 @@ public static class FunctionDescription
 		<GroupId>Momentum Indicators</GroupId>
 		<Flags>
 			<Flag>Streaming</Flag>
+			<Flag>Display Shift</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -4721,6 +4722,7 @@ public static class FunctionDescription
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Display Shift</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>

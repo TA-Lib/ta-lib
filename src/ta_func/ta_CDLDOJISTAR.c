@@ -63,6 +63,13 @@ TA_LIB_API int TA_CDLDOJISTAR_Lookback( void )
    return max(BodyDoji_avgPeriod,BodyLong_avgPeriod) + 1;
 }
 
+TA_LIB_API int TA_CDLDOJISTAR_DisplayShift( int outputIdx )
+{
+   if( outputIdx < 0 || outputIdx >= 1 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_LIB_API TA_RetCode TA_CDLDOJISTAR( int    startIdx,
                                       int    endIdx,
                                       const double inOpen[],

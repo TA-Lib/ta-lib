@@ -74,6 +74,26 @@ impl Core {
         // series is this one without the leading zero.
         return Ok((0) as usize);
     }
+    /// Display shift of one output of [`Core::wad`]: how many bars ahead (positive) or behind
+    /// (negative) of the bar that computed it a chart draws that output. The values are never
+    /// shifted.
+    ///
+    /// Every output of this function is drawn at its own bar, so the answer is 0.
+    ///
+    /// # Arguments
+    ///
+    /// * `outputIdx` — Position of the output in the batch signature, from 0
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output.
+    #[doc(alias = "TA_WAD_DisplayShift")]
+    pub fn wad_display_shift(&self, outputIdx: usize) -> Result<i32, RetCode> {
+        if outputIdx >= 1 {
+            return Err(RetCode::BadParam);
+        }
+        return Ok(0);
+    }
     /// C-shaped body behind [`Core::wad`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.

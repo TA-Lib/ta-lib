@@ -1340,6 +1340,17 @@ fn generate_c_dispatch(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> S
     s.push_str("        handle_abstract_get_lookback(json, resp, resp_size);\n");
     s.push_str("    }\n");
 
+    // Absent from a frozen release, which has no TA_GetDisplayShift to call.
+    let m = "abstract_get_display_shift";
+    s.push_str("#ifndef TA_REF_SERVE\n");
+    s.push_str(&format!(
+        "    else if ( methodLen == {n} && strncmp(method, \"{m}\", {n}) == 0 ) {{\n",
+        n = m.len()
+    ));
+    s.push_str("        handle_abstract_get_display_shift(json, resp, resp_size);\n");
+    s.push_str("    }\n");
+    s.push_str("#endif /* TA_REF_SERVE */\n");
+
     // abstract_for_each_func — enumerate functions via ta_abstract
     s.push_str("    else if ( methodLen == 22 && strncmp(method, \"abstract_for_each_func\", 22) == 0 ) {\n");
     s.push_str("        handle_abstract_for_each_func(json, resp, resp_size);\n");
@@ -1945,6 +1956,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("        else if (json.contains(\"\\\"TA_FunctionDescriptionXML\\\"\")) return handleFunctionDescriptionXML();\n");
     s.push_str("        else if (json.contains(\"\\\"abstract_call\\\"\")) return handleAbstractCall(json);\n");
     s.push_str("        else if (json.contains(\"\\\"abstract_get_lookback\\\"\")) return \"{\\\"lookback\\\":\" + computeLookback(jsonString(json, \"funcName\"), json) + \"}\";\n");
+    s.push_str("        else if (json.contains(\"\\\"abstract_get_display_shift\\\"\")) return \"{\\\"displayShift\\\":\" + computeDisplayShift(jsonString(json, \"funcName\"), json) + \"}\";\n");
 
     s.push_str("        else {\n");
     s.push_str("            return \"{\\\"error\\\":\\\"Unknown method\\\"}\";\n");
@@ -2371,6 +2383,16 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
             return absBind(f, json, null).lookback();
         } catch (RuntimeException e) {
             return -1;
+        }
+    }
+
+    static int computeDisplayShift(String funcName, String json) {
+        io.github.talib.metadata.FuncInfo f = io.github.talib.metadata.Functions.byName(funcName);
+        if (f == null) return Integer.MIN_VALUE;
+        try {
+            return absBind(f, json, null).displayShift(jsonInt(json, "outputIdx"));
+        } catch (RuntimeException e) {
+            return Integer.MIN_VALUE;
         }
     }
 
@@ -2841,6 +2863,10 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
     s.push_str("                string fn = p.GetProperty(\"funcName\").GetString()!;\n");
     s.push_str("                return $\"{{\\\"lookback\\\":{ComputeLookback(fn, p)}}}\";\n");
     s.push_str("            }\n");
+    s.push_str("            else if (method == \"abstract_get_display_shift\") {\n");
+    s.push_str("                string fn = p.GetProperty(\"funcName\").GetString()!;\n");
+    s.push_str("                return $\"{{\\\"displayShift\\\":{ComputeDisplayShift(fn, p)}}}\";\n");
+    s.push_str("            }\n");
 
     // ta_abstract introspection + dynamic dispatch, answered from the SHIPPED
     // TALib.Metadata catalogue (the csproj compiles the library sources, so the
@@ -2914,6 +2940,41 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
         s.push_str("        }\n");
     }
     s.push_str("        default: return -1;\n");
+    s.push_str("        }\n");
+    s.push_str("    }\n\n");
+
+    // ComputeDisplayShift: the same direct route, for the same reason.
+    s.push_str("    static long ComputeDisplayShift(string funcName, JsonElement p) {\n");
+    s.push_str("        switch (funcName) {\n");
+    for func in funcs {
+        let base = crate::backends::common::pascal_words(&func.name);
+        s.push_str(&format!("        case \"{}\": {{\n", func.name));
+        for opt in &func.optional_inputs {
+            match &opt.param_type {
+                ParamType::Real => s.push_str(&format!(
+                    "            double {name} = GetDouble(p, \"{name}\", 0.0);\n",
+                    name = opt.name
+                )),
+                ParamType::Enum(enum_name) => s.push_str(&format!(
+                    "            {ty} {name} = ({ty})GetInt(p, \"{name}\", (int){ty}.DEFAULT);\n",
+                    ty = enum_name,
+                    name = opt.name
+                )),
+                _ => s.push_str(&format!(
+                    "            int {name} = GetInt(p, \"{name}\", 0);\n",
+                    name = opt.name
+                )),
+            }
+        }
+        let mut args: Vec<&str> = func.optional_inputs.iter().map(|o| o.name.as_str()).collect();
+        args.push("GetInt(p, \"outputIdx\", 0)");
+        s.push_str(&format!(
+            "            return core.{base}DisplayShift({});\n",
+            args.join(", ")
+        ));
+        s.push_str("        }\n");
+    }
+    s.push_str("        default: return int.MinValue;\n");
     s.push_str("        }\n");
     s.push_str("    }\n\n");
 
@@ -4530,6 +4591,25 @@ fn abs_lookback(core: &Core, params: &Value) -> Option<i64> {
     }
     Some(h.lookback().map_or(-1i64, |v| v as i64))
 }
+
+fn abs_display_shift(core: &Core, params: &Value) -> Option<i32> {
+    let fname = params["funcName"].as_str().unwrap_or("");
+    let id = abstract_api::get_func_handle(fname)?;
+    let mut h = id.new_call(core);
+    for (k, opt) in id.info().opt_inputs.iter().enumerate() {
+        match opt.kind {
+            OptInputType::RealRange { .. } | OptInputType::RealList { .. } => {
+                if let Some(v) = params[opt.param_name].as_f64() { let _ = h.set_opt_input(k, v); }
+            }
+            _ => {
+                if let Some(v) = params[opt.param_name].as_i64() { let _ = h.set_opt_input(k, v as i32); }
+            }
+        }
+    }
+    // A negative index is inexpressible as `usize`; C answers INT_MIN for it.
+    let idx = usize::try_from(params["outputIdx"].as_i64().unwrap_or(0)).ok();
+    Some(idx.and_then(|i| h.display_shift(i).ok()).unwrap_or(i32::MIN))
+}
 "#;
 
 /// Rust server match arms for the abstract dynamic-dispatch RPCs. Mirrors C's
@@ -4568,6 +4648,13 @@ const RUST_ABSTRACT_DYNAMIC_HANDLERS: &str = r#"        "abstract_call" => {
             let fname = params["funcName"].as_str().unwrap_or("");
             match abs_lookback(core, params) {
                 Some(lb) => format!("{{\"lookback\":{}}}", lb),
+                None => format!("{{\"error\":\"Unknown function: {}\"}}", fname),
+            }
+        }
+        "abstract_get_display_shift" => {
+            let fname = params["funcName"].as_str().unwrap_or("");
+            match abs_display_shift(core, params) {
+                Some(ds) => format!("{{\"displayShift\":{}}}", ds),
                 None => format!("{{\"error\":\"Unknown function: {}\"}}", fname),
             }
         }

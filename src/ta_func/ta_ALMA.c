@@ -79,6 +79,15 @@ TA_LIB_API int TA_ALMA_Lookback( int optInTimePeriod, double optInSigma, double 
    return optInTimePeriod - 1;
 }
 
+TA_LIB_API int TA_ALMA_DisplayShift( int optInTimePeriod, double optInSigma, double optInOffset, int outputIdx )
+{
+   if( TA_ALMA_Lookback( optInTimePeriod, optInSigma, optInOffset ) < 0 )
+      return INT_MIN;
+   if( outputIdx < 0 || outputIdx >= 1 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_LIB_API TA_RetCode TA_ALMA( int    startIdx,
                                int    endIdx,
                                const double inReal[],

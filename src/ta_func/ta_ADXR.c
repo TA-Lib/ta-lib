@@ -78,6 +78,15 @@ TA_LIB_API int TA_ADXR_Lookback( int optInTimePeriod )
    }
 }
 
+TA_LIB_API int TA_ADXR_DisplayShift( int optInTimePeriod, int outputIdx )
+{
+   if( TA_ADXR_Lookback( optInTimePeriod ) < 0 )
+      return INT_MIN;
+   if( outputIdx < 0 || outputIdx >= 1 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_LIB_API TA_RetCode TA_ADXR( int    startIdx,
                                int    endIdx,
                                const double inHigh[],

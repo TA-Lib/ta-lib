@@ -10,6 +10,10 @@ pub struct FuncDef {
     pub optional_inputs: Vec<OptInput>,
     pub outputs: Vec<Output>,
     pub lookback: Option<LookbackExpr>,
+    /// Body of the input `.c`'s optional `<name>_display_shift`. `Some` exactly
+    /// when an output carries the `display_shift` flag; every backend emits the
+    /// query either way, answering 0 for `None`.
+    pub display_shift: Option<Vec<Statement>>,
     pub body: Vec<Statement>,
     /// Body for the private variant (explicit from _private function, or auto-derived from body).
     pub private_body: Vec<Statement>,
@@ -265,7 +269,25 @@ impl AltDef {
     }
 }
 
+/// The YAML key of the output flag (`TA_OUT_DISPLAY_SHIFT`) and of the function
+/// flag derived from it (`TA_FUNC_FLG_DISPLAY_SHIFT`).
+pub const DISPLAY_SHIFT_FLAG: &str = "display_shift";
+/// The trailing parameter of every display-shift query.
+pub const DISPLAY_SHIFT_INDEX_PARAM: &str = "outputIdx";
+
 impl FuncDef {
+    /// Indices of the outputs a display-shift body must not be asked about:
+    /// the unflagged ones, which answer 0 whatever the body says.
+    pub fn unshifted_outputs(&self) -> Vec<usize> {
+        (0..self.outputs.len())
+            .filter(|&i| !self.outputs[i].flags.iter().any(|f| f == DISPLAY_SHIFT_FLAG))
+            .collect()
+    }
+
+    pub fn has_display_shift(&self) -> bool {
+        self.outputs.iter().any(|o| o.flags.iter().any(|f| f == DISPLAY_SHIFT_FLAG))
+    }
+
     /// The alternate that wins one concrete `(tier, language)` cell, or `None`
     /// when the base body does.
     ///

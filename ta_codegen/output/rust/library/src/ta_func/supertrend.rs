@@ -98,6 +98,33 @@ impl Core {
         // restated here, which is what makes SUPERTREND inherit TA_FUNC_UNST_ATR.
         return Ok(self.atr_lookback(optInTimePeriod)?);
     }
+    /// Display shift of one output of [`Core::supertrend`]: how many bars ahead (positive) or
+    /// behind (negative) of the bar that computed it a chart draws that output. The values are
+    /// never shifted.
+    ///
+    /// Every output of this function is drawn at its own bar, so the answer is 0.
+    ///
+    /// # Arguments
+    ///
+    /// * `optInTimePeriod` — Smoothing period of the Average True Range (default 10, range
+    ///   2..=100000)
+    /// * `optInMultiplier` — Multiplier applied to the Average True Range to set the band width
+    ///   (default 3, minimum 0)
+    /// * `outputIdx` — Position of the output in the batch signature, from 0
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
+    /// parameters accept [`Core::INTEGER_DEFAULT`], and real parameters [`Core::REAL_DEFAULT`], to
+    /// select their default value.
+    #[doc(alias = "TA_SUPERTREND_DisplayShift")]
+    pub fn supertrend_display_shift(&self, mut optInTimePeriod: i32, mut optInMultiplier: f64, outputIdx: usize) -> Result<i32, RetCode> {
+        self.supertrend_lookback(optInTimePeriod, optInMultiplier)?;
+        if outputIdx >= 2 {
+            return Err(RetCode::BadParam);
+        }
+        return Ok(0);
+    }
     /// C-shaped body behind [`Core::supertrend`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.

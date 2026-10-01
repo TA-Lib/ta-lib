@@ -10362,6 +10362,7 @@ mod tests {
                 flags: vec![],
             }],
             lookback: None,
+            display_shift: None,
             body,
             private_body: vec![],
             private_extra_params: vec![],

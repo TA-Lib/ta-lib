@@ -70,6 +70,13 @@ TA_LIB_API int TA_HT_SINE_Lookback( void )
    return 63 + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_HT_SINE,Ht_sine);
 }
 
+TA_LIB_API int TA_HT_SINE_DisplayShift( int outputIdx )
+{
+   if( outputIdx < 0 || outputIdx >= 2 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_HT_SINE( int    startIdx,
                                   int    endIdx,

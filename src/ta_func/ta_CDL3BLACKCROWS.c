@@ -62,6 +62,13 @@ TA_LIB_API int TA_CDL3BLACKCROWS_Lookback( void )
    return ShadowVeryShort_avgPeriod + 3;
 }
 
+TA_LIB_API int TA_CDL3BLACKCROWS_DisplayShift( int outputIdx )
+{
+   if( outputIdx < 0 || outputIdx >= 1 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_LIB_API TA_RetCode TA_CDL3BLACKCROWS( int    startIdx,
                                          int    endIdx,
                                          const double inOpen[],

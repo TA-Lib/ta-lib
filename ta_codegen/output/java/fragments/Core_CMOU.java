@@ -43,6 +43,28 @@
       return optInTimePeriod ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cmou}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Number of trailing price changes summed (default
+    *        14; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cmouDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( cmouLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode cmouImpl( int startIdx,
                      int endIdx,
                      double inReal[],

@@ -69,6 +69,15 @@ TA_LIB_API int TA_EFI_Lookback( int optInTimePeriod )
    return optInTimePeriod + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_EMA,Ema);
 }
 
+TA_LIB_API int TA_EFI_DisplayShift( int optInTimePeriod, int outputIdx )
+{
+   if( TA_EFI_Lookback( optInTimePeriod ) < 0 )
+      return INT_MIN;
+   if( outputIdx < 0 || outputIdx >= 1 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_EFI( int    startIdx,
                               int    endIdx,

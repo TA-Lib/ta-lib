@@ -880,6 +880,7 @@ fn backends_render_max_min_fmax_fmin_abs() {
             flags: vec![],
         }],
         lookback: Some(LookbackExpr::Literal(0)),
+        display_shift: None,
         body: body.clone(),
         private_body: body,
         private_extra_params: vec![],
@@ -1506,6 +1507,7 @@ fn make_func_with_helper_call(
             flags: vec![],
         }],
         lookback: Some(ir::LookbackExpr::Literal(0)),
+        display_shift: None,
         body: body.clone(),
         private_body: body,
         private_extra_params: vec![],
@@ -1600,6 +1602,7 @@ fn inlining_counter_avoids_name_collisions() {
             flags: vec![],
         }],
         lookback: Some(ir::LookbackExpr::Literal(0)),
+        display_shift: None,
         body: vec![
             ir::Statement::VarDecl {
                 var_type: ir::VarType::Real,

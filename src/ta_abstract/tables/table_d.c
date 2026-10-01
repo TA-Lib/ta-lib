@@ -147,6 +147,9 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_DPO_TimePeriod =
    NULL
 };
 
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_DPO_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_DISPLAY_SHIFT };
+
 static const TA_InputParameterInfo    *TA_DPO_Inputs[]    =
 {
   &TA_DEF_UI_Input_Real,
@@ -155,7 +158,7 @@ static const TA_InputParameterInfo    *TA_DPO_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_DPO_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_DPO_Default,
   NULL
 };
 
@@ -167,7 +170,7 @@ static const TA_OptInputParameterInfo *TA_DPO_OptInputs[] =
 DEF_FUNCTION( DPO,
               TA_GroupId_MomentumIndicators,
               "Detrended Price Oscillator",
-              TA_FUNC_FLG_STREAM
+              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_DISPLAY_SHIFT
              );
 /* DPO END */
 

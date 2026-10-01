@@ -121,6 +121,19 @@ pub fn is_reserved_dir(name: &str) -> bool {
     matches!(name, "helpers" | "lib")
 }
 
+/// One source of truth: the function-level bit says "some output carries the
+/// output-level one", so it is derived and never written.
+fn derive_display_shift_flag(name: &str, outputs: &[Output], flags: &mut Vec<String>) {
+    let flag = crate::ir::DISPLAY_SHIFT_FLAG;
+    assert!(
+        !flags.iter().any(|f| f == flag),
+        "{name}: `display_shift` is an output flag; the function flag is derived from it"
+    );
+    if outputs.iter().any(|o| o.flags.iter().any(|f| f == flag)) {
+        flags.push(flag.to_string());
+    }
+}
+
 pub fn parse_yaml(path: &Path) -> FuncDef {
     let content = std::fs::read_to_string(path)
         .unwrap_or_else(|e| panic!("Failed to read {}: {}", path.display(), e));
@@ -205,7 +218,7 @@ pub fn parse_yaml(path: &Path) -> FuncDef {
         })
         .collect();
 
-    let outputs = yaml
+    let outputs: Vec<Output> = yaml
         .outputs
         .into_iter()
         .map(|p| Output {
@@ -215,7 +228,8 @@ pub fn parse_yaml(path: &Path) -> FuncDef {
         })
         .collect();
 
-    let flags = yaml.flags.into_vec();
+    let mut flags = yaml.flags.into_vec();
+    derive_display_shift_flag(&yaml.name, &outputs, &mut flags);
     // `stream` in the flags list opts the function into the generated
     // streaming API (it maps to TA_FUNC_FLG_STREAM like every other flag).
     let streaming = flags.iter().any(|f| f == "stream");
@@ -230,6 +244,7 @@ pub fn parse_yaml(path: &Path) -> FuncDef {
         optional_inputs: opt_inputs,
         outputs,
         lookback: None,
+        display_shift: None,
         body: vec![],
         private_body: vec![],
         private_extra_params: vec![],

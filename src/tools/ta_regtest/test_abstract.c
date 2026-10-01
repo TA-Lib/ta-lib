@@ -67,6 +67,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <math.h>
+#include <limits.h>
 #include "ta_test_priv.h"
 #include "test_codegen.h"
 
@@ -96,6 +97,15 @@ static long long g_d2Ordering = 0;
 /* Non-finite parameter probes; see d2_nonfinite_params. */
 static long long g_d2NonFinite = 0;
 static long long g_d2NonFiniteFuncs = 0;
+/* Display-shift queries, by what each one asserted; see
+ * abstract_check_display_shift. */
+static long long g_dsAnswered = 0;
+static long long g_dsRejected = 0;
+static long long g_dsParamRejected = 0;
+static long long g_dsBoundRejected = 0;
+static long long g_dsFlagged = 0;
+static long long g_dsNonZero = 0;
+static long long g_dsServer = 0;
 /* Self-checks, mirroring --xlang-hash's oorNotRejected / sentNotDefault. Both
  * classes assert only "C and the server agree" on their own; if C stopped
  * rejecting, or stopped substituting, the two tiers would be wrong TOGETHER and
@@ -151,6 +161,8 @@ void test_abstract_set_server(CodegenPipe *cp, const char *lang)
    g_d2Vectors = g_d2NonDefault = g_d2Sentinel = g_d2Reject = 0;
    g_d2Ordering = 0;
    g_d2NonFinite = g_d2NonFiniteFuncs = 0;
+   g_dsAnswered = g_dsRejected = g_dsParamRejected = g_dsBoundRejected = 0;
+   g_dsFlagged = g_dsNonZero = g_dsServer = 0;
    g_d2OorNotRejected = g_d2SentNotDefault = 0;
    if( cp )
    {
@@ -1495,6 +1507,191 @@ static int d2_lo_hi( const TA_OptInputParameterInfo *oi, double *lo, double *hi 
     return 1;
 }
 
+/* The display shift of every output for the parameters the holder carries now,
+ * plus the two indices that name no output (-1 and nbOutput).
+ *
+ * The lookback is the reference for WHICH parameter vectors are rejected: the
+ * two queries validate the same parameters, so one accepting what the other
+ * rejects is the defect. optVals is what the holder was set from (NULL for the
+ * declared defaults); it is what goes to the server. askServer is 0 for a
+ * holder whose values JSON cannot carry (NaN, Inf).
+ */
+static ErrorNumber abstract_check_display_shift( const char *funcName,
+                                                 const TA_FuncHandle *handle,
+                                                 const TA_FuncInfo *funcInfo,
+                                                 TA_ParamHolder *paramHolder,
+                                                 const double *optVals,
+                                                 int askServer )
+{
+    TA_Integer lookback = -1;
+    unsigned int nbFlagged = 0, k;
+    int idx, paramsRejected;
+
+    if( TA_GetLookback(paramHolder, &lookback) != TA_SUCCESS ) lookback = -1;
+    paramsRejected = lookback < 0;
+
+    for( idx = -1; idx <= (int)funcInfo->nbOutput; idx++ )
+    {
+        const TA_OutputParameterInfo *outInfo;
+        TA_Integer shift = 12345;
+        int inRange = idx >= 0 && idx < (int)funcInfo->nbOutput;
+        int flagged = 0;
+
+        if( TA_GetDisplayShift(paramHolder, (unsigned int)idx, &shift) != TA_SUCCESS )
+        {
+            printf("  Failed [%s]: TA_GetDisplayShift did not return TA_SUCCESS for output %d\n",
+                   funcName, idx);
+            return TA_ABS_TST_FAIL_DISPLAY_SHIFT;
+        }
+        if( inRange )
+        {
+            TA_GetOutputParameterInfo(handle, (unsigned int)idx, &outInfo);
+            flagged = (outInfo->flags & TA_OUT_DISPLAY_SHIFT) != 0;
+            nbFlagged += (unsigned int)flagged;
+        }
+
+        if( !inRange || paramsRejected )
+        {
+            if( shift != INT_MIN )
+            {
+                printf("  Failed [%s]: display shift of output %d is %d, expected INT_MIN "
+                       "(%s)\n", funcName, idx, (int)shift,
+                       inRange ? "the lookback rejects these parameters" : "no such output");
+                return TA_ABS_TST_FAIL_DISPLAY_SHIFT;
+            }
+            g_dsRejected++;
+            if( inRange ) g_dsParamRejected++;
+        }
+        else
+        {
+            if( shift == INT_MIN )
+            {
+                printf("  Failed [%s]: display shift of output %d rejects parameters the "
+                       "lookback accepts\n", funcName, idx);
+                return TA_ABS_TST_FAIL_DISPLAY_SHIFT;
+            }
+            if( !flagged && shift != 0 )
+            {
+                printf("  Failed [%s]: output %d reports a display shift of %d without "
+                       "TA_OUT_DISPLAY_SHIFT\n", funcName, idx, (int)shift);
+                return TA_ABS_TST_FAIL_DISPLAY_SHIFT;
+            }
+            g_dsAnswered++;
+            if( flagged ) g_dsFlagged++;
+            if( shift != 0 ) g_dsNonZero++;
+        }
+
+        if( g_abstractPipe && askServer )
+        {
+            int pos = codegen_appendf(g_abstractReqBuf, ABSTRACT_JSON_BUF_SIZE, 0,
+                "{\"method\":\"abstract_get_display_shift\",\"params\":{\"funcName\":\"%s\"",
+                funcName);
+            for( k = 0; k < funcInfo->nbOptInput; k++ )
+            {
+                const TA_OptInputParameterInfo *oi;
+                double v;
+                TA_GetOptInputParameterInfo(handle, k, &oi);
+                v = optVals ? optVals[k] : oi->defaultValue;
+                pos = codegen_appendf(g_abstractReqBuf, ABSTRACT_JSON_BUF_SIZE, pos,
+                    ",\"%s\":", oi->paramName);
+                if( oi->type == TA_OptInput_RealRange || oi->type == TA_OptInput_RealList )
+                    pos = codegen_appendf(g_abstractReqBuf, ABSTRACT_JSON_BUF_SIZE, pos, "%.17g", v);
+                else
+                    pos = codegen_appendf(g_abstractReqBuf, ABSTRACT_JSON_BUF_SIZE, pos, "%d", (int)v);
+            }
+            codegen_appendf(g_abstractReqBuf, ABSTRACT_JSON_BUF_SIZE, pos,
+                ",\"outputIdx\":%d}}", idx);
+
+            if( codegen_pipe_call(g_abstractPipe, g_abstractReqBuf,
+                                  g_abstractRespBuf, ABSTRACT_JSON_BUF_SIZE) != TA_TEST_PASS
+                || abstract_json_is_error(g_abstractRespBuf) )
+            {
+                printf("  ABSTRACT ERROR [%s]: abstract_get_display_shift server error\n", funcName);
+                return TA_ABSTRACT_SERVER_ERROR;
+            }
+            {
+                int srvShift = abstract_json_get_int(g_abstractRespBuf, "displayShift");
+                if( srvShift != (int)shift )
+                {
+                    printf("  ABSTRACT ERROR [%s]: display shift of output %d C=%d server=%d\n",
+                           funcName, idx, (int)shift, srvShift);
+                    return TA_ABSTRACT_DISPLAY_SHIFT_MISMATCH;
+                }
+            }
+            g_dsServer++;
+        }
+    }
+
+    if( (nbFlagged != 0) != ((funcInfo->flags & TA_FUNC_FLG_DISPLAY_SHIFT) != 0) )
+    {
+        printf("  Failed [%s]: TA_FUNC_FLG_DISPLAY_SHIFT is %s but %u output(s) carry "
+               "TA_OUT_DISPLAY_SHIFT\n", funcName,
+               (funcInfo->flags & TA_FUNC_FLG_DISPLAY_SHIFT) ? "set" : "clear", nbFlagged);
+        return TA_ABS_TST_FAIL_DISPLAY_SHIFT;
+    }
+    return TA_TEST_PASS;
+}
+
+/* The display shift at parameter vectors built from the declared domains: every
+ * slot at a non-default value, then each integer range at both bounds and one
+ * step outside each. Needs no server, so a bare run reaches rejected
+ * parameters on integer-only functions; the bounds are what make a shift that
+ * depends on its parameters answer something other than its default.
+ */
+static ErrorNumber ds_param_vectors( const char *funcName, const TA_FuncHandle *handle,
+                                     const TA_FuncInfo *funcInfo,
+                                     TA_ParamHolder *paramHolder )
+{
+    double base[D2_MAX_OPT], vec[D2_MAX_OPT];
+    const TA_OptInputParameterInfo *oi;
+    ErrorNumber e;
+    unsigned int k, j;
+    int b;
+
+    if( funcInfo->nbOptInput == 0 || funcInfo->nbOptInput > D2_MAX_OPT )
+        return TA_TEST_PASS;
+
+    for( k = 0; k < funcInfo->nbOptInput; k++ )
+    {
+        TA_GetOptInputParameterInfo(handle, k, &oi);
+        base[k] = oi->defaultValue;
+        vec[k] = d2_non_default(oi, k);
+    }
+    d2_set_opts(paramHolder, handle, funcInfo, vec);
+    e = abstract_check_display_shift(funcName, handle, funcInfo, paramHolder, vec, 1);
+
+    for( k = 0; e == TA_TEST_PASS && k < funcInfo->nbOptInput; k++ )
+    {
+        const TA_IntegerRange *r;
+        double probe[4];
+        int nbProbe = 0;
+
+        TA_GetOptInputParameterInfo(handle, k, &oi);
+        r = (const TA_IntegerRange *)oi->dataSet;
+        if( oi->type != TA_OptInput_IntegerRange || !r )
+            continue;
+        probe[nbProbe++] = (double)r->min;
+        probe[nbProbe++] = (double)r->max;
+        if( r->min > INT_MIN ) probe[nbProbe++] = (double)r->min - 1.0;
+        if( r->max < INT_MAX ) probe[nbProbe++] = (double)r->max + 1.0;
+
+        for( b = 0; e == TA_TEST_PASS && b < nbProbe; b++ )
+        {
+            for( j = 0; j < funcInfo->nbOptInput; j++ ) vec[j] = base[j];
+            TA_Integer lookback = -1;
+
+            vec[k] = probe[b];
+            d2_set_opts(paramHolder, handle, funcInfo, vec);
+            if( TA_GetLookback(paramHolder, &lookback) == TA_SUCCESS && lookback < 0 )
+                g_dsBoundRejected++;
+            e = abstract_check_display_shift(funcName, handle, funcInfo, paramHolder, vec, 1);
+        }
+    }
+
+    d2_set_opts(paramHolder, handle, funcInfo, base);
+    return e;
+}
+
 static ErrorNumber d2_drive( const char *funcName, const TA_FuncHandle *handle,
                              const TA_FuncInfo *funcInfo, TA_ParamHolder *paramHolder,
                              const double *input, int size, const double *vec,
@@ -1544,8 +1741,11 @@ static ErrorNumber d2_drive( const char *funcName, const TA_FuncHandle *handle,
         funcName, handle, funcInfo, input, size, 0, size - 1,
         rc, beg, nb, lookback, output, output_int, relaxValues, vec);
     if( e != TA_TEST_PASS )
+    {
         printf("  ABSTRACT ERROR [%s]: the %s vector diverged\n", funcName, what);
-    return e;
+        return e;
+    }
+    return abstract_check_display_shift(funcName, handle, funcInfo, paramHolder, vec, 1);
 }
 
 /* The whole sweep for one function. */
@@ -1634,6 +1834,15 @@ static ErrorNumber d2_nonfinite_params( const char *funcName, const TA_FuncHandl
                 return TA_ABSTRACT_CALL_MISMATCH;
             }
             g_d2NonFinite++;
+
+            /* So must the display shift, on the one tier that runs with no
+             * server: every other rejected vector reaches it only through
+             * d2_drive, which needs a pipe. */
+            {
+                ErrorNumber dsErr = abstract_check_display_shift(funcName, handle, funcInfo,
+                                                                 paramHolder, NULL, 0);
+                if( dsErr != TA_TEST_PASS ) return dsErr;
+            }
         }
     }
 
@@ -2089,6 +2298,18 @@ ErrorNumber test_abstract( void )
       return TA_ABSTRACT_CALL_MISMATCH;
    }
 
+   /* Every class of display-shift answer must have been reached. */
+   if( g_dsAnswered == 0 || g_dsRejected == 0 || g_dsParamRejected == 0
+       || g_dsBoundRejected == 0 || g_dsFlagged == 0 || g_dsNonZero == 0 || (g_abstractPipe && g_dsServer == 0) )
+   {
+      printf( "  Failed: the display-shift sweep answered %lld, rejected %lld (%lld for "
+              "their parameters, %lld at an integer bound), saw %lld flagged and %lld "
+              "non-zero, compared %lld with the server\n",
+              g_dsAnswered, g_dsRejected, g_dsParamRejected, g_dsBoundRejected,
+              g_dsFlagged, g_dsNonZero, g_dsServer );
+      return TA_ABS_TST_FAIL_DISPLAY_SHIFT_VACUOUS;
+   }
+
    if( g_abstractPipe )
    {
 
@@ -2485,6 +2706,16 @@ static ErrorNumber callWithDefaults( const char *funcName, const double *input, 
       return TA_ABS_TST_FAIL_CALLFUNC_3;
    }
 
+   {
+      ErrorNumber dsErr = abstract_check_display_shift( funcName, handle, funcInfo,
+                                                        paramHolder, NULL, 1 );
+      if( dsErr != TA_TEST_PASS )
+      {
+         TA_ParamHolderFree( paramHolder );
+         return dsErr;
+      }
+   }
+
    /* A successful call writes finite values -- unless the function declares
     * TA_FUNC_FLG_NAN_INF_OUT, the eight whose own domain has holes (ACOS/ASIN
     * outside [-1,1], LN/LOG10/SQRT on a negative, DIV on 0/0 or x/0, VWMA on a
@@ -2594,6 +2825,8 @@ static ErrorNumber callWithDefaults( const char *funcName, const double *input, 
 
          /* C-only, so unlike the sweep above it runs with no server pipe. */
          srvErr = d2_nonfinite_params( funcName, handle, funcInfo, paramHolder, size );
+         if( srvErr == TA_TEST_PASS )
+            srvErr = ds_param_vectors( funcName, handle, funcInfo, paramHolder );
          if( srvErr != TA_TEST_PASS )
          {
             TA_ParamHolderFree( paramHolder );

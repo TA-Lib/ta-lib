@@ -1580,6 +1580,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 None => format!("{{\"error\":\"Unknown function: {}\"}}", fname),
             }
         }
+        "abstract_get_display_shift" => {
+            let fname = params["funcName"].as_str().unwrap_or("");
+            match abs_display_shift(core, params) {
+                Some(ds) => format!("{{\"displayShift\":{}}}", ds),
+                None => format!("{{\"error\":\"Unknown function: {}\"}}", fname),
+            }
+        }
         "abstract_for_each_func" => {
             let mut arr: Vec<Value> = Vec::new();
             abstract_api::for_each_func(|fi| {
@@ -1772,6 +1779,25 @@ fn abs_lookback(core: &Core, params: &Value) -> Option<i64> {
         }
     }
     Some(h.lookback().map_or(-1i64, |v| v as i64))
+}
+
+fn abs_display_shift(core: &Core, params: &Value) -> Option<i32> {
+    let fname = params["funcName"].as_str().unwrap_or("");
+    let id = abstract_api::get_func_handle(fname)?;
+    let mut h = id.new_call(core);
+    for (k, opt) in id.info().opt_inputs.iter().enumerate() {
+        match opt.kind {
+            OptInputType::RealRange { .. } | OptInputType::RealList { .. } => {
+                if let Some(v) = params[opt.param_name].as_f64() { let _ = h.set_opt_input(k, v); }
+            }
+            _ => {
+                if let Some(v) = params[opt.param_name].as_i64() { let _ = h.set_opt_input(k, v as i32); }
+            }
+        }
+    }
+    // A negative index is inexpressible as `usize`; C answers INT_MIN for it.
+    let idx = usize::try_from(params["outputIdx"].as_i64().unwrap_or(0)).ok();
+    Some(idx.and_then(|i| h.display_shift(i).ok()).unwrap_or(i32::MIN))
 }
 fn main() {
     let mut core = Core::new();

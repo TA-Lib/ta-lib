@@ -106,6 +106,34 @@ impl Core {
         }
         return Ok((optInTimePeriod - 1) as usize);
     }
+    /// Display shift of one output of [`Core::alma`]: how many bars ahead (positive) or behind
+    /// (negative) of the bar that computed it a chart draws that output. The values are never
+    /// shifted.
+    ///
+    /// Every output of this function is drawn at its own bar, so the answer is 0.
+    ///
+    /// # Arguments
+    ///
+    /// * `optInTimePeriod` — Number of bars in the window (default 9, range 1..=100000)
+    /// * `optInSigma` — Divides the period to give the Gaussian's width in bars (default 6,
+    ///   minimum 0.01)
+    /// * `optInOffset` — Position of the peak weight, 0 at the oldest bar and 1 at the newest
+    ///   (default 0.85, range 0..=1)
+    /// * `outputIdx` — Position of the output in the batch signature, from 0
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
+    /// parameters accept [`Core::INTEGER_DEFAULT`], and real parameters [`Core::REAL_DEFAULT`], to
+    /// select their default value.
+    #[doc(alias = "TA_ALMA_DisplayShift")]
+    pub fn alma_display_shift(&self, mut optInTimePeriod: i32, mut optInSigma: f64, mut optInOffset: f64, outputIdx: usize) -> Result<i32, RetCode> {
+        self.alma_lookback(optInTimePeriod, optInSigma, optInOffset)?;
+        if outputIdx >= 1 {
+            return Err(RetCode::BadParam);
+        }
+        return Ok(0);
+    }
     /// C-shaped body behind [`Core::alma`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.

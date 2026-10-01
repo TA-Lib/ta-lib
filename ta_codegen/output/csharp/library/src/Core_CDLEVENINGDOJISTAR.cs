@@ -87,6 +87,29 @@ public partial class Core
       return MaxGt(MaxGt(BodyDoji_avgPeriod, BodyLong_avgPeriod), BodyShort_avgPeriod) + 2 ;
 
    }
+   /// <summary>
+   /// How many bars ahead (positive) or behind (negative) of the bar that
+   /// computed it a chart draws one output of <c>Cdleveningdojistar</c>.
+   /// </summary>
+   /// <remarks>
+   /// Every output of this function is drawn at its own bar, so the answer is 0.
+   /// </remarks>
+   /// <param name="optInPenetration">Fraction of the 1st real body the 3rd candle's close must penetrate;
+   /// larger demands a deeper close into the first body (default 0.3; minimum 0;
+   /// <see cref="Core.RealDefault"/> selects the default).</param>
+   /// <param name="outputIdx">Position of the output in the batch signature, from 0.</param>
+   /// <returns>The display shift, or <c>int.MinValue</c> if a parameter is out of range
+   /// or the index names no output.</returns>
+   public int CdleveningdojistarDisplayShift( double optInPenetration, int outputIdx )
+   {
+      if( CdleveningdojistarLookback( optInPenetration ) < 0 ) {
+         return int.MinValue;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return int.MinValue;
+      }
+      return 0;
+   }
    internal RetCode CdleveningdojistarImpl( int startIdx,
                                             int endIdx,
                                             ReadOnlySpan<double> inOpen,

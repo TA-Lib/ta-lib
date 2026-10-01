@@ -63,6 +63,13 @@ TA_LIB_API int TA_HT_PHASOR_Lookback( void )
    return 32 + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_HT_PHASOR,Ht_phasor);
 }
 
+TA_LIB_API int TA_HT_PHASOR_DisplayShift( int outputIdx )
+{
+   if( outputIdx < 0 || outputIdx >= 2 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_HT_PHASOR( int    startIdx,
                                     int    endIdx,

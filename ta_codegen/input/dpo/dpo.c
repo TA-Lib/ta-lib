@@ -10,6 +10,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  090426 MF,CC  Initial version (#363).
+ *  100126 MF,CC  Display shift (#489).
  */
 
 int dpo_lookback(int optInTimePeriod)
@@ -20,6 +21,14 @@ int dpo_lookback(int optInTimePeriod)
     * then read inReal[-1].
     */
    return max( optInTimePeriod - 1, optInTimePeriod / 2 + 1 );
+}
+
+int dpo_display_shift(int optInTimePeriod, int outputIdx)
+{
+   /* The value computed at a bar detrends the price this many bars back,
+    * which is where a chart draws it.
+    */
+   return -( optInTimePeriod / 2 + 1 );
 }
 
 TA_RetCode dpo(int startIdx, int endIdx,

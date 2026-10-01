@@ -130,6 +130,9 @@ public enum FuncFlags : uint
 
     /// <summary>A period of 1 performs no smoothing: the lookback is 0 and the output is a bit-exact copy of the input.</summary>
     Period1Identity = 0x00000001,
+
+    /// <summary>At least one output carries <c>OutputFlags.DisplayShift</c>; without it every output's display shift is 0.</summary>
+    DisplayShift = 0x00000002,
 }
 
 /// <summary>Which OHLCV components a price input consumes. Values match C's <c>TA_IN_PRICE_*</c>.</summary>
@@ -226,6 +229,9 @@ public enum OutputFlags : uint
 
     /// <summary>Discardable: C accepts <c>NULL</c> for it. C# still requires an array.</summary>
     Nullable = 0x00002000,
+
+    /// <summary>A chart draws it ahead of or behind the bar that computed it, by the bars the display-shift query reports. The values are never shifted.</summary>
+    DisplayShift = 0x00004000,
 }
 
 /// <summary>What a required input carries. Mirrors C's <c>TA_InputParameterType</c>.</summary>

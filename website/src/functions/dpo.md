@@ -17,7 +17,7 @@ Let `t = optInTimePeriod / 2 + 1`, an integer division, so a period and its odd 
 
 ## Notes
 
-- The value is emitted at the bar whose moving average produced it. Charting packages usually draw it `t` bars to the left instead, which is a plotting convention rather than a different series; a caller wanting that view shifts `outReal` itself.
+- The value is emitted at the bar whose moving average produced it. Charting packages usually draw it `t` bars to the left instead, which is a plotting convention rather than a different series; a caller wanting that view shifts `outReal` itself, by the display shift the function reports, `-t`.
 - A causal variant, `P[i] - SMA(P, optInTimePeriod)[i - t]`, displaces the average instead of the price. It is a genuinely different series, not a re-indexing of this one, and is not implemented here.
 
 ## Inputs
@@ -47,6 +47,7 @@ Let `t = optInTimePeriod / 2 + 1`, an integer division, so a period and its odd 
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Candlestick</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Can Output NaN or ±Inf</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Identity at Period 1</span> |
+| <span class="flag-box">✅</span> **Display Shift** <span class="flag-tip" tabindex="0" role="note" aria-label="A chart draws at least one output ahead of or behind the bar that computed it. The display-shift query gives the number of bars; the values are not shifted." data-tip="A chart draws at least one output ahead of or behind the bar that computed it. The display-shift query gives the number of bars; the values are not shifted.">i</span> |
 
 </div>
 

@@ -65,6 +65,13 @@ TA_LIB_API int TA_CDL3WHITESOLDIERS_Lookback( void )
    return max(max(ShadowVeryShort_avgPeriod,BodyShort_avgPeriod),max(Far_avgPeriod,Near_avgPeriod)) + 2;
 }
 
+TA_LIB_API int TA_CDL3WHITESOLDIERS_DisplayShift( int outputIdx )
+{
+   if( outputIdx < 0 || outputIdx >= 1 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_LIB_API TA_RetCode TA_CDL3WHITESOLDIERS( int    startIdx,
                                             int    endIdx,
                                             const double inOpen[],

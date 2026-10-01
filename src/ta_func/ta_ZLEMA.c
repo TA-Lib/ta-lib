@@ -68,6 +68,15 @@ TA_LIB_API int TA_ZLEMA_Lookback( int optInTimePeriod )
    return (optInTimePeriod - 1) / 2 + TA_EMA_Lookback(optInTimePeriod);
 }
 
+TA_LIB_API int TA_ZLEMA_DisplayShift( int optInTimePeriod, int outputIdx )
+{
+   if( TA_ZLEMA_Lookback( optInTimePeriod ) < 0 )
+      return INT_MIN;
+   if( outputIdx < 0 || outputIdx >= 1 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_ZLEMA( int    startIdx,
                                 int    endIdx,

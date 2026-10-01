@@ -66,6 +66,15 @@ TA_LIB_API int TA_CDLDARKCLOUDCOVER_Lookback( double optInPenetration )
    return BodyLong_avgPeriod + 1;
 }
 
+TA_LIB_API int TA_CDLDARKCLOUDCOVER_DisplayShift( double optInPenetration, int outputIdx )
+{
+   if( TA_CDLDARKCLOUDCOVER_Lookback( optInPenetration ) < 0 )
+      return INT_MIN;
+   if( outputIdx < 0 || outputIdx >= 1 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_LIB_API TA_RetCode TA_CDLDARKCLOUDCOVER( int    startIdx,
                                             int    endIdx,
                                             const double inOpen[],

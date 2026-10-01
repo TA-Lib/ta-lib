@@ -1089,6 +1089,43 @@ TA_RetCode TA_GetLookback( const TA_ParamHolder *param, TA_Integer *lookback )
    return TA_SUCCESS;
 }
 
+TA_RetCode TA_GetDisplayShift( const TA_ParamHolder *param,
+                               unsigned int outputIdx,
+                               TA_Integer *displayShift )
+{
+   const TA_ParamHolderPriv *paramHolderPriv;
+
+   const TA_FuncDef *funcDef;
+   const TA_FuncInfo *funcInfo;
+   TA_FrameDisplayShift displayShiftFunction;
+
+   if( (param == NULL) || (displayShift == NULL))
+   {
+      return TA_BAD_PARAM;
+   }
+
+   paramHolderPriv = (TA_ParamHolderPriv *)(param->hiddenData);
+   if( paramHolderPriv->magicNumber != TA_PARAM_HOLDER_PRIV_MAGIC_NB )
+   {
+      return TA_INVALID_PARAM_HOLDER;
+   }
+
+   funcInfo = paramHolderPriv->funcInfo;
+   if( !funcInfo ) return TA_INVALID_HANDLE;
+
+   funcDef = (const TA_FuncDef *)funcInfo->handle;
+   if( !funcDef ) return TA_INTERNAL_ERROR(2);
+   displayShiftFunction = funcDef->displayShift;
+   if( !displayShiftFunction ) return TA_INTERNAL_ERROR(2);
+
+   /* An index past INT_MAX lands negative and is rejected like any
+    * other index that names no output.
+    */
+   *displayShift = (*displayShiftFunction)( paramHolderPriv, (int)outputIdx );
+
+   return TA_SUCCESS;
+}
+
 TA_RetCode TA_CallFunc( const TA_ParamHolder *param,
                         TA_Integer            startIdx,
                         TA_Integer            endIdx,

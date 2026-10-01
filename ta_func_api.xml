@@ -4638,6 +4638,7 @@
 		<GroupId>Momentum Indicators</GroupId>
 		<Flags>
 			<Flag>Streaming</Flag>
+			<Flag>Display Shift</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -4666,6 +4667,7 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Display Shift</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>

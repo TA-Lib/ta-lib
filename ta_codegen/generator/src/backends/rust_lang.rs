@@ -132,6 +132,10 @@ pub struct RustRenderCtx {
     /// If true, we're inside a lookback function (returns usize, not RetCode).
     /// Return values that are i32-typed will be cast to usize.
     pub is_lookback: bool,
+    /// With `is_lookback`: the body is a display shift, so the value is an
+    /// `i32` that may be negative, `-1` is an answer rather than the bad-param
+    /// sentinel, and every integer local is signed.
+    pub signed_query: bool,
     /// Variable names that are assigned negative values (e.g., `highestIdx = -1`).
     /// These are declared as `i32` instead of `usize` to preserve sentinel semantics.
     /// When used as array indices, they get `as usize` casts.
@@ -290,6 +294,7 @@ impl RustRenderCtx {
             int_output_names: std::collections::HashSet::new(),
             int_vec_vars: std::collections::HashSet::new(),
             is_lookback: true,
+            signed_query: false,
             sentinel_vars: std::collections::HashSet::new(),
             result_error_returns: false,
             matype_map: std::collections::HashMap::new(),
@@ -622,6 +627,7 @@ fn gen_impl_block(func: &FuncDef, enums: &HashMap<String, EnumDef>, registry: &R
     );
 
     out.push_str(&gen_lookback(func, &snake, enums, registry, helpers));
+    out.push_str(&gen_display_shift(func, &snake, enums, registry, helpers));
 
     // Guarded public entry: validates params, then either renders the algorithm
     // inline or delegates to `_private`.
@@ -686,6 +692,7 @@ fn gen_impl_block(func: &FuncDef, enums: &HashMap<String, EnumDef>, registry: &R
         int_output_names: int_output_set,
         int_vec_vars,
         is_lookback: false,
+        signed_query: false,
         sentinel_vars,
         result_error_returns: false,
         matype_map: build_matype_map(enums),
@@ -734,7 +741,7 @@ fn gen_lookback(
             out.push_str(&format!("        return Ok(({param} - {offset}) as usize);\n"));
         }
         Some(LookbackExpr::Code(stmts)) => {
-            out.push_str(&render_lookback_code(stmts, func, enums, registry, helpers));
+            out.push_str(&render_lookback_code(stmts, func, false, enums, registry, helpers));
         }
         None => {
             out.push_str("        return Ok(0);\n");
@@ -768,6 +775,61 @@ fn gen_lookback(
         emit_lookback_return(&mut out);
     }
 
+    out.push_str("    }\n");
+    out
+}
+
+fn gen_display_shift(
+    func: &FuncDef,
+    snake: &str,
+    enums: &HashMap<String, EnumDef>,
+    registry: &Registry,
+    helpers: &HelperRegistry,
+) -> String {
+    let idx = crate::ir::DISPLAY_SHIFT_INDEX_PARAM;
+    let mut out = super::rust_doc::display_shift_docs(func, snake, enums);
+
+    let mut params: Vec<String> = func
+        .optional_inputs
+        .iter()
+        .map(|opt| format!("mut {}: {}", opt.name, opt_param_type(&opt.param_type)))
+        .collect();
+    params.push(format!("{idx}: usize"));
+    out.push_str(&format!(
+        "    pub fn {snake}_display_shift(&self, {}) -> Result<i32, RetCode> {{\n",
+        params.join(", ")
+    ));
+    if !func.optional_inputs.is_empty() {
+        let args: Vec<&str> = func.optional_inputs.iter().map(|o| o.name.as_str()).collect();
+        out.push_str(&format!("        self.{snake}_lookback({})?;\n", args.join(", ")));
+    }
+    if func.display_shift.is_some() {
+        for opt in &func.optional_inputs {
+            out.push_str(&gen_opt_param_validation(opt, "        ", true, enums));
+        }
+    }
+    out.push_str(&format!(
+        "        if {idx} >= {} {{\n            return Err(RetCode::BadParam);\n        }}\n",
+        func.outputs.len()
+    ));
+    match &func.display_shift {
+        Some(stmts) => {
+            let unshifted = func.unshifted_outputs();
+            if !unshifted.is_empty() {
+                let tests: Vec<String> =
+                    unshifted.iter().map(|i| format!("{idx} == {i}")).collect();
+                out.push_str(&format!(
+                    "        if {} {{\n            return Ok(0);\n        }}\n",
+                    tests.join(" || ")
+                ));
+            }
+            // The body is written against C's `int outputIdx`; in range, the
+            // conversion is exact.
+            out.push_str(&format!("        let {idx}: i32 = {idx} as i32;\n"));
+            out.push_str(&render_lookback_code(stmts, func, true, enums, registry, helpers));
+        }
+        None => out.push_str("        return Ok(0);\n"),
+    }
     out.push_str("    }\n");
     out
 }
@@ -1072,6 +1134,7 @@ fn gen_guarded_func(
             int_output_names: g_int_output_set,
             int_vec_vars: g_int_vec_vars,
             is_lookback: false,
+            signed_query: false,
             sentinel_vars: g_sentinel_vars,
             result_error_returns: false,
             matype_map: build_matype_map(enums),
@@ -1178,6 +1241,7 @@ fn gen_guarded_func(
             int_output_names: g_int_output_set,
             int_vec_vars: g_int_vec_vars,
             is_lookback: false,
+            signed_query: false,
             sentinel_vars: g_sentinel_vars,
             result_error_returns: false,
             matype_map: build_matype_map(enums),
@@ -3875,6 +3939,10 @@ impl StatementEmitter for RustStmt<'_, '_> {
             }
         }
         match value {
+            Some(expr) if self.ctx.signed_query => {
+                let rendered = render_return_expr(expr, self.ctx, self.opt_real_params, self.registry, self.helpers);
+                format!("{pad}return Ok({rendered});\n")
+            }
             Some(expr) if self.ctx.is_lookback && is_negative_one(expr) => {
                 // The lookback bad-param contract: -1 in C, Java and C#; Rust's
                 // lookback returns `Result<usize, RetCode>`, so the same C-side
@@ -5165,6 +5233,7 @@ fn render_index_expr(
 fn render_lookback_code(
     stmts: &[Statement],
     func: &FuncDef,
+    signed_query: bool,
     enums: &HashMap<String, EnumDef>,
     registry: &Registry,
     helpers: &HelperRegistry,
@@ -5183,6 +5252,12 @@ fn render_lookback_code(
     lookback_ctx.matype_map = build_matype_map(enums);
     lookback_ctx.enum_vars = enum_local_types(func);
     prune_enum_locals(&mut lookback_ctx.index_vars, &lookback_ctx.enum_vars);
+    if signed_query {
+        lookback_ctx.signed_query = true;
+        lookback_ctx.sentinel_vars.extend(lookback_ctx.index_vars.drain());
+        // Its name reads as an index, which would type it `usize` in an expression.
+        lookback_ctx.sentinel_vars.insert(crate::ir::DISPLAY_SHIFT_INDEX_PARAM.to_string());
+    }
 
     for stmt in stmts {
         if let Statement::VarDecl { var_type, name, .. } = stmt {

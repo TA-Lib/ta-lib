@@ -72,6 +72,15 @@ TA_LIB_API int TA_FRAMA_Lookback( int optInTimePeriod )
    return optInTimePeriod + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_FRAMA,Frama);
 }
 
+TA_LIB_API int TA_FRAMA_DisplayShift( int optInTimePeriod, int outputIdx )
+{
+   if( TA_FRAMA_Lookback( optInTimePeriod ) < 0 )
+      return INT_MIN;
+   if( outputIdx < 0 || outputIdx >= 1 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_FRAMA( int    startIdx,
                                 int    endIdx,

@@ -91,6 +91,30 @@ public partial class Core
       return 1 ;
 
    }
+   /// <summary>
+   /// How many bars ahead (positive) or behind (negative) of the bar that
+   /// computed it a chart draws one output of <c>Sar</c>.
+   /// </summary>
+   /// <remarks>
+   /// Every output of this function is drawn at its own bar, so the answer is 0.
+   /// </remarks>
+   /// <param name="optInAcceleration">Step added to the acceleration factor on each new extreme point (default
+   /// 0.02; minimum 0; <see cref="Core.RealDefault"/> selects the default).</param>
+   /// <param name="optInMaximum">Ceiling on the acceleration factor (default 0.2; minimum 0;
+   /// <see cref="Core.RealDefault"/> selects the default).</param>
+   /// <param name="outputIdx">Position of the output in the batch signature, from 0.</param>
+   /// <returns>The display shift, or <c>int.MinValue</c> if a parameter is out of range
+   /// or the index names no output.</returns>
+   public int SarDisplayShift( double optInAcceleration, double optInMaximum, int outputIdx )
+   {
+      if( SarLookback( optInAcceleration, optInMaximum ) < 0 ) {
+         return int.MinValue;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return int.MinValue;
+      }
+      return 0;
+   }
    internal RetCode SarImpl( int startIdx,
                              int endIdx,
                              ReadOnlySpan<double> inHigh,

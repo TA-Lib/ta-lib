@@ -80,6 +80,15 @@ TA_LIB_API int TA_T3_Lookback( int optInTimePeriod, double optInVFactor )
    return 6 * (optInTimePeriod - 1) + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_T3,T3);
 }
 
+TA_LIB_API int TA_T3_DisplayShift( int optInTimePeriod, double optInVFactor, int outputIdx )
+{
+   if( TA_T3_Lookback( optInTimePeriod, optInVFactor ) < 0 )
+      return INT_MIN;
+   if( outputIdx < 0 || outputIdx >= 1 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_T3( int    startIdx,
                              int    endIdx,

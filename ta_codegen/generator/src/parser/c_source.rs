@@ -18,11 +18,20 @@ pub struct ParsedCSource {
     /// file and no alternate may declare its own, so a `TA_ALT` here is rejected
     /// during wiring.
     pub lookback_pragmas: Vec<Pragma>,
+    /// The optional `int <name>_display_shift(<optInputs>, int outputIdx)`.
+    pub display_shift: Option<ParsedDisplayShift>,
     pub functions: Vec<ParsedCFunction>,
     /// File-level comment blocks that preceded the first function (e.g. the
     /// `List of contributors` / `Change history` block). Each entry is one
     /// comment block's cleaned content lines.
     pub header_comments: Vec<Vec<String>>,
+}
+
+#[derive(Debug, Clone)]
+pub struct ParsedDisplayShift {
+    pub body: Vec<Statement>,
+    pub params: Vec<(String, String)>,
+    pub pragmas: Vec<Pragma>,
 }
 
 #[derive(Debug, Clone)]
@@ -81,6 +90,7 @@ pub fn wire_parsed_source(func_def: &mut crate::ir::FuncDef, parsed: &ParsedCSou
     func_def.alternates = alternates;
     func_def.body.clone_from(&guarded.body);
     func_def.lookback = Some(crate::ir::LookbackExpr::Code(parsed.lookback_body.clone()));
+    wire_display_shift(func_def, parsed);
     func_def.header_comments.clone_from(&parsed.header_comments);
 
     let private_fn = parsed
@@ -308,6 +318,56 @@ fn base_params<'a>(parsed: &'a ParsedCSource, base_name: &str) -> &'a [(String, 
         .map_or(&[][..], |f| &f.params[..])
 }
 
+/// The YAML output flag and the `.c` definition must agree, in both directions:
+/// the flag is what a generic client reads to decide whether to ask, and the
+/// definition is the only thing that can answer anything but 0.
+fn wire_display_shift(func_def: &mut crate::ir::FuncDef, parsed: &ParsedCSource) {
+    let flagged = func_def.has_display_shift();
+    let Some(ds) = &parsed.display_shift else {
+        assert!(
+            !flagged,
+            "{}: an output carries the `display_shift` flag but the .c defines no \
+             `<name>_display_shift`",
+            func_def.name
+        );
+        return;
+    };
+    assert!(
+        flagged,
+        "{}: the .c defines a `_display_shift` but no output carries the `display_shift` flag",
+        func_def.name
+    );
+    reject_ta_alt(&ds.pragmas, "the display shift", func_def);
+    // Types too: the body is narrowing-checked against THIS signature, and the
+    // emitted one comes from the YAML.
+    let mut expected: Vec<(String, String)> = func_def
+        .optional_inputs
+        .iter()
+        .map(|o| {
+            let ty = match &o.param_type {
+                crate::ir::ParamType::Real => "double".to_string(),
+                crate::ir::ParamType::Enum(e) => format!("TA_{e}"),
+                _ => "int".to_string(),
+            };
+            (o.name.clone(), ty)
+        })
+        .collect();
+    expected.push((crate::ir::DISPLAY_SHIFT_INDEX_PARAM.to_string(), "int".to_string()));
+    let got: Vec<(String, String)> = ds
+        .params
+        .iter()
+        .map(|(n, t)| (n.clone(), t.split_whitespace().collect::<Vec<_>>().join(" ")))
+        .collect();
+    assert!(
+        got == expected,
+        "{}: `_display_shift` must take the optional inputs in YAML order and type, and \
+         then `int {}`; it takes {got:?}, expected {expected:?}",
+        func_def.name,
+        crate::ir::DISPLAY_SHIFT_INDEX_PARAM
+    );
+    func_def.display_shift = Some(ds.body.clone());
+}
+
 fn reject_ta_alt(pragmas: &[Pragma], who: &str, func_def: &crate::ir::FuncDef) {
     assert!(
         !pragmas.iter().any(|p| p.name == "TA_ALT"),
@@ -365,6 +425,13 @@ fn reject_implicit_narrowing(parsed: &ParsedCSource, file: Option<&str>) {
         ty.add_c_param(name, ctype);
     }
     check_narrowing(&parsed.lookback_body, &ty, "lookback", file);
+    if let Some(ds) = &parsed.display_shift {
+        let mut ty = TypeNames::default();
+        for (name, ctype) in &ds.params {
+            ty.add_c_param(name, ctype);
+        }
+        check_narrowing(&ds.body, &ty, "display_shift", file);
+    }
 }
 
 /// The same check for `input/helpers/*.c`, which parse through a different
@@ -1240,6 +1307,7 @@ fn extract_functions(
     let mut lookback_pragmas: Vec<Pragma> = Vec::new();
     let mut first_func_tok: Option<usize> = None;
     let mut saw_lookback = false;
+    let mut display_shift: Option<ParsedDisplayShift> = None;
     let mut i = 0;
 
     let (pragmas, plain) = split_pragma_comments(comments, tok_lines, file);
@@ -1247,29 +1315,29 @@ fn extract_functions(
     let mut pragma_cursor = 0usize;
 
     while i < tokens.len() {
-        if let Some(brace_end) = lookback_span(tokens, i) {
+        if let Some((is_shift, brace_end)) = int_query_at(tokens, i) {
             let Token::Ident(name) = &tokens[i + 1] else {
-                unreachable!("lookback_span matched an identifier")
+                unreachable!("the span matched an identifier")
             };
             assert!(
-                !saw_lookback,
-                "{}{name}: a second lookback function in one file (only one is wired; the \
+                if is_shift { display_shift.is_none() } else { !saw_lookback },
+                "{}{name}: a second {} function in one file (only one is wired; the \
                  extra would be silently discarded)",
-                pragma_loc(file, tok_lines.get(i).copied().unwrap_or(0))
+                pragma_loc(file, tok_lines.get(i).copied().unwrap_or(0)),
+                if is_shift { "display-shift" } else { "lookback" }
             );
-            saw_lookback = true;
             first_func_tok.get_or_insert(i);
-            lookback_pragmas = take_leading(&pragmas, &mut pragma_cursor, i);
-            let brace_start = find_open_brace(tokens, i + 2).expect("lookback_span found it");
-            let body_cmts = body_comments(comments, brace_start, brace_end);
-            lookback_params = extract_func_params(tokens, i + 2);
-            lookback_body = parse_body(
-                &tokens[brace_start + 1..brace_end],
-                &tok_lines[brace_start + 1..brace_end],
-                &body_cmts,
-                file,
-            );
+            let pragmas_here = take_leading(&pragmas, &mut pragma_cursor, i);
+            let parsed =
+                parse_int_query(tokens, tok_lines, comments, i, brace_end, pragmas_here, file);
             reject_pragmas_in_body(&pragmas, &mut pragma_cursor, brace_end, name, file);
+            if is_shift {
+                display_shift = Some(parsed);
+            } else {
+                saw_lookback = true;
+                (lookback_body, lookback_params, lookback_pragmas) =
+                    (parsed.body, parsed.params, parsed.pragmas);
+            }
             i = brace_end + 1;
             continue;
         }
@@ -1340,6 +1408,7 @@ fn extract_functions(
         lookback_body,
         lookback_params,
         lookback_pragmas,
+        display_shift,
         functions,
         header_comments,
     }
@@ -1367,6 +1436,54 @@ fn split_pragma_comments(
         }
     }
     (pragmas, plain)
+}
+
+/// The body, parameters and pragmas of a lookback or display-shift definition
+/// starting at token `i`.
+fn parse_int_query(
+    tokens: &[Token],
+    tok_lines: &[u32],
+    comments: &[CommentAnchor],
+    i: usize,
+    brace_end: usize,
+    pragmas: Vec<Pragma>,
+    file: Option<&str>,
+) -> ParsedDisplayShift {
+    let brace_start = find_open_brace(tokens, i + 2).expect("the span found it");
+    let body_cmts = body_comments(comments, brace_start, brace_end);
+    ParsedDisplayShift {
+        params: extract_func_params(tokens, i + 2),
+        body: parse_body(
+            &tokens[brace_start + 1..brace_end],
+            &tok_lines[brace_start + 1..brace_end],
+            &body_cmts,
+            file,
+        ),
+        pragmas,
+    }
+}
+
+/// A display-shift (`true`) or lookback (`false`) definition starting at token
+/// `i`, with the index of its closing brace.
+fn int_query_at(tokens: &[Token], i: usize) -> Option<(bool, usize)> {
+    int_query_span(tokens, i, "_display_shift")
+        .map(|end| (true, end))
+        .or_else(|| lookback_span(tokens, i).map(|end| (false, end)))
+}
+
+/// An `int <name><suffix>(...) {...}` definition starting at token `i`, returning
+/// the index of its closing brace.
+fn int_query_span(tokens: &[Token], i: usize, suffix: &str) -> Option<usize> {
+    if !matches!(&tokens[i], Token::Ident(s) if s == "int") {
+        return None;
+    }
+    let Some(Token::Ident(name)) = tokens.get(i + 1) else {
+        return None;
+    };
+    if !name.ends_with(suffix) {
+        return None;
+    }
+    find_matching_brace(tokens, find_open_brace(tokens, i + 2)?)
 }
 
 /// A lookback definition starting at token `i` — `int TA_XXX_Lookback(...) {...}`

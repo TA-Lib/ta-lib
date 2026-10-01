@@ -63,6 +63,13 @@ TA_LIB_API int TA_CDLGAPSIDESIDEWHITE_Lookback( void )
    return max(Near_avgPeriod,Equal_avgPeriod) + 2;
 }
 
+TA_LIB_API int TA_CDLGAPSIDESIDEWHITE_DisplayShift( int outputIdx )
+{
+   if( outputIdx < 0 || outputIdx >= 1 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_LIB_API TA_RetCode TA_CDLGAPSIDESIDEWHITE( int    startIdx,
                                               int    endIdx,
                                               const double inOpen[],

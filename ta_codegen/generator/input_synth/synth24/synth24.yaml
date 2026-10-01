@@ -1,0 +1,25 @@
+name: SYNTH24
+group: Math Operators
+hint: Synthetic gate function 24 - a display shift that differs per output (never shipped)
+flags: [stream]
+inputs:
+  - name: inReal
+    type: real
+optional_inputs:
+  - name: optInTimePeriod
+    type: integer
+    display_name: Time Period
+    hint: Time period
+    range: [1, 100000]
+    default: 30
+    suggested: [1, 200, 1]
+outputs:
+  - name: outOwnBar
+    type: real
+    flags: [line]
+  - name: outAhead
+    type: real
+    flags: [line, display_shift]
+  - name: outBehind
+    type: real
+    flags: [line, display_shift]

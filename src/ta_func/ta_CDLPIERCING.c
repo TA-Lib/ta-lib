@@ -62,6 +62,13 @@ TA_LIB_API int TA_CDLPIERCING_Lookback( void )
    return BodyLong_avgPeriod + 1;
 }
 
+TA_LIB_API int TA_CDLPIERCING_DisplayShift( int outputIdx )
+{
+   if( outputIdx < 0 || outputIdx >= 1 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_CDLPIERCING( int    startIdx,
                                       int    endIdx,

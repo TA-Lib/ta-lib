@@ -60,8 +60,8 @@ import io.github.talib.OutRange;
  * }</pre>
  *
  * <p>Everything is validated against the {@link FuncInfo} row: an index out
- * of bounds, a type that does not match the declared parameter, or an unset
- * parameter at {@link #call} time throws {@link IllegalArgumentException}. The
+ * of bounds, a type that does not match the declared parameter, or an unbound
+ * input or output at {@link #call} time throws {@link IllegalArgumentException}. The
  * call itself then behaves exactly like the typed method — including throwing
  * on misuse and returning an empty {@link OutRange} when the range is shorter
  * than the lookback.
@@ -270,6 +270,23 @@ public final class ParamHolder {
    public int lookback() {
       resolveUnsetOptInputs();
       return Dispatch.lookback(this);
+   }
+
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that computed
+    * it a chart draws one output, for the optional parameters bound so far.
+    *
+    * <p>The counterpart of C's {@code TA_GetDisplayShift}. It is 0 for an output
+    * without {@link OutputFlags#DISPLAY_SHIFT}, and describes the drawing only:
+    * the values are never shifted.
+    *
+    * @param outputIdx position of the output in the function's signature, from 0
+    * @return the display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *         out of range or the index names no output
+    */
+   public int displayShift(int outputIdx) {
+      resolveUnsetOptInputs();
+      return Dispatch.displayShift(this, outputIdx);
    }
 
    /**

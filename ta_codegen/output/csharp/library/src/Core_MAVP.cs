@@ -107,6 +107,34 @@ public partial class Core
       return MaLookback(optInMaxPeriod, optInMAType) ;
 
    }
+   /// <summary>
+   /// How many bars ahead (positive) or behind (negative) of the bar that
+   /// computed it a chart draws one output of <c>Mavp</c>.
+   /// </summary>
+   /// <remarks>
+   /// Every output of this function is drawn at its own bar, so the answer is 0.
+   /// </remarks>
+   /// <param name="optInMinPeriod">Lower clamp for the per-bar period (default 2; range 1..10000;
+   /// <c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInMaxPeriod">Upper clamp for the per-bar period (default 30; range 1..10000;
+   /// <c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInMAType">Moving-average type applied (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA,
+   /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
+   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA; <c>MAType.DEFAULT</c> (or
+   /// <c>(MAType)int.MinValue</c>) selects the default).</param>
+   /// <param name="outputIdx">Position of the output in the batch signature, from 0.</param>
+   /// <returns>The display shift, or <c>int.MinValue</c> if a parameter is out of range
+   /// or the index names no output.</returns>
+   public int MavpDisplayShift( int optInMinPeriod, int optInMaxPeriod, MAType optInMAType, int outputIdx )
+   {
+      if( MavpLookback( optInMinPeriod, optInMaxPeriod, optInMAType ) < 0 ) {
+         return int.MinValue;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return int.MinValue;
+      }
+      return 0;
+   }
    internal RetCode MavpImpl( int startIdx,
                               int endIdx,
                               ReadOnlySpan<double> inReal,

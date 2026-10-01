@@ -95,6 +95,32 @@ public partial class Core
       return AoLookback(optInFastPeriod, optInSlowPeriod) + SmaLookback(optInSignalPeriod) ;
 
    }
+   /// <summary>
+   /// How many bars ahead (positive) or behind (negative) of the bar that
+   /// computed it a chart draws one output of <c>Ac</c>.
+   /// </summary>
+   /// <remarks>
+   /// Every output of this function is drawn at its own bar, so the answer is 0.
+   /// </remarks>
+   /// <param name="optInFastPeriod">Number of bars in the short moving average of the median price (default 5;
+   /// range 2..100000; <c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInSlowPeriod">Number of bars in the long moving average of the median price (default 34;
+   /// range 2..100000; <c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInSignalPeriod">Number of bars in the moving average taken over the oscillator (default 5;
+   /// range 2..100000; <c>int.MinValue</c> selects the default).</param>
+   /// <param name="outputIdx">Position of the output in the batch signature, from 0.</param>
+   /// <returns>The display shift, or <c>int.MinValue</c> if a parameter is out of range
+   /// or the index names no output.</returns>
+   public int AcDisplayShift( int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, int outputIdx )
+   {
+      if( AcLookback( optInFastPeriod, optInSlowPeriod, optInSignalPeriod ) < 0 ) {
+         return int.MinValue;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return int.MinValue;
+      }
+      return 0;
+   }
    internal RetCode AcImpl( int startIdx,
                             int endIdx,
                             ReadOnlySpan<double> inHigh,

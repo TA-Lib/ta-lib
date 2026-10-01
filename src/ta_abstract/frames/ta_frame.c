@@ -74,6 +74,10 @@ unsigned int TA_AC_FramePPLB( const TA_ParamHolderPriv *params )
                     params->optIn[1].data.optInInteger, /* optInSlowPeriod*/
                     params->optIn[2].data.optInInteger /* optInSignalPeriod*/ );
 }
+int TA_AC_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_AC_DisplayShift( params->optIn[0].data.optInInteger, params->optIn[1].data.optInInteger, params->optIn[2].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_ACCBANDS_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -98,6 +102,10 @@ unsigned int TA_ACCBANDS_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_ACCBANDS_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
 }
+int TA_ACCBANDS_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_ACCBANDS_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_ACOS_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -117,6 +125,11 @@ unsigned int TA_ACOS_FramePPLB( const TA_ParamHolderPriv *params )
 {
    (void)params;
    return TA_ACOS_Lookback( );
+}
+int TA_ACOS_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_ACOS_DisplayShift( outputIdx );
 }
 TA_RetCode TA_AD_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -141,6 +154,11 @@ unsigned int TA_AD_FramePPLB( const TA_ParamHolderPriv *params )
    (void)params;
    return TA_AD_Lookback( );
 }
+int TA_AD_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_AD_DisplayShift( outputIdx );
+}
 TA_RetCode TA_ADD_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -161,6 +179,11 @@ unsigned int TA_ADD_FramePPLB( const TA_ParamHolderPriv *params )
 {
    (void)params;
    return TA_ADD_Lookback( );
+}
+int TA_ADD_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_ADD_DisplayShift( outputIdx );
 }
 TA_RetCode TA_ADOSC_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -187,6 +210,10 @@ unsigned int TA_ADOSC_FramePPLB( const TA_ParamHolderPriv *params )
    return TA_ADOSC_Lookback(params->optIn[0].data.optInInteger, /* optInFastPeriod*/
                     params->optIn[1].data.optInInteger /* optInSlowPeriod*/ );
 }
+int TA_ADOSC_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_ADOSC_DisplayShift( params->optIn[0].data.optInInteger, params->optIn[1].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_ADR_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -207,6 +234,10 @@ TA_RetCode TA_ADR_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_ADR_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_ADR_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
+}
+int TA_ADR_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_ADR_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
 }
 TA_RetCode TA_ADX_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -230,6 +261,10 @@ unsigned int TA_ADX_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_ADX_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
 }
+int TA_ADX_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_ADX_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_ADXR_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -251,6 +286,10 @@ TA_RetCode TA_ADXR_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_ADXR_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_ADXR_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
+}
+int TA_ADXR_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_ADXR_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
 }
 TA_RetCode TA_ALMA_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -276,6 +315,10 @@ unsigned int TA_ALMA_FramePPLB( const TA_ParamHolderPriv *params )
                     params->optIn[1].data.optInReal, /* optInSigma*/
                     params->optIn[2].data.optInReal /* optInOffset*/ );
 }
+int TA_ALMA_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_ALMA_DisplayShift( params->optIn[0].data.optInInteger, params->optIn[1].data.optInReal, params->optIn[2].data.optInReal, outputIdx );
+}
 TA_RetCode TA_AO_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -298,6 +341,10 @@ unsigned int TA_AO_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_AO_Lookback(params->optIn[0].data.optInInteger, /* optInFastPeriod*/
                     params->optIn[1].data.optInInteger /* optInSlowPeriod*/ );
+}
+int TA_AO_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_AO_DisplayShift( params->optIn[0].data.optInInteger, params->optIn[1].data.optInInteger, outputIdx );
 }
 TA_RetCode TA_APO_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -323,6 +370,10 @@ unsigned int TA_APO_FramePPLB( const TA_ParamHolderPriv *params )
                     params->optIn[1].data.optInInteger, /* optInSlowPeriod*/
                     (TA_MAType)params->optIn[2].data.optInInteger /* optInMAType*/ );
 }
+int TA_APO_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_APO_DisplayShift( params->optIn[0].data.optInInteger, params->optIn[1].data.optInInteger, (TA_MAType)params->optIn[2].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_AROON_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -345,6 +396,10 @@ unsigned int TA_AROON_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_AROON_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
 }
+int TA_AROON_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_AROON_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_AROONOSC_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -365,6 +420,10 @@ TA_RetCode TA_AROONOSC_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_AROONOSC_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_AROONOSC_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
+}
+int TA_AROONOSC_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_AROONOSC_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
 }
 TA_RetCode TA_ASI_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -389,6 +448,10 @@ unsigned int TA_ASI_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_ASI_Lookback(params->optIn[0].data.optInReal /* optInLimitMove*/ );
 }
+int TA_ASI_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_ASI_DisplayShift( params->optIn[0].data.optInReal, outputIdx );
+}
 TA_RetCode TA_ASIN_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -409,6 +472,11 @@ unsigned int TA_ASIN_FramePPLB( const TA_ParamHolderPriv *params )
    (void)params;
    return TA_ASIN_Lookback( );
 }
+int TA_ASIN_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_ASIN_DisplayShift( outputIdx );
+}
 TA_RetCode TA_ATAN_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -428,6 +496,11 @@ unsigned int TA_ATAN_FramePPLB( const TA_ParamHolderPriv *params )
 {
    (void)params;
    return TA_ATAN_Lookback( );
+}
+int TA_ATAN_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_ATAN_DisplayShift( outputIdx );
 }
 TA_RetCode TA_ATR_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -451,6 +524,10 @@ unsigned int TA_ATR_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_ATR_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
 }
+int TA_ATR_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_ATR_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_AVGDEV_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -470,6 +547,10 @@ TA_RetCode TA_AVGDEV_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_AVGDEV_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_AVGDEV_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
+}
+int TA_AVGDEV_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_AVGDEV_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
 }
 TA_RetCode TA_AVGPRICE_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -493,6 +574,11 @@ unsigned int TA_AVGPRICE_FramePPLB( const TA_ParamHolderPriv *params )
 {
    (void)params;
    return TA_AVGPRICE_Lookback( );
+}
+int TA_AVGPRICE_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_AVGPRICE_DisplayShift( outputIdx );
 }
 TA_RetCode TA_BBANDS_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -522,6 +608,10 @@ unsigned int TA_BBANDS_FramePPLB( const TA_ParamHolderPriv *params )
                     params->optIn[2].data.optInReal, /* optInNbDevDn*/
                     (TA_MAType)params->optIn[3].data.optInInteger /* optInMAType*/ );
 }
+int TA_BBANDS_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_BBANDS_DisplayShift( params->optIn[0].data.optInInteger, params->optIn[1].data.optInReal, params->optIn[2].data.optInReal, (TA_MAType)params->optIn[3].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_BBW_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -548,6 +638,10 @@ unsigned int TA_BBW_FramePPLB( const TA_ParamHolderPriv *params )
                     params->optIn[2].data.optInReal, /* optInNbDevDn*/
                     (TA_MAType)params->optIn[3].data.optInInteger /* optInMAType*/ );
 }
+int TA_BBW_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_BBW_DisplayShift( params->optIn[0].data.optInInteger, params->optIn[1].data.optInReal, params->optIn[2].data.optInReal, (TA_MAType)params->optIn[3].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_BETA_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -568,6 +662,10 @@ TA_RetCode TA_BETA_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_BETA_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_BETA_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
+}
+int TA_BETA_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_BETA_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
 }
 TA_RetCode TA_BOP_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -592,6 +690,11 @@ unsigned int TA_BOP_FramePPLB( const TA_ParamHolderPriv *params )
    (void)params;
    return TA_BOP_Lookback( );
 }
+int TA_BOP_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_BOP_DisplayShift( outputIdx );
+}
 TA_RetCode TA_CCI_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -613,6 +716,10 @@ TA_RetCode TA_CCI_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_CCI_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_CCI_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
+}
+int TA_CCI_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_CCI_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
 }
 TA_RetCode TA_CDL2CROWS_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -637,6 +744,11 @@ unsigned int TA_CDL2CROWS_FramePPLB( const TA_ParamHolderPriv *params )
    (void)params;
    return TA_CDL2CROWS_Lookback( );
 }
+int TA_CDL2CROWS_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_CDL2CROWS_DisplayShift( outputIdx );
+}
 TA_RetCode TA_CDL3BLACKCROWS_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -659,6 +771,11 @@ unsigned int TA_CDL3BLACKCROWS_FramePPLB( const TA_ParamHolderPriv *params )
 {
    (void)params;
    return TA_CDL3BLACKCROWS_Lookback( );
+}
+int TA_CDL3BLACKCROWS_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_CDL3BLACKCROWS_DisplayShift( outputIdx );
 }
 TA_RetCode TA_CDL3INSIDE_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -683,6 +800,11 @@ unsigned int TA_CDL3INSIDE_FramePPLB( const TA_ParamHolderPriv *params )
    (void)params;
    return TA_CDL3INSIDE_Lookback( );
 }
+int TA_CDL3INSIDE_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_CDL3INSIDE_DisplayShift( outputIdx );
+}
 TA_RetCode TA_CDL3LINESTRIKE_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -705,6 +827,11 @@ unsigned int TA_CDL3LINESTRIKE_FramePPLB( const TA_ParamHolderPriv *params )
 {
    (void)params;
    return TA_CDL3LINESTRIKE_Lookback( );
+}
+int TA_CDL3LINESTRIKE_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_CDL3LINESTRIKE_DisplayShift( outputIdx );
 }
 TA_RetCode TA_CDL3OUTSIDE_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -729,6 +856,11 @@ unsigned int TA_CDL3OUTSIDE_FramePPLB( const TA_ParamHolderPriv *params )
    (void)params;
    return TA_CDL3OUTSIDE_Lookback( );
 }
+int TA_CDL3OUTSIDE_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_CDL3OUTSIDE_DisplayShift( outputIdx );
+}
 TA_RetCode TA_CDL3STARSINSOUTH_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -751,6 +883,11 @@ unsigned int TA_CDL3STARSINSOUTH_FramePPLB( const TA_ParamHolderPriv *params )
 {
    (void)params;
    return TA_CDL3STARSINSOUTH_Lookback( );
+}
+int TA_CDL3STARSINSOUTH_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_CDL3STARSINSOUTH_DisplayShift( outputIdx );
 }
 TA_RetCode TA_CDL3WHITESOLDIERS_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -775,6 +912,11 @@ unsigned int TA_CDL3WHITESOLDIERS_FramePPLB( const TA_ParamHolderPriv *params )
    (void)params;
    return TA_CDL3WHITESOLDIERS_Lookback( );
 }
+int TA_CDL3WHITESOLDIERS_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_CDL3WHITESOLDIERS_DisplayShift( outputIdx );
+}
 TA_RetCode TA_CDLABANDONEDBABY_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -797,6 +939,10 @@ TA_RetCode TA_CDLABANDONEDBABY_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_CDLABANDONEDBABY_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_CDLABANDONEDBABY_Lookback(params->optIn[0].data.optInReal /* optInPenetration*/ );
+}
+int TA_CDLABANDONEDBABY_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_CDLABANDONEDBABY_DisplayShift( params->optIn[0].data.optInReal, outputIdx );
 }
 TA_RetCode TA_CDLADVANCEBLOCK_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -821,6 +967,11 @@ unsigned int TA_CDLADVANCEBLOCK_FramePPLB( const TA_ParamHolderPriv *params )
    (void)params;
    return TA_CDLADVANCEBLOCK_Lookback( );
 }
+int TA_CDLADVANCEBLOCK_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_CDLADVANCEBLOCK_DisplayShift( outputIdx );
+}
 TA_RetCode TA_CDLBELTHOLD_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -843,6 +994,11 @@ unsigned int TA_CDLBELTHOLD_FramePPLB( const TA_ParamHolderPriv *params )
 {
    (void)params;
    return TA_CDLBELTHOLD_Lookback( );
+}
+int TA_CDLBELTHOLD_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_CDLBELTHOLD_DisplayShift( outputIdx );
 }
 TA_RetCode TA_CDLBREAKAWAY_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -867,6 +1023,11 @@ unsigned int TA_CDLBREAKAWAY_FramePPLB( const TA_ParamHolderPriv *params )
    (void)params;
    return TA_CDLBREAKAWAY_Lookback( );
 }
+int TA_CDLBREAKAWAY_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_CDLBREAKAWAY_DisplayShift( outputIdx );
+}
 TA_RetCode TA_CDLCLOSINGMARUBOZU_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -889,6 +1050,11 @@ unsigned int TA_CDLCLOSINGMARUBOZU_FramePPLB( const TA_ParamHolderPriv *params )
 {
    (void)params;
    return TA_CDLCLOSINGMARUBOZU_Lookback( );
+}
+int TA_CDLCLOSINGMARUBOZU_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_CDLCLOSINGMARUBOZU_DisplayShift( outputIdx );
 }
 TA_RetCode TA_CDLCONCEALBABYSWALL_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -913,6 +1079,11 @@ unsigned int TA_CDLCONCEALBABYSWALL_FramePPLB( const TA_ParamHolderPriv *params 
    (void)params;
    return TA_CDLCONCEALBABYSWALL_Lookback( );
 }
+int TA_CDLCONCEALBABYSWALL_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_CDLCONCEALBABYSWALL_DisplayShift( outputIdx );
+}
 TA_RetCode TA_CDLCOUNTERATTACK_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -935,6 +1106,11 @@ unsigned int TA_CDLCOUNTERATTACK_FramePPLB( const TA_ParamHolderPriv *params )
 {
    (void)params;
    return TA_CDLCOUNTERATTACK_Lookback( );
+}
+int TA_CDLCOUNTERATTACK_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_CDLCOUNTERATTACK_DisplayShift( outputIdx );
 }
 TA_RetCode TA_CDLDARKCLOUDCOVER_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -959,6 +1135,10 @@ unsigned int TA_CDLDARKCLOUDCOVER_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_CDLDARKCLOUDCOVER_Lookback(params->optIn[0].data.optInReal /* optInPenetration*/ );
 }
+int TA_CDLDARKCLOUDCOVER_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_CDLDARKCLOUDCOVER_DisplayShift( params->optIn[0].data.optInReal, outputIdx );
+}
 TA_RetCode TA_CDLDOJI_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -981,6 +1161,11 @@ unsigned int TA_CDLDOJI_FramePPLB( const TA_ParamHolderPriv *params )
 {
    (void)params;
    return TA_CDLDOJI_Lookback( );
+}
+int TA_CDLDOJI_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_CDLDOJI_DisplayShift( outputIdx );
 }
 TA_RetCode TA_CDLDOJISTAR_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -1005,6 +1190,11 @@ unsigned int TA_CDLDOJISTAR_FramePPLB( const TA_ParamHolderPriv *params )
    (void)params;
    return TA_CDLDOJISTAR_Lookback( );
 }
+int TA_CDLDOJISTAR_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_CDLDOJISTAR_DisplayShift( outputIdx );
+}
 TA_RetCode TA_CDLDRAGONFLYDOJI_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -1027,6 +1217,11 @@ unsigned int TA_CDLDRAGONFLYDOJI_FramePPLB( const TA_ParamHolderPriv *params )
 {
    (void)params;
    return TA_CDLDRAGONFLYDOJI_Lookback( );
+}
+int TA_CDLDRAGONFLYDOJI_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_CDLDRAGONFLYDOJI_DisplayShift( outputIdx );
 }
 TA_RetCode TA_CDLENGULFING_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -1051,6 +1246,11 @@ unsigned int TA_CDLENGULFING_FramePPLB( const TA_ParamHolderPriv *params )
    (void)params;
    return TA_CDLENGULFING_Lookback( );
 }
+int TA_CDLENGULFING_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_CDLENGULFING_DisplayShift( outputIdx );
+}
 TA_RetCode TA_CDLEVENINGDOJISTAR_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -1073,6 +1273,10 @@ TA_RetCode TA_CDLEVENINGDOJISTAR_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_CDLEVENINGDOJISTAR_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_CDLEVENINGDOJISTAR_Lookback(params->optIn[0].data.optInReal /* optInPenetration*/ );
+}
+int TA_CDLEVENINGDOJISTAR_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_CDLEVENINGDOJISTAR_DisplayShift( params->optIn[0].data.optInReal, outputIdx );
 }
 TA_RetCode TA_CDLEVENINGSTAR_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -1097,6 +1301,10 @@ unsigned int TA_CDLEVENINGSTAR_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_CDLEVENINGSTAR_Lookback(params->optIn[0].data.optInReal /* optInPenetration*/ );
 }
+int TA_CDLEVENINGSTAR_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_CDLEVENINGSTAR_DisplayShift( params->optIn[0].data.optInReal, outputIdx );
+}
 TA_RetCode TA_CDLGAPSIDESIDEWHITE_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -1119,6 +1327,11 @@ unsigned int TA_CDLGAPSIDESIDEWHITE_FramePPLB( const TA_ParamHolderPriv *params 
 {
    (void)params;
    return TA_CDLGAPSIDESIDEWHITE_Lookback( );
+}
+int TA_CDLGAPSIDESIDEWHITE_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_CDLGAPSIDESIDEWHITE_DisplayShift( outputIdx );
 }
 TA_RetCode TA_CDLGRAVESTONEDOJI_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -1143,6 +1356,11 @@ unsigned int TA_CDLGRAVESTONEDOJI_FramePPLB( const TA_ParamHolderPriv *params )
    (void)params;
    return TA_CDLGRAVESTONEDOJI_Lookback( );
 }
+int TA_CDLGRAVESTONEDOJI_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_CDLGRAVESTONEDOJI_DisplayShift( outputIdx );
+}
 TA_RetCode TA_CDLHAMMER_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -1165,6 +1383,11 @@ unsigned int TA_CDLHAMMER_FramePPLB( const TA_ParamHolderPriv *params )
 {
    (void)params;
    return TA_CDLHAMMER_Lookback( );
+}
+int TA_CDLHAMMER_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_CDLHAMMER_DisplayShift( outputIdx );
 }
 TA_RetCode TA_CDLHANGINGMAN_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -1189,6 +1412,11 @@ unsigned int TA_CDLHANGINGMAN_FramePPLB( const TA_ParamHolderPriv *params )
    (void)params;
    return TA_CDLHANGINGMAN_Lookback( );
 }
+int TA_CDLHANGINGMAN_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_CDLHANGINGMAN_DisplayShift( outputIdx );
+}
 TA_RetCode TA_CDLHARAMI_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -1211,6 +1439,11 @@ unsigned int TA_CDLHARAMI_FramePPLB( const TA_ParamHolderPriv *params )
 {
    (void)params;
    return TA_CDLHARAMI_Lookback( );
+}
+int TA_CDLHARAMI_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_CDLHARAMI_DisplayShift( outputIdx );
 }
 TA_RetCode TA_CDLHARAMICROSS_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -1235,6 +1468,11 @@ unsigned int TA_CDLHARAMICROSS_FramePPLB( const TA_ParamHolderPriv *params )
    (void)params;
    return TA_CDLHARAMICROSS_Lookback( );
 }
+int TA_CDLHARAMICROSS_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_CDLHARAMICROSS_DisplayShift( outputIdx );
+}
 TA_RetCode TA_CDLHIGHWAVE_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -1257,6 +1495,11 @@ unsigned int TA_CDLHIGHWAVE_FramePPLB( const TA_ParamHolderPriv *params )
 {
    (void)params;
    return TA_CDLHIGHWAVE_Lookback( );
+}
+int TA_CDLHIGHWAVE_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_CDLHIGHWAVE_DisplayShift( outputIdx );
 }
 TA_RetCode TA_CDLHIKKAKE_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -1281,6 +1524,11 @@ unsigned int TA_CDLHIKKAKE_FramePPLB( const TA_ParamHolderPriv *params )
    (void)params;
    return TA_CDLHIKKAKE_Lookback( );
 }
+int TA_CDLHIKKAKE_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_CDLHIKKAKE_DisplayShift( outputIdx );
+}
 TA_RetCode TA_CDLHIKKAKEMOD_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -1303,6 +1551,11 @@ unsigned int TA_CDLHIKKAKEMOD_FramePPLB( const TA_ParamHolderPriv *params )
 {
    (void)params;
    return TA_CDLHIKKAKEMOD_Lookback( );
+}
+int TA_CDLHIKKAKEMOD_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_CDLHIKKAKEMOD_DisplayShift( outputIdx );
 }
 TA_RetCode TA_CDLHOMINGPIGEON_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -1327,6 +1580,11 @@ unsigned int TA_CDLHOMINGPIGEON_FramePPLB( const TA_ParamHolderPriv *params )
    (void)params;
    return TA_CDLHOMINGPIGEON_Lookback( );
 }
+int TA_CDLHOMINGPIGEON_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_CDLHOMINGPIGEON_DisplayShift( outputIdx );
+}
 TA_RetCode TA_CDLIDENTICAL3CROWS_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -1349,6 +1607,11 @@ unsigned int TA_CDLIDENTICAL3CROWS_FramePPLB( const TA_ParamHolderPriv *params )
 {
    (void)params;
    return TA_CDLIDENTICAL3CROWS_Lookback( );
+}
+int TA_CDLIDENTICAL3CROWS_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_CDLIDENTICAL3CROWS_DisplayShift( outputIdx );
 }
 TA_RetCode TA_CDLINNECK_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -1373,6 +1636,11 @@ unsigned int TA_CDLINNECK_FramePPLB( const TA_ParamHolderPriv *params )
    (void)params;
    return TA_CDLINNECK_Lookback( );
 }
+int TA_CDLINNECK_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_CDLINNECK_DisplayShift( outputIdx );
+}
 TA_RetCode TA_CDLINVERTEDHAMMER_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -1395,6 +1663,11 @@ unsigned int TA_CDLINVERTEDHAMMER_FramePPLB( const TA_ParamHolderPriv *params )
 {
    (void)params;
    return TA_CDLINVERTEDHAMMER_Lookback( );
+}
+int TA_CDLINVERTEDHAMMER_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_CDLINVERTEDHAMMER_DisplayShift( outputIdx );
 }
 TA_RetCode TA_CDLKICKING_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -1419,6 +1692,11 @@ unsigned int TA_CDLKICKING_FramePPLB( const TA_ParamHolderPriv *params )
    (void)params;
    return TA_CDLKICKING_Lookback( );
 }
+int TA_CDLKICKING_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_CDLKICKING_DisplayShift( outputIdx );
+}
 TA_RetCode TA_CDLKICKINGBYLENGTH_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -1441,6 +1719,11 @@ unsigned int TA_CDLKICKINGBYLENGTH_FramePPLB( const TA_ParamHolderPriv *params )
 {
    (void)params;
    return TA_CDLKICKINGBYLENGTH_Lookback( );
+}
+int TA_CDLKICKINGBYLENGTH_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_CDLKICKINGBYLENGTH_DisplayShift( outputIdx );
 }
 TA_RetCode TA_CDLLADDERBOTTOM_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -1465,6 +1748,11 @@ unsigned int TA_CDLLADDERBOTTOM_FramePPLB( const TA_ParamHolderPriv *params )
    (void)params;
    return TA_CDLLADDERBOTTOM_Lookback( );
 }
+int TA_CDLLADDERBOTTOM_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_CDLLADDERBOTTOM_DisplayShift( outputIdx );
+}
 TA_RetCode TA_CDLLONGLEGGEDDOJI_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -1487,6 +1775,11 @@ unsigned int TA_CDLLONGLEGGEDDOJI_FramePPLB( const TA_ParamHolderPriv *params )
 {
    (void)params;
    return TA_CDLLONGLEGGEDDOJI_Lookback( );
+}
+int TA_CDLLONGLEGGEDDOJI_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_CDLLONGLEGGEDDOJI_DisplayShift( outputIdx );
 }
 TA_RetCode TA_CDLLONGLINE_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -1511,6 +1804,11 @@ unsigned int TA_CDLLONGLINE_FramePPLB( const TA_ParamHolderPriv *params )
    (void)params;
    return TA_CDLLONGLINE_Lookback( );
 }
+int TA_CDLLONGLINE_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_CDLLONGLINE_DisplayShift( outputIdx );
+}
 TA_RetCode TA_CDLMARUBOZU_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -1533,6 +1831,11 @@ unsigned int TA_CDLMARUBOZU_FramePPLB( const TA_ParamHolderPriv *params )
 {
    (void)params;
    return TA_CDLMARUBOZU_Lookback( );
+}
+int TA_CDLMARUBOZU_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_CDLMARUBOZU_DisplayShift( outputIdx );
 }
 TA_RetCode TA_CDLMATCHINGLOW_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -1557,6 +1860,11 @@ unsigned int TA_CDLMATCHINGLOW_FramePPLB( const TA_ParamHolderPriv *params )
    (void)params;
    return TA_CDLMATCHINGLOW_Lookback( );
 }
+int TA_CDLMATCHINGLOW_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_CDLMATCHINGLOW_DisplayShift( outputIdx );
+}
 TA_RetCode TA_CDLMATHOLD_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -1579,6 +1887,10 @@ TA_RetCode TA_CDLMATHOLD_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_CDLMATHOLD_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_CDLMATHOLD_Lookback(params->optIn[0].data.optInReal /* optInPenetration*/ );
+}
+int TA_CDLMATHOLD_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_CDLMATHOLD_DisplayShift( params->optIn[0].data.optInReal, outputIdx );
 }
 TA_RetCode TA_CDLMORNINGDOJISTAR_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -1603,6 +1915,10 @@ unsigned int TA_CDLMORNINGDOJISTAR_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_CDLMORNINGDOJISTAR_Lookback(params->optIn[0].data.optInReal /* optInPenetration*/ );
 }
+int TA_CDLMORNINGDOJISTAR_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_CDLMORNINGDOJISTAR_DisplayShift( params->optIn[0].data.optInReal, outputIdx );
+}
 TA_RetCode TA_CDLMORNINGSTAR_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -1625,6 +1941,10 @@ TA_RetCode TA_CDLMORNINGSTAR_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_CDLMORNINGSTAR_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_CDLMORNINGSTAR_Lookback(params->optIn[0].data.optInReal /* optInPenetration*/ );
+}
+int TA_CDLMORNINGSTAR_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_CDLMORNINGSTAR_DisplayShift( params->optIn[0].data.optInReal, outputIdx );
 }
 TA_RetCode TA_CDLONNECK_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -1649,6 +1969,11 @@ unsigned int TA_CDLONNECK_FramePPLB( const TA_ParamHolderPriv *params )
    (void)params;
    return TA_CDLONNECK_Lookback( );
 }
+int TA_CDLONNECK_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_CDLONNECK_DisplayShift( outputIdx );
+}
 TA_RetCode TA_CDLPIERCING_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -1671,6 +1996,11 @@ unsigned int TA_CDLPIERCING_FramePPLB( const TA_ParamHolderPriv *params )
 {
    (void)params;
    return TA_CDLPIERCING_Lookback( );
+}
+int TA_CDLPIERCING_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_CDLPIERCING_DisplayShift( outputIdx );
 }
 TA_RetCode TA_CDLRICKSHAWMAN_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -1695,6 +2025,11 @@ unsigned int TA_CDLRICKSHAWMAN_FramePPLB( const TA_ParamHolderPriv *params )
    (void)params;
    return TA_CDLRICKSHAWMAN_Lookback( );
 }
+int TA_CDLRICKSHAWMAN_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_CDLRICKSHAWMAN_DisplayShift( outputIdx );
+}
 TA_RetCode TA_CDLRISEFALL3METHODS_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -1717,6 +2052,11 @@ unsigned int TA_CDLRISEFALL3METHODS_FramePPLB( const TA_ParamHolderPriv *params 
 {
    (void)params;
    return TA_CDLRISEFALL3METHODS_Lookback( );
+}
+int TA_CDLRISEFALL3METHODS_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_CDLRISEFALL3METHODS_DisplayShift( outputIdx );
 }
 TA_RetCode TA_CDLSEPARATINGLINES_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -1741,6 +2081,11 @@ unsigned int TA_CDLSEPARATINGLINES_FramePPLB( const TA_ParamHolderPriv *params )
    (void)params;
    return TA_CDLSEPARATINGLINES_Lookback( );
 }
+int TA_CDLSEPARATINGLINES_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_CDLSEPARATINGLINES_DisplayShift( outputIdx );
+}
 TA_RetCode TA_CDLSHOOTINGSTAR_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -1763,6 +2108,11 @@ unsigned int TA_CDLSHOOTINGSTAR_FramePPLB( const TA_ParamHolderPriv *params )
 {
    (void)params;
    return TA_CDLSHOOTINGSTAR_Lookback( );
+}
+int TA_CDLSHOOTINGSTAR_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_CDLSHOOTINGSTAR_DisplayShift( outputIdx );
 }
 TA_RetCode TA_CDLSHORTLINE_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -1787,6 +2137,11 @@ unsigned int TA_CDLSHORTLINE_FramePPLB( const TA_ParamHolderPriv *params )
    (void)params;
    return TA_CDLSHORTLINE_Lookback( );
 }
+int TA_CDLSHORTLINE_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_CDLSHORTLINE_DisplayShift( outputIdx );
+}
 TA_RetCode TA_CDLSPINNINGTOP_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -1809,6 +2164,11 @@ unsigned int TA_CDLSPINNINGTOP_FramePPLB( const TA_ParamHolderPriv *params )
 {
    (void)params;
    return TA_CDLSPINNINGTOP_Lookback( );
+}
+int TA_CDLSPINNINGTOP_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_CDLSPINNINGTOP_DisplayShift( outputIdx );
 }
 TA_RetCode TA_CDLSTALLEDPATTERN_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -1833,6 +2193,11 @@ unsigned int TA_CDLSTALLEDPATTERN_FramePPLB( const TA_ParamHolderPriv *params )
    (void)params;
    return TA_CDLSTALLEDPATTERN_Lookback( );
 }
+int TA_CDLSTALLEDPATTERN_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_CDLSTALLEDPATTERN_DisplayShift( outputIdx );
+}
 TA_RetCode TA_CDLSTICKSANDWICH_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -1855,6 +2220,11 @@ unsigned int TA_CDLSTICKSANDWICH_FramePPLB( const TA_ParamHolderPriv *params )
 {
    (void)params;
    return TA_CDLSTICKSANDWICH_Lookback( );
+}
+int TA_CDLSTICKSANDWICH_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_CDLSTICKSANDWICH_DisplayShift( outputIdx );
 }
 TA_RetCode TA_CDLTAKURI_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -1879,6 +2249,11 @@ unsigned int TA_CDLTAKURI_FramePPLB( const TA_ParamHolderPriv *params )
    (void)params;
    return TA_CDLTAKURI_Lookback( );
 }
+int TA_CDLTAKURI_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_CDLTAKURI_DisplayShift( outputIdx );
+}
 TA_RetCode TA_CDLTASUKIGAP_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -1901,6 +2276,11 @@ unsigned int TA_CDLTASUKIGAP_FramePPLB( const TA_ParamHolderPriv *params )
 {
    (void)params;
    return TA_CDLTASUKIGAP_Lookback( );
+}
+int TA_CDLTASUKIGAP_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_CDLTASUKIGAP_DisplayShift( outputIdx );
 }
 TA_RetCode TA_CDLTHRUSTING_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -1925,6 +2305,11 @@ unsigned int TA_CDLTHRUSTING_FramePPLB( const TA_ParamHolderPriv *params )
    (void)params;
    return TA_CDLTHRUSTING_Lookback( );
 }
+int TA_CDLTHRUSTING_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_CDLTHRUSTING_DisplayShift( outputIdx );
+}
 TA_RetCode TA_CDLTRISTAR_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -1947,6 +2332,11 @@ unsigned int TA_CDLTRISTAR_FramePPLB( const TA_ParamHolderPriv *params )
 {
    (void)params;
    return TA_CDLTRISTAR_Lookback( );
+}
+int TA_CDLTRISTAR_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_CDLTRISTAR_DisplayShift( outputIdx );
 }
 TA_RetCode TA_CDLUNIQUE3RIVER_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -1971,6 +2361,11 @@ unsigned int TA_CDLUNIQUE3RIVER_FramePPLB( const TA_ParamHolderPriv *params )
    (void)params;
    return TA_CDLUNIQUE3RIVER_Lookback( );
 }
+int TA_CDLUNIQUE3RIVER_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_CDLUNIQUE3RIVER_DisplayShift( outputIdx );
+}
 TA_RetCode TA_CDLUPSIDEGAP2CROWS_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -1993,6 +2388,11 @@ unsigned int TA_CDLUPSIDEGAP2CROWS_FramePPLB( const TA_ParamHolderPriv *params )
 {
    (void)params;
    return TA_CDLUPSIDEGAP2CROWS_Lookback( );
+}
+int TA_CDLUPSIDEGAP2CROWS_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_CDLUPSIDEGAP2CROWS_DisplayShift( outputIdx );
 }
 TA_RetCode TA_CDLXSIDEGAP3METHODS_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -2017,6 +2417,11 @@ unsigned int TA_CDLXSIDEGAP3METHODS_FramePPLB( const TA_ParamHolderPriv *params 
    (void)params;
    return TA_CDLXSIDEGAP3METHODS_Lookback( );
 }
+int TA_CDLXSIDEGAP3METHODS_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_CDLXSIDEGAP3METHODS_DisplayShift( outputIdx );
+}
 TA_RetCode TA_CEIL_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -2037,6 +2442,11 @@ unsigned int TA_CEIL_FramePPLB( const TA_ParamHolderPriv *params )
    (void)params;
    return TA_CEIL_Lookback( );
 }
+int TA_CEIL_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_CEIL_DisplayShift( outputIdx );
+}
 TA_RetCode TA_CG_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -2056,6 +2466,10 @@ TA_RetCode TA_CG_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_CG_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_CG_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
+}
+int TA_CG_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_CG_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
 }
 TA_RetCode TA_CHOP_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -2079,6 +2493,10 @@ unsigned int TA_CHOP_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_CHOP_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
 }
+int TA_CHOP_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_CHOP_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_CHOPTR_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -2100,6 +2518,10 @@ TA_RetCode TA_CHOPTR_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_CHOPTR_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_CHOPTR_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
+}
+int TA_CHOPTR_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_CHOPTR_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
 }
 TA_RetCode TA_CKSP_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -2128,6 +2550,10 @@ unsigned int TA_CKSP_FramePPLB( const TA_ParamHolderPriv *params )
                     params->optIn[1].data.optInReal, /* optInMultiplier*/
                     params->optIn[2].data.optInInteger /* optInStopPeriod*/ );
 }
+int TA_CKSP_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_CKSP_DisplayShift( params->optIn[0].data.optInInteger, params->optIn[1].data.optInReal, params->optIn[2].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_CMF_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -2151,6 +2577,10 @@ unsigned int TA_CMF_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_CMF_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
 }
+int TA_CMF_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_CMF_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_CMO_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -2171,6 +2601,10 @@ unsigned int TA_CMO_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_CMO_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
 }
+int TA_CMO_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_CMO_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_CMOU_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -2190,6 +2624,10 @@ TA_RetCode TA_CMOU_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_CMOU_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_CMOU_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
+}
+int TA_CMOU_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_CMOU_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
 }
 TA_RetCode TA_COPPOCK_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -2215,6 +2653,10 @@ unsigned int TA_COPPOCK_FramePPLB( const TA_ParamHolderPriv *params )
                     params->optIn[1].data.optInInteger, /* optInROC1Period*/
                     params->optIn[2].data.optInInteger /* optInROC2Period*/ );
 }
+int TA_COPPOCK_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_COPPOCK_DisplayShift( params->optIn[0].data.optInInteger, params->optIn[1].data.optInInteger, params->optIn[2].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_CORREL_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -2236,6 +2678,10 @@ unsigned int TA_CORREL_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_CORREL_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
 }
+int TA_CORREL_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_CORREL_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_COS_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -2256,6 +2702,11 @@ unsigned int TA_COS_FramePPLB( const TA_ParamHolderPriv *params )
    (void)params;
    return TA_COS_Lookback( );
 }
+int TA_COS_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_COS_DisplayShift( outputIdx );
+}
 TA_RetCode TA_COSH_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -2275,6 +2726,11 @@ unsigned int TA_COSH_FramePPLB( const TA_ParamHolderPriv *params )
 {
    (void)params;
    return TA_COSH_Lookback( );
+}
+int TA_COSH_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_COSH_DisplayShift( outputIdx );
 }
 TA_RetCode TA_CRSI_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -2300,6 +2756,10 @@ unsigned int TA_CRSI_FramePPLB( const TA_ParamHolderPriv *params )
                     params->optIn[1].data.optInInteger, /* optInStreakPeriod*/
                     params->optIn[2].data.optInInteger /* optInRankPeriod*/ );
 }
+int TA_CRSI_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_CRSI_DisplayShift( params->optIn[0].data.optInInteger, params->optIn[1].data.optInInteger, params->optIn[2].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_CTI_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -2320,6 +2780,10 @@ unsigned int TA_CTI_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_CTI_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
 }
+int TA_CTI_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_CTI_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_CUMSUM_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -2339,6 +2803,11 @@ unsigned int TA_CUMSUM_FramePPLB( const TA_ParamHolderPriv *params )
 {
    (void)params;
    return TA_CUMSUM_Lookback( );
+}
+int TA_CUMSUM_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_CUMSUM_DisplayShift( outputIdx );
 }
 TA_RetCode TA_CVI_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -2363,6 +2832,10 @@ unsigned int TA_CVI_FramePPLB( const TA_ParamHolderPriv *params )
    return TA_CVI_Lookback(params->optIn[0].data.optInInteger, /* optInTimePeriod*/
                     params->optIn[1].data.optInInteger /* optInROCPeriod*/ );
 }
+int TA_CVI_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_CVI_DisplayShift( params->optIn[0].data.optInInteger, params->optIn[1].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_DEMA_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -2382,6 +2855,10 @@ TA_RetCode TA_DEMA_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_DEMA_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_DEMA_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
+}
+int TA_DEMA_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_DEMA_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
 }
 TA_RetCode TA_DIV_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -2403,6 +2880,11 @@ unsigned int TA_DIV_FramePPLB( const TA_ParamHolderPriv *params )
 {
    (void)params;
    return TA_DIV_Lookback( );
+}
+int TA_DIV_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_DIV_DisplayShift( outputIdx );
 }
 TA_RetCode TA_DONCHIAN_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -2427,6 +2909,10 @@ unsigned int TA_DONCHIAN_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_DONCHIAN_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
 }
+int TA_DONCHIAN_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_DONCHIAN_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_DPO_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -2446,6 +2932,10 @@ TA_RetCode TA_DPO_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_DPO_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_DPO_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
+}
+int TA_DPO_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_DPO_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
 }
 TA_RetCode TA_DX_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -2469,6 +2959,10 @@ unsigned int TA_DX_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_DX_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
 }
+int TA_DX_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_DX_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_EFI_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -2490,6 +2984,10 @@ unsigned int TA_EFI_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_EFI_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
 }
+int TA_EFI_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_EFI_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_EMA_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -2509,6 +3007,10 @@ TA_RetCode TA_EMA_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_EMA_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_EMA_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
+}
+int TA_EMA_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_EMA_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
 }
 TA_RetCode TA_EMV_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -2534,6 +3036,10 @@ unsigned int TA_EMV_FramePPLB( const TA_ParamHolderPriv *params )
    return TA_EMV_Lookback(params->optIn[0].data.optInInteger, /* optInTimePeriod*/
                     params->optIn[1].data.optInReal /* optInVolumeDivisor*/ );
 }
+int TA_EMV_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_EMV_DisplayShift( params->optIn[0].data.optInInteger, params->optIn[1].data.optInReal, outputIdx );
+}
 TA_RetCode TA_ER_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -2553,6 +3059,10 @@ TA_RetCode TA_ER_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_ER_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_ER_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
+}
+int TA_ER_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_ER_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
 }
 TA_RetCode TA_ERI_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -2577,6 +3087,10 @@ unsigned int TA_ERI_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_ERI_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
 }
+int TA_ERI_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_ERI_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_EXP_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -2596,6 +3110,11 @@ unsigned int TA_EXP_FramePPLB( const TA_ParamHolderPriv *params )
 {
    (void)params;
    return TA_EXP_Lookback( );
+}
+int TA_EXP_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_EXP_DisplayShift( outputIdx );
 }
 TA_RetCode TA_FLOOR_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -2617,6 +3136,11 @@ unsigned int TA_FLOOR_FramePPLB( const TA_ParamHolderPriv *params )
    (void)params;
    return TA_FLOOR_Lookback( );
 }
+int TA_FLOOR_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_FLOOR_DisplayShift( outputIdx );
+}
 TA_RetCode TA_FOSC_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -2636,6 +3160,10 @@ TA_RetCode TA_FOSC_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_FOSC_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_FOSC_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
+}
+int TA_FOSC_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_FOSC_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
 }
 TA_RetCode TA_FRACTAL_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -2661,6 +3189,10 @@ unsigned int TA_FRACTAL_FramePPLB( const TA_ParamHolderPriv *params )
    return TA_FRACTAL_Lookback(params->optIn[0].data.optInInteger, /* optInLeftBars*/
                     params->optIn[1].data.optInInteger /* optInRightBars*/ );
 }
+int TA_FRACTAL_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_FRACTAL_DisplayShift( params->optIn[0].data.optInInteger, params->optIn[1].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_FRAMA_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -2681,6 +3213,10 @@ TA_RetCode TA_FRAMA_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_FRAMA_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_FRAMA_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
+}
+int TA_FRAMA_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_FRAMA_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
 }
 TA_RetCode TA_HA_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -2708,6 +3244,11 @@ unsigned int TA_HA_FramePPLB( const TA_ParamHolderPriv *params )
    (void)params;
    return TA_HA_Lookback( );
 }
+int TA_HA_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_HA_DisplayShift( outputIdx );
+}
 TA_RetCode TA_HMA_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -2727,6 +3268,10 @@ TA_RetCode TA_HMA_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_HMA_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_HMA_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
+}
+int TA_HMA_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_HMA_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
 }
 TA_RetCode TA_HT_DCPERIOD_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -2748,6 +3293,11 @@ unsigned int TA_HT_DCPERIOD_FramePPLB( const TA_ParamHolderPriv *params )
    (void)params;
    return TA_HT_DCPERIOD_Lookback( );
 }
+int TA_HT_DCPERIOD_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_HT_DCPERIOD_DisplayShift( outputIdx );
+}
 TA_RetCode TA_HT_DCPHASE_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -2767,6 +3317,11 @@ unsigned int TA_HT_DCPHASE_FramePPLB( const TA_ParamHolderPriv *params )
 {
    (void)params;
    return TA_HT_DCPHASE_Lookback( );
+}
+int TA_HT_DCPHASE_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_HT_DCPHASE_DisplayShift( outputIdx );
 }
 TA_RetCode TA_HT_PHASOR_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -2789,6 +3344,11 @@ unsigned int TA_HT_PHASOR_FramePPLB( const TA_ParamHolderPriv *params )
    (void)params;
    return TA_HT_PHASOR_Lookback( );
 }
+int TA_HT_PHASOR_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_HT_PHASOR_DisplayShift( outputIdx );
+}
 TA_RetCode TA_HT_SINE_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -2810,6 +3370,11 @@ unsigned int TA_HT_SINE_FramePPLB( const TA_ParamHolderPriv *params )
    (void)params;
    return TA_HT_SINE_Lookback( );
 }
+int TA_HT_SINE_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_HT_SINE_DisplayShift( outputIdx );
+}
 TA_RetCode TA_HT_TRENDLINE_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -2830,6 +3395,11 @@ unsigned int TA_HT_TRENDLINE_FramePPLB( const TA_ParamHolderPriv *params )
    (void)params;
    return TA_HT_TRENDLINE_Lookback( );
 }
+int TA_HT_TRENDLINE_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_HT_TRENDLINE_DisplayShift( outputIdx );
+}
 TA_RetCode TA_HT_TRENDMODE_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -2849,6 +3419,11 @@ unsigned int TA_HT_TRENDMODE_FramePPLB( const TA_ParamHolderPriv *params )
 {
    (void)params;
    return TA_HT_TRENDMODE_Lookback( );
+}
+int TA_HT_TRENDMODE_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_HT_TRENDMODE_DisplayShift( outputIdx );
 }
 TA_RetCode TA_IBS_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -2872,6 +3447,11 @@ unsigned int TA_IBS_FramePPLB( const TA_ParamHolderPriv *params )
    (void)params;
    return TA_IBS_Lookback( );
 }
+int TA_IBS_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_IBS_DisplayShift( outputIdx );
+}
 TA_RetCode TA_IMI_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -2893,6 +3473,10 @@ unsigned int TA_IMI_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_IMI_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
 }
+int TA_IMI_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_IMI_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_KAMA_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -2912,6 +3496,10 @@ TA_RetCode TA_KAMA_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_KAMA_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_KAMA_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
+}
+int TA_KAMA_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_KAMA_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
 }
 TA_RetCode TA_KC_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -2940,6 +3528,10 @@ unsigned int TA_KC_FramePPLB( const TA_ParamHolderPriv *params )
    return TA_KC_Lookback(params->optIn[0].data.optInInteger, /* optInTimePeriod*/
                     params->optIn[1].data.optInInteger, /* optInATRPeriod*/
                     params->optIn[2].data.optInReal /* optInNbDev*/ );
+}
+int TA_KC_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_KC_DisplayShift( params->optIn[0].data.optInInteger, params->optIn[1].data.optInInteger, params->optIn[2].data.optInReal, outputIdx );
 }
 TA_RetCode TA_KDJ_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -2972,6 +3564,10 @@ unsigned int TA_KDJ_FramePPLB( const TA_ParamHolderPriv *params )
                     (TA_MAType)params->optIn[2].data.optInInteger, /* optInSlowK_MAType*/
                     params->optIn[3].data.optInInteger, /* optInSlowD_Period*/
                     (TA_MAType)params->optIn[4].data.optInInteger /* optInSlowD_MAType*/ );
+}
+int TA_KDJ_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_KDJ_DisplayShift( params->optIn[0].data.optInInteger, params->optIn[1].data.optInInteger, (TA_MAType)params->optIn[2].data.optInInteger, params->optIn[3].data.optInInteger, (TA_MAType)params->optIn[4].data.optInInteger, outputIdx );
 }
 TA_RetCode TA_KST_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -3009,6 +3605,10 @@ unsigned int TA_KST_FramePPLB( const TA_ParamHolderPriv *params )
                     params->optIn[6].data.optInInteger, /* optInSMA3Period*/
                     params->optIn[7].data.optInInteger, /* optInSMA4Period*/
                     params->optIn[8].data.optInInteger /* optInSignalPeriod*/ );
+}
+int TA_KST_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_KST_DisplayShift( params->optIn[0].data.optInInteger, params->optIn[1].data.optInInteger, params->optIn[2].data.optInInteger, params->optIn[3].data.optInInteger, params->optIn[4].data.optInInteger, params->optIn[5].data.optInInteger, params->optIn[6].data.optInInteger, params->optIn[7].data.optInInteger, params->optIn[8].data.optInInteger, outputIdx );
 }
 TA_RetCode TA_KSTEXT_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -3051,6 +3651,10 @@ unsigned int TA_KSTEXT_FramePPLB( const TA_ParamHolderPriv *params )
                     (TA_MAType)params->optIn[9].data.optInInteger, /* optInROCMAType*/
                     (TA_MAType)params->optIn[10].data.optInInteger /* optInSignalMAType*/ );
 }
+int TA_KSTEXT_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_KSTEXT_DisplayShift( params->optIn[0].data.optInInteger, params->optIn[1].data.optInInteger, params->optIn[2].data.optInInteger, params->optIn[3].data.optInInteger, params->optIn[4].data.optInInteger, params->optIn[5].data.optInInteger, params->optIn[6].data.optInInteger, params->optIn[7].data.optInInteger, params->optIn[8].data.optInInteger, (TA_MAType)params->optIn[9].data.optInInteger, (TA_MAType)params->optIn[10].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_KURTOSIS_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -3070,6 +3674,10 @@ TA_RetCode TA_KURTOSIS_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_KURTOSIS_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_KURTOSIS_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
+}
+int TA_KURTOSIS_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_KURTOSIS_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
 }
 TA_RetCode TA_LINEARREG_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -3091,6 +3699,10 @@ unsigned int TA_LINEARREG_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_LINEARREG_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
 }
+int TA_LINEARREG_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_LINEARREG_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_LINEARREG_ANGLE_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -3110,6 +3722,10 @@ TA_RetCode TA_LINEARREG_ANGLE_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_LINEARREG_ANGLE_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_LINEARREG_ANGLE_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
+}
+int TA_LINEARREG_ANGLE_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_LINEARREG_ANGLE_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
 }
 TA_RetCode TA_LINEARREG_INTERCEPT_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -3131,6 +3747,10 @@ unsigned int TA_LINEARREG_INTERCEPT_FramePPLB( const TA_ParamHolderPriv *params 
 {
    return TA_LINEARREG_INTERCEPT_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
 }
+int TA_LINEARREG_INTERCEPT_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_LINEARREG_INTERCEPT_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_LINEARREG_SLOPE_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -3150,6 +3770,10 @@ TA_RetCode TA_LINEARREG_SLOPE_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_LINEARREG_SLOPE_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_LINEARREG_SLOPE_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
+}
+int TA_LINEARREG_SLOPE_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_LINEARREG_SLOPE_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
 }
 TA_RetCode TA_LN_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -3171,6 +3795,11 @@ unsigned int TA_LN_FramePPLB( const TA_ParamHolderPriv *params )
    (void)params;
    return TA_LN_Lookback( );
 }
+int TA_LN_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_LN_DisplayShift( outputIdx );
+}
 TA_RetCode TA_LOG10_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -3190,6 +3819,11 @@ unsigned int TA_LOG10_FramePPLB( const TA_ParamHolderPriv *params )
 {
    (void)params;
    return TA_LOG10_Lookback( );
+}
+int TA_LOG10_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_LOG10_DisplayShift( outputIdx );
 }
 TA_RetCode TA_MA_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -3212,6 +3846,10 @@ unsigned int TA_MA_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_MA_Lookback(params->optIn[0].data.optInInteger, /* optInTimePeriod*/
                     (TA_MAType)params->optIn[1].data.optInInteger /* optInMAType*/ );
+}
+int TA_MA_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_MA_DisplayShift( params->optIn[0].data.optInInteger, (TA_MAType)params->optIn[1].data.optInInteger, outputIdx );
 }
 TA_RetCode TA_MACD_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -3238,6 +3876,10 @@ unsigned int TA_MACD_FramePPLB( const TA_ParamHolderPriv *params )
    return TA_MACD_Lookback(params->optIn[0].data.optInInteger, /* optInFastPeriod*/
                     params->optIn[1].data.optInInteger, /* optInSlowPeriod*/
                     params->optIn[2].data.optInInteger /* optInSignalPeriod*/ );
+}
+int TA_MACD_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_MACD_DisplayShift( params->optIn[0].data.optInInteger, params->optIn[1].data.optInInteger, params->optIn[2].data.optInInteger, outputIdx );
 }
 TA_RetCode TA_MACDEXT_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -3271,6 +3913,10 @@ unsigned int TA_MACDEXT_FramePPLB( const TA_ParamHolderPriv *params )
                     params->optIn[4].data.optInInteger, /* optInSignalPeriod*/
                     (TA_MAType)params->optIn[5].data.optInInteger /* optInSignalMAType*/ );
 }
+int TA_MACDEXT_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_MACDEXT_DisplayShift( params->optIn[0].data.optInInteger, (TA_MAType)params->optIn[1].data.optInInteger, params->optIn[2].data.optInInteger, (TA_MAType)params->optIn[3].data.optInInteger, params->optIn[4].data.optInInteger, (TA_MAType)params->optIn[5].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_MACDFIX_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -3292,6 +3938,10 @@ TA_RetCode TA_MACDFIX_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_MACDFIX_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_MACDFIX_Lookback(params->optIn[0].data.optInInteger /* optInSignalPeriod*/ );
+}
+int TA_MACDFIX_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_MACDFIX_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
 }
 TA_RetCode TA_MAMA_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -3316,6 +3966,10 @@ unsigned int TA_MAMA_FramePPLB( const TA_ParamHolderPriv *params )
    return TA_MAMA_Lookback(params->optIn[0].data.optInReal, /* optInFastLimit*/
                     params->optIn[1].data.optInReal /* optInSlowLimit*/ );
 }
+int TA_MAMA_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_MAMA_DisplayShift( params->optIn[0].data.optInReal, params->optIn[1].data.optInReal, outputIdx );
+}
 TA_RetCode TA_MARKETFI_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -3337,6 +3991,11 @@ unsigned int TA_MARKETFI_FramePPLB( const TA_ParamHolderPriv *params )
 {
    (void)params;
    return TA_MARKETFI_Lookback( );
+}
+int TA_MARKETFI_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_MARKETFI_DisplayShift( outputIdx );
 }
 TA_RetCode TA_MASSI_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -3360,6 +4019,10 @@ unsigned int TA_MASSI_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_MASSI_Lookback(params->optIn[0].data.optInInteger, /* optInFastPeriod*/
                     params->optIn[1].data.optInInteger /* optInSlowPeriod*/ );
+}
+int TA_MASSI_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_MASSI_DisplayShift( params->optIn[0].data.optInInteger, params->optIn[1].data.optInInteger, outputIdx );
 }
 TA_RetCode TA_MAVP_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -3386,6 +4049,10 @@ unsigned int TA_MAVP_FramePPLB( const TA_ParamHolderPriv *params )
                     params->optIn[1].data.optInInteger, /* optInMaxPeriod*/
                     (TA_MAType)params->optIn[2].data.optInInteger /* optInMAType*/ );
 }
+int TA_MAVP_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_MAVP_DisplayShift( params->optIn[0].data.optInInteger, params->optIn[1].data.optInInteger, (TA_MAType)params->optIn[2].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_MAX_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -3405,6 +4072,10 @@ TA_RetCode TA_MAX_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_MAX_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_MAX_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
+}
+int TA_MAX_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_MAX_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
 }
 TA_RetCode TA_MAXINDEX_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -3426,6 +4097,10 @@ unsigned int TA_MAXINDEX_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_MAXINDEX_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
 }
+int TA_MAXINDEX_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_MAXINDEX_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_MCGD_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -3445,6 +4120,10 @@ TA_RetCode TA_MCGD_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_MCGD_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_MCGD_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
+}
+int TA_MCGD_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_MCGD_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
 }
 TA_RetCode TA_MEDIAN_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -3466,6 +4145,10 @@ unsigned int TA_MEDIAN_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_MEDIAN_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
 }
+int TA_MEDIAN_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_MEDIAN_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_MEDPRICE_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -3486,6 +4169,11 @@ unsigned int TA_MEDPRICE_FramePPLB( const TA_ParamHolderPriv *params )
 {
    (void)params;
    return TA_MEDPRICE_Lookback( );
+}
+int TA_MEDPRICE_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_MEDPRICE_DisplayShift( outputIdx );
 }
 TA_RetCode TA_MFI_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -3510,6 +4198,10 @@ unsigned int TA_MFI_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_MFI_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
 }
+int TA_MFI_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_MFI_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_MIDPOINT_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -3529,6 +4221,10 @@ TA_RetCode TA_MIDPOINT_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_MIDPOINT_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_MIDPOINT_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
+}
+int TA_MIDPOINT_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_MIDPOINT_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
 }
 TA_RetCode TA_MIDPRICE_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -3551,6 +4247,10 @@ unsigned int TA_MIDPRICE_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_MIDPRICE_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
 }
+int TA_MIDPRICE_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_MIDPRICE_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_MIN_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -3571,6 +4271,10 @@ unsigned int TA_MIN_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_MIN_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
 }
+int TA_MIN_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_MIN_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_MININDEX_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -3590,6 +4294,10 @@ TA_RetCode TA_MININDEX_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_MININDEX_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_MININDEX_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
+}
+int TA_MININDEX_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_MININDEX_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
 }
 TA_RetCode TA_MINMAX_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -3612,6 +4320,10 @@ unsigned int TA_MINMAX_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_MINMAX_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
 }
+int TA_MINMAX_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_MINMAX_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_MINMAXINDEX_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -3632,6 +4344,10 @@ TA_RetCode TA_MINMAXINDEX_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_MINMAXINDEX_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_MINMAXINDEX_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
+}
+int TA_MINMAXINDEX_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_MINMAXINDEX_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
 }
 TA_RetCode TA_MINUS_DI_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -3655,6 +4371,10 @@ unsigned int TA_MINUS_DI_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_MINUS_DI_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
 }
+int TA_MINUS_DI_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_MINUS_DI_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_MINUS_DM_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -3676,6 +4396,10 @@ unsigned int TA_MINUS_DM_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_MINUS_DM_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
 }
+int TA_MINUS_DM_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_MINUS_DM_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_MOM_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -3695,6 +4419,10 @@ TA_RetCode TA_MOM_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_MOM_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_MOM_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
+}
+int TA_MOM_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_MOM_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
 }
 TA_RetCode TA_MULT_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -3716,6 +4444,11 @@ unsigned int TA_MULT_FramePPLB( const TA_ParamHolderPriv *params )
 {
    (void)params;
    return TA_MULT_Lookback( );
+}
+int TA_MULT_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_MULT_DisplayShift( outputIdx );
 }
 TA_RetCode TA_NATR_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -3739,6 +4472,10 @@ unsigned int TA_NATR_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_NATR_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
 }
+int TA_NATR_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_NATR_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_NVI_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -3760,6 +4497,11 @@ unsigned int TA_NVI_FramePPLB( const TA_ParamHolderPriv *params )
    (void)params;
    return TA_NVI_Lookback( );
 }
+int TA_NVI_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_NVI_DisplayShift( outputIdx );
+}
 TA_RetCode TA_OBV_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -3780,6 +4522,11 @@ unsigned int TA_OBV_FramePPLB( const TA_ParamHolderPriv *params )
 {
    (void)params;
    return TA_OBV_Lookback( );
+}
+int TA_OBV_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_OBV_DisplayShift( outputIdx );
 }
 TA_RetCode TA_PERCENTB_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -3807,6 +4554,10 @@ unsigned int TA_PERCENTB_FramePPLB( const TA_ParamHolderPriv *params )
                     params->optIn[2].data.optInReal, /* optInNbDevDn*/
                     (TA_MAType)params->optIn[3].data.optInInteger /* optInMAType*/ );
 }
+int TA_PERCENTB_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_PERCENTB_DisplayShift( params->optIn[0].data.optInInteger, params->optIn[1].data.optInReal, params->optIn[2].data.optInReal, (TA_MAType)params->optIn[3].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_PERCENTILE_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -3829,6 +4580,10 @@ unsigned int TA_PERCENTILE_FramePPLB( const TA_ParamHolderPriv *params )
    return TA_PERCENTILE_Lookback(params->optIn[0].data.optInInteger, /* optInTimePeriod*/
                     params->optIn[1].data.optInReal /* optInPercentile*/ );
 }
+int TA_PERCENTILE_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_PERCENTILE_DisplayShift( params->optIn[0].data.optInInteger, params->optIn[1].data.optInReal, outputIdx );
+}
 TA_RetCode TA_PERCENTRANK_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -3848,6 +4603,10 @@ TA_RetCode TA_PERCENTRANK_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_PERCENTRANK_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_PERCENTRANK_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
+}
+int TA_PERCENTRANK_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_PERCENTRANK_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
 }
 TA_RetCode TA_PLUS_DI_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -3871,6 +4630,10 @@ unsigned int TA_PLUS_DI_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_PLUS_DI_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
 }
+int TA_PLUS_DI_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_PLUS_DI_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_PLUS_DM_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -3891,6 +4654,10 @@ TA_RetCode TA_PLUS_DM_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_PLUS_DM_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_PLUS_DM_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
+}
+int TA_PLUS_DM_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_PLUS_DM_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
 }
 TA_RetCode TA_PPO_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -3916,6 +4683,10 @@ unsigned int TA_PPO_FramePPLB( const TA_ParamHolderPriv *params )
                     params->optIn[1].data.optInInteger, /* optInSlowPeriod*/
                     (TA_MAType)params->optIn[2].data.optInInteger /* optInMAType*/ );
 }
+int TA_PPO_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_PPO_DisplayShift( params->optIn[0].data.optInInteger, params->optIn[1].data.optInInteger, (TA_MAType)params->optIn[2].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_PVI_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -3936,6 +4707,11 @@ unsigned int TA_PVI_FramePPLB( const TA_ParamHolderPriv *params )
 {
    (void)params;
    return TA_PVI_Lookback( );
+}
+int TA_PVI_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_PVI_DisplayShift( outputIdx );
 }
 TA_RetCode TA_PVO_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -3961,6 +4737,10 @@ unsigned int TA_PVO_FramePPLB( const TA_ParamHolderPriv *params )
                     params->optIn[1].data.optInInteger, /* optInSlowPeriod*/
                     (TA_MAType)params->optIn[2].data.optInInteger /* optInMAType*/ );
 }
+int TA_PVO_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_PVO_DisplayShift( params->optIn[0].data.optInInteger, params->optIn[1].data.optInInteger, (TA_MAType)params->optIn[2].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_PVT_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -3981,6 +4761,11 @@ unsigned int TA_PVT_FramePPLB( const TA_ParamHolderPriv *params )
 {
    (void)params;
    return TA_PVT_Lookback( );
+}
+int TA_PVT_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_PVT_DisplayShift( outputIdx );
 }
 TA_RetCode TA_QSTICK_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -4003,6 +4788,10 @@ unsigned int TA_QSTICK_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_QSTICK_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
 }
+int TA_QSTICK_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_QSTICK_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_RMA_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -4022,6 +4811,10 @@ TA_RetCode TA_RMA_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_RMA_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_RMA_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
+}
+int TA_RMA_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_RMA_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
 }
 TA_RetCode TA_ROC_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -4043,6 +4836,10 @@ unsigned int TA_ROC_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_ROC_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
 }
+int TA_ROC_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_ROC_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_ROCP_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -4062,6 +4859,10 @@ TA_RetCode TA_ROCP_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_ROCP_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_ROCP_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
+}
+int TA_ROCP_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_ROCP_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
 }
 TA_RetCode TA_ROCR_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -4083,6 +4884,10 @@ unsigned int TA_ROCR_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_ROCR_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
 }
+int TA_ROCR_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_ROCR_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_ROCR100_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -4103,6 +4908,10 @@ unsigned int TA_ROCR100_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_ROCR100_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
 }
+int TA_ROCR100_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_ROCR100_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_RSI_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -4122,6 +4931,10 @@ TA_RetCode TA_RSI_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_RSI_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_RSI_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
+}
+int TA_RSI_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_RSI_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
 }
 TA_RetCode TA_RVI_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -4144,6 +4957,10 @@ unsigned int TA_RVI_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_RVI_Lookback(params->optIn[0].data.optInInteger, /* optInTimePeriod*/
                     params->optIn[1].data.optInInteger /* optInStdDevPeriod*/ );
+}
+int TA_RVI_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_RVI_DisplayShift( params->optIn[0].data.optInInteger, params->optIn[1].data.optInInteger, outputIdx );
 }
 TA_RetCode TA_RVIR_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -4168,6 +4985,10 @@ unsigned int TA_RVIR_FramePPLB( const TA_ParamHolderPriv *params )
    return TA_RVIR_Lookback(params->optIn[0].data.optInInteger, /* optInTimePeriod*/
                     params->optIn[1].data.optInInteger /* optInStdDevPeriod*/ );
 }
+int TA_RVIR_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_RVIR_DisplayShift( params->optIn[0].data.optInInteger, params->optIn[1].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_RVOL_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -4187,6 +5008,10 @@ TA_RetCode TA_RVOL_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_RVOL_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_RVOL_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
+}
+int TA_RVOL_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_RVOL_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
 }
 TA_RetCode TA_SAR_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -4210,6 +5035,10 @@ unsigned int TA_SAR_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_SAR_Lookback(params->optIn[0].data.optInReal, /* optInAcceleration*/
                     params->optIn[1].data.optInReal /* optInMaximum*/ );
+}
+int TA_SAR_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_SAR_DisplayShift( params->optIn[0].data.optInReal, params->optIn[1].data.optInReal, outputIdx );
 }
 TA_RetCode TA_SAREXT_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -4246,6 +5075,10 @@ unsigned int TA_SAREXT_FramePPLB( const TA_ParamHolderPriv *params )
                     params->optIn[6].data.optInReal, /* optInAccelerationShort*/
                     params->optIn[7].data.optInReal /* optInAccelerationMaxShort*/ );
 }
+int TA_SAREXT_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_SAREXT_DisplayShift( params->optIn[0].data.optInReal, params->optIn[1].data.optInReal, params->optIn[2].data.optInReal, params->optIn[3].data.optInReal, params->optIn[4].data.optInReal, params->optIn[5].data.optInReal, params->optIn[6].data.optInReal, params->optIn[7].data.optInReal, outputIdx );
+}
 TA_RetCode TA_SI_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -4269,6 +5102,10 @@ unsigned int TA_SI_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_SI_Lookback(params->optIn[0].data.optInReal /* optInLimitMove*/ );
 }
+int TA_SI_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_SI_DisplayShift( params->optIn[0].data.optInReal, outputIdx );
+}
 TA_RetCode TA_SIN_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -4288,6 +5125,11 @@ unsigned int TA_SIN_FramePPLB( const TA_ParamHolderPriv *params )
 {
    (void)params;
    return TA_SIN_Lookback( );
+}
+int TA_SIN_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_SIN_DisplayShift( outputIdx );
 }
 TA_RetCode TA_SINH_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -4309,6 +5151,11 @@ unsigned int TA_SINH_FramePPLB( const TA_ParamHolderPriv *params )
    (void)params;
    return TA_SINH_Lookback( );
 }
+int TA_SINH_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_SINH_DisplayShift( outputIdx );
+}
 TA_RetCode TA_SMA_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -4328,6 +5175,10 @@ TA_RetCode TA_SMA_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_SMA_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_SMA_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
+}
+int TA_SMA_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_SMA_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
 }
 TA_RetCode TA_SMI_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -4358,6 +5209,10 @@ unsigned int TA_SMI_FramePPLB( const TA_ParamHolderPriv *params )
                     params->optIn[2].data.optInInteger, /* optInSlowPeriod*/
                     params->optIn[3].data.optInInteger /* optInSignalPeriod*/ );
 }
+int TA_SMI_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_SMI_DisplayShift( params->optIn[0].data.optInInteger, params->optIn[1].data.optInInteger, params->optIn[2].data.optInInteger, params->optIn[3].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_SQRT_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -4377,6 +5232,11 @@ unsigned int TA_SQRT_FramePPLB( const TA_ParamHolderPriv *params )
 {
    (void)params;
    return TA_SQRT_Lookback( );
+}
+int TA_SQRT_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_SQRT_DisplayShift( outputIdx );
 }
 TA_RetCode TA_STC_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -4402,6 +5262,10 @@ unsigned int TA_STC_FramePPLB( const TA_ParamHolderPriv *params )
                     params->optIn[1].data.optInInteger, /* optInSlowPeriod*/
                     params->optIn[2].data.optInInteger /* optInCyclePeriod*/ );
 }
+int TA_STC_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_STC_DisplayShift( params->optIn[0].data.optInInteger, params->optIn[1].data.optInInteger, params->optIn[2].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_STDDEV_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -4423,6 +5287,10 @@ unsigned int TA_STDDEV_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_STDDEV_Lookback(params->optIn[0].data.optInInteger, /* optInTimePeriod*/
                     params->optIn[1].data.optInReal /* optInNbDev*/ );
+}
+int TA_STDDEV_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_STDDEV_DisplayShift( params->optIn[0].data.optInInteger, params->optIn[1].data.optInReal, outputIdx );
 }
 TA_RetCode TA_STOCH_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -4455,6 +5323,10 @@ unsigned int TA_STOCH_FramePPLB( const TA_ParamHolderPriv *params )
                     params->optIn[3].data.optInInteger, /* optInSlowD_Period*/
                     (TA_MAType)params->optIn[4].data.optInInteger /* optInSlowD_MAType*/ );
 }
+int TA_STOCH_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_STOCH_DisplayShift( params->optIn[0].data.optInInteger, params->optIn[1].data.optInInteger, (TA_MAType)params->optIn[2].data.optInInteger, params->optIn[3].data.optInInteger, (TA_MAType)params->optIn[4].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_STOCHF_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -4481,6 +5353,10 @@ unsigned int TA_STOCHF_FramePPLB( const TA_ParamHolderPriv *params )
    return TA_STOCHF_Lookback(params->optIn[0].data.optInInteger, /* optInFastK_Period*/
                     params->optIn[1].data.optInInteger, /* optInFastD_Period*/
                     (TA_MAType)params->optIn[2].data.optInInteger /* optInFastD_MAType*/ );
+}
+int TA_STOCHF_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_STOCHF_DisplayShift( params->optIn[0].data.optInInteger, params->optIn[1].data.optInInteger, (TA_MAType)params->optIn[2].data.optInInteger, outputIdx );
 }
 TA_RetCode TA_STOCHRSI_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -4509,6 +5385,10 @@ unsigned int TA_STOCHRSI_FramePPLB( const TA_ParamHolderPriv *params )
                     params->optIn[2].data.optInInteger, /* optInFastD_Period*/
                     (TA_MAType)params->optIn[3].data.optInInteger /* optInFastD_MAType*/ );
 }
+int TA_STOCHRSI_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_STOCHRSI_DisplayShift( params->optIn[0].data.optInInteger, params->optIn[1].data.optInInteger, params->optIn[2].data.optInInteger, (TA_MAType)params->optIn[3].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_SUB_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -4530,6 +5410,11 @@ unsigned int TA_SUB_FramePPLB( const TA_ParamHolderPriv *params )
    (void)params;
    return TA_SUB_Lookback( );
 }
+int TA_SUB_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_SUB_DisplayShift( outputIdx );
+}
 TA_RetCode TA_SUM_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -4549,6 +5434,10 @@ TA_RetCode TA_SUM_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_SUM_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_SUM_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
+}
+int TA_SUM_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_SUM_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
 }
 TA_RetCode TA_SUPERTREND_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -4575,6 +5464,10 @@ unsigned int TA_SUPERTREND_FramePPLB( const TA_ParamHolderPriv *params )
    return TA_SUPERTREND_Lookback(params->optIn[0].data.optInInteger, /* optInTimePeriod*/
                     params->optIn[1].data.optInReal /* optInMultiplier*/ );
 }
+int TA_SUPERTREND_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_SUPERTREND_DisplayShift( params->optIn[0].data.optInInteger, params->optIn[1].data.optInReal, outputIdx );
+}
 TA_RetCode TA_T3_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -4597,6 +5490,10 @@ unsigned int TA_T3_FramePPLB( const TA_ParamHolderPriv *params )
    return TA_T3_Lookback(params->optIn[0].data.optInInteger, /* optInTimePeriod*/
                     params->optIn[1].data.optInReal /* optInVFactor*/ );
 }
+int TA_T3_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_T3_DisplayShift( params->optIn[0].data.optInInteger, params->optIn[1].data.optInReal, outputIdx );
+}
 TA_RetCode TA_TAN_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -4616,6 +5513,11 @@ unsigned int TA_TAN_FramePPLB( const TA_ParamHolderPriv *params )
 {
    (void)params;
    return TA_TAN_Lookback( );
+}
+int TA_TAN_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_TAN_DisplayShift( outputIdx );
 }
 TA_RetCode TA_TANH_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -4637,6 +5539,11 @@ unsigned int TA_TANH_FramePPLB( const TA_ParamHolderPriv *params )
    (void)params;
    return TA_TANH_Lookback( );
 }
+int TA_TANH_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_TANH_DisplayShift( outputIdx );
+}
 TA_RetCode TA_TEMA_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -4656,6 +5563,10 @@ TA_RetCode TA_TEMA_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_TEMA_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_TEMA_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
+}
+int TA_TEMA_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_TEMA_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
 }
 TA_RetCode TA_TRANGE_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -4679,6 +5590,11 @@ unsigned int TA_TRANGE_FramePPLB( const TA_ParamHolderPriv *params )
    (void)params;
    return TA_TRANGE_Lookback( );
 }
+int TA_TRANGE_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_TRANGE_DisplayShift( outputIdx );
+}
 TA_RetCode TA_TRIMA_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -4698,6 +5614,10 @@ TA_RetCode TA_TRIMA_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_TRIMA_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_TRIMA_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
+}
+int TA_TRIMA_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_TRIMA_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
 }
 TA_RetCode TA_TRIX_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -4719,6 +5639,10 @@ unsigned int TA_TRIX_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_TRIX_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
 }
+int TA_TRIX_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_TRIX_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_TSF_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -4738,6 +5662,10 @@ TA_RetCode TA_TSF_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_TSF_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_TSF_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
+}
+int TA_TSF_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_TSF_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
 }
 TA_RetCode TA_TSI_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -4761,6 +5689,10 @@ unsigned int TA_TSI_FramePPLB( const TA_ParamHolderPriv *params )
    return TA_TSI_Lookback(params->optIn[0].data.optInInteger, /* optInFirstPeriod*/
                     params->optIn[1].data.optInInteger /* optInSecondPeriod*/ );
 }
+int TA_TSI_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_TSI_DisplayShift( params->optIn[0].data.optInInteger, params->optIn[1].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_TYPPRICE_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -4782,6 +5714,11 @@ unsigned int TA_TYPPRICE_FramePPLB( const TA_ParamHolderPriv *params )
 {
    (void)params;
    return TA_TYPPRICE_Lookback( );
+}
+int TA_TYPPRICE_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_TYPPRICE_DisplayShift( outputIdx );
 }
 TA_RetCode TA_ULTOSC_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -4809,6 +5746,10 @@ unsigned int TA_ULTOSC_FramePPLB( const TA_ParamHolderPriv *params )
                     params->optIn[1].data.optInInteger, /* optInTimePeriod2*/
                     params->optIn[2].data.optInInteger /* optInTimePeriod3*/ );
 }
+int TA_ULTOSC_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_ULTOSC_DisplayShift( params->optIn[0].data.optInInteger, params->optIn[1].data.optInInteger, params->optIn[2].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_VAR_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -4831,6 +5772,10 @@ unsigned int TA_VAR_FramePPLB( const TA_ParamHolderPriv *params )
    return TA_VAR_Lookback(params->optIn[0].data.optInInteger, /* optInTimePeriod*/
                     params->optIn[1].data.optInReal /* optInNbDev*/ );
 }
+int TA_VAR_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_VAR_DisplayShift( params->optIn[0].data.optInInteger, params->optIn[1].data.optInReal, outputIdx );
+}
 TA_RetCode TA_VHF_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -4850,6 +5795,10 @@ TA_RetCode TA_VHF_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_VHF_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_VHF_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
+}
+int TA_VHF_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_VHF_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
 }
 TA_RetCode TA_VIDYA_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -4872,6 +5821,10 @@ unsigned int TA_VIDYA_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_VIDYA_Lookback(params->optIn[0].data.optInInteger, /* optInTimePeriod*/
                     params->optIn[1].data.optInInteger /* optInCMOPeriod*/ );
+}
+int TA_VIDYA_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_VIDYA_DisplayShift( params->optIn[0].data.optInInteger, params->optIn[1].data.optInInteger, outputIdx );
 }
 TA_RetCode TA_VORTEX_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -4896,6 +5849,10 @@ unsigned int TA_VORTEX_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_VORTEX_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
 }
+int TA_VORTEX_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_VORTEX_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_VWAP_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -4919,6 +5876,11 @@ unsigned int TA_VWAP_FramePPLB( const TA_ParamHolderPriv *params )
    (void)params;
    return TA_VWAP_Lookback( );
 }
+int TA_VWAP_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_VWAP_DisplayShift( outputIdx );
+}
 TA_RetCode TA_VWMA_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -4939,6 +5901,10 @@ TA_RetCode TA_VWMA_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_VWMA_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_VWMA_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
+}
+int TA_VWMA_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_VWMA_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
 }
 TA_RetCode TA_WAD_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -4962,6 +5928,11 @@ unsigned int TA_WAD_FramePPLB( const TA_ParamHolderPriv *params )
    (void)params;
    return TA_WAD_Lookback( );
 }
+int TA_WAD_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_WAD_DisplayShift( outputIdx );
+}
 TA_RetCode TA_WCLPRICE_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -4983,6 +5954,11 @@ unsigned int TA_WCLPRICE_FramePPLB( const TA_ParamHolderPriv *params )
 {
    (void)params;
    return TA_WCLPRICE_Lookback( );
+}
+int TA_WCLPRICE_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   (void)params;
+   return TA_WCLPRICE_DisplayShift( outputIdx );
 }
 TA_RetCode TA_WILLR_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
@@ -5006,6 +5982,10 @@ unsigned int TA_WILLR_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_WILLR_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
 }
+int TA_WILLR_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_WILLR_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_WMA_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -5026,6 +6006,10 @@ unsigned int TA_WMA_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_WMA_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
 }
+int TA_WMA_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_WMA_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_ZLEMA_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -5045,4 +6029,8 @@ TA_RetCode TA_ZLEMA_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_ZLEMA_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_ZLEMA_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
+}
+int TA_ZLEMA_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_ZLEMA_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
 }

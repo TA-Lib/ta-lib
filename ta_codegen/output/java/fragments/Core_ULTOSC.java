@@ -60,6 +60,32 @@
       return smaLookback(maxPeriod) + 1 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#ultosc}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod1 Bars for one averaging window (default 7; range
+    *        1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInTimePeriod2 Bars for another averaging window (default 14;
+    *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInTimePeriod3 Bars for another averaging window (default 28;
+    *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int ultoscDisplayShift( int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3, int outputIdx )
+   {
+      if( ultoscLookback( optInTimePeriod1, optInTimePeriod2, optInTimePeriod3 ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode ultoscImpl( int startIdx,
                        int endIdx,
                        double inHigh[],

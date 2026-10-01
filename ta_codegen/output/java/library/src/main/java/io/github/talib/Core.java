@@ -577,6 +577,35 @@ public final class Core {
       return aoLookback(optInFastPeriod, optInSlowPeriod) + smaLookback(optInSignalPeriod) ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#ac}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInFastPeriod Number of bars in the short moving average of the
+    *        median price (default 5; range 2..100000; {@code Integer.MIN_VALUE}
+    *        selects the default).
+    * @param optInSlowPeriod Number of bars in the long moving average of the
+    *        median price (default 34; range 2..100000; {@code Integer.MIN_VALUE}
+    *        selects the default).
+    * @param optInSignalPeriod Number of bars in the moving average taken over
+    *        the oscillator (default 5; range 2..100000; {@code Integer.MIN_VALUE}
+    *        selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int acDisplayShift( int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, int outputIdx )
+   {
+      if( acLookback( optInFastPeriod, optInSlowPeriod, optInSignalPeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode acImpl( int startIdx,
                    int endIdx,
                    double inHigh[],
@@ -1673,6 +1702,28 @@ public final class Core {
       return smaLookback(optInTimePeriod) ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#accbands}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod SMA smoothing period for all three bands (default
+    *        20; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int accbandsDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( accbandsLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 3 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode accbandsImpl( int startIdx,
                          int endIdx,
                          double inHigh[],
@@ -2611,6 +2662,23 @@ public final class Core {
       return 0 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#acos}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int acosDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode acosImpl( int startIdx,
                      int endIdx,
                      double inReal[],
@@ -3042,6 +3110,23 @@ public final class Core {
       /* This function have no lookback needed. */
       return 0 ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#ad}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int adDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode adImpl( int startIdx,
                    int endIdx,
@@ -3619,6 +3704,23 @@ public final class Core {
       return 0 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#add}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int addDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode addImpl( int startIdx,
                     int endIdx,
                     double inReal0[],
@@ -4077,6 +4179,30 @@ public final class Core {
       /* Adjust startIdx to account for the lookback period. */
       return emaLookback(slowestPeriod) ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#adosc}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInFastPeriod Period of the fast A/D EMA (default 3; range
+    *        2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInSlowPeriod Period of the slow A/D EMA (default 10; range
+    *        2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int adoscDisplayShift( int optInFastPeriod, int optInSlowPeriod, int outputIdx )
+   {
+      if( adoscLookback( optInFastPeriod, optInSlowPeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode adoscImpl( int startIdx,
                       int endIdx,
@@ -4937,6 +5063,32 @@ public final class Core {
       return optInTimePeriod - 1 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#adr}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Number of bar ranges averaged. Published
+    *        conventions differ and none is authoritative: TradingView's ADR indicator
+    *        page works its example over 7 bars, TC2000's over 10, and the Qullamaggie
+    *        screener community reads "ADR" as 20. The value shipped here is ATR's, so
+    *        the two volatility measures are comparable out of the box (default 14;
+    *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int adrDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( adrLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode adrImpl( int startIdx,
                     int endIdx,
                     double inHigh[],
@@ -5657,6 +5809,29 @@ public final class Core {
       }
       return 2 * optInTimePeriod + this.unstablePeriod[FuncUnstId.ADX.ordinal()] - 1 ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#adx}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Smoothing/averaging period for DM, TR, and ADX
+    *        (default 14; range 2..100000; {@code Integer.MIN_VALUE} selects the
+    *        default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int adxDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( adxLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode adxImpl( int startIdx,
                     int endIdx,
@@ -7222,6 +7397,29 @@ public final class Core {
       }
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#adxr}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Smoothing period, also the bar gap between the two
+    *        averaged ADX values (default 14; range 2..100000;
+    *        {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int adxrDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( adxrLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode adxrImpl( int startIdx,
                      int endIdx,
                      double inHigh[],
@@ -7881,6 +8079,33 @@ public final class Core {
       }
       return optInTimePeriod - 1 ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#alma}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Number of bars in the window (default 9; range
+    *        1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInSigma Divides the period to give the Gaussian's width in bars
+    *        (default 6; minimum 0.01; {@link Core#REAL_DEFAULT} selects the default).
+    * @param optInOffset Position of the peak weight, 0 at the oldest bar and 1
+    *        at the newest (default 0.85; range 0..1; {@link Core#REAL_DEFAULT} selects
+    *        the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int almaDisplayShift( int optInTimePeriod, double optInSigma, double optInOffset, int outputIdx )
+   {
+      if( almaLookback( optInTimePeriod, optInSigma, optInOffset ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode almaImpl( int startIdx,
                      int endIdx,
@@ -8811,6 +9036,30 @@ public final class Core {
       return smaLookback(Math.max(optInFastPeriod, optInSlowPeriod)) ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#ao}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInFastPeriod Number of bars in the short moving average (default
+    *        5; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInSlowPeriod Number of bars in the long moving average (default
+    *        34; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int aoDisplayShift( int optInFastPeriod, int optInSlowPeriod, int outputIdx )
+   {
+      if( aoLookback( optInFastPeriod, optInSlowPeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode aoImpl( int startIdx,
                    int endIdx,
                    double inHigh[],
@@ -9693,6 +9942,34 @@ public final class Core {
       /* The slow MA is the key factor determining the lookback period. */
       return maLookback(Math.max(optInSlowPeriod, optInFastPeriod), optInMAType) ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#apo}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInFastPeriod Period of the fast moving average (default 12;
+    *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInSlowPeriod Period of the slow moving average (default 26;
+    *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInMAType Moving-average type used for both MAs (default 1 = EMA;
+    *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+    *        {@code MAType.DEFAULT} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int apoDisplayShift( int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, int outputIdx )
+   {
+      if( apoLookback( optInFastPeriod, optInSlowPeriod, optInMAType ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode apoImpl( int startIdx,
                     int endIdx,
@@ -10634,6 +10911,28 @@ public final class Core {
       return optInTimePeriod ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#aroon}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Lookback window length (default 14; range
+    *        2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int aroonDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( aroonLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 2 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode aroonImpl( int startIdx,
                       int endIdx,
                       double inHigh[],
@@ -11541,6 +11840,29 @@ public final class Core {
       return optInTimePeriod ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#aroonosc}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Lookback window for locating the highest high and
+    *        lowest low (default 14; range 2..100000; {@code Integer.MIN_VALUE} selects
+    *        the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int aroonoscDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( aroonoscLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode aroonoscImpl( int startIdx,
                          int endIdx,
                          double inHigh[],
@@ -12434,6 +12756,29 @@ public final class Core {
       return 0 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#asi}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInLimitMove Limit move, the largest one-bar price move the index
+    *        is scaled against, in price units (default 3; minimum 0.00000001;
+    *        {@link Core#REAL_DEFAULT} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int asiDisplayShift( double optInLimitMove, int outputIdx )
+   {
+      if( asiLookback( optInLimitMove ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode asiImpl( int startIdx,
                     int endIdx,
                     double inOpen[],
@@ -13163,6 +13508,23 @@ public final class Core {
       return 0 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#asin}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int asinDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode asinImpl( int startIdx,
                      int endIdx,
                      double inReal[],
@@ -13592,6 +13954,23 @@ public final class Core {
    {
       return 0 ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#atan}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int atanDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode atanImpl( int startIdx,
                      int endIdx,
@@ -14037,6 +14416,28 @@ public final class Core {
        */
       return optInTimePeriod + this.unstablePeriod[FuncUnstId.ATR.ordinal()] ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#atr}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Smoothing period (default 14; range 1..100000;
+    *        {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int atrDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( atrLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode atrImpl( int startIdx,
                     int endIdx,
@@ -14931,6 +15332,28 @@ public final class Core {
       return optInTimePeriod - 1 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#avgdev}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Window length (default 14; range 2..100000;
+    *        {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int avgdevDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( avgdevLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode avgdevImpl( int startIdx,
                        int endIdx,
                        double inReal[],
@@ -15514,6 +15937,23 @@ public final class Core {
       return 0 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#avgprice}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int avgpriceDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode avgpriceImpl( int startIdx,
                          int endIdx,
                          double inOpen[],
@@ -16048,6 +16488,36 @@ public final class Core {
       stddevLookback = stddevLookback(optInTimePeriod, 1.0);
       return (maLookback > stddevLookback) ? maLookback : stddevLookback ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#bbands}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Periods for the MA and standard deviation (default
+    *        20; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInNbDevUp Standard-deviation multiplier for the upper band
+    *        (default 2; {@link Core#REAL_DEFAULT} selects the default).
+    * @param optInNbDevDn Standard-deviation multiplier for the lower band
+    *        (default 2; {@link Core#REAL_DEFAULT} selects the default).
+    * @param optInMAType Moving-average type for the middle band (default 0 =
+    *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+    *        {@code MAType.DEFAULT} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int bbandsDisplayShift( int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType, int outputIdx )
+   {
+      if( bbandsLookback( optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 3 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode bbandsImpl( int startIdx,
                        int endIdx,
@@ -17257,6 +17727,36 @@ public final class Core {
       return bbandsLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType) ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#bbw}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Periods for the MA and standard deviation (default
+    *        20; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInNbDevUp Standard-deviation multiplier for the upper band
+    *        (default 2; {@link Core#REAL_DEFAULT} selects the default).
+    * @param optInNbDevDn Standard-deviation multiplier for the lower band
+    *        (default 2; {@link Core#REAL_DEFAULT} selects the default).
+    * @param optInMAType Moving-average type for the middle band (default 0 =
+    *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+    *        {@code MAType.DEFAULT} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int bbwDisplayShift( int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType, int outputIdx )
+   {
+      if( bbwLookback( optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode bbwImpl( int startIdx,
                     int endIdx,
                     double inReal[],
@@ -18339,6 +18839,29 @@ public final class Core {
       }
       return optInTimePeriod ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#beta}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Rolling window length (number of returns) for the
+    *        regression sums (default 5; range 1..100000; {@code Integer.MIN_VALUE}
+    *        selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int betaDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( betaLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode betaImpl( int startIdx,
                      int endIdx,
@@ -20110,6 +20633,23 @@ public final class Core {
       return 0 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#bop}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int bopDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode bopImpl( int startIdx,
                     int endIdx,
                     double inOpen[],
@@ -20654,6 +21194,29 @@ public final class Core {
       }
       return optInTimePeriod - 1 ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cci}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Number of bars in the averaging/deviation window
+    *        (default 14; range 2..100000; {@code Integer.MIN_VALUE} selects the
+    *        default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cciDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( cciLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode cciImpl( int startIdx,
                     int endIdx,
@@ -21558,6 +22121,23 @@ public final class Core {
       return BodyLong_avgPeriod + 2 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cdl2crows}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cdl2crowsDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode cdl2crowsImpl( int startIdx,
                           int endIdx,
                           double inOpen[],
@@ -22303,6 +22883,23 @@ public final class Core {
       double ShadowVeryShort_factor = this.candleSettings[CandleSettingType.SHADOW_VERY_SHORT.ordinal()].factor;
       return ShadowVeryShort_avgPeriod + 3 ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cdl3blackcrows}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cdl3blackcrowsDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode cdl3blackcrowsImpl( int startIdx,
                                int endIdx,
@@ -23107,6 +23704,23 @@ public final class Core {
       double BodyShort_factor = this.candleSettings[CandleSettingType.BODY_SHORT.ordinal()].factor;
       return Math.max(BodyShort_avgPeriod, BodyLong_avgPeriod) + 2 ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cdl3inside}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cdl3insideDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode cdl3insideImpl( int startIdx,
                            int endIdx,
@@ -23947,6 +24561,23 @@ public final class Core {
       return Near_avgPeriod + 3 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cdl3linestrike}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cdl3linestrikeDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode cdl3linestrikeImpl( int startIdx,
                                int endIdx,
                                double inOpen[],
@@ -24761,6 +25392,23 @@ public final class Core {
       return 3 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cdl3outside}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cdl3outsideDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode cdl3outsideImpl( int startIdx,
                             int endIdx,
                             double inOpen[],
@@ -25405,6 +26053,23 @@ public final class Core {
       double ShadowVeryShort_factor = this.candleSettings[CandleSettingType.SHADOW_VERY_SHORT.ordinal()].factor;
       return Math.max(Math.max(ShadowVeryShort_avgPeriod, ShadowLong_avgPeriod), Math.max(BodyLong_avgPeriod, BodyShort_avgPeriod)) + 2 ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cdl3starsinsouth}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cdl3starsinsouthDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode cdl3starsinsouthImpl( int startIdx,
                                  int endIdx,
@@ -26474,6 +27139,23 @@ public final class Core {
       double ShadowVeryShort_factor = this.candleSettings[CandleSettingType.SHADOW_VERY_SHORT.ordinal()].factor;
       return Math.max(Math.max(ShadowVeryShort_avgPeriod, BodyShort_avgPeriod), Math.max(Far_avgPeriod, Near_avgPeriod)) + 2 ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cdl3whitesoldiers}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cdl3whitesoldiersDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode cdl3whitesoldiersImpl( int startIdx,
                                   int endIdx,
@@ -27577,6 +28259,29 @@ public final class Core {
       return Math.max(Math.max(BodyDoji_avgPeriod, BodyLong_avgPeriod), BodyShort_avgPeriod) + 2 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cdlabandonedbaby}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInPenetration Fraction of the 1st candle's real body the 3rd
+    *        close must penetrate (default 0.3; minimum 0; {@link Core#REAL_DEFAULT}
+    *        selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cdlabandonedbabyDisplayShift( double optInPenetration, int outputIdx )
+   {
+      if( cdlabandonedbabyLookback( optInPenetration ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode cdlabandonedbabyImpl( int startIdx,
                                  int endIdx,
                                  double inOpen[],
@@ -28564,6 +29269,23 @@ public final class Core {
       double ShadowShort_factor = this.candleSettings[CandleSettingType.SHADOW_SHORT.ordinal()].factor;
       return Math.max(Math.max(Math.max(ShadowLong_avgPeriod, ShadowShort_avgPeriod), Math.max(Far_avgPeriod, Near_avgPeriod)), BodyLong_avgPeriod) + 2 ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cdladvanceblock}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cdladvanceblockDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode cdladvanceblockImpl( int startIdx,
                                 int endIdx,
@@ -29777,6 +30499,23 @@ public final class Core {
       return Math.max(BodyLong_avgPeriod, ShadowVeryShort_avgPeriod) ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cdlbelthold}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cdlbeltholdDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode cdlbeltholdImpl( int startIdx,
                             int endIdx,
                             double inOpen[],
@@ -30552,6 +31291,23 @@ public final class Core {
       double BodyLong_factor = this.candleSettings[CandleSettingType.BODY_LONG.ordinal()].factor;
       return BodyLong_avgPeriod + 4 ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cdlbreakaway}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cdlbreakawayDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode cdlbreakawayImpl( int startIdx,
                              int endIdx,
@@ -31383,6 +32139,23 @@ public final class Core {
       return Math.max(BodyLong_avgPeriod, ShadowVeryShort_avgPeriod) ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cdlclosingmarubozu}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cdlclosingmarubozuDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode cdlclosingmarubozuImpl( int startIdx,
                                    int endIdx,
                                    double inOpen[],
@@ -32154,6 +32927,23 @@ public final class Core {
       double ShadowVeryShort_factor = this.candleSettings[CandleSettingType.SHADOW_VERY_SHORT.ordinal()].factor;
       return ShadowVeryShort_avgPeriod + 3 ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cdlconcealbabyswall}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cdlconcealbabyswallDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode cdlconcealbabyswallImpl( int startIdx,
                                     int endIdx,
@@ -32956,6 +33746,23 @@ public final class Core {
       double Equal_factor = this.candleSettings[CandleSettingType.EQUAL.ordinal()].factor;
       return Math.max(Equal_avgPeriod, BodyLong_avgPeriod) + 1 ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cdlcounterattack}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cdlcounterattackDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode cdlcounterattackImpl( int startIdx,
                                  int endIdx,
@@ -33781,6 +34588,30 @@ public final class Core {
       return BodyLong_avgPeriod + 1 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cdldarkcloudcover}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInPenetration Fraction of candle 1's real body that candle 2's
+    *        close must penetrate below close[i-1]; larger values require deeper
+    *        penetration (default 0.5; minimum 0; {@link Core#REAL_DEFAULT} selects the
+    *        default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cdldarkcloudcoverDisplayShift( double optInPenetration, int outputIdx )
+   {
+      if( cdldarkcloudcoverLookback( optInPenetration ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode cdldarkcloudcoverImpl( int startIdx,
                                   int endIdx,
                                   double inOpen[],
@@ -34530,6 +35361,23 @@ public final class Core {
       return BodyDoji_avgPeriod ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cdldoji}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cdldojiDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode cdldojiImpl( int startIdx,
                         int endIdx,
                         double inOpen[],
@@ -35189,6 +36037,23 @@ public final class Core {
       double BodyLong_factor = this.candleSettings[CandleSettingType.BODY_LONG.ordinal()].factor;
       return Math.max(BodyDoji_avgPeriod, BodyLong_avgPeriod) + 1 ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cdldojistar}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cdldojistarDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode cdldojistarImpl( int startIdx,
                             int endIdx,
@@ -36005,6 +36870,23 @@ public final class Core {
       return Math.max(BodyDoji_avgPeriod, ShadowVeryShort_avgPeriod) ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cdldragonflydoji}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cdldragonflydojiDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode cdldragonflydojiImpl( int startIdx,
                                  int endIdx,
                                  double inOpen[],
@@ -36772,6 +37654,23 @@ public final class Core {
       return 2 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cdlengulfing}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cdlengulfingDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode cdlengulfingImpl( int startIdx,
                              int endIdx,
                              double inOpen[],
@@ -37447,6 +38346,29 @@ public final class Core {
       double BodyShort_factor = this.candleSettings[CandleSettingType.BODY_SHORT.ordinal()].factor;
       return Math.max(Math.max(BodyDoji_avgPeriod, BodyLong_avgPeriod), BodyShort_avgPeriod) + 2 ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cdleveningdojistar}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInPenetration Fraction of the 1st real body the 3rd candle's
+    *        close must penetrate; larger demands a deeper close into the first body
+    *        (default 0.3; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cdleveningdojistarDisplayShift( double optInPenetration, int outputIdx )
+   {
+      if( cdleveningdojistarLookback( optInPenetration ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode cdleveningdojistarImpl( int startIdx,
                                    int endIdx,
@@ -38406,6 +39328,30 @@ public final class Core {
       return Math.max(BodyShort_avgPeriod, BodyLong_avgPeriod) + 2 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cdleveningstar}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInPenetration Fraction of the 1st candle's real body the 3rd
+    *        close must penetrate below the 1st close; larger requires deeper
+    *        penetration (default 0.3; minimum 0; {@link Core#REAL_DEFAULT} selects the
+    *        default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cdleveningstarDisplayShift( double optInPenetration, int outputIdx )
+   {
+      if( cdleveningstarLookback( optInPenetration ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode cdleveningstarImpl( int startIdx,
                                int endIdx,
                                double inOpen[],
@@ -39287,6 +40233,23 @@ public final class Core {
       return Math.max(Near_avgPeriod, Equal_avgPeriod) + 2 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cdlgapsidesidewhite}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cdlgapsidesidewhiteDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode cdlgapsidesidewhiteImpl( int startIdx,
                                     int endIdx,
                                     double inOpen[],
@@ -40125,6 +41088,23 @@ public final class Core {
       return Math.max(BodyDoji_avgPeriod, ShadowVeryShort_avgPeriod) ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cdlgravestonedoji}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cdlgravestonedojiDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode cdlgravestonedojiImpl( int startIdx,
                                   int endIdx,
                                   double inOpen[],
@@ -40901,6 +41881,23 @@ public final class Core {
       double ShadowVeryShort_factor = this.candleSettings[CandleSettingType.SHADOW_VERY_SHORT.ordinal()].factor;
       return Math.max(Math.max(Math.max(BodyShort_avgPeriod, ShadowLong_avgPeriod), ShadowVeryShort_avgPeriod), Near_avgPeriod) + 1 ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cdlhammer}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cdlhammerDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode cdlhammerImpl( int startIdx,
                           int endIdx,
@@ -41878,6 +42875,23 @@ public final class Core {
       return Math.max(Math.max(Math.max(BodyShort_avgPeriod, ShadowLong_avgPeriod), ShadowVeryShort_avgPeriod), Near_avgPeriod) + 1 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cdlhangingman}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cdlhangingmanDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode cdlhangingmanImpl( int startIdx,
                               int endIdx,
                               double inOpen[],
@@ -42854,6 +43868,23 @@ public final class Core {
       return Math.max(BodyShort_avgPeriod, BodyLong_avgPeriod) + 1 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cdlharami}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cdlharamiDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode cdlharamiImpl( int startIdx,
                           int endIdx,
                           double inOpen[],
@@ -43720,6 +44751,23 @@ public final class Core {
       return Math.max(BodyDoji_avgPeriod, BodyLong_avgPeriod) + 1 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cdlharamicross}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cdlharamicrossDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode cdlharamicrossImpl( int startIdx,
                                int endIdx,
                                double inOpen[],
@@ -44576,6 +45624,23 @@ public final class Core {
       return Math.max(BodyShort_avgPeriod, ShadowVeryLong_avgPeriod) ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cdlhighwave}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cdlhighwaveDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode cdlhighwaveImpl( int startIdx,
                             int endIdx,
                             double inOpen[],
@@ -45338,6 +46403,23 @@ public final class Core {
    {
       return 5 ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cdlhikkake}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cdlhikkakeDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode cdlhikkakeImpl( int startIdx,
                            int endIdx,
@@ -46146,6 +47228,23 @@ public final class Core {
       double Near_factor = this.candleSettings[CandleSettingType.NEAR.ordinal()].factor;
       return Math.max(1, Near_avgPeriod) + 5 ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cdlhikkakemod}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cdlhikkakemodDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode cdlhikkakemodImpl( int startIdx,
                               int endIdx,
@@ -47106,6 +48205,23 @@ public final class Core {
       return Math.max(BodyShort_avgPeriod, BodyLong_avgPeriod) + 1 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cdlhomingpigeon}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cdlhomingpigeonDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode cdlhomingpigeonImpl( int startIdx,
                                 int endIdx,
                                 double inOpen[],
@@ -47906,6 +49022,23 @@ public final class Core {
       double ShadowVeryShort_factor = this.candleSettings[CandleSettingType.SHADOW_VERY_SHORT.ordinal()].factor;
       return Math.max(ShadowVeryShort_avgPeriod, Equal_avgPeriod) + 2 ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cdlidentical3crows}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cdlidentical3crowsDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode cdlidentical3crowsImpl( int startIdx,
                                    int endIdx,
@@ -48796,6 +49929,23 @@ public final class Core {
       return Math.max(Equal_avgPeriod, BodyLong_avgPeriod) + 1 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cdlinneck}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cdlinneckDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode cdlinneckImpl( int startIdx,
                           int endIdx,
                           double inOpen[],
@@ -49606,6 +50756,23 @@ public final class Core {
       double ShadowVeryShort_factor = this.candleSettings[CandleSettingType.SHADOW_VERY_SHORT.ordinal()].factor;
       return Math.max(Math.max(BodyShort_avgPeriod, ShadowLong_avgPeriod), ShadowVeryShort_avgPeriod) + 1 ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cdlinvertedhammer}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cdlinvertedhammerDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode cdlinvertedhammerImpl( int startIdx,
                                   int endIdx,
@@ -50479,6 +51646,23 @@ public final class Core {
       return Math.max(ShadowVeryShort_avgPeriod, BodyLong_avgPeriod) + 1 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cdlkicking}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cdlkickingDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode cdlkickingImpl( int startIdx,
                            int endIdx,
                            double inOpen[],
@@ -51323,6 +52507,23 @@ public final class Core {
       return Math.max(ShadowVeryShort_avgPeriod, BodyLong_avgPeriod) + 1 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cdlkickingbylength}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cdlkickingbylengthDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode cdlkickingbylengthImpl( int startIdx,
                                    int endIdx,
                                    double inOpen[],
@@ -52163,6 +53364,23 @@ public final class Core {
       return ShadowVeryShort_avgPeriod + 4 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cdlladderbottom}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cdlladderbottomDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode cdlladderbottomImpl( int startIdx,
                                 int endIdx,
                                 double inOpen[],
@@ -52933,6 +54151,23 @@ public final class Core {
       return Math.max(BodyDoji_avgPeriod, ShadowLong_avgPeriod) ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cdllongleggeddoji}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cdllongleggeddojiDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode cdllongleggeddojiImpl( int startIdx,
                                   int endIdx,
                                   double inOpen[],
@@ -53694,6 +54929,23 @@ public final class Core {
       return Math.max(BodyLong_avgPeriod, ShadowShort_avgPeriod) ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cdllongline}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cdllonglineDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode cdllonglineImpl( int startIdx,
                             int endIdx,
                             double inOpen[],
@@ -54442,6 +55694,23 @@ public final class Core {
       double ShadowVeryShort_factor = this.candleSettings[CandleSettingType.SHADOW_VERY_SHORT.ordinal()].factor;
       return Math.max(BodyLong_avgPeriod, ShadowVeryShort_avgPeriod) ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cdlmarubozu}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cdlmarubozuDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode cdlmarubozuImpl( int startIdx,
                             int endIdx,
@@ -55193,6 +56462,23 @@ public final class Core {
       return Equal_avgPeriod + 1 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cdlmatchinglow}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cdlmatchinglowDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode cdlmatchinglowImpl( int startIdx,
                                int endIdx,
                                double inOpen[],
@@ -55902,6 +57188,29 @@ public final class Core {
       double BodyShort_factor = this.candleSettings[CandleSettingType.BODY_SHORT.ordinal()].factor;
       return Math.max(BodyShort_avgPeriod, BodyLong_avgPeriod) + 4 ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cdlmathold}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInPenetration Max fraction of the 1st white body the reaction
+    *        days (3rd, 4th) may penetrate (default 0.5; minimum 0;
+    *        {@link Core#REAL_DEFAULT} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cdlmatholdDisplayShift( double optInPenetration, int outputIdx )
+   {
+      if( cdlmatholdLookback( optInPenetration ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode cdlmatholdImpl( int startIdx,
                            int endIdx,
@@ -56874,6 +58183,30 @@ public final class Core {
       return Math.max(Math.max(BodyDoji_avgPeriod, BodyLong_avgPeriod), BodyShort_avgPeriod) + 2 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cdlmorningdojistar}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInPenetration Fraction of the 1st candle's real body the 3rd
+    *        close must exceed above close[i-2]; larger values demand deeper
+    *        penetration into the black body (default 0.3; minimum 0;
+    *        {@link Core#REAL_DEFAULT} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cdlmorningdojistarDisplayShift( double optInPenetration, int outputIdx )
+   {
+      if( cdlmorningdojistarLookback( optInPenetration ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode cdlmorningdojistarImpl( int startIdx,
                                    int endIdx,
                                    double inOpen[],
@@ -57837,6 +59170,29 @@ public final class Core {
       return Math.max(BodyShort_avgPeriod, BodyLong_avgPeriod) + 2 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cdlmorningstar}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInPenetration Fraction of the 1st candle's body the 3rd close
+    *        must exceed above the 1st close; larger = deeper penetration required
+    *        (default 0.3; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cdlmorningstarDisplayShift( double optInPenetration, int outputIdx )
+   {
+      if( cdlmorningstarLookback( optInPenetration ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode cdlmorningstarImpl( int startIdx,
                                int endIdx,
                                double inOpen[],
@@ -58722,6 +60078,23 @@ public final class Core {
       return Math.max(Equal_avgPeriod, BodyLong_avgPeriod) + 1 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cdlonneck}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cdlonneckDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode cdlonneckImpl( int startIdx,
                           int endIdx,
                           double inOpen[],
@@ -59523,6 +60896,23 @@ public final class Core {
       return BodyLong_avgPeriod + 1 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cdlpiercing}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cdlpiercingDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode cdlpiercingImpl( int startIdx,
                             int endIdx,
                             double inOpen[],
@@ -60265,6 +61655,23 @@ public final class Core {
       double ShadowLong_factor = this.candleSettings[CandleSettingType.SHADOW_LONG.ordinal()].factor;
       return Math.max(Math.max(BodyDoji_avgPeriod, ShadowLong_avgPeriod), Near_avgPeriod) ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cdlrickshawman}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cdlrickshawmanDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode cdlrickshawmanImpl( int startIdx,
                                int endIdx,
@@ -61133,6 +62540,23 @@ public final class Core {
       double BodyShort_factor = this.candleSettings[CandleSettingType.BODY_SHORT.ordinal()].factor;
       return Math.max(BodyShort_avgPeriod, BodyLong_avgPeriod) + 4 ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cdlrisefall3methods}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cdlrisefall3methodsDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode cdlrisefall3methodsImpl( int startIdx,
                                     int endIdx,
@@ -62081,6 +63505,23 @@ public final class Core {
       return Math.max(Math.max(ShadowVeryShort_avgPeriod, BodyLong_avgPeriod), Equal_avgPeriod) + 1 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cdlseparatinglines}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cdlseparatinglinesDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode cdlseparatinglinesImpl( int startIdx,
                                    int endIdx,
                                    double inOpen[],
@@ -62978,6 +64419,23 @@ public final class Core {
       return Math.max(Math.max(BodyShort_avgPeriod, ShadowLong_avgPeriod), ShadowVeryShort_avgPeriod) + 1 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cdlshootingstar}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cdlshootingstarDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode cdlshootingstarImpl( int startIdx,
                                 int endIdx,
                                 double inOpen[],
@@ -63854,6 +65312,23 @@ public final class Core {
       return Math.max(BodyShort_avgPeriod, ShadowShort_avgPeriod) ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cdlshortline}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cdlshortlineDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode cdlshortlineImpl( int startIdx,
                              int endIdx,
                              double inOpen[],
@@ -64600,6 +66075,23 @@ public final class Core {
       return BodyShort_avgPeriod ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cdlspinningtop}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cdlspinningtopDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode cdlspinningtopImpl( int startIdx,
                                int endIdx,
                                double inOpen[],
@@ -65267,6 +66759,23 @@ public final class Core {
       double ShadowVeryShort_factor = this.candleSettings[CandleSettingType.SHADOW_VERY_SHORT.ordinal()].factor;
       return Math.max(Math.max(BodyLong_avgPeriod, BodyShort_avgPeriod), Math.max(ShadowVeryShort_avgPeriod, Near_avgPeriod)) + 2 ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cdlstalledpattern}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cdlstalledpatternDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode cdlstalledpatternImpl( int startIdx,
                                   int endIdx,
@@ -66324,6 +67833,23 @@ public final class Core {
       return Equal_avgPeriod + 2 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cdlsticksandwich}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cdlsticksandwichDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode cdlsticksandwichImpl( int startIdx,
                                  int endIdx,
                                  double inOpen[],
@@ -67060,6 +68586,23 @@ public final class Core {
       double ShadowVeryShort_factor = this.candleSettings[CandleSettingType.SHADOW_VERY_SHORT.ordinal()].factor;
       return Math.max(Math.max(BodyDoji_avgPeriod, ShadowVeryShort_avgPeriod), ShadowVeryLong_avgPeriod) ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cdltakuri}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cdltakuriDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode cdltakuriImpl( int startIdx,
                           int endIdx,
@@ -67910,6 +69453,23 @@ public final class Core {
       return Near_avgPeriod + 2 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cdltasukigap}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cdltasukigapDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode cdltasukigapImpl( int startIdx,
                              int endIdx,
                              double inOpen[],
@@ -68681,6 +70241,23 @@ public final class Core {
       double Equal_factor = this.candleSettings[CandleSettingType.EQUAL.ordinal()].factor;
       return Math.max(Equal_avgPeriod, BodyLong_avgPeriod) + 1 ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cdlthrusting}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cdlthrustingDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode cdlthrustingImpl( int startIdx,
                              int endIdx,
@@ -69494,6 +71071,23 @@ public final class Core {
       return BodyDoji_avgPeriod + 2 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cdltristar}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cdltristarDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode cdltristarImpl( int startIdx,
                            int endIdx,
                            double inOpen[],
@@ -70259,6 +71853,23 @@ public final class Core {
       double BodyShort_factor = this.candleSettings[CandleSettingType.BODY_SHORT.ordinal()].factor;
       return Math.max(BodyShort_avgPeriod, BodyLong_avgPeriod) + 2 ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cdlunique3river}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cdlunique3riverDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode cdlunique3riverImpl( int startIdx,
                                 int endIdx,
@@ -71094,6 +72705,23 @@ public final class Core {
       return Math.max(BodyShort_avgPeriod, BodyLong_avgPeriod) + 2 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cdlupsidegap2crows}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cdlupsidegap2crowsDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode cdlupsidegap2crowsImpl( int startIdx,
                                    int endIdx,
                                    double inOpen[],
@@ -71926,6 +73554,23 @@ public final class Core {
       return 2 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cdlxsidegap3methods}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cdlxsidegap3methodsDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode cdlxsidegap3methodsImpl( int startIdx,
                                     int endIdx,
                                     double inOpen[],
@@ -72571,6 +74216,23 @@ public final class Core {
       return 0 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#ceil}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int ceilDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode ceilImpl( int startIdx,
                      int endIdx,
                      double inReal[],
@@ -72997,6 +74659,28 @@ public final class Core {
       }
       return optInTimePeriod - 1 ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cg}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Number of bars in the window (default 10; range
+    *        2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cgDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( cgLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode cgImpl( int startIdx,
                    int endIdx,
@@ -75383,6 +77067,28 @@ public final class Core {
       return optInTimePeriod ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#chop}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Number of bars in the window (default 14; range
+    *        2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int chopDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( chopLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode chopImpl( int startIdx,
                      int endIdx,
                      double inHigh[],
@@ -76223,6 +77929,28 @@ public final class Core {
       }
       return optInTimePeriod ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#choptr}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Number of bars in the window (default 14; range
+    *        2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int choptrDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( choptrLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode choptrImpl( int startIdx,
                        int endIdx,
@@ -77100,6 +78828,35 @@ public final class Core {
        */
       return atrLookback(optInTimePeriod) + optInStopPeriod - 1 ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cksp}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Window of the highest high and lowest low, and
+    *        smoothing period of the Average True Range (default 10; range 2..100000;
+    *        {@code Integer.MIN_VALUE} selects the default).
+    * @param optInMultiplier Multiplier applied to the Average True Range to
+    *        offset the first stops (default 1; minimum 0; {@link Core#REAL_DEFAULT}
+    *        selects the default).
+    * @param optInStopPeriod Window over which each first stop takes its extreme
+    *        (default 9; range 1..100000; {@code Integer.MIN_VALUE} selects the
+    *        default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int ckspDisplayShift( int optInTimePeriod, double optInMultiplier, int optInStopPeriod, int outputIdx )
+   {
+      if( ckspLookback( optInTimePeriod, optInMultiplier, optInStopPeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 2 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode ckspImpl( int startIdx,
                      int endIdx,
@@ -79181,6 +80938,28 @@ public final class Core {
       return optInTimePeriod - 1 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cmf}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Number of bars in the window (default 20; range
+    *        2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cmfDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( cmfLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode cmfImpl( int startIdx,
                     int endIdx,
                     double inHigh[],
@@ -80177,6 +81956,28 @@ public final class Core {
       return retValue ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cmo}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Bars over which gains/losses are smoothed (default
+    *        14; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cmoDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( cmoLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode cmoImpl( int startIdx,
                     int endIdx,
                     double inReal[],
@@ -80967,6 +82768,28 @@ public final class Core {
        */
       return optInTimePeriod ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cmou}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Number of trailing price changes summed (default
+    *        14; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cmouDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( cmouLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode cmouImpl( int startIdx,
                      int endIdx,
@@ -81932,6 +83755,32 @@ public final class Core {
       }
       return optInROC2Period + optInWMAPeriod - 1 ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#coppock}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInWMAPeriod Smoothing period for the ROC sum (default 10; range
+    *        1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInROC1Period Short rate-of-change period (default 11; range
+    *        1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInROC2Period Long rate-of-change period (default 14; range
+    *        1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int coppockDisplayShift( int optInWMAPeriod, int optInROC1Period, int optInROC2Period, int outputIdx )
+   {
+      if( coppockLookback( optInWMAPeriod, optInROC1Period, optInROC2Period ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode coppockImpl( int startIdx,
                         int endIdx,
@@ -83119,6 +84968,28 @@ public final class Core {
       }
       return optInTimePeriod - 1 ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#correl}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Rolling window length (default 30; range 1..100000;
+    *        {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int correlDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( correlLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode correlImpl( int startIdx,
                        int endIdx,
@@ -84674,6 +86545,23 @@ public final class Core {
       return 0 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cos}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cosDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode cosImpl( int startIdx,
                     int endIdx,
                     double inReal[],
@@ -85095,6 +86983,23 @@ public final class Core {
    {
       return 0 ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cosh}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int coshDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode coshImpl( int startIdx,
                      int endIdx,
@@ -85542,6 +87447,33 @@ public final class Core {
       retValue = Math.max(retValue, percentrankLookback(optInRankPeriod) + rocpLookback(1));
       return retValue ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#crsi}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Period of the RSI of the closes (default 3; range
+    *        2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInStreakPeriod Period of the RSI of the up/down streak (default
+    *        2; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInRankPeriod Number of earlier one-bar returns each return is
+    *        ranked against (default 100; range 2..10000; {@code Integer.MIN_VALUE}
+    *        selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int crsiDisplayShift( int optInTimePeriod, int optInStreakPeriod, int optInRankPeriod, int outputIdx )
+   {
+      if( crsiLookback( optInTimePeriod, optInStreakPeriod, optInRankPeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode crsiImpl( int startIdx,
                      int endIdx,
@@ -86351,6 +88283,29 @@ public final class Core {
       }
       return optInTimePeriod - 1 ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cti}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Number of trailing values correlated against the
+    *        ramp (default 20; range 2..100000; {@code Integer.MIN_VALUE} selects the
+    *        default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int ctiDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( ctiLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode ctiImpl( int startIdx,
                     int endIdx,
@@ -87571,6 +89526,23 @@ public final class Core {
       return 0 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cumsum}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cumsumDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode cumsumImpl( int startIdx,
                        int endIdx,
                        double inReal[],
@@ -88072,6 +90044,32 @@ public final class Core {
       }
       return emaLookback(optInTimePeriod) + rocpLookback(optInROCPeriod) ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cvi}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Number of bars in the exponential average of the
+    *        high-low spread (default 10; range 2..100000; {@code Integer.MIN_VALUE}
+    *        selects the default).
+    * @param optInROCPeriod How many bars back the percent change reaches
+    *        (default 10; range 1..100000; {@code Integer.MIN_VALUE} selects the
+    *        default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cviDisplayShift( int optInTimePeriod, int optInROCPeriod, int outputIdx )
+   {
+      if( cviLookback( optInTimePeriod, optInROCPeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode cviImpl( int startIdx,
                     int endIdx,
@@ -88874,6 +90872,28 @@ public final class Core {
       return emaLookback(optInTimePeriod) * 2 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#dema}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Smoothing period for both EMA passes (default 30;
+    *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int demaDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( demaLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode demaImpl( int startIdx,
                      int endIdx,
                      double inReal[],
@@ -89669,6 +91689,23 @@ public final class Core {
       return 0 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#div}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int divDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode divImpl( int startIdx,
                     int endIdx,
                     double inReal0[],
@@ -90120,6 +92157,28 @@ public final class Core {
       }
       return optInTimePeriod - 1 ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#donchian}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Number of bars in the extrema window (default 20;
+    *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int donchianDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( donchianLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 3 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode donchianImpl( int startIdx,
                          int endIdx,
@@ -91047,6 +93106,7 @@ public final class Core {
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  090426 MF,CC  Initial version (#363).
+ *  100126 MF,CC  Display shift (#489).
  */
 
    /**
@@ -91074,6 +93134,37 @@ public final class Core {
        * then read inReal[-1].
        */
       return Math.max(optInTimePeriod - 1, optInTimePeriod / 2 + 1) ;
+
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#dpo}.
+    * <p>The values are never shifted: this describes the drawing only.
+    *
+    * @param optInTimePeriod Number of bars spanned by the moving average being
+    *        removed; the displacement is derived from it (default 20; range 2..100000;
+    *        {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int dpoDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( dpoLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( optInTimePeriod == Integer.MIN_VALUE ) {
+         optInTimePeriod = 20;
+      } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      /* The value computed at a bar detrends the price this many bars back,
+       * which is where a chart draws it.
+       */
+      return -(optInTimePeriod / 2 + 1) ;
 
    }
    RetCode dpoImpl( int startIdx,
@@ -91222,7 +93313,7 @@ public final class Core {
     * href="https://ta-lib.org/functions/dpo">ta-lib.org/functions/dpo</a>.
     * <p><b>Notes</b>
     * <ul>
-    * <li>The value is emitted at the bar whose moving average produced it. Charting packages usually draw it {@code t} bars to the left instead, which is a plotting convention rather than a different series; a caller wanting that view shifts {@code outReal} itself.</li>
+    * <li>The value is emitted at the bar whose moving average produced it. Charting packages usually draw it {@code t} bars to the left instead, which is a plotting convention rather than a different series; a caller wanting that view shifts {@code outReal} itself, by the display shift the function reports, {@code -t}.</li>
     * <li>A causal variant, {@code P[i] - SMA(P, optInTimePeriod)[i - t]}, displaces the average instead of the price. It is a genuinely different series, not a re-indexing of this one, and is not implemented here.</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
@@ -91291,7 +93382,7 @@ public final class Core {
     * href="https://ta-lib.org/functions/dpo">ta-lib.org/functions/dpo</a>.
     * <p><b>Notes</b>
     * <ul>
-    * <li>The value is emitted at the bar whose moving average produced it. Charting packages usually draw it {@code t} bars to the left instead, which is a plotting convention rather than a different series; a caller wanting that view shifts {@code outReal} itself.</li>
+    * <li>The value is emitted at the bar whose moving average produced it. Charting packages usually draw it {@code t} bars to the left instead, which is a plotting convention rather than a different series; a caller wanting that view shifts {@code outReal} itself, by the display shift the function reports, {@code -t}.</li>
     * <li>A causal variant, {@code P[i] - SMA(P, optInTimePeriod)[i - t]}, displaces the average instead of the price. It is a genuinely different series, not a re-indexing of this one, and is not implemented here.</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
@@ -91771,6 +93862,28 @@ public final class Core {
          return 2 ;
       }
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#dx}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Smoothing period for the DM and TR sums (default
+    *        14; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int dxDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( dxLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode dxImpl( int startIdx,
                    int endIdx,
@@ -93173,6 +95286,28 @@ public final class Core {
       return optInTimePeriod + this.unstablePeriod[FuncUnstId.EMA.ordinal()] ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#efi}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod EMA period applied to the force series (default 13;
+    *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int efiDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( efiLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode efiImpl( int startIdx,
                     int endIdx,
                     double inClose[],
@@ -94030,6 +96165,29 @@ public final class Core {
       return optInTimePeriod - 1 + this.unstablePeriod[FuncUnstId.EMA.ordinal()] ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#ema}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Number of bars in the average; sets smoothing k =
+    *        2/(period+1) (default 30; range 1..100000; {@code Integer.MIN_VALUE}
+    *        selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int emaDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( emaLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode emaImpl( int startIdx,
                     int endIdx,
                     double inReal[],
@@ -94697,6 +96855,32 @@ public final class Core {
       }
       return 1 + smaLookback(optInTimePeriod) ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#emv}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Number of one-bar values in the simple moving
+    *        average (default 14; range 1..100000; {@code Integer.MIN_VALUE} selects
+    *        the default).
+    * @param optInVolumeDivisor Volume is divided by this before it forms the
+    *        box ratio (default 10000; minimum 1; {@link Core#REAL_DEFAULT} selects the
+    *        default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int emvDisplayShift( int optInTimePeriod, double optInVolumeDivisor, int outputIdx )
+   {
+      if( emvLookback( optInTimePeriod, optInVolumeDivisor ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode emvImpl( int startIdx,
                     int endIdx,
@@ -95538,6 +97722,30 @@ public final class Core {
       /* P one-bar changes need P+1 prices: first output at index P. */
       return optInTimePeriod ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#er}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Number of one-bar changes in the path sum
+    *        ({@code KAMA}'s {@code optInTimePeriod} is the same window, under its own
+    *        default) (default 10; range 2..100000; {@code Integer.MIN_VALUE} selects
+    *        the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int erDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( erLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode erImpl( int startIdx,
                    int endIdx,
@@ -96464,6 +98672,28 @@ public final class Core {
       return emaLookback(optInTimePeriod) ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#eri}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Number of bars in the EMA of close (default 13;
+    *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int eriDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( eriLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 2 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode eriImpl( int startIdx,
                     int endIdx,
                     double inHigh[],
@@ -97318,6 +99548,23 @@ public final class Core {
       return 0 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#exp}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int expDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode expImpl( int startIdx,
                     int endIdx,
                     double inReal[],
@@ -97735,6 +99982,23 @@ public final class Core {
    {
       return 0 ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#floor}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int floorDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode floorImpl( int startIdx,
                       int endIdx,
@@ -98161,6 +100425,28 @@ public final class Core {
       }
       return optInTimePeriod ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#fosc}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Number of bars in the regression window (default 5;
+    *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int foscDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( foscLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode foscImpl( int startIdx,
                      int endIdx,
@@ -99076,6 +101362,32 @@ public final class Core {
       return optInLeftBars + optInRightBars ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#fractal}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInLeftBars Bars before the pivot that it must strictly dominate
+    *        (default 2; range 1..100000; {@code Integer.MIN_VALUE} selects the
+    *        default).
+    * @param optInRightBars Bars after the pivot that it must strictly dominate,
+    *        and the delay before the verdict is reported (default 2; range 1..100000;
+    *        {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int fractalDisplayShift( int optInLeftBars, int optInRightBars, int outputIdx )
+   {
+      if( fractalLookback( optInLeftBars, optInRightBars ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 2 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode fractalImpl( int startIdx,
                         int endIdx,
                         double inHigh[],
@@ -99958,6 +102270,29 @@ public final class Core {
       }
       return optInTimePeriod + this.unstablePeriod[FuncUnstId.FRAMA.ordinal()] ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#frama}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Number of bars in the window, split into two equal
+    *        halves (default 16; range 2..100000; {@code Integer.MIN_VALUE} selects the
+    *        default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int framaDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( framaLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode framaImpl( int startIdx,
                       int endIdx,
@@ -101162,6 +103497,23 @@ public final class Core {
       return this.unstablePeriod[FuncUnstId.HA.ordinal()] ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#ha}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int haDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 4 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode haImpl( int startIdx,
                    int endIdx,
                    double inOpen[],
@@ -102117,6 +104469,29 @@ public final class Core {
       sqrtPeriod = (int)Math.sqrt((double)optInTimePeriod);
       return wmaLookback(optInTimePeriod) + wmaLookback(sqrtPeriod) ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#hma}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Number of bars in the full-period WMA; the half and
+    *        square-root periods derive from it (default 20; range 1..100000;
+    *        {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int hmaDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( hmaLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode hmaImpl( int startIdx,
                     int endIdx,
@@ -104429,6 +106804,23 @@ public final class Core {
       return 32 + this.unstablePeriod[FuncUnstId.HT_DCPERIOD.ordinal()] ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#htDcperiod}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int htDcperiodDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode htDcperiodImpl( int startIdx,
                            int endIdx,
                            double inReal[],
@@ -106234,6 +108626,23 @@ public final class Core {
        */
       return 63 + this.unstablePeriod[FuncUnstId.HT_DCPHASE.ordinal()] ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#htDcphase}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int htDcphaseDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode htDcphaseImpl( int startIdx,
                           int endIdx,
@@ -108356,6 +110765,23 @@ public final class Core {
       return 32 + this.unstablePeriod[FuncUnstId.HT_PHASOR.ordinal()] ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#htPhasor}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int htPhasorDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 2 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode htPhasorImpl( int startIdx,
                          int endIdx,
                          double inReal[],
@@ -110169,6 +112595,23 @@ public final class Core {
        */
       return 63 + this.unstablePeriod[FuncUnstId.HT_SINE.ordinal()] ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#htSine}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int htSineDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 2 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode htSineImpl( int startIdx,
                        int endIdx,
@@ -112371,6 +114814,23 @@ public final class Core {
       return 63 + this.unstablePeriod[FuncUnstId.HT_TRENDLINE.ordinal()] ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#htTrendline}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int htTrendlineDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode htTrendlineImpl( int startIdx,
                             int endIdx,
                             double inReal[],
@@ -114382,6 +116842,23 @@ public final class Core {
        */
       return 63 + this.unstablePeriod[FuncUnstId.HT_TRENDMODE.ordinal()] ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#htTrendmode}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int htTrendmodeDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode htTrendmodeImpl( int startIdx,
                             int endIdx,
@@ -116889,6 +119366,23 @@ public final class Core {
       return 0 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#ibs}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int ibsDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode ibsImpl( int startIdx,
                     int endIdx,
                     double inHigh[],
@@ -117425,6 +119919,29 @@ public final class Core {
       }
       return optInTimePeriod - 1 ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#imi}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Rolling window length for the up/down body sums
+    *        (default 14; range 2..100000; {@code Integer.MIN_VALUE} selects the
+    *        default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int imiDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( imiLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode imiImpl( int startIdx,
                     int endIdx,
@@ -118077,6 +120594,28 @@ public final class Core {
       }
       return optInTimePeriod + this.unstablePeriod[FuncUnstId.KAMA.ordinal()] ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#kama}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Lookback window for the efficiency ratio (default
+    *        30; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int kamaDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( kamaLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode kamaImpl( int startIdx,
                      int endIdx,
@@ -119424,6 +121963,33 @@ public final class Core {
       return (emaLookback > atrLookback) ? emaLookback : atrLookback ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#kc}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Smoothing period of the typical price moving
+    *        average (default 20; range 2..100000; {@code Integer.MIN_VALUE} selects
+    *        the default).
+    * @param optInATRPeriod Smoothing period of the Average True Range (default
+    *        10; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInNbDev Multiplier applied to the Average True Range (default 2;
+    *        {@link Core#REAL_DEFAULT} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int kcDisplayShift( int optInTimePeriod, int optInATRPeriod, double optInNbDev, int outputIdx )
+   {
+      if( kcLookback( optInTimePeriod, optInATRPeriod, optInNbDev ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 3 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode kcImpl( int startIdx,
                    int endIdx,
                    double inHigh[],
@@ -120292,6 +122858,42 @@ public final class Core {
       return stochLookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType) ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#kdj}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInFastK_Period Lookback window for the raw stochastic high-low
+    *        range (default 9; range 1..100000; {@code Integer.MIN_VALUE} selects the
+    *        default).
+    * @param optInSlowK_Period Smoothing period turning the raw stochastic into
+    *        K (default 3; range 1..100000; {@code Integer.MIN_VALUE} selects the
+    *        default).
+    * @param optInSlowK_MAType MA type used to smooth into K (default 13 = RMA;
+    *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+    *        {@code MAType.DEFAULT} selects the default).
+    * @param optInSlowD_Period Smoothing period for the D signal line (default
+    *        3; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInSlowD_MAType MA type used for the D line (default 13 = RMA;
+    *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+    *        {@code MAType.DEFAULT} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int kdjDisplayShift( int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType, int outputIdx )
+   {
+      if( kdjLookback( optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 3 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode kdjImpl( int startIdx,
                     int endIdx,
                     double inHigh[],
@@ -121159,6 +123761,49 @@ public final class Core {
       }
       return legMax + optInSignalPeriod - 1 ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#kst}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInROC1Period Rate-of-change period of leg 1 (weight 1) (default
+    *        10; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInROC2Period Rate-of-change period of leg 2 (weight 2) (default
+    *        15; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInROC3Period Rate-of-change period of leg 3 (weight 3) (default
+    *        20; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInROC4Period Rate-of-change period of leg 4 (weight 4) (default
+    *        30; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInSMA1Period Simple-moving-average period smoothing leg 1
+    *        (default 10; range 1..100000; {@code Integer.MIN_VALUE} selects the
+    *        default).
+    * @param optInSMA2Period Simple-moving-average period smoothing leg 2
+    *        (default 10; range 1..100000; {@code Integer.MIN_VALUE} selects the
+    *        default).
+    * @param optInSMA3Period Simple-moving-average period smoothing leg 3
+    *        (default 10; range 1..100000; {@code Integer.MIN_VALUE} selects the
+    *        default).
+    * @param optInSMA4Period Simple-moving-average period smoothing leg 4
+    *        (default 15; range 1..100000; {@code Integer.MIN_VALUE} selects the
+    *        default).
+    * @param optInSignalPeriod Simple-moving-average period of the signal line
+    *        (default 9; range 1..100000; {@code Integer.MIN_VALUE} selects the
+    *        default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int kstDisplayShift( int optInROC1Period, int optInROC2Period, int optInROC3Period, int optInROC4Period, int optInSMA1Period, int optInSMA2Period, int optInSMA3Period, int optInSMA4Period, int optInSignalPeriod, int outputIdx )
+   {
+      if( kstLookback( optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 2 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode kstImpl( int startIdx,
                     int endIdx,
@@ -123004,6 +125649,52 @@ public final class Core {
       return legMax + maLookback(optInSignalPeriod, optInSignalMAType) ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#kstext}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInROC1Period Rate-of-change period of leg 1 (weight 1) (default
+    *        10; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInROC2Period Rate-of-change period of leg 2 (weight 2) (default
+    *        15; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInROC3Period Rate-of-change period of leg 3 (weight 3) (default
+    *        20; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInROC4Period Rate-of-change period of leg 4 (weight 4) (default
+    *        30; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInMA1Period Period of the MA smoothing leg 1 (default 10; range
+    *        1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInMA2Period Period of the MA smoothing leg 2 (default 10; range
+    *        1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInMA3Period Period of the MA smoothing leg 3 (default 10; range
+    *        1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInMA4Period Period of the MA smoothing leg 4 (default 15; range
+    *        1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInSignalPeriod Period of the signal-line MA (default 9; range
+    *        1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInROCMAType MA type smoothing the four legs (default 0 = SMA;
+    *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+    *        {@code MAType.DEFAULT} selects the default).
+    * @param optInSignalMAType MA type for the signal line (default 0 = SMA;
+    *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+    *        {@code MAType.DEFAULT} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int kstextDisplayShift( int optInROC1Period, int optInROC2Period, int optInROC3Period, int optInROC4Period, int optInMA1Period, int optInMA2Period, int optInMA3Period, int optInMA4Period, int optInSignalPeriod, MAType optInROCMAType, MAType optInSignalMAType, int outputIdx )
+   {
+      if( kstextLookback( optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 2 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode kstextImpl( int startIdx,
                        int endIdx,
                        double inReal[],
@@ -124160,6 +126851,28 @@ public final class Core {
       }
       return optInTimePeriod - 1 ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#kurtosis}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Number of trailing values in the window (default
+    *        30; range 4..10000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int kurtosisDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( kurtosisLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode kurtosisImpl( int startIdx,
                          int endIdx,
@@ -125422,6 +128135,28 @@ public final class Core {
       return optInTimePeriod - 1 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#linearreg}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Number of bars in each regression window (default
+    *        14; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int linearregDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( linearregLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode linearregImpl( int startIdx,
                           int endIdx,
                           double inReal[],
@@ -126537,6 +129272,28 @@ public final class Core {
       return optInTimePeriod - 1 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#linearregAngle}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Number of points in the regression window (default
+    *        14; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int linearregAngleDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( linearregAngleLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode linearregAngleImpl( int startIdx,
                                int endIdx,
                                double inReal[],
@@ -127640,6 +130397,28 @@ public final class Core {
       return optInTimePeriod - 1 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#linearregIntercept}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Window length of the regression (default 14; range
+    *        2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int linearregInterceptDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( linearregInterceptLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode linearregInterceptImpl( int startIdx,
                                    int endIdx,
                                    double inReal[],
@@ -128739,6 +131518,28 @@ public final class Core {
       return optInTimePeriod - 1 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#linearregSlope}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Number of bars in the regression window (default
+    *        14; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int linearregSlopeDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( linearregSlopeLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode linearregSlopeImpl( int startIdx,
                                int endIdx,
                                double inReal[],
@@ -129813,6 +132614,23 @@ public final class Core {
       return 0 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#ln}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int lnDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode lnImpl( int startIdx,
                    int endIdx,
                    double inReal[],
@@ -130240,6 +133058,23 @@ public final class Core {
    {
       return 0 ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#log10}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int log10DisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode log10Impl( int startIdx,
                       int endIdx,
@@ -130744,6 +133579,32 @@ public final class Core {
       }
       return retValue ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#ma}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Averaging window length (default 30; range
+    *        1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInMAType Which moving-average algorithm to dispatch to (default
+    *        0 = SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA,
+    *        7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA,
+    *        15=ALMA; {@code MAType.DEFAULT} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int maDisplayShift( int optInTimePeriod, MAType optInMAType, int outputIdx )
+   {
+      if( maLookback( optInTimePeriod, optInMAType ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode maImpl( int startIdx,
                    int endIdx,
@@ -132328,6 +135189,32 @@ public final class Core {
       return emaLookback(optInSlowPeriod) + emaLookback(optInSignalPeriod) ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#macd}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInFastPeriod Period of the fast EMA (default 12; range
+    *        2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInSlowPeriod Period of the slow EMA (default 26; range
+    *        2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInSignalPeriod Smoothing period of the signal line (default 9;
+    *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int macdDisplayShift( int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, int outputIdx )
+   {
+      if( macdLookback( optInFastPeriod, optInSlowPeriod, optInSignalPeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 3 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode macdImpl( int startIdx,
                      int endIdx,
                      double inReal[],
@@ -133434,6 +136321,44 @@ public final class Core {
       return lookbackLargest + maLookback(optInSignalPeriod, optInSignalMAType) ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#macdext}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInFastPeriod Period of the fast MA (default 12; range 2..100000;
+    *        {@code Integer.MIN_VALUE} selects the default).
+    * @param optInFastMAType MA type for the fast MA (default 0 = SMA; values:
+    *        0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
+    *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+    *        {@code MAType.DEFAULT} selects the default).
+    * @param optInSlowPeriod Period of the slow MA (default 26; range 2..100000;
+    *        {@code Integer.MIN_VALUE} selects the default).
+    * @param optInSlowMAType MA type for the slow MA (default 0 = SMA; values:
+    *        0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
+    *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+    *        {@code MAType.DEFAULT} selects the default).
+    * @param optInSignalPeriod Period of the signal-line MA (default 9; range
+    *        1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInSignalMAType MA type for the signal line (default 0 = SMA;
+    *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+    *        {@code MAType.DEFAULT} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int macdextDisplayShift( int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType, int outputIdx )
+   {
+      if( macdextLookback( optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 3 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode macdextImpl( int startIdx,
                         int endIdx,
                         double inReal[],
@@ -134435,6 +137360,28 @@ public final class Core {
       return emaLookback(26) + emaLookback(optInSignalPeriod) ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#macdfix}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInSignalPeriod Smoothing period for the signal line (default 9;
+    *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int macdfixDisplayShift( int optInSignalPeriod, int outputIdx )
+   {
+      if( macdfixLookback( optInSignalPeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 3 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode macdfixImpl( int startIdx,
                         int endIdx,
                         double inReal[],
@@ -135433,6 +138380,32 @@ public final class Core {
        */
       return 32 + this.unstablePeriod[FuncUnstId.MAMA.ordinal()] ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#mama}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInFastLimit Upper bound on the adaptive smoothing factor
+    *        (default 0.5; range 0.01..0.99; {@link Core#REAL_DEFAULT} selects the
+    *        default).
+    * @param optInSlowLimit Lower bound on the adaptive smoothing factor
+    *        (default 0.05; range 0.01..0.99; {@link Core#REAL_DEFAULT} selects the
+    *        default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int mamaDisplayShift( double optInFastLimit, double optInSlowLimit, int outputIdx )
+   {
+      if( mamaLookback( optInFastLimit, optInSlowLimit ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 2 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode mamaImpl( int startIdx,
                      int endIdx,
@@ -137823,6 +140796,23 @@ public final class Core {
       return 0 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#marketfi}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int marketfiDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode marketfiImpl( int startIdx,
                          int endIdx,
                          double inHigh[],
@@ -138404,6 +141394,31 @@ public final class Core {
        */
       return emaLookback(optInFastPeriod) * 2 + (optInSlowPeriod - 1) ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#massi}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInFastPeriod Number of bars in each of the two exponential
+    *        averages of the high-low range (default 9; range 2..100000;
+    *        {@code Integer.MIN_VALUE} selects the default).
+    * @param optInSlowPeriod Number of bars the ratio is summed over (default
+    *        25; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int massiDisplayShift( int optInFastPeriod, int optInSlowPeriod, int outputIdx )
+   {
+      if( massiLookback( optInFastPeriod, optInSlowPeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode massiImpl( int startIdx,
                       int endIdx,
@@ -139404,6 +142419,34 @@ public final class Core {
       }
       return maLookback(optInMaxPeriod, optInMAType) ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#mavp}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInMinPeriod Lower clamp for the per-bar period (default 2; range
+    *        1..10000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInMaxPeriod Upper clamp for the per-bar period (default 30;
+    *        range 1..10000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInMAType Moving-average type applied (default 0 = SMA; values:
+    *        0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
+    *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+    *        {@code MAType.DEFAULT} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int mavpDisplayShift( int optInMinPeriod, int optInMaxPeriod, MAType optInMAType, int outputIdx )
+   {
+      if( mavpLookback( optInMinPeriod, optInMaxPeriod, optInMAType ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode mavpImpl( int startIdx,
                      int endIdx,
@@ -140539,6 +143582,28 @@ public final class Core {
       return optInTimePeriod - 1 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#max}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Window length in bars (default 30; range 2..100000;
+    *        {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int maxDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( maxLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode maxImpl( int startIdx,
                     int endIdx,
                     double inReal[],
@@ -141339,6 +144404,29 @@ public final class Core {
       return optInTimePeriod - 1 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#maxindex}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Window length over which the max is located
+    *        (default 30; range 2..100000; {@code Integer.MIN_VALUE} selects the
+    *        default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int maxindexDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( maxindexLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode maxindexImpl( int startIdx,
                          int endIdx,
                          double inReal[],
@@ -142037,6 +145125,28 @@ public final class Core {
       return optInTimePeriod - 1 + this.unstablePeriod[FuncUnstId.MCGD.ordinal()] ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#mcgd}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod The N of the step's denominator (default 14; range
+    *        2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int mcgdDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( mcgdLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode mcgdImpl( int startIdx,
                      int endIdx,
                      double inReal[],
@@ -142689,6 +145799,28 @@ public final class Core {
       }
       return optInTimePeriod - 1 ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#median}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Number of trailing values in the window (default
+    *        30; range 2..10000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int medianDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( medianLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode medianImpl( int startIdx,
                        int endIdx,
@@ -143875,6 +147007,23 @@ public final class Core {
       return 0 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#medprice}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int medpriceDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode medpriceImpl( int startIdx,
                          int endIdx,
                          double inHigh[],
@@ -144352,6 +147501,28 @@ public final class Core {
       }
       return optInTimePeriod ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#mfi}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Lookback window for summing money flow (default 14;
+    *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int mfiDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( mfiLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode mfiImpl( int startIdx,
                     int endIdx,
@@ -145378,6 +148549,28 @@ public final class Core {
       return optInTimePeriod - 1 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#midpoint}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Lookback window length (default 14; range
+    *        2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int midpointDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( midpointLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode midpointImpl( int startIdx,
                          int endIdx,
                          double inReal[],
@@ -146336,6 +149529,29 @@ public final class Core {
       }
       return optInTimePeriod - 1 ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#midprice}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Window length over which the high/low extremes are
+    *        taken (default 14; range 2..100000; {@code Integer.MIN_VALUE} selects the
+    *        default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int midpriceDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( midpriceLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode midpriceImpl( int startIdx,
                          int endIdx,
@@ -147318,6 +150534,28 @@ public final class Core {
       return optInTimePeriod - 1 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#min}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Number of bars in the trailing window (default 30;
+    *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int minDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( minLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode minImpl( int startIdx,
                     int endIdx,
                     double inReal[],
@@ -148113,6 +151351,29 @@ public final class Core {
       return optInTimePeriod - 1 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#minindex}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Window length over which the minimum is located
+    *        (default 30; range 2..100000; {@code Integer.MIN_VALUE} selects the
+    *        default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int minindexDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( minindexLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode minindexImpl( int startIdx,
                          int endIdx,
                          double inReal[],
@@ -148806,6 +152067,28 @@ public final class Core {
       }
       return optInTimePeriod - 1 ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#minmax}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Rolling window length (default 30; range 2..100000;
+    *        {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int minmaxDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( minmaxLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 2 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode minmaxImpl( int startIdx,
                        int endIdx,
@@ -149811,6 +153094,28 @@ public final class Core {
       return optInTimePeriod - 1 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#minmaxindex}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Window length in bars (default 30; range 2..100000;
+    *        {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int minmaxindexDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( minmaxindexLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 2 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode minmaxindexImpl( int startIdx,
                             int endIdx,
                             double inReal[],
@@ -150684,6 +153989,28 @@ public final class Core {
          return 1 ;
       }
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#minusDi}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Smoothing/lookback period for -DM and TR (default
+    *        14; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int minusDiDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( minusDiLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode minusDiImpl( int startIdx,
                         int endIdx,
@@ -152289,6 +155616,28 @@ public final class Core {
       }
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#minusDm}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Wilder smoothing period (default 14; range
+    *        1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int minusDmDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( minusDmLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode minusDmImpl( int startIdx,
                         int endIdx,
                         double inHigh[],
@@ -153420,6 +156769,28 @@ public final class Core {
       return optInTimePeriod ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#mom}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Lookback distance in bars (default 10; range
+    *        1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int momDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( momLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode momImpl( int startIdx,
                     int endIdx,
                     double inReal[],
@@ -154013,6 +157384,23 @@ public final class Core {
       return 0 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#mult}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int multDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode multImpl( int startIdx,
                      int endIdx,
                      double inReal0[],
@@ -154487,6 +157875,29 @@ public final class Core {
        */
       return optInTimePeriod + this.unstablePeriod[FuncUnstId.NATR.ordinal()] ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#natr}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Smoothing period for the true range average
+    *        (default 14; range 1..100000; {@code Integer.MIN_VALUE} selects the
+    *        default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int natrDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( natrLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode natrImpl( int startIdx,
                      int endIdx,
@@ -155507,6 +158918,23 @@ public final class Core {
       return 0 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#nvi}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int nviDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode nviImpl( int startIdx,
                     int endIdx,
                     double inClose[],
@@ -156120,6 +159548,23 @@ public final class Core {
       return 0 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#obv}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int obvDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode obvImpl( int startIdx,
                     int endIdx,
                     double inReal[],
@@ -156642,6 +160087,36 @@ public final class Core {
       }
       return bbandsLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType) ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#percentb}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Periods for the MA and standard deviation (default
+    *        20; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInNbDevUp Standard-deviation multiplier for the upper band
+    *        (default 2; {@link Core#REAL_DEFAULT} selects the default).
+    * @param optInNbDevDn Standard-deviation multiplier for the lower band
+    *        (default 2; {@link Core#REAL_DEFAULT} selects the default).
+    * @param optInMAType Moving-average type for the middle band (default 0 =
+    *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+    *        {@code MAType.DEFAULT} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int percentbDisplayShift( int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType, int outputIdx )
+   {
+      if( percentbLookback( optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode percentbImpl( int startIdx,
                          int endIdx,
@@ -157788,6 +161263,30 @@ public final class Core {
       return optInTimePeriod - 1 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#percentile}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Number of bars in the trailing window (default 100;
+    *        range 2..10000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInPercentile Percentage position within the sorted window
+    *        (default 50; range 0..100; {@link Core#REAL_DEFAULT} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int percentileDisplayShift( int optInTimePeriod, double optInPercentile, int outputIdx )
+   {
+      if( percentileLookback( optInTimePeriod, optInPercentile ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode percentileImpl( int startIdx,
                            int endIdx,
                            double inReal[],
@@ -158912,6 +162411,29 @@ public final class Core {
       return optInTimePeriod ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#percentrank}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Number of preceding values the current value is
+    *        ranked against (default 100; range 2..10000; {@code Integer.MIN_VALUE}
+    *        selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int percentrankDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( percentrankLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode percentrankImpl( int startIdx,
                             int endIdx,
                             double inReal[],
@@ -159553,6 +163075,28 @@ public final class Core {
          return 1 ;
       }
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#plusDi}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Wilder smoothing period (default 14; range
+    *        1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int plusDiDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( plusDiLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode plusDiImpl( int startIdx,
                        int endIdx,
@@ -161160,6 +164704,28 @@ public final class Core {
       }
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#plusDm}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Wilder smoothing period (default 14; range
+    *        1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int plusDmDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( plusDmLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode plusDmImpl( int startIdx,
                        int endIdx,
                        double inHigh[],
@@ -162316,6 +165882,34 @@ public final class Core {
       return maLookback(Math.max(optInSlowPeriod, optInFastPeriod), optInMAType) ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#ppo}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInFastPeriod Period of the fast MA (default 12; range 2..100000;
+    *        {@code Integer.MIN_VALUE} selects the default).
+    * @param optInSlowPeriod Period of the slow MA (default 26; range 2..100000;
+    *        {@code Integer.MIN_VALUE} selects the default).
+    * @param optInMAType Moving average type used for both MAs (default 1 = EMA;
+    *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+    *        {@code MAType.DEFAULT} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int ppoDisplayShift( int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, int outputIdx )
+   {
+      if( ppoLookback( optInFastPeriod, optInSlowPeriod, optInMAType ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode ppoImpl( int startIdx,
                     int endIdx,
                     double inReal[],
@@ -163462,6 +167056,23 @@ public final class Core {
       return 0 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#pvi}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int pviDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode pviImpl( int startIdx,
                     int endIdx,
                     double inClose[],
@@ -164097,6 +167708,34 @@ public final class Core {
       /* Lookback is driven by the slowest MA. */
       return maLookback(Math.max(optInSlowPeriod, optInFastPeriod), optInMAType) ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#pvo}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInFastPeriod Period of the fast MA (default 12; range 2..100000;
+    *        {@code Integer.MIN_VALUE} selects the default).
+    * @param optInSlowPeriod Period of the slow MA (default 26; range 2..100000;
+    *        {@code Integer.MIN_VALUE} selects the default).
+    * @param optInMAType Moving average type used for both MAs (default 1 = EMA;
+    *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+    *        {@code MAType.DEFAULT} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int pvoDisplayShift( int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, int outputIdx )
+   {
+      if( pvoLookback( optInFastPeriod, optInSlowPeriod, optInMAType ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode pvoImpl( int startIdx,
                     int endIdx,
@@ -165247,6 +168886,23 @@ public final class Core {
       return 0 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#pvt}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int pvtDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode pvtImpl( int startIdx,
                     int endIdx,
                     double inClose[],
@@ -165789,6 +169445,30 @@ public final class Core {
       }
       return optInTimePeriod - 1 ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#qstick}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Number of bars averaged. Default 10, matching Tulip
+    *        Indicators and pandas-ta-classic. Other packages differ: TraderEvolution
+    *        documents 1, and AmiBroker community code commonly uses 8 (default 10;
+    *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int qstickDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( qstickLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode qstickImpl( int startIdx,
                        int endIdx,
@@ -166473,6 +170153,29 @@ public final class Core {
       }
       return optInTimePeriod - 1 + this.unstablePeriod[FuncUnstId.RMA.ordinal()] ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#rma}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Number of bars in the seed window, and the
+    *        reciprocal of the smoothing factor (default 30; range 1..100000;
+    *        {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int rmaDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( rmaLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode rmaImpl( int startIdx,
                     int endIdx,
@@ -167172,6 +170875,28 @@ public final class Core {
       return optInTimePeriod ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#roc}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Lookback distance to the prior price (default 10;
+    *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int rocDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( rocLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode rocImpl( int startIdx,
                     int endIdx,
                     double inReal[],
@@ -167802,6 +171527,28 @@ public final class Core {
       }
       return optInTimePeriod ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#rocp}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Lookback distance to the previous price (default
+    *        10; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int rocpDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( rocpLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode rocpImpl( int startIdx,
                      int endIdx,
@@ -168435,6 +172182,29 @@ public final class Core {
       return optInTimePeriod ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#rocr}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Lookback distance in bars for the prior price
+    *        (default 10; range 1..100000; {@code Integer.MIN_VALUE} selects the
+    *        default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int rocrDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( rocrLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode rocrImpl( int startIdx,
                      int endIdx,
                      double inReal[],
@@ -169066,6 +172836,29 @@ public final class Core {
       }
       return optInTimePeriod ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#rocr100}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Lookback distance (bars back) for the reference
+    *        price (default 10; range 1..100000; {@code Integer.MIN_VALUE} selects the
+    *        default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int rocr100DisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( rocr100Lookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode rocr100Impl( int startIdx,
                         int endIdx,
@@ -169714,6 +173507,28 @@ public final class Core {
       retValue = optInTimePeriod + this.unstablePeriod[FuncUnstId.RSI.ordinal()];
       return retValue ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#rsi}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Lookback for the gain/loss averaging (default 14;
+    *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int rsiDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( rsiLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode rsiImpl( int startIdx,
                     int endIdx,
@@ -170564,6 +174379,32 @@ public final class Core {
       }
       return optInStdDevPeriod - 1 + (optInTimePeriod - 1) + this.unstablePeriod[FuncUnstId.RVI.ordinal()] ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#rvi}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Wilder smoothing period applied to both legs
+    *        (default 14; range 1..100000; {@code Integer.MIN_VALUE} selects the
+    *        default).
+    * @param optInStdDevPeriod Number of trailing values the standard deviation
+    *        spans (default 10; range 2..100000; {@code Integer.MIN_VALUE} selects the
+    *        default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int rviDisplayShift( int optInTimePeriod, int optInStdDevPeriod, int outputIdx )
+   {
+      if( rviLookback( optInTimePeriod, optInStdDevPeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode rviImpl( int startIdx,
                     int endIdx,
@@ -172142,6 +175983,32 @@ public final class Core {
       return rviLookback(optInTimePeriod, optInStdDevPeriod) ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#rvir}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Wilder smoothing period applied to both legs of
+    *        both indices (default 14; range 1..100000; {@code Integer.MIN_VALUE}
+    *        selects the default).
+    * @param optInStdDevPeriod Number of trailing values each standard deviation
+    *        spans (default 10; range 2..100000; {@code Integer.MIN_VALUE} selects the
+    *        default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int rvirDisplayShift( int optInTimePeriod, int optInStdDevPeriod, int outputIdx )
+   {
+      if( rvirLookback( optInTimePeriod, optInStdDevPeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode rvirImpl( int startIdx,
                      int endIdx,
                      double inHigh[],
@@ -172817,6 +176684,29 @@ public final class Core {
       }
       return optInTimePeriod ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#rvol}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Number of preceding bars averaged to form the
+    *        baseline (default 20; range 1..100000; {@code Integer.MIN_VALUE} selects
+    *        the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int rvolDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( rvolLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode rvolImpl( int startIdx,
                      int endIdx,
@@ -173545,6 +177435,31 @@ public final class Core {
        */
       return 1 ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#sar}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInAcceleration Step added to the acceleration factor on each new
+    *        extreme point (default 0.02; minimum 0; {@link Core#REAL_DEFAULT} selects
+    *        the default).
+    * @param optInMaximum Ceiling on the acceleration factor (default 0.2;
+    *        minimum 0; {@link Core#REAL_DEFAULT} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int sarDisplayShift( double optInAcceleration, double optInMaximum, int outputIdx )
+   {
+      if( sarLookback( optInAcceleration, optInMaximum ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode sarImpl( int startIdx,
                     int endIdx,
@@ -174922,6 +178837,44 @@ public final class Core {
        */
       return 1 ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#sarext}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInStartValue Initial SAR/direction: 0 auto, &gt;0 start long at
+    *        value, &lt;0 start short at -value (default 0; {@link Core#REAL_DEFAULT}
+    *        selects the default).
+    * @param optInOffsetOnReverse Fractional offset applied to the stop on each
+    *        reversal (default 0; minimum 0; {@link Core#REAL_DEFAULT} selects the
+    *        default).
+    * @param optInAccelerationInitLong Initial acceleration factor when long
+    *        (default 0.02; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
+    * @param optInAccelerationLong AF increment per new long extreme (default
+    *        0.02; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
+    * @param optInAccelerationMaxLong Cap on the long acceleration factor
+    *        (default 0.2; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
+    * @param optInAccelerationInitShort Initial acceleration factor when short
+    *        (default 0.02; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
+    * @param optInAccelerationShort AF increment per new short extreme (default
+    *        0.02; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
+    * @param optInAccelerationMaxShort Cap on the short acceleration factor
+    *        (default 0.2; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int sarextDisplayShift( double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort, int outputIdx )
+   {
+      if( sarextLookback( optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode sarextImpl( int startIdx,
                        int endIdx,
@@ -176562,6 +180515,29 @@ public final class Core {
       return 1 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#si}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInLimitMove Limit move, the largest one-bar price move the index
+    *        is scaled against, in price units (default 3; minimum 0.00000001;
+    *        {@link Core#REAL_DEFAULT} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int siDisplayShift( double optInLimitMove, int outputIdx )
+   {
+      if( siLookback( optInLimitMove ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode siImpl( int startIdx,
                    int endIdx,
                    double inOpen[],
@@ -177319,6 +181295,23 @@ public final class Core {
       return 0 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#sin}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int sinDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode sinImpl( int startIdx,
                     int endIdx,
                     double inReal[],
@@ -177738,6 +181731,23 @@ public final class Core {
    {
       return 0 ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#sinh}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int sinhDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode sinhImpl( int startIdx,
                      int endIdx,
@@ -178165,6 +182175,28 @@ public final class Core {
       }
       return optInTimePeriod - 1 ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#sma}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Number of bars in the averaging window (default 30;
+    *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int smaDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( smaLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode smaImpl( int startIdx,
                     int endIdx,
@@ -178858,6 +182890,36 @@ public final class Core {
        */
       return optInTimePeriod - 1 + emaLookback(optInSlowPeriod) + emaLookback(optInFastPeriod) + emaLookback(optInSignalPeriod) ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#smi}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Period of the high/low range (default 13; range
+    *        2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInFastPeriod Period of the second smoothing, applied to the
+    *        first (default 2; range 2..100000; {@code Integer.MIN_VALUE} selects the
+    *        default).
+    * @param optInSlowPeriod Period of the first smoothing, applied to the raw
+    *        momentum (default 25; range 2..100000; {@code Integer.MIN_VALUE} selects
+    *        the default).
+    * @param optInSignalPeriod Smoothing period of the signal line (default 9;
+    *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int smiDisplayShift( int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, int outputIdx )
+   {
+      if( smiLookback( optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 2 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode smiImpl( int startIdx,
                     int endIdx,
@@ -180409,6 +184471,23 @@ public final class Core {
       return 0 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#sqrt}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int sqrtDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode sqrtImpl( int startIdx,
                      int endIdx,
                      double inReal[],
@@ -180868,6 +184947,32 @@ public final class Core {
        */
       return emaLookback(optInSlowPeriod) + 2 * (optInCyclePeriod - 1) + this.unstablePeriod[FuncUnstId.STC.ordinal()] ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#stc}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInFastPeriod Period of the fast EMA (default 23; range
+    *        2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInSlowPeriod Period of the slow EMA (default 50; range
+    *        2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInCyclePeriod Window of both stochastic stages (default 10;
+    *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int stcDisplayShift( int optInFastPeriod, int optInSlowPeriod, int optInCyclePeriod, int outputIdx )
+   {
+      if( stcLookback( optInFastPeriod, optInSlowPeriod, optInCyclePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode stcImpl( int startIdx,
                     int endIdx,
@@ -182865,6 +186970,30 @@ public final class Core {
       return varLookback(optInTimePeriod, optInNbDev) ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#stddev}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Window length (default 5; range 2..100000;
+    *        {@code Integer.MIN_VALUE} selects the default).
+    * @param optInNbDev Multiplier applied to the standard deviation (default 1;
+    *        {@link Core#REAL_DEFAULT} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int stddevDisplayShift( int optInTimePeriod, double optInNbDev, int outputIdx )
+   {
+      if( stddevLookback( optInTimePeriod, optInNbDev ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode stddevImpl( int startIdx,
                        int endIdx,
                        double inReal[],
@@ -183521,6 +187650,43 @@ public final class Core {
       retValue += maLookback(optInSlowD_Period, optInSlowD_MAType);
       return retValue ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#stoch}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInFastK_Period Lookback window for the raw %K high-low range
+    *        (default 5; range 1..100000; {@code Integer.MIN_VALUE} selects the
+    *        default).
+    * @param optInSlowK_Period Smoothing period turning FastK into SlowK
+    *        (default 3; range 1..100000; {@code Integer.MIN_VALUE} selects the
+    *        default).
+    * @param optInSlowK_MAType MA type used to smooth into SlowK (default 0 =
+    *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+    *        {@code MAType.DEFAULT} selects the default).
+    * @param optInSlowD_Period Smoothing period for the SlowD signal line
+    *        (default 3; range 1..100000; {@code Integer.MIN_VALUE} selects the
+    *        default).
+    * @param optInSlowD_MAType MA type used for the SlowD line (default 0 = SMA;
+    *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+    *        {@code MAType.DEFAULT} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int stochDisplayShift( int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType, int outputIdx )
+   {
+      if( stochLookback( optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 2 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode stochImpl( int startIdx,
                       int endIdx,
@@ -184886,6 +189052,35 @@ public final class Core {
       return retValue ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#stochf}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInFastK_Period Lookback window for the highest-high/lowest-low
+    *        of Fast-K (default 5; range 1..100000; {@code Integer.MIN_VALUE} selects
+    *        the default).
+    * @param optInFastD_Period Smoothing period for the Fast-D line (default 3;
+    *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInFastD_MAType Moving-average type used to smooth Fast-D
+    *        (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA,
+    *        6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA,
+    *        14=VIDYA, 15=ALMA; {@code MAType.DEFAULT} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int stochfDisplayShift( int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, int outputIdx )
+   {
+      if( stochfLookback( optInFastK_Period, optInFastD_Period, optInFastD_MAType ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 2 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode stochfImpl( int startIdx,
                        int endIdx,
                        double inHigh[],
@@ -186148,6 +190343,37 @@ public final class Core {
       return retValue ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#stochrsi}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod RSI period (default 14; range 2..100000;
+    *        {@code Integer.MIN_VALUE} selects the default).
+    * @param optInFastK_Period Lookback window for the RSI min/max stochastic
+    *        (default 5; range 1..100000; {@code Integer.MIN_VALUE} selects the
+    *        default).
+    * @param optInFastD_Period Smoothing period for %D (default 3; range
+    *        1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInFastD_MAType MA type used to smooth %D (default 0 = SMA;
+    *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+    *        {@code MAType.DEFAULT} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int stochrsiDisplayShift( int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, int outputIdx )
+   {
+      if( stochrsiLookback( optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 2 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode stochrsiImpl( int startIdx,
                          int endIdx,
                          double inReal[],
@@ -186936,6 +191162,23 @@ public final class Core {
       return 0 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#sub}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int subDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode subImpl( int startIdx,
                     int endIdx,
                     double inReal0[],
@@ -187380,6 +191623,28 @@ public final class Core {
       }
       return optInTimePeriod - 1 ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#sum}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Window length summed (default 30; range 2..100000;
+    *        {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int sumDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( sumLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode sumImpl( int startIdx,
                     int endIdx,
@@ -187985,6 +192250,31 @@ public final class Core {
        */
       return atrLookback(optInTimePeriod) ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#supertrend}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Smoothing period of the Average True Range (default
+    *        10; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInMultiplier Multiplier applied to the Average True Range to set
+    *        the band width (default 3; minimum 0; {@link Core#REAL_DEFAULT} selects
+    *        the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int supertrendDisplayShift( int optInTimePeriod, double optInMultiplier, int outputIdx )
+   {
+      if( supertrendLookback( optInTimePeriod, optInMultiplier ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 2 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode supertrendImpl( int startIdx,
                            int endIdx,
@@ -189195,6 +193485,31 @@ public final class Core {
       return 6 * (optInTimePeriod - 1) + this.unstablePeriod[FuncUnstId.T3.ordinal()] ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#t3}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod EMA period for each of the six stages (default 5;
+    *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInVFactor Volume factor weighting the coefficients (0 = plain
+    *        triple EMA, higher = more DEMA-like sharpening) (default 0.7; range 0..1;
+    *        {@link Core#REAL_DEFAULT} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int t3DisplayShift( int optInTimePeriod, double optInVFactor, int outputIdx )
+   {
+      if( t3Lookback( optInTimePeriod, optInVFactor ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode t3Impl( int startIdx,
                    int endIdx,
                    double inReal[],
@@ -190159,6 +194474,23 @@ public final class Core {
       return 0 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#tan}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int tanDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode tanImpl( int startIdx,
                     int endIdx,
                     double inReal[],
@@ -190580,6 +194912,23 @@ public final class Core {
    {
       return 0 ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#tanh}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int tanhDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode tanhImpl( int startIdx,
                      int endIdx,
@@ -191019,6 +195368,28 @@ public final class Core {
       retValue = emaLookback(optInTimePeriod);
       return retValue * 3 ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#tema}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod EMA period used for all three passes (default 30;
+    *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int temaDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( temaLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode temaImpl( int startIdx,
                      int endIdx,
@@ -191883,6 +196254,23 @@ public final class Core {
       return 1 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#trange}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int trangeDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode trangeImpl( int startIdx,
                        int endIdx,
                        double inHigh[],
@@ -192526,6 +196914,28 @@ public final class Core {
       }
       return optInTimePeriod - 1 ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#trima}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Number of bars in the averaging window (default 30;
+    *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int trimaDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( trimaLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode trimaImpl( int startIdx,
                       int endIdx,
@@ -194008,6 +198418,29 @@ public final class Core {
       return emaLookback * 3 + rocrLookback(1) ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#trix}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod EMA period used at each of the three smoothing
+    *        passes (default 30; range 1..100000; {@code Integer.MIN_VALUE} selects the
+    *        default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int trixDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( trixLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode trixImpl( int startIdx,
                      int endIdx,
                      double inReal[],
@@ -194784,6 +199217,28 @@ public final class Core {
       }
       return optInTimePeriod - 1 ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#tsf}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Number of bars in the regression window (default
+    *        14; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int tsfDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( tsfLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode tsfImpl( int startIdx,
                     int endIdx,
@@ -195907,6 +200362,32 @@ public final class Core {
       return 1 + emaLookback(optInFirstPeriod) + emaLookback(optInSecondPeriod) ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#tsi}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInFirstPeriod Period of the first smoothing, applied to the raw
+    *        momentum (default 25; range 2..100000; {@code Integer.MIN_VALUE} selects
+    *        the default).
+    * @param optInSecondPeriod Period of the second smoothing, applied to the
+    *        first (default 13; range 2..100000; {@code Integer.MIN_VALUE} selects the
+    *        default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int tsiDisplayShift( int optInFirstPeriod, int optInSecondPeriod, int outputIdx )
+   {
+      if( tsiLookback( optInFirstPeriod, optInSecondPeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode tsiImpl( int startIdx,
                     int endIdx,
                     double inReal[],
@@ -196855,6 +201336,23 @@ public final class Core {
       return 0 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#typprice}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int typpriceDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode typpriceImpl( int startIdx,
                          int endIdx,
                          double inHigh[],
@@ -197343,6 +201841,32 @@ public final class Core {
       maxPeriod = Math.max(Math.max(optInTimePeriod1, optInTimePeriod2), optInTimePeriod3);
       return smaLookback(maxPeriod) + 1 ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#ultosc}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod1 Bars for one averaging window (default 7; range
+    *        1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInTimePeriod2 Bars for another averaging window (default 14;
+    *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInTimePeriod3 Bars for another averaging window (default 28;
+    *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int ultoscDisplayShift( int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3, int outputIdx )
+   {
+      if( ultoscLookback( optInTimePeriod1, optInTimePeriod2, optInTimePeriod3 ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode ultoscImpl( int startIdx,
                        int endIdx,
@@ -198842,6 +203366,31 @@ public final class Core {
       return optInTimePeriod - 1 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#var}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Window length for the variance (default 5; range
+    *        1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInNbDev Deviation count accepted by the API but never used in
+    *        the computation (default 1; {@link Core#REAL_DEFAULT} selects the
+    *        default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int varDisplayShift( int optInTimePeriod, double optInNbDev, int outputIdx )
+   {
+      if( varLookback( optInTimePeriod, optInNbDev ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode varImpl( int startIdx,
                     int endIdx,
                     double inReal[],
@@ -199921,6 +204470,29 @@ public final class Core {
       return optInTimePeriod ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#vhf}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Number of trailing closes spanned by the range
+    *        (default 28; range 2..100000; {@code Integer.MIN_VALUE} selects the
+    *        default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int vhfDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( vhfLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode vhfImpl( int startIdx,
                     int endIdx,
                     double inReal[],
@@ -200658,6 +205230,30 @@ public final class Core {
       }
       return optInCMOPeriod + this.unstablePeriod[FuncUnstId.VIDYA.ordinal()] ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#vidya}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod The EMA length whose alpha the CMO scales (default
+    *        12; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInCMOPeriod Number of trailing price changes in the CMO (default
+    *        9; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int vidyaDisplayShift( int optInTimePeriod, int optInCMOPeriod, int outputIdx )
+   {
+      if( vidyaLookback( optInTimePeriod, optInCMOPeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode vidyaImpl( int startIdx,
                       int endIdx,
@@ -201874,6 +206470,28 @@ public final class Core {
        */
       return optInTimePeriod ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#vortex}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Number of bars in the rolling sums (default 14;
+    *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int vortexDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( vortexLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 2 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode vortexImpl( int startIdx,
                        int endIdx,
@@ -203130,6 +207748,23 @@ public final class Core {
       return 0 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#vwap}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int vwapDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode vwapImpl( int startIdx,
                      int endIdx,
                      double inHigh[],
@@ -204057,6 +208692,28 @@ public final class Core {
       return optInTimePeriod - 1 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#vwma}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Number of bars in the weighting window (default 30;
+    *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int vwmaDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( vwmaLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode vwmaImpl( int startIdx,
                      int endIdx,
                      double inReal[],
@@ -204970,6 +209627,23 @@ public final class Core {
       return 0 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#wad}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int wadDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode wadImpl( int startIdx,
                     int endIdx,
                     double inHigh[],
@@ -205638,6 +210312,23 @@ public final class Core {
       return 0 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#wclprice}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int wclpriceDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode wclpriceImpl( int startIdx,
                          int endIdx,
                          double inHigh[],
@@ -206105,6 +210796,28 @@ public final class Core {
       }
       return optInTimePeriod - 1 ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#willr}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Lookback bars for the high/low range (default 14;
+    *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int willrDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( willrLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode willrImpl( int startIdx,
                       int endIdx,
@@ -207200,6 +211913,28 @@ public final class Core {
       }
       return optInTimePeriod - 1 ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#wma}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Number of bars in the weighting window (default 30;
+    *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int wmaDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( wmaLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode wmaImpl( int startIdx,
                     int endIdx,
@@ -208497,6 +213232,29 @@ public final class Core {
        */
       return (optInTimePeriod - 1) / 2 + emaLookback(optInTimePeriod) ;
 
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#zlema}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Number of bars in the exponential average; the
+    *        de-lag distance derives from it (default 30; range 1..100000;
+    *        {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int zlemaDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( zlemaLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
    }
    RetCode zlemaImpl( int startIdx,
                       int endIdx,

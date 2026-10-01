@@ -40,6 +40,29 @@
       return Math.max(BodyShort_avgPeriod, BodyLong_avgPeriod) + 4 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#cdlmathold}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInPenetration Max fraction of the 1st white body the reaction
+    *        days (3rd, 4th) may penetrate (default 0.5; minimum 0;
+    *        {@link Core#REAL_DEFAULT} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int cdlmatholdDisplayShift( double optInPenetration, int outputIdx )
+   {
+      if( cdlmatholdLookback( optInPenetration ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode cdlmatholdImpl( int startIdx,
                            int endIdx,
                            double inOpen[],

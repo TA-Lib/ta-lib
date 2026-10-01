@@ -63,6 +63,13 @@ TA_LIB_API int TA_CDLONNECK_Lookback( void )
    return max(Equal_avgPeriod,BodyLong_avgPeriod) + 1;
 }
 
+TA_LIB_API int TA_CDLONNECK_DisplayShift( int outputIdx )
+{
+   if( outputIdx < 0 || outputIdx >= 1 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_LIB_API TA_RetCode TA_CDLONNECK( int    startIdx,
                                     int    endIdx,
                                     const double inOpen[],

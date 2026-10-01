@@ -74,6 +74,15 @@ TA_LIB_API int TA_MACDFIX_Lookback( int optInSignalPeriod )
    return TA_EMA_Lookback(26) + TA_EMA_Lookback(optInSignalPeriod);
 }
 
+TA_LIB_API int TA_MACDFIX_DisplayShift( int optInSignalPeriod, int outputIdx )
+{
+   if( TA_MACDFIX_Lookback( optInSignalPeriod ) < 0 )
+      return INT_MIN;
+   if( outputIdx < 0 || outputIdx >= 3 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_MACDFIX( int    startIdx,
                                   int    endIdx,

@@ -103,6 +103,15 @@ TA_LIB_API int TA_SAREXT_Lookback( double optInStartValue, double optInOffsetOnR
    return 1;
 }
 
+TA_LIB_API int TA_SAREXT_DisplayShift( double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort, int outputIdx )
+{
+   if( TA_SAREXT_Lookback( optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort ) < 0 )
+      return INT_MIN;
+   if( outputIdx < 0 || outputIdx >= 1 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_SAREXT( int    startIdx,
                                  int    endIdx,

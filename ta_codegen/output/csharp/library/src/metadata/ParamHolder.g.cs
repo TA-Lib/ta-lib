@@ -418,6 +418,15 @@ public sealed class ParamHolder
     /// <returns>The lookback, or <c>-1</c> when a bound parameter is out of range.</returns>
     public int Lookback() => _info.Lookback(_core, this);
 
+    /// <summary>How many bars ahead (positive) or behind (negative) of the bar that
+    /// computed it a chart draws one output, for this call's parameters.</summary>
+    /// <remarks>It is 0 for an output without <see cref="OutputFlags.DisplayShift"/>,
+    /// and describes the drawing only: the values are never shifted.</remarks>
+    /// <param name="outputIdx">The output's position in the function's signature, from 0.</param>
+    /// <returns>The display shift, or <c>int.MinValue</c> when a bound parameter is
+    /// out of range or the index names no output.</returns>
+    public int DisplayShift(int outputIdx) => _info.DisplayShift(_core, this, outputIdx);
+
     /* Returns Success when every input and output is bound, or the code C's
        TA_CallFunc returns for the same condition. Split out of RequireBound so
        TryCall can honour its name: it advertises "failure as a code rather than

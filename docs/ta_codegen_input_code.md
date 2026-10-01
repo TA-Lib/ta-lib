@@ -34,6 +34,26 @@ TA_RetCode <name>( int startIdx, int endIdx,
 }
 ```
 
+### Optional: `<name>_display_shift`
+
+A function whose outputs a chart draws ahead of or behind the bar that computed
+them also defines:
+
+```c
+int <name>_display_shift( /* optional params, in YAML order */, int outputIdx )
+{
+    return /* bars: > 0 ahead, < 0 behind, 0 at its own bar */;
+}
+```
+
+`outputIdx` ranges over every output, in signature order. Write only the
+calculation: before this body runs the generator rejects the parameters the
+lookback rejects and an index that names no output, and answers 0 for an output
+without the flag.
+Define it exactly when an output carries the `display_shift` flag in the YAML;
+the generator refuses either without the other. Every other function gets a
+generated query that answers 0. The emitted values are never shifted.
+
 ### Complete example — `ta_codegen/input/sma/sma.c`
 
 ```c

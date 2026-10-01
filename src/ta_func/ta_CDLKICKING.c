@@ -63,6 +63,13 @@ TA_LIB_API int TA_CDLKICKING_Lookback( void )
    return max(ShadowVeryShort_avgPeriod,BodyLong_avgPeriod) + 1;
 }
 
+TA_LIB_API int TA_CDLKICKING_DisplayShift( int outputIdx )
+{
+   if( outputIdx < 0 || outputIdx >= 1 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_LIB_API TA_RetCode TA_CDLKICKING( int    startIdx,
                                      int    endIdx,
                                      const double inOpen[],

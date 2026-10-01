@@ -69,6 +69,15 @@ TA_LIB_API int TA_CVI_Lookback( int optInTimePeriod, int optInROCPeriod )
    return TA_EMA_Lookback(optInTimePeriod) + TA_ROCP_Lookback(optInROCPeriod);
 }
 
+TA_LIB_API int TA_CVI_DisplayShift( int optInTimePeriod, int optInROCPeriod, int outputIdx )
+{
+   if( TA_CVI_Lookback( optInTimePeriod, optInROCPeriod ) < 0 )
+      return INT_MIN;
+   if( outputIdx < 0 || outputIdx >= 1 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_CVI( int    startIdx,
                               int    endIdx,

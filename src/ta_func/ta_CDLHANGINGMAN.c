@@ -65,6 +65,13 @@ TA_LIB_API int TA_CDLHANGINGMAN_Lookback( void )
    return max(max(max(BodyShort_avgPeriod,ShadowLong_avgPeriod),ShadowVeryShort_avgPeriod),Near_avgPeriod) + 1;
 }
 
+TA_LIB_API int TA_CDLHANGINGMAN_DisplayShift( int outputIdx )
+{
+   if( outputIdx < 0 || outputIdx >= 1 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_LIB_API TA_RetCode TA_CDLHANGINGMAN( int    startIdx,
                                         int    endIdx,
                                         const double inOpen[],

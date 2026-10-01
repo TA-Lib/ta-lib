@@ -78,6 +78,29 @@ public partial class Core
       return 1 ;
 
    }
+   /// <summary>
+   /// How many bars ahead (positive) or behind (negative) of the bar that
+   /// computed it a chart draws one output of <c>Si</c>.
+   /// </summary>
+   /// <remarks>
+   /// Every output of this function is drawn at its own bar, so the answer is 0.
+   /// </remarks>
+   /// <param name="optInLimitMove">Limit move, the largest one-bar price move the index is scaled against, in
+   /// price units (default 3; minimum 0.00000001; <see cref="Core.RealDefault"/>
+   /// selects the default).</param>
+   /// <param name="outputIdx">Position of the output in the batch signature, from 0.</param>
+   /// <returns>The display shift, or <c>int.MinValue</c> if a parameter is out of range
+   /// or the index names no output.</returns>
+   public int SiDisplayShift( double optInLimitMove, int outputIdx )
+   {
+      if( SiLookback( optInLimitMove ) < 0 ) {
+         return int.MinValue;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return int.MinValue;
+      }
+      return 0;
+   }
    internal RetCode SiImpl( int startIdx,
                             int endIdx,
                             ReadOnlySpan<double> inOpen,

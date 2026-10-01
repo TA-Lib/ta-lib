@@ -42,6 +42,7 @@ Single-candle doji with two long shadows whose body sits near the midpoint of th
 | <span class="flag-box">✅</span> **Candlestick** <span class="flag-tip" tabindex="0" role="note" aria-label="Output is an integer candlestick-pattern signal (e.g. -100 / 0 / +100)." data-tip="Output is an integer candlestick-pattern signal (e.g. -100 / 0 / +100).">i</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Can Output NaN or ±Inf</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Identity at Period 1</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Display Shift</span> |
 
 </div>
 

@@ -120,6 +120,35 @@ impl Core {
         retValue += self.ma_lookback(optInFastD_Period, optInFastD_MAType)?;
         return Ok(retValue);
     }
+    /// Display shift of one output of [`Core::stochf`]: how many bars ahead (positive) or behind
+    /// (negative) of the bar that computed it a chart draws that output. The values are never
+    /// shifted.
+    ///
+    /// Every output of this function is drawn at its own bar, so the answer is 0.
+    ///
+    /// # Arguments
+    ///
+    /// * `optInFastK_Period` — Lookback window for the highest-high/lowest-low of Fast-K (default
+    ///   5, range 1..=100000)
+    /// * `optInFastD_Period` — Smoothing period for the Fast-D line (default 3, range 1..=100000)
+    /// * `optInFastD_MAType` — Moving-average type used to smooth Fast-D (default 0 = SMA,
+    ///   values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
+    ///   10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, `MAType::DEFAULT` selects
+    ///   the default)
+    /// * `outputIdx` — Position of the output in the batch signature, from 0
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
+    /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
+    #[doc(alias = "TA_STOCHF_DisplayShift")]
+    pub fn stochf_display_shift(&self, mut optInFastK_Period: i32, mut optInFastD_Period: i32, mut optInFastD_MAType: MAType, outputIdx: usize) -> Result<i32, RetCode> {
+        self.stochf_lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType)?;
+        if outputIdx >= 2 {
+            return Err(RetCode::BadParam);
+        }
+        return Ok(0);
+    }
     /// C-shaped body behind [`Core::stochf`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.

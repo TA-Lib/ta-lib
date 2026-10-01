@@ -886,6 +886,19 @@ public class MetadataTest {
         return a;
     }
 
+    static void holderDisplayShiftMatchesTheTypedApi() {
+        io.github.talib.metadata.ParamHolder dpo = Functions.byName("DPO").newCall().setOptInput(0, 20);
+        check(dpo.displayShift(0) == Core.DEFAULT.dpoDisplayShift(20, 0) && dpo.displayShift(0) == -11,
+              "the holder answers DPO's display shift (" + dpo.displayShift(0) + ")");
+        check(dpo.displayShift(1) == Integer.MIN_VALUE && dpo.displayShift(-1) == Integer.MIN_VALUE,
+              "an index that names no output is rejected");
+
+        io.github.talib.metadata.ParamHolder bbands = Functions.byName("BBANDS").newCall();
+        check(bbands.displayShift(0) == 0 && bbands.displayShift(2) == 0
+              && bbands.displayShift(3) == Integer.MIN_VALUE,
+              "an unflagged function answers 0 for each of its outputs and no further");
+    }
+
     /**
      * {@code FuncInfo.newCall(Core)} must route through the {@code Core} it
      * was handed, not {@link Core#DEFAULT}.
@@ -976,6 +989,7 @@ public class MetadataTest {
         choiceListSentinelMatchesTheDefault();
         holderLookbackMatchesTheTypedApi();
         newCallCarriesTheGivenCore();
+        holderDisplayShiftMatchesTheTypedApi();
         functionDescriptionXmlDescribesEveryFunction();
         registryIsImmutable();
 

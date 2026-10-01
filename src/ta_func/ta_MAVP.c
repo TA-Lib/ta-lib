@@ -88,6 +88,15 @@ TA_LIB_API int TA_MAVP_Lookback( int optInMinPeriod, int optInMaxPeriod, TA_MATy
    return TA_MA_Lookback(optInMaxPeriod,optInMAType);
 }
 
+TA_LIB_API int TA_MAVP_DisplayShift( int optInMinPeriod, int optInMaxPeriod, TA_MAType optInMAType, int outputIdx )
+{
+   if( TA_MAVP_Lookback( optInMinPeriod, optInMaxPeriod, optInMAType ) < 0 )
+      return INT_MIN;
+   if( outputIdx < 0 || outputIdx >= 1 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_LIB_API TA_RetCode TA_MAVP( int    startIdx,
                                int    endIdx,
                                const double inReal[],

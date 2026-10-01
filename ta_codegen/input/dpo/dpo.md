@@ -14,7 +14,7 @@ Let `t = optInTimePeriod / 2 + 1`, an integer division, so a period and its odd 
 
 ## Notes
 
-- The value is emitted at the bar whose moving average produced it. Charting packages usually draw it `t` bars to the left instead, which is a plotting convention rather than a different series; a caller wanting that view shifts `outReal` itself.
+- The value is emitted at the bar whose moving average produced it. Charting packages usually draw it `t` bars to the left instead, which is a plotting convention rather than a different series; a caller wanting that view shifts `outReal` itself, by the display shift the function reports, `-t`.
 - A causal variant, `P[i] - SMA(P, optInTimePeriod)[i - t]`, displaces the average instead of the price. It is a genuinely different series, not a re-indexing of this one, and is not implemented here.
 
 ## Inputs

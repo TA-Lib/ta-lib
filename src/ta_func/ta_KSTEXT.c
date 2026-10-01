@@ -123,6 +123,15 @@ TA_LIB_API int TA_KSTEXT_Lookback( int optInROC1Period, int optInROC2Period, int
    return legMax + TA_MA_Lookback(optInSignalPeriod,optInSignalMAType);
 }
 
+TA_LIB_API int TA_KSTEXT_DisplayShift( int optInROC1Period, int optInROC2Period, int optInROC3Period, int optInROC4Period, int optInMA1Period, int optInMA2Period, int optInMA3Period, int optInMA4Period, int optInSignalPeriod, TA_MAType optInROCMAType, TA_MAType optInSignalMAType, int outputIdx )
+{
+   if( TA_KSTEXT_Lookback( optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType ) < 0 )
+      return INT_MIN;
+   if( outputIdx < 0 || outputIdx >= 2 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_KSTEXT( int    startIdx,
                                  int    endIdx,

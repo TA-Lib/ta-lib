@@ -203,6 +203,7 @@ params. No generic `<T: TaFloat>`, no `f32` variants.
 | Variant | Purpose |
 |---------|---------|
 | `pub fn <n>_lookback(...) -> Result<usize, RetCode>` | First valid output index |
+| `pub fn <n>_display_shift(..., outputIdx) -> Result<i32, RetCode>` | Chart offset of one output. Calls its own lookback first: that is what makes the two reject the same parameters |
 | `pub fn <n>(...) -> Result<OutRange, RetCode>` | The batch API, and the tier that **owns the argument contract**: index range, then parameters, then every input and output length, before it calls `<n>_impl` |
 | `pub(crate) fn <n>_impl(...) -> RetCode` | The body. Keeps C's shape — a code plus `&mut outBegIdx` / `&mut outNBElement` — because that is what the transcribed bodies are written against, and it is where the FMA dispatch sits. Not a cross-call target |
 | `fn <n>_private(...)` | Only where the definition declares one; extra pre-computed params, no validation prologue. No shipped indicator declares one — the construct is carried by the `SYNTH4` gate fixture |

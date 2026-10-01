@@ -86,6 +86,15 @@ TA_LIB_API int TA_ULTOSC_Lookback( int optInTimePeriod1, int optInTimePeriod2, i
    return TA_SMA_Lookback(maxPeriod) + 1;
 }
 
+TA_LIB_API int TA_ULTOSC_DisplayShift( int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3, int outputIdx )
+{
+   if( TA_ULTOSC_Lookback( optInTimePeriod1, optInTimePeriod2, optInTimePeriod3 ) < 0 )
+      return INT_MIN;
+   if( outputIdx < 0 || outputIdx >= 1 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_LIB_API TA_RetCode TA_ULTOSC( int    startIdx,
                                  int    endIdx,
                                  const double inHigh[],

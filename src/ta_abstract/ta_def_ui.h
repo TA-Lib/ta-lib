@@ -141,6 +141,7 @@ typedef struct
    const TA_OutputParameterInfo   * const output;
    const TA_FrameFunction function;
    const TA_FrameLookback lookback;
+   const TA_FrameDisplayShift displayShift;
 } TA_FuncDef;
 
 #if !defined( TA_GEN_CODE )
@@ -160,7 +161,8 @@ typedef struct
       (const TA_OptInputParameterInfo * const)&TA_##name##_OptInputs[0], \
       (const TA_OutputParameterInfo   * const)&TA_##name##_Outputs[0],   \
       TA_##name##_FramePP, \
-      TA_##name##_FramePPLB \
+      TA_##name##_FramePPLB, \
+      TA_##name##_FramePPDS \
    }; \
    TA_FuncInfo TA_INFO_##name = \
    { \
@@ -189,6 +191,7 @@ typedef struct
       (const TA_InputParameterInfo    * const)&TA_##name##_Inputs[0],    \
       (const TA_OptInputParameterInfo * const)&TA_##name##_OptInputs[0], \
       (const TA_OutputParameterInfo   * const)&TA_##name##_Outputs[0],   \
+      NULL, \
       NULL, \
       NULL \
    }; \

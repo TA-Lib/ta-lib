@@ -94,6 +94,15 @@ TA_LIB_API int TA_STOCHF_Lookback( int optInFastK_Period, int optInFastD_Period,
    return retValue;
 }
 
+TA_LIB_API int TA_STOCHF_DisplayShift( int optInFastK_Period, int optInFastD_Period, TA_MAType optInFastD_MAType, int outputIdx )
+{
+   if( TA_STOCHF_Lookback( optInFastK_Period, optInFastD_Period, optInFastD_MAType ) < 0 )
+      return INT_MIN;
+   if( outputIdx < 0 || outputIdx >= 2 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_LIB_API TA_RetCode TA_STOCHF( int    startIdx,
                                  int    endIdx,
                                  const double inHigh[],

@@ -110,6 +110,33 @@ impl Core {
         }
         return Ok(self.ma_lookback(optInMaxPeriod, optInMAType)?);
     }
+    /// Display shift of one output of [`Core::mavp`]: how many bars ahead (positive) or behind
+    /// (negative) of the bar that computed it a chart draws that output. The values are never
+    /// shifted.
+    ///
+    /// Every output of this function is drawn at its own bar, so the answer is 0.
+    ///
+    /// # Arguments
+    ///
+    /// * `optInMinPeriod` — Lower clamp for the per-bar period (default 2, range 1..=10000)
+    /// * `optInMaxPeriod` — Upper clamp for the per-bar period (default 30, range 1..=10000)
+    /// * `optInMAType` — Moving-average type applied (default 0 = SMA, values: 0=SMA, 1=EMA,
+    ///   2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT,
+    ///   12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, `MAType::DEFAULT` selects the default)
+    /// * `outputIdx` — Position of the output in the batch signature, from 0
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
+    /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
+    #[doc(alias = "TA_MAVP_DisplayShift")]
+    pub fn mavp_display_shift(&self, mut optInMinPeriod: i32, mut optInMaxPeriod: i32, mut optInMAType: MAType, outputIdx: usize) -> Result<i32, RetCode> {
+        self.mavp_lookback(optInMinPeriod, optInMaxPeriod, optInMAType)?;
+        if outputIdx >= 1 {
+            return Err(RetCode::BadParam);
+        }
+        return Ok(0);
+    }
     /// C-shaped body behind [`Core::mavp`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.

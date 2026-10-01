@@ -65,6 +65,15 @@ TA_LIB_API int TA_SI_Lookback( double optInLimitMove )
    return 1;
 }
 
+TA_LIB_API int TA_SI_DisplayShift( double optInLimitMove, int outputIdx )
+{
+   if( TA_SI_Lookback( optInLimitMove ) < 0 )
+      return INT_MIN;
+   if( outputIdx < 0 || outputIdx >= 1 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_LIB_API TA_RetCode TA_SI( int    startIdx,
                              int    endIdx,
                              const double inOpen[],

@@ -76,6 +76,23 @@ public partial class Core
       return 32 + this._unstablePeriod[(int)FuncUnstId.HT_PHASOR] ;
 
    }
+   /// <summary>
+   /// How many bars ahead (positive) or behind (negative) of the bar that
+   /// computed it a chart draws one output of <c>HtPhasor</c>.
+   /// </summary>
+   /// <remarks>
+   /// Every output of this function is drawn at its own bar, so the answer is 0.
+   /// </remarks>
+   /// <param name="outputIdx">Position of the output in the batch signature, from 0.</param>
+   /// <returns>The display shift, or <c>int.MinValue</c> if a parameter is out of range
+   /// or the index names no output.</returns>
+   public int HtPhasorDisplayShift( int outputIdx )
+   {
+      if( outputIdx < 0 || outputIdx >= 2 ) {
+         return int.MinValue;
+      }
+      return 0;
+   }
    internal RetCode HtPhasorImpl( int startIdx,
                                   int endIdx,
                                   ReadOnlySpan<double> inReal,

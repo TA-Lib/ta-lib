@@ -102,6 +102,32 @@ public partial class Core
       return (emaLookback > atrLookback) ? emaLookback : atrLookback ;
 
    }
+   /// <summary>
+   /// How many bars ahead (positive) or behind (negative) of the bar that
+   /// computed it a chart draws one output of <c>Kc</c>.
+   /// </summary>
+   /// <remarks>
+   /// Every output of this function is drawn at its own bar, so the answer is 0.
+   /// </remarks>
+   /// <param name="optInTimePeriod">Smoothing period of the typical price moving average (default 20; range
+   /// 2..100000; <c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInATRPeriod">Smoothing period of the Average True Range (default 10; range 1..100000;
+   /// <c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInNbDev">Multiplier applied to the Average True Range (default 2;
+   /// <see cref="Core.RealDefault"/> selects the default).</param>
+   /// <param name="outputIdx">Position of the output in the batch signature, from 0.</param>
+   /// <returns>The display shift, or <c>int.MinValue</c> if a parameter is out of range
+   /// or the index names no output.</returns>
+   public int KcDisplayShift( int optInTimePeriod, int optInATRPeriod, double optInNbDev, int outputIdx )
+   {
+      if( KcLookback( optInTimePeriod, optInATRPeriod, optInNbDev ) < 0 ) {
+         return int.MinValue;
+      }
+      if( outputIdx < 0 || outputIdx >= 3 ) {
+         return int.MinValue;
+      }
+      return 0;
+   }
    internal RetCode KcImpl( int startIdx,
                             int endIdx,
                             ReadOnlySpan<double> inHigh,

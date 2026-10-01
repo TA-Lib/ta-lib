@@ -137,6 +137,43 @@ public partial class Core
       return 1 ;
 
    }
+   /// <summary>
+   /// How many bars ahead (positive) or behind (negative) of the bar that
+   /// computed it a chart draws one output of <c>Sarext</c>.
+   /// </summary>
+   /// <remarks>
+   /// Every output of this function is drawn at its own bar, so the answer is 0.
+   /// </remarks>
+   /// <param name="optInStartValue">Initial SAR/direction: 0 auto, &gt;0 start long at value, &lt;0 start
+   /// short at -value (default 0; <see cref="Core.RealDefault"/> selects the
+   /// default).</param>
+   /// <param name="optInOffsetOnReverse">Fractional offset applied to the stop on each reversal (default 0; minimum
+   /// 0; <see cref="Core.RealDefault"/> selects the default).</param>
+   /// <param name="optInAccelerationInitLong">Initial acceleration factor when long (default 0.02; minimum 0;
+   /// <see cref="Core.RealDefault"/> selects the default).</param>
+   /// <param name="optInAccelerationLong">AF increment per new long extreme (default 0.02; minimum 0;
+   /// <see cref="Core.RealDefault"/> selects the default).</param>
+   /// <param name="optInAccelerationMaxLong">Cap on the long acceleration factor (default 0.2; minimum 0;
+   /// <see cref="Core.RealDefault"/> selects the default).</param>
+   /// <param name="optInAccelerationInitShort">Initial acceleration factor when short (default 0.02; minimum 0;
+   /// <see cref="Core.RealDefault"/> selects the default).</param>
+   /// <param name="optInAccelerationShort">AF increment per new short extreme (default 0.02; minimum 0;
+   /// <see cref="Core.RealDefault"/> selects the default).</param>
+   /// <param name="optInAccelerationMaxShort">Cap on the short acceleration factor (default 0.2; minimum 0;
+   /// <see cref="Core.RealDefault"/> selects the default).</param>
+   /// <param name="outputIdx">Position of the output in the batch signature, from 0.</param>
+   /// <returns>The display shift, or <c>int.MinValue</c> if a parameter is out of range
+   /// or the index names no output.</returns>
+   public int SarextDisplayShift( double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort, int outputIdx )
+   {
+      if( SarextLookback( optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort ) < 0 ) {
+         return int.MinValue;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return int.MinValue;
+      }
+      return 0;
+   }
    internal RetCode SarextImpl( int startIdx,
                                 int endIdx,
                                 ReadOnlySpan<double> inHigh,

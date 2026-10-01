@@ -67,6 +67,15 @@ TA_LIB_API int TA_ERI_Lookback( int optInTimePeriod )
    return TA_EMA_Lookback(optInTimePeriod);
 }
 
+TA_LIB_API int TA_ERI_DisplayShift( int optInTimePeriod, int outputIdx )
+{
+   if( TA_ERI_Lookback( optInTimePeriod ) < 0 )
+      return INT_MIN;
+   if( outputIdx < 0 || outputIdx >= 2 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_ERI( int    startIdx,
                               int    endIdx,

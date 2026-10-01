@@ -93,6 +93,32 @@ impl Core {
         }
         return Ok((optInLeftBars + optInRightBars) as usize);
     }
+    /// Display shift of one output of [`Core::fractal`]: how many bars ahead (positive) or behind
+    /// (negative) of the bar that computed it a chart draws that output. The values are never
+    /// shifted.
+    ///
+    /// Every output of this function is drawn at its own bar, so the answer is 0.
+    ///
+    /// # Arguments
+    ///
+    /// * `optInLeftBars` — Bars before the pivot that it must strictly dominate (default 2, range
+    ///   1..=100000)
+    /// * `optInRightBars` — Bars after the pivot that it must strictly dominate, and the delay
+    ///   before the verdict is reported (default 2, range 1..=100000)
+    /// * `outputIdx` — Position of the output in the batch signature, from 0
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
+    /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
+    #[doc(alias = "TA_FRACTAL_DisplayShift")]
+    pub fn fractal_display_shift(&self, mut optInLeftBars: i32, mut optInRightBars: i32, outputIdx: usize) -> Result<i32, RetCode> {
+        self.fractal_lookback(optInLeftBars, optInRightBars)?;
+        if outputIdx >= 2 {
+            return Err(RetCode::BadParam);
+        }
+        return Ok(0);
+    }
     /// C-shaped body behind [`Core::fractal`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.

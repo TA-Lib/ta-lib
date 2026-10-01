@@ -86,22 +86,24 @@ static int abstract_parse_func_name(const char *json, char *funcName, int funcNa
  * Returns: lookback value
  */
 
-static void handle_abstract_get_lookback(const char *json, char *resp, int resp_size) {
+/* A holder for the request's function with every optional parameter the
+ * request carries bound by paramName. NULL once resp holds the error.
+ */
+static TA_ParamHolder *abstract_holder_with_opts(const char *json, char *resp, int resp_size) {
    char funcName[64];
    const TA_FuncHandle *handle;
    if( !abstract_parse_func_name(json, funcName, sizeof(funcName), &handle, resp, resp_size) )
-      return;
+      return NULL;
 
    TA_ParamHolder *params;
    if( TA_ParamHolderAlloc(handle, &params) != TA_SUCCESS ) {
       snprintf(resp, resp_size, "{\"error\":\"ParamHolderAlloc failed\"}");
-      return;
+      return NULL;
    }
 
    const TA_FuncInfo *fi;
    TA_GetFuncInfo(handle, &fi);
 
-   /* Set optional params from JSON (by paramName) */
    for( unsigned int i = 0; i < fi->nbOptInput; i++ ) {
       const TA_OptInputParameterInfo *optInfo;
       TA_GetOptInputParameterInfo(handle, i, &optInfo);
@@ -123,6 +125,13 @@ static void handle_abstract_get_lookback(const char *json, char *resp, int resp_
          }
       }
    }
+   return params;
+}
+
+static void handle_abstract_get_lookback(const char *json, char *resp, int resp_size) {
+   TA_ParamHolder *params = abstract_holder_with_opts(json, resp, resp_size);
+   if( !params )
+      return;
 
    TA_Integer lookback = 0;
    TA_GetLookback(params, &lookback);
@@ -130,6 +139,25 @@ static void handle_abstract_get_lookback(const char *json, char *resp, int resp_
 
    snprintf(resp, resp_size, "{\"lookback\":%d}", (int)lookback);
 }
+
+/* ---- abstract_get_display_shift ----
+ * Mirrors: TA_GetDisplayShift
+ * Params:  funcName, optional param values (by paramName), outputIdx
+ * Returns: displayShift, INT_MIN when the parameters or the index are rejected
+ */
+#ifndef TA_REF_SERVE
+static void handle_abstract_get_display_shift(const char *json, char *resp, int resp_size) {
+   TA_ParamHolder *params = abstract_holder_with_opts(json, resp, resp_size);
+   if( !params )
+      return;
+
+   TA_Integer displayShift = 0;
+   TA_GetDisplayShift(params, (unsigned int)json_find_int(json, "outputIdx"), &displayShift);
+   TA_ParamHolderFree(params);
+
+   snprintf(resp, resp_size, "{\"displayShift\":%d}", (int)displayShift);
+}
+#endif
 
 /* ---- abstract_call ----
  * Mirrors: Full ta_abstract call path (GetFuncHandle → ParamHolderAlloc →

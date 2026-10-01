@@ -14,7 +14,8 @@ toc: false
 <p><a href="#init">3.1 Initialize and Shutdown</a><br>
 <a href="#direct_call">3.2 Batch Processing</a><br>
 <a href="#output_size">3.3 Output Size and Lookback</a><br>
-<a href="#retcode">3.4 Return Codes</a><br></p>
+<a href="#display_shift">3.4 Display Shift</a><br>
+<a href="#retcode">3.5 Return Codes</a><br></p>
 </blockquote>
 
 <p><a href="#advanced">4.0 Advanced Features</a></p>
@@ -177,7 +178,17 @@ It is important that the output array is large enough. Here are three ways to de
 it is TA_SMA_Lookback.</p>
 <p>The lookback is the number of input elements consumed before the first output can be calculated. Example: a simple moving average (SMA) of period 10 has a lookback of 9.</p>
 
-### 3.4 Return Codes {#retcode}
+### 3.4 Display Shift {#display_shift}
+
+<p>A few indicators are conventionally drawn at another bar than the one that computes them: the Detrended Price Oscillator, for example, is drawn half a period back. TA-Lib never moves the values. Each TA function has a matching TA_XXXX_DisplayShift function that tells a charting app where to draw one output:</p>
+
+```c
+int shift = TA_DPO_DisplayShift( 20, 0 );   /* period 20, first output: -11 */
+```
+
+<p>It takes the optional parameters of TA_XXXX_Lookback, then the index of the output, counted from zero. The result is a number of bars: positive ahead, negative behind, and zero for almost every function. The same answer comes from <b>TA_GetDisplayShift</b> in the <a href="/api/abstract/">abstraction layer</a>. The rules are in the <a href="/spec/lookback/#display-shift">specification</a>.</p>
+
+### 3.5 Return Codes {#retcode}
 
 <p>Every TA function returns a <b>TA_RetCode</b>. <b>TA_SUCCESS</b> (zero) means the call completed and wrote its outputs; on anything else, treat outBegIdx and outNBElement as undefined and the output buffers as untouched. <b>TA_ALLOC_ERR</b> is the exception: it is fatal, and nothing about the call is defined past it.</p>
 <p>The codes a caller normally encounters:</p>
@@ -209,27 +220,13 @@ if( retCode != TA_SUCCESS )
 Error 1(TA_LIB_NOT_INITIALIZE): TA_Initialize was not successfully called
 ```
 
-<p>The <a href="#output_size">TA_XXXX_Lookback</a> functions are the exception to the pattern: they return an int rather than a TA_RetCode, and answer <b>-1</b> when a parameter is out of range. Check for that before using the value as an allocation size.</p>
+<p>The <a href="#output_size">TA_XXXX_Lookback</a> and <a href="#display_shift">TA_XXXX_DisplayShift</a> functions are the exception to the pattern: they return an int rather than a TA_RetCode. A lookback answers <b>-1</b> when a parameter is out of range. Check for that before using the value as an allocation size.</p>
 
 ## 4.0 Advanced Features {#advanced}
 
 ### 4.1 Abstraction Layer {#abstract}
 
-<p>Instead of hard-coding calls to specific TA functions, an app can look them up by name at runtime through the interface in <a href="https://github.com/TA-Lib/ta-lib/blob/main/include/ta_abstract.h">ta_abstract.h</a>. For any function it reports:</p>
-<ul>
-  <li>the inputs it takes,</li>
-  <li>its optional parameters with their valid ranges,</li>
-  <li>the outputs it produces, and</li>
-  <li>metadata about numerical properties and suggested default, range and display hints.</li>
-</ul>
-<p>This is what you want when the function or its parameters are not fixed in your code. Typical uses:</p>
-<ul>
-  <li>Generating glue code or wrappers for higher-level languages.</li>
-  <li>Automatically picking up new functions after a TA-Lib upgrade, with no code change.</li>
-  <li>"Mutating" the function and its parameters while searching for strategies (e.g. a genetic or neural-network algorithm).</li>
-  <li>Populating a charting app: the indicator menu and each settings dialog come straight from the metadata.</li>
-</ul>
-<p>If you only need a handful of specific functions, calling them directly — with <a href="#direct_call">batch processing</a> or the <a href="/api/stream/">streaming API</a> — is simpler.</p>
+<p>Instead of hard-coding calls to specific TA functions, an app can look them up by name at run time through the interface in <a href="https://github.com/TA-Lib/ta-lib/blob/main/include/ta_abstract.h">ta_abstract.h</a>, read their inputs, parameters and outputs, and call them. See the <a href="/api/abstract/">Abstraction Layer</a> page.</p>
 
 ### 4.2 Numerical Stability {#numerical_stability}
 

@@ -54,6 +54,7 @@ public partial class Core
     *  MMDDYY BY     Description
     *  -------------------------------------------------------------------
     *  090426 MF,CC  Initial version (#363).
+    *  100126 MF,CC  Display shift (#489).
     */
    /// <summary>
    /// Number of leading input bars <c>Dpo</c> consumes before it can produce its
@@ -81,6 +82,38 @@ public partial class Core
        * then read inReal[-1].
        */
       return MaxGt(optInTimePeriod - 1, optInTimePeriod / 2 + 1) ;
+
+   }
+   /// <summary>
+   /// How many bars ahead (positive) or behind (negative) of the bar that
+   /// computed it a chart draws one output of <c>Dpo</c>.
+   /// </summary>
+   /// <remarks>
+   /// The values are never shifted: this describes the drawing only.
+   /// </remarks>
+   /// <param name="optInTimePeriod">Number of bars spanned by the moving average being removed; the
+   /// displacement is derived from it (default 20; range 2..100000;
+   /// <c>int.MinValue</c> selects the default).</param>
+   /// <param name="outputIdx">Position of the output in the batch signature, from 0.</param>
+   /// <returns>The display shift, or <c>int.MinValue</c> if a parameter is out of range
+   /// or the index names no output.</returns>
+   public int DpoDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( DpoLookback( optInTimePeriod ) < 0 ) {
+         return int.MinValue;
+      }
+      if( optInTimePeriod == int.MinValue ) {
+         optInTimePeriod = 20;
+      } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+         return int.MinValue;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return int.MinValue;
+      }
+      /* The value computed at a bar detrends the price this many bars back,
+       * which is where a chart draws it.
+       */
+      return -(optInTimePeriod / 2 + 1) ;
 
    }
    internal RetCode DpoImpl( int startIdx,
@@ -242,7 +275,7 @@ public partial class Core
    /// <see href="https://ta-lib.org/functions/dpo">ta-lib.org/functions/dpo</see>.
    /// </para>
    /// <list type="bullet">
-   /// <item><description>The value is emitted at the bar whose moving average produced it. Charting packages usually draw it <c>t</c> bars to the left instead, which is a plotting convention rather than a different series; a caller wanting that view shifts <c>outReal</c> itself.</description></item>
+   /// <item><description>The value is emitted at the bar whose moving average produced it. Charting packages usually draw it <c>t</c> bars to the left instead, which is a plotting convention rather than a different series; a caller wanting that view shifts <c>outReal</c> itself, by the display shift the function reports, <c>-t</c>.</description></item>
    /// <item><description>A causal variant, <c>P[i] - SMA(P, optInTimePeriod)[i - t]</c>, displaces the average instead of the price. It is a genuinely different series, not a re-indexing of this one, and is not implemented here.</description></item>
    /// </list>
    /// <para>
@@ -324,7 +357,7 @@ public partial class Core
    /// <see href="https://ta-lib.org/functions/dpo">ta-lib.org/functions/dpo</see>.
    /// </para>
    /// <list type="bullet">
-   /// <item><description>The value is emitted at the bar whose moving average produced it. Charting packages usually draw it <c>t</c> bars to the left instead, which is a plotting convention rather than a different series; a caller wanting that view shifts <c>outReal</c> itself.</description></item>
+   /// <item><description>The value is emitted at the bar whose moving average produced it. Charting packages usually draw it <c>t</c> bars to the left instead, which is a plotting convention rather than a different series; a caller wanting that view shifts <c>outReal</c> itself, by the display shift the function reports, <c>-t</c>.</description></item>
    /// <item><description>A causal variant, <c>P[i] - SMA(P, optInTimePeriod)[i - t]</c>, displaces the average instead of the price. It is a genuinely different series, not a re-indexing of this one, and is not implemented here.</description></item>
    /// </list>
    /// <para>

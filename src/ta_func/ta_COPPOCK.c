@@ -82,6 +82,15 @@ TA_LIB_API int TA_COPPOCK_Lookback( int optInWMAPeriod, int optInROC1Period, int
    return optInROC2Period + optInWMAPeriod - 1;
 }
 
+TA_LIB_API int TA_COPPOCK_DisplayShift( int optInWMAPeriod, int optInROC1Period, int optInROC2Period, int outputIdx )
+{
+   if( TA_COPPOCK_Lookback( optInWMAPeriod, optInROC1Period, optInROC2Period ) < 0 )
+      return INT_MIN;
+   if( outputIdx < 0 || outputIdx >= 1 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_LIB_API TA_RetCode TA_COPPOCK( int    startIdx,
                                   int    endIdx,
                                   const double inReal[],

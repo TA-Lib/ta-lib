@@ -62,6 +62,13 @@ TA_LIB_API int TA_TRANGE_Lookback( void )
    return 1;
 }
 
+TA_LIB_API int TA_TRANGE_DisplayShift( int outputIdx )
+{
+   if( outputIdx < 0 || outputIdx >= 1 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_LIB_API TA_RetCode TA_TRANGE( int    startIdx,
                                  int    endIdx,
                                  const double inHigh[],

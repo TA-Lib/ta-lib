@@ -96,6 +96,15 @@ TA_LIB_API int TA_MACD_Lookback( int optInFastPeriod, int optInSlowPeriod, int o
    return TA_EMA_Lookback(optInSlowPeriod) + TA_EMA_Lookback(optInSignalPeriod);
 }
 
+TA_LIB_API int TA_MACD_DisplayShift( int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, int outputIdx )
+{
+   if( TA_MACD_Lookback( optInFastPeriod, optInSlowPeriod, optInSignalPeriod ) < 0 )
+      return INT_MIN;
+   if( outputIdx < 0 || outputIdx >= 3 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_MACD( int    startIdx,
                                int    endIdx,

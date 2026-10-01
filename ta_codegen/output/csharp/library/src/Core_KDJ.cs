@@ -109,6 +109,40 @@ public partial class Core
       return StochLookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType) ;
 
    }
+   /// <summary>
+   /// How many bars ahead (positive) or behind (negative) of the bar that
+   /// computed it a chart draws one output of <c>Kdj</c>.
+   /// </summary>
+   /// <remarks>
+   /// Every output of this function is drawn at its own bar, so the answer is 0.
+   /// </remarks>
+   /// <param name="optInFastK_Period">Lookback window for the raw stochastic high-low range (default 9; range
+   /// 1..100000; <c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInSlowK_Period">Smoothing period turning the raw stochastic into K (default 3; range
+   /// 1..100000; <c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInSlowK_MAType">MA type used to smooth into K (default 13 = RMA; values: 0=SMA, 1=EMA,
+   /// 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
+   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA; <c>MAType.DEFAULT</c> (or
+   /// <c>(MAType)int.MinValue</c>) selects the default).</param>
+   /// <param name="optInSlowD_Period">Smoothing period for the D signal line (default 3; range 1..100000;
+   /// <c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInSlowD_MAType">MA type used for the D line (default 13 = RMA; values: 0=SMA, 1=EMA,
+   /// 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
+   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA; <c>MAType.DEFAULT</c> (or
+   /// <c>(MAType)int.MinValue</c>) selects the default).</param>
+   /// <param name="outputIdx">Position of the output in the batch signature, from 0.</param>
+   /// <returns>The display shift, or <c>int.MinValue</c> if a parameter is out of range
+   /// or the index names no output.</returns>
+   public int KdjDisplayShift( int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType, int outputIdx )
+   {
+      if( KdjLookback( optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType ) < 0 ) {
+         return int.MinValue;
+      }
+      if( outputIdx < 0 || outputIdx >= 3 ) {
+         return int.MinValue;
+      }
+      return 0;
+   }
    internal RetCode KdjImpl( int startIdx,
                              int endIdx,
                              ReadOnlySpan<double> inHigh,

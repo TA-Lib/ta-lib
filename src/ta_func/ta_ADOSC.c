@@ -80,6 +80,15 @@ TA_LIB_API int TA_ADOSC_Lookback( int optInFastPeriod, int optInSlowPeriod )
    return TA_EMA_Lookback(slowestPeriod);
 }
 
+TA_LIB_API int TA_ADOSC_DisplayShift( int optInFastPeriod, int optInSlowPeriod, int outputIdx )
+{
+   if( TA_ADOSC_Lookback( optInFastPeriod, optInSlowPeriod ) < 0 )
+      return INT_MIN;
+   if( outputIdx < 0 || outputIdx >= 1 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_ADOSC( int    startIdx,
                                 int    endIdx,

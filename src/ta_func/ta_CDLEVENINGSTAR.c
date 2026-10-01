@@ -67,6 +67,15 @@ TA_LIB_API int TA_CDLEVENINGSTAR_Lookback( double optInPenetration )
    return max(BodyShort_avgPeriod,BodyLong_avgPeriod) + 2;
 }
 
+TA_LIB_API int TA_CDLEVENINGSTAR_DisplayShift( double optInPenetration, int outputIdx )
+{
+   if( TA_CDLEVENINGSTAR_Lookback( optInPenetration ) < 0 )
+      return INT_MIN;
+   if( outputIdx < 0 || outputIdx >= 1 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_LIB_API TA_RetCode TA_CDLEVENINGSTAR( int    startIdx,
                                          int    endIdx,
                                          const double inOpen[],

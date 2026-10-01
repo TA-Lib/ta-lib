@@ -1963,7 +1963,7 @@ public final class Functions {
 
    private static FuncInfo f_DPO() {
       return new FuncInfo(
-         "DPO", "Momentum Indicators", "Detrended Price Oscillator", 0x02000000,
+         "DPO", "Momentum Indicators", "Detrended Price Oscillator", 0x02000002,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),
@@ -1975,7 +1975,7 @@ public final class Functions {
                2, 100000, 10, 60, 5, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
+            new OutputInfo(OutputType.REAL, "outReal", 0x00004001)
          ));
    }
 

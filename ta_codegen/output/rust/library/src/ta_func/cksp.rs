@@ -107,6 +107,35 @@ impl Core {
         // TA_FUNC_UNST_ATR.
         return Ok((self.atr_lookback(optInTimePeriod)? + ((optInStopPeriod) as usize) - 1) as usize);
     }
+    /// Display shift of one output of [`Core::cksp`]: how many bars ahead (positive) or behind
+    /// (negative) of the bar that computed it a chart draws that output. The values are never
+    /// shifted.
+    ///
+    /// Every output of this function is drawn at its own bar, so the answer is 0.
+    ///
+    /// # Arguments
+    ///
+    /// * `optInTimePeriod` — Window of the highest high and lowest low, and smoothing period of
+    ///   the Average True Range (default 10, range 2..=100000)
+    /// * `optInMultiplier` — Multiplier applied to the Average True Range to offset the first
+    ///   stops (default 1, minimum 0)
+    /// * `optInStopPeriod` — Window over which each first stop takes its extreme (default 9,
+    ///   range 1..=100000)
+    /// * `outputIdx` — Position of the output in the batch signature, from 0
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
+    /// parameters accept [`Core::INTEGER_DEFAULT`], and real parameters [`Core::REAL_DEFAULT`], to
+    /// select their default value.
+    #[doc(alias = "TA_CKSP_DisplayShift")]
+    pub fn cksp_display_shift(&self, mut optInTimePeriod: i32, mut optInMultiplier: f64, mut optInStopPeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+        self.cksp_lookback(optInTimePeriod, optInMultiplier, optInStopPeriod)?;
+        if outputIdx >= 2 {
+            return Err(RetCode::BadParam);
+        }
+        return Ok(0);
+    }
     /// C-shaped body behind [`Core::cksp`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.

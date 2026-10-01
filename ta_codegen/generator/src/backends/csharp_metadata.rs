@@ -356,6 +356,11 @@ const FUNC_FLAGS: &[(&str, &str, &str)] = &[
         "Period1Identity",
         "A period of 1 performs no smoothing: the lookback is 0 and the output is a bit-exact copy of the input.",
     ),
+    (
+        "display_shift",
+        "DisplayShift",
+        "At least one output carries <c>OutputFlags.DisplayShift</c>; without it every output's display shift is 0.",
+    ),
 ];
 
 const OPT_FLAGS: &[(&str, &str, &str)] = &[
@@ -383,6 +388,11 @@ const OUTPUT_FLAGS: &[(&str, &str, &str)] = &[
         "nullable",
         "Nullable",
         "Discardable: C accepts <c>NULL</c> for it. C# still requires an array.",
+    ),
+    (
+        "display_shift",
+        "DisplayShift",
+        "A chart draws it ahead of or behind the bar that computed it, by the bars the display-shift query reports. The values are never shifted.",
     ),
 ];
 
@@ -871,6 +881,13 @@ fn emit_factory(s: &mut String, r: &FuncRow, by_name: &HashMap<&str, &FuncDef>) 
         "        lookback: static (core, c) => core.{method}Lookback({}),",
         opt_args.join(", ")
     );
+    let mut shift_args = opt_args.clone();
+    shift_args.push("outputIdx".into());
+    let _ = writeln!(
+        s,
+        "        displayShift: static (core, c, outputIdx) => core.{method}DisplayShift({}),",
+        shift_args.join(", ")
+    );
 
     let mut call_args: Vec<String> = vec!["startIdx".into(), "endIdx".into()];
     call_args.extend(input_arg_exprs(r, false));
@@ -1120,6 +1137,9 @@ namespace TALib.Metadata;
 
 /// <summary>Computes a function's lookback from a bound call.</summary>
 internal delegate int LookbackThunk(Core core, ParamHolder call);
+
+/// <summary>Computes one output's display shift from a bound call.</summary>
+internal delegate int DisplayShiftThunk(Core core, ParamHolder call, int outputIdx);
 
 /// <summary>Runs a function from a bound call.</summary>
 /// <remarks>The thunk calls the function's public overload, so a rejection
@@ -1438,7 +1458,8 @@ public sealed record FuncInfo
                           ImmutableArray<InputInfo> inputs,
                           ImmutableArray<OptInputInfo> optInputs,
                           ImmutableArray<OutputInfo> outputs,
-                          LookbackThunk lookback, InvokeThunk invoke)
+                          LookbackThunk lookback, DisplayShiftThunk displayShift,
+                          InvokeThunk invoke)
     {
         Name = name;
         Group = group;
@@ -1449,6 +1470,7 @@ public sealed record FuncInfo
         OptInputs = optInputs;
         Outputs = outputs;
         Lookback = lookback;
+        DisplayShift = displayShift;
         Invoke = invoke;
     }
 
@@ -1482,6 +1504,8 @@ public sealed record FuncInfo
     public ImmutableArray<OutputInfo> Outputs { get; }
 
     internal LookbackThunk Lookback { get; }
+
+    internal DisplayShiftThunk DisplayShift { get; }
 
     internal InvokeThunk Invoke { get; }
 
@@ -1878,6 +1902,15 @@ public sealed class ParamHolder
     /// <summary>The number of leading bars this call's parameters consume.</summary>
     /// <returns>The lookback, or <c>-1</c> when a bound parameter is out of range.</returns>
     public int Lookback() => _info.Lookback(_core, this);
+
+    /// <summary>How many bars ahead (positive) or behind (negative) of the bar that
+    /// computed it a chart draws one output, for this call's parameters.</summary>
+    /// <remarks>It is 0 for an output without <see cref="OutputFlags.DisplayShift"/>,
+    /// and describes the drawing only: the values are never shifted.</remarks>
+    /// <param name="outputIdx">The output's position in the function's signature, from 0.</param>
+    /// <returns>The display shift, or <c>int.MinValue</c> when a bound parameter is
+    /// out of range or the index names no output.</returns>
+    public int DisplayShift(int outputIdx) => _info.DisplayShift(_core, this, outputIdx);
 
     /* Returns Success when every input and output is bound, or the code C's
        TA_CallFunc returns for the same condition. Split out of RequireBound so

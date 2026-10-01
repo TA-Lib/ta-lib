@@ -115,6 +115,15 @@ TA_LIB_API int TA_BBANDS_Lookback( int optInTimePeriod, double optInNbDevUp, dou
    return (maLookback > stddevLookback) ? maLookback : stddevLookback;
 }
 
+TA_LIB_API int TA_BBANDS_DisplayShift( int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, TA_MAType optInMAType, int outputIdx )
+{
+   if( TA_BBANDS_Lookback( optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType ) < 0 )
+      return INT_MIN;
+   if( outputIdx < 0 || outputIdx >= 3 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_BBANDS( int    startIdx,
                                  int    endIdx,

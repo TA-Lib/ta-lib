@@ -89,6 +89,15 @@ TA_LIB_API int TA_STC_Lookback( int optInFastPeriod, int optInSlowPeriod, int op
    return TA_EMA_Lookback(optInSlowPeriod) + 2 * (optInCyclePeriod - 1) + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_STC,Stc);
 }
 
+TA_LIB_API int TA_STC_DisplayShift( int optInFastPeriod, int optInSlowPeriod, int optInCyclePeriod, int outputIdx )
+{
+   if( TA_STC_Lookback( optInFastPeriod, optInSlowPeriod, optInCyclePeriod ) < 0 )
+      return INT_MIN;
+   if( outputIdx < 0 || outputIdx >= 1 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_STC( int    startIdx,
                               int    endIdx,

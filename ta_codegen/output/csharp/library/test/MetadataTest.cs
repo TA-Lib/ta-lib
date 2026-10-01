@@ -1181,6 +1181,21 @@ public static class MetadataTest
         Check(moved, "a correct rebind reaches the output");
     }
 
+    private static void HolderDisplayShiftMatchesTheTypedApi()
+    {
+        ParamHolder dpo = FunctionCatalog.Default["DPO"].CreateCall().SetOptInput(0, 20);
+        Check(dpo.DisplayShift(0) == Core.Default.DpoDisplayShift(20, 0) && dpo.DisplayShift(0) == -11,
+            $"the holder answers DPO's display shift ({dpo.DisplayShift(0)})");
+        Check(dpo.DisplayShift(1) == int.MinValue && dpo.DisplayShift(-1) == int.MinValue,
+            "an index that names no output is rejected");
+        Check(FunctionCatalog.Default["DPO"].CreateCall().SetOptInput(0, 1).DisplayShift(0) == int.MinValue,
+            "a period the lookback rejects is rejected");
+
+        ParamHolder bbands = FunctionCatalog.Default["BBANDS"].CreateCall();
+        Check(bbands.DisplayShift(0) == 0 && bbands.DisplayShift(2) == 0 && bbands.DisplayShift(3) == int.MinValue,
+            "an unflagged function answers 0 for each of its outputs and no further");
+    }
+
     /// <summary><see cref="FuncInfo.CreateCall(Core)"/> routes <c>Lookback</c>,
     /// <c>Call</c> and <c>TryCall</c> through the Core it was handed.</summary>
     /// <remarks>The unstable period is the oracle: it moves the lookback, and it
@@ -1239,6 +1254,7 @@ public static class MetadataTest
         BinderRejectsMisuse();
         ARejectedSetterLeavesTheCallAsItFoundIt();
         CreateCallCarriesTheGivenCore();
+        HolderDisplayShiftMatchesTheTypedApi();
         BothCallPathsAgree();
         UnboundParametersTakeTheDocumentedDefault();
         MetadataTypesCannotBeConstructedOutside();

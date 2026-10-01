@@ -144,6 +144,21 @@ def _stub_definitions(absent, header):
     return "\n" + "\n".join(defs) + "\n" if defs else ""
 
 
+def _display_shift_stubs(names, header, frozen_header):
+    """A definition for every TA_<N>_DisplayShift the release does not declare.
+    The transport's abstract frames call it for every function, so it must link;
+    it is never reached, because the serve compiles the display-shift requests
+    out. Answers the query's own rejection value."""
+    cur = _batch_decls(header)
+    old = _batch_decls(frozen_header)
+    defs = []
+    for name in sorted(names):
+        sym = f"TA_{name}_DisplayShift"
+        if sym in cur and sym not in old:
+            defs.append(cur[sym].rstrip(';').strip() + " { return INT_MIN; }")
+    return "\n" + "\n".join(defs) + "\n" if defs else ""
+
+
 def ref_dir(root):
     return os.path.join(root, 'ta_ref')
 
@@ -405,7 +420,7 @@ def _check_abi(root, include, common, v, work):
     return max(_enum_values(include, 'TA_MAType_', work, v).values()), unst
 
 
-def _transport(root, work, post_funcs):
+def _transport(root, work, post_funcs, current, include):
     """The generated server with the indicator and ta_common sources stripped,
     so the frozen library provides them."""
     with open(os.path.join(root, 'ta_codegen', 'output', 'c', 'tools', 'ta_codegen_serve.c')) as f:
@@ -426,6 +441,9 @@ def _transport(root, work, post_funcs):
         text = _filter_list_functions(text, post_funcs)
         stubs = _stub_definitions(post_funcs, os.path.join(root, 'include', 'ta_func.h'))
         text = text.replace('int main(void) {', stubs + 'int main(void) {', 1)
+    shift_stubs = _display_shift_stubs(current, os.path.join(root, 'include', 'ta_func.h'),
+                                       os.path.join(include, 'ta_func.h'))
+    text = text.replace('int main(void) {', shift_stubs + 'int main(void) {', 1)
     text = text.replace('int main(void) {',
                         'int main(void) { TA_Initialize(); '
                         'TA_RestoreCandleDefaultSettings(TA_AllCandleSettings);', 1)
@@ -520,7 +538,7 @@ def build_serve(root, build_dir, v):
     release = _func_names(listed.decode())
     matype_max, unst = _check_abi(root, include, current & release, v, work)
     post_funcs = sorted(current - release)
-    transport = _transport(root, work, post_funcs)
+    transport = _transport(root, work, post_funcs, current, include)
     # The unstable-period ids each function's own handler sets, verified above
     # to name the same functions in the release: abstract_call applies them.
     rows = '\n'.join('   { "%s", %d, { %s } },' % (n, len(ids), ', '.join(map(str, ids)))

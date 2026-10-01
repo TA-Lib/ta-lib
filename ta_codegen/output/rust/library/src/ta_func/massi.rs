@@ -96,6 +96,32 @@ impl Core {
         // makes MASSI inherit TA_FUNC_UNST_EMA -- and it shifts by 2u, not u.
         return Ok((self.ema_lookback(optInFastPeriod)? * 2 + (((optInSlowPeriod - 1)) as usize)) as usize);
     }
+    /// Display shift of one output of [`Core::massi`]: how many bars ahead (positive) or behind
+    /// (negative) of the bar that computed it a chart draws that output. The values are never
+    /// shifted.
+    ///
+    /// Every output of this function is drawn at its own bar, so the answer is 0.
+    ///
+    /// # Arguments
+    ///
+    /// * `optInFastPeriod` — Number of bars in each of the two exponential averages of the
+    ///   high-low range (default 9, range 2..=100000)
+    /// * `optInSlowPeriod` — Number of bars the ratio is summed over (default 25, range
+    ///   2..=100000)
+    /// * `outputIdx` — Position of the output in the batch signature, from 0
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
+    /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
+    #[doc(alias = "TA_MASSI_DisplayShift")]
+    pub fn massi_display_shift(&self, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+        self.massi_lookback(optInFastPeriod, optInSlowPeriod)?;
+        if outputIdx >= 1 {
+            return Err(RetCode::BadParam);
+        }
+        return Ok(0);
+    }
     /// C-shaped body behind [`Core::massi`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.

@@ -63,6 +63,13 @@ TA_LIB_API int TA_HT_DCPERIOD_Lookback( void )
    return 32 + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_HT_DCPERIOD,Ht_dcperiod);
 }
 
+TA_LIB_API int TA_HT_DCPERIOD_DisplayShift( int outputIdx )
+{
+   if( outputIdx < 0 || outputIdx >= 1 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_HT_DCPERIOD( int    startIdx,
                                       int    endIdx,

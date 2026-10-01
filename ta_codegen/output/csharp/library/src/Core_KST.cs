@@ -148,6 +148,44 @@ public partial class Core
       return legMax + optInSignalPeriod - 1 ;
 
    }
+   /// <summary>
+   /// How many bars ahead (positive) or behind (negative) of the bar that
+   /// computed it a chart draws one output of <c>Kst</c>.
+   /// </summary>
+   /// <remarks>
+   /// Every output of this function is drawn at its own bar, so the answer is 0.
+   /// </remarks>
+   /// <param name="optInROC1Period">Rate-of-change period of leg 1 (weight 1) (default 10; range 1..100000;
+   /// <c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInROC2Period">Rate-of-change period of leg 2 (weight 2) (default 15; range 1..100000;
+   /// <c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInROC3Period">Rate-of-change period of leg 3 (weight 3) (default 20; range 1..100000;
+   /// <c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInROC4Period">Rate-of-change period of leg 4 (weight 4) (default 30; range 1..100000;
+   /// <c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInSMA1Period">Simple-moving-average period smoothing leg 1 (default 10; range 1..100000;
+   /// <c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInSMA2Period">Simple-moving-average period smoothing leg 2 (default 10; range 1..100000;
+   /// <c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInSMA3Period">Simple-moving-average period smoothing leg 3 (default 10; range 1..100000;
+   /// <c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInSMA4Period">Simple-moving-average period smoothing leg 4 (default 15; range 1..100000;
+   /// <c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInSignalPeriod">Simple-moving-average period of the signal line (default 9; range
+   /// 1..100000; <c>int.MinValue</c> selects the default).</param>
+   /// <param name="outputIdx">Position of the output in the batch signature, from 0.</param>
+   /// <returns>The display shift, or <c>int.MinValue</c> if a parameter is out of range
+   /// or the index names no output.</returns>
+   public int KstDisplayShift( int optInROC1Period, int optInROC2Period, int optInROC3Period, int optInROC4Period, int optInSMA1Period, int optInSMA2Period, int optInSMA3Period, int optInSMA4Period, int optInSignalPeriod, int outputIdx )
+   {
+      if( KstLookback( optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod ) < 0 ) {
+         return int.MinValue;
+      }
+      if( outputIdx < 0 || outputIdx >= 2 ) {
+         return int.MinValue;
+      }
+      return 0;
+   }
    internal RetCode KstImpl( int startIdx,
                              int endIdx,
                              ReadOnlySpan<double> inReal,

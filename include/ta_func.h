@@ -123,6 +123,7 @@ TA_LIB_API TA_RetCode TA_S_AC( int    startIdx,
 TA_LIB_API int TA_AC_Lookback( int           optInFastPeriod, /* From 2 to 100000 */
                                         int           optInSlowPeriod, /* From 2 to 100000 */
                                         int           optInSignalPeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_AC_DisplayShift( int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, int outputIdx );
 
 
 
@@ -217,6 +218,7 @@ TA_LIB_API TA_RetCode TA_S_ACCBANDS( int    startIdx,
                                                 double        outRealLowerBand[] );
 
 TA_LIB_API int TA_ACCBANDS_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_ACCBANDS_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -295,6 +297,7 @@ TA_LIB_API TA_RetCode TA_S_ACOS( int    startIdx,
                                             double        outReal[] );
 
 TA_LIB_API int TA_ACOS_Lookback( void );
+TA_LIB_API int TA_ACOS_DisplayShift( int outputIdx );
 
 
 
@@ -379,6 +382,7 @@ TA_LIB_API TA_RetCode TA_S_AD( int    startIdx,
                                           double        outReal[] );
 
 TA_LIB_API int TA_AD_Lookback( void );
+TA_LIB_API int TA_AD_DisplayShift( int outputIdx );
 
 
 
@@ -459,6 +463,7 @@ TA_LIB_API TA_RetCode TA_S_ADD( int    startIdx,
                                            double        outReal[] );
 
 TA_LIB_API int TA_ADD_Lookback( void );
+TA_LIB_API int TA_ADD_DisplayShift( int outputIdx );
 
 
 
@@ -557,6 +562,7 @@ TA_LIB_API TA_RetCode TA_S_ADOSC( int    startIdx,
 
 TA_LIB_API int TA_ADOSC_Lookback( int           optInFastPeriod, /* From 2 to 100000 */
                                            int           optInSlowPeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_ADOSC_DisplayShift( int optInFastPeriod, int optInSlowPeriod, int outputIdx );
 
 
 
@@ -645,6 +651,7 @@ TA_LIB_API TA_RetCode TA_S_ADR( int    startIdx,
                                            double        outReal[] );
 
 TA_LIB_API int TA_ADR_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
+TA_LIB_API int TA_ADR_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -735,6 +742,7 @@ TA_LIB_API TA_RetCode TA_S_ADX( int    startIdx,
                                            double        outReal[] );
 
 TA_LIB_API int TA_ADX_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_ADX_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -825,6 +833,7 @@ TA_LIB_API TA_RetCode TA_S_ADXR( int    startIdx,
                                             double        outReal[] );
 
 TA_LIB_API int TA_ADXR_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_ADXR_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -923,6 +932,7 @@ TA_LIB_API TA_RetCode TA_S_ALMA( int    startIdx,
 TA_LIB_API int TA_ALMA_Lookback( int           optInTimePeriod, /* From 1 to 100000 */
                                           double        optInSigma, /* From 0.01 to 30000000000000000000000000000000000000 */
                                           double        optInOffset );  /* From 0 to 1 */
+TA_LIB_API int TA_ALMA_DisplayShift( int optInTimePeriod, double optInSigma, double optInOffset, int outputIdx );
 
 
 
@@ -1017,6 +1027,7 @@ TA_LIB_API TA_RetCode TA_S_AO( int    startIdx,
 
 TA_LIB_API int TA_AO_Lookback( int           optInFastPeriod, /* From 2 to 100000 */
                                         int           optInSlowPeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_AO_DisplayShift( int optInFastPeriod, int optInSlowPeriod, int outputIdx );
 
 
 
@@ -1115,6 +1126,7 @@ TA_LIB_API TA_RetCode TA_S_APO( int    startIdx,
 TA_LIB_API int TA_APO_Lookback( int           optInFastPeriod, /* From 2 to 100000 */
                                          int           optInSlowPeriod, /* From 2 to 100000 */
                                          TA_MAType     optInMAType );
+TA_LIB_API int TA_APO_DisplayShift( int optInFastPeriod, int optInSlowPeriod, TA_MAType optInMAType, int outputIdx );
 
 
 /*
@@ -1204,6 +1216,7 @@ TA_LIB_API TA_RetCode TA_S_AROON( int    startIdx,
                                              double        outAroonUp[] );
 
 TA_LIB_API int TA_AROON_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_AROON_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -1292,6 +1305,7 @@ TA_LIB_API TA_RetCode TA_S_AROONOSC( int    startIdx,
                                                 double        outReal[] );
 
 TA_LIB_API int TA_AROONOSC_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_AROONOSC_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -1384,6 +1398,7 @@ TA_LIB_API TA_RetCode TA_S_ASI( int    startIdx,
                                            double        outReal[] );
 
 TA_LIB_API int TA_ASI_Lookback( double        optInLimitMove );  /* From 0.00000001 to 30000000000000000000000000000000000000 */
+TA_LIB_API int TA_ASI_DisplayShift( double optInLimitMove, int outputIdx );
 
 
 
@@ -1462,6 +1477,7 @@ TA_LIB_API TA_RetCode TA_S_ASIN( int    startIdx,
                                             double        outReal[] );
 
 TA_LIB_API int TA_ASIN_Lookback( void );
+TA_LIB_API int TA_ASIN_DisplayShift( int outputIdx );
 
 
 
@@ -1540,6 +1556,7 @@ TA_LIB_API TA_RetCode TA_S_ATAN( int    startIdx,
                                             double        outReal[] );
 
 TA_LIB_API int TA_ATAN_Lookback( void );
+TA_LIB_API int TA_ATAN_DisplayShift( int outputIdx );
 
 
 
@@ -1630,6 +1647,7 @@ TA_LIB_API TA_RetCode TA_S_ATR( int    startIdx,
                                            double        outReal[] );
 
 TA_LIB_API int TA_ATR_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
+TA_LIB_API int TA_ATR_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -1716,6 +1734,7 @@ TA_LIB_API TA_RetCode TA_S_AVGDEV( int    startIdx,
                                               double        outReal[] );
 
 TA_LIB_API int TA_AVGDEV_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_AVGDEV_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -1800,6 +1819,7 @@ TA_LIB_API TA_RetCode TA_S_AVGPRICE( int    startIdx,
                                                 double        outReal[] );
 
 TA_LIB_API int TA_AVGPRICE_Lookback( void );
+TA_LIB_API int TA_AVGPRICE_DisplayShift( int outputIdx );
 
 
 
@@ -1908,6 +1928,7 @@ TA_LIB_API int TA_BBANDS_Lookback( int           optInTimePeriod, /* From 2 to 1
                                             double        optInNbDevUp, /* From -30000000000000000000000000000000000000 to 30000000000000000000000000000000000000 */
                                             double        optInNbDevDn, /* From -30000000000000000000000000000000000000 to 30000000000000000000000000000000000000 */
                                             TA_MAType     optInMAType );
+TA_LIB_API int TA_BBANDS_DisplayShift( int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, TA_MAType optInMAType, int outputIdx );
 
 
 /*
@@ -2011,6 +2032,7 @@ TA_LIB_API int TA_BBW_Lookback( int           optInTimePeriod, /* From 2 to 1000
                                          double        optInNbDevUp, /* From -30000000000000000000000000000000000000 to 30000000000000000000000000000000000000 */
                                          double        optInNbDevDn, /* From -30000000000000000000000000000000000000 to 30000000000000000000000000000000000000 */
                                          TA_MAType     optInMAType );
+TA_LIB_API int TA_BBW_DisplayShift( int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, TA_MAType optInMAType, int outputIdx );
 
 
 /*
@@ -2098,6 +2120,7 @@ TA_LIB_API TA_RetCode TA_S_BETA( int    startIdx,
                                             double        outReal[] );
 
 TA_LIB_API int TA_BETA_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
+TA_LIB_API int TA_BETA_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -2182,6 +2205,7 @@ TA_LIB_API TA_RetCode TA_S_BOP( int    startIdx,
                                            double        outReal[] );
 
 TA_LIB_API int TA_BOP_Lookback( void );
+TA_LIB_API int TA_BOP_DisplayShift( int outputIdx );
 
 
 
@@ -2272,6 +2296,7 @@ TA_LIB_API TA_RetCode TA_S_CCI( int    startIdx,
                                            double        outReal[] );
 
 TA_LIB_API int TA_CCI_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_CCI_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -2356,6 +2381,7 @@ TA_LIB_API TA_RetCode TA_S_CDL2CROWS( int    startIdx,
                                                  int           outInteger[] );
 
 TA_LIB_API int TA_CDL2CROWS_Lookback( void );
+TA_LIB_API int TA_CDL2CROWS_DisplayShift( int outputIdx );
 
 
 
@@ -2440,6 +2466,7 @@ TA_LIB_API TA_RetCode TA_S_CDL3BLACKCROWS( int    startIdx,
                                                       int           outInteger[] );
 
 TA_LIB_API int TA_CDL3BLACKCROWS_Lookback( void );
+TA_LIB_API int TA_CDL3BLACKCROWS_DisplayShift( int outputIdx );
 
 
 
@@ -2524,6 +2551,7 @@ TA_LIB_API TA_RetCode TA_S_CDL3INSIDE( int    startIdx,
                                                   int           outInteger[] );
 
 TA_LIB_API int TA_CDL3INSIDE_Lookback( void );
+TA_LIB_API int TA_CDL3INSIDE_DisplayShift( int outputIdx );
 
 
 
@@ -2608,6 +2636,7 @@ TA_LIB_API TA_RetCode TA_S_CDL3LINESTRIKE( int    startIdx,
                                                       int           outInteger[] );
 
 TA_LIB_API int TA_CDL3LINESTRIKE_Lookback( void );
+TA_LIB_API int TA_CDL3LINESTRIKE_DisplayShift( int outputIdx );
 
 
 
@@ -2692,6 +2721,7 @@ TA_LIB_API TA_RetCode TA_S_CDL3OUTSIDE( int    startIdx,
                                                    int           outInteger[] );
 
 TA_LIB_API int TA_CDL3OUTSIDE_Lookback( void );
+TA_LIB_API int TA_CDL3OUTSIDE_DisplayShift( int outputIdx );
 
 
 
@@ -2776,6 +2806,7 @@ TA_LIB_API TA_RetCode TA_S_CDL3STARSINSOUTH( int    startIdx,
                                                         int           outInteger[] );
 
 TA_LIB_API int TA_CDL3STARSINSOUTH_Lookback( void );
+TA_LIB_API int TA_CDL3STARSINSOUTH_DisplayShift( int outputIdx );
 
 
 
@@ -2860,6 +2891,7 @@ TA_LIB_API TA_RetCode TA_S_CDL3WHITESOLDIERS( int    startIdx,
                                                          int           outInteger[] );
 
 TA_LIB_API int TA_CDL3WHITESOLDIERS_Lookback( void );
+TA_LIB_API int TA_CDL3WHITESOLDIERS_DisplayShift( int outputIdx );
 
 
 
@@ -2952,6 +2984,7 @@ TA_LIB_API TA_RetCode TA_S_CDLABANDONEDBABY( int    startIdx,
                                                         int           outInteger[] );
 
 TA_LIB_API int TA_CDLABANDONEDBABY_Lookback( double        optInPenetration );  /* From 0 to 30000000000000000000000000000000000000 */
+TA_LIB_API int TA_CDLABANDONEDBABY_DisplayShift( double optInPenetration, int outputIdx );
 
 
 
@@ -3036,6 +3069,7 @@ TA_LIB_API TA_RetCode TA_S_CDLADVANCEBLOCK( int    startIdx,
                                                        int           outInteger[] );
 
 TA_LIB_API int TA_CDLADVANCEBLOCK_Lookback( void );
+TA_LIB_API int TA_CDLADVANCEBLOCK_DisplayShift( int outputIdx );
 
 
 
@@ -3120,6 +3154,7 @@ TA_LIB_API TA_RetCode TA_S_CDLBELTHOLD( int    startIdx,
                                                    int           outInteger[] );
 
 TA_LIB_API int TA_CDLBELTHOLD_Lookback( void );
+TA_LIB_API int TA_CDLBELTHOLD_DisplayShift( int outputIdx );
 
 
 
@@ -3204,6 +3239,7 @@ TA_LIB_API TA_RetCode TA_S_CDLBREAKAWAY( int    startIdx,
                                                     int           outInteger[] );
 
 TA_LIB_API int TA_CDLBREAKAWAY_Lookback( void );
+TA_LIB_API int TA_CDLBREAKAWAY_DisplayShift( int outputIdx );
 
 
 
@@ -3288,6 +3324,7 @@ TA_LIB_API TA_RetCode TA_S_CDLCLOSINGMARUBOZU( int    startIdx,
                                                           int           outInteger[] );
 
 TA_LIB_API int TA_CDLCLOSINGMARUBOZU_Lookback( void );
+TA_LIB_API int TA_CDLCLOSINGMARUBOZU_DisplayShift( int outputIdx );
 
 
 
@@ -3372,6 +3409,7 @@ TA_LIB_API TA_RetCode TA_S_CDLCONCEALBABYSWALL( int    startIdx,
                                                            int           outInteger[] );
 
 TA_LIB_API int TA_CDLCONCEALBABYSWALL_Lookback( void );
+TA_LIB_API int TA_CDLCONCEALBABYSWALL_DisplayShift( int outputIdx );
 
 
 
@@ -3456,6 +3494,7 @@ TA_LIB_API TA_RetCode TA_S_CDLCOUNTERATTACK( int    startIdx,
                                                         int           outInteger[] );
 
 TA_LIB_API int TA_CDLCOUNTERATTACK_Lookback( void );
+TA_LIB_API int TA_CDLCOUNTERATTACK_DisplayShift( int outputIdx );
 
 
 
@@ -3548,6 +3587,7 @@ TA_LIB_API TA_RetCode TA_S_CDLDARKCLOUDCOVER( int    startIdx,
                                                          int           outInteger[] );
 
 TA_LIB_API int TA_CDLDARKCLOUDCOVER_Lookback( double        optInPenetration );  /* From 0 to 30000000000000000000000000000000000000 */
+TA_LIB_API int TA_CDLDARKCLOUDCOVER_DisplayShift( double optInPenetration, int outputIdx );
 
 
 
@@ -3632,6 +3672,7 @@ TA_LIB_API TA_RetCode TA_S_CDLDOJI( int    startIdx,
                                                int           outInteger[] );
 
 TA_LIB_API int TA_CDLDOJI_Lookback( void );
+TA_LIB_API int TA_CDLDOJI_DisplayShift( int outputIdx );
 
 
 
@@ -3716,6 +3757,7 @@ TA_LIB_API TA_RetCode TA_S_CDLDOJISTAR( int    startIdx,
                                                    int           outInteger[] );
 
 TA_LIB_API int TA_CDLDOJISTAR_Lookback( void );
+TA_LIB_API int TA_CDLDOJISTAR_DisplayShift( int outputIdx );
 
 
 
@@ -3800,6 +3842,7 @@ TA_LIB_API TA_RetCode TA_S_CDLDRAGONFLYDOJI( int    startIdx,
                                                         int           outInteger[] );
 
 TA_LIB_API int TA_CDLDRAGONFLYDOJI_Lookback( void );
+TA_LIB_API int TA_CDLDRAGONFLYDOJI_DisplayShift( int outputIdx );
 
 
 
@@ -3884,6 +3927,7 @@ TA_LIB_API TA_RetCode TA_S_CDLENGULFING( int    startIdx,
                                                     int           outInteger[] );
 
 TA_LIB_API int TA_CDLENGULFING_Lookback( void );
+TA_LIB_API int TA_CDLENGULFING_DisplayShift( int outputIdx );
 
 
 
@@ -3976,6 +4020,7 @@ TA_LIB_API TA_RetCode TA_S_CDLEVENINGDOJISTAR( int    startIdx,
                                                           int           outInteger[] );
 
 TA_LIB_API int TA_CDLEVENINGDOJISTAR_Lookback( double        optInPenetration );  /* From 0 to 30000000000000000000000000000000000000 */
+TA_LIB_API int TA_CDLEVENINGDOJISTAR_DisplayShift( double optInPenetration, int outputIdx );
 
 
 
@@ -4068,6 +4113,7 @@ TA_LIB_API TA_RetCode TA_S_CDLEVENINGSTAR( int    startIdx,
                                                       int           outInteger[] );
 
 TA_LIB_API int TA_CDLEVENINGSTAR_Lookback( double        optInPenetration );  /* From 0 to 30000000000000000000000000000000000000 */
+TA_LIB_API int TA_CDLEVENINGSTAR_DisplayShift( double optInPenetration, int outputIdx );
 
 
 
@@ -4152,6 +4198,7 @@ TA_LIB_API TA_RetCode TA_S_CDLGAPSIDESIDEWHITE( int    startIdx,
                                                            int           outInteger[] );
 
 TA_LIB_API int TA_CDLGAPSIDESIDEWHITE_Lookback( void );
+TA_LIB_API int TA_CDLGAPSIDESIDEWHITE_DisplayShift( int outputIdx );
 
 
 
@@ -4236,6 +4283,7 @@ TA_LIB_API TA_RetCode TA_S_CDLGRAVESTONEDOJI( int    startIdx,
                                                          int           outInteger[] );
 
 TA_LIB_API int TA_CDLGRAVESTONEDOJI_Lookback( void );
+TA_LIB_API int TA_CDLGRAVESTONEDOJI_DisplayShift( int outputIdx );
 
 
 
@@ -4320,6 +4368,7 @@ TA_LIB_API TA_RetCode TA_S_CDLHAMMER( int    startIdx,
                                                  int           outInteger[] );
 
 TA_LIB_API int TA_CDLHAMMER_Lookback( void );
+TA_LIB_API int TA_CDLHAMMER_DisplayShift( int outputIdx );
 
 
 
@@ -4404,6 +4453,7 @@ TA_LIB_API TA_RetCode TA_S_CDLHANGINGMAN( int    startIdx,
                                                      int           outInteger[] );
 
 TA_LIB_API int TA_CDLHANGINGMAN_Lookback( void );
+TA_LIB_API int TA_CDLHANGINGMAN_DisplayShift( int outputIdx );
 
 
 
@@ -4488,6 +4538,7 @@ TA_LIB_API TA_RetCode TA_S_CDLHARAMI( int    startIdx,
                                                  int           outInteger[] );
 
 TA_LIB_API int TA_CDLHARAMI_Lookback( void );
+TA_LIB_API int TA_CDLHARAMI_DisplayShift( int outputIdx );
 
 
 
@@ -4572,6 +4623,7 @@ TA_LIB_API TA_RetCode TA_S_CDLHARAMICROSS( int    startIdx,
                                                       int           outInteger[] );
 
 TA_LIB_API int TA_CDLHARAMICROSS_Lookback( void );
+TA_LIB_API int TA_CDLHARAMICROSS_DisplayShift( int outputIdx );
 
 
 
@@ -4656,6 +4708,7 @@ TA_LIB_API TA_RetCode TA_S_CDLHIGHWAVE( int    startIdx,
                                                    int           outInteger[] );
 
 TA_LIB_API int TA_CDLHIGHWAVE_Lookback( void );
+TA_LIB_API int TA_CDLHIGHWAVE_DisplayShift( int outputIdx );
 
 
 
@@ -4740,6 +4793,7 @@ TA_LIB_API TA_RetCode TA_S_CDLHIKKAKE( int    startIdx,
                                                   int           outInteger[] );
 
 TA_LIB_API int TA_CDLHIKKAKE_Lookback( void );
+TA_LIB_API int TA_CDLHIKKAKE_DisplayShift( int outputIdx );
 
 
 
@@ -4824,6 +4878,7 @@ TA_LIB_API TA_RetCode TA_S_CDLHIKKAKEMOD( int    startIdx,
                                                      int           outInteger[] );
 
 TA_LIB_API int TA_CDLHIKKAKEMOD_Lookback( void );
+TA_LIB_API int TA_CDLHIKKAKEMOD_DisplayShift( int outputIdx );
 
 
 
@@ -4908,6 +4963,7 @@ TA_LIB_API TA_RetCode TA_S_CDLHOMINGPIGEON( int    startIdx,
                                                        int           outInteger[] );
 
 TA_LIB_API int TA_CDLHOMINGPIGEON_Lookback( void );
+TA_LIB_API int TA_CDLHOMINGPIGEON_DisplayShift( int outputIdx );
 
 
 
@@ -4992,6 +5048,7 @@ TA_LIB_API TA_RetCode TA_S_CDLIDENTICAL3CROWS( int    startIdx,
                                                           int           outInteger[] );
 
 TA_LIB_API int TA_CDLIDENTICAL3CROWS_Lookback( void );
+TA_LIB_API int TA_CDLIDENTICAL3CROWS_DisplayShift( int outputIdx );
 
 
 
@@ -5076,6 +5133,7 @@ TA_LIB_API TA_RetCode TA_S_CDLINNECK( int    startIdx,
                                                  int           outInteger[] );
 
 TA_LIB_API int TA_CDLINNECK_Lookback( void );
+TA_LIB_API int TA_CDLINNECK_DisplayShift( int outputIdx );
 
 
 
@@ -5160,6 +5218,7 @@ TA_LIB_API TA_RetCode TA_S_CDLINVERTEDHAMMER( int    startIdx,
                                                          int           outInteger[] );
 
 TA_LIB_API int TA_CDLINVERTEDHAMMER_Lookback( void );
+TA_LIB_API int TA_CDLINVERTEDHAMMER_DisplayShift( int outputIdx );
 
 
 
@@ -5244,6 +5303,7 @@ TA_LIB_API TA_RetCode TA_S_CDLKICKING( int    startIdx,
                                                   int           outInteger[] );
 
 TA_LIB_API int TA_CDLKICKING_Lookback( void );
+TA_LIB_API int TA_CDLKICKING_DisplayShift( int outputIdx );
 
 
 
@@ -5328,6 +5388,7 @@ TA_LIB_API TA_RetCode TA_S_CDLKICKINGBYLENGTH( int    startIdx,
                                                           int           outInteger[] );
 
 TA_LIB_API int TA_CDLKICKINGBYLENGTH_Lookback( void );
+TA_LIB_API int TA_CDLKICKINGBYLENGTH_DisplayShift( int outputIdx );
 
 
 
@@ -5412,6 +5473,7 @@ TA_LIB_API TA_RetCode TA_S_CDLLADDERBOTTOM( int    startIdx,
                                                        int           outInteger[] );
 
 TA_LIB_API int TA_CDLLADDERBOTTOM_Lookback( void );
+TA_LIB_API int TA_CDLLADDERBOTTOM_DisplayShift( int outputIdx );
 
 
 
@@ -5496,6 +5558,7 @@ TA_LIB_API TA_RetCode TA_S_CDLLONGLEGGEDDOJI( int    startIdx,
                                                          int           outInteger[] );
 
 TA_LIB_API int TA_CDLLONGLEGGEDDOJI_Lookback( void );
+TA_LIB_API int TA_CDLLONGLEGGEDDOJI_DisplayShift( int outputIdx );
 
 
 
@@ -5580,6 +5643,7 @@ TA_LIB_API TA_RetCode TA_S_CDLLONGLINE( int    startIdx,
                                                    int           outInteger[] );
 
 TA_LIB_API int TA_CDLLONGLINE_Lookback( void );
+TA_LIB_API int TA_CDLLONGLINE_DisplayShift( int outputIdx );
 
 
 
@@ -5664,6 +5728,7 @@ TA_LIB_API TA_RetCode TA_S_CDLMARUBOZU( int    startIdx,
                                                    int           outInteger[] );
 
 TA_LIB_API int TA_CDLMARUBOZU_Lookback( void );
+TA_LIB_API int TA_CDLMARUBOZU_DisplayShift( int outputIdx );
 
 
 
@@ -5748,6 +5813,7 @@ TA_LIB_API TA_RetCode TA_S_CDLMATCHINGLOW( int    startIdx,
                                                       int           outInteger[] );
 
 TA_LIB_API int TA_CDLMATCHINGLOW_Lookback( void );
+TA_LIB_API int TA_CDLMATCHINGLOW_DisplayShift( int outputIdx );
 
 
 
@@ -5840,6 +5906,7 @@ TA_LIB_API TA_RetCode TA_S_CDLMATHOLD( int    startIdx,
                                                   int           outInteger[] );
 
 TA_LIB_API int TA_CDLMATHOLD_Lookback( double        optInPenetration );  /* From 0 to 30000000000000000000000000000000000000 */
+TA_LIB_API int TA_CDLMATHOLD_DisplayShift( double optInPenetration, int outputIdx );
 
 
 
@@ -5932,6 +5999,7 @@ TA_LIB_API TA_RetCode TA_S_CDLMORNINGDOJISTAR( int    startIdx,
                                                           int           outInteger[] );
 
 TA_LIB_API int TA_CDLMORNINGDOJISTAR_Lookback( double        optInPenetration );  /* From 0 to 30000000000000000000000000000000000000 */
+TA_LIB_API int TA_CDLMORNINGDOJISTAR_DisplayShift( double optInPenetration, int outputIdx );
 
 
 
@@ -6024,6 +6092,7 @@ TA_LIB_API TA_RetCode TA_S_CDLMORNINGSTAR( int    startIdx,
                                                       int           outInteger[] );
 
 TA_LIB_API int TA_CDLMORNINGSTAR_Lookback( double        optInPenetration );  /* From 0 to 30000000000000000000000000000000000000 */
+TA_LIB_API int TA_CDLMORNINGSTAR_DisplayShift( double optInPenetration, int outputIdx );
 
 
 
@@ -6108,6 +6177,7 @@ TA_LIB_API TA_RetCode TA_S_CDLONNECK( int    startIdx,
                                                  int           outInteger[] );
 
 TA_LIB_API int TA_CDLONNECK_Lookback( void );
+TA_LIB_API int TA_CDLONNECK_DisplayShift( int outputIdx );
 
 
 
@@ -6192,6 +6262,7 @@ TA_LIB_API TA_RetCode TA_S_CDLPIERCING( int    startIdx,
                                                    int           outInteger[] );
 
 TA_LIB_API int TA_CDLPIERCING_Lookback( void );
+TA_LIB_API int TA_CDLPIERCING_DisplayShift( int outputIdx );
 
 
 
@@ -6276,6 +6347,7 @@ TA_LIB_API TA_RetCode TA_S_CDLRICKSHAWMAN( int    startIdx,
                                                       int           outInteger[] );
 
 TA_LIB_API int TA_CDLRICKSHAWMAN_Lookback( void );
+TA_LIB_API int TA_CDLRICKSHAWMAN_DisplayShift( int outputIdx );
 
 
 
@@ -6360,6 +6432,7 @@ TA_LIB_API TA_RetCode TA_S_CDLRISEFALL3METHODS( int    startIdx,
                                                            int           outInteger[] );
 
 TA_LIB_API int TA_CDLRISEFALL3METHODS_Lookback( void );
+TA_LIB_API int TA_CDLRISEFALL3METHODS_DisplayShift( int outputIdx );
 
 
 
@@ -6444,6 +6517,7 @@ TA_LIB_API TA_RetCode TA_S_CDLSEPARATINGLINES( int    startIdx,
                                                           int           outInteger[] );
 
 TA_LIB_API int TA_CDLSEPARATINGLINES_Lookback( void );
+TA_LIB_API int TA_CDLSEPARATINGLINES_DisplayShift( int outputIdx );
 
 
 
@@ -6528,6 +6602,7 @@ TA_LIB_API TA_RetCode TA_S_CDLSHOOTINGSTAR( int    startIdx,
                                                        int           outInteger[] );
 
 TA_LIB_API int TA_CDLSHOOTINGSTAR_Lookback( void );
+TA_LIB_API int TA_CDLSHOOTINGSTAR_DisplayShift( int outputIdx );
 
 
 
@@ -6612,6 +6687,7 @@ TA_LIB_API TA_RetCode TA_S_CDLSHORTLINE( int    startIdx,
                                                     int           outInteger[] );
 
 TA_LIB_API int TA_CDLSHORTLINE_Lookback( void );
+TA_LIB_API int TA_CDLSHORTLINE_DisplayShift( int outputIdx );
 
 
 
@@ -6696,6 +6772,7 @@ TA_LIB_API TA_RetCode TA_S_CDLSPINNINGTOP( int    startIdx,
                                                       int           outInteger[] );
 
 TA_LIB_API int TA_CDLSPINNINGTOP_Lookback( void );
+TA_LIB_API int TA_CDLSPINNINGTOP_DisplayShift( int outputIdx );
 
 
 
@@ -6780,6 +6857,7 @@ TA_LIB_API TA_RetCode TA_S_CDLSTALLEDPATTERN( int    startIdx,
                                                          int           outInteger[] );
 
 TA_LIB_API int TA_CDLSTALLEDPATTERN_Lookback( void );
+TA_LIB_API int TA_CDLSTALLEDPATTERN_DisplayShift( int outputIdx );
 
 
 
@@ -6864,6 +6942,7 @@ TA_LIB_API TA_RetCode TA_S_CDLSTICKSANDWICH( int    startIdx,
                                                         int           outInteger[] );
 
 TA_LIB_API int TA_CDLSTICKSANDWICH_Lookback( void );
+TA_LIB_API int TA_CDLSTICKSANDWICH_DisplayShift( int outputIdx );
 
 
 
@@ -6948,6 +7027,7 @@ TA_LIB_API TA_RetCode TA_S_CDLTAKURI( int    startIdx,
                                                  int           outInteger[] );
 
 TA_LIB_API int TA_CDLTAKURI_Lookback( void );
+TA_LIB_API int TA_CDLTAKURI_DisplayShift( int outputIdx );
 
 
 
@@ -7032,6 +7112,7 @@ TA_LIB_API TA_RetCode TA_S_CDLTASUKIGAP( int    startIdx,
                                                     int           outInteger[] );
 
 TA_LIB_API int TA_CDLTASUKIGAP_Lookback( void );
+TA_LIB_API int TA_CDLTASUKIGAP_DisplayShift( int outputIdx );
 
 
 
@@ -7116,6 +7197,7 @@ TA_LIB_API TA_RetCode TA_S_CDLTHRUSTING( int    startIdx,
                                                     int           outInteger[] );
 
 TA_LIB_API int TA_CDLTHRUSTING_Lookback( void );
+TA_LIB_API int TA_CDLTHRUSTING_DisplayShift( int outputIdx );
 
 
 
@@ -7200,6 +7282,7 @@ TA_LIB_API TA_RetCode TA_S_CDLTRISTAR( int    startIdx,
                                                   int           outInteger[] );
 
 TA_LIB_API int TA_CDLTRISTAR_Lookback( void );
+TA_LIB_API int TA_CDLTRISTAR_DisplayShift( int outputIdx );
 
 
 
@@ -7284,6 +7367,7 @@ TA_LIB_API TA_RetCode TA_S_CDLUNIQUE3RIVER( int    startIdx,
                                                        int           outInteger[] );
 
 TA_LIB_API int TA_CDLUNIQUE3RIVER_Lookback( void );
+TA_LIB_API int TA_CDLUNIQUE3RIVER_DisplayShift( int outputIdx );
 
 
 
@@ -7368,6 +7452,7 @@ TA_LIB_API TA_RetCode TA_S_CDLUPSIDEGAP2CROWS( int    startIdx,
                                                           int           outInteger[] );
 
 TA_LIB_API int TA_CDLUPSIDEGAP2CROWS_Lookback( void );
+TA_LIB_API int TA_CDLUPSIDEGAP2CROWS_DisplayShift( int outputIdx );
 
 
 
@@ -7452,6 +7537,7 @@ TA_LIB_API TA_RetCode TA_S_CDLXSIDEGAP3METHODS( int    startIdx,
                                                            int           outInteger[] );
 
 TA_LIB_API int TA_CDLXSIDEGAP3METHODS_Lookback( void );
+TA_LIB_API int TA_CDLXSIDEGAP3METHODS_DisplayShift( int outputIdx );
 
 
 
@@ -7530,6 +7616,7 @@ TA_LIB_API TA_RetCode TA_S_CEIL( int    startIdx,
                                             double        outReal[] );
 
 TA_LIB_API int TA_CEIL_Lookback( void );
+TA_LIB_API int TA_CEIL_DisplayShift( int outputIdx );
 
 
 
@@ -7616,6 +7703,7 @@ TA_LIB_API TA_RetCode TA_S_CG( int    startIdx,
                                           double        outReal[] );
 
 TA_LIB_API int TA_CG_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_CG_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -7706,6 +7794,7 @@ TA_LIB_API TA_RetCode TA_S_CHOP( int    startIdx,
                                             double        outReal[] );
 
 TA_LIB_API int TA_CHOP_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_CHOP_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -7796,6 +7885,7 @@ TA_LIB_API TA_RetCode TA_S_CHOPTR( int    startIdx,
                                               double        outReal[] );
 
 TA_LIB_API int TA_CHOPTR_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_CHOPTR_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -7900,6 +7990,7 @@ TA_LIB_API TA_RetCode TA_S_CKSP( int    startIdx,
 TA_LIB_API int TA_CKSP_Lookback( int           optInTimePeriod, /* From 2 to 100000 */
                                           double        optInMultiplier, /* From 0 to 30000000000000000000000000000000000000 */
                                           int           optInStopPeriod );  /* From 1 to 100000 */
+TA_LIB_API int TA_CKSP_DisplayShift( int optInTimePeriod, double optInMultiplier, int optInStopPeriod, int outputIdx );
 
 
 
@@ -7992,6 +8083,7 @@ TA_LIB_API TA_RetCode TA_S_CMF( int    startIdx,
                                            double        outReal[] );
 
 TA_LIB_API int TA_CMF_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_CMF_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -8078,6 +8170,7 @@ TA_LIB_API TA_RetCode TA_S_CMO( int    startIdx,
                                            double        outReal[] );
 
 TA_LIB_API int TA_CMO_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_CMO_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -8164,6 +8257,7 @@ TA_LIB_API TA_RetCode TA_S_CMOU( int    startIdx,
                                             double        outReal[] );
 
 TA_LIB_API int TA_CMOU_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_CMOU_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -8262,6 +8356,7 @@ TA_LIB_API TA_RetCode TA_S_COPPOCK( int    startIdx,
 TA_LIB_API int TA_COPPOCK_Lookback( int           optInWMAPeriod, /* From 1 to 100000 */
                                              int           optInROC1Period, /* From 1 to 100000 */
                                              int           optInROC2Period );  /* From 1 to 100000 */
+TA_LIB_API int TA_COPPOCK_DisplayShift( int optInWMAPeriod, int optInROC1Period, int optInROC2Period, int outputIdx );
 
 
 
@@ -8350,6 +8445,7 @@ TA_LIB_API TA_RetCode TA_S_CORREL( int    startIdx,
                                               double        outReal[] );
 
 TA_LIB_API int TA_CORREL_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
+TA_LIB_API int TA_CORREL_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -8428,6 +8524,7 @@ TA_LIB_API TA_RetCode TA_S_COS( int    startIdx,
                                            double        outReal[] );
 
 TA_LIB_API int TA_COS_Lookback( void );
+TA_LIB_API int TA_COS_DisplayShift( int outputIdx );
 
 
 
@@ -8506,6 +8603,7 @@ TA_LIB_API TA_RetCode TA_S_COSH( int    startIdx,
                                             double        outReal[] );
 
 TA_LIB_API int TA_COSH_Lookback( void );
+TA_LIB_API int TA_COSH_DisplayShift( int outputIdx );
 
 
 
@@ -8604,6 +8702,7 @@ TA_LIB_API TA_RetCode TA_S_CRSI( int    startIdx,
 TA_LIB_API int TA_CRSI_Lookback( int           optInTimePeriod, /* From 2 to 100000 */
                                           int           optInStreakPeriod, /* From 2 to 100000 */
                                           int           optInRankPeriod );  /* From 2 to 10000 */
+TA_LIB_API int TA_CRSI_DisplayShift( int optInTimePeriod, int optInStreakPeriod, int optInRankPeriod, int outputIdx );
 
 
 
@@ -8690,6 +8789,7 @@ TA_LIB_API TA_RetCode TA_S_CTI( int    startIdx,
                                            double        outReal[] );
 
 TA_LIB_API int TA_CTI_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_CTI_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -8768,6 +8868,7 @@ TA_LIB_API TA_RetCode TA_S_CUMSUM( int    startIdx,
                                               double        outReal[] );
 
 TA_LIB_API int TA_CUMSUM_Lookback( void );
+TA_LIB_API int TA_CUMSUM_DisplayShift( int outputIdx );
 
 
 
@@ -8862,6 +8963,7 @@ TA_LIB_API TA_RetCode TA_S_CVI( int    startIdx,
 
 TA_LIB_API int TA_CVI_Lookback( int           optInTimePeriod, /* From 2 to 100000 */
                                          int           optInROCPeriod );  /* From 1 to 100000 */
+TA_LIB_API int TA_CVI_DisplayShift( int optInTimePeriod, int optInROCPeriod, int outputIdx );
 
 
 
@@ -8948,6 +9050,7 @@ TA_LIB_API TA_RetCode TA_S_DEMA( int    startIdx,
                                             double        outReal[] );
 
 TA_LIB_API int TA_DEMA_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
+TA_LIB_API int TA_DEMA_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -9028,6 +9131,7 @@ TA_LIB_API TA_RetCode TA_S_DIV( int    startIdx,
                                            double        outReal[] );
 
 TA_LIB_API int TA_DIV_Lookback( void );
+TA_LIB_API int TA_DIV_DisplayShift( int outputIdx );
 
 
 
@@ -9120,6 +9224,7 @@ TA_LIB_API TA_RetCode TA_S_DONCHIAN( int    startIdx,
                                                 double        outRealLowerBand[] );
 
 TA_LIB_API int TA_DONCHIAN_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_DONCHIAN_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -9206,6 +9311,7 @@ TA_LIB_API TA_RetCode TA_S_DPO( int    startIdx,
                                            double        outReal[] );
 
 TA_LIB_API int TA_DPO_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_DPO_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -9296,6 +9402,7 @@ TA_LIB_API TA_RetCode TA_S_DX( int    startIdx,
                                           double        outReal[] );
 
 TA_LIB_API int TA_DX_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_DX_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -9384,6 +9491,7 @@ TA_LIB_API TA_RetCode TA_S_EFI( int    startIdx,
                                            double        outReal[] );
 
 TA_LIB_API int TA_EFI_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
+TA_LIB_API int TA_EFI_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -9470,6 +9578,7 @@ TA_LIB_API TA_RetCode TA_S_EMA( int    startIdx,
                                            double        outReal[] );
 
 TA_LIB_API int TA_EMA_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
+TA_LIB_API int TA_EMA_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -9566,6 +9675,7 @@ TA_LIB_API TA_RetCode TA_S_EMV( int    startIdx,
 
 TA_LIB_API int TA_EMV_Lookback( int           optInTimePeriod, /* From 1 to 100000 */
                                          double        optInVolumeDivisor );  /* From 1 to 30000000000000000000000000000000000000 */
+TA_LIB_API int TA_EMV_DisplayShift( int optInTimePeriod, double optInVolumeDivisor, int outputIdx );
 
 
 
@@ -9652,6 +9762,7 @@ TA_LIB_API TA_RetCode TA_S_ER( int    startIdx,
                                           double        outReal[] );
 
 TA_LIB_API int TA_ER_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_ER_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -9744,6 +9855,7 @@ TA_LIB_API TA_RetCode TA_S_ERI( int    startIdx,
                                            double        outBearPower[] );
 
 TA_LIB_API int TA_ERI_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
+TA_LIB_API int TA_ERI_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -9822,6 +9934,7 @@ TA_LIB_API TA_RetCode TA_S_EXP( int    startIdx,
                                            double        outReal[] );
 
 TA_LIB_API int TA_EXP_Lookback( void );
+TA_LIB_API int TA_EXP_DisplayShift( int outputIdx );
 
 
 
@@ -9900,6 +10013,7 @@ TA_LIB_API TA_RetCode TA_S_FLOOR( int    startIdx,
                                              double        outReal[] );
 
 TA_LIB_API int TA_FLOOR_Lookback( void );
+TA_LIB_API int TA_FLOOR_DisplayShift( int outputIdx );
 
 
 
@@ -9986,6 +10100,7 @@ TA_LIB_API TA_RetCode TA_S_FOSC( int    startIdx,
                                             double        outReal[] );
 
 TA_LIB_API int TA_FOSC_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_FOSC_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -10082,6 +10197,7 @@ TA_LIB_API TA_RetCode TA_S_FRACTAL( int    startIdx,
 
 TA_LIB_API int TA_FRACTAL_Lookback( int           optInLeftBars, /* From 1 to 100000 */
                                              int           optInRightBars );  /* From 1 to 100000 */
+TA_LIB_API int TA_FRACTAL_DisplayShift( int optInLeftBars, int optInRightBars, int outputIdx );
 
 
 
@@ -10170,6 +10286,7 @@ TA_LIB_API TA_RetCode TA_S_FRAMA( int    startIdx,
                                              double        outReal[] );
 
 TA_LIB_API int TA_FRAMA_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_FRAMA_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -10260,6 +10377,7 @@ TA_LIB_API TA_RetCode TA_S_HA( int    startIdx,
                                           double        outHAClose[] );
 
 TA_LIB_API int TA_HA_Lookback( void );
+TA_LIB_API int TA_HA_DisplayShift( int outputIdx );
 
 
 
@@ -10346,6 +10464,7 @@ TA_LIB_API TA_RetCode TA_S_HMA( int    startIdx,
                                            double        outReal[] );
 
 TA_LIB_API int TA_HMA_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
+TA_LIB_API int TA_HMA_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -10424,6 +10543,7 @@ TA_LIB_API TA_RetCode TA_S_HT_DCPERIOD( int    startIdx,
                                                    double        outReal[] );
 
 TA_LIB_API int TA_HT_DCPERIOD_Lookback( void );
+TA_LIB_API int TA_HT_DCPERIOD_DisplayShift( int outputIdx );
 
 
 
@@ -10502,6 +10622,7 @@ TA_LIB_API TA_RetCode TA_S_HT_DCPHASE( int    startIdx,
                                                   double        outReal[] );
 
 TA_LIB_API int TA_HT_DCPHASE_Lookback( void );
+TA_LIB_API int TA_HT_DCPHASE_DisplayShift( int outputIdx );
 
 
 
@@ -10582,6 +10703,7 @@ TA_LIB_API TA_RetCode TA_S_HT_PHASOR( int    startIdx,
                                                  double        outQuadrature[] );
 
 TA_LIB_API int TA_HT_PHASOR_Lookback( void );
+TA_LIB_API int TA_HT_PHASOR_DisplayShift( int outputIdx );
 
 
 
@@ -10662,6 +10784,7 @@ TA_LIB_API TA_RetCode TA_S_HT_SINE( int    startIdx,
                                                double        outLeadSine[] );
 
 TA_LIB_API int TA_HT_SINE_Lookback( void );
+TA_LIB_API int TA_HT_SINE_DisplayShift( int outputIdx );
 
 
 
@@ -10740,6 +10863,7 @@ TA_LIB_API TA_RetCode TA_S_HT_TRENDLINE( int    startIdx,
                                                     double        outReal[] );
 
 TA_LIB_API int TA_HT_TRENDLINE_Lookback( void );
+TA_LIB_API int TA_HT_TRENDLINE_DisplayShift( int outputIdx );
 
 
 
@@ -10818,6 +10942,7 @@ TA_LIB_API TA_RetCode TA_S_HT_TRENDMODE( int    startIdx,
                                                     int           outInteger[] );
 
 TA_LIB_API int TA_HT_TRENDMODE_Lookback( void );
+TA_LIB_API int TA_HT_TRENDMODE_DisplayShift( int outputIdx );
 
 
 
@@ -10900,6 +11025,7 @@ TA_LIB_API TA_RetCode TA_S_IBS( int    startIdx,
                                            double        outReal[] );
 
 TA_LIB_API int TA_IBS_Lookback( void );
+TA_LIB_API int TA_IBS_DisplayShift( int outputIdx );
 
 
 
@@ -10988,6 +11114,7 @@ TA_LIB_API TA_RetCode TA_S_IMI( int    startIdx,
                                            double        outReal[] );
 
 TA_LIB_API int TA_IMI_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_IMI_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -11074,6 +11201,7 @@ TA_LIB_API TA_RetCode TA_S_KAMA( int    startIdx,
                                             double        outReal[] );
 
 TA_LIB_API int TA_KAMA_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
+TA_LIB_API int TA_KAMA_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -11180,6 +11308,7 @@ TA_LIB_API TA_RetCode TA_S_KC( int    startIdx,
 TA_LIB_API int TA_KC_Lookback( int           optInTimePeriod, /* From 2 to 100000 */
                                         int           optInATRPeriod, /* From 1 to 100000 */
                                         double        optInNbDev );  /* From -30000000000000000000000000000000000000 to 30000000000000000000000000000000000000 */
+TA_LIB_API int TA_KC_DisplayShift( int optInTimePeriod, int optInATRPeriod, double optInNbDev, int outputIdx );
 
 
 
@@ -11298,6 +11427,7 @@ TA_LIB_API int TA_KDJ_Lookback( int           optInFastK_Period, /* From 1 to 10
                                          TA_MAType     optInSlowK_MAType,
                                          int           optInSlowD_Period, /* From 1 to 100000 */
                                          TA_MAType     optInSlowD_MAType );
+TA_LIB_API int TA_KDJ_DisplayShift( int optInFastK_Period, int optInSlowK_Period, TA_MAType optInSlowK_MAType, int optInSlowD_Period, TA_MAType optInSlowD_MAType, int outputIdx );
 
 
 /*
@@ -11433,6 +11563,7 @@ TA_LIB_API int TA_KST_Lookback( int           optInROC1Period, /* From 1 to 1000
                                          int           optInSMA3Period, /* From 1 to 100000 */
                                          int           optInSMA4Period, /* From 1 to 100000 */
                                          int           optInSignalPeriod );  /* From 1 to 100000 */
+TA_LIB_API int TA_KST_DisplayShift( int optInROC1Period, int optInROC2Period, int optInROC3Period, int optInROC4Period, int optInSMA1Period, int optInSMA2Period, int optInSMA3Period, int optInSMA4Period, int optInSignalPeriod, int outputIdx );
 
 
 
@@ -11581,6 +11712,7 @@ TA_LIB_API int TA_KSTEXT_Lookback( int           optInROC1Period, /* From 1 to 1
                                             int           optInSignalPeriod, /* From 1 to 100000 */
                                             TA_MAType     optInROCMAType,
                                             TA_MAType     optInSignalMAType );
+TA_LIB_API int TA_KSTEXT_DisplayShift( int optInROC1Period, int optInROC2Period, int optInROC3Period, int optInROC4Period, int optInMA1Period, int optInMA2Period, int optInMA3Period, int optInMA4Period, int optInSignalPeriod, TA_MAType optInROCMAType, TA_MAType optInSignalMAType, int outputIdx );
 
 
 /*
@@ -11666,6 +11798,7 @@ TA_LIB_API TA_RetCode TA_S_KURTOSIS( int    startIdx,
                                                 double        outReal[] );
 
 TA_LIB_API int TA_KURTOSIS_Lookback( int           optInTimePeriod );  /* From 4 to 10000 */
+TA_LIB_API int TA_KURTOSIS_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -11752,6 +11885,7 @@ TA_LIB_API TA_RetCode TA_S_LINEARREG( int    startIdx,
                                                  double        outReal[] );
 
 TA_LIB_API int TA_LINEARREG_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_LINEARREG_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -11838,6 +11972,7 @@ TA_LIB_API TA_RetCode TA_S_LINEARREG_ANGLE( int    startIdx,
                                                        double        outReal[] );
 
 TA_LIB_API int TA_LINEARREG_ANGLE_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_LINEARREG_ANGLE_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -11924,6 +12059,7 @@ TA_LIB_API TA_RetCode TA_S_LINEARREG_INTERCEPT( int    startIdx,
                                                            double        outReal[] );
 
 TA_LIB_API int TA_LINEARREG_INTERCEPT_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_LINEARREG_INTERCEPT_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -12010,6 +12146,7 @@ TA_LIB_API TA_RetCode TA_S_LINEARREG_SLOPE( int    startIdx,
                                                        double        outReal[] );
 
 TA_LIB_API int TA_LINEARREG_SLOPE_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_LINEARREG_SLOPE_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -12088,6 +12225,7 @@ TA_LIB_API TA_RetCode TA_S_LN( int    startIdx,
                                           double        outReal[] );
 
 TA_LIB_API int TA_LN_Lookback( void );
+TA_LIB_API int TA_LN_DisplayShift( int outputIdx );
 
 
 
@@ -12166,6 +12304,7 @@ TA_LIB_API TA_RetCode TA_S_LOG10( int    startIdx,
                                              double        outReal[] );
 
 TA_LIB_API int TA_LOG10_Lookback( void );
+TA_LIB_API int TA_LOG10_DisplayShift( int outputIdx );
 
 
 
@@ -12258,6 +12397,7 @@ TA_LIB_API TA_RetCode TA_S_MA( int    startIdx,
 
 TA_LIB_API int TA_MA_Lookback( int           optInTimePeriod, /* From 1 to 100000 */
                                         TA_MAType     optInMAType );
+TA_LIB_API int TA_MA_DisplayShift( int optInTimePeriod, TA_MAType optInMAType, int outputIdx );
 
 
 /*
@@ -12359,6 +12499,7 @@ TA_LIB_API TA_RetCode TA_S_MACD( int    startIdx,
 TA_LIB_API int TA_MACD_Lookback( int           optInFastPeriod, /* From 2 to 100000 */
                                           int           optInSlowPeriod, /* From 2 to 100000 */
                                           int           optInSignalPeriod );  /* From 1 to 100000 */
+TA_LIB_API int TA_MACD_DisplayShift( int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, int outputIdx );
 
 
 
@@ -12479,6 +12620,7 @@ TA_LIB_API int TA_MACDEXT_Lookback( int           optInFastPeriod, /* From 2 to 
                                              TA_MAType     optInSlowMAType,
                                              int           optInSignalPeriod, /* From 1 to 100000 */
                                              TA_MAType     optInSignalMAType );
+TA_LIB_API int TA_MACDEXT_DisplayShift( int optInFastPeriod, TA_MAType optInFastMAType, int optInSlowPeriod, TA_MAType optInSlowMAType, int optInSignalPeriod, TA_MAType optInSignalMAType, int outputIdx );
 
 
 /*
@@ -12568,6 +12710,7 @@ TA_LIB_API TA_RetCode TA_S_MACDFIX( int    startIdx,
                                                double        outMACDHist[] );
 
 TA_LIB_API int TA_MACDFIX_Lookback( int           optInSignalPeriod );  /* From 1 to 100000 */
+TA_LIB_API int TA_MACDFIX_DisplayShift( int optInSignalPeriod, int outputIdx );
 
 
 
@@ -12665,6 +12808,7 @@ TA_LIB_API TA_RetCode TA_S_MAMA( int    startIdx,
 
 TA_LIB_API int TA_MAMA_Lookback( double        optInFastLimit, /* From 0.01 to 0.99 */
                                           double        optInSlowLimit );  /* From 0.01 to 0.99 */
+TA_LIB_API int TA_MAMA_DisplayShift( double optInFastLimit, double optInSlowLimit, int outputIdx );
 
 
 
@@ -12747,6 +12891,7 @@ TA_LIB_API TA_RetCode TA_S_MARKETFI( int    startIdx,
                                                 double        outReal[] );
 
 TA_LIB_API int TA_MARKETFI_Lookback( void );
+TA_LIB_API int TA_MARKETFI_DisplayShift( int outputIdx );
 
 
 
@@ -12841,6 +12986,7 @@ TA_LIB_API TA_RetCode TA_S_MASSI( int    startIdx,
 
 TA_LIB_API int TA_MASSI_Lookback( int           optInFastPeriod, /* From 2 to 100000 */
                                            int           optInSlowPeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_MASSI_DisplayShift( int optInFastPeriod, int optInSlowPeriod, int outputIdx );
 
 
 
@@ -12941,6 +13087,7 @@ TA_LIB_API TA_RetCode TA_S_MAVP( int    startIdx,
 TA_LIB_API int TA_MAVP_Lookback( int           optInMinPeriod, /* From 1 to 10000 */
                                           int           optInMaxPeriod, /* From 1 to 10000 */
                                           TA_MAType     optInMAType );
+TA_LIB_API int TA_MAVP_DisplayShift( int optInMinPeriod, int optInMaxPeriod, TA_MAType optInMAType, int outputIdx );
 
 
 /*
@@ -13026,6 +13173,7 @@ TA_LIB_API TA_RetCode TA_S_MAX( int    startIdx,
                                            double        outReal[] );
 
 TA_LIB_API int TA_MAX_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_MAX_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -13112,6 +13260,7 @@ TA_LIB_API TA_RetCode TA_S_MAXINDEX( int    startIdx,
                                                 int           outInteger[] );
 
 TA_LIB_API int TA_MAXINDEX_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_MAXINDEX_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -13198,6 +13347,7 @@ TA_LIB_API TA_RetCode TA_S_MCGD( int    startIdx,
                                             double        outReal[] );
 
 TA_LIB_API int TA_MCGD_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_MCGD_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -13284,6 +13434,7 @@ TA_LIB_API TA_RetCode TA_S_MEDIAN( int    startIdx,
                                               double        outReal[] );
 
 TA_LIB_API int TA_MEDIAN_Lookback( int           optInTimePeriod );  /* From 2 to 10000 */
+TA_LIB_API int TA_MEDIAN_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -13364,6 +13515,7 @@ TA_LIB_API TA_RetCode TA_S_MEDPRICE( int    startIdx,
                                                 double        outReal[] );
 
 TA_LIB_API int TA_MEDPRICE_Lookback( void );
+TA_LIB_API int TA_MEDPRICE_DisplayShift( int outputIdx );
 
 
 
@@ -13456,6 +13608,7 @@ TA_LIB_API TA_RetCode TA_S_MFI( int    startIdx,
                                            double        outReal[] );
 
 TA_LIB_API int TA_MFI_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_MFI_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -13542,6 +13695,7 @@ TA_LIB_API TA_RetCode TA_S_MIDPOINT( int    startIdx,
                                                 double        outReal[] );
 
 TA_LIB_API int TA_MIDPOINT_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_MIDPOINT_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -13630,6 +13784,7 @@ TA_LIB_API TA_RetCode TA_S_MIDPRICE( int    startIdx,
                                                 double        outReal[] );
 
 TA_LIB_API int TA_MIDPRICE_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_MIDPRICE_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -13716,6 +13871,7 @@ TA_LIB_API TA_RetCode TA_S_MIN( int    startIdx,
                                            double        outReal[] );
 
 TA_LIB_API int TA_MIN_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_MIN_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -13802,6 +13958,7 @@ TA_LIB_API TA_RetCode TA_S_MININDEX( int    startIdx,
                                                 int           outInteger[] );
 
 TA_LIB_API int TA_MININDEX_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_MININDEX_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -13890,6 +14047,7 @@ TA_LIB_API TA_RetCode TA_S_MINMAX( int    startIdx,
                                               double        outMax[] );
 
 TA_LIB_API int TA_MINMAX_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_MINMAX_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -13978,6 +14136,7 @@ TA_LIB_API TA_RetCode TA_S_MINMAXINDEX( int    startIdx,
                                                    int           outMaxIdx[] );
 
 TA_LIB_API int TA_MINMAXINDEX_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_MINMAXINDEX_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -14068,6 +14227,7 @@ TA_LIB_API TA_RetCode TA_S_MINUS_DI( int    startIdx,
                                                 double        outReal[] );
 
 TA_LIB_API int TA_MINUS_DI_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
+TA_LIB_API int TA_MINUS_DI_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -14156,6 +14316,7 @@ TA_LIB_API TA_RetCode TA_S_MINUS_DM( int    startIdx,
                                                 double        outReal[] );
 
 TA_LIB_API int TA_MINUS_DM_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
+TA_LIB_API int TA_MINUS_DM_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -14242,6 +14403,7 @@ TA_LIB_API TA_RetCode TA_S_MOM( int    startIdx,
                                            double        outReal[] );
 
 TA_LIB_API int TA_MOM_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
+TA_LIB_API int TA_MOM_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -14322,6 +14484,7 @@ TA_LIB_API TA_RetCode TA_S_MULT( int    startIdx,
                                             double        outReal[] );
 
 TA_LIB_API int TA_MULT_Lookback( void );
+TA_LIB_API int TA_MULT_DisplayShift( int outputIdx );
 
 
 
@@ -14412,6 +14575,7 @@ TA_LIB_API TA_RetCode TA_S_NATR( int    startIdx,
                                             double        outReal[] );
 
 TA_LIB_API int TA_NATR_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
+TA_LIB_API int TA_NATR_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -14492,6 +14656,7 @@ TA_LIB_API TA_RetCode TA_S_NVI( int    startIdx,
                                            double        outReal[] );
 
 TA_LIB_API int TA_NVI_Lookback( void );
+TA_LIB_API int TA_NVI_DisplayShift( int outputIdx );
 
 
 
@@ -14572,6 +14737,7 @@ TA_LIB_API TA_RetCode TA_S_OBV( int    startIdx,
                                            double        outReal[] );
 
 TA_LIB_API int TA_OBV_Lookback( void );
+TA_LIB_API int TA_OBV_DisplayShift( int outputIdx );
 
 
 
@@ -14676,6 +14842,7 @@ TA_LIB_API int TA_PERCENTB_Lookback( int           optInTimePeriod, /* From 2 to
                                               double        optInNbDevUp, /* From -30000000000000000000000000000000000000 to 30000000000000000000000000000000000000 */
                                               double        optInNbDevDn, /* From -30000000000000000000000000000000000000 to 30000000000000000000000000000000000000 */
                                               TA_MAType     optInMAType );
+TA_LIB_API int TA_PERCENTB_DisplayShift( int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, TA_MAType optInMAType, int outputIdx );
 
 
 /*
@@ -14767,6 +14934,7 @@ TA_LIB_API TA_RetCode TA_S_PERCENTILE( int    startIdx,
 
 TA_LIB_API int TA_PERCENTILE_Lookback( int           optInTimePeriod, /* From 2 to 10000 */
                                                 double        optInPercentile );  /* From 0 to 100 */
+TA_LIB_API int TA_PERCENTILE_DisplayShift( int optInTimePeriod, double optInPercentile, int outputIdx );
 
 
 
@@ -14853,6 +15021,7 @@ TA_LIB_API TA_RetCode TA_S_PERCENTRANK( int    startIdx,
                                                    double        outReal[] );
 
 TA_LIB_API int TA_PERCENTRANK_Lookback( int           optInTimePeriod );  /* From 2 to 10000 */
+TA_LIB_API int TA_PERCENTRANK_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -14943,6 +15112,7 @@ TA_LIB_API TA_RetCode TA_S_PLUS_DI( int    startIdx,
                                                double        outReal[] );
 
 TA_LIB_API int TA_PLUS_DI_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
+TA_LIB_API int TA_PLUS_DI_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -15031,6 +15201,7 @@ TA_LIB_API TA_RetCode TA_S_PLUS_DM( int    startIdx,
                                                double        outReal[] );
 
 TA_LIB_API int TA_PLUS_DM_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
+TA_LIB_API int TA_PLUS_DM_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -15129,6 +15300,7 @@ TA_LIB_API TA_RetCode TA_S_PPO( int    startIdx,
 TA_LIB_API int TA_PPO_Lookback( int           optInFastPeriod, /* From 2 to 100000 */
                                          int           optInSlowPeriod, /* From 2 to 100000 */
                                          TA_MAType     optInMAType );
+TA_LIB_API int TA_PPO_DisplayShift( int optInFastPeriod, int optInSlowPeriod, TA_MAType optInMAType, int outputIdx );
 
 
 /*
@@ -15208,6 +15380,7 @@ TA_LIB_API TA_RetCode TA_S_PVI( int    startIdx,
                                            double        outReal[] );
 
 TA_LIB_API int TA_PVI_Lookback( void );
+TA_LIB_API int TA_PVI_DisplayShift( int outputIdx );
 
 
 
@@ -15306,6 +15479,7 @@ TA_LIB_API TA_RetCode TA_S_PVO( int    startIdx,
 TA_LIB_API int TA_PVO_Lookback( int           optInFastPeriod, /* From 2 to 100000 */
                                          int           optInSlowPeriod, /* From 2 to 100000 */
                                          TA_MAType     optInMAType );
+TA_LIB_API int TA_PVO_DisplayShift( int optInFastPeriod, int optInSlowPeriod, TA_MAType optInMAType, int outputIdx );
 
 
 /*
@@ -15385,6 +15559,7 @@ TA_LIB_API TA_RetCode TA_S_PVT( int    startIdx,
                                            double        outReal[] );
 
 TA_LIB_API int TA_PVT_Lookback( void );
+TA_LIB_API int TA_PVT_DisplayShift( int outputIdx );
 
 
 
@@ -15473,6 +15648,7 @@ TA_LIB_API TA_RetCode TA_S_QSTICK( int    startIdx,
                                               double        outReal[] );
 
 TA_LIB_API int TA_QSTICK_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
+TA_LIB_API int TA_QSTICK_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -15559,6 +15735,7 @@ TA_LIB_API TA_RetCode TA_S_RMA( int    startIdx,
                                            double        outReal[] );
 
 TA_LIB_API int TA_RMA_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
+TA_LIB_API int TA_RMA_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -15645,6 +15822,7 @@ TA_LIB_API TA_RetCode TA_S_ROC( int    startIdx,
                                            double        outReal[] );
 
 TA_LIB_API int TA_ROC_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
+TA_LIB_API int TA_ROC_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -15731,6 +15909,7 @@ TA_LIB_API TA_RetCode TA_S_ROCP( int    startIdx,
                                             double        outReal[] );
 
 TA_LIB_API int TA_ROCP_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
+TA_LIB_API int TA_ROCP_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -15817,6 +15996,7 @@ TA_LIB_API TA_RetCode TA_S_ROCR( int    startIdx,
                                             double        outReal[] );
 
 TA_LIB_API int TA_ROCR_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
+TA_LIB_API int TA_ROCR_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -15903,6 +16083,7 @@ TA_LIB_API TA_RetCode TA_S_ROCR100( int    startIdx,
                                                double        outReal[] );
 
 TA_LIB_API int TA_ROCR100_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
+TA_LIB_API int TA_ROCR100_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -15989,6 +16170,7 @@ TA_LIB_API TA_RetCode TA_S_RSI( int    startIdx,
                                            double        outReal[] );
 
 TA_LIB_API int TA_RSI_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_RSI_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -16081,6 +16263,7 @@ TA_LIB_API TA_RetCode TA_S_RVI( int    startIdx,
 
 TA_LIB_API int TA_RVI_Lookback( int           optInTimePeriod, /* From 1 to 100000 */
                                          int           optInStdDevPeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_RVI_DisplayShift( int optInTimePeriod, int optInStdDevPeriod, int outputIdx );
 
 
 
@@ -16175,6 +16358,7 @@ TA_LIB_API TA_RetCode TA_S_RVIR( int    startIdx,
 
 TA_LIB_API int TA_RVIR_Lookback( int           optInTimePeriod, /* From 1 to 100000 */
                                           int           optInStdDevPeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_RVIR_DisplayShift( int optInTimePeriod, int optInStdDevPeriod, int outputIdx );
 
 
 
@@ -16261,6 +16445,7 @@ TA_LIB_API TA_RetCode TA_S_RVOL( int    startIdx,
                                             double        outReal[] );
 
 TA_LIB_API int TA_RVOL_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
+TA_LIB_API int TA_RVOL_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -16355,6 +16540,7 @@ TA_LIB_API TA_RetCode TA_S_SAR( int    startIdx,
 
 TA_LIB_API int TA_SAR_Lookback( double        optInAcceleration, /* From 0 to 30000000000000000000000000000000000000 */
                                          double        optInMaximum );  /* From 0 to 30000000000000000000000000000000000000 */
+TA_LIB_API int TA_SAR_DisplayShift( double optInAcceleration, double optInMaximum, int outputIdx );
 
 
 
@@ -16485,6 +16671,7 @@ TA_LIB_API int TA_SAREXT_Lookback( double        optInStartValue, /* From -30000
                                             double        optInAccelerationInitShort, /* From 0 to 30000000000000000000000000000000000000 */
                                             double        optInAccelerationShort, /* From 0 to 30000000000000000000000000000000000000 */
                                             double        optInAccelerationMaxShort );  /* From 0 to 30000000000000000000000000000000000000 */
+TA_LIB_API int TA_SAREXT_DisplayShift( double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort, int outputIdx );
 
 
 
@@ -16577,6 +16764,7 @@ TA_LIB_API TA_RetCode TA_S_SI( int    startIdx,
                                           double        outReal[] );
 
 TA_LIB_API int TA_SI_Lookback( double        optInLimitMove );  /* From 0.00000001 to 30000000000000000000000000000000000000 */
+TA_LIB_API int TA_SI_DisplayShift( double optInLimitMove, int outputIdx );
 
 
 
@@ -16655,6 +16843,7 @@ TA_LIB_API TA_RetCode TA_S_SIN( int    startIdx,
                                            double        outReal[] );
 
 TA_LIB_API int TA_SIN_Lookback( void );
+TA_LIB_API int TA_SIN_DisplayShift( int outputIdx );
 
 
 
@@ -16733,6 +16922,7 @@ TA_LIB_API TA_RetCode TA_S_SINH( int    startIdx,
                                             double        outReal[] );
 
 TA_LIB_API int TA_SINH_Lookback( void );
+TA_LIB_API int TA_SINH_DisplayShift( int outputIdx );
 
 
 
@@ -16819,6 +17009,7 @@ TA_LIB_API TA_RetCode TA_S_SMA( int    startIdx,
                                            double        outReal[] );
 
 TA_LIB_API int TA_SMA_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
+TA_LIB_API int TA_SMA_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -16929,6 +17120,7 @@ TA_LIB_API int TA_SMI_Lookback( int           optInTimePeriod, /* From 2 to 1000
                                          int           optInFastPeriod, /* From 2 to 100000 */
                                          int           optInSlowPeriod, /* From 2 to 100000 */
                                          int           optInSignalPeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_SMI_DisplayShift( int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, int outputIdx );
 
 
 
@@ -17007,6 +17199,7 @@ TA_LIB_API TA_RetCode TA_S_SQRT( int    startIdx,
                                             double        outReal[] );
 
 TA_LIB_API int TA_SQRT_Lookback( void );
+TA_LIB_API int TA_SQRT_DisplayShift( int outputIdx );
 
 
 
@@ -17105,6 +17298,7 @@ TA_LIB_API TA_RetCode TA_S_STC( int    startIdx,
 TA_LIB_API int TA_STC_Lookback( int           optInFastPeriod, /* From 2 to 100000 */
                                          int           optInSlowPeriod, /* From 2 to 100000 */
                                          int           optInCyclePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_STC_DisplayShift( int optInFastPeriod, int optInSlowPeriod, int optInCyclePeriod, int outputIdx );
 
 
 
@@ -17197,6 +17391,7 @@ TA_LIB_API TA_RetCode TA_S_STDDEV( int    startIdx,
 
 TA_LIB_API int TA_STDDEV_Lookback( int           optInTimePeriod, /* From 2 to 100000 */
                                             double        optInNbDev );  /* From -30000000000000000000000000000000000000 to 30000000000000000000000000000000000000 */
+TA_LIB_API int TA_STDDEV_DisplayShift( int optInTimePeriod, double optInNbDev, int outputIdx );
 
 
 
@@ -17313,6 +17508,7 @@ TA_LIB_API int TA_STOCH_Lookback( int           optInFastK_Period, /* From 1 to 
                                            TA_MAType     optInSlowK_MAType,
                                            int           optInSlowD_Period, /* From 1 to 100000 */
                                            TA_MAType     optInSlowD_MAType );
+TA_LIB_API int TA_STOCH_DisplayShift( int optInFastK_Period, int optInSlowK_Period, TA_MAType optInSlowK_MAType, int optInSlowD_Period, TA_MAType optInSlowD_MAType, int outputIdx );
 
 
 /*
@@ -17416,6 +17612,7 @@ TA_LIB_API TA_RetCode TA_S_STOCHF( int    startIdx,
 TA_LIB_API int TA_STOCHF_Lookback( int           optInFastK_Period, /* From 1 to 100000 */
                                             int           optInFastD_Period, /* From 1 to 100000 */
                                             TA_MAType     optInFastD_MAType );
+TA_LIB_API int TA_STOCHF_DisplayShift( int optInFastK_Period, int optInFastD_Period, TA_MAType optInFastD_MAType, int outputIdx );
 
 
 /*
@@ -17521,6 +17718,7 @@ TA_LIB_API int TA_STOCHRSI_Lookback( int           optInTimePeriod, /* From 2 to
                                               int           optInFastK_Period, /* From 1 to 100000 */
                                               int           optInFastD_Period, /* From 1 to 100000 */
                                               TA_MAType     optInFastD_MAType );
+TA_LIB_API int TA_STOCHRSI_DisplayShift( int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, TA_MAType optInFastD_MAType, int outputIdx );
 
 
 /*
@@ -17600,6 +17798,7 @@ TA_LIB_API TA_RetCode TA_S_SUB( int    startIdx,
                                            double        outReal[] );
 
 TA_LIB_API int TA_SUB_Lookback( void );
+TA_LIB_API int TA_SUB_DisplayShift( int outputIdx );
 
 
 
@@ -17686,6 +17885,7 @@ TA_LIB_API TA_RetCode TA_S_SUM( int    startIdx,
                                            double        outReal[] );
 
 TA_LIB_API int TA_SUM_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_SUM_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -17784,6 +17984,7 @@ TA_LIB_API TA_RetCode TA_S_SUPERTREND( int    startIdx,
 
 TA_LIB_API int TA_SUPERTREND_Lookback( int           optInTimePeriod, /* From 2 to 100000 */
                                                 double        optInMultiplier );  /* From 0 to 30000000000000000000000000000000000000 */
+TA_LIB_API int TA_SUPERTREND_DisplayShift( int optInTimePeriod, double optInMultiplier, int outputIdx );
 
 
 
@@ -17876,6 +18077,7 @@ TA_LIB_API TA_RetCode TA_S_T3( int    startIdx,
 
 TA_LIB_API int TA_T3_Lookback( int           optInTimePeriod, /* From 1 to 100000 */
                                         double        optInVFactor );  /* From 0 to 1 */
+TA_LIB_API int TA_T3_DisplayShift( int optInTimePeriod, double optInVFactor, int outputIdx );
 
 
 
@@ -17954,6 +18156,7 @@ TA_LIB_API TA_RetCode TA_S_TAN( int    startIdx,
                                            double        outReal[] );
 
 TA_LIB_API int TA_TAN_Lookback( void );
+TA_LIB_API int TA_TAN_DisplayShift( int outputIdx );
 
 
 
@@ -18032,6 +18235,7 @@ TA_LIB_API TA_RetCode TA_S_TANH( int    startIdx,
                                             double        outReal[] );
 
 TA_LIB_API int TA_TANH_Lookback( void );
+TA_LIB_API int TA_TANH_DisplayShift( int outputIdx );
 
 
 
@@ -18118,6 +18322,7 @@ TA_LIB_API TA_RetCode TA_S_TEMA( int    startIdx,
                                             double        outReal[] );
 
 TA_LIB_API int TA_TEMA_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
+TA_LIB_API int TA_TEMA_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -18200,6 +18405,7 @@ TA_LIB_API TA_RetCode TA_S_TRANGE( int    startIdx,
                                               double        outReal[] );
 
 TA_LIB_API int TA_TRANGE_Lookback( void );
+TA_LIB_API int TA_TRANGE_DisplayShift( int outputIdx );
 
 
 
@@ -18286,6 +18492,7 @@ TA_LIB_API TA_RetCode TA_S_TRIMA( int    startIdx,
                                              double        outReal[] );
 
 TA_LIB_API int TA_TRIMA_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
+TA_LIB_API int TA_TRIMA_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -18372,6 +18579,7 @@ TA_LIB_API TA_RetCode TA_S_TRIX( int    startIdx,
                                             double        outReal[] );
 
 TA_LIB_API int TA_TRIX_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
+TA_LIB_API int TA_TRIX_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -18458,6 +18666,7 @@ TA_LIB_API TA_RetCode TA_S_TSF( int    startIdx,
                                            double        outReal[] );
 
 TA_LIB_API int TA_TSF_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_TSF_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -18550,6 +18759,7 @@ TA_LIB_API TA_RetCode TA_S_TSI( int    startIdx,
 
 TA_LIB_API int TA_TSI_Lookback( int           optInFirstPeriod, /* From 2 to 100000 */
                                          int           optInSecondPeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_TSI_DisplayShift( int optInFirstPeriod, int optInSecondPeriod, int outputIdx );
 
 
 
@@ -18632,6 +18842,7 @@ TA_LIB_API TA_RetCode TA_S_TYPPRICE( int    startIdx,
                                                 double        outReal[] );
 
 TA_LIB_API int TA_TYPPRICE_Lookback( void );
+TA_LIB_API int TA_TYPPRICE_DisplayShift( int outputIdx );
 
 
 
@@ -18734,6 +18945,7 @@ TA_LIB_API TA_RetCode TA_S_ULTOSC( int    startIdx,
 TA_LIB_API int TA_ULTOSC_Lookback( int           optInTimePeriod1, /* From 1 to 100000 */
                                             int           optInTimePeriod2, /* From 1 to 100000 */
                                             int           optInTimePeriod3 );  /* From 1 to 100000 */
+TA_LIB_API int TA_ULTOSC_DisplayShift( int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3, int outputIdx );
 
 
 
@@ -18826,6 +19038,7 @@ TA_LIB_API TA_RetCode TA_S_VAR( int    startIdx,
 
 TA_LIB_API int TA_VAR_Lookback( int           optInTimePeriod, /* From 1 to 100000 */
                                          double        optInNbDev );  /* From -30000000000000000000000000000000000000 to 30000000000000000000000000000000000000 */
+TA_LIB_API int TA_VAR_DisplayShift( int optInTimePeriod, double optInNbDev, int outputIdx );
 
 
 
@@ -18912,6 +19125,7 @@ TA_LIB_API TA_RetCode TA_S_VHF( int    startIdx,
                                            double        outReal[] );
 
 TA_LIB_API int TA_VHF_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_VHF_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -19004,6 +19218,7 @@ TA_LIB_API TA_RetCode TA_S_VIDYA( int    startIdx,
 
 TA_LIB_API int TA_VIDYA_Lookback( int           optInTimePeriod, /* From 1 to 100000 */
                                            int           optInCMOPeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_VIDYA_DisplayShift( int optInTimePeriod, int optInCMOPeriod, int outputIdx );
 
 
 
@@ -19096,6 +19311,7 @@ TA_LIB_API TA_RetCode TA_S_VORTEX( int    startIdx,
                                               double        outMinusVI[] );
 
 TA_LIB_API int TA_VORTEX_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
+TA_LIB_API int TA_VORTEX_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -19180,6 +19396,7 @@ TA_LIB_API TA_RetCode TA_S_VWAP( int    startIdx,
                                             double        outReal[] );
 
 TA_LIB_API int TA_VWAP_Lookback( void );
+TA_LIB_API int TA_VWAP_DisplayShift( int outputIdx );
 
 
 
@@ -19268,6 +19485,7 @@ TA_LIB_API TA_RetCode TA_S_VWMA( int    startIdx,
                                             double        outReal[] );
 
 TA_LIB_API int TA_VWMA_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
+TA_LIB_API int TA_VWMA_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -19350,6 +19568,7 @@ TA_LIB_API TA_RetCode TA_S_WAD( int    startIdx,
                                            double        outReal[] );
 
 TA_LIB_API int TA_WAD_Lookback( void );
+TA_LIB_API int TA_WAD_DisplayShift( int outputIdx );
 
 
 
@@ -19432,6 +19651,7 @@ TA_LIB_API TA_RetCode TA_S_WCLPRICE( int    startIdx,
                                                 double        outReal[] );
 
 TA_LIB_API int TA_WCLPRICE_Lookback( void );
+TA_LIB_API int TA_WCLPRICE_DisplayShift( int outputIdx );
 
 
 
@@ -19522,6 +19742,7 @@ TA_LIB_API TA_RetCode TA_S_WILLR( int    startIdx,
                                              double        outReal[] );
 
 TA_LIB_API int TA_WILLR_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_WILLR_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -19608,6 +19829,7 @@ TA_LIB_API TA_RetCode TA_S_WMA( int    startIdx,
                                            double        outReal[] );
 
 TA_LIB_API int TA_WMA_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
+TA_LIB_API int TA_WMA_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 
@@ -19694,6 +19916,7 @@ TA_LIB_API TA_RetCode TA_S_ZLEMA( int    startIdx,
                                              double        outReal[] );
 
 TA_LIB_API int TA_ZLEMA_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
+TA_LIB_API int TA_ZLEMA_DisplayShift( int optInTimePeriod, int outputIdx );
 
 
 

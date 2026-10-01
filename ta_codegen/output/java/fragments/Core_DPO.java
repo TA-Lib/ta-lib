@@ -10,6 +10,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  090426 MF,CC  Initial version (#363).
+ *  100126 MF,CC  Display shift (#489).
  */
 
    /**
@@ -37,6 +38,37 @@
        * then read inReal[-1].
        */
       return Math.max(optInTimePeriod - 1, optInTimePeriod / 2 + 1) ;
+
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#dpo}.
+    * <p>The values are never shifted: this describes the drawing only.
+    *
+    * @param optInTimePeriod Number of bars spanned by the moving average being
+    *        removed; the displacement is derived from it (default 20; range 2..100000;
+    *        {@code Integer.MIN_VALUE} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int dpoDisplayShift( int optInTimePeriod, int outputIdx )
+   {
+      if( dpoLookback( optInTimePeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( optInTimePeriod == Integer.MIN_VALUE ) {
+         optInTimePeriod = 20;
+      } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      /* The value computed at a bar detrends the price this many bars back,
+       * which is where a chart draws it.
+       */
+      return -(optInTimePeriod / 2 + 1) ;
 
    }
    RetCode dpoImpl( int startIdx,
@@ -185,7 +217,7 @@
     * href="https://ta-lib.org/functions/dpo">ta-lib.org/functions/dpo</a>.
     * <p><b>Notes</b>
     * <ul>
-    * <li>The value is emitted at the bar whose moving average produced it. Charting packages usually draw it {@code t} bars to the left instead, which is a plotting convention rather than a different series; a caller wanting that view shifts {@code outReal} itself.</li>
+    * <li>The value is emitted at the bar whose moving average produced it. Charting packages usually draw it {@code t} bars to the left instead, which is a plotting convention rather than a different series; a caller wanting that view shifts {@code outReal} itself, by the display shift the function reports, {@code -t}.</li>
     * <li>A causal variant, {@code P[i] - SMA(P, optInTimePeriod)[i - t]}, displaces the average instead of the price. It is a genuinely different series, not a re-indexing of this one, and is not implemented here.</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
@@ -254,7 +286,7 @@
     * href="https://ta-lib.org/functions/dpo">ta-lib.org/functions/dpo</a>.
     * <p><b>Notes</b>
     * <ul>
-    * <li>The value is emitted at the bar whose moving average produced it. Charting packages usually draw it {@code t} bars to the left instead, which is a plotting convention rather than a different series; a caller wanting that view shifts {@code outReal} itself.</li>
+    * <li>The value is emitted at the bar whose moving average produced it. Charting packages usually draw it {@code t} bars to the left instead, which is a plotting convention rather than a different series; a caller wanting that view shifts {@code outReal} itself, by the display shift the function reports, {@code -t}.</li>
     * <li>A causal variant, {@code P[i] - SMA(P, optInTimePeriod)[i - t]}, displaces the average instead of the price. It is a genuinely different series, not a re-indexing of this one, and is not implemented here.</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in

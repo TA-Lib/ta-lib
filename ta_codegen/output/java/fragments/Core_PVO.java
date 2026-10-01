@@ -53,6 +53,34 @@
       return maLookback(Math.max(optInSlowPeriod, optInFastPeriod), optInMAType) ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#pvo}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInFastPeriod Period of the fast MA (default 12; range 2..100000;
+    *        {@code Integer.MIN_VALUE} selects the default).
+    * @param optInSlowPeriod Period of the slow MA (default 26; range 2..100000;
+    *        {@code Integer.MIN_VALUE} selects the default).
+    * @param optInMAType Moving average type used for both MAs (default 1 = EMA;
+    *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+    *        {@code MAType.DEFAULT} selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int pvoDisplayShift( int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, int outputIdx )
+   {
+      if( pvoLookback( optInFastPeriod, optInSlowPeriod, optInMAType ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode pvoImpl( int startIdx,
                     int endIdx,
                     double inVolume[],

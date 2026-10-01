@@ -172,7 +172,7 @@ short-circuit to `TA_TEST_PASS` when no pipe is set, so without a block a server
 can implement every RPC or none and every gate stays green.
 
 Each block runs the metadata getters for every function, and the
-dynamic-dispatch path (`abstract_call` / `abstract_get_lookback` /
+dynamic-dispatch path (`abstract_call` / `abstract_get_lookback` / `abstract_get_display_shift` /
 `TA_FunctionDescriptionXML`) comparing **values**. The C server is the **control
 arm** — it answers from the very `ta_abstract` it is compared against, so a
 failure there is a comparator defect, which is what makes a failure elsewhere
@@ -200,6 +200,16 @@ two binders rather than one against its own oracle. Two self-checks: an
 out-of-range probe C *accepts* is not out of range, and a sentinel is asserted
 against the all-defaults result rather than only against the server, so both
 tiers cannot be wrong together. All four counts are asserted non-zero.
+
+**The display shift** rides the same vectors: `abstract_check_display_shift`
+asks C and the server for every output plus the two indices that name none, at
+the defaults and at each `d2_param_vectors` vector. The lookback is the reference
+for which vectors are rejected, because a lookback body can refuse a parameter
+the declared range allows (FRAMA's odd period) and a query that only
+range-checked would accept it. `ds_param_vectors` adds each integer range's
+bounds and one step outside each, with or without a server, so a bare run
+reaches rejected parameters too. Each counter is asserted non-zero; the server
+one only when a server is attached.
 
 Opt-level `hint` is compared too. For a bespoke descriptor that is a genuine
 YAML-vs-C check; for a slot folded onto a predefined `TA_DEF_UI_*` it is not —

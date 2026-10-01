@@ -64,6 +64,15 @@ TA_LIB_API int TA_MINMAXINDEX_Lookback( int optInTimePeriod )
    return optInTimePeriod - 1;
 }
 
+TA_LIB_API int TA_MINMAXINDEX_DisplayShift( int optInTimePeriod, int outputIdx )
+{
+   if( TA_MINMAXINDEX_Lookback( optInTimePeriod ) < 0 )
+      return INT_MIN;
+   if( outputIdx < 0 || outputIdx >= 2 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_LIB_API TA_RetCode TA_MINMAXINDEX( int    startIdx,
                                       int    endIdx,
                                       const double inReal[],

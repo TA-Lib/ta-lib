@@ -84,6 +84,29 @@ public partial class Core
       return MaxGt(BodyShort_avgPeriod, BodyLong_avgPeriod) + 2 ;
 
    }
+   /// <summary>
+   /// How many bars ahead (positive) or behind (negative) of the bar that
+   /// computed it a chart draws one output of <c>Cdleveningstar</c>.
+   /// </summary>
+   /// <remarks>
+   /// Every output of this function is drawn at its own bar, so the answer is 0.
+   /// </remarks>
+   /// <param name="optInPenetration">Fraction of the 1st candle's real body the 3rd close must penetrate below
+   /// the 1st close; larger requires deeper penetration (default 0.3; minimum 0;
+   /// <see cref="Core.RealDefault"/> selects the default).</param>
+   /// <param name="outputIdx">Position of the output in the batch signature, from 0.</param>
+   /// <returns>The display shift, or <c>int.MinValue</c> if a parameter is out of range
+   /// or the index names no output.</returns>
+   public int CdleveningstarDisplayShift( double optInPenetration, int outputIdx )
+   {
+      if( CdleveningstarLookback( optInPenetration ) < 0 ) {
+         return int.MinValue;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return int.MinValue;
+      }
+      return 0;
+   }
    internal RetCode CdleveningstarImpl( int startIdx,
                                         int endIdx,
                                         ReadOnlySpan<double> inOpen,

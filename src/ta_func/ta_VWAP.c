@@ -65,6 +65,13 @@ TA_LIB_API int TA_VWAP_Lookback( void )
    return 0;
 }
 
+TA_LIB_API int TA_VWAP_DisplayShift( int outputIdx )
+{
+   if( outputIdx < 0 || outputIdx >= 1 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_LIB_API TA_RetCode TA_VWAP( int    startIdx,
                                int    endIdx,
                                const double inHigh[],

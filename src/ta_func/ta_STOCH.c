@@ -102,6 +102,15 @@ TA_LIB_API int TA_STOCH_Lookback( int optInFastK_Period, int optInSlowK_Period, 
    return retValue;
 }
 
+TA_LIB_API int TA_STOCH_DisplayShift( int optInFastK_Period, int optInSlowK_Period, TA_MAType optInSlowK_MAType, int optInSlowD_Period, TA_MAType optInSlowD_MAType, int outputIdx )
+{
+   if( TA_STOCH_Lookback( optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType ) < 0 )
+      return INT_MIN;
+   if( outputIdx < 0 || outputIdx >= 2 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_LIB_API TA_RetCode TA_STOCH( int    startIdx,
                                 int    endIdx,
                                 const double inHigh[],

@@ -118274,6 +118274,11 @@ static void handle_request(const char *json, char *resp, int resp_size) {
     else if ( methodLen == 21 && strncmp(method, "abstract_get_lookback", 21) == 0 ) {
         handle_abstract_get_lookback(json, resp, resp_size);
     }
+#ifndef TA_REF_SERVE
+    else if ( methodLen == 26 && strncmp(method, "abstract_get_display_shift", 26) == 0 ) {
+        handle_abstract_get_display_shift(json, resp, resp_size);
+    }
+#endif /* TA_REF_SERVE */
     else if ( methodLen == 22 && strncmp(method, "abstract_for_each_func", 22) == 0 ) {
         handle_abstract_for_each_func(json, resp, resp_size);
     }

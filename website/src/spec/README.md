@@ -9,7 +9,7 @@ This page maps that shared vocabulary onto Rust, Java and C#; a rule that introd
 
 ## Scope {#scope}
 
-- The four native APIs: batch, lookback, streams, settings, and the abstraction layer, which is specified only in part ([M1](/spec/errors/#m1)).
+- The four native APIs: batch, lookback, display shift, streams, settings, and the abstraction layer, which is specified only in part ([M1](/spec/errors/#m1)).
 - A wrapper keeps its own conventions. ta-lib-python aligns outputs to the input and fills the warm-up with NaN; the native APIs do not ([N2](/spec/inputs-outputs/#n2)).
 - Published packages and their versions: [Install](/install/).
 - Owned by other pages: [Unstable Period](/api/unstable-period/), [Candlestick Settings](/api/candle-settings/) (model and defaults), streaming in [C](/api/stream/), [Rust](/api/rust/stream/), [Java](/api/java/stream/) and [C#](/api/csharp/stream/), [Numerical Stability](/functions/stability), and the [function pages](/functions/): inputs, outputs in order, parameters (type, default, accepted values), stability category, flags.
@@ -21,7 +21,7 @@ This page maps that shared vocabulary onto Rust, Java and C#; a rule that introd
 |---|---|---|
 | [Errors](/spec/errors/) | return codes, evaluation order, batch tier, messages, abstraction layer | R1 to R5, B1 to B8, B6a, M1, M2 |
 | [Inputs and Outputs](/spec/inputs-outputs/) | index range, inputs, parameters, outputs, aliasing | I1 to I6, O1 to O7, N1 to N4, N8 |
-| [Lookback](/spec/lookback/) | lookback call, unstable period, candle averaging, period 1, start dependence | L1 to L9 |
+| [Lookback](/spec/lookback/) | lookback call, display shift, unstable period, candle averaging, period 1, start dependence | L1 to L12 |
 | [Streaming](/spec/streaming/) | bit-identity with batch, every stream call, lifetime | S1 to S7, S6a, U1 to U4, U6a, X1, H1 to H10, N7 |
 | [Settings and Threads](/spec/settings-threads/) | C lifecycle, `Core`, setting validation, threads, settings under a live stream | G1 to G7, T1 to T7, N5, N6 |
 | [Versions and Determinism](/spec/versions/) | bit-identity across languages and machines; releases | D1 to D4, V1 to V4 |
@@ -49,6 +49,7 @@ Every function has this surface; in Rust, Java and C# the calls are methods of a
 |---|---|---|---|---|
 | batch | `TA_SMA` | `sma` | `sma` | `Sma` |
 | lookback | `int TA_SMA_Lookback` | `sma_lookback` returns `Result<usize, RetCode>` | `int smaLookback` | `int SmaLookback` |
+| display shift of one output | `int TA_SMA_DisplayShift` | `sma_display_shift` returns `Result<i32, RetCode>` | `int smaDisplayShift` | `int SmaDisplayShift` |
 | open, open and fill | `TA_SMA_Open`, `TA_SMA_OpenAndFill` | `sma_open`, `sma_open_and_fill` | `smaOpen`, `smaOpenAndFill` | `SmaOpen`, `SmaOpenAndFill` |
 | handle | `TA_SMA_Stream *` | `SmaStream` | `Core.SmaStream` | `Core.SmaStream` |
 | handle calls | `TA_SMA_Update`, `_Peek`, `_Value`, `_OutRange`, `_Advance`, `_Clone`, `_Close` | `update`, `peek`, `value`, `out_range`, `advance`, `clone`; drop to release | `update`, `peek`, `value`, `outRange`, `advance`, `clone` | `Update`, `Peek`, `Advance`, `Clone`; properties `Value`, `OutRange` |
@@ -98,6 +99,8 @@ It describes every function at run time (inputs, outputs, each optional paramete
 |---|---|---|---|---|
 | look up, enumerate | `TA_GetFuncHandle`, `TA_ForEachFunc` | `get_func_handle`, `FUNCS` | `Functions.byName`, `Functions.all()` | `FunctionCatalog.Default[name]`, `FunctionCatalog.Default` |
 | call | `TA_ParamHolderAlloc`, `TA_CallFunc` | `FuncId::new_call`, `call` | `FuncInfo.newCall`, `call` | `FuncInfo.CreateCall`, `Call`, `TryCall` |
+| lookback | `TA_GetLookback` | `ParamHolder::lookback` | `ParamHolder.lookback` | `ParamHolder.Lookback` |
+| display shift of one output | `TA_GetDisplayShift` | `ParamHolder::display_shift` | `ParamHolder.displayShift` | `ParamHolder.DisplayShift` |
 | all as one XML document | `TA_FunctionDescriptionXML()` | `function_description_xml()` | `FunctionDescription.xml()` | `FunctionDescription.Xml` |
 
 ## How a failure reaches the caller {#failures}
@@ -114,6 +117,7 @@ It describes every function at run time (inputs, outputs, each optional paramete
 | carrier, code (messages: [R5](/spec/errors/#r5)) | returned `TA_RetCode` | `Err(RetCode)` | an exception implementing `TALibFailure`; `retCode()` | an exception implementing `ITALibFailure`; `RetCode` |
 | C's number | the value | `as_c_int()` | `asCInt()` | `(int)` cast |
 | lookback ([L1](/spec/lookback/#l1)) | `-1` | `Err(RetCode::BadParam)` | `-1` | `-1` |
+| display shift ([L12](/spec/lookback/#l12)) | `INT_MIN` | `Err(RetCode::BadParam)` | `Integer.MIN_VALUE` | `int.MinValue` |
 
 One row per function-tier code; `A : B` means `A` extends the platform type `B`, so a `catch` of `B` works.
 

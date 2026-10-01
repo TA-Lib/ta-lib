@@ -74,6 +74,15 @@ TA_LIB_API int TA_SUPERTREND_Lookback( int optInTimePeriod, double optInMultipli
    return TA_ATR_Lookback(optInTimePeriod);
 }
 
+TA_LIB_API int TA_SUPERTREND_DisplayShift( int optInTimePeriod, double optInMultiplier, int outputIdx )
+{
+   if( TA_SUPERTREND_Lookback( optInTimePeriod, optInMultiplier ) < 0 )
+      return INT_MIN;
+   if( outputIdx < 0 || outputIdx >= 2 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_SUPERTREND( int    startIdx,
                                      int    endIdx,

@@ -54,6 +54,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  090426 MF,CC  Initial version (#363).
+ *  100126 MF,CC  Display shift (#489).
  */
 
 TA_LIB_API int TA_DPO_Lookback( int optInTimePeriod )
@@ -68,6 +69,22 @@ TA_LIB_API int TA_DPO_Lookback( int optInTimePeriod )
     * then read inReal[-1].
     */
    return max(optInTimePeriod - 1,optInTimePeriod / 2 + 1);
+}
+
+TA_LIB_API int TA_DPO_DisplayShift( int optInTimePeriod, int outputIdx )
+{
+   if( TA_DPO_Lookback( optInTimePeriod ) < 0 )
+      return INT_MIN;
+   if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
+      optInTimePeriod = 20;
+   else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
+      return INT_MIN;
+   if( outputIdx < 0 || outputIdx >= 1 )
+      return INT_MIN;
+   /* The value computed at a bar detrends the price this many bars back,
+    * which is where a chart draws it.
+    */
+   return -(optInTimePeriod / 2 + 1);
 }
 
 TA_LIB_API TA_RetCode TA_DPO( int    startIdx,

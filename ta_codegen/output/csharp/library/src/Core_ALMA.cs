@@ -98,6 +98,33 @@ public partial class Core
       return optInTimePeriod - 1 ;
 
    }
+   /// <summary>
+   /// How many bars ahead (positive) or behind (negative) of the bar that
+   /// computed it a chart draws one output of <c>Alma</c>.
+   /// </summary>
+   /// <remarks>
+   /// Every output of this function is drawn at its own bar, so the answer is 0.
+   /// </remarks>
+   /// <param name="optInTimePeriod">Number of bars in the window (default 9; range 1..100000;
+   /// <c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInSigma">Divides the period to give the Gaussian's width in bars (default 6;
+   /// minimum 0.01; <see cref="Core.RealDefault"/> selects the default).</param>
+   /// <param name="optInOffset">Position of the peak weight, 0 at the oldest bar and 1 at the newest
+   /// (default 0.85; range 0..1; <see cref="Core.RealDefault"/> selects the
+   /// default).</param>
+   /// <param name="outputIdx">Position of the output in the batch signature, from 0.</param>
+   /// <returns>The display shift, or <c>int.MinValue</c> if a parameter is out of range
+   /// or the index names no output.</returns>
+   public int AlmaDisplayShift( int optInTimePeriod, double optInSigma, double optInOffset, int outputIdx )
+   {
+      if( AlmaLookback( optInTimePeriod, optInSigma, optInOffset ) < 0 ) {
+         return int.MinValue;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return int.MinValue;
+      }
+      return 0;
+   }
    internal RetCode AlmaImpl( int startIdx,
                               int endIdx,
                               ReadOnlySpan<double> inReal,

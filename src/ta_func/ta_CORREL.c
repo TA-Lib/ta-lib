@@ -76,6 +76,15 @@ TA_LIB_API int TA_CORREL_Lookback( int optInTimePeriod )
    return optInTimePeriod - 1;
 }
 
+TA_LIB_API int TA_CORREL_DisplayShift( int optInTimePeriod, int outputIdx )
+{
+   if( TA_CORREL_Lookback( optInTimePeriod ) < 0 )
+      return INT_MIN;
+   if( outputIdx < 0 || outputIdx >= 1 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_LIB_API TA_RetCode TA_CORREL( int    startIdx,
                                  int    endIdx,
                                  const double inReal0[],

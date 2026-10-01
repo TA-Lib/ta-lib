@@ -437,6 +437,7 @@ pub fn generate(
         out.push_str(&format!("/* {m} */\n\n"));
     }
     out.push_str(&gen_lookback(func, enums, registry, helpers));
+    out.push_str(&gen_display_shift(func, enums, registry, helpers));
 
     // For functions with an explicit _private, emit Private BEFORE guarded so the
     // C compiler knows the signature when the guarded body calls it. Only the
@@ -714,6 +715,64 @@ fn gen_lookback(
          {{\n\
          {body}\
          }}\n\n"
+    )
+}
+
+/// `TA_<N>_DisplayShift`: the lookback's contract with one more rejection, an
+/// `outputIdx` that names no output. Invalid answers `INT_MIN` because -1 is a
+/// shift a function can legitimately report.
+///
+/// It asks its own lookback first. A lookback body may refuse a parameter the
+/// declared ranges allow (FRAMA's odd period), and the two queries must reject
+/// the same calls; the range prologue alone would accept that one.
+fn gen_display_shift(
+    func: &FuncDef,
+    enums: &HashMap<String, EnumDef>,
+    registry: &Registry,
+    helpers: &HelperRegistry,
+) -> String {
+    let name = &func.name;
+    let idx = crate::ir::DISPLAY_SHIFT_INDEX_PARAM;
+    let mut params: Vec<String> = func
+        .optional_inputs
+        .iter()
+        .map(|opt| format!("{} {}", c_opt_param_type(&opt.param_type), opt.name))
+        .collect();
+    params.push(format!("int {idx}"));
+
+    let mut validation = String::new();
+    if !func.optional_inputs.is_empty() {
+        let args: Vec<&str> = func.optional_inputs.iter().map(|o| o.name.as_str()).collect();
+        validation.push_str(&format!(
+            "   if( TA_{name}_Lookback( {} ) < 0 )\n      return INT_MIN;\n",
+            args.join(", ")
+        ));
+    }
+    // The body reads the parameters, so it needs the defaults substituted.
+    if func.display_shift.is_some() {
+        validation.push_str(&emit_opt_param_validation(func, "INT_MIN", enums));
+    }
+    validation.push_str(&format!(
+        "   if( {idx} < 0 || {idx} >= {n} )\n      return INT_MIN;\n",
+        n = func.outputs.len()
+    ));
+    let unshifted = func.unshifted_outputs();
+    if func.display_shift.is_some() && !unshifted.is_empty() {
+        let tests: Vec<String> = unshifted.iter().map(|i| format!("{idx} == {i}")).collect();
+        validation.push_str(&format!("   if( {} )\n      return 0;\n", tests.join(" || ")));
+    }
+
+    let body = match &func.display_shift {
+        Some(stmts) => render_lookback_code(stmts, &validation, enums, registry, helpers),
+        None => format!("{validation}   return 0;\n"),
+    };
+
+    format!(
+        "TA_LIB_API int TA_{name}_DisplayShift( {} )\n\
+         {{\n\
+         {body}\
+         }}\n\n",
+        params.join(", ")
     )
 }
 

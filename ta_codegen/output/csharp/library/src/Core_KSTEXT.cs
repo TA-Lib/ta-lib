@@ -166,6 +166,52 @@ public partial class Core
       return legMax + MaLookback(optInSignalPeriod, optInSignalMAType) ;
 
    }
+   /// <summary>
+   /// How many bars ahead (positive) or behind (negative) of the bar that
+   /// computed it a chart draws one output of <c>Kstext</c>.
+   /// </summary>
+   /// <remarks>
+   /// Every output of this function is drawn at its own bar, so the answer is 0.
+   /// </remarks>
+   /// <param name="optInROC1Period">Rate-of-change period of leg 1 (weight 1) (default 10; range 1..100000;
+   /// <c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInROC2Period">Rate-of-change period of leg 2 (weight 2) (default 15; range 1..100000;
+   /// <c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInROC3Period">Rate-of-change period of leg 3 (weight 3) (default 20; range 1..100000;
+   /// <c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInROC4Period">Rate-of-change period of leg 4 (weight 4) (default 30; range 1..100000;
+   /// <c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInMA1Period">Period of the MA smoothing leg 1 (default 10; range 1..100000;
+   /// <c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInMA2Period">Period of the MA smoothing leg 2 (default 10; range 1..100000;
+   /// <c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInMA3Period">Period of the MA smoothing leg 3 (default 10; range 1..100000;
+   /// <c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInMA4Period">Period of the MA smoothing leg 4 (default 15; range 1..100000;
+   /// <c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInSignalPeriod">Period of the signal-line MA (default 9; range 1..100000;
+   /// <c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInROCMAType">MA type smoothing the four legs (default 0 = SMA; values: 0=SMA, 1=EMA,
+   /// 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
+   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA; <c>MAType.DEFAULT</c> (or
+   /// <c>(MAType)int.MinValue</c>) selects the default).</param>
+   /// <param name="optInSignalMAType">MA type for the signal line (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA,
+   /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
+   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA; <c>MAType.DEFAULT</c> (or
+   /// <c>(MAType)int.MinValue</c>) selects the default).</param>
+   /// <param name="outputIdx">Position of the output in the batch signature, from 0.</param>
+   /// <returns>The display shift, or <c>int.MinValue</c> if a parameter is out of range
+   /// or the index names no output.</returns>
+   public int KstextDisplayShift( int optInROC1Period, int optInROC2Period, int optInROC3Period, int optInROC4Period, int optInMA1Period, int optInMA2Period, int optInMA3Period, int optInMA4Period, int optInSignalPeriod, MAType optInROCMAType, MAType optInSignalMAType, int outputIdx )
+   {
+      if( KstextLookback( optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType ) < 0 ) {
+         return int.MinValue;
+      }
+      if( outputIdx < 0 || outputIdx >= 2 ) {
+         return int.MinValue;
+      }
+      return 0;
+   }
    internal RetCode KstextImpl( int startIdx,
                                 int endIdx,
                                 ReadOnlySpan<double> inReal,

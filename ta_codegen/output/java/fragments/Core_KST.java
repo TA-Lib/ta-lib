@@ -109,6 +109,49 @@
       return legMax + optInSignalPeriod - 1 ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#kst}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInROC1Period Rate-of-change period of leg 1 (weight 1) (default
+    *        10; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInROC2Period Rate-of-change period of leg 2 (weight 2) (default
+    *        15; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInROC3Period Rate-of-change period of leg 3 (weight 3) (default
+    *        20; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInROC4Period Rate-of-change period of leg 4 (weight 4) (default
+    *        30; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInSMA1Period Simple-moving-average period smoothing leg 1
+    *        (default 10; range 1..100000; {@code Integer.MIN_VALUE} selects the
+    *        default).
+    * @param optInSMA2Period Simple-moving-average period smoothing leg 2
+    *        (default 10; range 1..100000; {@code Integer.MIN_VALUE} selects the
+    *        default).
+    * @param optInSMA3Period Simple-moving-average period smoothing leg 3
+    *        (default 10; range 1..100000; {@code Integer.MIN_VALUE} selects the
+    *        default).
+    * @param optInSMA4Period Simple-moving-average period smoothing leg 4
+    *        (default 15; range 1..100000; {@code Integer.MIN_VALUE} selects the
+    *        default).
+    * @param optInSignalPeriod Simple-moving-average period of the signal line
+    *        (default 9; range 1..100000; {@code Integer.MIN_VALUE} selects the
+    *        default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int kstDisplayShift( int optInROC1Period, int optInROC2Period, int optInROC3Period, int optInROC4Period, int optInSMA1Period, int optInSMA2Period, int optInSMA3Period, int optInSMA4Period, int optInSignalPeriod, int outputIdx )
+   {
+      if( kstLookback( optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 2 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode kstImpl( int startIdx,
                     int endIdx,
                     double inReal[],

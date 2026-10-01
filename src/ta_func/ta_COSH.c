@@ -60,6 +60,13 @@ TA_LIB_API int TA_COSH_Lookback( void )
    return 0;
 }
 
+TA_LIB_API int TA_COSH_DisplayShift( int outputIdx )
+{
+   if( outputIdx < 0 || outputIdx >= 1 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_LIB_API TA_RetCode TA_COSH( int    startIdx,
                                int    endIdx,
                                const double inReal[],

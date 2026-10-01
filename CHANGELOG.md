@@ -12,6 +12,8 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   unrelated earlier crate that used the same name. (#179)
 - `find_package(ta-lib CONFIG)` now works against a CMake install and provides the `ta-lib::ta-lib`
   target. An autotools install still provides `ta-lib.pc` only. (#422)
+- Display shift: `TA_<NAME>_DisplayShift` and `TA_GetDisplayShift` tell a charting app how many bars
+  ahead of or behind its own bar to draw an output (e.g. DPO). Output values are not shifted. (#489)
 - New TA Functions:
   - ALMA: Arnaud Legoux Moving Average, a Gaussian-weighted window with an adjustable peak (#475)
   - ASI: Wilder Accumulative Swing Index, the running total of SI (#451)

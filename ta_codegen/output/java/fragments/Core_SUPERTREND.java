@@ -46,6 +46,31 @@
       return atrLookback(optInTimePeriod) ;
 
    }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#supertrend}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Smoothing period of the Average True Range (default
+    *        10; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInMultiplier Multiplier applied to the Average True Range to set
+    *        the band width (default 3; minimum 0; {@link Core#REAL_DEFAULT} selects
+    *        the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int supertrendDisplayShift( int optInTimePeriod, double optInMultiplier, int outputIdx )
+   {
+      if( supertrendLookback( optInTimePeriod, optInMultiplier ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 2 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
    RetCode supertrendImpl( int startIdx,
                            int endIdx,
                            double inHigh[],

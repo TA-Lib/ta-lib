@@ -68,6 +68,13 @@ TA_LIB_API int TA_CDLHIKKAKEMOD_Lookback( void )
    return max(1,Near_avgPeriod) + 5;
 }
 
+TA_LIB_API int TA_CDLHIKKAKEMOD_DisplayShift( int outputIdx )
+{
+   if( outputIdx < 0 || outputIdx >= 1 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_LIB_API TA_RetCode TA_CDLHIKKAKEMOD( int    startIdx,
                                         int    endIdx,
                                         const double inOpen[],

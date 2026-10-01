@@ -859,6 +859,10 @@ public class TaCodegenServe {
                 string fn = p.GetProperty("funcName").GetString()!;
                 return $"{{\"lookback\":{ComputeLookback(fn, p)}}}";
             }
+            else if (method == "abstract_get_display_shift") {
+                string fn = p.GetProperty("funcName").GetString()!;
+                return $"{{\"displayShift\":{ComputeDisplayShift(fn, p)}}}";
+            }
             else if (method == "TA_GetFuncInfo") return AbsFuncInfo(p);
             else if (method == "TA_GetInputParameterInfo") return AbsInputInfo(p);
             else if (method == "TA_GetOptInputParameterInfo") return AbsOptInputInfo(p);
@@ -74257,6 +74261,907 @@ public class TaCodegenServe {
             return core.ZlemaLookback(optInTimePeriod);
         }
         default: return -1;
+        }
+    }
+
+    static long ComputeDisplayShift(string funcName, JsonElement p) {
+        switch (funcName) {
+        case "AC": {
+            int optInFastPeriod = GetInt(p, "optInFastPeriod", 0);
+            int optInSlowPeriod = GetInt(p, "optInSlowPeriod", 0);
+            int optInSignalPeriod = GetInt(p, "optInSignalPeriod", 0);
+            return core.AcDisplayShift(optInFastPeriod, optInSlowPeriod, optInSignalPeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "ACCBANDS": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.AccbandsDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "ACOS": {
+            return core.AcosDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "AD": {
+            return core.AdDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "ADD": {
+            return core.AddDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "ADOSC": {
+            int optInFastPeriod = GetInt(p, "optInFastPeriod", 0);
+            int optInSlowPeriod = GetInt(p, "optInSlowPeriod", 0);
+            return core.AdoscDisplayShift(optInFastPeriod, optInSlowPeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "ADR": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.AdrDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "ADX": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.AdxDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "ADXR": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.AdxrDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "ALMA": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            double optInSigma = GetDouble(p, "optInSigma", 0.0);
+            double optInOffset = GetDouble(p, "optInOffset", 0.0);
+            return core.AlmaDisplayShift(optInTimePeriod, optInSigma, optInOffset, GetInt(p, "outputIdx", 0));
+        }
+        case "AO": {
+            int optInFastPeriod = GetInt(p, "optInFastPeriod", 0);
+            int optInSlowPeriod = GetInt(p, "optInSlowPeriod", 0);
+            return core.AoDisplayShift(optInFastPeriod, optInSlowPeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "APO": {
+            int optInFastPeriod = GetInt(p, "optInFastPeriod", 0);
+            int optInSlowPeriod = GetInt(p, "optInSlowPeriod", 0);
+            MAType optInMAType = (MAType)GetInt(p, "optInMAType", (int)MAType.DEFAULT);
+            return core.ApoDisplayShift(optInFastPeriod, optInSlowPeriod, optInMAType, GetInt(p, "outputIdx", 0));
+        }
+        case "AROON": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.AroonDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "AROONOSC": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.AroonoscDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "ASI": {
+            double optInLimitMove = GetDouble(p, "optInLimitMove", 0.0);
+            return core.AsiDisplayShift(optInLimitMove, GetInt(p, "outputIdx", 0));
+        }
+        case "ASIN": {
+            return core.AsinDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "ATAN": {
+            return core.AtanDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "ATR": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.AtrDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "AVGDEV": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.AvgdevDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "AVGPRICE": {
+            return core.AvgpriceDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "BBANDS": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            double optInNbDevUp = GetDouble(p, "optInNbDevUp", 0.0);
+            double optInNbDevDn = GetDouble(p, "optInNbDevDn", 0.0);
+            MAType optInMAType = (MAType)GetInt(p, "optInMAType", (int)MAType.DEFAULT);
+            return core.BbandsDisplayShift(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, GetInt(p, "outputIdx", 0));
+        }
+        case "BBW": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            double optInNbDevUp = GetDouble(p, "optInNbDevUp", 0.0);
+            double optInNbDevDn = GetDouble(p, "optInNbDevDn", 0.0);
+            MAType optInMAType = (MAType)GetInt(p, "optInMAType", (int)MAType.DEFAULT);
+            return core.BbwDisplayShift(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, GetInt(p, "outputIdx", 0));
+        }
+        case "BETA": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.BetaDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "BOP": {
+            return core.BopDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "CCI": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.CciDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "CDL2CROWS": {
+            return core.Cdl2crowsDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "CDL3BLACKCROWS": {
+            return core.Cdl3blackcrowsDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "CDL3INSIDE": {
+            return core.Cdl3insideDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "CDL3LINESTRIKE": {
+            return core.Cdl3linestrikeDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "CDL3OUTSIDE": {
+            return core.Cdl3outsideDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "CDL3STARSINSOUTH": {
+            return core.Cdl3starsinsouthDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "CDL3WHITESOLDIERS": {
+            return core.Cdl3whitesoldiersDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "CDLABANDONEDBABY": {
+            double optInPenetration = GetDouble(p, "optInPenetration", 0.0);
+            return core.CdlabandonedbabyDisplayShift(optInPenetration, GetInt(p, "outputIdx", 0));
+        }
+        case "CDLADVANCEBLOCK": {
+            return core.CdladvanceblockDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "CDLBELTHOLD": {
+            return core.CdlbeltholdDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "CDLBREAKAWAY": {
+            return core.CdlbreakawayDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "CDLCLOSINGMARUBOZU": {
+            return core.CdlclosingmarubozuDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "CDLCONCEALBABYSWALL": {
+            return core.CdlconcealbabyswallDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "CDLCOUNTERATTACK": {
+            return core.CdlcounterattackDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "CDLDARKCLOUDCOVER": {
+            double optInPenetration = GetDouble(p, "optInPenetration", 0.0);
+            return core.CdldarkcloudcoverDisplayShift(optInPenetration, GetInt(p, "outputIdx", 0));
+        }
+        case "CDLDOJI": {
+            return core.CdldojiDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "CDLDOJISTAR": {
+            return core.CdldojistarDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "CDLDRAGONFLYDOJI": {
+            return core.CdldragonflydojiDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "CDLENGULFING": {
+            return core.CdlengulfingDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "CDLEVENINGDOJISTAR": {
+            double optInPenetration = GetDouble(p, "optInPenetration", 0.0);
+            return core.CdleveningdojistarDisplayShift(optInPenetration, GetInt(p, "outputIdx", 0));
+        }
+        case "CDLEVENINGSTAR": {
+            double optInPenetration = GetDouble(p, "optInPenetration", 0.0);
+            return core.CdleveningstarDisplayShift(optInPenetration, GetInt(p, "outputIdx", 0));
+        }
+        case "CDLGAPSIDESIDEWHITE": {
+            return core.CdlgapsidesidewhiteDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "CDLGRAVESTONEDOJI": {
+            return core.CdlgravestonedojiDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "CDLHAMMER": {
+            return core.CdlhammerDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "CDLHANGINGMAN": {
+            return core.CdlhangingmanDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "CDLHARAMI": {
+            return core.CdlharamiDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "CDLHARAMICROSS": {
+            return core.CdlharamicrossDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "CDLHIGHWAVE": {
+            return core.CdlhighwaveDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "CDLHIKKAKE": {
+            return core.CdlhikkakeDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "CDLHIKKAKEMOD": {
+            return core.CdlhikkakemodDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "CDLHOMINGPIGEON": {
+            return core.CdlhomingpigeonDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "CDLIDENTICAL3CROWS": {
+            return core.Cdlidentical3crowsDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "CDLINNECK": {
+            return core.CdlinneckDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "CDLINVERTEDHAMMER": {
+            return core.CdlinvertedhammerDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "CDLKICKING": {
+            return core.CdlkickingDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "CDLKICKINGBYLENGTH": {
+            return core.CdlkickingbylengthDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "CDLLADDERBOTTOM": {
+            return core.CdlladderbottomDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "CDLLONGLEGGEDDOJI": {
+            return core.CdllongleggeddojiDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "CDLLONGLINE": {
+            return core.CdllonglineDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "CDLMARUBOZU": {
+            return core.CdlmarubozuDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "CDLMATCHINGLOW": {
+            return core.CdlmatchinglowDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "CDLMATHOLD": {
+            double optInPenetration = GetDouble(p, "optInPenetration", 0.0);
+            return core.CdlmatholdDisplayShift(optInPenetration, GetInt(p, "outputIdx", 0));
+        }
+        case "CDLMORNINGDOJISTAR": {
+            double optInPenetration = GetDouble(p, "optInPenetration", 0.0);
+            return core.CdlmorningdojistarDisplayShift(optInPenetration, GetInt(p, "outputIdx", 0));
+        }
+        case "CDLMORNINGSTAR": {
+            double optInPenetration = GetDouble(p, "optInPenetration", 0.0);
+            return core.CdlmorningstarDisplayShift(optInPenetration, GetInt(p, "outputIdx", 0));
+        }
+        case "CDLONNECK": {
+            return core.CdlonneckDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "CDLPIERCING": {
+            return core.CdlpiercingDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "CDLRICKSHAWMAN": {
+            return core.CdlrickshawmanDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "CDLRISEFALL3METHODS": {
+            return core.Cdlrisefall3methodsDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "CDLSEPARATINGLINES": {
+            return core.CdlseparatinglinesDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "CDLSHOOTINGSTAR": {
+            return core.CdlshootingstarDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "CDLSHORTLINE": {
+            return core.CdlshortlineDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "CDLSPINNINGTOP": {
+            return core.CdlspinningtopDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "CDLSTALLEDPATTERN": {
+            return core.CdlstalledpatternDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "CDLSTICKSANDWICH": {
+            return core.CdlsticksandwichDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "CDLTAKURI": {
+            return core.CdltakuriDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "CDLTASUKIGAP": {
+            return core.CdltasukigapDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "CDLTHRUSTING": {
+            return core.CdlthrustingDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "CDLTRISTAR": {
+            return core.CdltristarDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "CDLUNIQUE3RIVER": {
+            return core.Cdlunique3riverDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "CDLUPSIDEGAP2CROWS": {
+            return core.Cdlupsidegap2crowsDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "CDLXSIDEGAP3METHODS": {
+            return core.Cdlxsidegap3methodsDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "CEIL": {
+            return core.CeilDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "CG": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.CgDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "CHOP": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.ChopDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "CHOPTR": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.ChoptrDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "CKSP": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            double optInMultiplier = GetDouble(p, "optInMultiplier", 0.0);
+            int optInStopPeriod = GetInt(p, "optInStopPeriod", 0);
+            return core.CkspDisplayShift(optInTimePeriod, optInMultiplier, optInStopPeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "CMF": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.CmfDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "CMO": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.CmoDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "CMOU": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.CmouDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "COPPOCK": {
+            int optInWMAPeriod = GetInt(p, "optInWMAPeriod", 0);
+            int optInROC1Period = GetInt(p, "optInROC1Period", 0);
+            int optInROC2Period = GetInt(p, "optInROC2Period", 0);
+            return core.CoppockDisplayShift(optInWMAPeriod, optInROC1Period, optInROC2Period, GetInt(p, "outputIdx", 0));
+        }
+        case "CORREL": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.CorrelDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "COS": {
+            return core.CosDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "COSH": {
+            return core.CoshDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "CRSI": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            int optInStreakPeriod = GetInt(p, "optInStreakPeriod", 0);
+            int optInRankPeriod = GetInt(p, "optInRankPeriod", 0);
+            return core.CrsiDisplayShift(optInTimePeriod, optInStreakPeriod, optInRankPeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "CTI": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.CtiDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "CUMSUM": {
+            return core.CumsumDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "CVI": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            int optInROCPeriod = GetInt(p, "optInROCPeriod", 0);
+            return core.CviDisplayShift(optInTimePeriod, optInROCPeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "DEMA": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.DemaDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "DIV": {
+            return core.DivDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "DONCHIAN": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.DonchianDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "DPO": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.DpoDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "DX": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.DxDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "EFI": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.EfiDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "EMA": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.EmaDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "EMV": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            double optInVolumeDivisor = GetDouble(p, "optInVolumeDivisor", 0.0);
+            return core.EmvDisplayShift(optInTimePeriod, optInVolumeDivisor, GetInt(p, "outputIdx", 0));
+        }
+        case "ER": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.ErDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "ERI": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.EriDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "EXP": {
+            return core.ExpDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "FLOOR": {
+            return core.FloorDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "FOSC": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.FoscDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "FRACTAL": {
+            int optInLeftBars = GetInt(p, "optInLeftBars", 0);
+            int optInRightBars = GetInt(p, "optInRightBars", 0);
+            return core.FractalDisplayShift(optInLeftBars, optInRightBars, GetInt(p, "outputIdx", 0));
+        }
+        case "FRAMA": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.FramaDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "HA": {
+            return core.HaDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "HMA": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.HmaDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "HT_DCPERIOD": {
+            return core.HtDcperiodDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "HT_DCPHASE": {
+            return core.HtDcphaseDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "HT_PHASOR": {
+            return core.HtPhasorDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "HT_SINE": {
+            return core.HtSineDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "HT_TRENDLINE": {
+            return core.HtTrendlineDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "HT_TRENDMODE": {
+            return core.HtTrendmodeDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "IBS": {
+            return core.IbsDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "IMI": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.ImiDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "KAMA": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.KamaDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "KC": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            int optInATRPeriod = GetInt(p, "optInATRPeriod", 0);
+            double optInNbDev = GetDouble(p, "optInNbDev", 0.0);
+            return core.KcDisplayShift(optInTimePeriod, optInATRPeriod, optInNbDev, GetInt(p, "outputIdx", 0));
+        }
+        case "KDJ": {
+            int optInFastK_Period = GetInt(p, "optInFastK_Period", 0);
+            int optInSlowK_Period = GetInt(p, "optInSlowK_Period", 0);
+            MAType optInSlowK_MAType = (MAType)GetInt(p, "optInSlowK_MAType", (int)MAType.DEFAULT);
+            int optInSlowD_Period = GetInt(p, "optInSlowD_Period", 0);
+            MAType optInSlowD_MAType = (MAType)GetInt(p, "optInSlowD_MAType", (int)MAType.DEFAULT);
+            return core.KdjDisplayShift(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, GetInt(p, "outputIdx", 0));
+        }
+        case "KST": {
+            int optInROC1Period = GetInt(p, "optInROC1Period", 0);
+            int optInROC2Period = GetInt(p, "optInROC2Period", 0);
+            int optInROC3Period = GetInt(p, "optInROC3Period", 0);
+            int optInROC4Period = GetInt(p, "optInROC4Period", 0);
+            int optInSMA1Period = GetInt(p, "optInSMA1Period", 0);
+            int optInSMA2Period = GetInt(p, "optInSMA2Period", 0);
+            int optInSMA3Period = GetInt(p, "optInSMA3Period", 0);
+            int optInSMA4Period = GetInt(p, "optInSMA4Period", 0);
+            int optInSignalPeriod = GetInt(p, "optInSignalPeriod", 0);
+            return core.KstDisplayShift(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "KSTEXT": {
+            int optInROC1Period = GetInt(p, "optInROC1Period", 0);
+            int optInROC2Period = GetInt(p, "optInROC2Period", 0);
+            int optInROC3Period = GetInt(p, "optInROC3Period", 0);
+            int optInROC4Period = GetInt(p, "optInROC4Period", 0);
+            int optInMA1Period = GetInt(p, "optInMA1Period", 0);
+            int optInMA2Period = GetInt(p, "optInMA2Period", 0);
+            int optInMA3Period = GetInt(p, "optInMA3Period", 0);
+            int optInMA4Period = GetInt(p, "optInMA4Period", 0);
+            int optInSignalPeriod = GetInt(p, "optInSignalPeriod", 0);
+            MAType optInROCMAType = (MAType)GetInt(p, "optInROCMAType", (int)MAType.DEFAULT);
+            MAType optInSignalMAType = (MAType)GetInt(p, "optInSignalMAType", (int)MAType.DEFAULT);
+            return core.KstextDisplayShift(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, GetInt(p, "outputIdx", 0));
+        }
+        case "KURTOSIS": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.KurtosisDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "LINEARREG": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.LinearregDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "LINEARREG_ANGLE": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.LinearregAngleDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "LINEARREG_INTERCEPT": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.LinearregInterceptDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "LINEARREG_SLOPE": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.LinearregSlopeDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "LN": {
+            return core.LnDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "LOG10": {
+            return core.Log10DisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "MA": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            MAType optInMAType = (MAType)GetInt(p, "optInMAType", (int)MAType.DEFAULT);
+            return core.MaDisplayShift(optInTimePeriod, optInMAType, GetInt(p, "outputIdx", 0));
+        }
+        case "MACD": {
+            int optInFastPeriod = GetInt(p, "optInFastPeriod", 0);
+            int optInSlowPeriod = GetInt(p, "optInSlowPeriod", 0);
+            int optInSignalPeriod = GetInt(p, "optInSignalPeriod", 0);
+            return core.MacdDisplayShift(optInFastPeriod, optInSlowPeriod, optInSignalPeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "MACDEXT": {
+            int optInFastPeriod = GetInt(p, "optInFastPeriod", 0);
+            MAType optInFastMAType = (MAType)GetInt(p, "optInFastMAType", (int)MAType.DEFAULT);
+            int optInSlowPeriod = GetInt(p, "optInSlowPeriod", 0);
+            MAType optInSlowMAType = (MAType)GetInt(p, "optInSlowMAType", (int)MAType.DEFAULT);
+            int optInSignalPeriod = GetInt(p, "optInSignalPeriod", 0);
+            MAType optInSignalMAType = (MAType)GetInt(p, "optInSignalMAType", (int)MAType.DEFAULT);
+            return core.MacdextDisplayShift(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, GetInt(p, "outputIdx", 0));
+        }
+        case "MACDFIX": {
+            int optInSignalPeriod = GetInt(p, "optInSignalPeriod", 0);
+            return core.MacdfixDisplayShift(optInSignalPeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "MAMA": {
+            double optInFastLimit = GetDouble(p, "optInFastLimit", 0.0);
+            double optInSlowLimit = GetDouble(p, "optInSlowLimit", 0.0);
+            return core.MamaDisplayShift(optInFastLimit, optInSlowLimit, GetInt(p, "outputIdx", 0));
+        }
+        case "MARKETFI": {
+            return core.MarketfiDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "MASSI": {
+            int optInFastPeriod = GetInt(p, "optInFastPeriod", 0);
+            int optInSlowPeriod = GetInt(p, "optInSlowPeriod", 0);
+            return core.MassiDisplayShift(optInFastPeriod, optInSlowPeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "MAVP": {
+            int optInMinPeriod = GetInt(p, "optInMinPeriod", 0);
+            int optInMaxPeriod = GetInt(p, "optInMaxPeriod", 0);
+            MAType optInMAType = (MAType)GetInt(p, "optInMAType", (int)MAType.DEFAULT);
+            return core.MavpDisplayShift(optInMinPeriod, optInMaxPeriod, optInMAType, GetInt(p, "outputIdx", 0));
+        }
+        case "MAX": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.MaxDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "MAXINDEX": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.MaxindexDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "MCGD": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.McgdDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "MEDIAN": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.MedianDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "MEDPRICE": {
+            return core.MedpriceDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "MFI": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.MfiDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "MIDPOINT": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.MidpointDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "MIDPRICE": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.MidpriceDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "MIN": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.MinDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "MININDEX": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.MinindexDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "MINMAX": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.MinmaxDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "MINMAXINDEX": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.MinmaxindexDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "MINUS_DI": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.MinusDiDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "MINUS_DM": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.MinusDmDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "MOM": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.MomDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "MULT": {
+            return core.MultDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "NATR": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.NatrDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "NVI": {
+            return core.NviDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "OBV": {
+            return core.ObvDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "PERCENTB": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            double optInNbDevUp = GetDouble(p, "optInNbDevUp", 0.0);
+            double optInNbDevDn = GetDouble(p, "optInNbDevDn", 0.0);
+            MAType optInMAType = (MAType)GetInt(p, "optInMAType", (int)MAType.DEFAULT);
+            return core.PercentbDisplayShift(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, GetInt(p, "outputIdx", 0));
+        }
+        case "PERCENTILE": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            double optInPercentile = GetDouble(p, "optInPercentile", 0.0);
+            return core.PercentileDisplayShift(optInTimePeriod, optInPercentile, GetInt(p, "outputIdx", 0));
+        }
+        case "PERCENTRANK": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.PercentrankDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "PLUS_DI": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.PlusDiDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "PLUS_DM": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.PlusDmDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "PPO": {
+            int optInFastPeriod = GetInt(p, "optInFastPeriod", 0);
+            int optInSlowPeriod = GetInt(p, "optInSlowPeriod", 0);
+            MAType optInMAType = (MAType)GetInt(p, "optInMAType", (int)MAType.DEFAULT);
+            return core.PpoDisplayShift(optInFastPeriod, optInSlowPeriod, optInMAType, GetInt(p, "outputIdx", 0));
+        }
+        case "PVI": {
+            return core.PviDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "PVO": {
+            int optInFastPeriod = GetInt(p, "optInFastPeriod", 0);
+            int optInSlowPeriod = GetInt(p, "optInSlowPeriod", 0);
+            MAType optInMAType = (MAType)GetInt(p, "optInMAType", (int)MAType.DEFAULT);
+            return core.PvoDisplayShift(optInFastPeriod, optInSlowPeriod, optInMAType, GetInt(p, "outputIdx", 0));
+        }
+        case "PVT": {
+            return core.PvtDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "QSTICK": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.QstickDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "RMA": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.RmaDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "ROC": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.RocDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "ROCP": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.RocpDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "ROCR": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.RocrDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "ROCR100": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.Rocr100DisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "RSI": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.RsiDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "RVI": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            int optInStdDevPeriod = GetInt(p, "optInStdDevPeriod", 0);
+            return core.RviDisplayShift(optInTimePeriod, optInStdDevPeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "RVIR": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            int optInStdDevPeriod = GetInt(p, "optInStdDevPeriod", 0);
+            return core.RvirDisplayShift(optInTimePeriod, optInStdDevPeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "RVOL": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.RvolDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "SAR": {
+            double optInAcceleration = GetDouble(p, "optInAcceleration", 0.0);
+            double optInMaximum = GetDouble(p, "optInMaximum", 0.0);
+            return core.SarDisplayShift(optInAcceleration, optInMaximum, GetInt(p, "outputIdx", 0));
+        }
+        case "SAREXT": {
+            double optInStartValue = GetDouble(p, "optInStartValue", 0.0);
+            double optInOffsetOnReverse = GetDouble(p, "optInOffsetOnReverse", 0.0);
+            double optInAccelerationInitLong = GetDouble(p, "optInAccelerationInitLong", 0.0);
+            double optInAccelerationLong = GetDouble(p, "optInAccelerationLong", 0.0);
+            double optInAccelerationMaxLong = GetDouble(p, "optInAccelerationMaxLong", 0.0);
+            double optInAccelerationInitShort = GetDouble(p, "optInAccelerationInitShort", 0.0);
+            double optInAccelerationShort = GetDouble(p, "optInAccelerationShort", 0.0);
+            double optInAccelerationMaxShort = GetDouble(p, "optInAccelerationMaxShort", 0.0);
+            return core.SarextDisplayShift(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, GetInt(p, "outputIdx", 0));
+        }
+        case "SI": {
+            double optInLimitMove = GetDouble(p, "optInLimitMove", 0.0);
+            return core.SiDisplayShift(optInLimitMove, GetInt(p, "outputIdx", 0));
+        }
+        case "SIN": {
+            return core.SinDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "SINH": {
+            return core.SinhDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "SMA": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.SmaDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "SMI": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            int optInFastPeriod = GetInt(p, "optInFastPeriod", 0);
+            int optInSlowPeriod = GetInt(p, "optInSlowPeriod", 0);
+            int optInSignalPeriod = GetInt(p, "optInSignalPeriod", 0);
+            return core.SmiDisplayShift(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "SQRT": {
+            return core.SqrtDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "STC": {
+            int optInFastPeriod = GetInt(p, "optInFastPeriod", 0);
+            int optInSlowPeriod = GetInt(p, "optInSlowPeriod", 0);
+            int optInCyclePeriod = GetInt(p, "optInCyclePeriod", 0);
+            return core.StcDisplayShift(optInFastPeriod, optInSlowPeriod, optInCyclePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "STDDEV": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            double optInNbDev = GetDouble(p, "optInNbDev", 0.0);
+            return core.StddevDisplayShift(optInTimePeriod, optInNbDev, GetInt(p, "outputIdx", 0));
+        }
+        case "STOCH": {
+            int optInFastK_Period = GetInt(p, "optInFastK_Period", 0);
+            int optInSlowK_Period = GetInt(p, "optInSlowK_Period", 0);
+            MAType optInSlowK_MAType = (MAType)GetInt(p, "optInSlowK_MAType", (int)MAType.DEFAULT);
+            int optInSlowD_Period = GetInt(p, "optInSlowD_Period", 0);
+            MAType optInSlowD_MAType = (MAType)GetInt(p, "optInSlowD_MAType", (int)MAType.DEFAULT);
+            return core.StochDisplayShift(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, GetInt(p, "outputIdx", 0));
+        }
+        case "STOCHF": {
+            int optInFastK_Period = GetInt(p, "optInFastK_Period", 0);
+            int optInFastD_Period = GetInt(p, "optInFastD_Period", 0);
+            MAType optInFastD_MAType = (MAType)GetInt(p, "optInFastD_MAType", (int)MAType.DEFAULT);
+            return core.StochfDisplayShift(optInFastK_Period, optInFastD_Period, optInFastD_MAType, GetInt(p, "outputIdx", 0));
+        }
+        case "STOCHRSI": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            int optInFastK_Period = GetInt(p, "optInFastK_Period", 0);
+            int optInFastD_Period = GetInt(p, "optInFastD_Period", 0);
+            MAType optInFastD_MAType = (MAType)GetInt(p, "optInFastD_MAType", (int)MAType.DEFAULT);
+            return core.StochrsiDisplayShift(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, GetInt(p, "outputIdx", 0));
+        }
+        case "SUB": {
+            return core.SubDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "SUM": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.SumDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "SUPERTREND": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            double optInMultiplier = GetDouble(p, "optInMultiplier", 0.0);
+            return core.SupertrendDisplayShift(optInTimePeriod, optInMultiplier, GetInt(p, "outputIdx", 0));
+        }
+        case "T3": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            double optInVFactor = GetDouble(p, "optInVFactor", 0.0);
+            return core.T3DisplayShift(optInTimePeriod, optInVFactor, GetInt(p, "outputIdx", 0));
+        }
+        case "TAN": {
+            return core.TanDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "TANH": {
+            return core.TanhDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "TEMA": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.TemaDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "TRANGE": {
+            return core.TrangeDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "TRIMA": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.TrimaDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "TRIX": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.TrixDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "TSF": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.TsfDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "TSI": {
+            int optInFirstPeriod = GetInt(p, "optInFirstPeriod", 0);
+            int optInSecondPeriod = GetInt(p, "optInSecondPeriod", 0);
+            return core.TsiDisplayShift(optInFirstPeriod, optInSecondPeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "TYPPRICE": {
+            return core.TyppriceDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "ULTOSC": {
+            int optInTimePeriod1 = GetInt(p, "optInTimePeriod1", 0);
+            int optInTimePeriod2 = GetInt(p, "optInTimePeriod2", 0);
+            int optInTimePeriod3 = GetInt(p, "optInTimePeriod3", 0);
+            return core.UltoscDisplayShift(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, GetInt(p, "outputIdx", 0));
+        }
+        case "VAR": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            double optInNbDev = GetDouble(p, "optInNbDev", 0.0);
+            return core.VarDisplayShift(optInTimePeriod, optInNbDev, GetInt(p, "outputIdx", 0));
+        }
+        case "VHF": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.VhfDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "VIDYA": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            int optInCMOPeriod = GetInt(p, "optInCMOPeriod", 0);
+            return core.VidyaDisplayShift(optInTimePeriod, optInCMOPeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "VORTEX": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.VortexDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "VWAP": {
+            return core.VwapDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "VWMA": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.VwmaDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "WAD": {
+            return core.WadDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "WCLPRICE": {
+            return core.WclpriceDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "WILLR": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.WillrDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "WMA": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.WmaDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        case "ZLEMA": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.ZlemaDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
+        }
+        default: return int.MinValue;
         }
     }
 

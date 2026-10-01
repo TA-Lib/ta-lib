@@ -69,6 +69,15 @@ TA_LIB_API int TA_FRACTAL_Lookback( int optInLeftBars, int optInRightBars )
    return optInLeftBars + optInRightBars;
 }
 
+TA_LIB_API int TA_FRACTAL_DisplayShift( int optInLeftBars, int optInRightBars, int outputIdx )
+{
+   if( TA_FRACTAL_Lookback( optInLeftBars, optInRightBars ) < 0 )
+      return INT_MIN;
+   if( outputIdx < 0 || outputIdx >= 2 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_LIB_API TA_RetCode TA_FRACTAL( int    startIdx,
                                   int    endIdx,
                                   const double inHigh[],

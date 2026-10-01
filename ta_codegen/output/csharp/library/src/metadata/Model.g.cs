@@ -49,6 +49,9 @@ namespace TALib.Metadata;
 /// <summary>Computes a function's lookback from a bound call.</summary>
 internal delegate int LookbackThunk(Core core, ParamHolder call);
 
+/// <summary>Computes one output's display shift from a bound call.</summary>
+internal delegate int DisplayShiftThunk(Core core, ParamHolder call, int outputIdx);
+
 /// <summary>Runs a function from a bound call.</summary>
 /// <remarks>The thunk calls the function's public overload, so a rejection
 /// arrives as an exception and the range is all that comes back;
@@ -366,7 +369,8 @@ public sealed record FuncInfo
                           ImmutableArray<InputInfo> inputs,
                           ImmutableArray<OptInputInfo> optInputs,
                           ImmutableArray<OutputInfo> outputs,
-                          LookbackThunk lookback, InvokeThunk invoke)
+                          LookbackThunk lookback, DisplayShiftThunk displayShift,
+                          InvokeThunk invoke)
     {
         Name = name;
         Group = group;
@@ -377,6 +381,7 @@ public sealed record FuncInfo
         OptInputs = optInputs;
         Outputs = outputs;
         Lookback = lookback;
+        DisplayShift = displayShift;
         Invoke = invoke;
     }
 
@@ -410,6 +415,8 @@ public sealed record FuncInfo
     public ImmutableArray<OutputInfo> Outputs { get; }
 
     internal LookbackThunk Lookback { get; }
+
+    internal DisplayShiftThunk DisplayShift { get; }
 
     internal InvokeThunk Invoke { get; }
 

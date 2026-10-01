@@ -64,6 +64,13 @@ TA_LIB_API int TA_CDLSEPARATINGLINES_Lookback( void )
    return max(max(ShadowVeryShort_avgPeriod,BodyLong_avgPeriod),Equal_avgPeriod) + 1;
 }
 
+TA_LIB_API int TA_CDLSEPARATINGLINES_DisplayShift( int outputIdx )
+{
+   if( outputIdx < 0 || outputIdx >= 1 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_LIB_API TA_RetCode TA_CDLSEPARATINGLINES( int    startIdx,
                                              int    endIdx,
                                              const double inOpen[],

@@ -63,6 +63,13 @@ TA_LIB_API int TA_CDLIDENTICAL3CROWS_Lookback( void )
    return max(ShadowVeryShort_avgPeriod,Equal_avgPeriod) + 2;
 }
 
+TA_LIB_API int TA_CDLIDENTICAL3CROWS_DisplayShift( int outputIdx )
+{
+   if( outputIdx < 0 || outputIdx >= 1 )
+      return INT_MIN;
+   return 0;
+}
+
 TA_LIB_API TA_RetCode TA_CDLIDENTICAL3CROWS( int    startIdx,
                                              int    endIdx,
                                              const double inOpen[],
