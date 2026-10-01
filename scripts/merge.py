@@ -1,151 +1,132 @@
 #!/usr/bin/env python3
 
-# Merge dev into main branch
+# Promote dev to main: fast-forward origin/main to origin/dev.
+#
+# Checks out no branch, so it runs from any worktree, detached HEAD included,
+# and whichever worktree holds main cannot block it. The tree it runs in must
+# BE origin/dev, clean: the gates read the working files, and what they pass is
+# the exact commit that gets pushed.
 
 import argparse
 import subprocess
 import sys
-import os
 
 import sync
-from utilities.common import verify_git_repo
+from utilities.common import verify_git_repo, run_command
 from utilities.versions import check_sources_digest
 
-def run_command(command):
-    """Run a shell command and return the output."""
-    result = subprocess.run(command, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-    return result.stdout.strip()
 
 def parse_args():
-    """Parse (and reject) the command line before anything touches git.
-
-    This script takes no options -- running it merges and PUSHES. It previously
-    ignored sys.argv entirely, so a mistyped or exploratory flag ('merge.py
-    --help') silently performed the merge instead of printing usage. argparse
-    now exits on -h/--help and on any unrecognized argument, before main() runs.
-    """
+    """Takes no options: running it pushes, so a stray flag must stop it here."""
     parser = argparse.ArgumentParser(
         prog="scripts/merge.py",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description=(
-            "Fast-forward main to dev, then push BOTH branches to origin.\n"
+            "Fast-forward origin/main to origin/dev.\n"
             "\n"
-            "Takes no options: invoking it performs the merge and the push.\n"
+            "Takes no options: invoking it performs the push.\n"
             "\n"
-            "It refuses to run unless dev is clean, is up-to-date with\n"
-            "origin/dev, and its committed TA_LIB_SOURCES_DIGEST matches its\n"
-            "sources -- i.e. the dev-nightly job has already regenerated and\n"
-            "committed the dist assets. Merging an inconsistent dev breaks\n"
-            "main-nightly's dist verification."
+            "Run it from a clean tree checked out at origin/dev (the dev branch,\n"
+            "or 'git switch --detach origin/dev' in any worktree). It refuses\n"
+            "unless the committed TA_LIB_SOURCES_DIGEST matches the sources,\n"
+            "i.e. the dev-nightly job has already regenerated and committed the\n"
+            "dist assets, scripts/sync.py has nothing left to change, and main\n"
+            "has no commit that dev lacks."
         ),
         epilog="Usage: run it with no arguments, after a green dev nightly.",
     )
     parser.parse_args()
 
 
+def tracked_changes() -> str:
+    return run_command(['git', 'status', '--porcelain', '--untracked-files=no'])
+
+
+def realign_local_main(root_dir: str, pushed: str):
+    """Fast-forward the local main branch, unless a worktree has it checked out:
+    moving a checked-out branch would leave that worktree's files behind it.
+
+    Never fatal: it runs after the push, and a failure here must not report the
+    promotion as failed."""
+    exists = subprocess.run(['git', 'show-ref', '--verify', '--quiet', 'refs/heads/main'])
+    if exists.returncode != 0 or run_command(['git', 'rev-parse', 'main']) == pushed:
+        return
+    holder = sync.worktree_holding('main', root_dir)
+    if holder:
+        print(f"Local main is checked out in {holder} and is not at origin/main.")
+        print(f"Update it with: git -C {holder} merge --ff-only origin/main")
+        return
+    moved = subprocess.run(['git', 'fetch', 'origin', 'main:main'],
+                           stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if moved.returncode == 0:
+        print("Local main fast-forwarded.")
+    else:
+        print("Local main could not be fast-forwarded to origin/main; update it by hand.")
+
+
 def main():
-    try:
-        # Switch to dev branch if not already on it
-        original_branch = run_command(['git', 'rev-parse', '--abbrev-ref', 'HEAD'])
-        if original_branch != "dev":
-            print("Switching to dev branch")
-            run_command(['git', 'checkout', 'dev'])
+    root_dir = verify_git_repo()
 
-        # Make sure the dev branch does not have uncommitted changes.
-        try:
-            run_command(['git', 'diff-index', '--quiet', 'HEAD', '--'])
-        except subprocess.CalledProcessError:
-            print("Uncommitted changes in the dev branch. Please commit or stash them before merging.")
-            sys.exit(1)
-
-        # Make sure the dev branch is up-to-date with the remote.
-        run_command(['git', 'fetch', 'origin', 'dev'])
-        if run_command(['git', 'rev-parse', 'dev']) != run_command(['git', 'rev-parse', 'origin/dev']):
-            print("dev branch not up-to-date with remote. Do 'git pull'.")
-            sys.exit(1)
-
-        # Gate: dev must be self-consistent before it is propagated to main.
-        #
-        # The committed TA_LIB_SOURCES_DIGEST must already match what dev's
-        # sources compute. If it does not, the dev-nightly job has not yet
-        # regenerated and committed the digest -- and, in the same pass, the
-        # dist assets -- for the current sources. Merging that state into main
-        # makes main-nightly's "Verify dist assets are up-to-date" gate fail,
-        # exactly how PR #33's source change broke main after it landed there
-        # without its dist regeneration. Refuse rather than propagate the
-        # inconsistency (this also pre-empts sync.main() below silently
-        # rewriting a stale digest into a dirty ta_common.h).
-        root_dir = verify_git_repo()
-        print("Verifying dev sources digest is consistent...")
-        if check_sources_digest(root_dir) is None:
-            print("Error: dev is NOT consistent -- its committed "
-                  "TA_LIB_SOURCES_DIGEST does not match its sources (mismatch "
-                  "printed above).")
-            print("Wait for the dev-nightly job to regenerate and commit the "
-                  "digest + dist assets, or run 'scripts/package.py' on dev and "
-                  "commit the result, then re-run this merge.")
-            sys.exit(1)
-        print("dev sources digest is consistent.")
-
-        # Call sync to verify that dev is up-to-date with main.
-        # This is to avoid conflicts when merging dev into main.
-        sync.main([])
-
-        # sync.main() rewrites tracked files. Left uncommitted they would never reach
-        # main, and the rebase below would refuse the dirty tree after main had
-        # already moved locally.
-        dirty = run_command(['git', 'status', '--porcelain', '--untracked-files=no'])
-        if dirty:
-            print("sync.py changed these files on dev:")
-            print(dirty)
-            print("Commit them, push dev, then re-run this merge.")
-            sys.exit(1)
-
-        # Switch to main branch
-        print("Switching to main branch")
-        run_command(['git', 'checkout', 'main'])
-        run_command(['git', 'fetch', 'origin', 'main'])
-
-        # Proceed to merge dev into main. Detect if there are conflicts, if yes
-        # give instruction to resolve them.
-
-        # Find the common ancestor of dev and main
-        merge_base = run_command(['git', 'merge-base', 'dev', 'main'])
-
-        # Check if there are any changes from dev that are not in main
-        try:
-            run_command(['git', 'diff', '--quiet', merge_base, 'dev'])
-            print("No changes to merge from dev to main.")
-        except subprocess.CalledProcessError:
-            # Perform the actual merge
-            try:
-                run_command(['git', 'merge', '--ff-only', 'dev'])
-                print("Merged dev into main.")
-
-                # Rebase dev to keep on same last commit (that merge that was just done).
-                run_command(['git', 'checkout', 'dev'])
-                run_command(['git', 'rebase', 'main'])
-                run_command(['git', 'push', 'origin', 'dev'])
-                run_command(['git', 'push', 'origin', 'main'])
-            except subprocess.CalledProcessError:
-                print("Merge failed due to conflicts.")
-                print("To resolve the conflicts, follow these steps:")
-                print("1. Identify conflicted files using 'git status'.")
-                print("2. Resolve manually by editing conflicted files.")
-                print("3. Mark conflicts as resolved using 'git add <file>'.")
-                print("4. Complete merge with 'git commit' and 'push'.")
-                sys.exit(1)
-
-    except subprocess.CalledProcessError as e:
-        print(f"An error occurred: {e}")
+    if tracked_changes():
+        print("Uncommitted changes. Commit or stash them before merging.")
         sys.exit(1)
 
-    finally:
-        # Restore to the branch the user was located before running this script
-        current_branch = run_command(['git', 'rev-parse', '--abbrev-ref', 'HEAD'])
-        if current_branch != original_branch:
-            print(f"Switching back to {original_branch} branch")
-            run_command(['git', 'checkout', original_branch])
+    run_command(['git', 'fetch', 'origin',
+                 '+refs/heads/dev:refs/remotes/origin/dev',
+                 '+refs/heads/main:refs/remotes/origin/main'])
+    dev = run_command(['git', 'rev-parse', 'origin/dev'])
+    if run_command(['git', 'rev-parse', 'HEAD']) != dev:
+        print(f"This tree is not at origin/dev ({dev[:9]}).")
+        print("On the dev branch: push or pull until it matches origin/dev.")
+        print("In any other worktree: git switch --detach origin/dev")
+        sys.exit(1)
+
+    # Not redundant with the "sync.py changed these files" check below: this
+    # also requires every dist asset to have been built from these sources,
+    # which sync.py neither checks nor repairs. main-nightly's dist verification
+    # fails on a main promoted without it. Keep it ahead of sync.py, which
+    # rewrites a stale digest.
+    print("Verifying dev sources digest is consistent...")
+    if check_sources_digest(root_dir) is None:
+        print("Error: dev is NOT consistent: its committed TA_LIB_SOURCES_DIGEST "
+              "does not match its sources (mismatch printed above).")
+        print("Wait for the dev-nightly job to regenerate and commit the "
+              "digest + dist assets, or run 'scripts/package.py' on dev and "
+              "commit the result, then re-run this merge.")
+        sys.exit(1)
+    print("dev sources digest is consistent.")
+
+    sync.main([])
+
+    dirty = tracked_changes()
+    if dirty:
+        print("sync.py changed these files on dev:")
+        print(dirty)
+        print("Commit them, push dev, then re-run this merge.")
+        sys.exit(1)
+    if run_command(['git', 'rev-parse', 'HEAD']) != dev:
+        print("dev moved while sync.py ran: it merged main into dev or pulled a newer origin/dev.")
+        print("Push dev if it is ahead of origin/dev, then re-run this merge.")
+        sys.exit(1)
+
+    if run_command(['git', 'rev-parse', 'origin/main']) == dev:
+        print("No changes to merge from dev to main.")
+        realign_local_main(root_dir, dev)
+        return
+
+    ancestor = subprocess.run(['git', 'merge-base', '--is-ancestor', 'origin/main', dev])
+    if ancestor.returncode != 0:
+        print("origin/main has commits that origin/dev lacks, so main cannot fast-forward.")
+        print("Merge origin/main into dev, push dev, then re-run this merge.")
+        sys.exit(1)
+
+    # The hash, not the branch name: dev may have moved since the fetch, and
+    # only this commit went through the gates.
+    run_command(['git', 'push', 'origin', f'{dev}:refs/heads/main'])
+    print(f"Merged dev into main ({dev[:9]}).")
+
+    realign_local_main(root_dir, dev)
+
 
 if __name__ == "__main__":
     parse_args()
