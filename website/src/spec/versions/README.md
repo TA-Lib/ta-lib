@@ -35,7 +35,7 @@ Where D2 or D3 lets such a call differ, the difference starts in the last bit of
 
 <a id="d1"></a>**D1** On one machine, C built as [D4](/spec/versions/#d4) requires and Rust are bit-identical, transcendental functions included.
 
-<a id="d2"></a>**D2** On one machine, Java and C# are bit-identical to C built as [D4](/spec/versions/#d4) requires, for every call that evaluates no transcendental function. A call that evaluates one may differ from C's; whether it does depends on the runtime and the host.
+<a id="d2"></a>**D2** On one machine, Java and C# are bit-identical to C built as [D4](/spec/versions/#d4) requires, for every call that evaluates no transcendental function. A call that evaluates one may differ from C's: Java's and .NET's math libraries can round a transcendental result differently from the C library in the last bit, which is beyond TA-Lib's control, and the difference can grow through the rest of the calculation. Whether it does depends on the runtime and the host.
 
 <a id="d3"></a>**D3** Between machines (operating system, math library, CPU), a call that evaluates no transcendental function is bit-identical in every backend, C built as [D4](/spec/versions/#d4) requires. Every fused multiply-add is explicit in the source (C `fma`, Rust `mul_add`, Java `Math.fma`, C# `Math.FusedMultiplyAdd`), so a CPU with or without an FMA unit gives the same bits. A call that evaluates a transcendental function may differ between machines.
 

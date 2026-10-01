@@ -6,8 +6,11 @@ Stochastic), volatility (Bollinger Bands, ATR), volume, Hilbert Transform cycle 
 statistics, price transforms and candlestick patterns.
 
 Every function is generated from the same canonical definitions as the C library and is
-bit-identical to the C reference implementation over the same inputs. No native binaries, no
-P/Invoke, no dependencies.
+bit-identical to the C reference implementation over the same inputs, except where a
+calculation calls a transcendental math function such as `exp` or `log`: .NET's math library
+can round that result differently from the C library in the last bit, which is beyond
+TA-Lib's control, and the difference can grow through the rest of the calculation. No native
+binaries, no P/Invoke, no dependencies.
 
 ## Quick start
 
