@@ -35,5 +35,5 @@ export default defineUserConfig({
 
   theme,
 
-  plugins: [llms],
+  plugins: llms,
 });
