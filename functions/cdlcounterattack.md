@@ -1,0 +1,72 @@
+---
+url: 'https://ta-lib.org/functions/cdlcounterattack.md'
+description: >-
+  A two-candle pattern of two long, opposite-colored real bodies whose closing
+  prices are (nearly) equal.
+---
+# Counterattack (CDLCOUNTERATTACK)
+
+## Summary
+
+A two-candle pattern of two long, opposite-colored real bodies whose closing prices are (nearly) equal. Emits a bullish signal when the second candle is white and a bearish signal when it is black (a reversal signal, though its trend context is not checked).
+
+## Notes
+
+* Does not verify the prior trend the reversal signal classically assumes.
+* Bulkowski's testing found the bearish Counterattack/Meeting Lines does not reliably reverse at all — it acts as a bullish CONTINUATION 51% of the time — and the bullish version reverses only 56% of the time, both "near random" by his classification. ([thepatternsite.com](https://thepatternsite.com/MeetingLinesBear.html))
+
+## Inputs
+
+* `inOpen` — Open price of each bar
+* `inHigh` — High price of each bar
+* `inLow` — Low price of each bar
+* `inClose` — Close price of each bar
+
+## Outputs
+
+* `outInteger` — +100 when the second candle is white (bullish), -100 when it is black (bearish), 0 when no pattern
+
+## Output Values
+
+| Value | Meaning |
+|-------|---------|
+| -100 | Bearish Counterattack — a strong rally is matched and stopped cold by an equally strong opposite close, a reversal warning at a top |
+| 0 | No pattern |
+| 100 | Bullish Counterattack — a strong decline is matched and stopped cold by an equally strong opposite close, a reversal warning at a bottom |
+
+## Properties
+
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
+
+<div class="flag-table">
+
+|  |
+| :-- |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Overlap Input</span> |
+| <span class="flag-box">✅</span> **Independent Y-Axis** <span class="flag-tip" tabindex="0" role="note" aria-label="Output is on its own scale, drawn in a separate pane below the price chart." data-tip="Output is on its own scale, drawn in a separate pane below the price chart.">i</span> |
+| <span class="flag-box">✅</span> **Candlestick** <span class="flag-tip" tabindex="0" role="note" aria-label="Output is an integer candlestick-pattern signal (e.g. -100 / 0 / +100)." data-tip="Output is an integer candlestick-pattern signal (e.g. -100 / 0 / +100).">i</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Can Output NaN or ±Inf</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Identity at Period 1</span> |
+
+</div>
+
+## Implementation
+
+TA-Lib Definition: [`cdlcounterattack.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlcounterattack/cdlcounterattack.c) · [`cdlcounterattack.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlcounterattack/cdlcounterattack.yaml)
+
+| Native | File |
+|--------|------|
+| C | [`ta_CDLCOUNTERATTACK.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CDLCOUNTERATTACK.c) |
+| Rust | [`cdlcounterattack.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cdlcounterattack.rs) |
+| Java | [`Core_CDLCOUNTERATTACK.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CDLCOUNTERATTACK.java) |
+| C# | [`Core_CDLCOUNTERATTACK.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CDLCOUNTERATTACK.cs) |
+
+TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+
+## Aliases
+
+Counterattack, Counterattack Lines, Meeting Lines
+
+## See Also
+
+[CDLPIERCING](/functions/cdlpiercing.md) · [CDLDARKCLOUDCOVER](/functions/cdldarkcloudcover.md) · [CDLGAPSIDESIDEWHITE](/functions/cdlgapsidesidewhite.md)

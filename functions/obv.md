@@ -1,0 +1,62 @@
+---
+url: 'https://ta-lib.org/functions/obv.md'
+description: >-
+  On Balance Volume: a running cumulative total of volume, added on up-price
+  bars and subtracted on down-price bars. Relates volume flow to price
+  direction.
+---
+# On Balance Volume (OBV)
+
+## Summary
+
+On Balance Volume: a running cumulative total of volume, added on up-price bars and subtracted on down-price bars. Relates volume flow to price direction.
+
+## Formula
+
+OBV\[i] = OBV\[i-1] + (inReal\[i] > inReal\[i-1] ? V\[i] : inReal\[i] < inReal\[i-1] ? -V\[i] : 0); seed OBV\[startIdx] = V\[startIdx]
+
+## Inputs
+
+* `inReal` — Price series, typically close
+* `inVolume` — Volume of each bar
+
+## Outputs
+
+* `outReal` — Cumulative on-balance volume
+
+## Properties
+
+**Numerical Stability:** [Path-Dependent](/functions/stability.md#path-dependent)
+
+<div class="flag-table">
+
+|  |
+| :-- |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Overlap Input</span> |
+| <span class="flag-box">✅</span> **Independent Y-Axis** <span class="flag-tip" tabindex="0" role="note" aria-label="Output is on its own scale, drawn in a separate pane below the price chart." data-tip="Output is on its own scale, drawn in a separate pane below the price chart.">i</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Candlestick</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Can Output NaN or ±Inf</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Identity at Period 1</span> |
+
+</div>
+
+## Implementation
+
+TA-Lib Definition: [`obv.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/obv/obv.c) · [`obv.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/obv/obv.yaml)
+
+| Native | File |
+|--------|------|
+| C | [`ta_OBV.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_OBV.c) |
+| Rust | [`obv.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/obv.rs) |
+| Java | [`Core_OBV.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_OBV.java) |
+| C# | [`Core_OBV.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_OBV.cs) |
+
+TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+
+## Aliases
+
+On Balance Volume
+
+## References
+
+* Joseph Ensign Granville, B. Granville, *Granville's New Strategy of Daily Stock Market Timing for Maximum Profit*, Simon & Schuster (ISBN 0133634329)

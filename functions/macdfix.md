@@ -1,0 +1,75 @@
+---
+url: 'https://ta-lib.org/functions/macdfix.md'
+description: >-
+  MACD with the fast/slow EMAs fixed to the classic 12/26 periods (with the
+  classic fixed smoothing factors 0.15 and 0.075), exposing only the signal
+  period.
+---
+# Moving Average Convergence/Divergence Fix 12/26 (MACDFIX)
+
+## Summary
+
+MACD with the fast/slow EMAs fixed to the classic 12/26 periods (with the classic fixed smoothing factors 0.15 and 0.075), exposing only the signal period. Signal-line crossovers and histogram sign flag momentum shifts.
+
+## Formula
+
+MACD = EMA_12 - EMA_26   (fixed k: 0.15 for 12, 0.075 for 26)
+Signal = EMA(MACD, signalPeriod),  k = 2/(signalPeriod+1)
+Hist = MACD - Signal
+
+## Notes
+
+* A signal period of 1 disables signal-line smoothing: the signal equals the MACD line and the histogram is zero. Before 0.6.5 this parameter value produced misaligned output (issues #48/#59).
+
+## Inputs
+
+* `inReal` — Source series (typically close)
+
+## Outputs
+
+* `outMACD` — Fixed EMA12 minus EMA26
+* `outMACDSignal` — EMA of the MACD line
+* `outMACDHist` — MACD minus signal
+
+## Parameters
+
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInSignalPeriod` | integer | 9 | 1–100000 | Smoothing period for the signal line |
+
+## Properties
+
+**Numerical Stability:** [Initial Unstable Period](/functions/stability.md#initial-unstable-period) — Inherited from EMA, which MACDFIX computes internally; tunable via EMA's unstable period.
+
+<div class="flag-table">
+
+|  |
+| :-- |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Overlap Input</span> |
+| <span class="flag-box">✅</span> **Independent Y-Axis** <span class="flag-tip" tabindex="0" role="note" aria-label="Output is on its own scale, drawn in a separate pane below the price chart." data-tip="Output is on its own scale, drawn in a separate pane below the price chart.">i</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Candlestick</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Can Output NaN or ±Inf</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Identity at Period 1</span> |
+
+</div>
+
+## Implementation
+
+TA-Lib Definition: [`macdfix.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/macdfix/macdfix.c) · [`macdfix.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/macdfix/macdfix.yaml)
+
+| Native | File |
+|--------|------|
+| C | [`ta_MACDFIX.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_MACDFIX.c) |
+| Rust | [`macdfix.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/macdfix.rs) |
+| Java | [`Core_MACDFIX.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_MACDFIX.java) |
+| C# | [`Core_MACDFIX.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_MACDFIX.cs) |
+
+TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+
+## Aliases
+
+Moving Average Convergence/Divergence Fix
+
+## See Also
+
+[MACD](/functions/macd.md) · [MACDEXT](/functions/macdext.md) · [EMA](/functions/ema.md) · [APO](/functions/apo.md)

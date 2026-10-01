@@ -1,0 +1,70 @@
+---
+url: 'https://ta-lib.org/functions/minindex.md'
+description: >-
+  Returns the absolute index of the lowest value within a rolling window of the
+  given period.
+---
+# Index of lowest value over a specified period (MININDEX)
+
+## Summary
+
+Returns the absolute index of the lowest value within a rolling window of the given period. Same scan as MIN but outputs the position of the minimum rather than its value.
+
+## Formula
+
+outInteger\[i] = index of min(inReal\[i-optInTimePeriod+1 .. i])
+
+## Notes
+
+* When several bars in a window share the lowest value, the index of one of them is returned — not necessarily the first or the last.
+
+## Inputs
+
+* `inReal` — Series to scan for its minimum
+
+## Outputs
+
+* `outInteger` — Absolute index in inReal of the lowest value in each window
+
+## Parameters
+
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInTimePeriod` | integer | 30 | 2–100000 | Window length over which the minimum is located |
+
+## Properties
+
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
+
+<div class="flag-table">
+
+|  |
+| :-- |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Overlap Input</span> |
+| <span class="flag-box">✅</span> **Independent Y-Axis** <span class="flag-tip" tabindex="0" role="note" aria-label="Output is on its own scale, drawn in a separate pane below the price chart." data-tip="Output is on its own scale, drawn in a separate pane below the price chart.">i</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Candlestick</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Can Output NaN or ±Inf</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Identity at Period 1</span> |
+
+</div>
+
+## Implementation
+
+TA-Lib Definition: [`minindex.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/minindex/minindex.c) · [`minindex.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/minindex/minindex.yaml)
+
+| Native | File |
+|--------|------|
+| C | [`ta_MININDEX.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_MININDEX.c) |
+| Rust | [`minindex.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/minindex.rs) |
+| Java | [`Core_MININDEX.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_MININDEX.java) |
+| C# | [`Core_MININDEX.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_MININDEX.cs) |
+
+TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+
+## Aliases
+
+Index of Lowest Value, Lowest Value Index, Rolling Argmin
+
+## See Also
+
+[MIN](/functions/min.md) · [MAXINDEX](/functions/maxindex.md) · [MINMAXINDEX](/functions/minmaxindex.md) · [MINMAX](/functions/minmax.md)

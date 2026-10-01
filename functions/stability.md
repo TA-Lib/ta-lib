@@ -1,0 +1,53 @@
+---
+url: 'https://ta-lib.org/functions/stability.md'
+description: >-
+  What it means for an indicator to be start-independent, to carry an initial
+  unstable period, to depend on the MA type selected, or to be path-dependent.
+---
+# Numerical Stability
+
+The [Function Documentation](/functions/) specifies which of the four categories below applies to each function. They answer a single practical question: **does the value at a given bar depend on where the series you passed in begins?**
+
+## If Start-Independent, then... {#start-independent}
+
+The value at a bar does not depend on where your data starts. Feed the function a year or a decade and the value it reports for a given bar is identical. These functions read a bounded window — a fixed number of bars — and ignore everything older.
+
+## If Initial Unstable Period, then... {#initial-unstable-period}
+
+Early values depend on how much history precedes them, and converge as more bars are supplied. These functions are defined recursively: each value folds in the previous one, so the series never entirely forgets where it began — though the influence decays until it is lost in floating-point rounding.
+
+See [Unstable Period](/api/unstable-period/) for what to do about it: when to ignore it, when to supply extra history, and how to have TA-Lib drop the unstable values for you.
+
+## If Depends on MA Type, then... {#depends-on-ma-type}
+
+Some functions take an `optInMAType` parameter selecting how their moving average is computed. That choice decides which of the properties above applies: a recursive MA type gives the function an initial unstable period, a windowed one leaves it start-independent.
+
+| MA Type | Value | Numerical Stability | Why |
+| :-- | --: | :-- | :-- |
+| [SMA](/functions/sma.md) | 0 | Start-Independent | A windowed average: it reads a fixed number of bars and forgets everything older. |
+| [EMA](/functions/ema.md) | 1 | Initial Unstable Period | Recursive: each value folds in the previous one. Tunable via EMA's own unstable period. |
+| [WMA](/functions/wma.md) | 2 | Start-Independent | A windowed average: it reads a fixed number of bars and forgets everything older. |
+| [DEMA](/functions/dema.md) | 3 | Initial Unstable Period | Built from EMA, and inherits its unstable period. |
+| [TEMA](/functions/tema.md) | 4 | Initial Unstable Period | Built from EMA, and inherits its unstable period. |
+| [TRIMA](/functions/trima.md) | 5 | Start-Independent | A windowed average: it reads a fixed number of bars and forgets everything older. |
+| [KAMA](/functions/kama.md) | 6 | Initial Unstable Period | Recursive: each value folds in the previous one. Tunable via KAMA's own unstable period. |
+| [MAMA](/functions/mama.md) | 7 | Initial Unstable Period | Recursive: each value folds in the previous one. Tunable via MAMA's own unstable period. |
+| [T3](/functions/t3.md) | 8 | Initial Unstable Period | Recursive: each value folds in the previous one. Tunable via T3's own unstable period. |
+| [HMA](/functions/hma.md) | 9 | Start-Independent | A windowed average: it reads a fixed number of bars and forgets everything older. |
+| `DISABLED` | 10 | Start-Independent | Not a moving average: the input is copied through unchanged. |
+| `DEFAULT` | 11 | — | Not a moving average: selects the documented default of whichever parameter it is passed to. |
+| [ZLEMA](/functions/zlema.md) | 12 | Initial Unstable Period | Built from EMA, and inherits its unstable period. |
+| [RMA](/functions/rma.md) | 13 | Initial Unstable Period | Recursive: each value folds in the previous one. Tunable via RMA's own unstable period. |
+| [VIDYA](/functions/vidya.md) | 14 | Initial Unstable Period | Recursive: each value folds in the previous one. Tunable via VIDYA's own unstable period. |
+| [ALMA](/functions/alma.md) | 15 | Start-Independent | A windowed average: it reads a fixed number of bars and forgets everything older. |
+
+## If Path-Dependent, then... {#path-dependent}
+
+The value is built up from the first bar — a running accumulation or a state machine that tracks the path prices took — so it depends on where your data begins and never converges. Unlike an unstable period, there is no warm-up you can discard: the difference persists for the whole series.
+
+Two Examples:
+
+* [AD](/functions/ad.md) adds each bar's money-flow volume to a running total that begins at zero on your first bar. Only the differences between bars carry meaning; the absolute level is an artifact of the start date.
+* [SAR](/functions/sar.md) is a state machine: it reads the first two bars to decide whether the trend starts long or short, then carries that direction, the extreme price, and an acceleration factor forward. Start a day earlier and it can pick the opposite direction, putting the stop on the other side of price for the rest of the run.
+
+Do not compare these values across differently-sized windows, and expect a backtest starting at a different date to produce different numbers.

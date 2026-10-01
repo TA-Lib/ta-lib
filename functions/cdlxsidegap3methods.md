@@ -1,0 +1,72 @@
+---
+url: 'https://ta-lib.org/functions/cdlxsidegap3methods.md'
+description: >-
+  A three-candle continuation pattern: two same-color candles separated by a
+  real-body gap, followed by an opposite-color candle that fills into the gap.
+---
+# Upside/Downside Gap Three Methods (CDLXSIDEGAP3METHODS)
+
+## Summary
+
+A three-candle continuation pattern: two same-color candles separated by a real-body gap, followed by an opposite-color candle that fills into the gap. Bullish (upside) when the first two candles are white, bearish (downside) when they are black.
+
+## Notes
+
+* This continuation pattern does not verify the prior trend it classically assumes; the caller must confirm the trend.
+* Bulkowski's testing found BOTH directions of this pattern actually act as reversals more often than not, opposite the classic continuation label: the upside variant reverses bearish 59% of the time, the downside variant reverses bullish 62% of the time. ([thepatternsite.com](https://thepatternsite.com/UpGap3Methods.html))
+
+## Inputs
+
+* `inOpen` — Open price of each bar
+* `inHigh` — High price of each bar
+* `inLow` — Low price of each bar
+* `inClose` — Close price of each bar
+
+## Outputs
+
+* `outInteger` — +100 when the two same-color candles are white (bullish/upside continuation), -100 when black (bearish/downside continuation), 0 otherwise. Equals candlecolor(1st candle) \* 100
+
+## Output Values
+
+| Value | Meaning |
+|-------|---------|
+| -100 | Downside Gap Three Methods: the first two candles are black — bearish continuation |
+| 0 | No pattern |
+| 100 | Upside Gap Three Methods: the first two candles are white — bullish continuation |
+
+## Properties
+
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
+
+<div class="flag-table">
+
+|  |
+| :-- |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Overlap Input</span> |
+| <span class="flag-box">✅</span> **Independent Y-Axis** <span class="flag-tip" tabindex="0" role="note" aria-label="Output is on its own scale, drawn in a separate pane below the price chart." data-tip="Output is on its own scale, drawn in a separate pane below the price chart.">i</span> |
+| <span class="flag-box">✅</span> **Candlestick** <span class="flag-tip" tabindex="0" role="note" aria-label="Output is an integer candlestick-pattern signal (e.g. -100 / 0 / +100)." data-tip="Output is an integer candlestick-pattern signal (e.g. -100 / 0 / +100).">i</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Can Output NaN or ±Inf</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Identity at Period 1</span> |
+
+</div>
+
+## Implementation
+
+TA-Lib Definition: [`cdlxsidegap3methods.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlxsidegap3methods/cdlxsidegap3methods.c) · [`cdlxsidegap3methods.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlxsidegap3methods/cdlxsidegap3methods.yaml)
+
+| Native | File |
+|--------|------|
+| C | [`ta_CDLXSIDEGAP3METHODS.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CDLXSIDEGAP3METHODS.c) |
+| Rust | [`cdlxsidegap3methods.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cdlxsidegap3methods.rs) |
+| Java | [`Core_CDLXSIDEGAP3METHODS.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CDLXSIDEGAP3METHODS.java) |
+| C# | [`Core_CDLXSIDEGAP3METHODS.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CDLXSIDEGAP3METHODS.cs) |
+
+TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+
+## Aliases
+
+Upside/Downside Gap Three Methods, Upside Gap Three Methods, Downside Gap Three Methods
+
+## See Also
+
+[CDLGAPSIDESIDEWHITE](/functions/cdlgapsidesidewhite.md) · [CDLTASUKIGAP](/functions/cdltasukigap.md) · [CDLRISEFALL3METHODS](/functions/cdlrisefall3methods.md)

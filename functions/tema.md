@@ -1,0 +1,74 @@
+---
+url: 'https://ta-lib.org/functions/tema.md'
+description: >-
+  Triple Exponential Moving Average: a smoothed price overlay built from three
+  successively-applied EMAs to reduce lag versus a plain EMA.
+---
+# Triple Exponential Moving Average (TEMA)
+
+## Summary
+
+Triple Exponential Moving Average: a smoothed price overlay built from three successively-applied EMAs to reduce lag versus a plain EMA. Distinct from EMA3, also called "triple EMA" in the literature.
+
+## Formula
+
+EMA1=EMA(t,period); EMA2=EMA(EMA1,period); EMA3=EMA(EMA2,period); TEMA = 3*EMA1 - 3*EMA2 + EMA3
+
+## Notes
+
+* A period of 1 performs no smoothing: the output is a copy of the input. Allowed since 0.6.5 (issues #48/#59).
+
+## Inputs
+
+* `inReal` — Source price/data series
+
+## Outputs
+
+* `outReal` — The TEMA line
+
+## Parameters
+
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInTimePeriod` | integer | 30 | 1–100000 | EMA period used for all three passes |
+
+## Properties
+
+**Numerical Stability:** [Initial Unstable Period](/functions/stability.md#initial-unstable-period) — Inherited from EMA, which TEMA computes internally; tunable via EMA's unstable period.
+
+<div class="flag-table">
+
+|  |
+| :-- |
+| <span class="flag-box">✅</span> **Overlap Input** <span class="flag-tip" tabindex="0" role="note" aria-label="Output is on the same scale as the input price, so it is drawn over the price chart." data-tip="Output is on the same scale as the input price, so it is drawn over the price chart.">i</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Independent Y-Axis</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Candlestick</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Can Output NaN or ±Inf</span> |
+| <span class="flag-box">✅</span> **Identity at Period 1** <span class="flag-tip" tabindex="0" role="note" aria-label="A period of 1 performs no smoothing: the lookback is 0 and every output value is a bit-exact copy of its input value." data-tip="A period of 1 performs no smoothing: the lookback is 0 and every output value is a bit-exact copy of its input value.">i</span> |
+
+</div>
+
+## Implementation
+
+TA-Lib Definition: [`tema.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/tema/tema.c) · [`tema.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/tema/tema.yaml)
+
+| Native | File |
+|--------|------|
+| C | [`ta_TEMA.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_TEMA.c) |
+| Rust | [`tema.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/tema.rs) |
+| Java | [`Core_TEMA.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_TEMA.java) |
+| C# | [`Core_TEMA.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_TEMA.cs) |
+
+TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+
+## Aliases
+
+Triple Exponential Moving Average
+
+## See Also
+
+[EMA](/functions/ema.md) · [DEMA](/functions/dema.md) · [T3](/functions/t3.md)
+
+## References
+
+* Patrick G. Mulloy, *Smoothing Data with Faster Moving Averages*, Technical Analysis of Stocks & Commodities, V.12:1 (January 1994)

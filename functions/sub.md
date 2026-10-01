@@ -1,0 +1,59 @@
+---
+url: 'https://ta-lib.org/functions/sub.md'
+description: Element-wise subtraction of two input series.
+---
+# Vector Arithmetic Subtraction (SUB)
+
+## Summary
+
+Element-wise subtraction of two input series.
+
+## Formula
+
+outReal\[i] = inReal0\[i] - inReal1\[i]
+
+## Inputs
+
+* `inReal0` — Minuend series
+* `inReal1` — Subtrahend series
+
+## Outputs
+
+* `outReal` — Per-element difference inReal0 - inReal1
+
+## Properties
+
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
+
+<div class="flag-table">
+
+|  |
+| :-- |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Overlap Input</span> |
+| <span class="flag-box">✅</span> **Independent Y-Axis** <span class="flag-tip" tabindex="0" role="note" aria-label="Output is on its own scale, drawn in a separate pane below the price chart." data-tip="Output is on its own scale, drawn in a separate pane below the price chart.">i</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Candlestick</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Can Output NaN or ±Inf</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Identity at Period 1</span> |
+
+</div>
+
+## Implementation
+
+TA-Lib Definition: [`sub.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/sub/sub.c) · [`sub.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/sub/sub.yaml)
+
+| Native | File |
+|--------|------|
+| C | [`ta_SUB.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_SUB.c) |
+| Rust | [`sub.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/sub.rs) |
+| Java | [`Core_SUB.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_SUB.java) |
+| C# | [`Core_SUB.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_SUB.cs) |
+
+TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+
+## Aliases
+
+Subtract, Vector Subtraction
+
+## See Also
+
+[ADD](/functions/add.md) · [MULT](/functions/mult.md) · [DIV](/functions/div.md)

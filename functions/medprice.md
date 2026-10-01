@@ -1,0 +1,61 @@
+---
+url: 'https://ta-lib.org/functions/medprice.md'
+description: >-
+  Median Price: the midpoint of each bar's high and low. A price-transform
+  overlay.
+---
+# Median Price (MEDPRICE)
+
+## Summary
+
+Median Price: the midpoint of each bar's high and low. A price-transform overlay.
+
+## Formula
+
+$MEDPRICE_i = (High_i + Low_i) / 2$
+
+## Inputs
+
+* `inHigh` — High price of each bar
+* `inLow` — Low price of each bar
+
+## Outputs
+
+* `outReal` — Midpoint of each bar's high and low
+
+## Properties
+
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
+
+<div class="flag-table">
+
+|  |
+| :-- |
+| <span class="flag-box">✅</span> **Overlap Input** <span class="flag-tip" tabindex="0" role="note" aria-label="Output is on the same scale as the input price, so it is drawn over the price chart." data-tip="Output is on the same scale as the input price, so it is drawn over the price chart.">i</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Independent Y-Axis</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Candlestick</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Can Output NaN or ±Inf</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Identity at Period 1</span> |
+
+</div>
+
+## Implementation
+
+TA-Lib Definition: [`medprice.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/medprice/medprice.c) · [`medprice.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/medprice/medprice.yaml)
+
+| Native | File |
+|--------|------|
+| C | [`ta_MEDPRICE.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_MEDPRICE.c) |
+| Rust | [`medprice.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/medprice.rs) |
+| Java | [`Core_MEDPRICE.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_MEDPRICE.java) |
+| C# | [`Core_MEDPRICE.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_MEDPRICE.cs) |
+
+TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+
+## Aliases
+
+Median Price
+
+## See Also
+
+[MIDPRICE](/functions/midprice.md) · [AVGPRICE](/functions/avgprice.md) · [TYPPRICE](/functions/typprice.md) · [WCLPRICE](/functions/wclprice.md)

@@ -1,0 +1,92 @@
+---
+url: 'https://ta-lib.org/functions/rsi.md'
+description: >-
+  Wilder's Relative Strength Index, a momentum oscillator bounded 0-100 from the
+  ratio of average gains to average losses over the period.
+---
+# Relative Strength Index (RSI)
+
+## Summary
+
+Wilder's Relative Strength Index, a momentum oscillator bounded 0-100 from the ratio of average gains to average losses over the period. Used to gauge overbought/oversold conditions. >70 overbought, <30 oversold.
+
+## Formula
+
+$$
+\begin{aligned}
+U_t &= \max(X_t - X_{t-1},\ 0)
+   &  D_t &= \max(X_{t-1} - X_t,\ 0) \\[4pt]
+\overline{U}_t &= \begin{cases}
+    \operatorname{SMA}(U, n)_t                 & \text{if } t = n \\[4pt]
+    \dfrac{(n-1)\,\overline{U}_{t-1} + U_t}{n} & \text{if } t > n
+  \end{cases}
+   &  \overline{D}_t &= \begin{cases}
+    \operatorname{SMA}(D, n)_t                 & \text{if } t = n \\[4pt]
+    \dfrac{(n-1)\,\overline{D}_{t-1} + D_t}{n} & \text{if } t > n
+  \end{cases} \\[4pt]
+\mathrm{RS}_t &= \frac{\overline{U}_t}{\overline{D}_t}
+   &  \mathrm{RSI}_t &= 100 - \frac{100}{1 + \mathrm{RS}_t}
+\end{aligned}
+$$
+
+where $X$ is the input series and $n$ the period.
+
+## Notes
+
+* While the input has not changed since the first bar the call reads, there is neither a gain nor a loss and RSI is 0/0: the output is the neutral 50. Up to 0.8.1 it was 0, which read as oversold. Input that has only risen gives 100 and input that has only fallen gives 0.
+* After a move, an unchanged input holds the last value until the two averages decay to rounding residue: about a thousand unchanged bars at period 2, about ten thousand at period 14. The output then drifts and settles on 50. Input that had only risen or only fallen stays at 100 or 0, except at period 2.
+
+## Inputs
+
+* `inReal` — Price series (typically close)
+
+## Outputs
+
+* `outReal` — RSI value
+
+## Parameters
+
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInTimePeriod` | integer | 14 | 2–100000 | Lookback for the gain/loss averaging |
+
+## Properties
+
+**Numerical Stability:** [Initial Unstable Period](/functions/stability.md#initial-unstable-period)
+
+<div class="flag-table">
+
+|  |
+| :-- |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Overlap Input</span> |
+| <span class="flag-box">✅</span> **Independent Y-Axis** <span class="flag-tip" tabindex="0" role="note" aria-label="Output is on its own scale, drawn in a separate pane below the price chart." data-tip="Output is on its own scale, drawn in a separate pane below the price chart.">i</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Candlestick</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Can Output NaN or ±Inf</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Identity at Period 1</span> |
+
+</div>
+
+## Implementation
+
+TA-Lib Definition: [`rsi.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/rsi/rsi.c) · [`rsi.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/rsi/rsi.yaml)
+
+| Native | File |
+|--------|------|
+| C | [`ta_RSI.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_RSI.c) |
+| Rust | [`rsi.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/rsi.rs) |
+| Java | [`Core_RSI.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_RSI.java) |
+| C# | [`Core_RSI.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_RSI.cs) |
+
+TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+
+## Aliases
+
+relative strength index
+
+## See Also
+
+[CMO](/functions/cmo.md) · [STOCHRSI](/functions/stochrsi.md)
+
+## References
+
+* J. Welles Wilder, *New Concepts in Technical Trading Systems*, Trend Research (ISBN 0894590278)

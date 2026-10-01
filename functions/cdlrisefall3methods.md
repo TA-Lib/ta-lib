@@ -1,0 +1,74 @@
+---
+url: 'https://ta-lib.org/functions/cdlrisefall3methods.md'
+description: >-
+  A five-candle continuation pattern: a long candle, three small counter-color
+  candles that stay partly within the first candle's high-low range, then a…
+---
+# Rising/Falling Three Methods (CDLRISEFALL3METHODS)
+
+## Summary
+
+A five-candle continuation pattern: a long candle, three small counter-color candles that stay partly within the first candle's high-low range, then a long same-color candle that resumes the trend. Bullish (rising) or bearish (falling) continuation signal.
+
+## Notes
+
+* Only the three-small-candle variant is detected; the classic pattern allowing two or more small candles is not supported.
+* The middle candles need only partially overlap the first candle's range, not be fully contained within it.
+* The prior trend the continuation reading assumes is not verified.
+* Bulkowski's testing found Rising Three Methods continues 74% of the time (102 examples out of 4.7M candle lines) and Falling Three Methods continues 71% of the time (just 64 examples) — both act as classically labeled, but Bulkowski flags the samples as too thin to trust: Falling Three Methods is so rare he omitted its statistics from his book entirely. ([thepatternsite.com](https://thepatternsite.com/Rising3Methods.html))
+
+## Inputs
+
+* `inOpen` — Open price of each bar
+* `inHigh` — High price of each bar
+* `inLow` — Low price of each bar
+* `inClose` — Close price of each bar
+
+## Outputs
+
+* `outInteger` — +100 when candle 1 is white (rising/bullish continuation), -100 when candle 1 is black (falling/bearish continuation), 0 otherwise. Sign = 100 \* color of candle 1
+
+## Output Values
+
+| Value | Meaning |
+|-------|---------|
+| -100 | Falling Three Methods: candle 1 is black — bearish continuation |
+| 0 | No pattern |
+| 100 | Rising Three Methods: candle 1 is white — bullish continuation |
+
+## Properties
+
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
+
+<div class="flag-table">
+
+|  |
+| :-- |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Overlap Input</span> |
+| <span class="flag-box">✅</span> **Independent Y-Axis** <span class="flag-tip" tabindex="0" role="note" aria-label="Output is on its own scale, drawn in a separate pane below the price chart." data-tip="Output is on its own scale, drawn in a separate pane below the price chart.">i</span> |
+| <span class="flag-box">✅</span> **Candlestick** <span class="flag-tip" tabindex="0" role="note" aria-label="Output is an integer candlestick-pattern signal (e.g. -100 / 0 / +100)." data-tip="Output is an integer candlestick-pattern signal (e.g. -100 / 0 / +100).">i</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Can Output NaN or ±Inf</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Identity at Period 1</span> |
+
+</div>
+
+## Implementation
+
+TA-Lib Definition: [`cdlrisefall3methods.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlrisefall3methods/cdlrisefall3methods.c) · [`cdlrisefall3methods.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlrisefall3methods/cdlrisefall3methods.yaml)
+
+| Native | File |
+|--------|------|
+| C | [`ta_CDLRISEFALL3METHODS.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CDLRISEFALL3METHODS.c) |
+| Rust | [`cdlrisefall3methods.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cdlrisefall3methods.rs) |
+| Java | [`Core_CDLRISEFALL3METHODS.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CDLRISEFALL3METHODS.java) |
+| C# | [`Core_CDLRISEFALL3METHODS.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CDLRISEFALL3METHODS.cs) |
+
+TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+
+## Aliases
+
+Rising/Falling Three Methods, Rising Three Methods, Falling Three Methods
+
+## See Also
+
+[CDLXSIDEGAP3METHODS](/functions/cdlxsidegap3methods.md) · [CDL3INSIDE](/functions/cdl3inside.md) · [CDL3OUTSIDE](/functions/cdl3outside.md)

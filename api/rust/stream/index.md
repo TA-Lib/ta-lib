@@ -1,0 +1,116 @@
+---
+url: 'https://ta-lib.org/api/rust/stream/index.md'
+description: >-
+  Rust streaming API for live feeds: a stream carries indicator state from bar
+  to bar, so an update never recomputes the history; its values are
+  bit-identical to the batch calls.
+---
+# Rust Streaming API
+
+::: warning Not yet released
+The Rust API is not yet released. Estimated release: **Q1 2027**.
+:::
+
+The **streaming API** is built for live feeds: open a stream once, then feed it one bar at a time. The stream carries its state from bar to bar, so a new bar never costs a pass over the history: most indicators do constant work per bar, and the ones that work over their window, such as AVGDEV, CCI, MEDIAN and the rolling extremes, take time at most proportional to the window's length. Every value is **bit-identical** to what the [batch method](/api/rust/) (`core.sma`, `core.rsi`, …) would return by recomputing over the whole slice.
+
+Each streamable function adds two constructors on `Core` and a handful of methods on its stream:
+
+| Call | When | Does |
+|------|------|------|
+| `core.<name>_open(history, params)` | once | validate params, consume warm-up history, return `(stream, value)` |
+| `stream.update(bar)` | once per **closed** bar | commit one bar, return the new value |
+| `stream.peek(bar)` | any time on the **forming** bar | evaluate a provisional bar **without** committing |
+
+One more call, `open_and_fill`, writes array output instead of a single value — see [Array-Fill Open](#array-fill-open) below.
+
+Additional [utility functions](#utility-calls) are available.
+
+There is no `close` — dropping the stream closes it (RAII).
+
+## Example (SMA)
+
+```rust
+use ta_lib::Core;
+
+let core = Core::new();
+
+// Seed with warm-up history (>= sma_lookback(period) + 1 bars).
+let history: Vec<f64> = /* ...your closing prices... */;
+let (mut s, last) = core.sma_open(&history, 30)?;   // stream + value at the last history bar
+
+// Each time a bar closes:
+let v = s.update(new_close)?;                        // Err on a non-finite bar, or past INDEX_MAX
+
+// Intra-bar, on the not-yet-closed bar (repeat as the price ticks):
+let provisional = s.peek(forming_close)?;            // state left unchanged
+
+// dropping `s` closes the stream
+```
+
+`open` returns a `Result` — `Err(RetCode::InsufficientHistory)` if there is too little history (another bar might fix it, so this is the one worth retrying), `Err(RetCode::BadParam)` if a parameter is out of range. `update` and `peek` return a `Result` too, and after a successful `open` what they reject is invalid input such as NaN or ±Inf. They also reject a bar past `Core::INDEX_MAX`, the last index the batch API addresses. A rejection changes nothing at all — no state, no value, and no range.
+
+## Rules
+
+* **Warm-up.** `open` succeeds only if `history.len() >= <name>_lookback(params) + 1` — with fewer bars there is no defined value yet. After `open`, the history can be dropped — the stream keeps everything it needs.
+* **Closed vs forming bar.** `update` commits state irreversibly, so use it only for **closed** bars. `peek` returns exactly the value the next `update` would, without committing — call it as often as the forming bar ticks.
+* **Parameters are fixed at `open`.** Changing a parameter means a new stream. [Unstable period](/api/rust/#numerical_stability) and [candle settings](/api/rust/#candle_settings) are captured from the immutable `Core` at `open` and cannot change during the stream's life.
+* **Threads.** `update(&mut self)` makes the single-writer rule a **compile-time** guarantee — one exclusive writer per stream. `peek(&self)` and `value(&self)` never write the stream, so they may run concurrently. Streams are `Send + Sync + Clone`; **cloning forks an independent stream**.
+
+## Multi-input / multi-output
+
+Inputs and outputs mirror the batch method. Multi-output functions return a tuple in batch output order; candlestick patterns return `i32`:
+
+```rust
+// MACD: one input, three outputs
+let (mut s, (macd, signal, hist)) = core.macd_open(&history, 12, 26, 9)?;
+let (macd, signal, hist) = s.update(new_close)?;
+
+// A candlestick pattern returns i32
+let (mut s, _) = core.cdldoji_open(&open, &high, &low, &close)?;
+let pattern: i32 = s.update(o, h, l, c)?;
+```
+
+## Array-Fill Open
+
+`open` and `update` each write a single value. One more call writes a full slice instead — the same shape the [batch method](/api/rust/) would produce — while still opening the stream:
+
+| Call | When | Does |
+|------|------|------|
+| `core.<name>_open_and_fill(..)` | once, instead of `open` | like `open`, but also fills the output for **every** history bar, returning `(stream, OutRange)` |
+
+```rust
+let mut warmup = vec![0.0; history.len()];
+
+let (mut s, filled) = core.sma_open_and_fill(&history, 30, &mut warmup)?;
+
+// warmup[..filled.count] is the SMA over all of history; then stream on:
+let v = s.update(new_close)?;
+```
+
+`open_and_fill` takes the [batch method](/api/rust/)'s optional parameters and one slice per output, and returns the range it wrote as the same `OutRange` the batch method returns, beside the live stream.
+
+## Utility Calls
+
+| Call | When | Does |
+|------|------|------|
+| `stream.value()` | any time | the value(s) at the last bar the stream counted, without recomputing |
+| `stream.clone()` | any time | an independent fork of the stream, at the same bar |
+| `stream.out_range()` | any time | the bars the stream has an output for — the batch range over the same bars |
+| `stream.advance()` | after a bar you will not feed | advances the range without affecting any other internal state of the stream |
+
+```rust
+let v = s.value();          // the value at the last bar s counted
+let mut fork = s.clone();   // independent from here on
+let r = s.out_range();      // the bars s has an output for
+s.advance()?;               // a bar you skipped, counted
+```
+
+The first three return no `Result`: they read what the stream already holds, so
+there is nothing to reject. `advance()` returns one — it moves the range, and the
+range cannot pass `Core::INDEX_MAX`.
+
+See [Rules](#rules) for when concurrent reads of these are safe.
+
+## Discovering streamable functions
+
+When driving TA-Lib through the [abstraction layer](/api/rust/#abstract), streamable functions carry `FuncFlags::STREAM` in `FuncInfo::flags`.

@@ -1,0 +1,294 @@
+# TA-Lib.org
+
+> Open-Source library for technical analysis of time series and trading data
+
+## Key facts
+
+TA-Lib computes technical-analysis indicators and recognizes candlestick patterns over price series.
+
+This documentation is built from the main branch and can be ahead of the newest release, so any installed version, the newest included, can lack what is described here or compute different values. The [changelog](https://github.com/TA-Lib/ta-lib/blob/main/CHANGELOG.md) records each release's changes, and its "Not Released Yet" section lists changes no release has yet. Pin the exact version when results must reproduce.
+
+- **C is the reference.** Open source under the BSD license, in use since 2001. Each function has a page with its inputs, outputs, parameters (type, default, accepted values) and numerical stability, at `https://ta-lib.org/functions/<name>.md` with the name in lowercase (e.g. [RSI](https://ta-lib.org/functions/rsi.md)); the [function index](https://ta-lib.org/functions/index.md) lists them by group.
+- **Native Rust, Java and C#.** Each is a port, not a binding (no FFI, JNI or P/Invoke), generated together with the C library from [one definition per function](https://ta-lib.org/contribute/index.md): [Rust](https://ta-lib.org/api/rust/index.md), [Java](https://ta-lib.org/api/java/index.md), [C#](https://ta-lib.org/api/csharp/index.md). Each is bit-identical to C over the same inputs, except that a Java or C# result computed through a transcendental math function (such as `exp` or `log`) can differ: the difference starts in the last bit and can grow through the function's arithmetic, and HT_* outputs can differ outright ([determinism](https://ta-lib.org/spec/versions/index.md)). Whether a port's package is published, and how to add it, is in the "Add it to your project" section of its API page; the C library's install methods are on the [C install page](https://ta-lib.org/install/c/index.md).
+- **Wrappers.** Python ([ta-lib-python](https://github.com/ta-lib/ta-lib-python)), R and other languages call the C library through [community wrappers](https://ta-lib.org/wrappers/index.md), each with its own conventions.
+- **Batch API: defined values only.** A call computes the inclusive, zero-based `startIdx` to `endIdx` range and writes only the bars where the function is defined, from the start of the output buffer: `out[0]` is input bar `outBegIdx`, and `outNBElement` values follow in [C](https://ta-lib.org/api/index.md); Rust, Java and C# return the same pair as an `OutRange` (begin index and count). Nothing is padded, and too little data is a success with an empty range.
+- **Errors.** An indicator call, batch or stream, reports a rejected argument as a non-zero `TA_RetCode` in C, an `Err(RetCode)` in Rust, and an exception carrying its `RetCode` in Java and C#. Other calls differ: a lookback answers -1 for an out-of-range parameter in C, Java and C# (`Err(BadParam)` in Rust), and in Java and C# the `Core` builder's setters and a misused metadata `ParamHolder` throw the platform's own exceptions (such as `IllegalArgumentException` or `ArgumentOutOfRangeException`), with no `RetCode`.
+- **Lookback.** `TA_<NAME>_Lookback(params)`, and its equivalent in each port, is the number of bars consumed before the first output, including any unstable period set that applies ([exceptions](https://ta-lib.org/spec/lookback/index.md)); output starts at `max(startIdx, lookback)`, so the exact output length is `endIdx - max(startIdx, lookback) + 1`, or 0 when that is not positive.
+- **NaN padding is ta-lib-python's convention.** It returns arrays as long as the input. Over the warm-up bars a real output holds NaN and an integer output holds 0, which on a `CDL*` output looks the same as no pattern. The C, Rust, Java and C# APIs never pad, so code ported from Python must re-align outputs by the begin index.
+- **NaN in the input.** A NaN or ±Inf inside a batch input series, or in the history a stream opens on, is not detected, and nothing is promised about the output: it can affect every later value, since some functions carry it forward and some recover. Clean or split the series before calling. A stream's update and peek reject such a bar and leave the stream unchanged.
+- **Streaming.** Every function also streams: open it on history, update it once per closed bar, and peek at the forming bar without changing state. Every value is bit-identical to the batch call over the same bars, except that a zero can differ in sign ([H1](https://ta-lib.org/spec/streaming/index.md)). Each language's streaming page: [C](https://ta-lib.org/api/stream/index.md), [Rust](https://ta-lib.org/api/rust/stream/index.md), [Java](https://ta-lib.org/api/java/stream/index.md), [C#](https://ta-lib.org/api/csharp/stream/index.md).
+- **Numerical stability.** Each function page says whether a bar's value depends on where the series begins: [start-independent, initial unstable period, path-dependent, or depends on the MA type](https://ta-lib.org/functions/stability.md). A recursive function converges as history grows; a path-dependent one, such as AD, OBV or SAR, never does.
+- **Stability at run time.** In the metadata, `TA_FUNC_FLG_PATH_DEP` marks every path-dependent function and `TA_FUNC_FLG_UNST_PER` every function with its own unstable-period setting, with the same bits in Rust, Java and C#. A function unstable only through a callee, such as DEMA or MACD through EMA, carries neither flag, so the function page is the complete classification.
+- **Unstable period.** [Setting it](https://ta-lib.org/api/unstable-period/index.md) for a recursive function such as EMA, RSI or ADX drops that many more leading outputs, the ones its seed still distorts; the default, 0, drops nothing. It follows the function wherever it runs, so EMA's setting also moves MACD and DEMA.
+- **Metadata API.** Enumerate every function at run time, with its group, inputs, parameters (type, range, default), outputs and flags, then call it by name: the "Abstraction Layer" section of the [C](https://ta-lib.org/api/index.md), [Rust](https://ta-lib.org/api/rust/index.md), [Java](https://ta-lib.org/api/java/index.md) and [C#](https://ta-lib.org/api/csharp/index.md) API pages.
+- **Candlestick settings.** The `CDL*` pattern functions judge bodies, shadows and distances against [tunable thresholds](https://ta-lib.org/api/candle-settings/index.md).
+- **Settings and threads.** In C, call `TA_Initialize` once, then set the unstable period and candle settings, which are process-wide, from one thread; after that the TA functions are safe to call from any number of threads (the "High-performance Multi-threading" section of the [C API page](https://ta-lib.org/api/index.md)). In Rust, Java and C#, settings live in an immutable `Core` built with a builder, so differently configured instances coexist and one instance is shared across threads freely. The exceptions are a stream handle, which has one writer (an update must not race with any other call on it; clone it to fork), and two objects to confine to one thread: a parameter holder of the abstraction layer and, in Java and C#, a `Core` builder ([T6](https://ta-lib.org/spec/settings-threads/index.md)).
+
+## Table of Contents
+
+### Specification
+
+- [Specification](https://ta-lib.org/spec/index.md): The exhaustive contract of TA-Lib's C, Rust, Java and C# APIs, for precise AI-agent-driven integration: how a failure reaches the caller, how names fold, and one page per topic.
+- [Errors](https://ta-lib.org/spec/errors/index.md): Every TA-Lib return code, the order a rejected call is evaluated in, and the batch tier's conditions, for the C, Rust, Java and C# APIs.
+- [Inputs and Outputs](https://ta-lib.org/spec/inputs-outputs/index.md): What a TA-Lib call accepts and writes: index range, input lengths, optional parameters, value domain, non-finite values, output range and size, argument order, integer and declinable outputs, and aliasing.
+- [Lookback](https://ta-lib.org/spec/lookback/index.md): How the lookback is defined and queried, how the unstable period, candle averaging and a period of 1 enter it, and how to tell from metadata whether the start of the series matters.
+- [Streaming](https://ta-lib.org/spec/streaming/index.md): The streaming contract in C, Rust, Java and C#: bit-identity with batch, opening and its errors, Update, Peek and Advance, the accessors, and handle lifetime.
+- [Settings and Threads](https://ta-lib.org/spec/settings-threads/index.md): C initialization and process-global settings, the immutable Core of the Rust, Java and C# APIs, setting validation, and what is safe across threads and under a live stream.
+- [Versions and Determinism](https://ta-lib.org/spec/versions/index.md): Which TA-Lib results are bit-identical across languages, machines, C builds and equivalent calls, and what a release keeps and may add.
+
+### API and concepts
+
+- [C/C++ Core API](https://ta-lib.org/api/index.md): Calling TA-Lib from C/C++: initialization, the batch calling pattern, sizing outputs with the lookback, return codes, the abstraction layer and thread safety.
+- [C/C++ Streaming API](https://ta-lib.org/api/stream/index.md): The TA-Lib C/C++ streaming API for live feeds: open a stream once, feed one bar at a time without recomputing the history, with values bit-identical to the batch functions.
+- [Rust Core API](https://ta-lib.org/api/rust/index.md): The ta-lib Rust crate: a native port with no C bindings, indicators as methods on Core over f64 slices, bit-identical to the reference C library.
+- [Rust Streaming API](https://ta-lib.org/api/rust/stream/index.md): Rust streaming API for live feeds: a stream carries indicator state from bar to bar, so an update never recomputes the history; its values are bit-identical to the batch calls.
+- [Java Core API](https://ta-lib.org/api/java/index.md): io.github.talib: a native Java port with no JNI, indicators as methods on a Core instance over double arrays, bit-identical to the reference C library.
+- [Java Streaming API](https://ta-lib.org/api/java/stream/index.md): Java streaming API for live feeds: a stream carries indicator state from bar to bar, so an update never recomputes the history; its values are bit-identical to the batch calls.
+- [C# Core API](https://ta-lib.org/api/csharp/index.md): TALib: a native C# port with no P/Invoke, indicators as methods on a Core instance taking spans, bit-identical to the reference C library.
+- [C# Streaming API](https://ta-lib.org/api/csharp/stream/index.md): C# streaming API for live feeds: a stream carries indicator state from bar to bar, so an update never recomputes the history; its values are bit-identical to the batch calls.
+- [Unstable Period](https://ta-lib.org/api/unstable-period/index.md): How many warm-up bars TA-Lib discards from recursive indicators such as EMA, RSI and ADX before reporting their output, and how to set it in C, Rust, Java and C#.
+- [Numerical Stability](https://ta-lib.org/functions/stability.md): What it means for an indicator to be start-independent, to carry an initial unstable period, to depend on the MA type selected, or to be path-dependent.
+- [Candlestick Settings](https://ta-lib.org/api/candle-settings/index.md): Tune the thresholds the CDL* pattern functions judge candles against: body length, shadows, near-equal candles. Defaults, and how to set them in C, Rust, Java and C#.
+
+### Functions
+
+- [Functions](https://ta-lib.org/functions/index.md): Every TA-Lib technical analysis function, grouped by category, with the formula, inputs, outputs and source for each.
+- [Accelerator/Decelerator Oscillator (AC)](https://ta-lib.org/functions/ac.md): Bill Williams' Accelerator/Decelerator Oscillator (New Trading Dimensions, 1998): the rate at which market momentum is itself speeding up or slowing down.
+- [Acceleration Bands (ACCBANDS)](https://ta-lib.org/functions/accbands.md): Acceleration Bands: three overlap lines around price.
+- [Vector Trigonometric ACos (ACOS)](https://ta-lib.org/functions/acos.md): Element-wise arc cosine of the input series.
+- [Chaikin A/D Line (AD)](https://ta-lib.org/functions/ad.md): Chaikin Accumulation/Distribution Line, a cumulative volume-flow indicator.
+- [Vector Arithmetic Add (ADD)](https://ta-lib.org/functions/add.md): Element-wise addition of two input series.
+- [Chaikin A/D Oscillator (ADOSC)](https://ta-lib.org/functions/adosc.md): Chaikin A/D Oscillator: the difference between a fast and a slow EMA of the Accumulation/Distribution line.
+- [Average Day Range (ADR)](https://ta-lib.org/functions/adr.md): Average Day Range: the arithmetic mean of the last optInTimePeriod bar ranges, high minus low.
+- [Average Directional Movement Index (ADX)](https://ta-lib.org/functions/adx.md): Wilder's Average Directional Movement Index, a smoothed measure of trend strength derived from the directional indicators (+DI/-DI).
+- [Average Directional Movement Index Rating (ADXR)](https://ta-lib.org/functions/adxr.md): Smoothed variant of ADX: the average of the current ADX value and the ADX value from (period-1) bars earlier. Further damps ADX to gauge trend strength.
+- [Arnaud Legoux Moving Average (ALMA)](https://ta-lib.org/functions/alma.md): Arnaud Legoux Moving Average: the last N inputs weighted by a Gaussian whose peak sits a fraction offset of the way from the oldest to the newest bar.
+- [Awesome Oscillator (AO)](https://ta-lib.org/functions/ao.md): Bill Williams' Awesome Oscillator (New Trading Dimensions, 1998): market momentum read as the spread between a short and a long simple moving average of…
+- [Absolute Price Oscillator (APO)](https://ta-lib.org/functions/apo.md): Absolute Price Oscillator: the difference between a fast and a slow moving average of the input, in price units. Measures short- vs long-term momentum.
+- [Aroon (AROON)](https://ta-lib.org/functions/aroon.md): Aroon reports how recently the highest high and lowest low occurred within a rolling window of length optInTimePeriod, as two 0-100 oscillators.
+- [Aroon Oscillator (AROONOSC)](https://ta-lib.org/functions/aroonosc.md): Aroon Oscillator: AroonUp minus AroonDown over a lookback window. Measures trend direction and strength on a -100..+100 scale.
+- [Wilder Accumulative Swing Index (ASI)](https://ta-lib.org/functions/asi.md): Wilder's Accumulative Swing Index: the running total of the Swing Index (SI), a line meant to trace the market's real swings through the noise of the…
+- [Vector Trigonometric ASin (ASIN)](https://ta-lib.org/functions/asin.md): Element-wise arcsine of the input series.
+- [Vector Trigonometric ATan (ATAN)](https://ta-lib.org/functions/atan.md): Element-wise arctangent of the input series.
+- [Average True Range (ATR)](https://ta-lib.org/functions/atr.md): Wilder-smoothed average of the True Range over a period, measuring price volatility regardless of direction.
+- [Average Deviation (AVGDEV)](https://ta-lib.org/functions/avgdev.md): Rolling average absolute deviation of a series from its own simple moving average over the last N periods. Measures dispersion around the window mean.
+- [Average Price (AVGPRICE)](https://ta-lib.org/functions/avgprice.md): Average Price: the arithmetic mean of each bar's open, high, low, and close. A price-transform overlap condensing OHLC into a single representative price.
+- [Bollinger Bands (BBANDS)](https://ta-lib.org/functions/bbands.md): Bollinger Bands: a moving-average middle band with upper and lower bands offset by a multiple of the standard deviation.
+- [Bollinger BandWidth (BBW)](https://ta-lib.org/functions/bbw.md): Bollinger BandWidth: the distance between the upper and lower Bollinger Bands as a percentage of the middle band.
+- [Beta (BETA)](https://ta-lib.org/functions/beta.md): Beta: the slope of a least-squares linear regression of one series' percentage returns (y, from inReal1) against another's (x, from inReal0) over a…
+- [Balance Of Power (BOP)](https://ta-lib.org/functions/bop.md): Balance Of Power compares where the close sits relative to the open, normalized by the bar's high-low range. A per-bar oscillator with no smoothing.
+- [Commodity Channel Index (CCI)](https://ta-lib.org/functions/cci.md): Commodity Channel Index: measures the current typical price relative to its simple moving average, scaled by mean absolute deviation.
+- [Two Crows (CDL2CROWS)](https://ta-lib.org/functions/cdl2crows.md): Three-candle bearish reversal pattern: a long white candle, then a black candle gapping up, then a black candle that opens inside the second body and…
+- [Three Black Crows (CDL3BLACKCROWS)](https://ta-lib.org/functions/cdl3blackcrows.md): A four-bar pattern: a white candle followed by three consecutive black (down) candles with successively lower closes, each opening inside the prior…
+- [Three Inside Up/Down (CDL3INSIDE)](https://ta-lib.org/functions/cdl3inside.md): A three-candle reversal pattern: a long real body, then a short real body totally engulfed by it (a harami), then a third candle of opposite color to the…
+- [Three-Line Strike (CDL3LINESTRIKE)](https://ta-lib.org/functions/cdl3linestrike.md): A four-candle pattern: three same-color candles with consecutively higher (or lower) closes, each opening within or near the prior real body, then a…
+- [Three Outside Up/Down (CDL3OUTSIDE)](https://ta-lib.org/functions/cdl3outside.md): A three-candle pattern: an engulfing pair (candle 2's body fully engulfs candle 1's body) followed by a third candle that confirms in the engulfing…
+- [Three Stars In The South (CDL3STARSINSOUTH)](https://ta-lib.org/functions/cdl3starsinsouth.md): A three-candle bullish reversal pattern of three consecutive black candles that progressively shrink and stabilize: a long black candle with a long lower…
+- [Three Advancing White Soldiers (CDL3WHITESOLDIERS)](https://ta-lib.org/functions/cdl3whitesoldiers.md): A three-candle pattern of consecutive white candles with progressively higher closes, each opening within/near the prior body and each with a very short…
+- [Abandoned Baby (CDLABANDONEDBABY)](https://ta-lib.org/functions/cdlabandonedbaby.md): A three-candle reversal pattern: a long body, then a gapped-away doji, then a body of opposite color that gaps back the other way and closes deep into…
+- [Advance Block (CDLADVANCEBLOCK)](https://ta-lib.org/functions/cdladvanceblock.md): Three-candle bearish reversal pattern: three white candles with consecutively higher closes whose advance weakens (progressively smaller bodies and/or…
+- [Belt-hold (CDLBELTHOLD)](https://ta-lib.org/functions/cdlbelthold.md): Single-candle pattern with a long real body that opens at (or near) its extreme.
+- [Breakaway (CDLBREAKAWAY)](https://ta-lib.org/functions/cdlbreakaway.md): A five-candle reversal pattern: a long first candle, a same-colored second candle that gaps away from it by its real body, two more candles extending the…
+- [Closing Marubozu (CDLCLOSINGMARUBOZU)](https://ta-lib.org/functions/cdlclosingmarubozu.md): Single-candle pattern: a long real body whose closing end has no or very short shadow, so the close sits at the candle's extreme.
+- [Concealing Baby Swallow (CDLCONCEALBABYSWALL)](https://ta-lib.org/functions/cdlconcealbabyswall.md): A four-candle pattern: two black marubozus, then a black candle that gaps down but pokes its upper shadow into the prior body, then a larger black candle…
+- [Counterattack (CDLCOUNTERATTACK)](https://ta-lib.org/functions/cdlcounterattack.md): A two-candle pattern of two long, opposite-colored real bodies whose closing prices are (nearly) equal.
+- [Dark Cloud Cover (CDLDARKCLOUDCOVER)](https://ta-lib.org/functions/cdldarkcloudcover.md): A two-candle bearish reversal pattern: a long white candle followed by a black candle that opens above the prior high and closes deep into the prior…
+- [Doji (CDLDOJI)](https://ta-lib.org/functions/cdldoji.md): Single-candle Doji recognizer: fires when the real body (|close-open|) is at or below the BodyDoji threshold.
+- [Doji Star (CDLDOJISTAR)](https://ta-lib.org/functions/cdldojistar.md): A two-candle reversal pattern: a long real body followed by a doji whose real body gaps away from it (up after a white body, down after a black body).
+- [Dragonfly Doji (CDLDRAGONFLYDOJI)](https://ta-lib.org/functions/cdldragonflydoji.md): Single-candle pattern: a doji (open and close nearly equal) sitting at the top of the range, with no meaningful upper shadow and a long lower shadow.
+- [Engulfing Pattern (CDLENGULFING)](https://ta-lib.org/functions/cdlengulfing.md): A two-candle reversal pattern where the second candle's real body engulfs the first candle's opposite-colored real body.
+- [Evening Doji Star (CDLEVENINGDOJISTAR)](https://ta-lib.org/functions/cdleveningdojistar.md): A three-candle bearish reversal pattern: a long white candle, a doji that gaps up (the star), then a black candle closing well down into the first…
+- [Evening Star (CDLEVENINGSTAR)](https://ta-lib.org/functions/cdleveningstar.md): A three-candle bearish reversal pattern: a long white candle, a short-bodied star gapping up, then a black candle closing well down into the first…
+- [Up/Down-gap side-by-side white lines (CDLGAPSIDESIDEWHITE)](https://ta-lib.org/functions/cdlgapsidesidewhite.md): A three-candle pattern: a first candle followed by two white candles of similar body size that both gap the same direction (up or down) from the first…
+- [Gravestone Doji (CDLGRAVESTONEDOJI)](https://ta-lib.org/functions/cdlgravestonedoji.md): Single-candle doji whose open and close sit at the low of the day, leaving a long upper shadow and no lower shadow.
+- [Hammer (CDLHAMMER)](https://ta-lib.org/functions/cdlhammer.md): Single-candle pattern: a small real body at the top of the range with a long lower shadow and little or no upper shadow, sitting at or near the prior…
+- [Hanging Man (CDLHANGINGMAN)](https://ta-lib.org/functions/cdlhangingman.md): Single candle with a small real body, a long lower shadow, and little/no upper shadow, sitting at or near the highs of the prior candle.
+- [Harami Pattern (CDLHARAMI)](https://ta-lib.org/functions/cdlharami.md): Two-candle pattern: a long real body followed by a short real body contained within the first candle's real body.
+- [Harami Cross Pattern (CDLHARAMICROSS)](https://ta-lib.org/functions/cdlharamicross.md): A two-candle reversal pattern: a long real body followed by a doji whose real body is contained within the first candle's real body (the doji variant of…
+- [High-Wave Candle (CDLHIGHWAVE)](https://ta-lib.org/functions/cdlhighwave.md): Single-candle pattern: a short real body with both a very long upper and a very long lower shadow.
+- [Hikkake Pattern (CDLHIKKAKE)](https://ta-lib.org/functions/cdlhikkake.md): A 3-bar pattern: an inside bar followed by a false breakout, optionally later confirmed by a follow-through bar.
+- [Modified Hikkake Pattern (CDLHIKKAKEMOD)](https://ta-lib.org/functions/cdlhikkakemod.md): A four-candle pattern: two successively narrower inside bars, then a breakout bar, with the second candle closing near one extreme of its range.
+- [Homing Pigeon (CDLHOMINGPIGEON)](https://ta-lib.org/functions/cdlhomingpigeon.md): Two-candle pattern: a long black candle followed by a small black candle whose real body sits inside the prior body.
+- [Identical Three Crows (CDLIDENTICAL3CROWS)](https://ta-lib.org/functions/cdlidentical3crows.md): A three-candle bearish reversal pattern: three consecutive declining black candles, each with a very short (or no) lower shadow, where each candle after…
+- [In-Neck Pattern (CDLINNECK)](https://ta-lib.org/functions/cdlinneck.md): A two-candle in-neck pattern: a long black candle followed by a white candle that opens below the prior low and closes just barely into the prior body…
+- [Inverted Hammer (CDLINVERTEDHAMMER)](https://ta-lib.org/functions/cdlinvertedhammer.md): Single-candle pattern: a small real body with a long upper shadow and little-to-no lower shadow that gaps down from the prior candle.
+- [Kicking (CDLKICKING)](https://ta-lib.org/functions/cdlkicking.md): Two-candle pattern of two opposite-color marubozu (long bodies with very short shadows) separated by a price gap.
+- [Kicking - bull/bear determined by the longer marubozu (CDLKICKINGBYLENGTH)](https://ta-lib.org/functions/cdlkickingbylength.md): A two-candle pattern of two opposite-color marubozu (long body, very short shadows on both ends) separated by a gap.
+- [Ladder Bottom (CDLLADDERBOTTOM)](https://ta-lib.org/functions/cdlladderbottom.md): Five-candle bullish reversal pattern: three consecutively lower black candles, a fourth black candle with a non-very-short upper shadow, then a white…
+- [Long Legged Doji (CDLLONGLEGGEDDOJI)](https://ta-lib.org/functions/cdllongleggeddoji.md): Single-candle doji (open ~ close) with at least one long shadow. Signals market indecision, not a directional bias.
+- [Long Line Candle (CDLLONGLINE)](https://ta-lib.org/functions/cdllongline.md): A single-candle pattern: a long real body with short upper and short lower shadow.
+- [Marubozu (CDLMARUBOZU)](https://ta-lib.org/functions/cdlmarubozu.md): Single candle with a long real body and no/very-short upper and lower shadows, so open and close sit at the range extremes.
+- [Matching Low (CDLMATCHINGLOW)](https://ta-lib.org/functions/cdlmatchinglow.md): A two-candle pattern of two consecutive black (bearish) candles with equal closes (within a tolerance). Treated as a bullish reversal signal.
+- [Mat Hold (CDLMATHOLD)](https://ta-lib.org/functions/cdlmathold.md): A five-candle bullish continuation pattern: a long white candle, an upside real-body-gapped small black candle, two more small falling candles that hold…
+- [Morning Doji Star (CDLMORNINGDOJISTAR)](https://ta-lib.org/functions/cdlmorningdojistar.md): A three-candle bullish reversal pattern: a long black candle, then a doji that gaps down, then a white candle closing well up into the first candle's body.
+- [Morning Star (CDLMORNINGSTAR)](https://ta-lib.org/functions/cdlmorningstar.md): A three-candle bottom-reversal pattern: a long black candle, a small-bodied star gapping down, then a white candle closing well up into the first…
+- [On-Neck Pattern (CDLONNECK)](https://ta-lib.org/functions/cdlonneck.md): A two-candle on-neck pattern: a long black candle followed by a white candle that opens below the prior candle's low and closes right at that low.
+- [Piercing Pattern (CDLPIERCING)](https://ta-lib.org/functions/cdlpiercing.md): Two-candle pattern: a long black candle followed by a long white candle that opens below the prior low and closes back above the midpoint of the prior…
+- [Rickshaw Man (CDLRICKSHAWMAN)](https://ta-lib.org/functions/cdlrickshawman.md): Single-candle doji with two long shadows whose body sits near the midpoint of the high-low range.
+- [Rising/Falling Three Methods (CDLRISEFALL3METHODS)](https://ta-lib.org/functions/cdlrisefall3methods.md): A five-candle continuation pattern: a long candle, three small counter-color candles that stay partly within the first candle's high-low range, then a…
+- [Separating Lines (CDLSEPARATINGLINES)](https://ta-lib.org/functions/cdlseparatinglines.md): A two-candle continuation pattern: the second candle opposes the first in color, opens at the same price as the first, and is a long-bodied belt hold.
+- [Shooting Star (CDLSHOOTINGSTAR)](https://ta-lib.org/functions/cdlshootingstar.md): Single-candle pattern: a small real body with a long upper shadow and little-to-no lower shadow that gaps up from the prior candle's real body.
+- [Short Line Candle (CDLSHORTLINE)](https://ta-lib.org/functions/cdlshortline.md): Single-candle pattern: a short real body with short upper and lower shadows (a small-range candle).
+- [Spinning Top (CDLSPINNINGTOP)](https://ta-lib.org/functions/cdlspinningtop.md): Single-candle pattern: a small real body with both an upper and a lower shadow longer than the body.
+- [Stalled Pattern (CDLSTALLEDPATTERN)](https://ta-lib.org/functions/cdlstalledpattern.md): A three-candle pattern of three white candles with consecutively higher closes where the third loses momentum (a small body riding on the shoulder of the…
+- [Stick Sandwich (CDLSTICKSANDWICH)](https://ta-lib.org/functions/cdlsticksandwich.md): A three-candle bullish reversal pattern: two black candles (1st and 3rd) sandwiching a white candle, where the 3rd black candle closes at the same level…
+- [Takuri (Dragonfly Doji with very long lower shadow) (CDLTAKURI)](https://ta-lib.org/functions/cdltakuri.md): Single-candle pattern: a doji whose open and close sit at the high (no/very short upper shadow) with a very long lower shadow, i.e. a dragonfly doji with…
+- [Tasuki Gap (CDLTASUKIGAP)](https://ta-lib.org/functions/cdltasukigap.md): A three-candle pattern: a real-body-gapping candle followed by an opposite-color candle that opens inside its body and closes back into the gap without…
+- [Thrusting Pattern (CDLTHRUSTING)](https://ta-lib.org/functions/cdlthrusting.md): A two-candle pattern: a long black candle followed by a white candle that opens below the prior low and closes back into the prior body but below its…
+- [Tristar Pattern (CDLTRISTAR)](https://ta-lib.org/functions/cdltristar.md): A three-candle pattern of three consecutive doji where the middle doji is a star (its body gaps away from the first). Bullish or bearish reversal signal.
+- [Unique 3 River (CDLUNIQUE3RIVER)](https://ta-lib.org/functions/cdlunique3river.md): A three-candle bullish reversal pattern: a long black candle, then a black harami candle that makes a lower low, then a small white candle.
+- [Upside Gap Two Crows (CDLUPSIDEGAP2CROWS)](https://ta-lib.org/functions/cdlupsidegap2crows.md): A three-candle bearish reversal pattern: a long white candle, then a small black candle gapping up (a gap between the real bodies), then a black candle…
+- [Upside/Downside Gap Three Methods (CDLXSIDEGAP3METHODS)](https://ta-lib.org/functions/cdlxsidegap3methods.md): A three-candle continuation pattern: two same-color candles separated by a real-body gap, followed by an opposite-color candle that fills into the gap.
+- [Vector Ceil (CEIL)](https://ta-lib.org/functions/ceil.md): Element-wise ceiling (round up to the nearest integer) of the input series.
+- [Center of Gravity Oscillator (CG)](https://ta-lib.org/functions/cg.md): John Ehlers' Center of Gravity oscillator: the balance point of the last optInTimePeriod values, each weighted by its value and placed at its position…
+- [Choppiness Index (CHOP)](https://ta-lib.org/functions/chop.md): Choppiness Index: a trend-versus-consolidation gauge, the true range travelled over a window against the height of the box its bars span.
+- [Choppiness Index (True Range Box) (CHOPTR)](https://ta-lib.org/functions/choptr.md): Choppiness Index with a true-range box: the true range travelled over a window against the span from its highest true high to its lowest true low.
+- [Chande Kroll Stop (CKSP)](https://ta-lib.org/functions/cksp.md): Chande and Kroll's two-line volatility stop.
+- [Chaikin Money Flow (CMF)](https://ta-lib.org/functions/cmf.md): Chaikin Money Flow: over a trailing window of optInTimePeriod bars, the sum of each bar's money flow volume divided by the sum of its volume.
+- [Chande Momentum Oscillator (CMO)](https://ta-lib.org/functions/cmo.md): Chande Momentum Oscillator: bounded momentum measure from Wilder-smoothed average up-moves and down-moves.
+- [Chande Momentum Oscillator (Unsmoothed) (CMOU)](https://ta-lib.org/functions/cmou.md): Chande Momentum Oscillator: Tushar Chande's original momentum oscillator, computed from plain moving-window sums of the up-moves and down-moves over the…
+- [Coppock Curve (COPPOCK)](https://ta-lib.org/functions/coppock.md): Coppock Curve: Edwin S. "Sedge" Coppock's long-term momentum oscillator (Barron's, originally published as the "Trendex Model"), computed as a weighted…
+- [Pearson's Correlation Coefficient (r) (CORREL)](https://ta-lib.org/functions/correl.md): Pearson's correlation coefficient (r) between two input series over a rolling window of optInTimePeriod bars.
+- [Vector Trigonometric Cos (COS)](https://ta-lib.org/functions/cos.md): Element-wise cosine of the input series.
+- [Vector Trigonometric Cosh (COSH)](https://ta-lib.org/functions/cosh.md): Element-wise hyperbolic cosine of the input series.
+- [Connors Relative Strength Index (CRSI)](https://ta-lib.org/functions/crsi.md): Connors RSI: a 0 to 100 oscillator, the plain average of three short-term momentum readings on that same scale.
+- [Correlation Trend Indicator (CTI)](https://ta-lib.org/functions/cti.md): John F. Ehlers' Correlation Trend Indicator: the Pearson correlation of the last optInTimePeriod closes against a straight line of positive slope.
+- [Cumulative Sum (CUMSUM)](https://ta-lib.org/functions/cumsum.md): Cumulative Sum: the running total of a series from the anchor bar forward.
+- [Chaikin's Volatility (CVI)](https://ta-lib.org/functions/cvi.md): Chaikin's Volatility: Marc Chaikin's reading of how fast a market's daily trading range is widening or narrowing.
+- [Double Exponential Moving Average (DEMA)](https://ta-lib.org/functions/dema.md): Double Exponential Moving Average: an EMA combined with an EMA-of-EMA to reduce lag versus a plain EMA. Overlap Studies overlay on price.
+- [Vector Arithmetic Div (DIV)](https://ta-lib.org/functions/div.md): Element-wise division of two input series.
+- [Donchian Channels (DONCHIAN)](https://ta-lib.org/functions/donchian.md): Donchian Channels: three overlap lines built from rolling price extrema.
+- [Detrended Price Oscillator (DPO)](https://ta-lib.org/functions/dpo.md): Detrended Price Oscillator: the price a half-cycle back, less the moving average that spans the cycle.
+- [Directional Movement Index (DX)](https://ta-lib.org/functions/dx.md): Wilder's Directional Movement Index: the normalized spread between +DI and -DI.
+- [Elder's Force Index (EFI)](https://ta-lib.org/functions/efi.md): Alexander Elder's Force Index (Trading for a Living, 1993): volume-weighted momentum.
+- [Exponential Moving Average (EMA)](https://ta-lib.org/functions/ema.md): Exponential moving average that weights recent prices more heavily via a recursive smoothing factor.
+- [Arms Ease of Movement (EMV)](https://ta-lib.org/functions/emv.md): Ease of Movement: the bar-to-bar move of the high-low midpoint divided by a box ratio of volume to range, averaged over a trailing window.
+- [Kaufman Efficiency Ratio (ER)](https://ta-lib.org/functions/er.md): Kaufman Efficiency Ratio (also searched as "KER"): Perry Kaufman's noise measure from Smarter Trading (1995) — the net directional movement over the…
+- [Elder Ray Index (Bull Power / Bear Power) (ERI)](https://ta-lib.org/functions/eri.md): Elder Ray Index: Alexander Elder's Bull Power / Bear Power pair from Trading for a Living (1993) — how far the bar's high and low sit from an EMA of the…
+- [Vector Arithmetic Exp (EXP)](https://ta-lib.org/functions/exp.md): Element-wise base-e exponential of the input series.
+- [Vector Floor (FLOOR)](https://ta-lib.org/functions/floor.md): Element-wise floor (round down to the nearest integer) of the input series.
+- [Forecast Oscillator (FOSC)](https://ta-lib.org/functions/fosc.md): Forecast Oscillator: the percentage by which the close deviates from the Time Series Forecast that was made one bar earlier for the current bar.
+- [Williams Fractal (FRACTAL)](https://ta-lib.org/functions/fractal.md): Williams Fractal: a causal swing-pivot detector.
+- [Fractal Adaptive Moving Average (FRAMA)](https://ta-lib.org/functions/frama.md): Fractal Adaptive Moving Average (John Ehlers): an EMA whose smoothing factor adapts each bar to the fractal dimension of the window, estimated from the…
+- [Heikin-Ashi Candles (HA)](https://ta-lib.org/functions/ha.md): Heikin-Ashi candles: an OHLC-to-OHLC transform that replaces each bar with a smoothed synthetic candle.
+- [Hull Moving Average (HMA)](https://ta-lib.org/functions/hma.md): Hull Moving Average, published by Alan Hull in 2005: a moving average built to track price with far less lag than an SMA, WMA or EMA of the same length…
+- [Hilbert Transform - Dominant Cycle Period (HT_DCPERIOD)](https://ta-lib.org/functions/ht_dcperiod.md): Hilbert Transform estimate of the dominant cycle period (in bars) of the price series. Outputs the smoothed instantaneous cycle period.
+- [Hilbert Transform - Dominant Cycle Phase (HT_DCPHASE)](https://ta-lib.org/functions/ht_dcphase.md): Hilbert Transform Dominant Cycle Phase: the instantaneous phase (in degrees) of the dominant market cycle, derived from a homodyne discriminator on a…
+- [Hilbert Transform - Phasor Components (HT_PHASOR)](https://ta-lib.org/functions/ht_phasor.md): Hilbert Transform indicator that decomposes the price series into its in-phase (I) and quadrature (Q) phasor components.
+- [Hilbert Transform - SineWave (HT_SINE)](https://ta-lib.org/functions/ht_sine.md): Hilbert Transform SineWave: derives the dominant-cycle phase from price and emits its sine plus a 45-degree-lead sine.
+- [Hilbert Transform - Instantaneous Trendline (HT_TRENDLINE)](https://ta-lib.org/functions/ht_trendline.md): Ehlers' Hilbert Transform Instantaneous Trendline: a smoothed, low-lag overlay whose averaging window adapts to the dominant cycle period measured via…
+- [Hilbert Transform - Trend vs Cycle Mode (HT_TRENDMODE)](https://ta-lib.org/functions/ht_trendmode.md): Hilbert Transform classifier that labels each bar 1 (trending — favor trend-following) or 0 (cycling — favor mean-reversion).
+- [Internal Bar Strength (IBS)](https://ta-lib.org/functions/ibs.md): Internal Bar Strength: where the close sits inside its own bar's range.
+- [Intraday Momentum Index (IMI)](https://ta-lib.org/functions/imi.md): Intraday Momentum Index: an RSI-like 0-100 oscillator built from the open-to-close body of each bar.
+- [Kaufman Adaptive Moving Average (KAMA)](https://ta-lib.org/functions/kama.md): Kaufman Adaptive Moving Average: an EMA whose smoothing factor adapts each bar to an efficiency ratio (directional move vs. total volatility).
+- [Keltner Channels (KC)](https://ta-lib.org/functions/kc.md): Keltner Channels: three overlap lines around price.
+- [KDJ Stochastic (KDJ)](https://ta-lib.org/functions/kdj.md): The stochastic oscillator as it is drawn on Chinese-market platforms: the Slow-%K and Slow-%D lines plus a third line J that amplifies the gap between…
+- [Know Sure Thing (Pring) (KST)](https://ta-lib.org/functions/kst.md): Know Sure Thing: Martin J. Pring's momentum oscillator, a weighted sum of four smoothed rates of change with a moving-average signal line.
+- [Know Sure Thing with controllable MA type (KSTEXT)](https://ta-lib.org/functions/kstext.md): Know Sure Thing with selectable moving averages: Pring's weighted sum of four smoothed rates of change, with a signal line.
+- [Rolling Excess Kurtosis (KURTOSIS)](https://ta-lib.org/functions/kurtosis.md): An estimate, from the trailing window, of the excess kurtosis of the distribution its values come from: the fourth standardised moment minus 3, so a…
+- [Linear Regression Angle (LINEARREG_ANGLE)](https://ta-lib.org/functions/linearreg_angle.md): The angle, in degrees, of the least-squares best-fit line over the last N points.
+- [Linear Regression Intercept (LINEARREG_INTERCEPT)](https://ta-lib.org/functions/linearreg_intercept.md): Returns the y-intercept (b) of the least-squares regression line fitted over the last optInTimePeriod values.
+- [Linear Regression Slope (LINEARREG_SLOPE)](https://ta-lib.org/functions/linearreg_slope.md): Slope 'm' of the least-squares best-fit line (y = b + m*x) over the last optInTimePeriod bars. Reports the per-bar rate of change of the fitted trend line.
+- [Linear Regression (LINEARREG)](https://ta-lib.org/functions/linearreg.md): Least-squares straight-line fit over the last optInTimePeriod bars, reported as the fitted line value at the window endpoint (b + m*(period-1)).
+- [Vector Log Natural (LN)](https://ta-lib.org/functions/ln.md): Element-wise natural logarithm of the input series.
+- [Vector Log10 (LOG10)](https://ta-lib.org/functions/log10.md): Element-wise base-10 logarithm of the input series.
+- [Moving average (MA)](https://ta-lib.org/functions/ma.md): Generic moving-average dispatcher that forwards the job to the MA implementation selected by optInMAType.
+- [Moving Average Convergence/Divergence (MACD)](https://ta-lib.org/functions/macd.md): Moving Average Convergence/Divergence: the difference between a fast and a slow EMA of the input, plus an EMA-smoothed signal line and their histogram.
+- [MACD with controllable MA type (MACDEXT)](https://ta-lib.org/functions/macdext.md): MACD variant where the fast, slow, and signal moving averages each use a user-selectable MA type.
+- [Moving Average Convergence/Divergence Fix 12/26 (MACDFIX)](https://ta-lib.org/functions/macdfix.md): MACD with the fast/slow EMAs fixed to the classic 12/26 periods (with the classic fixed smoothing factors 0.15 and 0.075), exposing only the signal period.
+- [MESA Adaptive Moving Average (MAMA)](https://ta-lib.org/functions/mama.md): MESA Adaptive Moving Average: an adaptive EMA whose smoothing factor is driven by the dominant-cycle phase rate measured with a Hilbert transform.
+- [Market Facilitation Index (MARKETFI)](https://ta-lib.org/functions/marketfi.md): Bill Williams' Market Facilitation Index (Trading Chaos, 1995): the price range a bar travelled per unit of volume traded — how much movement the market…
+- [Mass Index (MASSI)](https://ta-lib.org/functions/massi.md): Mass Index: Donald Dorsey's non-directional measure of how the trading range itself is expanding or contracting.
+- [Moving average with variable period (MAVP)](https://ta-lib.org/functions/mavp.md): Moving average whose period varies per bar, driven by a companion period series.
+- [Highest value over a specified period (MAX)](https://ta-lib.org/functions/max.md): Highest input value over a rolling window of the last optInTimePeriod bars. A moving-window maximum.
+- [Index of highest value over a specified period (MAXINDEX)](https://ta-lib.org/functions/maxindex.md): Returns the index of the highest input value within a rolling window of optInTimePeriod bars. Same as MAX but outputs the location instead of the value.
+- [McGinley Dynamic (MCGD)](https://ta-lib.org/functions/mcgd.md): McGinley Dynamic (John R. McGinley, Jr.): a moving average whose speed adjusts to the market.
+- [Rolling Median (MEDIAN)](https://ta-lib.org/functions/median.md): The middle order statistic of the trailing window: the central value when optInTimePeriod is odd, the mean of the two central values when it is even.
+- [Median Price (MEDPRICE)](https://ta-lib.org/functions/medprice.md): Median Price: the midpoint of each bar's high and low. A price-transform overlay.
+- [Money Flow Index (MFI)](https://ta-lib.org/functions/mfi.md): Money Flow Index: a volume-weighted momentum oscillator (0-100) comparing positive vs negative money flow over a period.
+- [MidPoint over period (MIDPOINT)](https://ta-lib.org/functions/midpoint.md): Midpoint over a period: the average of the highest and lowest input values within the lookback window.
+- [Midpoint Price over period (MIDPRICE)](https://ta-lib.org/functions/midprice.md): Midpoint of the price range over a rolling window: the average of the highest high and lowest low across the last optInTimePeriod bars.
+- [Lowest value over a specified period (MIN)](https://ta-lib.org/functions/min.md): Rolling minimum: the lowest input value over the trailing period.
+- [Index of lowest value over a specified period (MININDEX)](https://ta-lib.org/functions/minindex.md): Returns the absolute index of the lowest value within a rolling window of the given period.
+- [Lowest and highest values over a specified period (MINMAX)](https://ta-lib.org/functions/minmax.md): Returns both the lowest and highest values of the input over a rolling window of the last optInTimePeriod bars.
+- [Indexes of lowest and highest values over a specified period (MINMAXINDEX)](https://ta-lib.org/functions/minmaxindex.md): Returns the absolute input indices of the lowest and highest values within each rolling window of optInTimePeriod bars. Index variant of MINMAX.
+- [Minus Directional Indicator (MINUS_DI)](https://ta-lib.org/functions/minus_di.md): Wilder's Minus Directional Indicator: the Wilder-smoothed downward directional movement (-DM) normalized by smoothed True Range.
+- [Minus Directional Movement (MINUS_DM)](https://ta-lib.org/functions/minus_dm.md): Minus Directional Movement, the downward component of Wilder's directional movement system. Measures Wilder-smoothed downward price motion over the period.
+- [Momentum (MOM)](https://ta-lib.org/functions/mom.md): Momentum: current price minus the price optInTimePeriod bars ago. The absolute (unnormalized) rate of change.
+- [Vector Arithmetic Mult (MULT)](https://ta-lib.org/functions/mult.md): Element-wise multiplication of two input series.
+- [Normalized Average True Range (NATR)](https://ta-lib.org/functions/natr.md): Average True Range expressed as a percentage of the current close, making volatility comparable across price levels and securities.
+- [Negative Volume Index (NVI)](https://ta-lib.org/functions/nvi.md): Negative Volume Index: a running cumulative index that changes only on days when volume falls versus the prior day, compounding that day's percentage…
+- [On Balance Volume (OBV)](https://ta-lib.org/functions/obv.md): On Balance Volume: a running cumulative total of volume, added on up-price bars and subtracted on down-price bars. Relates volume flow to price direction.
+- [Bollinger Bands %B (PERCENTB)](https://ta-lib.org/functions/percentb.md): Bollinger Bands %B: where the input sits relative to its Bollinger Bands, 0 at the lower band and 1 at the upper band.
+- [Percentile (nearest rank) (PERCENTILE)](https://ta-lib.org/functions/percentile.md): Rolling percentile by the nearest-rank method: sort the trailing window ascending and report the value whose 1-based ordinal rank is the P-th percentile…
+- [Percent Rank (PERCENTRANK)](https://ta-lib.org/functions/percentrank.md): Percent Rank: where the current value sits inside the distribution of the values that came before it, as a percentage.
+- [Plus Directional Indicator (PLUS_DI)](https://ta-lib.org/functions/plus_di.md): Plus Directional Indicator: the Wilder-smoothed positive directional movement expressed as a percentage of the true range.
+- [Plus Directional Movement (PLUS_DM)](https://ta-lib.org/functions/plus_dm.md): Plus Directional Movement: the Wilder-smoothed accumulation of upward directional movement (+DM1).
+- [Percentage Price Oscillator (PPO)](https://ta-lib.org/functions/ppo.md): Percentage Price Oscillator: the difference between a fast and slow moving average expressed as a percentage of the slow MA.
+- [Positive Volume Index (PVI)](https://ta-lib.org/functions/pvi.md): Positive Volume Index: a running cumulative index that changes only on days when volume rises versus the prior day, compounding that day's percentage…
+- [Percentage Volume Oscillator (PVO)](https://ta-lib.org/functions/pvo.md): Percentage Volume Oscillator: a variation of the Percentage Price Oscillator (PPO, created by Gerald Appel) applied to the volume series instead of price.
+- [Price Volume Trend (PVT)](https://ta-lib.org/functions/pvt.md): Price Volume Trend: a running cumulative total of each bar's volume weighted by that bar's fractional price change.
+- [Qstick (QSTICK)](https://ta-lib.org/functions/qstick.md): Tushar Chande and Stanley Kroll's Qstick (The New Technical Trader, 1994): a simple moving average of the candle body, close minus open.
+- [Wilder's Smoothed Moving Average (RMA)](https://ta-lib.org/functions/rma.md): Wilder's smoothed moving average: an exponential average whose smoothing factor is the reciprocal of the period rather than the 2/(n+1) of a classic EMA…
+- [Rate of change : ((price/prevPrice)-1)*100 (ROC)](https://ta-lib.org/functions/roc.md): Rate-of-change momentum oscillator: the percent change of price versus the price optInTimePeriod bars earlier.
+- [Rate of change Percentage: (price-prevPrice)/prevPrice (ROCP)](https://ta-lib.org/functions/rocp.md): Rate of change expressed as a fraction of the price optInTimePeriod bars ago.
+- [Rate of change ratio: (price/prevPrice) (ROCR)](https://ta-lib.org/functions/rocr.md): Rate of Change Ratio: the ratio of the current price to the price optInTimePeriod bars ago. A momentum measure centered at 1.
+- [Rate of change ratio 100 scale: (price/prevPrice)*100 (ROCR100)](https://ta-lib.org/functions/rocr100.md): Rate-of-change ratio scaled by 100: current price as a percentage of the price optInTimePeriod bars ago.
+- [Relative Strength Index (RSI)](https://ta-lib.org/functions/rsi.md): Wilder's Relative Strength Index, a momentum oscillator bounded 0-100 from the ratio of average gains to average losses over the period.
+- [Relative Volatility Index (RVI)](https://ta-lib.org/functions/rvi.md): Relative Volatility Index: Donald Dorsey's volatility oscillator, built exactly like RSI except that the quantity routed to the up and down buckets is…
+- [Relative Volatility Index, refined high/low form (RVIR)](https://ta-lib.org/functions/rvir.md): Relative Volatility Index, refined form: Donald Dorsey's 1995 revision of his own indicator, which runs the 1993 RVI over the daily highs and again over…
+- [Relative Volume (RVOL)](https://ta-lib.org/functions/rvol.md): Relative Volume: today's volume as a ratio to the average volume of the bars that came before it.
+- [Parabolic SAR (SAR)](https://ta-lib.org/functions/sar.md): Wilder's Parabolic SAR (Stop And Reverse): a trailing stop/reverse level that accelerates toward price via an acceleration factor.
+- [Parabolic SAR - Extended (SAREXT)](https://ta-lib.org/functions/sarext.md): Extended Parabolic SAR (stop and reverse) giving the caller full control over the initial state and separate acceleration factors for long and short…
+- [Wilder Swing Index (SI)](https://ta-lib.org/functions/si.md): Wilder's Swing Index: one number rating each bar against the bar before it, from both bars' open and close and the current bar's high and low, signed by…
+- [Vector Trigonometric Sin (SIN)](https://ta-lib.org/functions/sin.md): Element-wise sine of the input series.
+- [Vector Trigonometric Sinh (SINH)](https://ta-lib.org/functions/sinh.md): Element-wise hyperbolic sine of the input series.
+- [Simple Moving Average (SMA)](https://ta-lib.org/functions/sma.md): Simple Moving Average: the unweighted arithmetic mean of the last N input values. Used to smooth a series.
+- [Stochastic Momentum Index (SMI)](https://ta-lib.org/functions/smi.md): Stochastic Momentum Index: where the close sits relative to the midpoint of the recent high/low range, double-smoothed.
+- [Vector Square Root (SQRT)](https://ta-lib.org/functions/sqrt.md): Element-wise square root of the input series.
+- [Schaff Trend Cycle (STC)](https://ta-lib.org/functions/stc.md): Schaff Trend Cycle (Doug Schaff): a MACD line passed twice through a stochastic, each pass smoothed by half.
+- [Standard Deviation (STDDEV)](https://ta-lib.org/functions/stddev.md): Rolling standard deviation of a series over a window, scaled by a deviations multiplier. Delegates to VAR, then takes the square root.
+- [Stochastic (STOCH)](https://ta-lib.org/functions/stoch.md): Slow Stochastic oscillator: locates the close within the high-low range over a lookback period, then double-smooths it.
+- [Stochastic Fast (STOCHF)](https://ta-lib.org/functions/stochf.md): Fast Stochastic Oscillator: the raw %K line and its moving-average-smoothed %D line.
+- [Stochastic Relative Strength Index (STOCHRSI)](https://ta-lib.org/functions/stochrsi.md): Applies the Fast Stochastic (STOCHF) oscillator to an RSI series instead of price, measuring where RSI sits within its recent min/max range.
+- [Vector Arithmetic Subtraction (SUB)](https://ta-lib.org/functions/sub.md): Element-wise subtraction of two input series.
+- [Summation (SUM)](https://ta-lib.org/functions/sum.md): Rolling sum of the input over a fixed period. Each output is the sum of the most recent optInTimePeriod input values.
+- [SuperTrend (SUPERTREND)](https://ta-lib.org/functions/supertrend.md): An ATR-scaled trailing band that follows price on one side at a time and flips to the other side when the close breaks through it.
+- [Triple Exponential Moving Average (T3) (T3)](https://ta-lib.org/functions/t3.md): Tillson's T3: a low-lag moving average built from six chained EMAs, combined via volume-factor-weighted coefficients.
+- [Vector Trigonometric Tan (TAN)](https://ta-lib.org/functions/tan.md): Element-wise tangent of the input series.
+- [Vector Trigonometric Tanh (TANH)](https://ta-lib.org/functions/tanh.md): Element-wise hyperbolic tangent of the input series.
+- [Triple Exponential Moving Average (TEMA)](https://ta-lib.org/functions/tema.md): Triple Exponential Moving Average: a smoothed price overlay built from three successively-applied EMAs to reduce lag versus a plain EMA.
+- [True Range (TRANGE)](https://ta-lib.org/functions/trange.md): True Range: the greatest of today's high-low span and the two gaps between yesterday's close and today's high/low.
+- [Triangular Moving Average (TRIMA)](https://ta-lib.org/functions/trima.md): Triangular Moving Average: a double-smoothed moving average that weights prices toward the middle of the window most heavily.
+- [1-day Rate-Of-Change (ROC) of a Triple Smooth EMA (TRIX)](https://ta-lib.org/functions/trix.md): 1-day Rate-Of-Change of a triple-smoothed EMA of the input. Momentum oscillator that filters out price moves shorter than the chosen period.
+- [Time Series Forecast (TSF)](https://ta-lib.org/functions/tsf.md): Time Series Forecast: fits a least-squares linear regression line over the last N bars and projects it one x-step beyond LINEARREG.
+- [True Strength Index (TSI)](https://ta-lib.org/functions/tsi.md): True Strength Index: William Blau's double-smoothed momentum oscillator.
+- [Typical Price (TYPPRICE)](https://ta-lib.org/functions/typprice.md): Typical Price: the average of the high, low, and close of each bar. A single representative price per period.
+- [Ultimate Oscillator (ULTOSC)](https://ta-lib.org/functions/ultosc.md): Ultimate Oscillator: momentum indicator combining buying-pressure/true-range ratios over three time periods into one 0-100 weighted average.
+- [Variance (VAR)](https://ta-lib.org/functions/var.md): Rolling population variance of a real series over a given period. Measures dispersion of values around their mean.
+- [Vertical Horizontal Filter (VHF)](https://ta-lib.org/functions/vhf.md): Vertical Horizontal Filter: Adam White's trend-versus-range filter, the range a window covered divided by the path it actually travelled. Bounded in [0,1].
+- [Variable Index Dynamic Average (VIDYA)](https://ta-lib.org/functions/vidya.md): Variable Index Dynamic Average (Tushar Chande): an EMA whose smoothing factor is scaled every bar by the absolute value of the Chande Momentum Oscillator.
+- [Vortex Indicator (VORTEX)](https://ta-lib.org/functions/vortex.md): Vortex Indicator: Etienne Botes and Douglas Siepman's two-line trend indicator (Technical Analysis of Stocks & Commodities 28:1, January 2010).
+- [Volume Weighted Average Price (VWAP)](https://ta-lib.org/functions/vwap.md): Volume Weighted Average Price: the average price paid per unit of volume traded, accumulated from the first bar of the range onward.
+- [Volume Weighted Moving Average (VWMA)](https://ta-lib.org/functions/vwma.md): Volume Weighted Moving Average: the mean price over a trailing window of optInTimePeriod bars, each bar weighted by its own volume.
+- [Williams' Accumulation/Distribution (WAD)](https://ta-lib.org/functions/wad.md): Williams' Accumulation/Distribution: a cumulative line meant to expose whether a security is quietly under accumulation (informed buying) or distribution…
+- [Weighted Close Price (WCLPRICE)](https://ta-lib.org/functions/wclprice.md): Weighted Close Price: a per-bar price average giving the close double weight relative to high and low.
+- [Williams' %R (WILLR)](https://ta-lib.org/functions/willr.md): Williams' %R momentum oscillator over a rolling period, bounded in [-100, 0].
+- [Weighted Moving Average (WMA)](https://ta-lib.org/functions/wma.md): Linearly weighted moving average: each of the last N prices is weighted by its position, oldest getting weight 1 and newest weight N.
+- [Zero-Lag Exponential Moving Average (ZLEMA)](https://ta-lib.org/functions/zlema.md): Zero-Lag Exponential Moving Average: an EMA applied not to price but to a de-lagged series that extrapolates price forward by the EMA's own lag…
+
+### Migrating from other libraries
+
+- [Migrating from pandas-ta](https://ta-lib.org/agents/migrate/pandas-ta.md): Move pandas-ta code to pandas-ta-classic or to TA-Lib: the name map, and what changes.
+- [Migrating from ta](https://ta-lib.org/agents/migrate/ta.md): Move code from the ta package to TA-Lib: the name map, and a replacement for add_all_ta_features.
+- [Migrating from talipp](https://ta-lib.org/agents/migrate/talipp.md): Move a talipp incremental pipeline to TA-Lib's streaming handles: the concept and name maps.
+
+### Project
+
+- [TA-Lib](https://ta-lib.org/index.md): Open-source technical analysis library: 200+ indicators (ADX, MACD, RSI), candlestick patterns. Native C/C++, Java, C# and Rust, plus Python and R wrappers.
+- [About Us](https://ta-lib.org/about/index.md): Who builds TA-Lib: the administrators, feature contributors, wrapper authors and issue reporters credited across two decades of the project.
+- [Contribute a TA Function](https://ta-lib.org/contribute/index.md): Contribute a new TA function to TA-Lib: agree the spec in the open, hand the implementation to an AI agent, prove it against golden values from an oracle.
+- [FAQ](https://ta-lib.org/faq/index.md): Whether TA-Lib is still maintained (yes, actively again since 2025) and where to get support: Discord, GitHub issues and the wrapper communities.
+- [Install](https://ta-lib.org/install/index.md): Install TA-Lib: a dozen languages, natively or through a wrapper. Native C/C++, Java, C# and Rust, plus community wrappers for Python, R, Go, Ruby, PHP, Zig and more.
+- [Install C/C++](https://ta-lib.org/install/c/index.md): Install the TA-Lib C/C++ libraries and headers: Windows installer, macOS Homebrew, Linux packages, or build from source with CMake or autotools.
+- [Wrappers](https://ta-lib.org/wrappers/index.md): Community-maintained TA-Lib wrappers for Python, R, Go, Ruby, PHP, Zig, pandas and PostgreSQL, with a link to each project's GitHub repository.

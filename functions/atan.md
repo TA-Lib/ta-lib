@@ -1,0 +1,62 @@
+---
+url: 'https://ta-lib.org/functions/atan.md'
+description: Element-wise arctangent of the input series.
+---
+# Vector Trigonometric ATan (ATAN)
+
+## Summary
+
+Element-wise arctangent of the input series.
+
+## Formula
+
+outReal\[i] = atan(inReal\[i])  (radians, range (-pi/2, pi/2))
+
+## Inputs
+
+* `inReal` — Input values
+
+## Outputs
+
+* `outReal` — Arc tangent of each input, in radians
+
+## Properties
+
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
+
+<div class="flag-table">
+
+|  |
+| :-- |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Overlap Input</span> |
+| <span class="flag-box">✅</span> **Independent Y-Axis** <span class="flag-tip" tabindex="0" role="note" aria-label="Output is on its own scale, drawn in a separate pane below the price chart." data-tip="Output is on its own scale, drawn in a separate pane below the price chart.">i</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Candlestick</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Can Output NaN or ±Inf</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Identity at Period 1</span> |
+
+</div>
+
+## Implementation
+
+TA-Lib Definition: [`atan.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/atan/atan.c) · [`atan.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/atan/atan.yaml)
+
+| Native | File |
+|--------|------|
+| C | [`ta_ATAN.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_ATAN.c) |
+| Rust | [`atan.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/atan.rs) |
+| Java | [`Core_ATAN.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_ATAN.java) |
+| C# | [`Core_ATAN.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_ATAN.cs) |
+
+TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+
+## Aliases
+
+arctangent, arctan, inverse tangent
+
+## See Also
+
+[TAN](/functions/tan.md) · [ACOS](/functions/acos.md) · [ASIN](/functions/asin.md)
+
+## References
+
+* Wikipedia, *Inverse trigonometric functions*: [en.wikipedia.org/wiki/Inverse_trigonometric_functions](https://en.wikipedia.org/wiki/Inverse_trigonometric_functions)

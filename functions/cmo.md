@@ -1,0 +1,74 @@
+---
+url: 'https://ta-lib.org/functions/cmo.md'
+description: >-
+  Chande Momentum Oscillator: bounded momentum measure from Wilder-smoothed
+  average up-moves and down-moves.
+---
+# Chande Momentum Oscillator (CMO)
+
+## Summary
+
+Chande Momentum Oscillator: bounded momentum measure from Wilder-smoothed average up-moves and down-moves. Identical to RSI except the numerator uses (gain-loss) instead of gain. Bounded in \[-100,+100]; positive = net upward momentum, negative = net downward.
+
+## Formula
+
+d = P\[t]-P\[t-1]; over the initial period accumulate gain = sum of positive d, loss = sum of -d for negative d. Wilder-smooth each: prevGain = (prevGain\*(period-1) + gain_today)/period (same for loss). CMO = 100 \* (prevGain-prevLoss)/(prevGain+prevLoss); 0 when prevGain+prevLoss == 0.
+
+## Notes
+
+* Gains and losses are smoothed with Wilder's method (as in RSI) rather than the simple period sums of Chande's original definition.
+
+## Inputs
+
+* `inReal` — Source price/value series
+
+## Outputs
+
+* `outReal` — CMO oscillator value
+
+## Parameters
+
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInTimePeriod` | integer | 14 | 2–100000 | Bars over which gains/losses are smoothed |
+
+## Properties
+
+**Numerical Stability:** [Initial Unstable Period](/functions/stability.md#initial-unstable-period)
+
+<div class="flag-table">
+
+|  |
+| :-- |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Overlap Input</span> |
+| <span class="flag-box">✅</span> **Independent Y-Axis** <span class="flag-tip" tabindex="0" role="note" aria-label="Output is on its own scale, drawn in a separate pane below the price chart." data-tip="Output is on its own scale, drawn in a separate pane below the price chart.">i</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Candlestick</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Can Output NaN or ±Inf</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Identity at Period 1</span> |
+
+</div>
+
+## Implementation
+
+TA-Lib Definition: [`cmo.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cmo/cmo.c) · [`cmo.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cmo/cmo.yaml)
+
+| Native | File |
+|--------|------|
+| C | [`ta_CMO.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CMO.c) |
+| Rust | [`cmo.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cmo.rs) |
+| Java | [`Core_CMO.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CMO.java) |
+| C# | [`Core_CMO.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CMO.cs) |
+
+TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+
+## Aliases
+
+Chande Momentum Oscillator
+
+## See Also
+
+[RSI](/functions/rsi.md)
+
+## References
+
+* Tushar S. Chande, *The New Technical Trader*, John Wiley & Sons (ISBN 0471597805)

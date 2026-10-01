@@ -1,0 +1,71 @@
+---
+url: 'https://ta-lib.org/functions/trima.md'
+description: >-
+  Triangular Moving Average: a double-smoothed moving average that weights
+  prices toward the middle of the window most heavily.
+---
+# Triangular Moving Average (TRIMA)
+
+## Summary
+
+Triangular Moving Average: a double-smoothed moving average that weights prices toward the middle of the window most heavily. Equivalent to an SMA of an SMA, computed here via an incremental triangular-weighted running numerator.
+
+## Formula
+
+Weights rise then fall (4-period: (1a+2b+2c+1d)/6; 5-period: (1a+2b+3c+2d+1e)/9). With n = period>>1: odd divides by (n+1)^2, even by n(n+1). Equivalent to odd: SMA(SMA(x,(period+1)/2),(period+1)/2); even: SMA(SMA(x,period/2),period/2+1).
+
+## Notes
+
+* Follows the generally accepted (Metastock) definition rather than the TradeStation variant.
+* A period of 1 performs no smoothing: the output is a copy of the input. Allowed since 0.6.5 (issues #48/#59).
+
+## Inputs
+
+* `inReal` — Source price series
+
+## Outputs
+
+* `outReal` — Triangular moving average
+
+## Parameters
+
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInTimePeriod` | integer | 30 | 1–100000 | Number of bars in the averaging window |
+
+## Properties
+
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
+
+<div class="flag-table">
+
+|  |
+| :-- |
+| <span class="flag-box">✅</span> **Overlap Input** <span class="flag-tip" tabindex="0" role="note" aria-label="Output is on the same scale as the input price, so it is drawn over the price chart." data-tip="Output is on the same scale as the input price, so it is drawn over the price chart.">i</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Independent Y-Axis</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Candlestick</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Can Output NaN or ±Inf</span> |
+| <span class="flag-box">✅</span> **Identity at Period 1** <span class="flag-tip" tabindex="0" role="note" aria-label="A period of 1 performs no smoothing: the lookback is 0 and every output value is a bit-exact copy of its input value." data-tip="A period of 1 performs no smoothing: the lookback is 0 and every output value is a bit-exact copy of its input value.">i</span> |
+
+</div>
+
+## Implementation
+
+TA-Lib Definition: [`trima.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/trima/trima.c) · [`trima.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/trima/trima.yaml)
+
+| Native | File |
+|--------|------|
+| C | [`ta_TRIMA.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_TRIMA.c) |
+| Rust | [`trima.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/trima.rs) |
+| Java | [`Core_TRIMA.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_TRIMA.java) |
+| C# | [`Core_TRIMA.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_TRIMA.cs) |
+
+TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+
+## Aliases
+
+Triangular Moving Average
+
+## See Also
+
+[SMA](/functions/sma.md) · [WMA](/functions/wma.md) · [MA](/functions/ma.md)

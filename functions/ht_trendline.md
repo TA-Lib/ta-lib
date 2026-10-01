@@ -1,0 +1,60 @@
+---
+url: 'https://ta-lib.org/functions/ht_trendline.md'
+description: >-
+  Ehlers' Hilbert Transform Instantaneous Trendline: a smoothed, low-lag overlay
+  whose averaging window adapts to the dominant cycle period measured via…
+---
+# Hilbert Transform - Instantaneous Trendline (HT_TRENDLINE)
+
+## Summary
+
+Ehlers' Hilbert Transform Instantaneous Trendline: a smoothed, low-lag overlay whose averaging window adapts to the dominant cycle period measured via Hilbert-transform quadrature (I/Q) analysis of price.
+
+## Inputs
+
+* `inReal` — Source price series
+
+## Outputs
+
+* `outReal` — Instantaneous trendline value
+
+## Properties
+
+**Numerical Stability:** [Initial Unstable Period](/functions/stability.md#initial-unstable-period)
+
+<div class="flag-table">
+
+|  |
+| :-- |
+| <span class="flag-box">✅</span> **Overlap Input** <span class="flag-tip" tabindex="0" role="note" aria-label="Output is on the same scale as the input price, so it is drawn over the price chart." data-tip="Output is on the same scale as the input price, so it is drawn over the price chart.">i</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Independent Y-Axis</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Candlestick</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Can Output NaN or ±Inf</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Identity at Period 1</span> |
+
+</div>
+
+## Implementation
+
+TA-Lib Definition: [`ht_trendline.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/ht_trendline/ht_trendline.c) · [`ht_trendline.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/ht_trendline/ht_trendline.yaml)
+
+| Native | File |
+|--------|------|
+| C | [`ta_HT_TRENDLINE.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_HT_TRENDLINE.c) |
+| Rust | [`ht_trendline.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/ht_trendline.rs) |
+| Java | [`Core_HT_TRENDLINE.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_HT_TRENDLINE.java) |
+| C# | [`Core_HT_TRENDLINE.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_HT_TRENDLINE.cs) |
+
+TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+
+## Aliases
+
+Hilbert Transform Instantaneous Trendline, Instantaneous Trendline
+
+## See Also
+
+[HT_DCPERIOD](/functions/ht_dcperiod.md) · [HT_PHASOR](/functions/ht_phasor.md) · [MAMA](/functions/mama.md) · [WMA](/functions/wma.md)
+
+## References
+
+* John F. Ehlers, *Rocket Science for Traders: Digital Signal Processing Applications*, John Wiley & Sons (ISBN 0471405671)

@@ -1,0 +1,74 @@
+---
+url: 'https://ta-lib.org/functions/dema.md'
+description: >-
+  Double Exponential Moving Average: an EMA combined with an EMA-of-EMA to
+  reduce lag versus a plain EMA. Overlap Studies overlay on price.
+---
+# Double Exponential Moving Average (DEMA)
+
+## Summary
+
+Double Exponential Moving Average: an EMA combined with an EMA-of-EMA to reduce lag versus a plain EMA. Overlap Studies overlay on price.
+
+## Formula
+
+EMA1 = EMA(inReal, period); EMA2 = EMA(EMA1, period); DEMA = 2\*EMA1 - EMA2
+
+## Notes
+
+* A period of 1 performs no smoothing: the output is a copy of the input. Allowed since 0.6.5 (issues #48/#59).
+
+## Inputs
+
+* `inReal` — Source series (typically price)
+
+## Outputs
+
+* `outReal` — DEMA line
+
+## Parameters
+
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInTimePeriod` | integer | 30 | 1–100000 | Smoothing period for both EMA passes |
+
+## Properties
+
+**Numerical Stability:** [Initial Unstable Period](/functions/stability.md#initial-unstable-period) — Inherited from EMA, which DEMA computes internally; tunable via EMA's unstable period.
+
+<div class="flag-table">
+
+|  |
+| :-- |
+| <span class="flag-box">✅</span> **Overlap Input** <span class="flag-tip" tabindex="0" role="note" aria-label="Output is on the same scale as the input price, so it is drawn over the price chart." data-tip="Output is on the same scale as the input price, so it is drawn over the price chart.">i</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Independent Y-Axis</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Candlestick</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Can Output NaN or ±Inf</span> |
+| <span class="flag-box">✅</span> **Identity at Period 1** <span class="flag-tip" tabindex="0" role="note" aria-label="A period of 1 performs no smoothing: the lookback is 0 and every output value is a bit-exact copy of its input value." data-tip="A period of 1 performs no smoothing: the lookback is 0 and every output value is a bit-exact copy of its input value.">i</span> |
+
+</div>
+
+## Implementation
+
+TA-Lib Definition: [`dema.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/dema/dema.c) · [`dema.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/dema/dema.yaml)
+
+| Native | File |
+|--------|------|
+| C | [`ta_DEMA.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_DEMA.c) |
+| Rust | [`dema.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/dema.rs) |
+| Java | [`Core_DEMA.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_DEMA.java) |
+| C# | [`Core_DEMA.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_DEMA.cs) |
+
+TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+
+## Aliases
+
+Double Exponential Moving Average
+
+## See Also
+
+[EMA](/functions/ema.md) · [TEMA](/functions/tema.md) · [MA](/functions/ma.md)
+
+## References
+
+* Patrick G. Mulloy, *Smoothing Data with Faster Moving Averages*, Technical Analysis of Stocks & Commodities, V.12:1 (January 1994)

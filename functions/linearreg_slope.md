@@ -1,0 +1,69 @@
+---
+url: 'https://ta-lib.org/functions/linearreg_slope.md'
+description: >-
+  Slope 'm' of the least-squares best-fit line (y = b + m*x) over the last
+  optInTimePeriod bars. Reports the per-bar rate of change of the fitted trend
+  line.
+---
+# Linear Regression Slope (LINEARREG_SLOPE)
+
+## Summary
+
+Slope 'm' of the least-squares best-fit line (y = b + m\*x) over the last optInTimePeriod bars. Reports the per-bar rate of change of the fitted trend line. Positive slope = rising trend, negative = falling; magnitude is price change per bar.
+
+## Formula
+
+m = (n·SumXY − SumX·SumY) / Divisor
+SumX = n(n−1)/2,  SumXSqr = n(n−1)(2n−1)/6,  Divisor = SumX² − n·SumXSqr
+SumXY = Σ i·y\[today−i],  SumY = Σ y\[today−i],  i=0..n−1,  n=period,  y=inReal
+
+## Inputs
+
+* `inReal` — Data series to fit
+
+## Outputs
+
+* `outReal` — Slope m of the fitted line
+
+## Parameters
+
+| Parameter | Type | Default | Accepted values | Description |
+| --- | --- | --- | --- | --- |
+| `optInTimePeriod` | integer | 14 | 2–100000 | Number of bars in the regression window |
+
+## Properties
+
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
+
+<div class="flag-table">
+
+|  |
+| :-- |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Overlap Input</span> |
+| <span class="flag-box">✅</span> **Independent Y-Axis** <span class="flag-tip" tabindex="0" role="note" aria-label="Output is on its own scale, drawn in a separate pane below the price chart." data-tip="Output is on its own scale, drawn in a separate pane below the price chart.">i</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Candlestick</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Can Output NaN or ±Inf</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Identity at Period 1</span> |
+
+</div>
+
+## Implementation
+
+TA-Lib Definition: [`linearreg_slope.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/linearreg_slope/linearreg_slope.c) · [`linearreg_slope.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/linearreg_slope/linearreg_slope.yaml)
+
+| Native | File |
+|--------|------|
+| C | [`ta_LINEARREG_SLOPE.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_LINEARREG_SLOPE.c) |
+| Rust | [`linearreg_slope.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/linearreg_slope.rs) |
+| Java | [`Core_LINEARREG_SLOPE.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_LINEARREG_SLOPE.java) |
+| C# | [`Core_LINEARREG_SLOPE.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_LINEARREG_SLOPE.cs) |
+
+TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+
+## Aliases
+
+Linear Regression Slope, LSMA slope, least squares slope
+
+## See Also
+
+[LINEARREG](/functions/linearreg.md) · [LINEARREG_INTERCEPT](/functions/linearreg_intercept.md) · [LINEARREG_ANGLE](/functions/linearreg_angle.md) · [TSF](/functions/tsf.md)

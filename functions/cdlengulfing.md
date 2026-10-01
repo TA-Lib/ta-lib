@@ -1,0 +1,74 @@
+---
+url: 'https://ta-lib.org/functions/cdlengulfing.md'
+description: >-
+  A two-candle reversal pattern where the second candle's real body engulfs the
+  first candle's opposite-colored real body.
+---
+# Engulfing Pattern (CDLENGULFING)
+
+## Summary
+
+A two-candle reversal pattern where the second candle's real body engulfs the first candle's opposite-colored real body. Bullish (white engulfs black) or bearish (black engulfs white) reversal signal; ideally after a downtrend (bullish) or uptrend (bearish), which the code does not verify.
+
+## Notes
+
+* Does not verify the prior trend (down for bullish, up for bearish) the reversal classically assumes.
+* Bulkowski's testing found bearish Engulfing has a strong 79% reversal rate (5th-best of 103 patterns by that measure alone) but a weak overall post-breakout performance rank of 91st of 103 — the reversal fires reliably but rarely sustains. Bullish Engulfing reverses 63% of the time with a similarly weak overall rank of 84th of 103. ([thepatternsite.com](https://thepatternsite.com/BearEngulfing.html))
+
+## Inputs
+
+* `inOpen` — Open price of each bar
+* `inHigh` — High price of each bar
+* `inLow` — Low price of each bar
+* `inClose` — Close price of each bar
+
+## Outputs
+
+* `outInteger` — +100/+80 (bullish, white engulfs black), -100/-80 (bearish, black engulfs white), 0 otherwise. Magnitude 100 when the second body strictly engulfs both ends; 80 when the bodies share an exact endpoint (open\[i]==close\[i-1] or close\[i]==open\[i-1])
+
+## Output Values
+
+| Value | Meaning |
+|-------|---------|
+| -100 | Bearish engulfing: the black body fully swallows the prior white body — a strong reversal signal |
+| -80 | Bearish engulfing, weaker variant: one edge of the two bodies lines up exactly rather than fully overhanging it |
+| 0 | No pattern |
+| 80 | Bullish engulfing, weaker variant: one edge of the two bodies lines up exactly rather than fully overhanging it |
+| 100 | Bullish engulfing: the white body fully swallows the prior black body — a strong reversal signal |
+
+## Properties
+
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
+
+<div class="flag-table">
+
+|  |
+| :-- |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Overlap Input</span> |
+| <span class="flag-box">✅</span> **Independent Y-Axis** <span class="flag-tip" tabindex="0" role="note" aria-label="Output is on its own scale, drawn in a separate pane below the price chart." data-tip="Output is on its own scale, drawn in a separate pane below the price chart.">i</span> |
+| <span class="flag-box">✅</span> **Candlestick** <span class="flag-tip" tabindex="0" role="note" aria-label="Output is an integer candlestick-pattern signal (e.g. -100 / 0 / +100)." data-tip="Output is an integer candlestick-pattern signal (e.g. -100 / 0 / +100).">i</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Can Output NaN or ±Inf</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Identity at Period 1</span> |
+
+</div>
+
+## Implementation
+
+TA-Lib Definition: [`cdlengulfing.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlengulfing/cdlengulfing.c) · [`cdlengulfing.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlengulfing/cdlengulfing.yaml)
+
+| Native | File |
+|--------|------|
+| C | [`ta_CDLENGULFING.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CDLENGULFING.c) |
+| Rust | [`cdlengulfing.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cdlengulfing.rs) |
+| Java | [`Core_CDLENGULFING.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CDLENGULFING.java) |
+| C# | [`Core_CDLENGULFING.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CDLENGULFING.cs) |
+
+TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+
+## Aliases
+
+Engulfing Pattern, Engulfing, Bullish/Bearish Engulfing
+
+## See Also
+
+[CDLHARAMI](/functions/cdlharami.md) · [CDLCOUNTERATTACK](/functions/cdlcounterattack.md) · [CDLHARAMICROSS](/functions/cdlharamicross.md)

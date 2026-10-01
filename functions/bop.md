@@ -1,0 +1,60 @@
+---
+url: 'https://ta-lib.org/functions/bop.md'
+description: >-
+  Balance Of Power compares where the close sits relative to the open,
+  normalized by the bar's high-low range. A per-bar oscillator with no
+  smoothing.
+---
+# Balance Of Power (BOP)
+
+## Summary
+
+Balance Of Power compares where the close sits relative to the open, normalized by the bar's high-low range. A per-bar oscillator with no smoothing. Positive: close above open (buyers dominated); negative: sellers dominated.
+
+## Formula
+
+BOP = (Close - Open) / (High - Low)
+
+## Inputs
+
+* `inOpen` — Open price of each bar
+* `inHigh` — High price of each bar
+* `inLow` — Low price of each bar
+* `inClose` — Close price of each bar
+
+## Outputs
+
+* `outReal` — Balance of Power value per bar
+
+## Properties
+
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
+
+<div class="flag-table">
+
+|  |
+| :-- |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Overlap Input</span> |
+| <span class="flag-box">✅</span> **Independent Y-Axis** <span class="flag-tip" tabindex="0" role="note" aria-label="Output is on its own scale, drawn in a separate pane below the price chart." data-tip="Output is on its own scale, drawn in a separate pane below the price chart.">i</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Candlestick</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Can Output NaN or ±Inf</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Identity at Period 1</span> |
+
+</div>
+
+## Implementation
+
+TA-Lib Definition: [`bop.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/bop/bop.c) · [`bop.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/bop/bop.yaml)
+
+| Native | File |
+|--------|------|
+| C | [`ta_BOP.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_BOP.c) |
+| Rust | [`bop.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/bop.rs) |
+| Java | [`Core_BOP.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_BOP.java) |
+| C# | [`Core_BOP.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_BOP.cs) |
+
+TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+
+## Aliases
+
+Balance Of Power, Balance of Power

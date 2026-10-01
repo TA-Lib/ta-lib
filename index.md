@@ -1,0 +1,24 @@
+---
+url: 'https://ta-lib.org/index.md'
+description: >-
+  Open-source technical analysis library: 200+ indicators (ADX, MACD, RSI),
+  candlestick patterns. Native C/C++, Java, C# and Rust, plus Python and R
+  wrappers.
+---
+# TA-Lib
+
+<div align="center" class="home-hero">
+
+<img src="/assets/images/home.png" alt="TA-Lib">
+
+### Technical analysis, battle-tested since 2001
+
+</div>
+
+* 200+ indicators such as ADX, MACD, RSI, Stochastic, Bollinger Bands etc... [See complete list...](/functions/)
+* Candlestick patterns recognition
+* Native implementation in [C/C++](/api/), [Java](/api/java/), [C#](/api/csharp/) and [Rust](/api/rust/).
+* Wrappers for Python, R, and [more](/install/#wrappers).
+* Open-Source (BSD License). Can be freely integrated in your own open-source or commercial applications.
+
+TA-Lib implements standard technical analysis algorithms used across the industry — stable, well-tested, and production-proven.
