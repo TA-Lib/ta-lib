@@ -27,7 +27,7 @@
     * output.
     *
     * @param optInStartValue Initial SAR/direction: 0 auto, &gt;0 start long at
-    *        value, &lt;0 start short at |value| (default 0; {@link Core#REAL_DEFAULT}
+    *        value, &lt;0 start short at -value (default 0; {@link Core#REAL_DEFAULT}
     *        selects the default).
     * @param optInOffsetOnReverse Fractional offset applied to the stop on each
     *        reversal (default 0; minimum 0; {@link Core#REAL_DEFAULT} selects the
@@ -686,7 +686,7 @@
     * @param inHigh High price of each bar.
     * @param inLow Low price of each bar.
     * @param optInStartValue Initial SAR/direction: 0 auto, &gt;0 start long at
-    *        value, &lt;0 start short at |value| (default 0; {@link Core#REAL_DEFAULT}
+    *        value, &lt;0 start short at -value (default 0; {@link Core#REAL_DEFAULT}
     *        selects the default).
     * @param optInOffsetOnReverse Fractional offset applied to the stop on each
     *        reversal (default 0; minimum 0; {@link Core#REAL_DEFAULT} selects the
@@ -774,7 +774,7 @@
     * @param inHigh High price of each bar.
     * @param inLow Low price of each bar.
     * @param optInStartValue Initial SAR/direction: 0 auto, &gt;0 start long at
-    *        value, &lt;0 start short at |value| (default 0; {@link Core#REAL_DEFAULT}
+    *        value, &lt;0 start short at -value (default 0; {@link Core#REAL_DEFAULT}
     *        selects the default).
     * @param optInOffsetOnReverse Fractional offset applied to the stop on each
     *        reversal (default 0; minimum 0; {@link Core#REAL_DEFAULT} selects the

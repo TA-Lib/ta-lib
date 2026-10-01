@@ -72,7 +72,7 @@ public partial class Core
    /// output.
    /// </remarks>
    /// <param name="optInStartValue">Initial SAR/direction: 0 auto, &gt;0 start long at value, &lt;0 start
-   /// short at |value| (default 0; <see cref="Core.RealDefault"/> selects the
+   /// short at -value (default 0; <see cref="Core.RealDefault"/> selects the
    /// default).</param>
    /// <param name="optInOffsetOnReverse">Fractional offset applied to the stop on each reversal (default 0; minimum
    /// 0; <see cref="Core.RealDefault"/> selects the default).</param>
@@ -742,7 +742,7 @@ public partial class Core
    /// <param name="inHigh">High price of each bar.</param>
    /// <param name="inLow">Low price of each bar.</param>
    /// <param name="optInStartValue">Initial SAR/direction: 0 auto, &gt;0 start long at value, &lt;0 start
-   /// short at |value| (default 0; <see cref="Core.RealDefault"/> selects the
+   /// short at -value (default 0; <see cref="Core.RealDefault"/> selects the
    /// default).</param>
    /// <param name="optInOffsetOnReverse">Fractional offset applied to the stop on each reversal (default 0; minimum
    /// 0; <see cref="Core.RealDefault"/> selects the default).</param>
@@ -847,7 +847,7 @@ public partial class Core
    /// <param name="inHigh">High price of each bar.</param>
    /// <param name="inLow">Low price of each bar.</param>
    /// <param name="optInStartValue">Initial SAR/direction: 0 auto, &gt;0 start long at value, &lt;0 start
-   /// short at |value| (default 0; <see cref="Core.RealDefault"/> selects the
+   /// short at -value (default 0; <see cref="Core.RealDefault"/> selects the
    /// default).</param>
    /// <param name="optInOffsetOnReverse">Fractional offset applied to the stop on each reversal (default 0; minimum
    /// 0; <see cref="Core.RealDefault"/> selects the default).</param>

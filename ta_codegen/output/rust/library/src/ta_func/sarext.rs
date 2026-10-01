@@ -77,7 +77,7 @@ impl Core {
     /// # Arguments
     ///
     /// * `optInStartValue` — Initial SAR/direction: 0 auto, >0 start long at value, \<0 start
-    ///   short at |value| (default 0)
+    ///   short at -value (default 0)
     /// * `optInOffsetOnReverse` — Fractional offset applied to the stop on each reversal (default
     ///   0, minimum 0)
     /// * `optInAccelerationInitLong` — Initial acceleration factor when long (default 0.02,
@@ -550,7 +550,7 @@ impl Core {
     /// * `inHigh` — High price of each bar.
     /// * `inLow` — Low price of each bar.
     /// * `optInStartValue` — Initial SAR/direction: 0 auto, >0 start long at value, \<0 start
-    ///   short at |value| (default 0)
+    ///   short at -value (default 0)
     /// * `optInOffsetOnReverse` — Fractional offset applied to the stop on each reversal (default
     ///   0, minimum 0)
     /// * `optInAccelerationInitLong` — Initial acceleration factor when long (default 0.02,

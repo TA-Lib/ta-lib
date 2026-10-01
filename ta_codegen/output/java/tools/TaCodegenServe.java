@@ -173272,7 +173272,7 @@ class Core {
         * output.
         *
         * @param optInStartValue Initial SAR/direction: 0 auto, &gt;0 start long at
-        *        value, &lt;0 start short at |value| (default 0; {@link Core#REAL_DEFAULT}
+        *        value, &lt;0 start short at -value (default 0; {@link Core#REAL_DEFAULT}
         *        selects the default).
         * @param optInOffsetOnReverse Fractional offset applied to the stop on each
         *        reversal (default 0; minimum 0; {@link Core#REAL_DEFAULT} selects the
@@ -173931,7 +173931,7 @@ class Core {
         * @param inHigh High price of each bar.
         * @param inLow Low price of each bar.
         * @param optInStartValue Initial SAR/direction: 0 auto, &gt;0 start long at
-        *        value, &lt;0 start short at |value| (default 0; {@link Core#REAL_DEFAULT}
+        *        value, &lt;0 start short at -value (default 0; {@link Core#REAL_DEFAULT}
         *        selects the default).
         * @param optInOffsetOnReverse Fractional offset applied to the stop on each
         *        reversal (default 0; minimum 0; {@link Core#REAL_DEFAULT} selects the
@@ -174019,7 +174019,7 @@ class Core {
         * @param inHigh High price of each bar.
         * @param inLow Low price of each bar.
         * @param optInStartValue Initial SAR/direction: 0 auto, &gt;0 start long at
-        *        value, &lt;0 start short at |value| (default 0; {@link Core#REAL_DEFAULT}
+        *        value, &lt;0 start short at -value (default 0; {@link Core#REAL_DEFAULT}
         *        selects the default).
         * @param optInOffsetOnReverse Fractional offset applied to the stop on each
         *        reversal (default 0; minimum 0; {@link Core#REAL_DEFAULT} selects the
@@ -207663,7 +207663,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "f8844e1a61552f11";
+    static final String SPLICED_GENCODE_DIGEST = "217433a94d879e20";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];

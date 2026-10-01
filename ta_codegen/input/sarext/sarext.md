@@ -19,7 +19,7 @@ SAR_next = SAR + AF*(EP - SAR), then clamped within the prior and current bar's 
 
 ## Parameters
 
-- `optInStartValue` — Initial SAR/direction: 0 auto, >0 start long at value, <0 start short at |value|
+- `optInStartValue` — Initial SAR/direction: 0 auto, >0 start long at value, <0 start short at -value
 - `optInOffsetOnReverse` — Fractional offset applied to the stop on each reversal
 - `optInAccelerationInitLong` — Initial acceleration factor when long
 - `optInAccelerationLong` — AF increment per new long extreme
