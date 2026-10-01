@@ -354,7 +354,7 @@ const FUNC_FLAGS: &[(&str, &str, &str)] = &[
     (
         "period1_identity",
         "Period1Identity",
-        "A period of 1 performs no smoothing: the lookback is 0 and the output is a bit-exact copy of the input.",
+        "A period of 1 performs no smoothing: the output is a bit-exact copy of the input.",
     ),
     (
         "display_shift",

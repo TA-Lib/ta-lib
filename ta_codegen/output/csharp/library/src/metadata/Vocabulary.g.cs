@@ -128,7 +128,7 @@ public enum FuncFlags : uint
     /// <summary>Some inputs have no finite result, so a successful call can return NaN or +/-Infinity.</summary>
     NanInfOutput = 0x40000000,
 
-    /// <summary>A period of 1 performs no smoothing: the lookback is 0 and the output is a bit-exact copy of the input.</summary>
+    /// <summary>A period of 1 performs no smoothing: the output is a bit-exact copy of the input.</summary>
     Period1Identity = 0x00000001,
 
     /// <summary>At least one output carries <c>OutputFlags.DisplayShift</c>; without it every output's display shift is 0.</summary>

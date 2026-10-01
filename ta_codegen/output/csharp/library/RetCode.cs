@@ -49,8 +49,8 @@ public enum RetCode
     /// <summary>A parameter is out of its documented range, or two output
     /// arrays alias each other (<c>TA_BAD_PARAM</c> = 2).</summary>
     BadParam = 2,
-    /// <summary>An internal allocation failed (<c>TA_ALLOC_ERR</c> = 3). C parity only, never
-    /// returned here: an allocation failure terminates the process (#178).</summary>
+    /// <summary>An internal allocation failed (<c>TA_ALLOC_ERR</c> = 3). C parity only:
+    /// never returned or thrown here.</summary>
     AllocErr = 3,
     /// <summary>A <see cref="TALib.Metadata.ParamHolder"/> was invoked with an
     /// input left unbound (<c>TA_INPUT_NOT_ALL_INITIALIZE</c> = 10). Reachable only
@@ -61,11 +61,11 @@ public enum RetCode
     /// output left unbound (<c>TA_OUTPUT_NOT_ALL_INITIALIZE</c> = 11). Reachable
     /// only from the dynamic binder.</summary>
     OutputNotAllInitialize = 11,
-    /// <summary><c>startIdx</c> is negative (<c>TA_OUT_OF_RANGE_START_INDEX</c>
-    /// = 12).</summary>
+    /// <summary>An index outside its domain (<c>TA_OUT_OF_RANGE_START_INDEX</c> = 12):
+    /// <see href="https://ta-lib.org/spec/errors/#b1">B1</see>, <see href="https://ta-lib.org/spec/streaming/#s1">S1</see>.</summary>
     OutOfRangeStartIndex = 12,
-    /// <summary><c>endIdx</c> is negative or precedes <c>startIdx</c>
-    /// (<c>TA_OUT_OF_RANGE_END_INDEX</c> = 13).</summary>
+    /// <summary>An index outside its domain (<c>TA_OUT_OF_RANGE_END_INDEX</c> = 13):
+    /// <see href="https://ta-lib.org/spec/errors/#b2">B2</see>, <see href="https://ta-lib.org/spec/streaming/#s2">S2</see>, <see href="https://ta-lib.org/spec/streaming/#u4">U4</see>.</summary>
     OutOfRangeEndIndex = 13,
     /// <summary>A stream opener was given fewer than <c>lookback + 1</c> bars
     /// (<c>TA_INSUFFICIENT_HISTORY</c> = 17) — the library's one recoverable

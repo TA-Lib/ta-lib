@@ -2705,11 +2705,11 @@ fn history_length_guards(func: &FuncDef, n: &str, verb: &str) -> String {
 
 /// Rule S5 at the PUBLIC `OpenAndFill`.
 ///
-/// An opener is a batch call over `[0, historyLen - 1]`, so B5's produced count
-/// collapses to `historyLen - lookback`. B5 reads its two halves in one rule,
-/// inputs first, so the input series' agreement with the history is checked here
-/// too — the core makes that test, but only after this frame would have answered,
-/// which reported a short input as an output-capacity fault.
+/// Each input must equal the history's length and each output must hold
+/// `historyLen - lookback` values (<https://ta-lib.org/spec/streaming/#s5>). The
+/// input half is checked first: the core makes that test too, but only after this
+/// frame would have answered, so a short input would read as an output-capacity
+/// fault.
 ///
 /// `Core.OpenFillCount` floors a short history at 0 so that it reaches S7, and
 /// raises on the `-1` a rejected parameter returns so that S3 stays ahead of the

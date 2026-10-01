@@ -59,7 +59,7 @@ TA_RetCode TA_SetUnstablePeriod( TA_FuncUnstId id,
 {
    int i;
 
-   /* The wildcard is INT_MAX, far above every id, so it is tested by value and
+   /* The wildcard sits far above every id, so it is tested by value and
     * everything else must land inside the table. The unsigned compare wraps a
     * negative id past the count instead of indexing behind the array (#144),
     * and stays correct whether the compiler gives the enum a signed or unsigned

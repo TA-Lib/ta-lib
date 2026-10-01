@@ -883,10 +883,10 @@
     * <li>Both sums are exact before the divide, so a window summing to exactly zero is always recognised and the value does not depend on where the call started. The exception is a window holding a non-finite value, a value with bits below 2^-1022 (every subnormal, and only values under about 2e-292), or values that together span more binary digits than the sums can hold exactly (97 at the default period, 84 at 1000, 58 at 100000): it is summed in floating point, oldest value first.</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
-    * {@link OutRange} says where they start and how many there are; nothing
-    * outside that range is touched, and the library never pads with NaN. A
-    * valid range that ends before {@link Core#cgLookback} is a <b>success with
-    * no values</b> ({@code count() == 0}), not an error.
+    * {@link OutRange} says where they start and how many there are, and the
+    * library never pads with NaN. A valid range that ends before
+    * {@link Core#cgLookback} is a <b>success with no values</b>
+    * ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -956,10 +956,10 @@
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
     * <p>Values are written only where the indicator is defined. The returned
-    * {@link OutRange} says where they start and how many there are; nothing
-    * outside that range is touched, and the library never pads with NaN. A
-    * valid range that ends before {@link Core#cgLookback} is a <b>success with
-    * no values</b> ({@code count() == 0}), not an error.
+    * {@link OutRange} says where they start and how many there are, and the
+    * library never pads with NaN. A valid range that ends before
+    * {@link Core#cgLookback} is a <b>success with no values</b>
+    * ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).

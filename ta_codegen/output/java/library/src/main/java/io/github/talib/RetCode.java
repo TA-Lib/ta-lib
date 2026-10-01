@@ -61,7 +61,7 @@ public enum RetCode
     SUCCESS(0),
     /** The catch-all rejection ({@code TA_BAD_PARAM}). */
     BAD_PARAM(2),
-    /** C parity only, never returned here: an allocation failure terminates the process (#178). */
+    /** C parity only: never returned or thrown here. */
     ALLOC_ERR(3),
     /** {@code startIdx} outside the addressable index domain. */
     OUT_OF_RANGE_START_INDEX(12),

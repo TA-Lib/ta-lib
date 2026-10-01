@@ -66,7 +66,7 @@ public final class FuncFlags {
    /** Some inputs have no finite result, so a successful call can return NaN or +/-Infinity. */
    public static final int NAN_INF_OUTPUT = 0x40000000;
 
-   /** A period of 1 performs no smoothing: the lookback is 0 and the output is a bit-exact copy of the input. */
+   /** A period of 1 performs no smoothing: the output is a bit-exact copy of the input. */
    public static final int PERIOD1_IDENTITY = 0x00000001;
 
    /** At least one output carries {@code OutputFlags.DISPLAY_SHIFT}; without it every output's display shift is 0. */

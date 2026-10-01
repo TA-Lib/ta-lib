@@ -15,6 +15,7 @@ p_i = clamp((int)inPeriods[startIdx+i], optInMinPeriod, optInMaxPeriod); outReal
 
 - Fractional per-bar periods are truncated to whole numbers before being clamped to the minimum and maximum period.
 - Period values of 1 perform no smoothing (the bar's output equals its input); the minimum allowed period is 1 since 0.6.5.
+- `optInMinPeriod` must not exceed `optInMaxPeriod`; a larger minimum is rejected.
 
 ## Inputs
 

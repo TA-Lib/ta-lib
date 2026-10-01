@@ -288,10 +288,10 @@
     * <li>Bulkowski's own dataset contains only 52 Mat Hold occurrences out of 4.7 million candle lines; he explicitly warns the 78% continuation rate he measured "will likely be wrong or at least subject to large change as additional samples become available." (<a href="https://thepatternsite.com/MatHold.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
-    * {@link OutRange} says where they start and how many there are; nothing
-    * outside that range is touched, and the library never pads with NaN. A
-    * valid range that ends before {@link Core#cdlmatholdLookback} is a
-    * <b>success with no values</b> ({@code count() == 0}), not an error.
+    * {@link OutRange} says where they start and how many there are, and the
+    * library never pads with NaN. A valid range that ends before
+    * {@link Core#cdlmatholdLookback} is a <b>success with no values</b>
+    * ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -367,10 +367,10 @@
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
     * <p>Values are written only where the indicator is defined. The returned
-    * {@link OutRange} says where they start and how many there are; nothing
-    * outside that range is touched, and the library never pads with NaN. A
-    * valid range that ends before {@link Core#cdlmatholdLookback} is a
-    * <b>success with no values</b> ({@code count() == 0}), not an error.
+    * {@link OutRange} says where they start and how many there are, and the
+    * library never pads with NaN. A valid range that ends before
+    * {@link Core#cdlmatholdLookback} is a <b>success with no values</b>
+    * ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).

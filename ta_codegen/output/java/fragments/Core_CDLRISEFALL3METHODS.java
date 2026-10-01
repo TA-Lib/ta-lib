@@ -265,10 +265,10 @@
     * <li>Bulkowski's testing found Rising Three Methods continues 74% of the time (102 examples out of 4.7M candle lines) and Falling Three Methods continues 71% of the time (just 64 examples) — both act as classically labeled, but Bulkowski flags the samples as too thin to trust: Falling Three Methods is so rare he omitted its statistics from his book entirely. (<a href="https://thepatternsite.com/Rising3Methods.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
-    * {@link OutRange} says where they start and how many there are; nothing
-    * outside that range is touched, and the library never pads with NaN. A
-    * valid range that ends before {@link Core#cdlrisefall3methodsLookback} is a
-    * <b>success with no values</b> ({@code count() == 0}), not an error.
+    * {@link OutRange} says where they start and how many there are, and the
+    * library never pads with NaN. A valid range that ends before
+    * {@link Core#cdlrisefall3methodsLookback} is a <b>success with no
+    * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -342,10 +342,10 @@
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
     * <p>Values are written only where the indicator is defined. The returned
-    * {@link OutRange} says where they start and how many there are; nothing
-    * outside that range is touched, and the library never pads with NaN. A
-    * valid range that ends before {@link Core#cdlrisefall3methodsLookback} is a
-    * <b>success with no values</b> ({@code count() == 0}), not an error.
+    * {@link OutRange} says where they start and how many there are, and the
+    * library never pads with NaN. A valid range that ends before
+    * {@link Core#cdlrisefall3methodsLookback} is a <b>success with no
+    * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).

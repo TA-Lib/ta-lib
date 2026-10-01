@@ -21,7 +21,7 @@ FAMA = (alpha/2)*MAMA + (1-alpha/2)*FAMA_prev
 ## Outputs
 
 - `outMAMA` — Adaptive moving average (fast line)
-- `outFAMA` — Following adaptive moving average, using half the alpha (slow line)
+- `outFAMA` — Following adaptive moving average, using half the alpha (slow line). May be declined ([O5](/spec/inputs-outputs/#o5)).
 
 ## Parameters
 

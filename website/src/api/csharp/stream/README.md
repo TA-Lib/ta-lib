@@ -89,7 +89,7 @@ OutRange r = s.OutRange;    // the bars it has an output for
 // ...and s is live, ready for Update.
 ```
 
-The output arguments are the batch call's, in the same order. An output may not overlap an input, or another output — that throws `ArgumentException` and mints no stream. With spans that means genuine memory overlap, not just the same buffer: two slices of one array that share even one element are rejected.
+The output arguments are the batch call's, in the same order. An output must not overlap an input or another output. Passing the same buffer throws `ArgumentException` and mints no stream ([S6](/spec/streaming/#s6)); any other overlap is unspecified ([N8](/spec/inputs-outputs/#n8)).
 
 ## Utility Calls
 
@@ -116,7 +116,7 @@ See [Rules](#rules) for when concurrent reads of these are safe.
 
 ## Error model
 
-`Open` and `OpenAndFill` throw. After a successful open, `Update` and `Peek` reject invalid input such as NaN or ±Inf, or a bar past `Core.IndexMax`. A rejection changes nothing at all — no state, no value, and no range. `Value`, `Clone()` and `OutRange` never throw; `Advance()` throws only at the `IndexMax` ceiling.
+`Open` and `OpenAndFill` throw. After a successful open, `Update` and `Peek` reject invalid input such as NaN or ±Inf, and `Update` also rejects a bar past `Core.IndexMax`. A rejection changes nothing at all — no state, no value, and no range. `Value`, `Clone()` and `OutRange` never throw; `Advance()` throws only at the `IndexMax` ceiling.
 
 | Condition | Exception |
 |---|---|
@@ -124,7 +124,7 @@ See [Rules](#rules) for when concurrent reads of these are safe.
 | A history longer than `Core.IndexMax + 1` bars | `ArgumentOutOfRangeException` carrying `RetCode.OutOfRangeEndIndex` |
 | An optional parameter outside its documented range, a non-finite real parameter included | `ArgumentException` |
 | An input series whose length differs from the history's | `ArgumentException` naming it |
-| (`OpenAndFill`) an output shorter than the values the fill writes, or overlapping an input or another output | `ArgumentException` |
+| (`OpenAndFill`) an output shorter than the values the fill writes, or the same buffer as an input or another output | `ArgumentException` |
 | Fewer than `lookback + 1` history bars | `InsufficientHistoryException` |
 | A non-finite bar (NaN or ±Inf) | `ArgumentException` naming the input |
 | A bar past `Core.IndexMax`, the last index the batch API addresses | `ArgumentException` carrying `RetCode.OutOfRangeEndIndex` |

@@ -226,10 +226,10 @@
     * <li>Bulkowski's testing ranks the bullish Belt-Hold's 71% reversal rate 11th of 103 patterns for pure reversal reliability (bearish reverses 68% of the time) — though its overall post-breakout performance rank is a more middling 62nd/63rd of 103. (<a href="https://thepatternsite.com/BeltHoldBull.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
-    * {@link OutRange} says where they start and how many there are; nothing
-    * outside that range is touched, and the library never pads with NaN. A
-    * valid range that ends before {@link Core#cdlbeltholdLookback} is a
-    * <b>success with no values</b> ({@code count() == 0}), not an error.
+    * {@link OutRange} says where they start and how many there are, and the
+    * library never pads with NaN. A valid range that ends before
+    * {@link Core#cdlbeltholdLookback} is a <b>success with no values</b>
+    * ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -301,10 +301,10 @@
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
     * <p>Values are written only where the indicator is defined. The returned
-    * {@link OutRange} says where they start and how many there are; nothing
-    * outside that range is touched, and the library never pads with NaN. A
-    * valid range that ends before {@link Core#cdlbeltholdLookback} is a
-    * <b>success with no values</b> ({@code count() == 0}), not an error.
+    * {@link OutRange} says where they start and how many there are, and the
+    * library never pads with NaN. A valid range that ends before
+    * {@link Core#cdlbeltholdLookback} is a <b>success with no values</b>
+    * ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).

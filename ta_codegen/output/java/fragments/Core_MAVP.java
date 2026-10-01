@@ -38,6 +38,9 @@
     */
    public int mavpLookback( int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
    {
+      if( optInMAType == null ) {
+         return -1;
+      }
       if( optInMinPeriod == Integer.MIN_VALUE ) {
          optInMinPeriod = 2;
       } else if( optInMinPeriod < 1 || optInMinPeriod > 10000 ) {
@@ -532,12 +535,13 @@
     * <ul>
     * <li>Fractional per-bar periods are truncated to whole numbers before being clamped to the minimum and maximum period.</li>
     * <li>Period values of 1 perform no smoothing (the bar's output equals its input); the minimum allowed period is 1 since 0.6.5.</li>
+    * <li>{@code optInMinPeriod} must not exceed {@code optInMaxPeriod}; a larger minimum is rejected.</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
-    * {@link OutRange} says where they start and how many there are; nothing
-    * outside that range is touched, and the library never pads with NaN. A
-    * valid range that ends before {@link Core#mavpLookback} is a <b>success
-    * with no values</b> ({@code count() == 0}), not an error.
+    * {@link OutRange} says where they start and how many there are, and the
+    * library never pads with NaN. A valid range that ends before
+    * {@link Core#mavpLookback} is a <b>success with no values</b>
+    * ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -608,15 +612,16 @@
     * <ul>
     * <li>Fractional per-bar periods are truncated to whole numbers before being clamped to the minimum and maximum period.</li>
     * <li>Period values of 1 perform no smoothing (the bar's output equals its input); the minimum allowed period is 1 since 0.6.5.</li>
+    * <li>{@code optInMinPeriod} must not exceed {@code optInMaxPeriod}; a larger minimum is rejected.</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
     * <p>Values are written only where the indicator is defined. The returned
-    * {@link OutRange} says where they start and how many there are; nothing
-    * outside that range is touched, and the library never pads with NaN. A
-    * valid range that ends before {@link Core#mavpLookback} is a <b>success
-    * with no values</b> ({@code count() == 0}), not an error.
+    * {@link OutRange} says where they start and how many there are, and the
+    * library never pads with NaN. A valid range that ends before
+    * {@link Core#mavpLookback} is a <b>success with no values</b>
+    * ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).

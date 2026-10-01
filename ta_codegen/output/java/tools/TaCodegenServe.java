@@ -588,10 +588,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/ac">ta-lib.org/functions/ac</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#acLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#acLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -678,10 +678,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#acLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#acLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -1628,10 +1628,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/accbands">ta-lib.org/functions/accbands</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#accbandsLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#accbandsLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -1704,10 +1704,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#accbandsLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#accbandsLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -2390,10 +2390,10 @@ class Core {
         * <li>Outside [-1, 1] there is no angle whose cosine is that value, so those elements come out NaN.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#acosLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#acosLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -2450,10 +2450,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#acosLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#acosLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -2897,10 +2897,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/ad">ta-lib.org/functions/ad</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#adLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#adLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -2964,10 +2964,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#adLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#adLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -3430,10 +3430,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/add">ta-lib.org/functions/add</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#addLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#addLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -3489,10 +3489,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#addLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#addLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -4117,10 +4117,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/adosc">ta-lib.org/functions/adosc</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#adoscLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#adoscLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -4190,10 +4190,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#adoscLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#adoscLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -4914,10 +4914,10 @@ class Core {
         * <li>No percentage form is emitted. The two published ones disagree by more than 20% on ordinary data — Qullamaggie's {@code 100 · (SMA(high/low, 20) - 1)} averages ratios, TradingView's {@code (SMA(high, 14) - SMA(low, 14)) / close · 100} takes a ratio of averages — so picking one silently would ship a second indicator under this one's name.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#adrLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#adrLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -4998,10 +4998,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#adrLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#adrLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -6113,10 +6113,10 @@ class Core {
         * <li>Wilder's original integer rounding is not applied.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#adxLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#adxLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -6191,10 +6191,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#adxLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#adxLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -7210,10 +7210,10 @@ class Core {
         * <li>Wilder's original integer rounding is not applied (unreliable when values are near 1).</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#adxrLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#adxrLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -7284,10 +7284,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#adxrLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#adxrLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -8044,10 +8044,10 @@ class Core {
         * <li>The published paper's summary formula uses a different parameterisation; this is the form of the authors' own implementation.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#almaLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#almaLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -8127,10 +8127,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#almaLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#almaLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -8946,10 +8946,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/ao">ta-lib.org/functions/ao</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#aoLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#aoLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -9026,10 +9026,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#aoLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#aoLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -9584,6 +9584,9 @@ class Core {
         */
        public int apoLookback( int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
        {
+          if( optInMAType == null ) {
+             return -1;
+          }
           if( optInFastPeriod == Integer.MIN_VALUE ) {
              optInFastPeriod = 12;
           } else if( optInFastPeriod < 2 || optInFastPeriod > 100000 ) {
@@ -10053,12 +10056,13 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>{@code optInMAType} applies to both the fast and slow moving average. {@code TA_MAType_MAMA} ignores its period argument, so with {@code optInMAType = TA_MAType_MAMA} the fast and slow MAs are identical and the output is zero at every bar.</li>
+        * <li>If the slow period is set smaller than the fast period, the two are swapped, as in {@code MACD}.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#apoLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#apoLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -10127,15 +10131,16 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>{@code optInMAType} applies to both the fast and slow moving average. {@code TA_MAType_MAMA} ignores its period argument, so with {@code optInMAType = TA_MAType_MAMA} the fast and slow MAs are identical and the output is zero at every bar.</li>
+        * <li>If the slow period is set smaller than the fast period, the two are swapped, as in {@code MACD}.</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#apoLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#apoLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -10808,10 +10813,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/aroon">ta-lib.org/functions/aroon</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#aroonLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#aroonLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -10882,10 +10887,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#aroonLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#aroonLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -11745,10 +11750,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/aroonosc">ta-lib.org/functions/aroonosc</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#aroonoscLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#aroonoscLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -11810,10 +11815,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#aroonoscLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#aroonoscLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -12606,10 +12611,10 @@ class Core {
         * <li>Wilder accumulates Swing Index values rounded to whole numbers; the running total here is of the unrounded values.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#asiLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#asiLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -12686,10 +12691,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#asiLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#asiLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -13236,10 +13241,10 @@ class Core {
         * <li>Outside [-1, 1] there is no angle whose sine is that value, so those elements come out NaN.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#asinLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#asinLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -13297,10 +13302,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#asinLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#asinLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -13680,10 +13685,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/atan">ta-lib.org/functions/atan</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#atanLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#atanLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -13736,10 +13741,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#atanLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#atanLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -14378,10 +14383,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/atr">ta-lib.org/functions/atr</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#atrLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#atrLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -14446,10 +14451,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#atrLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#atrLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -15128,10 +15133,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/avgdev">ta-lib.org/functions/avgdev</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#avgdevLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#avgdevLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -15190,10 +15195,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#avgdevLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#avgdevLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -15672,10 +15677,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/avgprice">ta-lib.org/functions/avgprice</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#avgpriceLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#avgpriceLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -15739,10 +15744,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#avgpriceLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#avgpriceLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -16110,6 +16115,9 @@ class Core {
         */
        public int bbandsLookback( int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType )
        {
+          if( optInMAType == null ) {
+             return -1;
+          }
           if( optInTimePeriod == Integer.MIN_VALUE ) {
              optInTimePeriod = 20;
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
@@ -16722,10 +16730,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/bbands">ta-lib.org/functions/bbands</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#bbandsLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#bbandsLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -16805,10 +16813,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#bbandsLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#bbandsLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -17364,6 +17372,9 @@ class Core {
         */
        public int bbwLookback( int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType )
        {
+          if( optInMAType == null ) {
+             return -1;
+          }
           if( optInTimePeriod == Integer.MIN_VALUE ) {
              optInTimePeriod = 20;
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
@@ -17912,10 +17923,10 @@ class Core {
         * <li>Wherever the middle band is not 0, BBW is bit for bit {@code ((upper - lower) / middle) * 100} computed from BBANDS' own outputs.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#bbwLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#bbwLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -17995,10 +18006,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#bbwLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#bbwLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -19100,10 +19111,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/beta">ta-lib.org/functions/beta</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#betaLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#betaLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -19169,10 +19180,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#betaLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#betaLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -20387,10 +20398,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/bop">ta-lib.org/functions/bop</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#bopLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#bopLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -20451,10 +20462,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#bopLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#bopLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -21117,10 +21128,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/cci">ta-lib.org/functions/cci</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cciLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cciLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -21185,10 +21196,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cciLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cciLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -21955,10 +21966,10 @@ class Core {
         * <li>Bulkowski's testing found this reverses bearishly only 54% of the time — "near random" — despite the pattern's classic always-bearish label; the breakout direction cannot be predicted with any real accuracy. (<a href="https://thepatternsite.com/TwoCrows.html">thepatternsite.com</a>)</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdl2crowsLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdl2crowsLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -22029,10 +22040,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdl2crowsLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdl2crowsLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -22735,10 +22746,10 @@ class Core {
         * <li>Does not verify the prior mature uptrend the pattern classically assumes for significance.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdl3blackcrowsLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdl3blackcrowsLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -22808,10 +22819,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdl3blackcrowsLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdl3blackcrowsLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -23567,10 +23578,10 @@ class Core {
         * <li>Bulkowski's testing found Three Inside Up succeeds as a bullish reversal 65% of the time (rank 20 of 103 overall) and Three Inside Down succeeds as a bearish reversal 60% of the time (rank 56 of 103) — both meaningfully better than a coin flip. (<a href="https://thepatternsite.com/ThreeInsideUp.html">thepatternsite.com</a>)</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdl3insideLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdl3insideLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -23643,10 +23654,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdl3insideLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdl3insideLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -24414,10 +24425,10 @@ class Core {
         * <li>TA-Lib's sign follows the classic continuation reading. Thomas Bulkowski's statistical study of the pattern (<i>Encyclopedia of Candlestick Charts</i>) found the opposite in practice — it acted as a reversal far more often than a continuation — so traders who follow his research read this pattern's signal in the opposite direction from what its sign here suggests.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdl3linestrikeLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdl3linestrikeLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -24490,10 +24501,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdl3linestrikeLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdl3linestrikeLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -25193,10 +25204,10 @@ class Core {
         * <li>Bulkowski's testing puts Three Outside Up at a 75% bullish-reversal success rate versus 69% for Three Outside Down — both notably higher than the closely related Three Inside Up/Down (65%/60%), i.e. the engulfing "outside" variant tests as more reliable than the harami "inside" variant. (<a href="https://thepatternsite.com/ThreeOutsideUp.html">thepatternsite.com</a>)</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdl3outsideLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdl3outsideLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -25268,10 +25279,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdl3outsideLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdl3outsideLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -25990,10 +26001,10 @@ class Core {
         * <li>Thomas Bulkowski's statistical study found this has the best reversal rate of the 103 candlestick patterns he tracked (86% bullish reversal) — but that rests on just 9 occurrences in 4.7 million candle lines, and its overall post-breakout performance ranks dead last, 103rd of 103. (<a href="https://thepatternsite.com/ThreeStarsSouth.html">thepatternsite.com</a>)</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdl3starsinsouthLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdl3starsinsouthLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -26066,10 +26077,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdl3starsinsouthLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdl3starsinsouthLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -27095,10 +27106,10 @@ class Core {
         * <li>Bulkowski's testing found this reverses a downtrend 82% of the time, but cautions the high rate mostly reflects how rare downward breakouts are afterward — moves following an upward breakout perform poorly. (<a href="https://thepatternsite.com/ThreeWhiteSoldiers.html">thepatternsite.com</a>)</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdl3whitesoldiersLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdl3whitesoldiersLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -27169,10 +27180,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdl3whitesoldiersLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdl3whitesoldiersLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -28173,10 +28184,10 @@ class Core {
         * <li>Bulkowski found the Abandoned Baby both very rare (293 occurrences out of 4.7 million candle lines, frequency rank 92 of 103) and unusually reliable when it does occur (70% success as a reversal, overall performance rank 9 of 103). (<a href="https://thepatternsite.com/AbandonBabyBull.html">thepatternsite.com</a>)</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlabandonedbabyLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlabandonedbabyLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -28252,10 +28263,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlabandonedbabyLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlabandonedbabyLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -29266,10 +29277,10 @@ class Core {
         * <li>Although classically read as a bearish reversal, Bulkowski's testing found the Advance Block actually acts as a bullish continuation 64% of the time. (<a href="https://thepatternsite.com/AdvanceBlock.html">thepatternsite.com</a>)</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdladvanceblockLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdladvanceblockLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -29340,10 +29351,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdladvanceblockLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdladvanceblockLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -30351,10 +30362,10 @@ class Core {
         * <li>Bulkowski's testing ranks the bullish Belt-Hold's 71% reversal rate 11th of 103 patterns for pure reversal reliability (bearish reverses 68% of the time) — though its overall post-breakout performance rank is a more middling 62nd/63rd of 103. (<a href="https://thepatternsite.com/BeltHoldBull.html">thepatternsite.com</a>)</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlbeltholdLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlbeltholdLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -30426,10 +30437,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlbeltholdLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlbeltholdLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -31138,10 +31149,10 @@ class Core {
         * <li>Bulkowski's data shows a directional asymmetry TA-Lib's symmetric output doesn't capture: bullish Breakaway reverses only 59% of the time ("near random"), while bearish Breakaway reverses 63% of the time overall. (<a href="https://thepatternsite.com/BullBreakaway.html">thepatternsite.com</a>)</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlbreakawayLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlbreakawayLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -31213,10 +31224,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlbreakawayLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlbreakawayLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -31989,10 +32000,10 @@ class Core {
         * <li>Bulkowski's testing found Closing Marubozu continues in its expected direction only marginally more than chance — 52% for the black variant — which he calls "near random." (<a href="https://thepatternsite.com/CloseBlkMarubozu.html">thepatternsite.com</a>)</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlclosingmarubozuLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlclosingmarubozuLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -32062,10 +32073,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlclosingmarubozuLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlclosingmarubozuLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -32778,10 +32789,10 @@ class Core {
         * <li>Despite the bullish-reversal label, Bulkowski's testing found this pattern actually behaves as a bearish continuation 75% of the time — though the finding rests on just 4 occurrences out of 4.7 million candle lines, and it ranks 101st of 103 patterns overall. (<a href="https://thepatternsite.com/ConcealBaby.html">thepatternsite.com</a>)</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlconcealbabyswallLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlconcealbabyswallLookback} is a <b>success with no
+        * values</b> ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -32850,10 +32861,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlconcealbabyswallLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlconcealbabyswallLookback} is a <b>success with no
+        * values</b> ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -33611,10 +33622,10 @@ class Core {
         * <li>Bulkowski's testing found the bearish Counterattack/Meeting Lines does not reliably reverse at all — it acts as a bullish CONTINUATION 51% of the time — and the bullish version reverses only 56% of the time, both "near random" by his classification. (<a href="https://thepatternsite.com/MeetingLinesBear.html">thepatternsite.com</a>)</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlcounterattackLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlcounterattackLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -33685,10 +33696,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlcounterattackLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlcounterattackLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -34436,10 +34447,10 @@ class Core {
         * <li>Does not verify the preceding uptrend the bearish reversal classically assumes.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdldarkcloudcoverLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdldarkcloudcoverLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -34514,10 +34525,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdldarkcloudcoverLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdldarkcloudcoverLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -35174,10 +35185,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/cdldoji">ta-lib.org/functions/cdldoji</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdldojiLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdldojiLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -35242,10 +35253,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdldojiLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdldojiLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -35896,10 +35907,10 @@ class Core {
         * <li>Bulkowski's testing contradicts the classic reading for the bullish case: theory says a bullish Doji Star (gapping down after a black candle) should be a bullish reversal, but he found it instead acts as a bearish CONTINUATION 64% of the time — almost 2 out of 3, the opposite of the textbook signal. (<a href="https://thepatternsite.com/DojiStarBull.html">thepatternsite.com</a>)</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdldojistarLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdldojistarLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -35975,10 +35986,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdldojistarLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdldojistarLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -36721,10 +36732,10 @@ class Core {
         * <li>Bulkowski's testing found this reverses the prior trend only about 50% of the time — statistically no better than a coin flip — and ranks 98th of 103 candlestick patterns for post-breakout performance. (<a href="https://thepatternsite.com/Dragonfly.html">thepatternsite.com</a>)</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdldragonflydojiLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdldragonflydojiLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -36799,10 +36810,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdldragonflydojiLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdldragonflydojiLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -37467,10 +37478,10 @@ class Core {
         * <li>Bulkowski's testing found bearish Engulfing has a strong 79% reversal rate (5th-best of 103 patterns by that measure alone) but a weak overall post-breakout performance rank of 91st of 103 — the reversal fires reliably but rarely sustains. Bullish Engulfing reverses 63% of the time with a similarly weak overall rank of 84th of 103. (<a href="https://thepatternsite.com/BearEngulfing.html">thepatternsite.com</a>)</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlengulfingLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlengulfingLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -37543,10 +37554,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlengulfingLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlengulfingLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -38253,10 +38264,10 @@ class Core {
         * <li>Does not verify the preceding uptrend the bearish reversal classically assumes.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdleveningdojistarLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdleveningdojistarLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -38331,10 +38342,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdleveningdojistarLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdleveningdojistarLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -39216,10 +39227,10 @@ class Core {
         * <li>The third candle only needs a body longer than short, not the full long body some definitions require.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdleveningstarLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdleveningstarLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -39295,10 +39306,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdleveningstarLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdleveningstarLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -40097,10 +40108,10 @@ class Core {
         * <li>Bulkowski's data shows the bullish form is rare (984 occurrences out of 4.7 million candle lines, frequency rank 73/103) but continues as labeled 66% of the time; the bearish form is rarer still (frequency rank 86/103) and its 56% continuation rate is "near random" — Bulkowski cautions the bearish sample is too thin to trust. (<a href="https://thepatternsite.com/SidebySideWhiteLinesBull.html">thepatternsite.com</a>)</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlgapsidesidewhiteLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlgapsidesidewhiteLookback} is a <b>success with no
+        * values</b> ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -40172,10 +40183,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlgapsidesidewhiteLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlgapsidesidewhiteLookback} is a <b>success with no
+        * values</b> ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -40939,10 +40950,10 @@ class Core {
         * <li>Bulkowski's testing found the bearish reversal traders expect actually shows up only 51% of the time — essentially random — and it ranks 77th of 103 patterns for post-breakout performance. (<a href="https://thepatternsite.com/Gravestone.html">thepatternsite.com</a>)</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlgravestonedojiLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlgravestonedojiLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -41017,10 +41028,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlgravestonedojiLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlgravestonedojiLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -41792,10 +41803,10 @@ class Core {
         * <li>Bulkowski's testing found the Hammer reverses a preceding downtrend about 60% of the time — in his words "not far from random (50%)" — and it ranks a modest 65th of 103 patterns for post-breakout performance. (<a href="https://thepatternsite.com/Hammer.html">thepatternsite.com</a>)</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlhammerLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlhammerLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -41865,10 +41876,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlhammerLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlhammerLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -42786,10 +42797,10 @@ class Core {
         * <li>Bulkowski's testing found this acts as a bullish continuation 59% of the time — the opposite of the bearish-reversal reading it's named for ("near random") — and it ranks 87th of 103 patterns for post-breakout performance. (<a href="https://thepatternsite.com/HangingMan.html">thepatternsite.com</a>)</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlhangingmanLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlhangingmanLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -42861,10 +42872,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlhangingmanLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlhangingmanLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -43747,10 +43758,10 @@ class Core {
         * <li>Bulkowski's testing found the bearish Harami actually acts as a bullish CONTINUATION 53% of the time — more often than it reverses the prior uptrend — rating the pattern "near random" overall (rank 72 of 103). (<a href="https://thepatternsite.com/HaramiBear.html">thepatternsite.com</a>)</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlharamiLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlharamiLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -43821,10 +43832,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlharamiLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlharamiLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -44627,10 +44638,10 @@ class Core {
         * <li>Bulkowski's testing found the bearish Harami Cross behaves opposite its textbook label even more strongly than the plain Harami: it acts as a bullish CONTINUATION 57% of the time rather than a bearish reversal, and the bullish Harami Cross likewise fails to reverse the downtrend 55% of the time. (<a href="https://thepatternsite.com/HaramiCrossBear.html">thepatternsite.com</a>)</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlharamicrossLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlharamicrossLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -44702,10 +44713,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlharamicrossLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlharamicrossLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -45471,10 +45482,10 @@ class Core {
         * <li>Bulkowski's testing found the High-Wave candle acts as a reversal only 51% of the time — statistically indistinguishable from random — which he notes actually agrees with the pattern's theoretical meaning of pure indecision. (<a href="https://thepatternsite.com/HighWave.html">thepatternsite.com</a>)</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlhighwaveLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlhighwaveLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -45547,10 +45558,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlhighwaveLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlhighwaveLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -46289,10 +46300,10 @@ class Core {
         * <li>The name comes from the Japanese word for a deceptive move or "trap" — fitting, since the pattern exists to catch traders acting on a false breakout. Bulkowski's testing of the confirmed pattern found the trap itself barely beats a coin flip: the bullish variant continues as expected only 52% of the time and the bearish variant exactly 50% ("random"), both ranking in the bottom fifth (83rd-84th of 105) for post-breakout performance. (<a href="https://thepatternsite.com/HikkakeBull.html">thepatternsite.com</a>)</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlhikkakeLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlhikkakeLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -46362,10 +46373,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlhikkakeLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlhikkakeLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -47160,10 +47171,10 @@ class Core {
         * <li>Does not verify the prior trend (downtrend for bullish, uptrend for bearish) that this reversal pattern assumes.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlhikkakemodLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlhikkakemodLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -47233,10 +47244,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlhikkakemodLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlhikkakemodLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -48060,10 +48071,10 @@ class Core {
         * <li>Despite the bullish-reversal label, Bulkowski's testing found this behaves as a bearish continuation 56% of the time — "near random" by his own description — though its overall post-breakout performance rank (21st of 103) is comparatively strong. (<a href="https://thepatternsite.com/HomingPigeon.html">thepatternsite.com</a>)</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlhomingpigeonLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlhomingpigeonLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -48132,10 +48143,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlhomingpigeonLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlhomingpigeonLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -48911,10 +48922,10 @@ class Core {
         * <li>Does not require the three bodies to be equal in size; 'identical' refers only to each candle opening at or near the previous candle's close.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlidentical3crowsLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlidentical3crowsLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -48984,10 +48995,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlidentical3crowsLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlidentical3crowsLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -49785,10 +49796,10 @@ class Core {
         * <li>Bulkowski's testing found the bearish continuation holds only 53% of the time — "near random" — though its overall post-breakout performance still ranks a strong 17th of 103. (<a href="https://www.thepatternsite.com/InNeck.html">thepatternsite.com</a>)</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlinneckLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlinneckLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -49860,10 +49871,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlinneckLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlinneckLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -50637,10 +50648,10 @@ class Core {
         * <li>Despite the bullish-reversal label, Bulkowski's testing found this actually behaves as a bearish continuation 65% of the time — yet its overall post-breakout performance rank (6th of 103) is among the best of all candlestick patterns he studied. (<a href="https://thepatternsite.com/HammerInv.html">thepatternsite.com</a>)</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlinvertedhammerLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlinvertedhammerLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -50710,10 +50721,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlinvertedhammerLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlinvertedhammerLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -51518,10 +51529,10 @@ class Core {
         * <li>Bulkowski's testing found Kicking reverses only 53% (bullish) / 54% (bearish) of the time — both "near random" — and it's also one of the rarest patterns he tracked (frequency rank 100/103 bullish, 102/103 bearish). (<a href="https://thepatternsite.com/KickingBull.html">thepatternsite.com</a>)</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlkickingLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlkickingLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -51590,10 +51601,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlkickingLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlkickingLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -52376,10 +52387,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/cdlkickingbylength">ta-lib.org/functions/cdlkickingbylength</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlkickingbylengthLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlkickingbylengthLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -52446,10 +52457,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlkickingbylengthLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlkickingbylengthLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -53200,10 +53211,10 @@ class Core {
         * <li>Bulkowski's testing found this reverses a downtrend only 56% of the time — "near random" — and it is extremely rare (451 occurrences out of 4.7 million candle lines), ranking 41st of 103 patterns for overall performance. (<a href="https://thepatternsite.com/LadderBottom.html">thepatternsite.com</a>)</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlladderbottomLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlladderbottomLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -53275,10 +53286,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlladderbottomLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlladderbottomLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -53997,10 +54008,10 @@ class Core {
         * <li>Bulkowski's testing found this continues in the direction of the prior trend only 51% of the time — statistically random — and ranks 37th of 103 patterns overall; in his words, "it means nothing." (<a href="https://thepatternsite.com/LongLegDoji.html">thepatternsite.com</a>)</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdllongleggeddojiLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdllongleggeddojiLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -54072,10 +54083,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdllongleggeddojiLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdllongleggeddojiLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -54770,10 +54781,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/cdllongline">ta-lib.org/functions/cdllongline</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdllonglineLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdllonglineLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -54840,10 +54851,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdllonglineLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdllonglineLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -55539,10 +55550,10 @@ class Core {
         * <li>Despite the shape's strong-conviction reputation, Bulkowski's testing found a Marubozu continues in its expected direction only about 53% (black) to 56% (white) of the time — both "near random." (<a href="https://thepatternsite.com/BlackMarubozu.html">thepatternsite.com</a>)</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlmarubozuLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlmarubozuLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -55611,10 +55622,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlmarubozuLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlmarubozuLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -56286,10 +56297,10 @@ class Core {
         * <li>Although classically read as a bullish reversal (and TA-Lib only emits +100), Bulkowski's testing found it actually acts as a bearish continuation 61% of the time — even so, it still ranks a strong 8th of 103 patterns for overall performance. (<a href="https://thepatternsite.com/MatchingLow.html">thepatternsite.com</a>)</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlmatchinglowLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlmatchinglowLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -56358,10 +56369,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlmatchinglowLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlmatchinglowLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -57095,10 +57106,10 @@ class Core {
         * <li>Bulkowski's own dataset contains only 52 Mat Hold occurrences out of 4.7 million candle lines; he explicitly warns the 78% continuation rate he measured "will likely be wrong or at least subject to large change as additional samples become available." (<a href="https://thepatternsite.com/MatHold.html">thepatternsite.com</a>)</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlmatholdLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlmatholdLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -57174,10 +57185,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlmatholdLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlmatholdLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -58092,10 +58103,10 @@ class Core {
         * <li>A prior downtrend is not verified.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlmorningdojistarLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlmorningdojistarLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -58173,10 +58184,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlmorningdojistarLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlmorningdojistarLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -59059,10 +59070,10 @@ class Core {
         * <li>Bulkowski ranks the Morning Star unusually high — 6th of 103 for reversal rate (78%) and 12th of 103 for overall post-breakout performance — one of the few classic candle patterns whose textbook reputation his statistics confirm rather than debunk. (<a href="https://thepatternsite.com/MorningStar.html">thepatternsite.com</a>)</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlmorningstarLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlmorningstarLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -59140,10 +59151,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlmorningstarLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlmorningstarLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -59934,10 +59945,10 @@ class Core {
         * <li>Bulkowski's testing found the bearish continuation holds only 56% of the time, which he explicitly calls "near random." (<a href="https://thepatternsite.com/OnNeck.html">thepatternsite.com</a>)</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlonneckLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlonneckLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -60007,10 +60018,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlonneckLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlonneckLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -60735,10 +60746,10 @@ class Core {
         * <li>A prior downtrend is not verified.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlpiercingLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlpiercingLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -60808,10 +60819,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlpiercingLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlpiercingLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -61536,10 +61547,10 @@ class Core {
         * <li>Bulkowski's verdict: "The rickshaw man candle may look pretty on the chart but it has no investment implications that I have been able to find" — his testing shows it continues only 51% of the time, statistically random. (<a href="https://thepatternsite.com/RickshawMan.html">thepatternsite.com</a>)</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlrickshawmanLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlrickshawmanLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -61610,10 +61621,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlrickshawmanLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlrickshawmanLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -62432,10 +62443,10 @@ class Core {
         * <li>Bulkowski's testing found Rising Three Methods continues 74% of the time (102 examples out of 4.7M candle lines) and Falling Three Methods continues 71% of the time (just 64 examples) — both act as classically labeled, but Bulkowski flags the samples as too thin to trust: Falling Three Methods is so rare he omitted its statistics from his book entirely. (<a href="https://thepatternsite.com/Rising3Methods.html">thepatternsite.com</a>)</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlrisefall3methodsLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlrisefall3methodsLookback} is a <b>success with no
+        * values</b> ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -62509,10 +62520,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlrisefall3methodsLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlrisefall3methodsLookback} is a <b>success with no
+        * values</b> ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -63390,10 +63401,10 @@ class Core {
         * <li>A prior trend is not verified, nor that the pattern aligns with it.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlseparatinglinesLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlseparatinglinesLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -63461,10 +63472,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlseparatinglinesLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlseparatinglinesLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -64300,10 +64311,10 @@ class Core {
         * <li>Bulkowski found this reverses only 59% of the time — "near random," summarized in his words as "this candle looks better than it performs" — ranking 55th of 103 patterns. (<a href="https://thepatternsite.com/ShootingStar.html">thepatternsite.com</a>)</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlshootingstarLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlshootingstarLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -64375,10 +64386,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlshootingstarLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlshootingstarLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -65153,10 +65164,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/cdlshortline">ta-lib.org/functions/cdlshortline</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlshortlineLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlshortlineLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -65222,10 +65233,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlshortlineLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlshortlineLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -65888,10 +65899,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/cdlspinningtop">ta-lib.org/functions/cdlspinningtop</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlspinningtopLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlspinningtopLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -65957,10 +65968,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlspinningtopLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlspinningtopLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -66700,10 +66711,10 @@ class Core {
         * <li>Bulkowski's testing shows this classically-bearish pattern actually acts as a bullish continuation 77% of the time — the reverse of the label — because price tends to close above the pattern's top rather than turning down. (<a href="https://thepatternsite.com/Deliberation.html">thepatternsite.com</a>)</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlstalledpatternLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlstalledpatternLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -66774,10 +66785,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlstalledpatternLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlstalledpatternLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -67662,10 +67673,10 @@ class Core {
         * <li>Although classically a bullish reversal (and TA-Lib only emits +100), Bulkowski's testing found it actually acts as a bearish continuation 62% of the time — despite that, it still ranks a respectable 14th of 103 patterns for overall performance. (<a href="https://thepatternsite.com/StickSandwich.html">thepatternsite.com</a>)</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlsticksandwichLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlsticksandwichLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -67735,10 +67746,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlsticksandwichLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlsticksandwichLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -68463,10 +68474,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/cdltakuri">ta-lib.org/functions/cdltakuri</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdltakuriLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdltakuriLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -68538,10 +68549,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdltakuriLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdltakuriLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -69294,10 +69305,10 @@ class Core {
         * <li>Bulkowski's testing found the downside Tasuki Gap actually acts as a bullish REVERSAL 54% of the time — opposite its textbook bearish-continuation label — while the upside variant does continue as labeled, but only 57% of the time ("near random"). (<a href="https://thepatternsite.com/DownsideTasukiGap.html">thepatternsite.com</a>)</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdltasukigapLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdltasukigapLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -69368,10 +69379,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdltasukigapLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdltasukigapLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -70102,10 +70113,10 @@ class Core {
         * <li>Bulkowski's testing found this classically-bearish continuation pattern actually acts as a bullish reversal 57% of the time — "near random" — though it ranks a strong 15th of 103 patterns for overall performance. (<a href="https://www.thepatternsite.com/Thrusting.html">thepatternsite.com</a>)</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlthrustingLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlthrustingLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -70178,10 +70189,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlthrustingLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlthrustingLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -70911,10 +70922,10 @@ class Core {
         * <li>Bulkowski's testing found both Tristar variants reverse only marginally better than chance — bullish 60% of the time (rank 28/103 overall, but rare: frequency rank 79/103) and bearish just 52% of the time (rank 76/103) — despite the "exhaustion signal" framing, one of the weaker reversal signals in his candlestick set. (<a href="https://thepatternsite.com/TriStarBull.html">thepatternsite.com</a>)</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdltristarLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdltristarLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -70985,10 +70996,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdltristarLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdltristarLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -71714,10 +71725,10 @@ class Core {
         * <li>Although classically a bullish reversal (and TA-Lib only emits +100), Bulkowski's testing found the opposite: it acts as a bearish continuation 60% of the time, ranking 60th of 103 patterns overall. (<a href="https://thepatternsite.com/Unique3RiverBottom.html">thepatternsite.com</a>)</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlunique3riverLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlunique3riverLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -71788,10 +71799,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlunique3riverLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlunique3riverLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -72568,10 +72579,10 @@ class Core {
         * <li>Although classically a bearish reversal, Bulkowski's testing found this actually acts as a bullish continuation 60% of the time, and even when it does work "the price move is often lousy." (<a href="https://www.thepatternsite.com/UpGapTwoCrows.html">thepatternsite.com</a>)</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlupsidegap2crowsLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlupsidegap2crowsLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -72642,10 +72653,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlupsidegap2crowsLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlupsidegap2crowsLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -73359,10 +73370,10 @@ class Core {
         * <li>Bulkowski's testing found BOTH directions of this pattern actually act as reversals more often than not, opposite the classic continuation label: the upside variant reverses bearish 59% of the time, the downside variant reverses bullish 62% of the time. (<a href="https://thepatternsite.com/UpGap3Methods.html">thepatternsite.com</a>)</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlxsidegap3methodsLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlxsidegap3methodsLookback} is a <b>success with no
+        * values</b> ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -73435,10 +73446,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cdlxsidegap3methodsLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cdlxsidegap3methodsLookback} is a <b>success with no
+        * values</b> ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -73941,10 +73952,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/ceil">ta-lib.org/functions/ceil</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#ceilLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#ceilLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -73996,10 +74007,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#ceilLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#ceilLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -75167,10 +75178,10 @@ class Core {
         * <li>Both sums are exact before the divide, so a window summing to exactly zero is always recognised and the value does not depend on where the call started. The exception is a window holding a non-finite value, a value with bits below 2^-1022 (every subnormal, and only values under about 2e-292), or values that together span more binary digits than the sums can hold exactly (97 at the default period, 84 at 1000, 58 at 100000): it is summed in floating point, oldest value first.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cgLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cgLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -75240,10 +75251,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cgLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cgLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -76945,10 +76956,10 @@ class Core {
         * <li>Dreiss's 3-bar smoothing of the index is not built in; apply a moving average to {@code outReal} to obtain it.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#chopLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#chopLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -77023,10 +77034,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#chopLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#chopLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -77811,10 +77822,10 @@ class Core {
         * <li>Dreiss's 3-bar smoothing of the index is not built in; apply a moving average to {@code outReal} to obtain it.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#choptrLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#choptrLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -77889,10 +77900,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#choptrLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#choptrLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -79360,10 +79371,10 @@ class Core {
         * <li>Both lines inherit the Average True Range's warm-up, so a caller who wants them converged sets {@code TA_FUNC_UNST_ATR}, exactly as when calling that function directly.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#ckspLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#ckspLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -79458,10 +79469,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#ckspLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#ckspLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -80921,10 +80932,10 @@ class Core {
         * <li>The default period of 20 follows the original write-up, which describes 20 or 21 bars.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cmfLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cmfLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -81015,10 +81026,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cmfLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cmfLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -81872,10 +81883,10 @@ class Core {
         * <li>Gains and losses are smoothed with Wilder's method (as in RSI) rather than the simple period sums of Chande's original definition.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cmoLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cmoLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -81936,10 +81947,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cmoLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cmoLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -82731,10 +82742,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/cmou">ta-lib.org/functions/cmou</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cmouLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cmouLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -82796,10 +82807,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cmouLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cmouLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -83811,10 +83822,10 @@ class Core {
         * <li>First output at {@code max(optInROC1Period, optInROC2Period) + optInWMAPeriod - 1}. Not start-dependent: each output depends only on its finite trailing window.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#coppockLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#coppockLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -83881,10 +83892,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#coppockLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#coppockLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -85115,10 +85126,10 @@ class Core {
         * <li>When the correlation is undefined for a window (for example a constant series), the output is 0 rather than an error or NaN.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#correlLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#correlLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -85184,10 +85195,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#correlLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#correlLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -86269,10 +86280,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/cos">ta-lib.org/functions/cos</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cosLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cosLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -86326,10 +86337,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cosLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cosLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -86708,10 +86719,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/cosh">ta-lib.org/functions/cosh</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#coshLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#coshLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -86764,10 +86775,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#coshLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#coshLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -87363,10 +87374,10 @@ class Core {
         * <li>Finite input is a precondition. A NaN close does not propagate: the output stays finite and no error is reported, but the values that follow it are wrong.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#crsiLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#crsiLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -87443,10 +87454,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#crsiLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#crsiLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -88321,10 +88332,10 @@ class Core {
         * <li>{@code optInTimePeriod} starts at 2, not 1: at {@code n = 1} the closed form {@code n²(n²−1)/12} is identically zero and every window is degenerate.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#ctiLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#ctiLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -88396,10 +88407,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#ctiLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#ctiLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -89284,10 +89295,10 @@ class Core {
         * <li>The sum is uncompensated. A Kahan or Neumaier variant would diverge from {@code AD}'s own convention, which this follows.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cumsumLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cumsumLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -89350,10 +89361,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cumsumLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cumsumLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -89950,10 +89961,10 @@ class Core {
         * <li>CVI inherits EMA's unstable period rather than owning one: {@code TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, ...)} moves CVI's first output too.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cviLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cviLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -90036,10 +90047,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#cviLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#cviLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -90794,10 +90805,10 @@ class Core {
         * <li>A period of 1 performs no smoothing: the output is a copy of the input. Allowed since 0.6.5 (issues #48/#59).</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#demaLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#demaLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -90858,10 +90869,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#demaLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#demaLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -91419,10 +91430,10 @@ class Core {
         * <li>Zero divided by zero gives NaN; anything else divided by zero gives positive or negative infinity. Neither is reported as an error.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#divLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#divLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -91482,10 +91493,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#divLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#divLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -92081,10 +92092,10 @@ class Core {
         * <li>No smoothing or recursion is involved, so there is no unstable period: outputs are exact from the first bar.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#donchianLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#donchianLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -92162,10 +92173,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#donchianLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#donchianLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -92975,10 +92986,10 @@ class Core {
         * <li>A causal variant, {@code P[i] - SMA(P, optInTimePeriod)[i - t]}, displaces the average instead of the price. It is a genuinely different series, not a re-indexing of this one, and is not implemented here.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#dpoLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#dpoLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -93047,10 +93058,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#dpoLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#dpoLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -94070,10 +94081,10 @@ class Core {
         * <li>When +DI and -DI sum to zero the value is undefined; the previous bar's DX is carried forward instead (the first such bar outputs zero).</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#dxLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#dxLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -94147,10 +94158,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#dxLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#dxLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -95197,10 +95208,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/efi">ta-lib.org/functions/efi</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#efiLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#efiLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -95273,10 +95284,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#efiLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#efiLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -96006,10 +96017,10 @@ class Core {
         * <li>A period of 1 performs no smoothing: the output is a copy of the input. Allowed since 0.6.5 (issues #48/#59).</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#emaLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#emaLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -96076,10 +96087,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#emaLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#emaLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -96773,10 +96784,10 @@ class Core {
         * <li>A period of 1 returns the unsmoothed one-bar values. Smoothing is a simple moving average; for an exponential one, apply {@code EMA} to this function's output at a period of 1.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#emvLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#emvLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -96861,10 +96872,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#emvLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#emvLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -97678,10 +97689,10 @@ class Core {
         * <li>First output at index {@code P} ({@code P} one-bar changes need {@code P+1} prices). No unstable period, not start-dependent.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#erLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#erLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -97751,10 +97762,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#erLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#erLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -98573,10 +98584,10 @@ class Core {
         * <li>No MAType parameter: every canonical source fixes the EMA, and a selectable average would invent a variant nobody ships.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#eriLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#eriLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -98652,10 +98663,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#eriLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#eriLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -99272,10 +99283,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/exp">ta-lib.org/functions/exp</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#expLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#expLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -99327,10 +99338,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#expLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#expLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -99708,10 +99719,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/floor">ta-lib.org/functions/floor</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#floorLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#floorLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -99763,10 +99774,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#floorLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#floorLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -100363,10 +100374,10 @@ class Core {
         * <li>The default window is Chande's own suggestion, shorter than the one TA-Lib's TSF and LINEARREG default to.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#foscLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#foscLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -100433,10 +100444,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#foscLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#foscLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -101254,10 +101265,10 @@ class Core {
         * <li>Each output is decided on its own side: a high tied with any other high in the window forces {@code outSwingHigh} to 0 while leaving {@code outSwingLow} free to fire 100, and the mirror holds. Only a window flat in both series emits 0 on both.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#fractalLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#fractalLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -101346,10 +101357,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#fractalLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#fractalLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -102380,10 +102391,10 @@ class Core {
         * <li>The period must be even; an odd period is rejected.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#framaLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#framaLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -102452,10 +102463,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#framaLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#framaLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -103431,10 +103442,10 @@ class Core {
         * <li>Averaging four prices of one bar is also what <a href="https://ta-lib.org/functions/avgprice">{@code AVGPRICE}</a> computes, but it sums them in a different order, so the two can differ in the last bits.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#haLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#haLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -103531,10 +103542,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#haLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#haLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -104808,10 +104819,10 @@ class Core {
         * <li>A period of 1 performs no smoothing: the output is a copy of the input.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#hmaLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#hmaLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -104889,10 +104900,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#hmaLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#hmaLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -107114,10 +107125,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/ht_dcperiod">ta-lib.org/functions/ht_dcperiod</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#htDcperiodLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#htDcperiodLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -107175,10 +107186,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#htDcperiodLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#htDcperiodLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -109060,10 +109071,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/ht_dcphase">ta-lib.org/functions/ht_dcphase</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#htDcphaseLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#htDcphaseLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -109123,10 +109134,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#htDcphaseLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#htDcphaseLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -111090,10 +111101,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/ht_phasor">ta-lib.org/functions/ht_phasor</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#htPhasorLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#htPhasorLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -111159,10 +111170,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#htPhasorLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#htPhasorLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -113043,10 +113054,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/ht_sine">ta-lib.org/functions/ht_sine</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#htSineLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#htSineLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -113109,10 +113120,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#htSineLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#htSineLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -115188,10 +115199,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/ht_trendline">ta-lib.org/functions/ht_trendline</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#htTrendlineLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#htTrendlineLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -115247,10 +115258,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#htTrendlineLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#htTrendlineLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -117416,10 +117427,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/ht_trendmode">ta-lib.org/functions/ht_trendmode</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#htTrendmodeLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#htTrendmodeLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -117477,10 +117488,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#htTrendmodeLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#htTrendmodeLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -119124,10 +119135,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/ibs">ta-lib.org/functions/ibs</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#ibsLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#ibsLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -119189,10 +119200,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#ibsLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#ibsLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -119717,10 +119728,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/imi">ta-lib.org/functions/imi</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#imiLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#imiLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -119780,10 +119791,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#imiLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#imiLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -120693,10 +120704,10 @@ class Core {
         * <li>The output never leaves the range of the prices it has seen.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#kamaLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#kamaLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -120761,10 +120772,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#kamaLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#kamaLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -121854,10 +121865,10 @@ class Core {
         * <li>The centre line and the band are separate recursions, each with its own warm-up. They are entered at their own lookbacks, so a caller who wants either one converged sets that function's unstable period — {@code TA_FUNC_UNST_EMA} for the centre line, {@code TA_FUNC_UNST_ATR} for the band.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#kcLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#kcLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -121949,10 +121960,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#kcLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#kcLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -122492,6 +122503,12 @@ class Core {
         */
        public int kdjLookback( int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType )
        {
+          if( optInSlowK_MAType == null ) {
+             return -1;
+          }
+          if( optInSlowD_MAType == null ) {
+             return -1;
+          }
           if( optInFastK_Period == Integer.MIN_VALUE ) {
              optInFastK_Period = 9;
           } else if( optInFastK_Period < 1 || optInFastK_Period > 100000 ) {
@@ -122717,10 +122734,10 @@ class Core {
         * <li>When the high-low range over the window is zero, the raw stochastic is set to 0 instead of being undefined.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#kdjLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#kdjLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -122828,10 +122845,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#kdjLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#kdjLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -124069,10 +124086,10 @@ class Core {
         * <li>Pring's daily page uses a 10-day signal. The default signal period follows the charting platforms instead.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#kstLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#kstLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -124179,10 +124196,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#kstLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#kstLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -125238,6 +125255,12 @@ class Core {
         */
        public int kstextLookback( int optInROC1Period, int optInROC2Period, int optInROC3Period, int optInROC4Period, int optInMA1Period, int optInMA2Period, int optInMA3Period, int optInMA4Period, int optInSignalPeriod, MAType optInROCMAType, MAType optInSignalMAType )
        {
+          if( optInROCMAType == null ) {
+             return -1;
+          }
+          if( optInSignalMAType == null ) {
+             return -1;
+          }
           if( optInROC1Period == Integer.MIN_VALUE ) {
              optInROC1Period = 10;
           } else if( optInROC1Period < 1 || optInROC1Period > 100000 ) {
@@ -125722,10 +125745,10 @@ class Core {
         * <li>The weights go with leg position, not with the length of the rate of change.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#kstextLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#kstextLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -125840,10 +125863,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#kstextLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#kstextLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -126911,10 +126934,10 @@ class Core {
         * <li>The result is at most {@code n}, the value of one reading apart from {@code n−1} equal ones, so a window dominated by one outlier is legitimately far above 0.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#kurtosisLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#kurtosisLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -126984,10 +127007,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#kurtosisLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#kurtosisLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -128117,10 +128140,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/linearreg">ta-lib.org/functions/linearreg</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#linearregLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#linearregLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -128179,10 +128202,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#linearregLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#linearregLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -129249,10 +129272,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/linearreg_angle">ta-lib.org/functions/linearreg_angle</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#linearregAngleLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#linearregAngleLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -129313,10 +129336,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#linearregAngleLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#linearregAngleLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -130373,10 +130396,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/linearreg_intercept">ta-lib.org/functions/linearreg_intercept</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#linearregInterceptLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#linearregInterceptLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -130435,10 +130458,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#linearregInterceptLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#linearregInterceptLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -131489,10 +131512,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/linearreg_slope">ta-lib.org/functions/linearreg_slope</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#linearregSlopeLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#linearregSlopeLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -131552,10 +131575,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#linearregSlopeLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#linearregSlopeLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -132342,10 +132365,10 @@ class Core {
         * <li>The logarithm is defined only for positive values: a negative input gives NaN, and a zero input gives negative infinity.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#lnLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#lnLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -132402,10 +132425,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#lnLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#lnLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -132787,10 +132810,10 @@ class Core {
         * <li>The logarithm is defined only for positive values: a negative input gives NaN, and a zero input gives negative infinity.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#log10Lookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#log10Lookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -132846,10 +132869,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#log10Lookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#log10Lookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -133175,6 +133198,9 @@ class Core {
         */
        public int maLookback( int optInTimePeriod, MAType optInMAType )
        {
+          if( optInMAType == null ) {
+             return -1;
+          }
           if( optInTimePeriod == Integer.MIN_VALUE ) {
              optInTimePeriod = 30;
           } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
@@ -133578,10 +133604,10 @@ class Core {
         * <li>{@code TA_MAType_DEFAULT} selects the documented default of the parameter it is passed to — SMA here, EMA for APO, PPO and PVO. Every function that takes an MAType parameter accepts it.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#maLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#maLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -133662,10 +133688,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#maLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#maLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -135231,10 +135257,10 @@ class Core {
         * <li>A signal period of 1 disables signal-line smoothing: the signal equals the MACD line and the histogram is zero. Before 0.6.5 this parameter value produced misaligned output (issues #48/#59).</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#macdLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#macdLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -135315,10 +135341,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#macdLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#macdLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -135943,6 +135969,15 @@ class Core {
         */
        public int macdextLookback( int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType )
        {
+          if( optInFastMAType == null ) {
+             return -1;
+          }
+          if( optInSlowMAType == null ) {
+             return -1;
+          }
+          if( optInSignalMAType == null ) {
+             return -1;
+          }
           if( optInFastPeriod == Integer.MIN_VALUE ) {
              optInFastPeriod = 12;
           } else if( optInFastPeriod < 2 || optInFastPeriod > 100000 ) {
@@ -136316,10 +136351,10 @@ class Core {
         * <li>{@code TA_MAType_MAMA} ignores its period argument, so it always produces the same series regardless of the period requested. If both {@code optInFastMAType} and {@code optInSlowMAType} are set to MAMA, the fast and slow lines are therefore identical and MACD, Signal, and Hist are all zero at every bar. Select MAMA for only one side to get a meaningful spread.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#macdextLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#macdextLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -136421,10 +136456,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#macdextLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#macdextLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -137347,10 +137382,10 @@ class Core {
         * <li>A signal period of 1 disables signal-line smoothing: the signal equals the MACD line and the histogram is zero. Before 0.6.5 this parameter value produced misaligned output (issues #48/#59).</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#macdfixLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#macdfixLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -137423,10 +137458,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#macdfixLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#macdfixLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -138804,10 +138839,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/mama">ta-lib.org/functions/mama</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#mamaLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#mamaLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -138878,10 +138913,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#mamaLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#mamaLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -140568,10 +140603,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/marketfi">ta-lib.org/functions/marketfi</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#marketfiLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#marketfiLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -140642,10 +140677,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#marketfiLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#marketfiLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -141399,10 +141434,10 @@ class Core {
         * <li>MASSI inherits EMA's unstable period rather than owning one, and inherits it twice: {@code TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, u)} moves the first output by 2u.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#massiLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#massiLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -141485,10 +141520,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#massiLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#massiLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -142055,6 +142090,9 @@ class Core {
         */
        public int mavpLookback( int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
        {
+          if( optInMAType == null ) {
+             return -1;
+          }
           if( optInMinPeriod == Integer.MIN_VALUE ) {
              optInMinPeriod = 2;
           } else if( optInMinPeriod < 1 || optInMinPeriod > 10000 ) {
@@ -142549,12 +142587,13 @@ class Core {
         * <ul>
         * <li>Fractional per-bar periods are truncated to whole numbers before being clamped to the minimum and maximum period.</li>
         * <li>Period values of 1 perform no smoothing (the bar's output equals its input); the minimum allowed period is 1 since 0.6.5.</li>
+        * <li>{@code optInMinPeriod} must not exceed {@code optInMaxPeriod}; a larger minimum is rejected.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#mavpLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#mavpLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -142625,15 +142664,16 @@ class Core {
         * <ul>
         * <li>Fractional per-bar periods are truncated to whole numbers before being clamped to the minimum and maximum period.</li>
         * <li>Period values of 1 perform no smoothing (the bar's output equals its input); the minimum allowed period is 1 since 0.6.5.</li>
+        * <li>{@code optInMinPeriod} must not exceed {@code optInMaxPeriod}; a larger minimum is rejected.</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#mavpLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#mavpLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -143524,10 +143564,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/max">ta-lib.org/functions/max</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#maxLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#maxLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -143584,10 +143624,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#maxLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#maxLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -144243,10 +144283,10 @@ class Core {
         * <li>When several bars in a window share the highest value, the index of one of them is returned — not necessarily the first or the last.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#maxindexLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#maxindexLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -144311,10 +144351,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#maxindexLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#maxindexLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -144971,10 +145011,10 @@ class Core {
         * <li>Some implementations write the step's denominator as {@code 0.6 * P * (x / MD)^4}. That is this function at a period of {@code 0.6 * P}, when that is an integer.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#mcgdLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#mcgdLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -145045,10 +145085,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#mcgdLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#mcgdLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -145886,10 +145926,10 @@ class Core {
         * <li>Every input value must be finite. A NaN makes every comparison against it false, which breaks the order the window is kept in, and the output can stay wrong long after the NaN has left the window.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#medianLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#medianLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -145960,10 +146000,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#medianLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#medianLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -146742,10 +146782,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/medprice">ta-lib.org/functions/medprice</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#medpriceLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#medpriceLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -146803,10 +146843,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#medpriceLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#medpriceLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -147505,10 +147545,10 @@ class Core {
         * <li>A window in which no bar contributed any money flow — every typical price unchanged, or no volume traded — leaves the index undefined (0/0); 0 is returned. The result does not otherwise depend on the size of the money flow: scaling every volume, or quoting the instrument in a different unit, leaves the index unchanged.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#mfiLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#mfiLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -147580,10 +147620,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#mfiLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#mfiLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -148564,10 +148604,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/midpoint">ta-lib.org/functions/midpoint</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#midpointLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#midpointLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -148625,10 +148665,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#midpointLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#midpointLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -149552,10 +149592,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/midprice">ta-lib.org/functions/midprice</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#midpriceLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#midpriceLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -149616,10 +149656,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#midpriceLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#midpriceLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -150474,10 +150514,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/min">ta-lib.org/functions/min</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#minLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#minLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -150533,10 +150573,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#minLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#minLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -151190,10 +151230,10 @@ class Core {
         * <li>When several bars in a window share the lowest value, the index of one of them is returned — not necessarily the first or the last.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#minindexLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#minindexLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -151258,10 +151298,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#minindexLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#minindexLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -152092,10 +152132,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/minmax">ta-lib.org/functions/minmax</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#minmaxLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#minmaxLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -152160,10 +152200,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#minmaxLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#minmaxLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -152985,10 +153025,10 @@ class Core {
         * <li>When several bars in a window share the extreme value, the index of one of them is returned — not necessarily the first or the last.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#minmaxindexLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#minmaxindexLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -153056,10 +153096,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#minmaxindexLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#minmaxindexLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -154219,10 +154259,10 @@ class Core {
         * <li>Wilder's original integer rounding is not applied (it was removed as unreliable when values are near 1).</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#minusDiLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#minusDiLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -154294,10 +154334,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#minusDiLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#minusDiLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -155638,10 +155678,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/minus_dm">ta-lib.org/functions/minus_dm</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#minusDmLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#minusDmLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -155705,10 +155745,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#minusDmLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#minusDmLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -156576,10 +156616,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/mom">ta-lib.org/functions/mom</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#momLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#momLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -156638,10 +156678,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#momLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#momLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -157118,10 +157158,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/mult">ta-lib.org/functions/mult</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#multLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#multLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -157177,10 +157217,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#multLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#multLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -157903,10 +157943,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/natr">ta-lib.org/functions/natr</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#natrLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#natrLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -157972,10 +158012,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#natrLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#natrLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -158712,10 +158752,10 @@ class Core {
         * <li>The index compounds, so it has no upper bound. If a run of large rises ever pushes it past the largest representable number, the last representable value is carried forward instead of returning infinity. Real price series stay far away from that.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#nviLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#nviLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -158775,10 +158815,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#nviLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#nviLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -159302,10 +159342,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/obv">ta-lib.org/functions/obv</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#obvLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#obvLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -159359,10 +159399,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#obvLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#obvLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -159725,6 +159765,9 @@ class Core {
         */
        public int percentbLookback( int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType )
        {
+          if( optInMAType == null ) {
+             return -1;
+          }
           if( optInTimePeriod == Integer.MIN_VALUE ) {
              optInTimePeriod = 20;
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
@@ -160306,10 +160349,10 @@ class Core {
         * <li>PERCENTB is bit for bit {@code (inReal - lower) / (upper - lower)} computed from BBANDS' own outputs, and 0.5 wherever those two bands are equal.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#percentbLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#percentbLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -160388,10 +160431,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#percentbLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#percentbLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -161324,10 +161367,10 @@ class Core {
         * <li>Every input value in the window must be finite. A NaN makes every comparison against it false, which breaks the ordering the rank index is read from.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#percentileLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#percentileLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -161400,10 +161443,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#percentileLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#percentileLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -162222,10 +162265,10 @@ class Core {
         * <li>Finite input is a precondition. A NaN in the window fails every comparison, so it silently lowers the rank instead of propagating: the output stays finite and no error is reported.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#percentrankLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#percentrankLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -162300,10 +162343,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#percentrankLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#percentrankLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -163305,10 +163348,10 @@ class Core {
         * <li>Wilder's original integer rounding of intermediate values is not applied (it was unreliable when values are near 1).</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#plusDiLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#plusDiLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -163380,10 +163423,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#plusDiLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#plusDiLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -164726,10 +164769,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/plus_dm">ta-lib.org/functions/plus_dm</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#plusDmLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#plusDmLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -164793,10 +164836,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#plusDmLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#plusDmLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -165523,6 +165566,9 @@ class Core {
         */
        public int ppoLookback( int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
        {
+          if( optInMAType == null ) {
+             return -1;
+          }
           if( optInFastPeriod == Integer.MIN_VALUE ) {
              optInFastPeriod = 12;
           } else if( optInFastPeriod < 2 || optInFastPeriod > 100000 ) {
@@ -166115,12 +166161,13 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>{@code optInMAType} applies to both the fast and slow moving average. {@code TA_MAType_MAMA} ignores its period argument, so with {@code optInMAType = TA_MAType_MAMA} the fast and slow MAs are identical, making the numerator — and therefore the output — zero at every bar.</li>
+        * <li>If the slow period is set smaller than the fast period, the two are swapped, as in {@code MACD}.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#ppoLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#ppoLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -166188,15 +166235,16 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>{@code optInMAType} applies to both the fast and slow moving average. {@code TA_MAType_MAMA} ignores its period argument, so with {@code optInMAType = TA_MAType_MAMA} the fast and slow MAs are identical, making the numerator — and therefore the output — zero at every bar.</li>
+        * <li>If the slow period is set smaller than the fast period, the two are swapped, as in {@code MACD}.</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#ppoLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#ppoLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -166850,10 +166898,10 @@ class Core {
         * <li>The index compounds, so it has no upper bound. If a run of large rises ever pushes it past the largest representable number, the last representable value is carried forward instead of returning infinity. Real price series stay far away from that.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#pviLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#pviLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -166913,10 +166961,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#pviLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#pviLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -167350,6 +167398,9 @@ class Core {
         */
        public int pvoLookback( int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
        {
+          if( optInMAType == null ) {
+             return -1;
+          }
           if( optInFastPeriod == Integer.MIN_VALUE ) {
              optInFastPeriod = 12;
           } else if( optInFastPeriod < 2 || optInFastPeriod > 100000 ) {
@@ -167944,12 +167995,13 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>{@code optInMAType} applies to both the fast and slow moving average. {@code TA_MAType_MAMA} ignores its period argument, so with {@code optInMAType = TA_MAType_MAMA} the fast and slow MAs are identical, making the numerator — and therefore the output — zero at every bar.</li>
+        * <li>If the slow period is set smaller than the fast period, the two are swapped, as in {@code MACD}.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#pvoLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#pvoLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -168019,15 +168071,16 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>{@code optInMAType} applies to both the fast and slow moving average. {@code TA_MAType_MAMA} ignores its period argument, so with {@code optInMAType = TA_MAType_MAMA} the fast and slow MAs are identical, making the numerator — and therefore the output — zero at every bar.</li>
+        * <li>If the slow period is set smaller than the fast period, the two are swapped, as in {@code MACD}.</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#pvoLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#pvoLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -168652,10 +168705,10 @@ class Core {
         * <li>A bar whose previous close is exactly zero contributes nothing and the running total is carried forward unchanged, rather than dividing by zero. A flat stretch of the output can therefore mean either genuine zero net accumulation or a run of zero previous closes.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#pvtLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#pvtLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -168727,10 +168780,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#pvtLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#pvtLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -169285,10 +169338,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/qstick">ta-lib.org/functions/qstick</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#qstickLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#qstickLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -169354,10 +169407,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#qstickLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#qstickLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -170019,10 +170072,10 @@ class Core {
         * <li>Being recursive, an output depends on how much history precedes it: the same bar computed from an earlier start differs while the seed still carries weight, and that difference decays by a factor of {@code 1 - 1/N} per bar. The unstable period is how much of the warm-up to discard.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#rmaLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#rmaLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -170107,10 +170160,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#rmaLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#rmaLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -170694,10 +170747,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/roc">ta-lib.org/functions/roc</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#rocLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#rocLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -170757,10 +170810,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#rocLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#rocLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -171346,10 +171399,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/rocp">ta-lib.org/functions/rocp</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#rocpLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#rocpLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -171409,10 +171462,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#rocpLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#rocpLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -172001,10 +172054,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/rocr">ta-lib.org/functions/rocr</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#rocrLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#rocrLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -172064,10 +172117,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#rocrLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#rocrLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -172657,10 +172710,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/rocr100">ta-lib.org/functions/rocr100</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#rocr100Lookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#rocr100Lookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -172721,10 +172774,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#rocr100Lookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#rocr100Lookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -173454,10 +173507,10 @@ class Core {
         * <li>After a move, an unchanged input holds the last value until the two averages decay to rounding residue: about a thousand unchanged bars at period 2, about ten thousand at period 14. The output then drifts and settles on 50. Input that had only risen or only fallen stays at 100 or 0, except at period 2.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#rsiLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#rsiLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -173519,10 +173572,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#rsiLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#rsiLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -174690,10 +174743,10 @@ class Core {
         * <li>Unrelated to the Relative Vigor Index, which several platforms also abbreviate RVI.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#rviLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#rviLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -174769,10 +174822,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#rviLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#rviLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -175827,10 +175880,10 @@ class Core {
         * <li>RVIR is the 1995 revision; <a href="https://ta-lib.org/functions/rvi">{@code RVI}</a> is the 1993 version.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#rvirLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#rvirLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -175905,10 +175958,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#rvirLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#rvirLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -176537,10 +176590,10 @@ class Core {
         * <li>A window in which every bar traded nothing has a baseline of zero and no defined ratio: that element is ±Inf, or NaN when the current bar is also zero. Real volume is non-negative, so this only happens on a dead window — an instrument that did not trade at all, or a series carrying no volume, such as a cash-index feed.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#rvolLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#rvolLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -176612,10 +176665,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#rvolLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#rvolLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -177538,10 +177591,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/sar">ta-lib.org/functions/sar</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#sarLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#sarLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -177607,10 +177660,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#sarLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#sarLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -179116,10 +179169,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/sarext">ta-lib.org/functions/sarext</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#sarextLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#sarextLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -179204,10 +179257,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#sarextLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#sarextLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -180380,10 +180433,10 @@ class Core {
         * <li>A bar that moves more than the limit move can read beyond -100 or +100; the output is not clamped.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#siLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#siLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -180462,10 +180515,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#siLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#siLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -181019,10 +181072,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/sin">ta-lib.org/functions/sin</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#sinLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#sinLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -181075,10 +181128,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#sinLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#sinLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -181456,10 +181509,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/sinh">ta-lib.org/functions/sinh</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#sinhLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#sinhLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -181511,10 +181564,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#sinhLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#sinhLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -181994,10 +182047,10 @@ class Core {
         * <li>A period of 1 performs no smoothing: the output is a copy of the input. Allowed since 0.6.5 (issues #48/#59).</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#smaLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#smaLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -182060,10 +182113,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#smaLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#smaLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -183141,10 +183194,10 @@ class Core {
         * <li>One output range covers both outputs, so the SMI values consumed by the signal line's own warm-up are not published.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#smiLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#smiLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -183238,10 +183291,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#smiLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#smiLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -184199,10 +184252,10 @@ class Core {
         * <li>A negative input has no real square root, so those elements come out NaN.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#sqrtLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#sqrtLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -184255,10 +184308,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#sqrtLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#sqrtLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -185440,10 +185493,10 @@ class Core {
         * <li>Being recursive, an output depends on how much history precedes it. The unstable period warms the two smoothers; the EMA unstable period warms the MACD line.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#stcLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#stcLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -185515,10 +185568,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#stcLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#stcLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -186780,10 +186833,10 @@ class Core {
         * <li>Uses population variance (divides by the period, not period minus one), so results differ slightly from the sample standard deviation used by some tools.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#stddevLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#stddevLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -186847,10 +186900,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#stddevLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#stddevLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -187278,6 +187331,12 @@ class Core {
         */
        public int stochLookback( int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType )
        {
+          if( optInSlowK_MAType == null ) {
+             return -1;
+          }
+          if( optInSlowD_MAType == null ) {
+             return -1;
+          }
           if( optInFastK_Period == Integer.MIN_VALUE ) {
              optInFastK_Period = 5;
           } else if( optInFastK_Period < 1 || optInFastK_Period > 100000 ) {
@@ -187745,10 +187804,10 @@ class Core {
         * <li>When the high-low range over the window is zero, the raw stochastic is set to 0 instead of being undefined.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#stochLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#stochLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -187843,10 +187902,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#stochLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#stochLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -188689,6 +188748,9 @@ class Core {
         */
        public int stochfLookback( int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
        {
+          if( optInFastD_MAType == null ) {
+             return -1;
+          }
           if( optInFastK_Period == Integer.MIN_VALUE ) {
              optInFastK_Period = 5;
           } else if( optInFastK_Period < 1 || optInFastK_Period > 100000 ) {
@@ -189101,10 +189163,10 @@ class Core {
         * <li>When the high-low range over the window is zero, %K is set to 0 instead of being undefined.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#stochfLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#stochfLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -189188,10 +189250,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#stochfLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#stochfLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -189978,6 +190040,9 @@ class Core {
         */
        public int stochrsiLookback( int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
        {
+          if( optInFastD_MAType == null ) {
+             return -1;
+          }
           if( optInTimePeriod == Integer.MIN_VALUE ) {
              optInTimePeriod = 14;
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
@@ -190235,10 +190300,10 @@ class Core {
         * <li>When the RSI's recent range is zero, %K is set to 0 instead of being undefined.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#stochrsiLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#stochrsiLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -190321,10 +190386,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#stochrsiLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#stochrsiLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -190889,10 +190954,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/sub">ta-lib.org/functions/sub</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#subLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#subLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -190948,10 +191013,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#subLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#subLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -191430,10 +191495,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/sum">ta-lib.org/functions/sum</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#sumLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#sumLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -191488,10 +191553,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#sumLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#sumLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -192305,10 +192370,10 @@ class Core {
         * <li>The band inherits the Average True Range's warm-up, so a caller who wants it converged sets {@code TA_FUNC_UNST_ATR}, exactly as when calling that function directly.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#supertrendLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#supertrendLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -192396,10 +192461,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#supertrendLookback} is a
-        * <b>success with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#supertrendLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -193489,10 +193554,10 @@ class Core {
         * <li>A period of 1 performs no smoothing: the output is a copy of the input. Allowed since 0.6.5 (issues #48/#59).</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#t3Lookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#t3Lookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -193559,10 +193624,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#t3Lookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#t3Lookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -194198,10 +194263,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/tan">ta-lib.org/functions/tan</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#tanLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#tanLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -194255,10 +194320,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#tanLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#tanLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -194637,10 +194702,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/tanh">ta-lib.org/functions/tanh</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#tanhLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#tanhLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -194693,10 +194758,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#tanhLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#tanhLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -195325,10 +195390,10 @@ class Core {
         * <li>A period of 1 performs no smoothing: the output is a copy of the input. Allowed since 0.6.5 (issues #48/#59).</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#temaLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#temaLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -195390,10 +195455,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#temaLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#temaLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -196066,10 +196131,10 @@ class Core {
         * <li>The first bar produces no value because it has no prior close; unlike some definitions, it does not fall back to the high-low range for that bar.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#trangeLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#trangeLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -196134,10 +196199,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#trangeLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#trangeLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -197010,10 +197075,10 @@ class Core {
         * <li>A period of 1 performs no smoothing: the output is a copy of the input. Allowed since 0.6.5 (issues #48/#59).</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#trimaLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#trimaLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -197077,10 +197142,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#trimaLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#trimaLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -198331,10 +198396,10 @@ class Core {
         * <li>The final rate-of-change step yields 0 when the previous smoothed value is exactly zero, rather than being undefined.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#trixLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#trixLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -198399,10 +198464,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#trixLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#trixLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -199200,10 +199265,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/tsf">ta-lib.org/functions/tsf</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#tsfLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#tsfLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -199263,10 +199328,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#tsfLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#tsfLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -200370,10 +200435,10 @@ class Core {
         * <li>The parameters are named by the order they are applied in, not fast and slow. Blau's published pair applies the longer average first, the inverse of the differenced fast/slow pairs elsewhere in the library, so swapping them silently returns a different indicator with the same lookback.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#tsiLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#tsiLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -200454,10 +200519,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#tsiLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#tsiLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -201068,10 +201133,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/typprice">ta-lib.org/functions/typprice</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#typpriceLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#typpriceLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -201131,10 +201196,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#typpriceLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#typpriceLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -202052,10 +202117,10 @@ class Core {
         * <li>The three periods are sorted internally, so the 4/2/1 weighting always applies to the shortest, middle, and longest period regardless of the order in which you pass them.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#ultoscLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#ultoscLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -202131,10 +202196,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#ultoscLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#ultoscLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -203352,10 +203417,10 @@ class Core {
         * <li>The deviation-count parameter is accepted but has no effect on the result.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#varLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#varLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -203420,10 +203485,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#varLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#varLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -204317,10 +204382,10 @@ class Core {
         * <li>Adam White later described an 18-bar VHF smoothed by a 6-bar moving average. That variant is not implemented here; apply a moving average to {@code outReal} to obtain it.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#vhfLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#vhfLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -204389,10 +204454,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#vhfLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#vhfLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -205302,10 +205367,10 @@ class Core {
         * <li>As an {@code MA} type, the one period is n and the CMO period is (3n + 2) / 4 in integer division, Chande's 12:9 ratio.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#vidyaLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#vidyaLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -205377,10 +205442,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#vidyaLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#vidyaLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -206503,10 +206568,10 @@ class Core {
         * <li>Not start-dependent: each output depends only on the finite trailing window. No unstable period.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#vortexLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#vortexLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -206585,10 +206650,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#vortexLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#vortexLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -207621,10 +207686,10 @@ class Core {
         * <li>A bar whose price or volume is not a finite number cannot be weighted, so it is left out of the average entirely and repeats the previous value. It is skipped, not absorbed: the running average stays usable and resumes on the next bar that can be weighted, rather than being held at one stale value for the remainder of the range.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#vwapLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#vwapLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -207705,10 +207770,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#vwapLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#vwapLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -208622,10 +208687,10 @@ class Core {
         * <li>Volume is expected to be non-negative. Individual zero-volume bars are fine: a bar that did not trade simply carries no weight, and the average stays well defined as long as some bar in the window has volume. At a period of 2 or more, a window in which <i>every</i> volume is zero has no weights at all; the weighted mean is then undefined and that element is NaN, as it is in every other implementation. Series carrying no volume on any bar, such as cash-index feeds, are outside what a volume-weighted average can describe — use SMA or WMA there.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#vwmaLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#vwmaLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -208699,10 +208764,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#vwmaLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#vwmaLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -209453,10 +209518,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/wad">ta-lib.org/functions/wad</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#wadLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#wadLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -209531,10 +209596,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#wadLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#wadLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -210044,10 +210109,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/wclprice">ta-lib.org/functions/wclprice</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#wclpriceLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#wclpriceLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -210107,10 +210172,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#wclpriceLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#wclpriceLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -210877,10 +210942,10 @@ class Core {
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/willr">ta-lib.org/functions/willr</a>.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#willrLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#willrLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -210945,10 +211010,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#willrLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#willrLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -211896,10 +211961,10 @@ class Core {
         * <li>A period of 1 performs no smoothing: the output is a copy of the input. Allowed since 0.6.5 (issues #48/#59).</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#wmaLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#wmaLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -211963,10 +212028,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#wmaLookback} is a <b>success with
-        * no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#wmaLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -213117,10 +213182,10 @@ class Core {
         * <li>A period of 1 performs no smoothing: the output is a copy of the input.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#zlemaLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#zlemaLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -213202,10 +213267,10 @@ class Core {
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
         * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are; nothing
-        * outside that range is touched, and the library never pads with NaN. A
-        * valid range that ends before {@link Core#zlemaLookback} is a <b>success
-        * with no values</b> ({@code count() == 0}), not an error.
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#zlemaLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
         *
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
@@ -213663,7 +213728,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "a7472e1f99683370";
+    static final String SPLICED_GENCODE_DIGEST = "5107a47782f9bf97";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];

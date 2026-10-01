@@ -67,7 +67,7 @@ namespace TALib.Test;
 /// library takes no test dependency, and `dotnet build` + a plain `Main` is the
 /// whole harness. Numerical correctness is NOT this file's job —
 /// <c>ta_regtest --codegen</c> and <c>--xlang-hash</c> prove that bit-for-bit
-/// against the C reference for all 168 functions. What is tested here is the
+/// against the C reference for every function. What is tested here is the
 /// surface a C# caller touches, which no cross-language harness ever sees:
 /// the OutRange value type, the exception mapping, the unguarded tier, and the
 /// float overloads.</para>

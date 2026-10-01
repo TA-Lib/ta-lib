@@ -84,8 +84,8 @@ pub fn guarded_docs(
     }
     b.para(&format!(
         "Values are written only where the indicator is defined. The returned \
-         <see cref=\"OutRange\"/> says where they start and how many there are; nothing \
-         outside that range is touched, and the library never pads with NaN. A valid range \
+         <see cref=\"OutRange\"/> says where they start and how many there are, and the \
+         library never pads with NaN. A valid range \
          that ends before <c>{cs_name}Lookback</c> is a <b>success with no values</b> \
          (<c>Count == 0</c>), not an error."
     ));

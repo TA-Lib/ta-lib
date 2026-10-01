@@ -520,10 +520,10 @@ public partial class Core
    /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
-   /// <see cref="OutRange"/> says where they start and how many there are;
-   /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range that ends before <c>StochfLookback</c> is a <b>success
-   /// with no values</b> (<c>Count == 0</c>), not an error.
+   /// <see cref="OutRange"/> says where they start and how many there are, and
+   /// the library never pads with NaN. A valid range that ends before
+   /// <c>StochfLookback</c> is a <b>success with no values</b> (<c>Count ==
+   /// 0</c>), not an error.
    /// </para>
    /// <para>
    /// Every exception it throws, except the runtime's own
@@ -621,10 +621,10 @@ public partial class Core
    /// </para>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
-   /// <see cref="OutRange"/> says where they start and how many there are;
-   /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range that ends before <c>StochfLookback</c> is a <b>success
-   /// with no values</b> (<c>Count == 0</c>), not an error.
+   /// <see cref="OutRange"/> says where they start and how many there are, and
+   /// the library never pads with NaN. A valid range that ends before
+   /// <c>StochfLookback</c> is a <b>success with no values</b> (<c>Count ==
+   /// 0</c>), not an error.
    /// </para>
    /// <para>
    /// Every exception it throws, except the runtime's own

@@ -590,13 +590,14 @@ public partial class Core
    /// <list type="bullet">
    /// <item><description>Fractional per-bar periods are truncated to whole numbers before being clamped to the minimum and maximum period.</description></item>
    /// <item><description>Period values of 1 perform no smoothing (the bar's output equals its input); the minimum allowed period is 1 since 0.6.5.</description></item>
+   /// <item><description><c>optInMinPeriod</c> must not exceed <c>optInMaxPeriod</c>; a larger minimum is rejected.</description></item>
    /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
-   /// <see cref="OutRange"/> says where they start and how many there are;
-   /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range that ends before <c>MavpLookback</c> is a <b>success
-   /// with no values</b> (<c>Count == 0</c>), not an error.
+   /// <see cref="OutRange"/> says where they start and how many there are, and
+   /// the library never pads with NaN. A valid range that ends before
+   /// <c>MavpLookback</c> is a <b>success with no values</b> (<c>Count ==
+   /// 0</c>), not an error.
    /// </para>
    /// <para>
    /// Every exception it throws, except the runtime's own
@@ -677,6 +678,7 @@ public partial class Core
    /// <list type="bullet">
    /// <item><description>Fractional per-bar periods are truncated to whole numbers before being clamped to the minimum and maximum period.</description></item>
    /// <item><description>Period values of 1 perform no smoothing (the bar's output equals its input); the minimum allowed period is 1 since 0.6.5.</description></item>
+   /// <item><description><c>optInMinPeriod</c> must not exceed <c>optInMaxPeriod</c>; a larger minimum is rejected.</description></item>
    /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
@@ -686,10 +688,10 @@ public partial class Core
    /// </para>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
-   /// <see cref="OutRange"/> says where they start and how many there are;
-   /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range that ends before <c>MavpLookback</c> is a <b>success
-   /// with no values</b> (<c>Count == 0</c>), not an error.
+   /// <see cref="OutRange"/> says where they start and how many there are, and
+   /// the library never pads with NaN. A valid range that ends before
+   /// <c>MavpLookback</c> is a <b>success with no values</b> (<c>Count ==
+   /// 0</c>), not an error.
    /// </para>
    /// <para>
    /// Every exception it throws, except the runtime's own

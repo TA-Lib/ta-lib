@@ -117,7 +117,7 @@ Every indicator is overloaded for `float[]` inputs as well as `double[]` — see
 
 ### 3.2 Output Size and Lookback {#output_size}
 
-An output is written only where the indicator is defined — a 30-period SMA has no value until the 30th bar. `begIdx()` is the first valid bar and `count()` is the number written; the rest of the array is left untouched, never padded with NaN. Size the output array to at least `endIdx - startIdx + 1`, or exactly with the lookback:
+An output is written only where the indicator is defined — a 30-period SMA has no value until the 30th bar. `begIdx()` is the first valid bar and `count()` is the number written; the array is never padded with NaN. Size the output array to at least `endIdx - startIdx + 1`, or exactly with the lookback:
 
 ```java
 int lookback = Core.DEFAULT.smaLookback(30);    // 29 for a 30-period SMA
@@ -147,7 +147,7 @@ Misuse throws rather than returning a return code:
 | Optional parameter outside its documented range | `TALibArgumentException` |
 | Two outputs sharing one array | `TALibArgumentException` |
 | An array too short for the range requested, including an `endIdx` past the end of the input | `TALibArgumentException` |
-| A null input or output array | `TALibArgumentException` |
+| A null array, other than an output that may be declined ([O5](/spec/inputs-outputs/#o5)) | `TALibArgumentException` |
 
 Each extends the platform type you would reach for — `TALibIndexException` an
 `IndexOutOfBoundsException`, the rest an `IllegalArgumentException` — so catching

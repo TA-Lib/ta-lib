@@ -46,7 +46,7 @@ UpperCamel for both.
 | filling opener | `TA_SMA_OpenAndFill` | `sma_open_and_fill` | `smaOpenAndFill` | `SmaOpenAndFill` |
 | open seams (not public) | `TA_SMA_OpenImpl`, `TA_SMA_StepImpl`, `TA_SMA_ReleaseImpl` | `sma_open_impl`, `sma_step_impl` | `smaOpenImpl`, `smaOpenInternal`, `smaStepImpl` | `SmaOpenImpl`, `SmaOpenInternal`, `SmaStepImpl` |
 | handle type | `TA_SMA_Stream` | `SmaStream` | `Core.SmaStream` | `Core.SmaStream` |
-| handle methods | `TA_SMA_Update`, `_Peek`, `_Value`, `_OutRange`, `_Advance`, `_Clone`, `_Close` | `update`, `peek`, `value`, `out_range`, `advance`, derived `Clone` | `update`, `peek`, `value`, `outRange`, `advance`, `clone` | `Update`, `Peek`, `Value`, `OutRange`, `Advance`, `Clone` |
+| handle methods | `TA_SMA_Update`, `_Peek`, `_Value`, `_OutRange`, `_Advance`, `_Clone`, `_Close` | `update`, `peek`, `value`, `out_range`, `advance`, derived `Clone` | `update`, `peek`, `value`, `outRange`, `advance`, `clone` | `Update`, `Peek`, `Advance`, `Clone`; properties `Value`, `OutRange` |
 | multi-output carrier | out-parameters | `(f64, f64, f64)` | `AccbandsOut` (`realUpperBand`) | `AccbandsValue` (`RealUpperBand`) |
 
 The carrier row looks inconsistent and is not. **The suffix names the construct,
@@ -66,7 +66,7 @@ C#'s struct and Rust's tuple do not.
 | function holder | (globals) | `Core` | `Core` | `Core` |
 | builder | `TA_SetUnstablePeriod`, `TA_SetCandleSettings` | `CoreBuilder`, `unstable_period`, `candle_setting`, `restore_candle_default`, `build` | `CoreBuilder`, `unstablePeriod`, `candleSetting`, `restoreCandleDefault`, `build` | `CoreBuilder`, `UnstablePeriod`, `CandleSetting`, `RestoreCandleDefault`, `Build` |
 | output range | `outBegIdx`, `outNBElement` out-params | `OutRange { beg_idx, count }`, `EMPTY`, `is_empty` | `OutRange(begIdx, count)`, `EMPTY`, `isEmpty` | `OutRange { BegIdx, Count }`, `Empty`, `IsEmpty` |
-| candle setting | `TA_CandleSetting` | `CandleSetting { range_type, avg_period, factor }`, `CandleSettings` | `CandleSetting`, `rangeType()`, `avgPeriod()`, `factor()` | `CandleSetting`, `RangeType`, `AvgPeriod`, `Factor` |
+| candle setting | none: the four arguments of `TA_SetCandleSettings` | `CandleSetting { range_type, avg_period, factor }`, `CandleSettings` | `CandleSetting`, `rangeType()`, `avgPeriod()`, `factor()` | `CandleSetting`, `RangeType`, `AvgPeriod`, `Factor` |
 | enum type names | `TA_RetCode`, `TA_MAType`, `TA_FuncUnstId`, `TA_CandleSettingType`, `TA_RangeType` | `RetCode`, `MAType`, `FuncUnstId`, `CandleSettingType`, `RangeType` | same | same |
 
 C's word carries over where it is idiomatic in the target and is replaced where
@@ -110,7 +110,7 @@ constants PascalCase. A bound puts the noun first, as `TA_REAL_MAX` and
 | carrier | `TA_RetCode` return | `Result<_, RetCode>` | thrown | thrown |
 | marker | n/a | n/a | `TALibFailure` | `ITALibFailure` |
 | bad argument | `TA_BAD_PARAM` | `RetCode::BadParam` | `TALibArgumentException` | `TALibArgumentException` |
-| bad index | `TA_OUT_OF_RANGE_*` | `RetCode::OutOfRange*` | `TALibIndexException` | `TALibArgumentOutOfRangeException` |
+| bad index | `TA_OUT_OF_RANGE_*` | `RetCode::OutOfRange*` | `TALibIndexException` | `TALibArgumentOutOfRangeException`, except U4 ([failures](https://ta-lib.org/spec/#failures)) |
 | bad state | n/a | n/a | `TALibStateException` | `TALibInvalidOperationException` |
 | short history | `TA_INSUFFICIENT_HISTORY` | `RetCode::InsufficientHistory` | `InsufficientHistoryException` | `InsufficientHistoryException` |
 
@@ -127,8 +127,8 @@ a namespace named by the same acronym.
 
 | surface | C (frozen) | Rust | Java | C# |
 |---|---|---|---|---|
-| lookup | `TA_GetFuncHandle` | `get_func_handle` | `Functions.byName` | `FunctionCatalog[name]` |
-| enumerate | `TA_ForEachFunc` | `for_each_func`, `FUNCS` | `Functions.all`, `Functions.groups` | `FunctionCatalog` as `IReadOnlyList`, `InGroup` |
+| lookup | `TA_GetFuncHandle` | `get_func_handle` | `Functions.byName` | `FunctionCatalog.Default[name]` |
+| enumerate | `TA_ForEachFunc` | `for_each_func`, `FUNCS` | `Functions.all`, `Functions.groups` | `FunctionCatalog.Default` as `IReadOnlyList`, `InGroup` |
 | holder | `TA_ParamHolder` | `ParamHolder` | `ParamHolder` | `ParamHolder` |
 | set input | `TA_SetInputParamRealPtr` | `set_input` | `setInput` | `SetInput` |
 | set parameter | `TA_SetOptInputParamInteger` | `set_opt_input` | `setOptInput` | `SetOptInput` |

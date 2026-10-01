@@ -700,8 +700,8 @@ static ErrorNumber testIdentityAtPeriodOne( const TA_History *history )
  * nothing.
  */
 
-/* Names collected from a TA_ForEachFunc walk. 168 functions today; the bound is
- * checked, and an overflow is a failure rather than a silent truncation. */
+/* Names collected from a TA_ForEachFunc walk. The bound is checked, and an
+ * overflow is a failure rather than a silent truncation. */
 #define PB_MAX_FLAGGED 64
 /* The flagged set at #184: the 9 MAType members that have a period, plus MA and
  * VWMA. A floor, so the set can grow freely and only shrinks deliberately. */

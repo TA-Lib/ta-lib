@@ -55,6 +55,9 @@
     */
    public int bbandsLookback( int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType )
    {
+      if( optInMAType == null ) {
+         return -1;
+      }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 20;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
@@ -667,10 +670,10 @@
     * <p>Formula and more info at <a
     * href="https://ta-lib.org/functions/bbands">ta-lib.org/functions/bbands</a>.
     * <p>Values are written only where the indicator is defined. The returned
-    * {@link OutRange} says where they start and how many there are; nothing
-    * outside that range is touched, and the library never pads with NaN. A
-    * valid range that ends before {@link Core#bbandsLookback} is a <b>success
-    * with no values</b> ({@code count() == 0}), not an error.
+    * {@link OutRange} says where they start and how many there are, and the
+    * library never pads with NaN. A valid range that ends before
+    * {@link Core#bbandsLookback} is a <b>success with no values</b>
+    * ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -750,10 +753,10 @@
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
     * <p>Values are written only where the indicator is defined. The returned
-    * {@link OutRange} says where they start and how many there are; nothing
-    * outside that range is touched, and the library never pads with NaN. A
-    * valid range that ends before {@link Core#bbandsLookback} is a <b>success
-    * with no values</b> ({@code count() == 0}), not an error.
+    * {@link OutRange} says where they start and how many there are, and the
+    * library never pads with NaN. A valid range that ends before
+    * {@link Core#bbandsLookback} is a <b>success with no values</b>
+    * ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).

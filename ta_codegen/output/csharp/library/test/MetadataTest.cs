@@ -65,7 +65,7 @@ namespace TALib.Test;
 /// <para>What this file does NOT do is re-assert what a cross-language gate
 /// already proves. <c>ta_regtest --codegen --language=csharp</c> compares every
 /// row of this catalogue against the C library's <c>ta_abstract</c>, and drives
-/// <see cref="ParamHolder"/> for all 168 functions with the output values
+/// <see cref="ParamHolder"/> for every function with the output values
 /// compared to C. So the numbers and the dispatch are covered from outside;
 /// what is covered here is the surface a C# caller touches and no server ever
 /// sees, plus the two shapes an external oracle structurally cannot check:
@@ -169,8 +169,8 @@ public static class MetadataTest
     {
         FunctionCatalog c = FunctionCatalog.Default;
 
-        // Exact, not a threshold: `>= 160` against 168 would let eight
-        // functions disappear without a word.
+        // Exact, not a threshold: a threshold would let functions disappear
+        // without a word.
         Check(c.Count == CatalogFacts.FunctionCount,
             $"catalogue holds exactly {CatalogFacts.FunctionCount} functions (got {c.Count})");
         Check(ReferenceEquals(c, Core.Functions), "Core.Functions is the same catalogue");

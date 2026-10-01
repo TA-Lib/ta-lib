@@ -35,7 +35,7 @@ The Rust API is not yet released. Estimated release: **Q1 2027**.
 
 ## 1.0 Introduction {#intro}
 
-The `ta-lib` crate is a native Rust port of TA-Lib — no C bindings, no `unsafe` at the call site. Every indicator is a method on `Core`, operates on `f64` slices, and is **bit-identical** to the reference C library over the same inputs.
+The `ta-lib` crate is a native Rust port of TA-Lib: no C bindings, no `unsafe` at the call site. Every indicator is a method on `Core`, operates on `f64` slices, and is **bit-identical** to the reference C library over the same inputs ([D1](/spec/versions/#d1)).
 
 The **Core API** provides:
 
@@ -180,7 +180,7 @@ On success you get an [`OutRange`](https://docs.rs/ta-lib): `beg_idx` is the inp
 | `RetCode::OutOfRangeStartIndex` | `startIdx` is above `Core::INDEX_MAX` (100,000,000). |
 | `RetCode::OutOfRangeEndIndex` | `endIdx` is above `Core::INDEX_MAX`, or below `startIdx`. |
 
-`RetCode` also carries `Success` — the code C returns and the one the other ports expose — plus `AllocErr` and `InternalError`, which the safe Rust code paths do not produce.
+`RetCode` also carries `Success` (the code C returns and the one the other ports expose), plus `AllocErr`, never returned ([B7](/spec/errors/#b7)), and `InternalError`, a bug in TA-Lib to report ([B8](/spec/errors/#b8)).
 
 Indexing is safe throughout: the crate is `#![forbid(unsafe_code)]`, so nothing here can read or write out of bounds. Slice sizes are checked before the call runs and reported as `BadParam`; a violated precondition anywhere below that is a panic, never memory corruption.
 

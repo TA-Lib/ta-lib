@@ -753,13 +753,10 @@ fn emit_open_internal_wrapper_named(
 /// Rule S5 — the output capacity — at a PUBLIC `OpenAndFill`, with the index
 /// pair it has to be read after.
 ///
-/// An opener is a batch call over `[0, historyLen - 1]`, so B5's produced count,
-/// `endIdx - max(startIdx, lookback) + 1`, collapses to `historyLen - lookback`.
-/// It has no zero case the way B5 does: S7 refuses a history shorter than
-/// `lookback + 1`, so a fill that runs always writes at least one value. The
-/// `saturating_sub` is for the frame's own sake, not the caller's — S7 has not
-/// run yet here, and a short history must reach it rather than be answered as a
-/// capacity fault.
+/// Each output must hold `historyLen - lookback` values
+/// (<https://ta-lib.org/spec/streaming/#s5>). The `saturating_sub` is for the
+/// frame's own sake: S7 has not run yet here, and a short history must reach it
+/// rather than be answered as a capacity fault.
 ///
 /// **The PUBLIC frame, never `<n>_open_and_fill_internal`.** That seam takes an
 /// anchor and writes `historyLen - max(lookback, startIdx)` — fewer — so the
@@ -771,13 +768,10 @@ fn emit_open_internal_wrapper_named(
 /// one call buys S3 and the width together — the same trick the batch entry
 /// point plays.
 ///
-/// **S5's input half comes first**, for the same reason the whole guard is at
-/// this frame: the core makes the test too, but only after this one would have
-/// answered, so an input series shorter than the history was being reported as
-/// an output-capacity fault. B5 reads the two halves in one rule, inputs first,
-/// and this is that rule over `[0, historyLen - 1]` — where the history's own
-/// length IS the range, so the inputs must agree with it rather than merely
-/// reach it.
+/// **S5's input half comes first**: the core makes the test too, but only after
+/// this one would have answered, so an input series shorter than the history
+/// would read as an output-capacity fault. Each input must equal the history's
+/// length, not merely reach it.
 fn open_fill_capacity_guards(func: &FuncDef, with_pair: bool) -> String {
     let inputs = streaming::input_array_names(func);
     let first = &inputs[0];
@@ -3185,10 +3179,9 @@ fn emit_update_and_peek(
          \x20   ///\n\
          \x20   /// [`RetCode::BadParam`] if any bar value is not finite (NaN or ±Inf).\n\
          \x20   /// That check runs before anything is written, so the handle's state is\n\
-         \x20   /// left exactly as it was and the stream stays usable: skip the bar, or\n\
-         \x20   /// close and re-open on a clean history. This is the one place the\n\
-         \x20   /// streaming tier is stricter than the batch API, which computes on\n\
-         \x20   /// whatever it is given — a handle retains its state, so a single\n\
+         \x20   /// left exactly as it was and the stream stays usable. This is the one\n\
+         \x20   /// place the streaming tier is stricter than the batch API, which computes\n\
+         \x20   /// on whatever it is given: a handle retains its state, so a single\n\
          \x20   /// non-finite bar would poison every later value it produces.\n\
          \x20   ///\n\
          \x20   /// A rejection leaves [`Self::out_range`] alone too. Re-feed the bar when\n\

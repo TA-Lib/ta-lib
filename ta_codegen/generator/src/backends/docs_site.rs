@@ -97,6 +97,7 @@ fn transform_page(
     // Summary is extracted from the untransformed body: it precedes every rewrite.
     let desc = extract_summary(body);
     let injected = inject_parameters(body, func, enums);
+    let injected = mark_declinable_outputs(&injected, func);
     let with_impl = inject_implementation(&injected, func, root);
     let with_flags = inject_flags(&with_impl, func, enums, stability);
     let linked = linkify_see_also(&with_flags, known);
@@ -127,6 +128,40 @@ const AFTER_IMPLEMENTATION: [&str; 3] = ["## Aliases", "## See Also", "## Refere
 /// follows it in the canonical order, or at the end.
 fn inject_implementation(body: &str, func: &FuncDef, root: &Path) -> String {
     insert_before_later_sections(body, &implementation_section(func, root))
+}
+
+fn mark_declinable_outputs(body: &str, func: &FuncDef) -> String {
+    let names: Vec<String> = func
+        .outputs
+        .iter()
+        .filter(|o| o.is_nullable())
+        .map(|o| format!("- `{}`", o.name))
+        .collect();
+    let lines: Vec<&str> = body.lines().collect();
+    let Some((start, end)) = section_span(&lines, "## Outputs") else {
+        return body.to_string();
+    };
+    let mut out: Vec<String> = lines.iter().map(|l| (*l).to_string()).collect();
+    for i in start + 1..end {
+        if !names.iter().any(|n| lines[i].trim_start().starts_with(n.as_str())) {
+            continue;
+        }
+        let mut last = i;
+        while last + 1 < end
+            && !lines[last + 1].trim().is_empty()
+            && !lines[last + 1].trim_start().starts_with("- ")
+        {
+            last += 1;
+        }
+        let base = out[last].trim_end().to_string();
+        let sep = if base.ends_with('.') { " " } else { ". " };
+        out[last] = format!("{base}{sep}May be declined ([O5](/spec/inputs-outputs/#o5)).");
+    }
+    let mut s = out.join("\n");
+    if body.ends_with('\n') {
+        s.push('\n');
+    }
+    s
 }
 
 fn insert_before_later_sections(body: &str, block: &str) -> String {
@@ -398,8 +433,8 @@ fn inject_flags(
         (
             "Identity at Period 1",
             has("period1_identity"),
-            "A period of 1 performs no smoothing: the lookback is 0 and every output value is \
-             a bit-exact copy of its input value.",
+            "A period of 1 performs no smoothing: every output value is a bit-exact copy of \
+             its input value.",
         ),
         (
             "Display Shift",
@@ -1081,16 +1116,16 @@ fn build_stability_page(
     s.push_str("## If Start-Independent, then... {#start-independent}\n\n");
     s.push_str(
         "The value at a bar does not depend on where your data starts. Feed the function a \
-         year or a decade and the value it reports for a given bar is identical. These \
-         functions read a bounded window — a fixed number of bars — and ignore everything \
-         older.\n\n",
+         year or a decade and the value it reports for a given bar is the same, up to \
+         floating-point rounding ([details](/spec/lookback/#start)). These functions read a \
+         bounded window, a fixed number of bars, and ignore everything older.\n\n",
     );
 
     s.push_str("## If Initial Unstable Period, then... {#initial-unstable-period}\n\n");
     s.push_str(
         "Early values depend on how much history precedes them, and converge as more bars are \
          supplied. These functions are defined recursively: each value folds in the previous \
-         one, so the series never entirely forgets where it began — though the influence decays \
+         one, so the series never entirely forgets where it began, though the influence decays \
          until it is lost in floating-point rounding.\n\n\
          See [Unstable Period](/api/unstable-period/) for what to do about it: when to \
          ignore it, when to supply extra history, and how to have TA-Lib drop the \
@@ -1099,7 +1134,7 @@ fn build_stability_page(
 
     s.push_str("## If Depends on MA Type, then... {#depends-on-ma-type}\n\n");
     s.push_str(
-        "Some functions take an `optInMAType` parameter selecting how their moving average is \
+        "Some functions take an MA-type parameter selecting how their moving average is \
          computed. That choice decides which of the properties above applies: a recursive MA \
          type gives the function an initial unstable period, a windowed one leaves it \
          start-independent.\n\n",
@@ -1151,8 +1186,8 @@ fn build_stability_page(
 
     s.push_str("## If Path-Dependent, then... {#path-dependent}\n\n");
     s.push_str(
-        "The value is built up from the first bar — a running accumulation or a state machine \
-         that tracks the path prices took — so it depends on where your data begins and never \
+        "The value is built up from the first bar by a running accumulation or a state machine \
+         that tracks the path prices took, so it depends on where your data begins and never \
          converges. Unlike an unstable period, there is no warm-up you can discard: the \
          difference persists for the whole series.\n\n\
          Two Examples:\n\n\

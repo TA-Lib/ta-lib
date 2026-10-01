@@ -48,6 +48,9 @@
     */
    public int stochfLookback( int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
    {
+      if( optInFastD_MAType == null ) {
+         return -1;
+      }
       if( optInFastK_Period == Integer.MIN_VALUE ) {
          optInFastK_Period = 5;
       } else if( optInFastK_Period < 1 || optInFastK_Period > 100000 ) {
@@ -460,10 +463,10 @@
     * <li>When the high-low range over the window is zero, %K is set to 0 instead of being undefined.</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
-    * {@link OutRange} says where they start and how many there are; nothing
-    * outside that range is touched, and the library never pads with NaN. A
-    * valid range that ends before {@link Core#stochfLookback} is a <b>success
-    * with no values</b> ({@code count() == 0}), not an error.
+    * {@link OutRange} says where they start and how many there are, and the
+    * library never pads with NaN. A valid range that ends before
+    * {@link Core#stochfLookback} is a <b>success with no values</b>
+    * ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -547,10 +550,10 @@
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
     * <p>Values are written only where the indicator is defined. The returned
-    * {@link OutRange} says where they start and how many there are; nothing
-    * outside that range is touched, and the library never pads with NaN. A
-    * valid range that ends before {@link Core#stochfLookback} is a <b>success
-    * with no values</b> ({@code count() == 0}), not an error.
+    * {@link OutRange} says where they start and how many there are, and the
+    * library never pads with NaN. A valid range that ends before
+    * {@link Core#stochfLookback} is a <b>success with no values</b>
+    * ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).

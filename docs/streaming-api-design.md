@@ -82,9 +82,8 @@ the copy would still answer correctly, so no value gate can see the difference.
 Each backend therefore carries its own sweep over every streamable function —
 `peek_suite` for C, `no_rust_peek_copies_the_handle`,
 `no_java_peek_copies_the_handle`, `no_csharp_peek_copies_the_handle` — asserting
-that a frame is what runs, that it allocates nothing growing with the period, and
-that no shipped function has fallen back from the shadow to copying an
-accumulator.
+that a frame is what runs and that no shipped function has fallen back from the
+shadow to copying an accumulator.
 
 Every backend's frame drops the handle qualifier on a localized field, so each
 renderer that keys on how a name is spelled has to classify the bare name as it
@@ -369,15 +368,17 @@ family, BETA, CORREL, AVGDEV, IMI, CCI, ULTOSC, the CDL candle averages); and fo
 the window extrema, O(1) while the cached extremum sits away from the trailing
 edge and O(period) while it sits on it — **not** amortized O(1).
 
-That last one is deliberate. The extrema functions transcribe batch's cached-index
-automaton over a ring, so the stream inherits batch's cost profile exactly,
-rescans and all. A monotonic deque would be amortized O(1), but batch uses
-different tie rules on its two paths (strict `<` on rescan, `<=` on the incoming
-side), so the selected INDEX is path-dependent and no single deque discipline
-reproduces it — MININDEX at period 2 on `[3,3]` diverges on the first output.
-That rules a deque out for every function that outputs an index or computes from
-one. It would be legal for the value-output subset, whose ties are bit-identical
-input copies, and substituting one there is still open.
+That last one is deliberate. The extrema streams run a cached-index automaton
+over a ring, rescans and all. It is batch's own, except in the functions whose
+source carries `PRAGMA TA_ALT={STREAM,...}`, where batch runs a block scan. A
+monotonic deque would be amortized O(1), but the automaton uses different tie
+rules on its two paths (strict `<` on rescan, `<=` on the incoming side), so the
+selected INDEX is path-dependent and no single deque discipline reproduces it:
+MININDEX at period 2 on `[3,3]` diverges on the first output. That rules a deque
+out for every function that outputs an index or computes from one. It would be
+legal for the value-output subset within
+[H1](https://ta-lib.org/spec/streaming/#h1), and substituting one there is still
+open.
 
 One ring-order constraint survives from the same family: some batch code sums its
 circular buffer IN BUFFER ORDER, so the FP summation order depends on the ring's

@@ -996,7 +996,7 @@ public class StreamSmokeTest {
      * carries the previous call's values into the next one, and a tier that
      * wrote nothing at all would return them: {@code peek} then {@code update}
      * on the same bar would agree because both read {@code peek}'s leftovers,
-     * and the whole 176-handle sweep would hold while the sink was never
+     * and the sweep over every handle would hold while the sink was never
      * written. The canaries are the same ones the fill gates use, so a field
      * left unwritten reads as an absurd value rather than as a plausible one.
      */
@@ -1096,12 +1096,12 @@ public class StreamSmokeTest {
      * The one method {@code c} declares under {@code name}, taking the
      * {@code double} shape.
      *
-     * <p>There is exactly one opener per function today (176 methods, no
-     * {@code float[]} overload). The filter is there so that adding one later
-     * makes this sweep keep testing the {@code double} API rather than picking
-     * whichever overload {@code getMethods()} happened to return first — an
-     * order the JLS does not specify, which is the difference between a gate
-     * that fails and a gate that flakes.
+     * <p>There is exactly one opener per function today (no {@code float[]}
+     * overload). The filter is there so that adding one later makes this sweep
+     * keep testing the {@code double} API rather than picking whichever
+     * overload {@code getMethods()} happened to return first, an order the JLS
+     * does not specify, which is the difference between a gate that fails and a
+     * gate that flakes.
      */
     private static java.lang.reflect.Method methodNamed(Class<?> c, String name) {
         for (java.lang.reflect.Method m : c.getMethods()) {
@@ -1158,22 +1158,21 @@ public class StreamSmokeTest {
      * paired with the same sabotage driven through {@code stream_verify}, and
      * the miss recorded rather than rounded off:</b>
      * <ul>
-     *   <li>{@code clone()} → {@code return this}: 176 of 176 named here, and
-     *       the range assertions are what do it — the value assertions alone
-     *       name 108, so 68 handles would have shared state silently.
+     *   <li>{@code clone()} → {@code return this}: every handle named here,
+     *       and the range assertions are what do it; the value assertions alone
+     *       miss handles that would then share state silently.
      *       {@code stream_verify} also goes red.
-     *   <li>the copy constructor drops the two range fields: 176 of 176 named
-     *       here, {@code stream_verify} fully green. The one defect class with
-     *       no other cover.
+     *   <li>the copy constructor drops the two range fields: every handle
+     *       named here, {@code stream_verify} fully green. The one defect class
+     *       with no other cover.
      *   <li>{@code peek} moves the range: named here, {@code stream_verify}
      *       also goes red.
      * </ul>
      * With every {@code peek} rewritten to step the handle instead of a scratch
-     * copy (95 of the 176 handles are emitted in that shape), it names 81 of the
-     * 95. The 14 it does not are candlestick patterns whose output is 0 on both
-     * sides of the corruption; making them observable needs bars that trigger
-     * the pattern, which is what the MC/DC suites (#219) are for, not a corpus
-     * this sweep can carry.
+     * copy, it names every handle emitted in that shape except candlestick
+     * patterns whose output is 0 on both sides of the corruption; making them
+     * observable needs bars that trigger the pattern, which is what the MC/DC
+     * suites (#219) are for, not a corpus this sweep can carry.
      */
     private static void peekAndCopyHoldOnEveryHandle(Core core) {
         java.util.List<String> unhandled = new java.util.ArrayList<String>();

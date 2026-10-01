@@ -181,11 +181,11 @@ TA_RetCode TA_SetCandleSettings( TA_CandleSettingType settingType,
     if( (unsigned int)rangeType > (unsigned int)TA_RangeType_Shadows )
         return TA_BAD_PARAM;
 
-    /* avgPeriod IS the lookback of every function that reads this setting, so
-     * it is bounded like one (#185). A negative one starts the main loop that
-     * many bars late while *outBegIdx still reports startIdx -- every value
-     * shifted under a correct-looking index, and a lookback reporting negative
-     * while the call returns TA_SUCCESS. TA_INDEX_MAX is the ceiling
+    /* avgPeriod enters the lookback of every function that reads this
+     * setting, so it is bounded like one (#185). A negative one starts the main
+     * loop that many bars late while *outBegIdx still reports startIdx -- every
+     * value shifted under a correct-looking index, and a lookback reporting
+     * negative while the call returns TA_SUCCESS. TA_INDEX_MAX is the ceiling
      * TA_SetUnstablePeriod already uses for the same reason: above it the
      * `max(...)+N` lookbacks overflow signed-negative into that same state, and
      * a warm-up longer than the largest addressable series could never produce
@@ -194,12 +194,10 @@ TA_RetCode TA_SetCandleSettings( TA_CandleSettingType settingType,
         return TA_BAD_PARAM;
 
     /* factor scales a threshold, never an index, so any finite value is legal.
-     * A negative one is legal too, and it does not "never match" -- the range
-     * and the average are both non-negative, so `range > factor*avg` becomes
-     * unconditionally TRUE rather than false, and the pattern fires on every
-     * bar. Legal, and worth knowing before setting one.
-     * NaN is refused because it silences every comparison it feeds without
-     * being asked to. */
+     * A negative one is legal too: with a positive average, every test that a
+     * range is above the threshold passes and every test that it is at or
+     * below fails. NaN is refused because it silences every comparison it
+     * feeds without being asked to. */
     if( factor != factor )
         return TA_BAD_PARAM;
 

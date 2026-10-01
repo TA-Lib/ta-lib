@@ -44,6 +44,15 @@
     */
    public int macdextLookback( int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType )
    {
+      if( optInFastMAType == null ) {
+         return -1;
+      }
+      if( optInSlowMAType == null ) {
+         return -1;
+      }
+      if( optInSignalMAType == null ) {
+         return -1;
+      }
       if( optInFastPeriod == Integer.MIN_VALUE ) {
          optInFastPeriod = 12;
       } else if( optInFastPeriod < 2 || optInFastPeriod > 100000 ) {
@@ -417,10 +426,10 @@
     * <li>{@code TA_MAType_MAMA} ignores its period argument, so it always produces the same series regardless of the period requested. If both {@code optInFastMAType} and {@code optInSlowMAType} are set to MAMA, the fast and slow lines are therefore identical and MACD, Signal, and Hist are all zero at every bar. Select MAMA for only one side to get a meaningful spread.</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
-    * {@link OutRange} says where they start and how many there are; nothing
-    * outside that range is touched, and the library never pads with NaN. A
-    * valid range that ends before {@link Core#macdextLookback} is a <b>success
-    * with no values</b> ({@code count() == 0}), not an error.
+    * {@link OutRange} says where they start and how many there are, and the
+    * library never pads with NaN. A valid range that ends before
+    * {@link Core#macdextLookback} is a <b>success with no values</b>
+    * ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -522,10 +531,10 @@
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
     * <p>Values are written only where the indicator is defined. The returned
-    * {@link OutRange} says where they start and how many there are; nothing
-    * outside that range is touched, and the library never pads with NaN. A
-    * valid range that ends before {@link Core#macdextLookback} is a <b>success
-    * with no values</b> ({@code count() == 0}), not an error.
+    * {@link OutRange} says where they start and how many there are, and the
+    * library never pads with NaN. A valid range that ends before
+    * {@link Core#macdextLookback} is a <b>success with no values</b>
+    * ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).

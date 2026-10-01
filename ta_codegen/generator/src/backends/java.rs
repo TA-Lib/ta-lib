@@ -620,7 +620,16 @@ fn gen_lookback(
 
     // Same param validation as the guarded function, with the lookback
     // bad-param contract: out-of-range returns -1.
-    let validation = emit_opt_param_validation(func, "-1", enums);
+    let mut validation = String::new();
+    let enum_opts =
+        func.optional_inputs.iter().filter(|o| matches!(o.param_type, ParamType::Enum(_)));
+    for opt in enum_opts {
+        validation.push_str(&format!(
+            "      if( {0} == null ) {{\n         return -1;\n      }}\n",
+            opt.name
+        ));
+    }
+    validation.push_str(&emit_opt_param_validation(func, "-1", enums));
 
     let body = match &func.lookback {
         Some(LookbackExpr::Literal(n)) => format!("{validation}      return {n};"),

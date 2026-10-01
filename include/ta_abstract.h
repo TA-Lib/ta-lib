@@ -216,8 +216,6 @@ typedef int TA_FuncFlags;
                                           * when. ta_regtest holds every
                                           * function WITHOUT this flag to
                                           * finite output.
-                                          * ACOS, ASIN, DIV, LN, LOG10, RVOL,
-                                          * SQRT, VWMA -- and no others.
                                           */
 /* The 0x01000000-and-up run above is the historical allocation and now has one
  * slot left, 0x80000000 -- the sign bit of the signed TA_FuncFlags, which is
@@ -227,16 +225,15 @@ typedef int TA_FuncFlags;
  */
 #define TA_FUNC_FLG_PERIOD1_IDENTITY 0x00000001
                                          /* A period of 1 performs no smoothing:
-                                          * the lookback is 0 and every output
-                                          * value is a bit-exact copy of its
-                                          * input value.
+                                          * every output value is a bit-exact
+                                          * copy of its input value.
                                           * Declared by the function rather than
                                           * inferred, because the two cases are
                                           * indistinguishable in the source:
                                           * SMA's window math is already exact at
                                           * a period of 1, while EMA's recurrence
                                           * needs an explicit arm to be. e.g.
-                                          * SMA, EMA, RSI, VWMA.
+                                          * SMA, EMA, VWMA.
                                           * NOT set on MACD/MACDFIX: only their
                                           * signal stage degenerates, the MACD
                                           * line is still computed.
@@ -523,8 +520,7 @@ TA_LIB_API TA_RetCode TA_GetOutputParameterInfo( const TA_FuncHandle *handle,
 /* Alloc a structure allowing to build the list of parameters
  * for doing a call.
  *
- * All input and output parameters must be setup. If not, TA_BAD_PARAM
- * will be returned when TA_CallFunc is called.
+ * All input and output parameters must be setup, or TA_CallFunc fails.
  *
  * The optional input are not required to be setup. A default value
  * will always be used in that case.

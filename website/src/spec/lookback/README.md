@@ -22,8 +22,6 @@ Every function has a lookback call. It takes exactly the batch call's optional p
 | <a id="l3"></a>**L3** | Rust, Java and C# reach the same accept or reject decision as C for the same parameters and settings, and wherever both accept, return the same lookback. Whether their outputs match C's: [D1](/spec/versions/#d1) (Rust), [D2](/spec/versions/#d2) (Java, C#). |
 | <a id="l4"></a>**L4** | Nothing else in this tier fails. |
 
-**[Current behaviour](/spec/#reading)**: Java's lookback calls break L1, L2 and L4 for a null MA type. They return a lookback when every null-typed stage runs at period 1 and throw `NullPointerException` otherwise; the batch call rejects every such call under [B3](/spec/errors/#b3).
-
 <a id="l6"></a>**L6** A lookback depends only on the optional parameters and on the settings in effect at the call: the unstable periods ([L7](/spec/lookback/#l7)) and the candle averaging periods ([L8](/spec/lookback/#l8)). C reads them from the process globals ([T2](/spec/settings-threads/#t2)); Rust, Java and C# from the `Core` the call is made on ([T3](/spec/settings-threads/#t3)). It never depends on an input value.
 
 **Current behaviour**: a lookback other than the rejection signal is in `[0, INT_MAX]`, settings at `TA_INDEX_MAX` included. One above `TA_INDEX_MAX` leaves no call able to produce a value.
@@ -37,8 +35,6 @@ Every function has a display-shift call. It takes the lookback call's parameters
 | <a id="l10"></a>**L10** | A display shift of `s` means a chart draws the value computed at bar `i` at bar `i + s`. It describes drawing only: every output value is written at the bar that computed it, and no value, lookback, `outBegIdx` or `outNBElement` depends on it. It depends only on the optional parameters and the output index, never on a setting or an input value. |
 | <a id="l11"></a>**L11** | An output without `TA_OUT_DISPLAY_SHIFT` (Rust `OutputFlags::DISPLAY_SHIFT`, Java `OutputFlags.DISPLAY_SHIFT`, C# `OutputFlags.DisplayShift`) has a display shift of 0; a flagged output can report 0 for some parameters. A function carries `TA_FUNC_FLG_DISPLAY_SHIFT` (Rust `FuncFlags::DISPLAY_SHIFT`, Java `FuncFlags.DISPLAY_SHIFT`, C# `FuncFlags.DisplayShift`) exactly when at least one of its outputs carries the output flag. |
 | <a id="l12"></a>**L12** | The call returns its rejection signal ([per language](/spec/#failures)) exactly when the lookback call rejects the same parameters ([L1](/spec/lookback/#l1)) or the index names no output. Rust, Java and C# reach the same decision as C and, wherever both accept, return the same shift. Nothing else in this tier fails. |
-
-**[Current behaviour](/spec/#reading)**: Java's display-shift calls throw `NullPointerException` for a null MA type wherever the lookback call does ([L4](/spec/lookback/#l4)).
 
 ## Unstable period {#unstable-period}
 
@@ -56,7 +52,7 @@ The functions that own an id, and how to set one: [Unstable Period](/api/unstabl
 
 ## Period-1 identity {#period-1-identity}
 
-<a id="l9"></a>**L9** A function flagged `TA_FUNC_FLG_PERIOD1_IDENTITY` (Rust `FuncFlags::PERIOD1_IDENTITY`, Java `FuncFlags.PERIOD1_IDENTITY`, C# `FuncFlags.Period1Identity`), called with `optInTimePeriod` at 1, writes every output value as a bit-for-bit copy of its input at the same bar (VWMA copies the close). When no unstable period reaches it, its lookback at period 1 is 0. Which functions carry the flag: the "Identity at Period 1" row of each [function page](/functions/) (its tooltip omits the unstable-period case; L9 governs).
+<a id="l9"></a>**L9** A function flagged `TA_FUNC_FLG_PERIOD1_IDENTITY` (Rust `FuncFlags::PERIOD1_IDENTITY`, Java `FuncFlags.PERIOD1_IDENTITY`, C# `FuncFlags.Period1Identity`), called with `optInTimePeriod` at 1, writes every output value as a bit-for-bit copy of its input at the same bar (VWMA copies the close). When no unstable period reaches it, its lookback at period 1 is 0. Which functions carry the flag: the "Identity at Period 1" row of each [function page](/functions/).
 
 **Current behaviour**: an unstable period that reaches the function still enters its lookback at period 1, and the values stay copies. With every unstable period at 7, EMA's lookback at period 1 is 7, DEMA's 14 and TEMA's 21. MA at period 1: [L7](/spec/lookback/#l7).
 

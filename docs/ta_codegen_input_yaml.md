@@ -156,7 +156,7 @@ Each backend renders enums appropriately:
 | `stream` | Generate the streaming API (Open/Update/Peek/…) | `TA_FUNC_FLG_STREAM` |
 | `path_dependent` | Absolute output depends on `startIdx` and never converges across ranges (a running accumulation seeded at the first bar, or a path-dependent state machine); the same bar computed from a different `startIdx` can differ | `TA_FUNC_FLG_PATH_DEP` |
 | `nan_inf_output` | Some inputs of ordinary magnitude have no finite result, so a successful call can write NaN or ±Inf | `TA_FUNC_FLG_NAN_INF_OUT` |
-| `period1_identity` | A period of 1 performs no smoothing: the lookback is 0 and every output value is a bit-exact copy of its input value | `TA_FUNC_FLG_PERIOD1_IDENTITY` |
+| `period1_identity` | A period of 1 performs no smoothing: every output value is a bit-exact copy of its input value | `TA_FUNC_FLG_PERIOD1_IDENTITY` |
 | `display_shift` | **Derived, never written.** Set when an output carries the `display_shift` output flag | `TA_FUNC_FLG_DISPLAY_SHIFT` |
 
 ```yaml
@@ -169,11 +169,8 @@ to decide it cannot cross-compare the function's values across ranges. Dropping
 it is fail-safe — the sweep then value-compares the function and fails loudly if
 it is genuinely start-dependent (issue #98).
 
-`nan_inf_output` (issue #191) marks the eight functions with a hole in their own
-domain — `ACOS`/`ASIN` outside [-1,1], `LN`/`LOG10`/`SQRT` on a negative value
-(and `LN`/`LOG10` on zero, which is -Inf), `DIV` on 0/0 or x/0, `VWMA` on a
-window with no volume at all, `RVOL` on a trailing window that traded
-nothing. Each one's `<name>.md` says when, in a `## Notes` bullet, and the website renders the flag as a `Can Output NaN or ±Inf` display
+`nan_inf_output` (issue #191) marks a function with a hole in its own domain,
+such as `ACOS` outside [-1,1] or `DIV` on x/0. Each one's `<name>.md` says when, in a `## Notes` bullet, and the website renders the flag as a `Can Output NaN or ±Inf` display
 flag. It is not set for a non-finite value that only appears once the
 intermediate arithmetic overflows on the *input* magnitudes themselves (around
 1e160 and up), which is a property of `double`, not of the indicator.

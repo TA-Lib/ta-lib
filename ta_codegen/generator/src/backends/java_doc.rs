@@ -64,8 +64,8 @@ pub fn guarded_docs(
     // Range / lookback contract — the thing callers get wrong most often.
     b.para(&format!(
         "Values are written only where the indicator is defined. The returned \
-         {{@link OutRange}} says where they start and how many there are; nothing outside \
-         that range is touched, and the library never pads with NaN. A valid range that ends \
+         {{@link OutRange}} says where they start and how many there are, and the library \
+         never pads with NaN. A valid range that ends \
          before {{@link Core#{java_name}Lookback}} is a <b>success with no values</b> \
          ({{@code count() == 0}}), not an error."
     ));

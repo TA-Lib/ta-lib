@@ -674,10 +674,9 @@ impl MinStream {
     ///
     /// [`RetCode::BadParam`] if any bar value is not finite (NaN or ±Inf).
     /// That check runs before anything is written, so the handle's state is
-    /// left exactly as it was and the stream stays usable: skip the bar, or
-    /// close and re-open on a clean history. This is the one place the
-    /// streaming tier is stricter than the batch API, which computes on
-    /// whatever it is given — a handle retains its state, so a single
+    /// left exactly as it was and the stream stays usable. This is the one
+    /// place the streaming tier is stricter than the batch API, which computes
+    /// on whatever it is given: a handle retains its state, so a single
     /// non-finite bar would poison every later value it produces.
     ///
     /// A rejection leaves [`Self::out_range`] alone too. Re-feed the bar when

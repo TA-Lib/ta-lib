@@ -42,6 +42,9 @@
     */
    public int apoLookback( int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
    {
+      if( optInMAType == null ) {
+         return -1;
+      }
       if( optInFastPeriod == Integer.MIN_VALUE ) {
          optInFastPeriod = 12;
       } else if( optInFastPeriod < 2 || optInFastPeriod > 100000 ) {
@@ -511,12 +514,13 @@
     * <p><b>Notes</b>
     * <ul>
     * <li>{@code optInMAType} applies to both the fast and slow moving average. {@code TA_MAType_MAMA} ignores its period argument, so with {@code optInMAType = TA_MAType_MAMA} the fast and slow MAs are identical and the output is zero at every bar.</li>
+    * <li>If the slow period is set smaller than the fast period, the two are swapped, as in {@code MACD}.</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
-    * {@link OutRange} says where they start and how many there are; nothing
-    * outside that range is touched, and the library never pads with NaN. A
-    * valid range that ends before {@link Core#apoLookback} is a <b>success with
-    * no values</b> ({@code count() == 0}), not an error.
+    * {@link OutRange} says where they start and how many there are, and the
+    * library never pads with NaN. A valid range that ends before
+    * {@link Core#apoLookback} is a <b>success with no values</b>
+    * ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -585,15 +589,16 @@
     * <p><b>Notes</b>
     * <ul>
     * <li>{@code optInMAType} applies to both the fast and slow moving average. {@code TA_MAType_MAMA} ignores its period argument, so with {@code optInMAType = TA_MAType_MAMA} the fast and slow MAs are identical and the output is zero at every bar.</li>
+    * <li>If the slow period is set smaller than the fast period, the two are swapped, as in {@code MACD}.</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
     * <p>Values are written only where the indicator is defined. The returned
-    * {@link OutRange} says where they start and how many there are; nothing
-    * outside that range is touched, and the library never pads with NaN. A
-    * valid range that ends before {@link Core#apoLookback} is a <b>success with
-    * no values</b> ({@code count() == 0}), not an error.
+    * {@link OutRange} says where they start and how many there are, and the
+    * library never pads with NaN. A valid range that ends before
+    * {@link Core#apoLookback} is a <b>success with no values</b>
+    * ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).

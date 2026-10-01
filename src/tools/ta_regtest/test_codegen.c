@@ -2321,7 +2321,7 @@ static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
      * PR #33's contract, it needs no oracle, and it holds per language.
      *
      * C, Java and C# all ship a float surface (TA_S_<N>, the float[] overload of
-     * the Java core, the float[] overload of the C# core) — 168 functions each.
+     * the Java core, the float[] overload of the C# core).
      * Rust is concrete f64 and has none, so it is the only exclusion.
      *
      * This ran C-only until the Java and C# servers gained a float path. While
@@ -9483,8 +9483,8 @@ ErrorNumber test_codegen(const TA_History *history,
          *
          * AllocErr, InternalError and InsufficientHistory are NOT floored here
          * and are named rather than silently omitted: the first two are
-         * unreachable from the managed batch tier (an allocation failure
-         * terminates the process, #178), and the third is streaming-only, which
+         * unreachable from the managed batch tier (only C returns AllocErr, and
+         * no internal-error guard is reachable), and the third is streaming-only, which
          * this leg does not drive. `other` must stay ZERO — a code outside the
          * documented function-tier set reaching the wire is a defect however
          * often it happens. */

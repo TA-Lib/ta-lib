@@ -45,7 +45,7 @@ namespace TALib;
 /// <c>lookback + 1</c> bars. This is the one routine, data-dependent way an
 /// open fails, which is why it has its own type: it is catchable separately
 /// from the programming errors (a parameter out of range, two outputs sharing
-/// one array) that arrive as a plain <see cref="ArgumentException"/>. It stays an
+/// one array), which arrive as a <see cref="TALibArgumentException"/>. It stays an
 /// <see cref="ArgumentException"/> by inheritance, so an existing <c>catch</c>
 /// keeps working, and it reports <see cref="RetCode.InsufficientHistory"/>
 /// through <see cref="ITALibFailure.RetCode"/>.</para>

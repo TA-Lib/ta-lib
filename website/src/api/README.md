@@ -217,7 +217,7 @@ if( retCode != TA_SUCCESS )
 <p>which prints, for example:</p>
 
 ```
-Error 1(TA_LIB_NOT_INITIALIZE): TA_Initialize was not successfully called
+Error 2(TA_BAD_PARAM): A parameter is out of range
 ```
 
 <p>The <a href="#output_size">TA_XXXX_Lookback</a> and <a href="#display_shift">TA_XXXX_DisplayShift</a> functions are the exception to the pattern: they return an int rather than a TA_RetCode. A lookback answers <b>-1</b> when a parameter is out of range. Check for that before using the value as an allocation size.</p>

@@ -42,13 +42,12 @@ package io.github.talib;
 
 /**
  * The library failed for a reason that is not the caller's argument: an
- * allocation, or an invariant it owns.
+ * invariant it owns was broken.
  *
  * <p>An {@link IllegalStateException}, which is what the API documents and what
- * a caller catches; {@link #retCode()} distinguishes {@link RetCode#ALLOC_ERR}
- * from {@link RetCode#INTERNAL_ERROR}, which the type alone cannot. Neither is
- * expected in normal use — an allocation failure terminates the JVM long before
- * it reaches here.
+ * a caller catches. {@link #retCode()} is {@link RetCode#INTERNAL_ERROR};
+ * {@link RetCode#ALLOC_ERR} is C parity and never raised. Not expected in normal
+ * use.
  */
 public final class TALibStateException extends IllegalStateException implements TALibFailure {
    private static final long serialVersionUID = 1L;

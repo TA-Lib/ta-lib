@@ -65,8 +65,7 @@ endif()
 # never documents setting it. This is the ONE part of -ffast-math that cannot
 # change a value: no reassociation, no finite-math assumptions — sqrt returns
 # the same correctly-rounded double either way, and sqrtpd is sqrtsd per lane.
-# Verified bit-identical across all 168 functions; -ffp-contract=off is
-# unaffected and still applies.
+# -ffp-contract=off is unaffected and still applies.
 #
 # Probed rather than added outright, unlike -ffp-contract=off above, and the
 # asymmetry is deliberate: that flag is load-bearing for the FMA contract, so a

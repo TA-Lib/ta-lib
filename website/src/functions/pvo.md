@@ -16,6 +16,7 @@ The standard form is exponential with periods 12 and 26 — ((12-day EMA of Volu
 ## Notes
 
 - `optInMAType` applies to both the fast and slow moving average. `TA_MAType_MAMA` ignores its period argument, so with `optInMAType = TA_MAType_MAMA` the fast and slow MAs are identical, making the numerator — and therefore the output — zero at every bar.
+- If the slow period is set smaller than the fast period, the two are swapped, as in `MACD`.
 
 ## Inputs
 

@@ -50,10 +50,8 @@ package io.github.talib;
  * {@link IllegalArgumentException} — because that is what a caller catches.
  * What the types cannot carry is <i>which</i> condition: one
  * {@code IndexOutOfBoundsException} serves both {@link RetCode#OUT_OF_RANGE_START_INDEX}
- * and {@link RetCode#OUT_OF_RANGE_END_INDEX}, and one {@link IllegalStateException}
- * serves both {@link RetCode#ALLOC_ERR} and {@link RetCode#INTERNAL_ERROR}. This
- * interface is what makes the two separable again, without narrowing the catch
- * types.
+ * and {@link RetCode#OUT_OF_RANGE_END_INDEX}. This interface is what makes the
+ * two separable again, without narrowing the catch types.
  *
  * <p>The mapping is <b>total</b> over the batch and streaming tiers — every
  * failure a call to an indicator raises implements it, including the length and

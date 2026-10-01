@@ -373,9 +373,8 @@ public sealed partial class Core
      *
      * Every type returned here implements ITALibFailure, so the code is
      * recoverable from the thrown object. The exception types are coarser than
-     * the codes -- one InvalidOperationException serves both AllocErr and
-     * InternalError -- and a caller that cannot tell them apart cannot respond
-     * to either. */
+     * the codes -- one ArgumentOutOfRangeException serves both index codes --
+     * and a caller that cannot tell them apart cannot respond to either. */
     internal static Exception Failure(string funcName, RetCode retCode)
     {
         string where = funcName + ": ";

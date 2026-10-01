@@ -45,9 +45,9 @@ namespace TALib;
 /// index is still an <see cref="ArgumentOutOfRangeException"/>, a bad parameter
 /// still an <see cref="ArgumentException"/> — because that is what a caller
 /// catches. What the types cannot carry is <i>which</i> condition: one
-/// <see cref="InvalidOperationException"/> serves both an allocation failure and
-/// an internal error. This interface is what makes them separable again, without
-/// narrowing the catch types.</para>
+/// <see cref="ArgumentOutOfRangeException"/> serves both an out-of-range start
+/// index and an out-of-range end index. This interface is what makes them
+/// separable again, without narrowing the catch types.</para>
 /// <para>The mapping is <b>total</b> over the batch and streaming tiers — every
 /// failure a call to an indicator raises implements it, including the length
 /// checks C cannot make (they report the catch-all, the code C uses for an
@@ -105,9 +105,10 @@ public sealed class TALibArgumentOutOfRangeException : ArgumentOutOfRangeExcepti
 }
 
 /// <summary>The library failed for a reason that is not the caller's argument:
-/// an allocation, or an invariant it owns.</summary>
-/// <remarks>Neither is expected in normal use — an allocation failure aborts the
-/// process long before it reaches here.</remarks>
+/// an invariant it owns was broken.</summary>
+/// <remarks>Carries <see cref="TALib.RetCode.InternalError"/>;
+/// <see cref="TALib.RetCode.AllocErr"/> is C parity and never raised. Not expected
+/// in normal use.</remarks>
 public sealed class TALibInvalidOperationException : InvalidOperationException, ITALibFailure
 {
     private readonly RetCode _retCode;

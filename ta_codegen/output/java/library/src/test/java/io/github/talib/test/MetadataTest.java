@@ -69,9 +69,9 @@ import io.github.talib.metadata.ParamHolder;
 /**
  * The shipped introspection registry and its call-by-name path.
  *
- * <p>The headline check is {@link #callByNameMatchesTheTypedApi()}: every one of
- * the 168 functions is driven <i>both</i> ways — through the typed method and
- * through {@code Functions.byName(...).newCall()} — and the outputs must agree
+ * <p>The headline check is {@link #callByNameMatchesTheTypedApi()}: every
+ * function is driven <i>both</i> ways (through the typed method and
+ * through {@code Functions.byName(...).newCall()}) and the outputs must agree
  * <b>bit for bit</b>. That is what makes the generated dispatch trustworthy: an
  * argument mis-ordering in the generated switch cannot hide, because it would
  * have to produce identical doubles by accident.
@@ -142,7 +142,7 @@ public class MetadataTest {
     /* ------------------------------------------------------------- registry */
 
     static void registryIsComplete() {
-        // No `>= 160` threshold here: against 168 it would let eight functions
+        // No floor here: one below the registry's size would let functions
         // disappear without a word. The EXACT set is pinned against C by
         // abstract_for_each_func in test_abstract.c, which fails naming the
         // missing function; what this suite owes is internal coherence, and
@@ -448,8 +448,8 @@ public class MetadataTest {
                 check(same, f.name() + " output " + k + ": call-by-name is bit-identical");
             }
         }
-        // Exact, not a floor: `>= 160` against 168 let eight functions drop out
-        // of the comparison silently, and a function whose typed overload cannot
+        // Exact, not a floor: a floor lets functions drop out of the comparison
+        // silently, and a function whose typed overload cannot
         // be reached is exactly the defect this test exists to find (#164).
         check(compared == Functions.all().size(),
               "compared every function (" + compared + "/" + Functions.all().size() + ")");
@@ -790,7 +790,7 @@ public class MetadataTest {
      * The holder's lookback must agree with what the call actually produces.
      *
      * <p>{@code Dispatch.lookback} is a SECOND, independent copy of the
-     * opt-slot-to-argument mapping across all 168 functions, and most of those pass
+     * opt-slot-to-argument mapping across every function, and most of those pass
      * two or more same-typed arguments — so a swapped or duplicated slot still
      * compiles. This is the only gate on it, which is why the parameters are bound
      * to DISTINCT non-default values: with every slot carrying the same number, a
@@ -832,15 +832,16 @@ public class MetadataTest {
                passes under `>=` and fails under `==` with "lookback 3 == outBegIdx
                4". If a function ever legitimately reports outBegIdx > lookback
                (issue #99 raised that for BBANDS), carve THAT function out by name
-               rather than relaxing the operator for all 168. */
+               rather than relaxing the operator for every function. */
             check(viaHolder >= 0 && r.begIdx() == viaHolder,
                 f.name() + ": holder lookback " + viaHolder + " == outBegIdx " + r.begIdx());
             compared++;
         }
         check(compared == Functions.all().size(), "checked every function (" + compared + ")");
-        /* 69 of the 168 declare an INTEGER_RANGE parameter; the rest take only
-           reals, only a choice list, or nothing, and cannot carry a distinct
-           period. Floor it so the discriminating half cannot quietly shrink. */
+        /* Only the functions declaring an INTEGER_RANGE parameter can carry a
+           distinct period; the rest take only reals, only a choice list, or
+           nothing. Floor it so the discriminating half cannot quietly
+           shrink. */
         check(withDistinct >= 65,
             "the functions with a period were driven with distinct non-default ones ("
             + withDistinct + ")");
@@ -930,10 +931,8 @@ public class MetadataTest {
          * of them was pinned. Measured on this tree: rewriting the one line in
          * `Dispatch.call` to `Core core = Core.DEFAULT;`, so that every
          * call-by-name silently ignores the Core it was handed, leaves all six
-         * Java suites green (BatchApiTest 181, CoreApiTest 66, DivZeroTest 91,
-         * MetadataTest 1540, SMathOverflowTest 4, StreamSmokeTest 3859). The
-         * blanket rewrite of BOTH lines fails 2 of 1540 -- the three checks
-         * above -- which is exactly the half that was already covered.
+         * Java suites green. The blanket rewrite of BOTH lines fails only the
+         * checks above, which is exactly the half that was already covered.
          *
          * The unstable period is the oracle again, and it discriminates on the
          * range rather than on the values: it does not change how RSI is
@@ -956,7 +955,7 @@ public class MetadataTest {
 
         /* And the binder's answer is the typed call's answer on that same Core,
          * bit for bit -- the same standard callByNameMatchesTheTypedApi() holds
-         * the 176 functions to on Core.DEFAULT, now on a Core that is not it.
+         * every function to on Core.DEFAULT, now on a Core that is not it.
          */
         double[] direct = new double[N];
         OutRange rDirect = tuned.rsi(0, N - 1, CLOSE, 14, direct);

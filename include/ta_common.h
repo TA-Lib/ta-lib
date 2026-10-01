@@ -35,7 +35,7 @@
 
 /* The following macro is used to return internal errors.
  * The Id can be from 1 to 999 and translate to the user
- * as the return code 5000 to 5999.
+ * as the return code 5001 to 5999.
  *
  * The generated function tier (src/ta_func) gives every
  * guard its own Id, so the number names the guard that

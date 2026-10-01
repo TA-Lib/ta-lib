@@ -132,7 +132,7 @@ An indicator consumes a number of leading bars — its **lookback** — before i
 int lookback = core.SmaLookback(30);   // 29
 ```
 
-Output is written only where the indicator is defined: `outReal[0]` corresponds to input bar `r.BegIdx`, and nothing outside `0 .. r.Count - 1` is touched. The library never pads with `NaN`. A range that ends before the lookback is a **success with no values** (`r.Count == 0`), not an error.
+Output is written only where the indicator is defined: `outReal[0]` corresponds to input bar `r.BegIdx`. The library never pads with `NaN`. A range that ends before the lookback is a **success with no values** (`r.Count == 0`), not an error.
 
 ### 3.3 Display Shift {#display_shift}
 
@@ -153,14 +153,14 @@ The public methods throw rather than return a status code:
 | `startIdx`/`endIdx` negative, above `Core.IndexMax`, or `endIdx < startIdx` | `TALibArgumentOutOfRangeException` |
 | An optional parameter outside its documented range | `TALibArgumentException` |
 | An input span that does not reach `endIdx`, or an output span shorter than the values produced | `TALibArgumentException` naming the span |
-| Two outputs overlapping, or an output *partially* overlapping an input | `TALibArgumentException` |
+| Two outputs that are the same buffer ([B6](/spec/errors/#b6)) | `TALibArgumentException` |
 | An inconsistency in the library's own state: a bug, please report it | `TALibInvalidOperationException` carrying `RetCode.InternalError` |
 
 Each extends the framework type you would reach for and implements
 `ITALibFailure`, so `catch (ArgumentException)` still works and the `RetCode` is
 there when you want it.
 
-Computing wholly in place is allowed and stays supported — passing the same buffer as both an input and an output is how several indicators are meant to be used. What is rejected is *partial* overlap, which only spans can express: two views of the same memory at different offsets make a body write through what it is still reading, and the result would be silently wrong rather than merely surprising.
+Computing wholly in place is allowed and stays supported — passing the same buffer as both an input and an output is how several indicators are meant to be used. Avoid partial overlap, which only spans can express: what it does is unspecified ([N8](/spec/inputs-outputs/#n8)).
 
 A `NaN` or `±Inf` inside an input series is not detected, and nothing is promised about the output: a running sum or a recursion carries it into every later value, not only the bars whose window holds it. Clean or split the series before calling.
 

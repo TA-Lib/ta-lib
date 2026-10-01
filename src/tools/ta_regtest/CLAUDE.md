@@ -481,16 +481,10 @@ guard is harmless (no `/arch:AVX2`, so no FMA instruction to contract into).
 What is left is purely the CRT's transcendentals, covered by `--xlang-hash`'s
 tolerance lane.
 
-**The GCC i386 lane IS excess-precision, and no bit-exactness claim covers it.**
-`cmake/toolchain-linux-i386.cmake` builds the shipped i386 `.deb` with
-`i686-linux-gnu-gcc`, which sets no `-mfpmath` and defaults to `387`, and
-`C_EXTENSIONS` at its ON default means `-fexcess-precision=fast`. Under
-`FLT_EVAL_METHOD==2` an intermediate kept in a register carries 64 mantissa bits
-while one round-tripped through memory does not, so *any* difference in where a
-value lives changes results — batch and stream diverge there independently of
-anything the generator does — and nothing executes that artifact
-(`scripts/test-dist.py` is 64-bit only). Treat i386 as an unmodelled target:
-every bit-exact invariant in this file is stated for `FLT_EVAL_METHOD==0`.
+**Every bit-exact invariant in this file is stated for `FLT_EVAL_METHOD==0`.**
+The i386 `.deb` gets it from `cmake/toolchain-linux-i386.cmake`; a native 32-bit
+x86 build without `-msse2 -mfpmath=sse` gets x87 math, which no bit-exactness
+claim covers ([D4](https://ta-lib.org/spec/versions/#d4)).
 
 MAMA (damped adaptive alpha) and LINEARREG_ANGLE (atan is terminal) reach `atan`
 and stay in: both are smooth in it, and MAMA carries the 8-ULP libm floor.
@@ -671,16 +665,15 @@ Scope rules (deliberate):
   Rust and C# are held to it. These cases carry their own count and floor, being
   a subset of `sentCases` whose stopping the combined total could not show.
 - **The ill-conditioning skip: HT_DCPHASE / HT_SINE on the constant shape, for
-  the tolerance-lane servers.** Both derive their output from `atan2` of the
-  Hilbert transform's in-phase/quadrature components; on `FUZZ_CONSTANT` those
-  are floating-point noise, so the phase is `atan2(≈0,≈0)` — chaotically
-  sensitive to the last bit of every transcendental step, which amplifies ~1 ULP
-  to whole degrees. C and Rust share the system libm and stay bit-identical
-  there, so `xlang_illcond` skips exactly those two functions on exactly that
-  shape for exactly the tolerance-lane servers, and reports the count. Not a
-  codegen bug: every non-degenerate shape agrees within 1e-9, and `atan2` of a
-  null signal is undefined, so no fixed tolerance could separate it from libm
-  noise.
+  the tolerance-lane servers.** Both derive their output from `atan` of a ratio
+  of two sums, `realPart/imagPart`; on `FUZZ_CONSTANT` both are floating-point
+  noise, so the phase is `atan(≈0/≈0)`: chaotically sensitive to the last bit of
+  every transcendental step, which amplifies ~1 ULP to whole degrees. C and Rust
+  share the system libm and stay bit-identical there, so `xlang_illcond` skips
+  exactly those two functions on exactly that shape for exactly the
+  tolerance-lane servers, and reports the count. Not a codegen bug: every
+  non-degenerate shape agrees within 1e-9, and the phase of a null signal is
+  undefined, so no fixed tolerance could separate it from libm noise.
 - **Integer periods sweep from each parameter's declared minimum**, period 1
   included, and reach default+50/+51.
 - Expected GREEN because every backend fuses the identical `a*b+c` sites via the

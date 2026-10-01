@@ -699,13 +699,14 @@ public partial class Core
    /// </para>
    /// <list type="bullet">
    /// <item><description><c>optInMAType</c> applies to both the fast and slow moving average. <c>TA_MAType_MAMA</c> ignores its period argument, so with <c>optInMAType = TA_MAType_MAMA</c> the fast and slow MAs are identical, making the numerator — and therefore the output — zero at every bar.</description></item>
+   /// <item><description>If the slow period is set smaller than the fast period, the two are swapped, as in <c>MACD</c>.</description></item>
    /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
-   /// <see cref="OutRange"/> says where they start and how many there are;
-   /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range that ends before <c>PpoLookback</c> is a <b>success
-   /// with no values</b> (<c>Count == 0</c>), not an error.
+   /// <see cref="OutRange"/> says where they start and how many there are, and
+   /// the library never pads with NaN. A valid range that ends before
+   /// <c>PpoLookback</c> is a <b>success with no values</b> (<c>Count == 0</c>),
+   /// not an error.
    /// </para>
    /// <para>
    /// Every exception it throws, except the runtime's own
@@ -784,6 +785,7 @@ public partial class Core
    /// </para>
    /// <list type="bullet">
    /// <item><description><c>optInMAType</c> applies to both the fast and slow moving average. <c>TA_MAType_MAMA</c> ignores its period argument, so with <c>optInMAType = TA_MAType_MAMA</c> the fast and slow MAs are identical, making the numerator — and therefore the output — zero at every bar.</description></item>
+   /// <item><description>If the slow period is set smaller than the fast period, the two are swapped, as in <c>MACD</c>.</description></item>
    /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
@@ -793,10 +795,10 @@ public partial class Core
    /// </para>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
-   /// <see cref="OutRange"/> says where they start and how many there are;
-   /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range that ends before <c>PpoLookback</c> is a <b>success
-   /// with no values</b> (<c>Count == 0</c>), not an error.
+   /// <see cref="OutRange"/> says where they start and how many there are, and
+   /// the library never pads with NaN. A valid range that ends before
+   /// <c>PpoLookback</c> is a <b>success with no values</b> (<c>Count == 0</c>),
+   /// not an error.
    /// </para>
    /// <para>
    /// Every exception it throws, except the runtime's own

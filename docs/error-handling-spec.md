@@ -33,13 +33,11 @@ retired footnote leaves a gap, so a citation of `[4]` keeps its meaning.
 
 | Rule | Topic | C | Rust | Java | C# |
 |---|---|:---:|:---:|:---:|:---:|
-| L1 | [rejection signal](https://ta-lib.org/spec/lookback/#l1) | ✅ | ✅ | ❌<br>[18] | ✅ |
-| L2 | [agrees with batch and Open](https://ta-lib.org/spec/lookback/#l2) | ✅ | ✅ | ❌<br>[18] | ✅ |
+| L1 | [rejection signal](https://ta-lib.org/spec/lookback/#l1) | ✅ | ✅ | ✅ | ✅ |
+| L2 | [agrees with batch and Open](https://ta-lib.org/spec/lookback/#l2) | ✅ | ✅ | ✅ | ✅ |
 | L3 | [agrees with C](https://ta-lib.org/spec/lookback/#l3) | — | ✅ | ✅ | ✅ |
-| L4 | [nothing else fails](https://ta-lib.org/spec/lookback/#l4) | ✅ | ✅ | ❌<br>[18] | ✅ |
-| L12 | [display shift rejects what the lookback rejects](https://ta-lib.org/spec/lookback/#l12) | ✅ | ✅ | ❌<br>[18] | ✅ |
-
-[18] A null MA type: Appendix D item 14.
+| L4 | [nothing else fails](https://ta-lib.org/spec/lookback/#l4) | ✅ | ✅ | ✅ | ✅ |
+| L12 | [display shift rejects what the lookback rejects](https://ta-lib.org/spec/lookback/#l12) | ✅ | ✅ | ✅ | ✅ |
 
 ### Batch tier
 
@@ -156,12 +154,14 @@ rejection.
 ### L1 to L4
 
 `xlang_lookback_leg`, `xlang_tier_native_check`, `xlang_tier_gold_check`
-(regtest `--xlang-hash`).
+(regtest `--xlang-hash`); `aNullEnumLookbackIsMinusOne` in `BatchApiTest`
+(Java) for a null MA type.
 
 ### L12
 
 `abstract_check_display_shift` (`test_abstract.c`; against each server under
-regtest `--codegen`, in-process in a bare run).
+regtest `--codegen`, in-process in a bare run); `aNullEnumLookbackIsMinusOne`
+in `BatchApiTest` (Java) for a null MA type.
 
 ### B1 to B8
 
@@ -668,7 +668,7 @@ implemented but not covered by a CI probe; the rule's own footnote says which.
 | ~~10~~ | C | | *Obsolete.* `TA_SetCompatibility` accepted any value; #388 removed the behaviour it selected, and the pair is kept declared and inert. |
 | ~~11~~ | C#, Rust | B6 | *Fixed.* Two distinct **empty** output buffers were rejected as aliased in C# and Rust and accepted in C and Java, measured on `ACCBANDS(0, 251, …, optInTimePeriod 253, …)` with three distinct zero-length outputs. Both now accept them (#262). |
 | ~~13~~ | all | S1 | *Fixed.* An empty history answered `TA_BAD_PARAM` where S1 specifies `TA_OUT_OF_RANGE_START_INDEX`, and C checked argument presence ahead of the index pair. All four openers now answer the pair ahead of every presence check, except for the one check each language makes a precondition of reading the length (footnote [4]). |
-| 14 | Java | L1, L2, L4 | *Open.* A lookback call does not check a null MA type: `maLookback(1, null)` returns 0 and `maLookback(2, null)` throws `NullPointerException` from its `switch`, where `ma(..., null)` throws `TALibArgumentException` carrying `TA_BAD_PARAM` (B3). The same holds for every lookback with an MA-type parameter (MA, MAVP, STOCH, STOCHF, STOCHRSI, KDJ, MACDEXT, BBANDS and the rest): a null-typed stage at period 1 returns a lookback, any other throws. |
+| ~~14~~ | Java | L1, L2, L4, L12 | *Fixed.* A lookback call did not check a null MA type: `maLookback(1, null)` returned 0 and `maLookback(2, null)` threw `NullPointerException` from its `switch`, and every lookback with an MA-type parameter did the same. Each now returns -1, as B3 rejects the batch call. |
 | ~~15~~ | C# | B6, S6 | *Fixed.* One zero-length array passed as two outputs, on a range that produces no values, answered `TA_SUCCESS` in C# (`Overlaps` is false for an empty span) and `TA_BAD_PARAM` in C and Java. Ruled 2026-10-01: outputs must be different buffers in every language. C#'s batch and `OpenAndFill` guards now also reject two empty outputs on the same non-null reference. |
 
 Next item: 16.

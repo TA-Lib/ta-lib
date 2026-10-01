@@ -152,7 +152,8 @@ function discards; the larger the value, the later the first output. The default
 
 The setting follows the function wherever it runs: whether you call it directly, or
 another indicator uses it internally. The EMA id therefore affects EMA itself and
-every indicator built on one, such as MACD and DEMA.
+every indicator built on one, such as MACD and DEMA, which can drop a different
+number of bars than EMA ([L7](/spec/lookback/#l7)).
 
 In C, the unstable period and the candle settings are process-wide. Change them
 only while no TA function is running and no stream is open

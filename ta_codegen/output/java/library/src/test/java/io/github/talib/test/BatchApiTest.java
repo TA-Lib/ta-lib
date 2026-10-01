@@ -68,7 +68,7 @@ import java.util.Set;
  *
  * <p>Junit-free by design (see {@link CoreApiTest}). Numerical correctness is
  * not this file's job — {@code ta_regtest --codegen} and {@code --xlang-hash}
- * prove that against the C reference for all 168 functions. What is tested here
+ * prove that against the C reference for every function. What is tested here
  * is the surface a Java caller touches, which no cross-language harness sees.
  *
  * <p>It absorbs the two non-vacuous cases of the retired junit {@code CoreTest}
@@ -857,6 +857,20 @@ public class BatchApiTest {
     }
 
     /**
+     * L1, L2 and L4 for a null enum: the lookback answers -1, as B3 rejects the
+     * batch call. STOCH adds MA's lookback, so it must check its own enums: a -1
+     * from MA alone would come back as a positive sum.
+     */
+    static void aNullEnumLookbackIsMinusOne() {
+        check(Core.DEFAULT.maLookback(2, null) == -1, "maLookback(2, null) == -1");
+        check(Core.DEFAULT.maLookback(1, null) == -1, "maLookback(1, null) == -1");
+        check(Core.DEFAULT.stochLookback(5, 3, null, 3, MAType.SMA) == -1,
+              "stochLookback with a null slow-K MA type == -1");
+        check(Core.DEFAULT.maDisplayShift(2, null, 0) == Integer.MIN_VALUE,
+              "maDisplayShift(2, null, 0) == Integer.MIN_VALUE");
+    }
+
+    /**
      * Rule B6a: an output the .yaml marks {@code nullable} may be declined with
      * {@code null}, and declining it changes nothing about the output that was
      * asked for. MAMA's {@code outFAMA} is the only one in the corpus.
@@ -1325,6 +1339,7 @@ public class BatchApiTest {
         anIndexFaultOutranksAnAbsentArgument();
         aBadParameterOutranksAnAbsentBuffer();
         aNullEnumIsNamed();
+        aNullEnumLookbackIsMinusOne();
         aNullableOutputMayBeDeclined();
         oneEmptyArrayIsOneBuffer();
         streamingOpenersCheckTheirArguments();

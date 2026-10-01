@@ -12,7 +12,7 @@ A candle characteristic is measured against an average of a chosen range over th
 previous `avgPeriod` bars, scaled by `factor`. For each setting type:
 
 - **range type** — what to measure: the real body (open-to-close), the high-to-low
-  range, or the two shadows.
+  range, or the mean of the upper and lower shadows.
 - **`avgPeriod`** — how many prior bars to average (`0` means "use only the current
   candle", no averaging).
 - **`factor`** — the multiplier applied to that average to form the threshold.
