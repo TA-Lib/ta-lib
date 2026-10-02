@@ -560,6 +560,14 @@ typedef enum
    * comparison count that did not advance is the only witness. */
   TA_SV_ROUTED_VACUOUS               = 1700,
 
+  /* Stream handle calls given a NULL handle or out-pointer. */
+  TA_STREAM_NULL_CLOSE_FAILED        = 1701,
+  TA_STREAM_NULL_NOT_REJECTED        = 1702,
+  TA_STREAM_NULL_WROTE               = 1703,
+  TA_STREAM_NULL_ORIGINAL_MOVED      = 1704,
+  TA_STREAM_NULL_SETUP_FAILED        = 1705,
+  TA_STREAM_NULL_VACUOUS             = 1706,
+
   /* Error code related to bug fix documentented on SourceForge. */
   TA_TEST_FAIL_BUG1359452_1  = 2000,
   TA_TEST_FAIL_BUG1359452_2  = 2001,

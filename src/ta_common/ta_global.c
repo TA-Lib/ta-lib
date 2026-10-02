@@ -221,7 +221,7 @@ TA_RetCode TA_RestoreCandleDefaultSettings( TA_CandleSettingType settingType )
      * becomes a clean error instead of an over-read. */
     if( sizeof(TA_CandleDefaultSettings)/sizeof(TA_CandleDefaultSettings[0])
         != (size_t)TA_NB_CANDLE_SETTING )
-        return TA_INTERNAL_ERROR;
+        return TA_INTERNAL_ERROR(482);
 
     if( settingType == TA_AllCandleSettings )
         for( i = 0; i < TA_NB_CANDLE_SETTING; ++i )

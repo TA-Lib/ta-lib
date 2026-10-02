@@ -5,7 +5,7 @@ The caller-facing rules are published at https://ta-lib.org/spec/ (source
 what a caller relies on and a test enforces. This file is the maintainer's side:
 per id, whether each backend conforms, what tests it, and why the rule is what
 it is. It also states what the public pages leave out because only the tests and
-a maintainer need it: the evaluation order, and the rows marked *unpublished*. A
+a maintainer need it: the evaluation order. A
 change to a published rule edits the public page; a change here edits a mark, a
 test or a reason.
 
@@ -128,10 +128,13 @@ return the value, and Java writes every field of a caller-owned sink.
 
 | Rule | Topic | C | Rust | Java | C# |
 |---|---|:---:|:---:|:---:|:---:|
-| *unpublished* | `Close(NULL)` succeeds | ✅ | — | — | — |
+| rH10 | [`Close(NULL)`](https://ta-lib.org/spec/streaming/#rh10) | ✅ | — | — | — |
 
-Unpublished until a committed test calls `Close(NULL)`. Only C has an explicit release. The other three reclaim a handle when it becomes
+Only C has an explicit release. The other three reclaim a handle when it becomes
 unreachable, so there is no double release or use after release to track.
+`sf_null_arguments` (`test_stream_finite.c`) calls `Close(NULL)` on each of its
+emitted bodies, and drives a NULL handle and a NULL out-pointer through
+`Update`, `Peek`, `Value`, `OutRange` and `Clone` in C.
 
 ### Configuration
 
@@ -187,7 +190,8 @@ Java's and C#'s `BatchApiTest` pass one zero-length array as two outputs.
 
 ### Stream opening conditions
 
-rS1, rS2, rS4, rS5, rS7 and rS8 are mapped; rS3 is not yet, and rS6 only for one buffer
+rS1, rS2, rS4, rS5, rS7 and rS8 are mapped below; rS3 is driven by the parameter
+leg of `test_open_contract.c` over the C openers; rS6 is mapped only for one buffer
 passed as two outputs: `testBatchArgumentContract` passes one buffer as
 ACCBANDS's first two `OpenAndFill` outputs on a history of lookback bars
 (`TA_BAD_PARAM`), with a separate-outputs control answering rS8; Java's and C#'s

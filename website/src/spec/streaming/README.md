@@ -48,8 +48,8 @@ A loop that waits for enough history starts at one bar: an empty history is rS1.
 
 | Rule | Condition | Code | Calls | Not checked in |
 |---|---|---|---|---|
-| <a id="ru1"></a>**rU1** | The handle is absent | `TA_BAD_PARAM` | all | Rust, Java, C#: cannot be absent |
-| <a id="ru2"></a>**rU2** | A required output is absent: a C out-pointer, a Java multi-output sink | `TA_BAD_PARAM` | Update, Peek | Rust, C#: value returned |
+| <a id="ru1"></a>**rU1** | The handle is absent | `TA_BAD_PARAM` | every handle call except Close | Rust, Java, C#: cannot be absent |
+| <a id="ru2"></a>**rU2** | A required output is absent: a C out-pointer, a Java multi-output sink | `TA_BAD_PARAM` | Update, Peek; in C also Value, OutRange, Clone | Rust, C#: value returned |
 | <a id="ru3"></a>**rU3** | A bar value is NaN, `+Inf` or `-Inf` | `TA_BAD_PARAM` | Update, Peek | |
 | <a id="ru4"></a>**rU4** | The bar this call would count leaves the index domain: `begIdx + count > TA_INDEX_MAX` | `TA_OUT_OF_RANGE_END_INDEX` | Update, Advance | |
 | <a id="ru5"></a>**rU5** | An output that is not declinable is declined ([rW5](/spec/inputs-outputs/#rw5)) | `TA_BAD_PARAM` | Update, Peek | Rust, Java, C#: nothing to decline |
@@ -72,3 +72,7 @@ A loop that waits for enough history starts at one bar: an empty history is rS1.
 ## Discovery
 
 <a id="rh9"></a>**rH9** Every function streams, in every language. The metadata flag is `TA_FUNC_FLG_STREAM`: Rust `FuncFlags::STREAM`, Java `FuncFlags.STREAMING`, C# `FuncFlags.Stream`. A stream is opened by its typed `Open`; the abstraction layer binds batch calls only.
+
+## Release
+
+<a id="rh10"></a>**rH10** In C, `Close(NULL)` succeeds and does nothing. Rust, Java and C# have no release call.
