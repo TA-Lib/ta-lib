@@ -200,9 +200,12 @@ What enters a lookback, in C, in a bare run:
 - rL2's signal: `abstract_check_display_shift` refuses a negative lookback
   other than -1 on every vector it drives.
 
-The ports' lookback and display-shift calls are compared with C's at default
-settings only; under a setting a port's lookback is seen through
-the batch `outBegIdx`, and its display shift not at all.
+rL4 under settings: `server_verify_lookback_value` compares each server's
+lookback with C's, for every function with every unstable period raised
+(`test_func_unstable_shift`) and for every candlestick function under each row
+of the candle settings matrix (`test_candlestick.c`), under regtest
+`--codegen`. The ports' display-shift calls are compared with C's at default
+settings only.
 
 ### rL11
 

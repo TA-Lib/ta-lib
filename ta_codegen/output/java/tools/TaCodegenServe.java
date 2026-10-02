@@ -249896,12 +249896,31 @@ public class TaCodegenServe {
         }
     }
 
+    /* The shipped registry takes the shipped Core, not this file's twin, so the
+       settings this server holds are carried onto one. A holder bound to the
+       default Core would answer every request at the default settings. */
+    static io.github.talib.Core absCore() {
+        io.github.talib.CoreBuilder b = io.github.talib.Core.builder();
+        for (io.github.talib.FuncUnstId id : io.github.talib.FuncUnstId.values()) {
+            if (id != io.github.talib.FuncUnstId.ALL) {
+                b.unstablePeriod(id, core.unstablePeriod[id.value()]);
+            }
+        }
+        io.github.talib.CandleSettingType[] types = io.github.talib.CandleSettingType.values();
+        io.github.talib.RangeType[] ranges = io.github.talib.RangeType.values();
+        for (int i = 0; i < core.candleSettings.length; i++) {
+            CandleSetting s = core.candleSettings[i];
+            b.candleSetting(types[i], ranges[s.rangeType.ordinal()], s.avgPeriod, s.factor);
+        }
+        return b.build();
+    }
+
     /* Binds every declared parameter of `f` from the request. `outs` receives the
        output arrays when the caller needs them back; pass null for the lookback
        tier, which binds none. */
     static io.github.talib.metadata.ParamHolder absBind(
             io.github.talib.metadata.FuncInfo f, String json, Object[] outs) {
-        io.github.talib.metadata.ParamHolder h = f.newCall();
+        io.github.talib.metadata.ParamHolder h = f.newCall(absCore());
         int startIdx = jsonInt(json, "startIdx");
         int endIdx = jsonInt(json, "endIdx");
         int n = endIdx - startIdx + 1;

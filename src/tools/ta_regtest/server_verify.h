@@ -118,4 +118,20 @@ ErrorNumber server_verify_lookback_parity(
     int            nbOptParams
 );
 
+/* The lookback each server answers for one parameter vector against the
+ * in-process library's, under the unstable periods and candle settings the
+ * library holds at the call. Every other lookback comparison with C runs at
+ * the default settings, and a port's lookback call evaluated on default
+ * settings is invisible through a batch outBegIdx wherever the body restates
+ * the expression instead of calling it. optParams NULL selects the defaults.
+ */
+ErrorNumber server_verify_lookback_value(
+    const char   *funcName,
+    const double  optParams[],
+    int           nbOptParams
+);
+
+/* How many lookback numbers server_verify_lookback_value compared. */
+int server_verify_lookback_values(void);
+
 #endif

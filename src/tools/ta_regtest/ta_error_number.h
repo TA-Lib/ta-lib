@@ -374,6 +374,8 @@ typedef enum
   TA_SV_LOOKBACK_PARITY_MISMATCH     = 1304,  /* issue #256: one server's own
                                                   lookback tier disagrees with its
                                                   own batch tier */
+  TA_SV_LOOKBACK_VALUE_MISMATCH      = 1305,  /* a server's lookback is not the
+                                                  C library's under the same settings */
 
   /* Single-precision (TA_S_) vector-arithmetic overflow guard (PR #33) */
   TA_S_OVERFLOW_BAD_RETCODE          = 1400,

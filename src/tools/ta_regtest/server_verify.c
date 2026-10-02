@@ -215,6 +215,9 @@ static int              g_comparisons;
  * call satisfies it (#427). */
 static int              g_valueComparisons;
 
+/* Lookback numbers compared with the in-process library, summed over pipes. */
+static int              g_lookbackValues;
+
 /* ---- Init / shutdown ---- */
 
 void server_verify_init(CodegenPipe *pipes[], const char *langs[], int nbPipes)
@@ -242,6 +245,7 @@ void server_verify_init(CodegenPipe *pipes[], const char *langs[], int nbPipes)
         g_candleSyncs = 0;
         g_comparisons = 0;
         g_valueComparisons = 0;
+        g_lookbackValues = 0;
     }
 }
 
@@ -290,6 +294,11 @@ int server_verify_comparisons(void)
 int server_verify_value_comparisons(void)
 {
     return g_valueComparisons;
+}
+
+int server_verify_lookback_values(void)
+{
+    return g_lookbackValues;
 }
 
 int server_verify_active(void)
@@ -992,5 +1001,79 @@ ErrorNumber server_verify_lookback_parity(
         }
     }
 
+    return TA_TEST_PASS;
+}
+
+ErrorNumber server_verify_lookback_value(
+    const char   *funcName,
+    const double  optParams[],
+    int           nbOptParams)
+{
+    const TA_FuncHandle *handle;
+    const TA_FuncInfo   *fi;
+    TA_ParamHolder      *holder;
+    TA_Integer           want = -1;
+
+    if( g_nbPipes == 0 )
+        return TA_TEST_PASS;
+    if( TA_GetFuncHandle(funcName, &handle) != TA_SUCCESS ||
+        TA_GetFuncInfo(handle, &fi) != TA_SUCCESS ||
+        TA_ParamHolderAlloc(handle, &holder) != TA_SUCCESS )
+    {
+        printf("  SV FAIL [%s]: lookback-value: no such function in ta_abstract\n", funcName);
+        return TA_SV_LOOKBACK_VALUE_MISMATCH;
+    }
+    for( unsigned int i = 0; i < fi->nbOptInput && optParams && (int)i < nbOptParams; i++ )
+    {
+        const TA_OptInputParameterInfo *oi;
+        TA_GetOptInputParameterInfo(handle, i, &oi);
+        if( oi->type == TA_OptInput_RealRange || oi->type == TA_OptInput_RealList )
+            TA_SetOptInputParamReal(holder, i, optParams[i]);
+        else
+            TA_SetOptInputParamInteger(holder, i, (TA_Integer)optParams[i]);
+    }
+    if( TA_GetLookback(holder, &want) != TA_SUCCESS )
+        want = -1;
+    TA_ParamHolderFree(holder);
+
+    for( int p = 0; p < g_nbPipes; p++ )
+    {
+        const char *lang = g_pipeLang[p] ? g_pipeLang[p] : "?";
+        ErrorNumber err;
+        int lbLen, got;
+
+        g_curPipe = p;
+        err = sync_unstable_periods(p);
+        if( err == TA_TEST_PASS )
+            err = sync_candle_settings(p);
+        if( err != TA_TEST_PASS )
+        {
+            printf("  SV FAIL [%s] (pipe %d, %s): lookback-value: the settings did not "
+                   "reach the server\n", funcName, p, lang);
+            return err;
+        }
+        build_lookback_request(handle, fi, funcName, optParams, nbOptParams);
+        err = codegen_pipe_call(g_pipes[p], g_reqBuf, g_respBuf, SV_BUF_SIZE);
+        if( err != TA_TEST_PASS )
+        {
+            printf("  SV FAIL [%s] (pipe %d, %s): lookback-value call failed\n", funcName, p, lang);
+            return err;
+        }
+        if( !json_find_field(g_respBuf, "lookback", &lbLen) )
+        {
+            printf("  SV FAIL [%s] (pipe %d, %s): abstract_get_lookback response has no "
+                   "lookback field (%.120s)\n", funcName, p, lang, g_respBuf);
+            return TA_SV_LOOKBACK_VALUE_MISMATCH;
+        }
+        got = json_get_int(g_respBuf, "lookback");
+        if( want < 0 ? got >= 0 : got != (int)want )
+        {
+            printf("  SV FAIL [%s] (pipe %d, %s): lookback is %d, the C library answers %d "
+                   "under the same settings\n", funcName, p, lang, got, (int)want);
+            return TA_SV_LOOKBACK_VALUE_MISMATCH;
+        }
+        g_comparisons++;
+        g_lookbackValues++;
+    }
     return TA_TEST_PASS;
 }

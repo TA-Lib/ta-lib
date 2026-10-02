@@ -11386,6 +11386,8 @@ static ErrorNumber test_candle_settings_matrix( const TA_History *history )
    unsigned int r, f;
    int moved = 0, valueMoved = 0, nonZeroPairs = 0, calls = 0, restoredMismatch = 0;
    int syncsBefore = server_verify_candle_syncs();
+   int movedLookbacks = 0;
+   static int defLookback[NB_TEST];
 
    outDefault = (int *)malloc((size_t)nbBars * NB_TEST * sizeof(int));
    outCur     = (int *)malloc((size_t)nbBars * sizeof(int));
@@ -11465,6 +11467,25 @@ static ErrorNumber test_candle_settings_matrix( const TA_History *history )
                     r, tableTest[f].name );
             errNb = TA_CDLSET_XLANG_MISMATCH;
             break;
+         }
+         /* The lookback CALL under this row: outBegIdx above does not show a
+          * port's lookback evaluated on other settings than its body's. Only a
+          * row that moved the lookback off the default row's can tell. */
+         {
+            int compared = server_verify_lookback_values();
+            errNb = server_verify_lookback_value( tableTest[f].name, NULL, 0 );
+            if( errNb != TA_TEST_PASS )
+            {
+               printf( "Failed: candle settings matrix row %u, %s (lookback, cross-language)\n",
+                       r, tableTest[f].name );
+               errNb = TA_CDLSET_XLANG_MISMATCH;
+               break;
+            }
+            if( r > 0 && lookback != defLookback[f] &&
+                server_verify_lookback_values() > compared )
+               movedLookbacks++;
+            if( r == 0 )
+               defLookback[f] = lookback;
          }
       }
    }
@@ -11589,6 +11610,12 @@ static ErrorNumber test_candle_settings_matrix( const TA_History *history )
    if( server_verify_active() && server_verify_candle_syncs() == syncsBefore )
    {
       printf( "Failed: no candle setting was pushed to any language server\n" );
+      return TA_CDLSET_VACUOUS_NO_SYNC;
+   }
+   if( server_verify_active() && movedLookbacks == 0 )
+   {
+      printf( "Failed: no lookback moved by a candle setting was compared with any "
+              "language server\n" );
       return TA_CDLSET_VACUOUS_NO_SYNC;
    }
 

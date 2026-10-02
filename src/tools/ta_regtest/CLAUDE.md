@@ -734,6 +734,7 @@ site firing thousands of times a run stays in-process.
 
 `DO_TEST` fails a group that ran under `--codegen` and compared no server
 value; it reads `server_verify_value_comparisons()`, since the total also
-counts `server_verify_lookback_parity`, which compares no number.
+counts `server_verify_lookback_parity`, which compares no number, and
+`server_verify_lookback_value`, which compares a lookback and no output.
 `DO_TEST_NOSV` is the opt-out, and the reason belongs on a `SERVER_VERIFY:`
 line in that file's header, where a reader meets it.

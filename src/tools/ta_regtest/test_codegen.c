@@ -7,6 +7,7 @@
  */
 #include "test_codegen.h"
 #include "codegen_pipe.h"
+#include "server_verify.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -1782,9 +1783,9 @@ static void setup_inputs(TA_ParamHolder *paramHolder,
 
 /* ---- What raising an unstable period does ----
  *
- * SERVER_VERIFY: none. Each assertion relates two calls of the C library to
- * each other; the language servers under a raised unstable period are compared
- * with C by the --codegen unstable pass.
+ * SERVER_VERIFY: no output value, since each assertion relates two calls of
+ * the C library to each other. Every function's lookback under the raised
+ * periods is compared with each server's.
  */
 
 #define SHIFT_K    5
@@ -1916,6 +1917,16 @@ static int shift_recipe(const TA_FuncInfo *funcInfo, ShiftCtx *ctx, int vector)
     }
     TA_SetUnstablePeriod(TA_FUNC_UNST_ALL, (unsigned int)at0.lookback + 1);
     shift_run(funcInfo, ctx->history, vector, &raised);
+    if( vector == SHIFT_VEC_DEFAULT )
+    {
+        ErrorNumber svErr = server_verify_lookback_value(funcInfo->name, NULL, 0);
+        if( svErr != TA_TEST_PASS )
+        {
+            TA_SetUnstablePeriod(TA_FUNC_UNST_ALL, 0);
+            ctx->error = svErr;
+            return 0;
+        }
+    }
     TA_SetUnstablePeriod(TA_FUNC_UNST_ALL, 0);
     if( raised.lookback != at0.lookback )
     {
@@ -2023,6 +2034,7 @@ static void shift_one_function(const TA_FuncInfo *funcInfo, void *opaque)
 ErrorNumber test_func_unstable_shift( TA_History *history )
 {
     ShiftCtx ctx;
+    int serverLookbacks = server_verify_lookback_values();
 
     memset(&ctx, 0, sizeof(ctx));
     ctx.history = history;
@@ -2045,6 +2057,11 @@ ErrorNumber test_func_unstable_shift( TA_History *history )
                "and %d at another list value\n",
                ctx.owners, ctx.ownersAtMinimum, ctx.movers, ctx.flatDefault,
                ctx.flatMinimum, ctx.flatList);
+        return TA_UNSTABLE_SHIFT_VACUOUS;
+    }
+    if( server_verify_active() && server_verify_lookback_values() == serverLookbacks )
+    {
+        printf("\nUNSTABLE SHIFT: no lookback was compared with any language server\n");
         return TA_UNSTABLE_SHIFT_VACUOUS;
     }
     return TA_TEST_PASS;
