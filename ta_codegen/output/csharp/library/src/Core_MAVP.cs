@@ -61,6 +61,7 @@ public partial class Core
     *                used, and bound it so an off-contract period cannot overflow.
     *  080326 MF,CC  Split the size temp from the cast-fed period temp (#160).
     *  092526 MF,CC  #442. Allocate the multi-period buffers on that path only.
+    *  100226 MF,CC  #497. An inverted window is refused with the range untouched.
     */
    /// <summary>
    /// Number of leading input bars <c>Mavp</c> consumes before it can produce
@@ -202,8 +203,6 @@ public partial class Core
        * results. Reject it cleanly instead of returning garbage.
        */
       if( optInMinPeriod > optInMaxPeriod ) {
-         outBegIdx = 0;
-         outNBElement = 0;
          return RetCode.BadParam ;
       }
       /* Identify the minimum number of price bar needed
@@ -319,8 +318,6 @@ public partial class Core
        * If you delete this, delete the clamps and the comments together.
        */
       if( maxUsed < minUsed || maxUsed - minUsed > 100000 ) {
-         outBegIdx = 0;
-         outNBElement = 0;
          return RetCode.BadParam ;
       }
       if( minUsed == maxUsed ) {
@@ -465,8 +462,6 @@ public partial class Core
          return RetCode.BadParam ;
       }
       if( optInMinPeriod > optInMaxPeriod ) {
-         outBegIdx = 0;
-         outNBElement = 0;
          return RetCode.BadParam ;
       }
       lookbackTotal = MaLookback(optInMaxPeriod, optInMAType);
@@ -520,8 +515,6 @@ public partial class Core
          }
       }
       if( maxUsed < minUsed || maxUsed - minUsed > 100000 ) {
-         outBegIdx = 0;
-         outNBElement = 0;
          return RetCode.BadParam ;
       }
       if( minUsed == maxUsed ) {

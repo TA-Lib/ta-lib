@@ -57,6 +57,7 @@ public partial class Core
     *  052603 MF     Adapt code to compile with .NET Managed C++
     *  070526 MF,CC  Speed optimization: delegate to the single-pass MACD
     *                when all three MA types are EMA (bit-exact).
+    *  100226 MF,CC  #497. The consistency exit leaves the range untouched.
     */
    /// <summary>
    /// Number of leading input bars <c>Macdext</c> consumes before it can produce
@@ -315,8 +316,6 @@ public partial class Core
       retCode = RetCode.Success;
       /* Parano tests. Will be removed eventually. */
       if( outBegIdx1 != tempInteger || outBegIdx2 != tempInteger || outNbElement1 != outNbElement2 || outNbElement1 != endIdx - startIdx + 1 + lookbackSignal ) {
-         outBegIdx = 0;
-         outNBElement = 0;
          return RetCode.BadParam ;
       }
       /* Calculate (fast MA) - (slow MA). */
@@ -456,8 +455,6 @@ public partial class Core
       outNbElement2 = _xr2.Count;
       retCode = RetCode.Success;
       if( outBegIdx1 != tempInteger || outBegIdx2 != tempInteger || outNbElement1 != outNbElement2 || outNbElement1 != endIdx - startIdx + 1 + lookbackSignal ) {
-         outBegIdx = 0;
-         outNBElement = 0;
          return RetCode.BadParam ;
       }
       for( i = 0; i < outNbElement1; i += 1 ) {
@@ -1029,8 +1026,6 @@ public partial class Core
       retCode = RetCode.Success;
       /* Parano tests. Will be removed eventually. */
       if( outBegIdx1 != tempInteger || outBegIdx2 != tempInteger || outNbElement1 != outNbElement2 || outNbElement1 != endIdx - startIdx + 1 + lookbackSignal ) {
-         outBegIdx = 0;
-         outNBElement = 0;
          return RetCode.BadParam ;
       }
       /* Calculate (fast MA) - (slow MA). */

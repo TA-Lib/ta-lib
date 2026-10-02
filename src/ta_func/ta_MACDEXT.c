@@ -57,6 +57,7 @@
  *  052603 MF     Adapt code to compile with .NET Managed C++
  *  070526 MF,CC  Speed optimization: delegate to the single-pass MACD
  *                when all three MA types are EMA (bit-exact).
+ *  100226 MF,CC  #497. The consistency exit leaves the range untouched.
  */
 
 TA_LIB_API int TA_MACDEXT_Lookback( int optInFastPeriod, TA_MAType optInFastMAType, int optInSlowPeriod, TA_MAType optInSlowMAType, int optInSignalPeriod, TA_MAType optInSignalMAType )
@@ -279,8 +280,6 @@ TA_LIB_API TA_RetCode TA_MACDEXT( int    startIdx,
    /* Parano tests. Will be removed eventually. */
    if( outBegIdx1 != tempInteger || outBegIdx2 != tempInteger || outNbElement1 != outNbElement2 || outNbElement1 != endIdx - startIdx + 1 + lookbackSignal )
    {
-      *outBegIdx= 0;
-      *outNBElement= 0;
       free(fastMABuffer);
       free(slowMABuffer);
       return TA_BAD_PARAM;
@@ -455,8 +454,6 @@ TA_RetCode TA_S_MACDEXT( int    startIdx,
    }
    if( outBegIdx1 != tempInteger || outBegIdx2 != tempInteger || outNbElement1 != outNbElement2 || outNbElement1 != endIdx - startIdx + 1 + lookbackSignal )
    {
-      *outBegIdx= 0;
-      *outNBElement= 0;
       free(fastMABuffer);
       free(slowMABuffer);
       return TA_BAD_PARAM;
@@ -737,8 +734,6 @@ static TA_RetCode TA_MACDEXT_OpenImpl( struct TA_MACDEXT_Stream **stream, const 
       /* Parano tests. Will be removed eventually. */
       if( outBegIdx1 != tempInteger || outBegIdx2 != tempInteger || outNbElement1 != outNbElement2 || outNbElement1 != endIdx - startIdx + 1 + lookbackSignal )
       {
-         dummyBegIdx = 0;
-         dummyNBElement = 0;
          free(fastMABuffer);
          free(slowMABuffer);
          TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); if( !outStride ) TA_Free( sc_outMACD ); if( !outStride ) TA_Free( sc_outMACDSignal ); if( !outStride ) TA_Free( sc_outMACDHist );

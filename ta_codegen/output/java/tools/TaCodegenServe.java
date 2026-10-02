@@ -101907,6 +101907,7 @@ class Core {
      *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
      *  092826 MF,CC  First version (issue #464).
+     *  100226 MF,CC  #497. An odd period is refused before the range is written.
      */
 
        /**
@@ -102014,11 +102015,11 @@ class Core {
           expScale = -4.6 / 0.6931471805599453;
           /* -4.6/ln(2): alpha = exp(-4.6*(D-1)) with D-1 = log2((R1+R2)/R). */
           /* Id, Type, Static Size */
-          outBegIdx.value = 0;
-          outNBElement.value = 0;
           if( optInTimePeriod % 2 != 0 ) {
              return RetCode.BAD_PARAM ;
           }
+          outBegIdx.value = 0;
+          outNBElement.value = 0;
           lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.FRAMA.ordinal()];
           if( startIdx < lookbackTotal ) {
              startIdx = lookbackTotal;
@@ -102229,11 +102230,11 @@ class Core {
              return RetCode.BAD_PARAM;
           }
           expScale = -4.6 / 0.6931471805599453;
-          outBegIdx.value = 0;
-          outNBElement.value = 0;
           if( optInTimePeriod % 2 != 0 ) {
              return RetCode.BAD_PARAM ;
           }
+          outBegIdx.value = 0;
+          outNBElement.value = 0;
           lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.FRAMA.ordinal()];
           if( startIdx < lookbackTotal ) {
              startIdx = lookbackTotal;
@@ -102870,11 +102871,11 @@ class Core {
           expScale = -4.6 / 0.6931471805599453;
           /* -4.6/ln(2): alpha = exp(-4.6*(D-1)) with D-1 = log2((R1+R2)/R). */
           /* Id, Type, Static Size */
-          outBegIdx.value = 0;
-          outNBElement.value = 0;
           if( optInTimePeriod % 2 != 0 ) {
              return RetCode.BAD_PARAM ;
           }
+          outBegIdx.value = 0;
+          outNBElement.value = 0;
           lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.FRAMA.ordinal()];
           if( startIdx < lookbackTotal ) {
              startIdx = lookbackTotal;
@@ -135938,6 +135939,7 @@ class Core {
      *  052603 MF     Adapt code to compile with .NET Managed C++
      *  070526 MF,CC  Speed optimization: delegate to the single-pass MACD
      *                when all three MA types are EMA (bit-exact).
+     *  100226 MF,CC  #497. The consistency exit leaves the range untouched.
      */
 
        /**
@@ -136188,8 +136190,6 @@ class Core {
           retCode = RetCode.SUCCESS;
           /* Parano tests. Will be removed eventually. */
           if( outBegIdx1.value != tempInteger || outBegIdx2.value != tempInteger || outNbElement1.value != outNbElement2.value || outNbElement1.value != endIdx - startIdx + 1 + lookbackSignal ) {
-             outBegIdx.value = 0;
-             outNBElement.value = 0;
              return RetCode.BAD_PARAM ;
           }
           /* Calculate (fast MA) - (slow MA). */
@@ -136318,8 +136318,6 @@ class Core {
           outNbElement2.value = _xr2.count();
           retCode = RetCode.SUCCESS;
           if( outBegIdx1.value != tempInteger || outBegIdx2.value != tempInteger || outNbElement1.value != outNbElement2.value || outNbElement1.value != endIdx - startIdx + 1 + lookbackSignal ) {
-             outBegIdx.value = 0;
-             outNBElement.value = 0;
              return RetCode.BAD_PARAM ;
           }
           for( i = 0; i < outNbElement1.value; i += 1 ) {
@@ -136880,8 +136878,6 @@ class Core {
           retCode = RetCode.SUCCESS;
           /* Parano tests. Will be removed eventually. */
           if( outBegIdx1.value != tempInteger || outBegIdx2.value != tempInteger || outNbElement1.value != outNbElement2.value || outNbElement1.value != endIdx - startIdx + 1 + lookbackSignal ) {
-             outBegIdx.value = 0;
-             outNBElement.value = 0;
              return RetCode.BAD_PARAM ;
           }
           /* Calculate (fast MA) - (slow MA). */
@@ -142069,6 +142065,7 @@ class Core {
      *                used, and bound it so an off-contract period cannot overflow.
      *  080326 MF,CC  Split the size temp from the cast-fed period temp (#160).
      *  092526 MF,CC  #442. Allocate the multi-period buffers on that path only.
+     *  100226 MF,CC  #497. An inverted window is refused with the range untouched.
      */
 
        /**
@@ -142204,8 +142201,6 @@ class Core {
            * results. Reject it cleanly instead of returning garbage.
            */
           if( optInMinPeriod > optInMaxPeriod ) {
-             outBegIdx.value = 0;
-             outNBElement.value = 0;
              return RetCode.BAD_PARAM ;
           }
           /* Identify the minimum number of price bar needed
@@ -142321,8 +142316,6 @@ class Core {
            * If you delete this, delete the clamps and the comments together.
            */
           if( maxUsed < minUsed || maxUsed - minUsed > 100000 ) {
-             outBegIdx.value = 0;
-             outNBElement.value = 0;
              return RetCode.BAD_PARAM ;
           }
           if( minUsed == maxUsed ) {
@@ -142460,8 +142453,6 @@ class Core {
              optInMAType = MAType.SMA;
           }
           if( optInMinPeriod > optInMaxPeriod ) {
-             outBegIdx.value = 0;
-             outNBElement.value = 0;
              return RetCode.BAD_PARAM ;
           }
           lookbackTotal = maLookback(optInMaxPeriod, optInMAType);
@@ -142520,8 +142511,6 @@ class Core {
              }
           }
           if( maxUsed < minUsed || maxUsed - minUsed > 100000 ) {
-             outBegIdx.value = 0;
-             outNBElement.value = 0;
              return RetCode.BAD_PARAM ;
           }
           if( minUsed == maxUsed ) {
@@ -213728,7 +213717,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "5107a47782f9bf97";
+    static final String SPLICED_GENCODE_DIGEST = "30b5d451578e0ac5";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];

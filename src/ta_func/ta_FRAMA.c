@@ -54,6 +54,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  092826 MF,CC  First version (issue #464).
+ *  100226 MF,CC  #497. An odd period is refused before the range is written.
  */
 
 TA_LIB_API int TA_FRAMA_Lookback( int optInTimePeriod )
@@ -145,12 +146,12 @@ TA_LIB_API TA_RetCode TA_FRAMA( int    startIdx,
    expScale = -4.6 / 0.6931471805599453;
    /* -4.6/ln(2): alpha = exp(-4.6*(D-1)) with D-1 = log2((R1+R2)/R). */
    /* Id, Type, Static Size */
-   *outBegIdx= 0;
-   *outNBElement= 0;
    if( optInTimePeriod % 2 != 0 )
    {
       return TA_BAD_PARAM;
    }
+   *outBegIdx= 0;
+   *outNBElement= 0;
    lookbackTotal = optInTimePeriod + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_FRAMA,Frama);
    if( startIdx < lookbackTotal )
    {
@@ -443,12 +444,12 @@ TA_RetCode TA_S_FRAMA( int    startIdx,
       return TA_BAD_PARAM;
 
    expScale = -4.6 / 0.6931471805599453;
-   *outBegIdx= 0;
-   *outNBElement= 0;
    if( optInTimePeriod % 2 != 0 )
    {
       return TA_BAD_PARAM;
    }
+   *outBegIdx= 0;
+   *outNBElement= 0;
    lookbackTotal = optInTimePeriod + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_FRAMA,Frama);
    if( startIdx < lookbackTotal )
    {
@@ -852,12 +853,12 @@ static TA_RetCode TA_FRAMA_OpenImpl( struct TA_FRAMA_Stream **stream, const doub
       int half;
       int lastSlot = 0;
       int seedIdx;
-      *outBegIdx= 0;
-      *outNBElement= 0;
       if( optInTimePeriod % 2 != 0 )
       {
          return TA_BAD_PARAM;
       }
+      *outBegIdx= 0;
+      *outNBElement= 0;
       lookbackTotal = optInTimePeriod + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_FRAMA,Frama);
       if( startIdx < lookbackTotal )
       {

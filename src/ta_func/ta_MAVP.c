@@ -61,6 +61,7 @@
  *                used, and bound it so an off-contract period cannot overflow.
  *  080326 MF,CC  Split the size temp from the cast-fed period temp (#160).
  *  092526 MF,CC  #442. Allocate the multi-period buffers on that path only.
+ *  100226 MF,CC  #497. An inverted window is refused with the range untouched.
  */
 
 TA_LIB_API int TA_MAVP_Lookback( int optInMinPeriod, int optInMaxPeriod, TA_MAType optInMAType )
@@ -166,8 +167,6 @@ TA_LIB_API TA_RetCode TA_MAVP( int    startIdx,
     */
    if( optInMinPeriod > optInMaxPeriod )
    {
-      *outBegIdx= 0;
-      *outNBElement= 0;
       return TA_BAD_PARAM;
    }
    /* Identify the minimum number of price bar needed
@@ -317,8 +316,6 @@ TA_LIB_API TA_RetCode TA_MAVP( int    startIdx,
       {
          free(localFinalArray);
       }
-      *outBegIdx= 0;
-      *outNBElement= 0;
       return TA_BAD_PARAM;
    }
    if( minUsed == maxUsed )
@@ -519,8 +516,6 @@ TA_RetCode TA_S_MAVP( int    startIdx,
 
    if( optInMinPeriod > optInMaxPeriod )
    {
-      *outBegIdx= 0;
-      *outNBElement= 0;
       return TA_BAD_PARAM;
    }
    lookbackTotal = TA_MA_Lookback(optInMaxPeriod,optInMAType);
@@ -613,8 +608,6 @@ TA_RetCode TA_S_MAVP( int    startIdx,
       {
          free(localFinalArray);
       }
-      *outBegIdx= 0;
-      *outNBElement= 0;
       return TA_BAD_PARAM;
    }
    if( minUsed == maxUsed )

@@ -301,11 +301,12 @@ ErrorNumber test_func_mavp( TA_History *history )
                           TA_MAType_SMA, 0, 0, endIdx );
    if( errNb != TA_TEST_PASS ) return errNb;
 
-   /* An inverted window (minPeriod > maxPeriod) must be rejected cleanly. */
+   /* An inverted window (minPeriod > maxPeriod) must be rejected cleanly,
+    * leaving the range as the caller had it. */
    outBegIdx = outNbElement = -1;
    retCode = TA_MAVP( 0, endIdx, history->close, mvPeriods, 30, 2,
                       TA_MAType_SMA, &outBegIdx, &outNbElement, mvOut );
-   if( retCode != TA_BAD_PARAM || outBegIdx != 0 || outNbElement != 0 )
+   if( retCode != TA_BAD_PARAM || outBegIdx != -1 || outNbElement != -1 )
    {
       printf( "\nFail: MAVP(min=30,max=2): rc=%d beg=%d nb=%d, expected clean TA_BAD_PARAM\n",
               (int)retCode, (int)outBegIdx, (int)outNbElement );

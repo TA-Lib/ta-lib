@@ -10,6 +10,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  092826 MF,CC  First version (issue #464).
+ *  100226 MF,CC  #497. An odd period is refused before the range is written.
  */
 
 int frama_lookback(int optInTimePeriod)
@@ -39,11 +40,11 @@ TA_RetCode frama(int startIdx, int endIdx,
    double hi1, lo1, hi2, lo2, r1, r2, r, price, alpha, prevFRAMA;
    int i, today, outIdx, lookbackTotal, half, lastSlot, seedIdx;
 
-   *outBegIdx = 0;
-   *outNBElement = 0;
-
    if( (optInTimePeriod%2) != 0 )
       return TA_BAD_PARAM;
+
+   *outBegIdx = 0;
+   *outNBElement = 0;
 
    lookbackTotal = optInTimePeriod + TA_GetUnstablePeriod(TA_FUNC_UNST_FRAMA);
 

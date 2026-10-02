@@ -1658,8 +1658,9 @@ static ErrorNumber abstract_check_display_shift( const char *funcName,
     return TA_TEST_PASS;
 }
 
-/* A call the library rejects must not have stored into an output buffer. The
- * range pair is not looked at: C leaves it unspecified after a failure.
+/* A call the library rejects for its arguments must not have stored anything:
+ * no output buffer, and neither half of the range pair, which the guard every
+ * TA_CallFunc of the suite goes through judges.
  */
 #define REJECT_PAINT_REAL (-1.2345678901234e300)
 #define REJECT_PAINT_INT  ((int)0x5A5AA5A5)
@@ -1669,6 +1670,8 @@ static ErrorNumber abstract_rejected_call_writes_nothing( const char *funcName,
 {
     const double paintReal = REJECT_PAINT_REAL;
     TA_Integer beg = 0, nb = 0;
+    long judged = regtest_rejected_calls_judged();
+    long wrote = regtest_rejected_calls_wrote_range();
     TA_RetCode rc;
     unsigned int o, j;
 
@@ -1684,6 +1687,13 @@ static ErrorNumber abstract_rejected_call_writes_nothing( const char *funcName,
     {
         printf("  Failed [%s]: the lookback rejects %s but the call returned %d, "
                "expected TA_BAD_PARAM\n", funcName, what, (int)rc);
+        return TA_ABS_TST_FAIL_REJECTED_CALL;
+    }
+    if( regtest_rejected_calls_judged() != judged + 1 ||
+        regtest_rejected_calls_wrote_range() != wrote )
+    {
+        printf("  Failed [%s]: the call rejected for %s wrote the range, or the "
+               "range was not looked at\n", funcName, what);
         return TA_ABS_TST_FAIL_REJECTED_CALL;
     }
     for( o = 0; o < 10; o++ )
@@ -3327,6 +3337,7 @@ static int indexRangeNbFuncs;        /* functions enumerated                 */
 static int indexRangeNbChecked;      /* rows actually run                    */
 static int indexRangeNbAccept;       /* boundary-accept rows actually run    */
 static int indexRangeNbNoProbe;      /* functions with no usable probe       */
+static long indexRangeNbRangeKept;   /* rows whose range pair was held to its sentinel */
 
 /* The boundary-accept row needs an optional-parameter value the prologue is
  * CERTAIN to reject, because the row's safety depends on it: the call is made
@@ -3388,6 +3399,7 @@ static ErrorNumber checkIndexRangeRejected( const TA_FuncInfo *funcInfo )
    TA_RetCode retCode;
    unsigned int i, c, badParamIdx = 0;
    int outBegIdx, outNbElement;
+   long judged, wrote;
    int badInt = 0, badIsReal = 0;
    double badReal = 0.0;
    int haveProbe = indexRangeBadOptValue( funcInfo, &badParamIdx,
@@ -3450,9 +3462,17 @@ static ErrorNumber checkIndexRangeRejected( const TA_FuncInfo *funcInfo )
             TA_SetOptInputParamInteger( paramHolder, badParamIdx, badInt );
       }
 
+      judged = regtest_rejected_calls_judged();
+      wrote = regtest_rejected_calls_wrote_range();
       retCode = TA_CallFunc( paramHolder, tc->startIdx, tc->endIdx,
                              &outBegIdx, &outNbElement );
       TA_ParamHolderFree( paramHolder );
+      if( regtest_rejected_calls_wrote_range() != wrote )
+      {
+         printf( "  INDEX RANGE [%s]: %s wrote the range\n", funcInfo->name, tc->what );
+         return TA_ABS_TST_FAIL_INDEX_RANGE;
+      }
+      indexRangeNbRangeKept += regtest_rejected_calls_judged() - judged;
 
       if( retCode != tc->expected )
       {
@@ -4410,6 +4430,7 @@ static ErrorNumber test_default_calls(void)
    {
       indexRangeNbFuncs = indexRangeNbChecked = 0;
       indexRangeNbAccept = indexRangeNbNoProbe = 0;
+      indexRangeNbRangeKept = 0;
       TA_ForEachFunc( testIndexRange, &errNumber );
       /* Exact accounting rather than a round floor. Every function runs the six
        * always-applicable rows, and the boundary-accept row either ran or was
@@ -4430,6 +4451,13 @@ static ErrorNumber test_default_calls(void)
          printf( "Failed: index-range accounting (%d cases, %d funcs, %d accept, "
                  "%d unprobeable)\n", indexRangeNbChecked, indexRangeNbFuncs,
                  indexRangeNbAccept, indexRangeNbNoProbe );
+         errNumber = TA_ABS_TST_FAIL_INDEX_RANGE;
+      }
+      /* Every row is a rejection, so every row's range pair was judged. */
+      if( errNumber == TA_TEST_PASS && indexRangeNbRangeKept != indexRangeNbChecked )
+      {
+         printf( "Failed: index-range gate judged the range pair of %ld of %d rows\n",
+                 indexRangeNbRangeKept, indexRangeNbChecked );
          errNumber = TA_ABS_TST_FAIL_INDEX_RANGE;
       }
    }

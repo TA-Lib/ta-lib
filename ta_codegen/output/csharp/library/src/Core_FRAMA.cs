@@ -54,6 +54,7 @@ public partial class Core
     *  MMDDYY BY     Description
     *  -------------------------------------------------------------------
     *  092826 MF,CC  First version (issue #464).
+    *  100226 MF,CC  #497. An odd period is refused before the range is written.
     */
    /// <summary>
    /// Number of leading input bars <c>Frama</c> consumes before it can produce
@@ -165,11 +166,11 @@ public partial class Core
       expScale = -4.6 / 0.6931471805599453;
       /* -4.6/ln(2): alpha = exp(-4.6*(D-1)) with D-1 = log2((R1+R2)/R). */
       /* Id, Type, Static Size */
-      outBegIdx = 0;
-      outNBElement = 0;
       if( optInTimePeriod % 2 != 0 ) {
          return RetCode.BadParam ;
       }
+      outBegIdx = 0;
+      outNBElement = 0;
       lookbackTotal = optInTimePeriod + this._unstablePeriod[(int)FuncUnstId.FRAMA];
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -369,11 +370,11 @@ public partial class Core
          return RetCode.BadParam ;
       }
       expScale = -4.6 / 0.6931471805599453;
-      outBegIdx = 0;
-      outNBElement = 0;
       if( optInTimePeriod % 2 != 0 ) {
          return RetCode.BadParam ;
       }
+      outBegIdx = 0;
+      outNBElement = 0;
       lookbackTotal = optInTimePeriod + this._unstablePeriod[(int)FuncUnstId.FRAMA];
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -1012,11 +1013,11 @@ public partial class Core
       expScale = -4.6 / 0.6931471805599453;
       /* -4.6/ln(2): alpha = exp(-4.6*(D-1)) with D-1 = log2((R1+R2)/R). */
       /* Id, Type, Static Size */
-      outBegIdx = 0;
-      outNBElement = 0;
       if( optInTimePeriod % 2 != 0 ) {
          return RetCode.BadParam ;
       }
+      outBegIdx = 0;
+      outNBElement = 0;
       lookbackTotal = optInTimePeriod + this._unstablePeriod[(int)FuncUnstId.FRAMA];
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;

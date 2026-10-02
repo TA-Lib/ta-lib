@@ -55,6 +55,7 @@
  *  052603 MF     Adapt code to compile with .NET Managed C++
  *  070526 MF,CC  Speed optimization: delegate to the single-pass MACD
  *                when all three MA types are EMA (bit-exact).
+ *  100226 MF,CC  #497. The consistency exit leaves the range untouched.
  */
 
 // Import types from parent module
@@ -305,8 +306,6 @@ impl Core {
         retCode = RetCode::Success;
         // Parano tests. Will be removed eventually.
         if outBegIdx1 != tempInteger || outBegIdx2 != tempInteger || outNbElement1 != outNbElement2 || outNbElement1 != endIdx - startIdx + 1 + lookbackSignal {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
             return RetCode::BadParam;
         }
         // Calculate (fast MA) - (slow MA).
@@ -671,8 +670,6 @@ impl Core {
         retCode = RetCode::Success;
         // Parano tests. Will be removed eventually.
         if outBegIdx1 != tempInteger || outBegIdx2 != tempInteger || outNbElement1 != outNbElement2 || outNbElement1 != endIdx - startIdx + 1 + lookbackSignal {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
             return Err(RetCode::BadParam);
         }
         // Calculate (fast MA) - (slow MA).

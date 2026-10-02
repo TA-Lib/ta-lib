@@ -13,6 +13,7 @@
  *  052603 MF     Adapt code to compile with .NET Managed C++
  *  070526 MF,CC  Speed optimization: delegate to the single-pass MACD
  *                when all three MA types are EMA (bit-exact).
+ *  100226 MF,CC  #497. The consistency exit leaves the range untouched.
  */
 
    /**
@@ -263,8 +264,6 @@
       retCode = RetCode.SUCCESS;
       /* Parano tests. Will be removed eventually. */
       if( outBegIdx1.value != tempInteger || outBegIdx2.value != tempInteger || outNbElement1.value != outNbElement2.value || outNbElement1.value != endIdx - startIdx + 1 + lookbackSignal ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
          return RetCode.BAD_PARAM ;
       }
       /* Calculate (fast MA) - (slow MA). */
@@ -393,8 +392,6 @@
       outNbElement2.value = _xr2.count();
       retCode = RetCode.SUCCESS;
       if( outBegIdx1.value != tempInteger || outBegIdx2.value != tempInteger || outNbElement1.value != outNbElement2.value || outNbElement1.value != endIdx - startIdx + 1 + lookbackSignal ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
          return RetCode.BAD_PARAM ;
       }
       for( i = 0; i < outNbElement1.value; i += 1 ) {
@@ -955,8 +952,6 @@
       retCode = RetCode.SUCCESS;
       /* Parano tests. Will be removed eventually. */
       if( outBegIdx1.value != tempInteger || outBegIdx2.value != tempInteger || outNbElement1.value != outNbElement2.value || outNbElement1.value != endIdx - startIdx + 1 + lookbackSignal ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
          return RetCode.BAD_PARAM ;
       }
       /* Calculate (fast MA) - (slow MA). */

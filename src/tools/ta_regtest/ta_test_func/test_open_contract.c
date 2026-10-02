@@ -50,8 +50,9 @@
 /* Description:
  *
  *   A rejected Open or OpenAndFill leaves the caller's output buffers exactly
- *   as it found them (website/src/api/README.md 3.4). Corpus-wide, both entry
- *   points.
+ *   as it found them. OpenAndFill's range pair reads (0, 0) after a too-short
+ *   history and is untouched after any other rejection. Corpus-wide, both
+ *   entry points.
  *
  *   WHY A RAMP RATHER THAN A COMPUTED SHORT HISTORY. The leg walks historyLen
  *   up from 0 and stops at the first length that produces a value, so the last
@@ -149,7 +150,10 @@ typedef struct {
    int     nbMinParamPasses;  /* functions whose pass 1 actually differed */
    int     nbMinParamFuncs;   /* functions whose table row says it should */
    int     nbViolation;       /* buffer writes on a rejection */
-   int     nbCountLeaked;     /* rejections leaving outNBElement non-zero */
+   int     nbCountLeaked;     /* rejections whose range pair is not the expected one */
+   long    nbShortHistoryZeroed; /* too-short histories that reported an empty range */
+   long    nbParamRangeKept;  /* refused parameters whose range pair was kept */
+   long    nbRangeKept;       /* other rejections whose range pair was kept */
    int     nbFunc;
    int     nbReported;
 } OcCtx;
@@ -314,23 +318,28 @@ static void oc_judge_reject( OcCtx *c, const TA_StreamEntry *e, int minParams,
    c->nbRejectChecked++;
    if( minParams ) c->nbMinParamRejects++;
 
-   /* 3.4 leaves the indices undefined on a rejection, and most of the corpus
-    * (a TA_BAD_PARAM or a too-short-history return before outBegIdx/
-    * outNBElement are even null-checked) genuinely relies on that -- writing
-    * through an unvalidated pointer there would be the bug. TA_INSUFFICIENT_HISTORY
-    * is different: every guard that can return it runs strictly after the
-    * null-check, and 200 of 201 zero the pair there (#386); MAVP's hand-rolled
-    * OpenAndFill was the one guard that returned without writing, so this is
-    * scoped to that one retCode rather than every rejection. */
-   if( hasOutMeta && rc == TA_INSUFFICIENT_HISTORY && ( nbElement != 0 || begIdx != 0 ) )
+   /* A too-short history reports an empty range, so a caller that skips the
+    * return code sees nothing was output. Every other rejection leaves the pair
+    * as the caller had it. */
+   if( hasOutMeta )
    {
-      if( c->nbReported < 12 )
+      int want = rc == TA_INSUFFICIENT_HISTORY ? 0 : OC_SENT_IDX;
+      if( nbElement != want || begIdx != want )
       {
-         c->nbReported++;
-         printf( "  OPEN-CONTRACT TA_%s %s: retCode=%d reported outBegIdx=%d outNBElement=%d\n",
-                 e->name, what, rc, begIdx, nbElement );
+         if( c->nbReported < 12 )
+         {
+            c->nbReported++;
+            printf( "  OPEN-CONTRACT TA_%s %s: retCode=%d left outBegIdx=%d outNBElement=%d,"
+                    " expected %d in both\n", e->name, what, rc, begIdx, nbElement, want );
+         }
+         c->nbCountLeaked++;
       }
-      c->nbCountLeaked++;
+      else if( rc == TA_INSUFFICIENT_HISTORY )
+         c->nbShortHistoryZeroed++;
+      else if( rc == TA_BAD_PARAM )
+         c->nbParamRangeKept++;
+      else
+         c->nbRangeKept++;
    }
 
    slot = oc_first_moved( c, e );
@@ -579,7 +588,7 @@ ErrorNumber test_func_open_contract( TA_History *history )
    if( ctx.nbViolation > 0 || ctx.nbCountLeaked > 0 )
    {
       printf( "\nFail: %d Open/OpenAndFill rejection%s wrote the caller's output"
-              " buffer and %d reported a non-zero outNBElement (issue #389).\n",
+              " buffer and %d left an unexpected range pair.\n",
               ctx.nbViolation, ctx.nbViolation == 1 ? "" : "s", ctx.nbCountLeaked );
       return TA_OPEN_CONTRACT_WROTE;
    }
@@ -620,6 +629,13 @@ ErrorNumber test_func_open_contract( TA_History *history )
                  ctx.nbMinParamRejects, ctx.nbMinParamPasses, ctx.nbMinParamFuncs,
                  ctx.nbSuccessChecked, ctx.nbOpenControlled, TA_STREAM_TABLE_SIZE,
                  wantControls );
+         return TA_OPEN_CONTRACT_VACUOUS;
+      }
+      if( ctx.nbShortHistoryZeroed == 0 || ctx.nbParamRangeKept == 0 || ctx.nbRangeKept == 0 )
+      {
+         printf( "\nFail: open-contract sweep judged the range pair of %ld too-short"
+                 " histories, %ld refused parameters and %ld other rejections.\n",
+                 ctx.nbShortHistoryZeroed, ctx.nbParamRangeKept, ctx.nbRangeKept );
          return TA_OPEN_CONTRACT_VACUOUS;
       }
    }

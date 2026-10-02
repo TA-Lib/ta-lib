@@ -586,6 +586,9 @@ typedef enum
   TA_UNSTABLE_SHIFT_FAIL             = 1708,
   TA_UNSTABLE_SHIFT_VACUOUS          = 1709,
 
+  /* A call that was rejected wrote *outBegIdx or *outNBElement. */
+  TA_REJECTED_CALL_WROTE_RANGE       = 1710,
+
   /* Error code related to bug fix documentented on SourceForge. */
   TA_TEST_FAIL_BUG1359452_1  = 2000,
   TA_TEST_FAIL_BUG1359452_2  = 2001,

@@ -257,8 +257,7 @@ its sweep that the lookback rejects and requires `TA_BAD_PARAM` with no element
 written. Its two floors count the vectors rejected inside their declared range,
 the rejections a C body makes itself after the generated checks: at a bound
 (MAVP's inverted window) and one step above the lower bound (FRAMA's odd
-period). It never reads the range pair. Java's and C#'s `BatchApiTest` hold a
-canary after rB5. Rust has no run-time canary: the public entry makes every
+period). Java's and C#'s `BatchApiTest` hold a canary after rB5. Rust has no run-time canary: the public entry makes every
 argument rejection before its one `_impl` call
 (`rust_public_entry_orders_the_argument_contract`), the parameter decision
 included, which it takes from the lookback, and no output is lent to anything
@@ -443,14 +442,25 @@ invisible. The cross-language comparison covers the index codes
 
 ### rE3: checks precede writes
 
-C's `OpenAndFill`, rejected under rS8, writes 0 to `*outBegIdx` and
-`*outNBElement` before it returns: the transcribed body's empty-range exit
-does, and a composed opener's guard writes the caller's pair explicitly
-(`c_stream.rs`, "must ALSO zero the caller's real pair"), and C's MAVP and
-FRAMA zero the pair before rejecting a parameter. The public rE3 therefore
-promises only that no output buffer is written, and leaves C's range
-out-parameters unspecified after a failure. No source says whether a `TA_INTERNAL_ERROR` leaves the
-caller's buffers untouched, so rE3 promises nothing after rB9.
+The range out-parameters in C. The public rule is the weak one, to keep room
+to change: `*outBegIdx` and `*outNBElement` may or may not have been written
+when a call does not return `TA_SUCCESS`, so a caller reads them after
+`TA_SUCCESS` only. The library holds itself to more, and the suite tests it:
+
+- `TA_INSUFFICIENT_HISTORY` writes 0 to both. Nothing was output, and a caller
+  that skipped the return code reads an empty range instead of stale indices.
+- Every other rejection leaves both as the caller had them: a call writes the
+  pair once, at its exit, on success.
+- Nothing holds after rB8 or rB9. No source says whether a `TA_INTERNAL_ERROR`
+  or an allocation failure leaves the caller's buffers or range untouched.
+
+Coverage, each call painting the pair with a sentinel first: every `TA_CallFunc`
+the suite makes (`regtest_guarded_call`, which `ta_test_priv.h` substitutes for
+it, failing the run at `freeLib`); the double and float entry of every function
+at each in-range parameter vector its body refuses (`test_variants.c`); every
+function's `OpenAndFill`, held to (0, 0) at each too-short history and to the
+sentinel at each out-of-range parameter (`test_open_contract.c`); the
+absent-argument rows of `test_internals.c`.
 
 ### Messages
 

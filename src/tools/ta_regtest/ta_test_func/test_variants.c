@@ -100,6 +100,7 @@
 #define V_MAX_BARS   300   /* history is 252 bars; assert, never clamp */
 #define V_MAX_INPUT    6   /* widest is OHLCV + one spare */
 #define V_MAX_OUTPUT   4   /* HA is the widest */
+#define V_RANGE_SENTINEL (-7654321)
 #define V_MAX_OPT      16
 /* Candidate values probed per optional parameter. An enum contributes one per
  * member, so the bound is a fact about enums.yaml and comes from the generated
@@ -182,6 +183,7 @@ typedef struct
    long nbCompare;    /* variant comparisons actually performed */
    long nbValueCmp;   /* of those, ones that compared >0 output elements */
    long nbOutputCmp;  /* actual memcmp calls — incremented AT the comparison */
+   long nbRejectKept; /* agreed rejections whose two range pairs were judged */
 } VariantCtx;
 
 /**** Local functions declarations. ****/
@@ -217,6 +219,7 @@ ErrorNumber test_func_variants( TA_History *history )
    nb = (int)history->nbBars;
    ctx.nb = nb;
    ctx.nbFunc = ctx.nbVector = ctx.nbCompare = ctx.nbValueCmp = ctx.nbOutputCmp = 0;
+   ctx.nbRejectKept = 0;
 
    /* TA_EMA_Lookback reads the unstable period; neutralise it so a leftover
     * setting from an earlier test group cannot colour these results. */
@@ -312,6 +315,11 @@ ErrorNumber test_func_variants( TA_History *history )
               "%ld output memcmp(s))\n",
               ctx.nbFunc, ctx.nbVector, ctx.nbCompare, ctx.nbValueCmp,
               ctx.nbOutputCmp );
+      return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+   }
+   if( ctx.nbRejectKept == 0 )
+   {
+      printf( "\nVariant gate Fail: no rejected call had its range pair judged\n" );
       return TA_TESTUTIL_TFRR_BAD_CALCULATION;
    }
    (void)nbDelegating;
@@ -645,7 +653,8 @@ static ErrorNumber run_one_vector( VariantCtx *ctx, const TA_VariantEntry *e,
    double    *outRealD[V_MAX_OUTPUT], *outRealS[V_MAX_OUTPUT];
    int       *outIntD [V_MAX_OUTPUT], *outIntS [V_MAX_OUTPUT];
    TA_RetCode rcD, rcS;
-   int begD = 0, nbD = 0, begS = 0, nbS = 0;
+   int begD = V_RANGE_SENTINEL, nbD = V_RANGE_SENTINEL;
+   int begS = V_RANGE_SENTINEL, nbS = V_RANGE_SENTINEL;
    int i;
 
    for( i = 0; i < e->nbInput; i++ )
@@ -661,9 +670,6 @@ static ErrorNumber run_one_vector( VariantCtx *ctx, const TA_VariantEntry *e,
 
    set_canaries( ctx, e );
 
-   /* A guarded rejection returns without touching *outBegIdx / *outNBElement,
-    * so these must be pre-set or an unequal retCode would be compared against
-    * uninitialised memory. */
    rcD = e->guarded( startIdx, endIdx, dPtr, optIn, &begD, &nbD, outRealD, outIntD );
    rcS = e->single ( startIdx, endIdx, fPtr, optIn, &begS, &nbS, outRealS, outIntS );
 
@@ -684,7 +690,20 @@ static ErrorNumber run_one_vector( VariantCtx *ctx, const TA_VariantEntry *e,
       return TA_TESTUTIL_TFRR_BAD_RETCODE;
    }
    if( rcD != TA_SUCCESS )
-      return TA_TEST_PASS;   /* agreed rejection — nothing to compare */
+   {
+      /* A rejected call leaves the range as the caller had it. */
+      if( begD != V_RANGE_SENTINEL || nbD != V_RANGE_SENTINEL ||
+          begS != V_RANGE_SENTINEL || nbS != V_RANGE_SENTINEL )
+      {
+         printf( "\nVariant gate Fail [TA_%s %s start=%d end=%d]: rejected with "
+                 "retCode=%d, range written: guarded(%d,%d) TA_S_(%d,%d)\n",
+                 e->name, regime_name(ctx->regime), startIdx, endIdx, (int)rcD,
+                 begD, nbD, begS, nbS );
+         return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+      }
+      ctx->nbRejectKept++;
+      return TA_TEST_PASS;
+   }
 
    if( begS != begD || nbS != nbD )
    {

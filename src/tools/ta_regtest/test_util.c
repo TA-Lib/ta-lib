@@ -63,6 +63,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <math.h>
+#define TA_REGTEST_UNGUARDED_CALL
 #include "ta_test_priv.h"
 #include "ta_utility.h"
 #include "ta_memory.h"
@@ -182,6 +183,9 @@ ErrorNumber allocLib()
    return TA_TEST_PASS;
 }
 
+static long rejectedJudged;
+static long rejectedWroteRange;
+
 ErrorNumber freeLib()
 {
    TA_RetCode retCode;
@@ -196,7 +200,60 @@ ErrorNumber freeLib()
       return TA_TESTUTIL_SHUTDOWN_FAILED;
    }
 
+   if( rejectedWroteRange > 0 )
+   {
+      printf( "Failed: %ld rejected TA_CallFunc call(s) wrote a range out-parameter\n",
+              rejectedWroteRange );
+      rejectedWroteRange = 0;
+      return TA_REJECTED_CALL_WROTE_RANGE;
+   }
+
    return TA_TEST_PASS;
+}
+
+#define RANGE_SENTINEL (-7654321)
+
+TA_RetCode regtest_guarded_call( const TA_ParamHolder *params,
+                                 TA_Integer startIdx, TA_Integer endIdx,
+                                 TA_Integer *outBegIdx, TA_Integer *outNbElement )
+{
+   TA_Integer keptBeg, keptNb;
+   TA_RetCode retCode;
+
+   if( !outBegIdx || !outNbElement )
+      return TA_CallFunc( params, startIdx, endIdx, outBegIdx, outNbElement );
+
+   keptBeg = *outBegIdx;
+   keptNb  = *outNbElement;
+   *outBegIdx = *outNbElement = RANGE_SENTINEL;
+   retCode = TA_CallFunc( params, startIdx, endIdx, outBegIdx, outNbElement );
+
+   /* Nothing is promised after an allocation failure or an internal error. */
+   if( retCode == TA_SUCCESS || retCode == TA_ALLOC_ERR ||
+       ( (int)retCode >= 5000 && (int)retCode <= 5999 ) )
+      return retCode;
+
+   rejectedJudged++;
+   if( *outBegIdx != RANGE_SENTINEL || *outNbElement != RANGE_SENTINEL )
+   {
+      if( rejectedWroteRange++ < 8 )
+         printf( "Failed: TA_CallFunc( %d, %d ) answered %d and wrote the range (%d, %d)\n",
+                 (int)startIdx, (int)endIdx, (int)retCode,
+                 (int)*outBegIdx, (int)*outNbElement );
+   }
+   *outBegIdx    = keptBeg;
+   *outNbElement = keptNb;
+   return retCode;
+}
+
+long regtest_rejected_calls_judged( void )
+{
+   return rejectedJudged;
+}
+
+long regtest_rejected_calls_wrote_range( void )
+{
+   return rejectedWroteRange;
 }
 
 void reportError( const char *str, TA_RetCode retCode )

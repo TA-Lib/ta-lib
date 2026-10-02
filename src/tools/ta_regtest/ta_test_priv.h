@@ -40,6 +40,19 @@ ErrorNumber test_abstract_server_metadata( const char *functionFilter );
 ErrorNumber freeLib( void );
 ErrorNumber allocLib( void );
 
+/* Every TA_CallFunc the suite makes goes through this guard: a call that is
+ * rejected must leave both range out-parameters as the caller had them, and
+ * freeLib() fails the run when one did not. The caller sees its own values
+ * again either way. */
+TA_RetCode regtest_guarded_call( const TA_ParamHolder *params,
+                                 TA_Integer startIdx, TA_Integer endIdx,
+                                 TA_Integer *outBegIdx, TA_Integer *outNbElement );
+long regtest_rejected_calls_judged( void );
+long regtest_rejected_calls_wrote_range( void );
+#ifndef TA_REGTEST_UNGUARDED_CALL
+   #define TA_CallFunc regtest_guarded_call
+#endif
+
 void reportError( const char *str, TA_RetCode retCode );
 
 /* Global Temporary Used by the ta_func_xxx function. */

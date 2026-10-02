@@ -17,6 +17,7 @@
  *                used, and bound it so an off-contract period cannot overflow.
  *  080326 MF,CC  Split the size temp from the cast-fed period temp (#160).
  *  092526 MF,CC  #442. Allocate the multi-period buffers on that path only.
+ *  100226 MF,CC  #497. An inverted window is refused with the range untouched.
  */
 
 int mavp_lookback(int optInMinPeriod, int optInMaxPeriod, TA_MAType optInMAType)
@@ -60,8 +61,6 @@ TA_RetCode mavp(int startIdx, int endIdx,
     */
    if( optInMinPeriod > optInMaxPeriod )
    {
-      *outBegIdx = 0;
-      *outNBElement = 0;
       return TA_BAD_PARAM;
    }
 
@@ -198,8 +197,6 @@ TA_RetCode mavp(int startIdx, int endIdx,
    {
       free(localPeriodArray);
       if( finalIsAllocated ) { free(localFinalArray); }
-      *outBegIdx = 0;
-      *outNBElement = 0;
       return TA_BAD_PARAM;
    }
 

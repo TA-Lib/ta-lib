@@ -276,8 +276,8 @@ static ErrorNumber regtest_main( int argc, char **argv )
       }
       TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
       fuzzRet = fuzz_ref( refVersion, functionFilter );
-      TA_Shutdown();
-      return fuzzRet;
+      retValue = freeLib();
+      return fuzzRet != TA_TEST_PASS ? fuzzRet : retValue;
    }
 
    /* Opt-in cross-language BITWISE parity gate (issue #113). Self-contained:
@@ -293,8 +293,8 @@ static ErrorNumber regtest_main( int argc, char **argv )
       }
       TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
       xlangRet = xlang_hash( functionFilter, codegenLanguageFilter );
-      TA_Shutdown();
-      return xlangRet;
+      retValue = freeLib();
+      return xlangRet != TA_TEST_PASS ? xlangRet : retValue;
    }
 
    /* Test utility like List/Stack/Dictionary/Memory Allocation etc... */

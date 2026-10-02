@@ -1038,9 +1038,11 @@ static ErrorNumber test_frama_params( void )
          double value = 0.0;
          TA_RetCode openRet;
 
+         /* A rejected call leaves the range as the caller had it. */
+         begIdx = nbElement = -7;
          retCode = TA_FRAMA( 0, FRAMA_NB-1, h, l, oddPeriods[k], &begIdx, &nbElement, out );
          openRet = TA_FRAMA_Open( &stream, h, l, FRAMA_NB, oddPeriods[k], &value );
-         if( retCode != TA_BAD_PARAM || begIdx != 0 || nbElement != 0
+         if( retCode != TA_BAD_PARAM || begIdx != -7 || nbElement != -7
              || TA_FRAMA_Lookback( oddPeriods[k] ) != -1
              || openRet != TA_BAD_PARAM || stream != NULL )
          {

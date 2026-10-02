@@ -554,18 +554,28 @@ static ErrorNumber testStreamShortHistory( void )
  * same argument shapes, so the streaming openers are driven from here rather
  * than from a gate of their own.
  */
+#define ARG_RANGE_SENTINEL (-7654321)
 static int bacReject, bacAccept;
 static int s4Reject, s4Accept;
 static int s6Probe;
 static int u6aUpd;
 
+/* A rejected call leaves the range pair in scope as it was. */
 #define BAC_REJECT( name, call )                                               \
    do {                                                                        \
-      TA_RetCode rc__ = (call);                                                \
+      TA_RetCode rc__;                                                         \
+      beg = nb = ARG_RANGE_SENTINEL;                                           \
+      rc__ = (call);                                                           \
       if( rc__ != TA_BAD_PARAM )                                               \
       {                                                                        \
          printf( "\nFailed: %s returned %d, expected TA_BAD_PARAM (%d)\n",     \
                  name, (int)rc__, (int)TA_BAD_PARAM );                         \
+         return TA_BATCH_ARG_WRONG_CODE;                                       \
+      }                                                                        \
+      if( beg != ARG_RANGE_SENTINEL || nb != ARG_RANGE_SENTINEL )              \
+      {                                                                        \
+         printf( "\nFailed: %s was rejected and wrote the range (%d, %d)\n",   \
+                 name, beg, nb );                                              \
          return TA_BATCH_ARG_WRONG_CODE;                                       \
       }                                                                        \
       bacReject++;                                                             \
@@ -583,13 +593,22 @@ static int u6aUpd;
       bacAccept++;                                                             \
    } while(0)
 
+/* A rejected call leaves the range pair in scope as it was. */
 #define S4_REJECT( name, call )                                                \
    do {                                                                        \
-      TA_RetCode rc__ = (call);                                                \
+      TA_RetCode rc__;                                                         \
+      beg = nb = ARG_RANGE_SENTINEL;                                           \
+      rc__ = (call);                                                           \
       if( rc__ != TA_BAD_PARAM )                                               \
       {                                                                        \
          printf( "\nFailed: %s returned %d, expected TA_BAD_PARAM (%d)\n",     \
                  name, (int)rc__, (int)TA_BAD_PARAM );                         \
+         return TA_BATCH_ARG_WRONG_CODE;                                       \
+      }                                                                        \
+      if( beg != ARG_RANGE_SENTINEL || nb != ARG_RANGE_SENTINEL )              \
+      {                                                                        \
+         printf( "\nFailed: %s was rejected and wrote the range (%d, %d)\n",   \
+                 name, beg, nb );                                              \
          return TA_BATCH_ARG_WRONG_CODE;                                       \
       }                                                                        \
       s4Reject++;                                                              \

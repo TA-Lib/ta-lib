@@ -13,6 +13,7 @@
  *  052603 MF     Adapt code to compile with .NET Managed C++
  *  070526 MF,CC  Speed optimization: delegate to the single-pass MACD
  *                when all three MA types are EMA (bit-exact).
+ *  100226 MF,CC  #497. The consistency exit leaves the range untouched.
  *
  */
 
@@ -182,8 +183,6 @@ TA_RetCode macdext(int startIdx, int endIdx,
       (outNbElement1 != outNbElement2) ||
       (outNbElement1 != (endIdx-startIdx)+1+lookbackSignal) )
    {
-      *outBegIdx = 0;
-      *outNBElement = 0;
       free(fastMABuffer);
       free(slowMABuffer);
       return TA_BAD_PARAM;
