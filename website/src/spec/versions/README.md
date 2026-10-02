@@ -36,9 +36,9 @@ A **transcendental function** here is `exp`, `log`, `log10`, or a trigonometric,
 
 ### Across machines {#machines}
 
-A difference between two machines' math libraries can change the result of a call that evaluates a transcendental function, as it can between languages.
+A call that evaluates a transcendental function can differ between machines, because their math libraries can.
 
-Functions are tested on several CPUs and compilers against the same golden values. The comparison is bit-exact or within a tolerance, depending on whether the algorithm is sensitive to how floating-point operations are ordered or fused (fused multiply-add, for example) and on whether it uses a transcendental function.
+Everything else is written to give the same bits on every machine: each fused multiply-add is explicit in the source, so nothing depends on the CPU or on how the compiler orders operations. The test suite checks this against fixed golden values on several CPUs and compilers.
 
 ### Equivalent calls {#equivalent}
 
