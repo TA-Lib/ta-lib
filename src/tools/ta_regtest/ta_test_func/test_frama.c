@@ -1039,17 +1039,27 @@ static ErrorNumber test_frama_params( void )
          TA_RetCode openRet;
 
          /* A rejected call leaves the range as the caller had it. */
+         TA_FRAMA_Stream *fillStream = NULL;
+         int fillBeg = -7, fillNb = -7;
+         TA_RetCode fillRet;
+
          begIdx = nbElement = -7;
          retCode = TA_FRAMA( 0, FRAMA_NB-1, h, l, oddPeriods[k], &begIdx, &nbElement, out );
          openRet = TA_FRAMA_Open( &stream, h, l, FRAMA_NB, oddPeriods[k], &value );
+         fillRet = TA_FRAMA_OpenAndFill( &fillStream, h, l, FRAMA_NB, oddPeriods[k],
+                                         &fillBeg, &fillNb, out );
+         if( fillRet == TA_SUCCESS && fillStream != NULL )
+            TA_FRAMA_Close( fillStream );
          if( retCode != TA_BAD_PARAM || begIdx != -7 || nbElement != -7
+             || fillRet != TA_BAD_PARAM || fillBeg != -7 || fillNb != -7
              || TA_FRAMA_Lookback( oddPeriods[k] ) != -1
              || openRet != TA_BAD_PARAM || stream != NULL )
          {
             printf( "FRAMA odd Fail [N=%d u=%d]: rc=%d (%d,%d) lookback %d "
-                    "Open rc=%d stream %p\n", oddPeriods[k], unstVals[b],
-                    (int)retCode, begIdx, nbElement,
-                    TA_FRAMA_Lookback( oddPeriods[k] ), (int)openRet, (void *)stream );
+                    "Open rc=%d stream %p OpenAndFill rc=%d (%d,%d)\n",
+                    oddPeriods[k], unstVals[b], (int)retCode, begIdx, nbElement,
+                    TA_FRAMA_Lookback( oddPeriods[k] ), (int)openRet, (void *)stream,
+                    (int)fillRet, fillBeg, fillNb );
             if( openRet == TA_SUCCESS && stream != NULL )
                TA_FRAMA_Close( stream );
             err = TA_TESTUTIL_TFRR_BAD_PARAM;

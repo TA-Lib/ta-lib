@@ -1711,7 +1711,8 @@ static ErrorNumber abstract_rejected_call_writes_nothing( const char *funcName,
 /* What a setting may and may not move, at the declared default parameters.
  *
  * A candle range type or factor moves no lookback. A candle averaging period
- * moves only a candlestick function's, by exactly what was added or not at all.
+ * moves only the lookback of a candlestick function or a gate fixture, by
+ * exactly what was added or not at all.
  * No setting moves a display shift: they are read with every candle component
  * and every unstable period changed. With every unstable period and averaging
  * period at TA_INDEX_MAX a lookback is still a count: it only grows.

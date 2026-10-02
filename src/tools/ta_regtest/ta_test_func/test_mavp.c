@@ -312,6 +312,20 @@ ErrorNumber test_func_mavp( TA_History *history )
               (int)retCode, (int)outBegIdx, (int)outNbElement );
       return TA_REGTEST_OPTIMIZATION_REF_ERROR;
    }
+   {
+      TA_MAVP_Stream *stream = NULL;
+
+      retCode = TA_MAVP_OpenAndFill( &stream, history->close, mvPeriods, endIdx + 1, 30, 2,
+                                     TA_MAType_SMA, &outBegIdx, &outNbElement, mvOut );
+      if( retCode == TA_SUCCESS && stream != NULL )
+         TA_MAVP_Close( stream );
+      if( retCode != TA_BAD_PARAM || outBegIdx != -1 || outNbElement != -1 )
+      {
+         printf( "\nFail: MAVP OpenAndFill(min=30,max=2): rc=%d beg=%d nb=%d, expected clean "
+                 "TA_BAD_PARAM\n", (int)retCode, (int)outBegIdx, (int)outNbElement );
+         return TA_REGTEST_OPTIMIZATION_REF_ERROR;
+      }
+   }
 
    /* End-truncation pins for every MA type (sawtooth shape). */
    for( i = 0; i < MV_DATA_SIZE; i++ )

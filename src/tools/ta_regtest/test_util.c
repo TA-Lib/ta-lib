@@ -228,18 +228,20 @@ TA_RetCode regtest_guarded_call( const TA_ParamHolder *params,
    *outBegIdx = *outNbElement = RANGE_SENTINEL;
    retCode = TA_CallFunc( params, startIdx, endIdx, outBegIdx, outNbElement );
 
-   /* Nothing is promised after an allocation failure or an internal error. */
-   if( retCode == TA_SUCCESS || retCode == TA_ALLOC_ERR ||
-       ( (int)retCode >= 5000 && (int)retCode <= 5999 ) )
+   if( retCode == TA_SUCCESS )
       return retCode;
 
-   rejectedJudged++;
-   if( *outBegIdx != RANGE_SENTINEL || *outNbElement != RANGE_SENTINEL )
+   /* Nothing is held after an allocation failure or an internal error. */
+   if( retCode != TA_ALLOC_ERR && !( (int)retCode >= 5000 && (int)retCode <= 5999 ) )
    {
-      if( rejectedWroteRange++ < 8 )
-         printf( "Failed: TA_CallFunc( %d, %d ) answered %d and wrote the range (%d, %d)\n",
-                 (int)startIdx, (int)endIdx, (int)retCode,
-                 (int)*outBegIdx, (int)*outNbElement );
+      rejectedJudged++;
+      if( *outBegIdx != RANGE_SENTINEL || *outNbElement != RANGE_SENTINEL )
+      {
+         if( rejectedWroteRange++ < 8 )
+            printf( "Failed: TA_CallFunc( %d, %d ) answered %d and wrote the range (%d, %d)\n",
+                    (int)startIdx, (int)endIdx, (int)retCode,
+                    (int)*outBegIdx, (int)*outNbElement );
+      }
    }
    *outBegIdx    = keptBeg;
    *outNbElement = keptNb;

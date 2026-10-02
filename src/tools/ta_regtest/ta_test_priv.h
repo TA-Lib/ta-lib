@@ -42,8 +42,8 @@ ErrorNumber allocLib( void );
 
 /* Every TA_CallFunc the suite makes goes through this guard: a call that is
  * rejected must leave both range out-parameters as the caller had them, and
- * freeLib() fails the run when one did not. The caller sees its own values
- * again either way. */
+ * freeLib() fails the run when one did not. After any failure the caller sees
+ * its own values again. */
 TA_RetCode regtest_guarded_call( const TA_ParamHolder *params,
                                  TA_Integer startIdx, TA_Integer endIdx,
                                  TA_Integer *outBegIdx, TA_Integer *outNbElement );
