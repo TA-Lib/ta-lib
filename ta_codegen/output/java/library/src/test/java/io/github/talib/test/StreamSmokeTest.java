@@ -1706,6 +1706,8 @@ public class StreamSmokeTest {
             } catch (IllegalArgumentException e) {
                 check(e.getMessage().contains("MACD " + verb) && e.getMessage().contains("out"),
                       verb + ": the rejection names the function and the argument");
+                check(e instanceof TALibFailure failure && failure.retCode() == RetCode.BAD_PARAM,
+                      verb + ": the rejection carries BAD_PARAM");
             }
         }
         check(mn.outRange().begIdx() == mnBefore.begIdx()

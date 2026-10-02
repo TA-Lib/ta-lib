@@ -61,7 +61,7 @@ A batch call accepts `0 <= startIdx <= endIdx <= TA_INDEX_MAX` ([`TA_INDEX_MAX`]
 
 **rB8.** Rust aborts the process, and Java and C# raise their runtime's out-of-memory error.
 
-**rB9.** A bug in TA-Lib, not in the call: report it, with the number in C. Rust, Java and C# report `TA_INTERNAL_ERROR` without an id.
+**rB9.** A bug in TA-Lib, not in the call: report it, with the number in C. C's `TA_SetRetCodeInfo` names every value from 5000 to 5999 `TA_INTERNAL_ERROR`, and a value that is not a `TA_RetCode` member `TA_UNKNOWN_ERR`. Rust, Java and C# report `TA_INTERNAL_ERROR` without an id.
 
 ## Abstraction layer {#abstraction-layer}
 

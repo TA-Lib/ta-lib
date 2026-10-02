@@ -1321,8 +1321,8 @@ static ErrorNumber testEnumValueContract( void )
     * into a table this file cannot see -- but TA_SetRetCodeInfo answers
     * "TA_UNKNOWN_ERR" for anything absent from that table, so probing the value
     * space finds a code that was added to the csv and never pinned here. The
-    * 5000-5999 band reports TA_INTERNAL_ERROR for all 1000 values, so only its
-    * first needs a row. */
+    * 5000-5999 band needs one row for its 1000 values: each must be named
+    * TA_INTERNAL_ERROR, which is how a caller holding an id reads it back. */
    {
       unsigned long v;
       for( v = 0; v <= 0xFFFFUL; v++ )
@@ -1331,9 +1331,17 @@ static ErrorNumber testEnumValueContract( void )
          unsigned int p;
          int pinned = 0;
 
-         if( v > 5000 && v <= 5999 ) continue;   /* one code, whole band */
-
          TA_SetRetCodeInfo( (TA_RetCode)v, &info );
+         if( v >= 5000 && v <= 5999 )
+         {
+            if( strcmp( info.enumStr, "TA_INTERNAL_ERROR" ) != 0 )
+            {
+               printf( "\nFailed: TA_SetRetCodeInfo names %lu %s, expected TA_INTERNAL_ERROR\n"
+                       "        for every value from 5000 to 5999.\n", v, info.enumStr );
+               return TA_INTERNAL_ENUM_CONTRACT_FAIL_3;
+            }
+            if( v > 5000 ) continue;
+         }
          if( v != 0xFFFFUL && strcmp( info.enumStr, "TA_UNKNOWN_ERR" ) == 0 )
             continue;                            /* not a defined code */
 
@@ -1345,6 +1353,22 @@ static ErrorNumber testEnumValueContract( void )
             printf( "\nFailed: TA_RetCode %lu (%s) is defined but not pinned. Add its\n"
                     "        row to retCodePins[] (append only -- never renumber).\n",
                     v, info.enumStr );
+            return TA_INTERNAL_ENUM_CONTRACT_FAIL_3;
+         }
+      }
+   }
+
+   /* The walk stops at 0xFFFF; a value past either end of it is not a code. */
+   {
+      static const int notACode[] = { -1, INT_MIN, 0x10000, INT_MAX };
+      for( i=0; i < sizeof(notACode)/sizeof(notACode[0]); i++ )
+      {
+         TA_RetCodeInfo info;
+         TA_SetRetCodeInfo( (TA_RetCode)notACode[i], &info );
+         if( strcmp( info.enumStr, "TA_UNKNOWN_ERR" ) != 0 )
+         {
+            printf( "\nFailed: TA_SetRetCodeInfo names %d %s, expected TA_UNKNOWN_ERR\n",
+                    notACode[i], info.enumStr );
             return TA_INTERNAL_ENUM_CONTRACT_FAIL_3;
          }
       }
@@ -1369,8 +1393,7 @@ static ErrorNumber testEnumValueContract( void )
        * before it consults the table at all, so this check cannot see that row
        * -- it would compare the trap's "TA_INTERNAL_ERROR" against the pin's
        * identical text whether the csv row exists, is renamed, or is deleted.
-       * Skipped rather than left to pass vacuously. The band itself is pinned by
-       * the probe above, which walks the whole value space.
+       * Skipped rather than left to pass vacuously.
        */
       if( retCodePins[i].shipped >= 5000 && retCodePins[i].shipped <= 5999 )
          continue;

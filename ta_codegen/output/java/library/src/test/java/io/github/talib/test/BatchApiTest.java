@@ -922,6 +922,12 @@ public class BatchApiTest {
         checkThrows(IllegalArgumentException.class,
             () -> Core.DEFAULT.mama(0, 251, in, 0.5, 0.05, mamaRef, new double[1]),
             "a SUPPLIED nullable output is still length-checked", "MAMA", "outFAMA");
+        checkCode(RetCode.BAD_PARAM,
+            () -> Core.DEFAULT.mama(0, 251, in, 0.5, 0.05, null, famaRef),
+            "the missing non-nullable output carries BAD_PARAM");
+        checkCode(RetCode.BAD_PARAM,
+            () -> Core.DEFAULT.mama(0, 251, in, 0.5, 0.05, mamaRef, new double[1]),
+            "the short supplied output carries BAD_PARAM");
     }
 
     /**
@@ -1123,6 +1129,7 @@ public class BatchApiTest {
     private static void streamRejects(Runnable body, String what, String... needles) {
         s4Reject++;
         checkThrows(IllegalArgumentException.class, body, what, needles);
+        check(codeOf(body) == RetCode.BAD_PARAM, what + ": the rejection carries BAD_PARAM");
     }
 
     /**

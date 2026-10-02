@@ -106,6 +106,12 @@ static long long g_dsBoundRejected = 0;
 static long long g_dsFlagged = 0;
 static long long g_dsNonZero = 0;
 static long long g_dsServer = 0;
+/* Rejected batch calls found to leave the output buffers untouched, where the
+ * rejected value lies inside its declared range: a rejection the function body
+ * makes itself, after the generated argument checks. At a bound, and one step
+ * above the lower bound. */
+static long long g_rejectedAtBoundClean = 0;
+static long long g_rejectedAboveMinClean = 0;
 /* Self-checks, mirroring --xlang-hash's oorNotRejected / sentNotDefault. Both
  * classes assert only "C and the server agree" on their own; if C stopped
  * rejecting, or stopped substituting, the two tiers would be wrong TOGETHER and
@@ -163,6 +169,7 @@ void test_abstract_set_server(CodegenPipe *cp, const char *lang)
    g_d2NonFinite = g_d2NonFiniteFuncs = 0;
    g_dsAnswered = g_dsRejected = g_dsParamRejected = g_dsBoundRejected = 0;
    g_dsFlagged = g_dsNonZero = g_dsServer = 0;
+   g_rejectedAtBoundClean = g_rejectedAboveMinClean = 0;
    g_d2OorNotRejected = g_d2SentNotDefault = 0;
    if( cp )
    {
@@ -1632,15 +1639,60 @@ static ErrorNumber abstract_check_display_shift( const char *funcName,
     return TA_TEST_PASS;
 }
 
+/* A call the library rejects must not have stored into an output buffer. The
+ * range pair is not looked at: C leaves it unspecified after a failure.
+ */
+#define REJECT_PAINT_REAL (-1.2345678901234e300)
+#define REJECT_PAINT_INT  ((int)0x5A5AA5A5)
+static ErrorNumber abstract_rejected_call_writes_nothing( const char *funcName,
+                                                          TA_ParamHolder *paramHolder,
+                                                          int size, const char *what )
+{
+    const double paintReal = REJECT_PAINT_REAL;
+    TA_Integer beg = 0, nb = 0;
+    TA_RetCode rc;
+    unsigned int o, j;
+
+    for( o = 0; o < 10; o++ )
+        for( j = 0; j < 2000; j++ )
+        {
+            output[o][j] = paintReal;
+            output_int[o][j] = REJECT_PAINT_INT;
+        }
+
+    rc = TA_CallFunc(paramHolder, 0, size - 1, &beg, &nb);
+    if( rc != TA_BAD_PARAM )
+    {
+        printf("  Failed [%s]: the lookback rejects %s but the call returned %d, "
+               "expected TA_BAD_PARAM\n", funcName, what, (int)rc);
+        return TA_ABS_TST_FAIL_REJECTED_CALL;
+    }
+    for( o = 0; o < 10; o++ )
+        for( j = 0; j < 2000; j++ )
+            if( memcmp(&output[o][j], &paintReal, sizeof(double)) != 0
+                || output_int[o][j] != REJECT_PAINT_INT )
+            {
+                printf("  Failed [%s]: the call rejected for %s wrote output buffer "
+                       "%u at index %u\n", funcName, what, o, j);
+                return TA_ABS_TST_FAIL_REJECTED_CALL;
+            }
+    return TA_TEST_PASS;
+}
+
 /* The display shift at parameter vectors built from the declared domains: every
- * slot at a non-default value, then each integer range at both bounds and one
- * step outside each. Needs no server, so a bare run reaches rejected
- * parameters on integer-only functions; the bounds are what make a shift that
- * depends on its parameters answer something other than its default.
+ * slot at a non-default value, then each integer range at both bounds, one
+ * step outside each and one step above the lower one. Needs no server, so a
+ * bare run reaches rejected parameters on integer-only functions; the bounds
+ * are what make a shift that depends on its parameters answer something other
+ * than its default.
+ *
+ * The step above the lower bound flips a period's parity, which is where
+ * FRAMA refuses a value inside its declared range. Every vector the lookback
+ * rejects is also called, to see that the rejection wrote nothing.
  */
 static ErrorNumber ds_param_vectors( const char *funcName, const TA_FuncHandle *handle,
                                      const TA_FuncInfo *funcInfo,
-                                     TA_ParamHolder *paramHolder )
+                                     TA_ParamHolder *paramHolder, int size )
 {
     double base[D2_MAX_OPT], vec[D2_MAX_OPT];
     const TA_OptInputParameterInfo *oi;
@@ -1658,13 +1710,22 @@ static ErrorNumber ds_param_vectors( const char *funcName, const TA_FuncHandle *
         vec[k] = d2_non_default(oi, k);
     }
     d2_set_opts(paramHolder, handle, funcInfo, vec);
+    {
+        TA_Integer lookback = -1;
+        if( TA_GetLookback(paramHolder, &lookback) == TA_SUCCESS && lookback < 0 )
+        {
+            e = abstract_rejected_call_writes_nothing(funcName, paramHolder, size,
+                                                      "its non-default parameters");
+            if( e != TA_TEST_PASS ) return e;
+        }
+    }
     e = abstract_check_display_shift(funcName, handle, funcInfo, paramHolder, vec, 1);
 
     for( k = 0; e == TA_TEST_PASS && k < funcInfo->nbOptInput; k++ )
     {
         const TA_IntegerRange *r;
-        double probe[4];
-        int nbProbe = 0;
+        double probe[5];
+        int nbProbe = 0, aboveMin = -1;
 
         TA_GetOptInputParameterInfo(handle, k, &oi);
         r = (const TA_IntegerRange *)oi->dataSet;
@@ -1674,6 +1735,11 @@ static ErrorNumber ds_param_vectors( const char *funcName, const TA_FuncHandle *
         probe[nbProbe++] = (double)r->max;
         if( r->min > INT_MIN ) probe[nbProbe++] = (double)r->min - 1.0;
         if( r->max < INT_MAX ) probe[nbProbe++] = (double)r->max + 1.0;
+        if( r->min + 1 < r->max )
+        {
+            aboveMin = nbProbe;
+            probe[nbProbe++] = (double)r->min + 1.0;
+        }
 
         for( b = 0; e == TA_TEST_PASS && b < nbProbe; b++ )
         {
@@ -1683,7 +1749,16 @@ static ErrorNumber ds_param_vectors( const char *funcName, const TA_FuncHandle *
             vec[k] = probe[b];
             d2_set_opts(paramHolder, handle, funcInfo, vec);
             if( TA_GetLookback(paramHolder, &lookback) == TA_SUCCESS && lookback < 0 )
+            {
                 g_dsBoundRejected++;
+                e = abstract_rejected_call_writes_nothing(funcName, paramHolder, size,
+                                                          oi->paramName);
+                if( e != TA_TEST_PASS ) break;
+                if( b == aboveMin )
+                    g_rejectedAboveMinClean++;
+                else if( probe[b] >= (double)r->min && probe[b] <= (double)r->max )
+                    g_rejectedAtBoundClean++;
+            }
             e = abstract_check_display_shift(funcName, handle, funcInfo, paramHolder, vec, 1);
         }
     }
@@ -2310,6 +2385,15 @@ ErrorNumber test_abstract( void )
       return TA_ABS_TST_FAIL_DISPLAY_SHIFT_VACUOUS;
    }
 
+   if( g_rejectedAtBoundClean == 0 || g_rejectedAboveMinClean == 0 )
+   {
+      printf( "  Failed: the calls rejected inside a declared range and checked for an "
+              "untouched output buffer were %lld at a bound and %lld one step above "
+              "the lower bound\n",
+              g_rejectedAtBoundClean, g_rejectedAboveMinClean );
+      return TA_ABS_TST_FAIL_REJECTED_CALL_VACUOUS;
+   }
+
    if( g_abstractPipe )
    {
 
@@ -2824,7 +2908,7 @@ static ErrorNumber callWithDefaults( const char *funcName, const double *input, 
          /* C-only, so unlike the sweep above it runs with no server pipe. */
          srvErr = d2_nonfinite_params( funcName, handle, funcInfo, paramHolder, size );
          if( srvErr == TA_TEST_PASS )
-            srvErr = ds_param_vectors( funcName, handle, funcInfo, paramHolder );
+            srvErr = ds_param_vectors( funcName, handle, funcInfo, paramHolder, size );
          if( srvErr != TA_TEST_PASS )
          {
             TA_ParamHolderFree( paramHolder );

@@ -188,6 +188,26 @@ that produces no values: C's form of one zero-length array passed as two outputs
 (Appendix D item 15), with the pair rebound apart as that leg's control.
 Java's and C#'s `BatchApiTest` pass one zero-length array as two outputs.
 
+rE3 at a batch call: in C, `abstract_rejected_call_writes_nothing`
+(`test_abstract.c`) paints every output buffer, calls each parameter vector of
+its sweep that the lookback rejects and requires `TA_BAD_PARAM` with no element
+written. Its two floors count the vectors rejected inside their declared range,
+the rejections a C body makes itself after the generated checks: at a bound
+(MAVP's inverted window) and one step above the lower bound (FRAMA's odd
+period). It never reads the range pair. Java's and C#'s `BatchApiTest` hold a
+canary after rB5. Rust has no run-time canary: the public entry makes every
+argument rejection before its one `_impl` call
+(`rust_public_entry_orders_the_argument_contract`), the parameter decision
+included, which it takes from the lookback, and no output is lent to anything
+ahead of that call. A code `_impl` returns is forwarded after the call; its own
+parameter rejections stay unreachable for as long as the lookback decides the
+same way (lookback rules above).
+
+rB9's band: `testEnumValueContract` (`test_internals.c`) requires
+`TA_SetRetCodeInfo` to name each value from 5000 to 5999 `TA_INTERNAL_ERROR`,
+and `TA_UNKNOWN_ERR` for every value from 0 to 0xFFFF that is not a pinned
+member and for four values outside that walk.
+
 ### Stream opening conditions
 
 rS1, rS2, rS4, rS5, rS7 and rS8 are mapped below; rS3 is driven by the parameter
