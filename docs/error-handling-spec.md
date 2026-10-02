@@ -147,6 +147,7 @@ emitted bodies, and drives a NULL handle and a NULL out-pointer through
 | rT6 | [average period bound](https://ta-lib.org/spec/settings-threads/#rt6) | ✅ | ✅ | ✅ | ✅ |
 | rT7 | [NaN factor](https://ta-lib.org/spec/settings-threads/#rt7) | ✅ | ✅ | ✅ | ✅ |
 | rT8 | [no change on refusal](https://ta-lib.org/spec/settings-threads/#rt8) | ✅ | ✅<br>[16] | ✅ | ✅ |
+| rT10 | [initial state](https://ta-lib.org/spec/settings-threads/#rt10) | ✅ | — | — | — |
 
 [13] The wildcard is a declared member, so it is rejected by value; a target
 outside the declared set is unrepresentable.
@@ -296,7 +297,11 @@ as one exception class.
 ### Settings rules
 
 rT4's C getter: `test_internals.c`. rT8's Rust latch: verified by probe
-(footnote [16]).
+(footnote [16]). rT8's candle setter in Java: `aRejectedCandleSettingWritesNothing`
+(`CoreApiTest`), through CDLDOJI since Java's `Core` has no candle getter. rT2,
+rT4 and rT5 under a cast out of the enum in C#: `CandleMisuseThrows` and
+`MisuseThrows` (`CoreBuilderTest`). rT10: `testUnstablePeriodBounds`
+(`test_internals.c`) changes the settings and initializes over them.
 
 ## Rationale
 

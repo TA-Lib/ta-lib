@@ -492,6 +492,43 @@ public class CoreApiTest {
         check(allIntact, "a rejected wildcard leaves every slot at its previous value");
     }
 
+    /**
+     * A refused candle setter leaves the builder as it was. Each refused call
+     * carries values that would stop the doji from firing had they been stored.
+     */
+    static void aRejectedCandleSettingWritesNothing() {
+        int n = 60;
+        double[] open = new double[n], high = new double[n], low = new double[n], close = new double[n];
+        for (int i = 0; i < n; i++) {
+            open[i] = 100.0;
+            close[i] = 100.5;
+            high[i] = 101.0;
+            low[i] = 99.0;
+        }
+        final CoreBuilder b = Core.builder()
+            .candleSetting(CandleSettingType.BODY_DOJI, RangeType.HIGH_LOW, 10, 1.0e9);
+        checkThrows(IllegalArgumentException.class,
+            () -> b.candleSetting(CandleSettingType.BODY_DOJI, RangeType.HIGH_LOW, 10, Double.NaN),
+            "a NaN factor is refused");
+        checkThrows(IllegalArgumentException.class,
+            () -> b.candleSetting(CandleSettingType.BODY_DOJI, RangeType.HIGH_LOW, -1, 0.0),
+            "a negative avgPeriod is refused");
+        checkThrows(IllegalArgumentException.class,
+            () -> b.candleSetting(CandleSettingType.BODY_DOJI, RangeType.HIGH_LOW, Core.INDEX_MAX + 1, 0.0),
+            "an avgPeriod above INDEX_MAX is refused");
+        checkThrows(IllegalArgumentException.class,
+            () -> b.candleSetting(CandleSettingType.ALL_CANDLE_SETTINGS, RangeType.HIGH_LOW, 10, 0.0),
+            "the wildcard is refused by the single-setting setter");
+
+        int[] outD = new int[n], outT = new int[n];
+        OutRange rD = Core.DEFAULT.cdldoji(0, n - 1, open, high, low, close, outD);
+        OutRange rT = b.build().cdldoji(0, n - 1, open, high, low, close, outT);
+        check(!rD.isEmpty() && outD[rD.count() - 1] == 0,
+              "control: at the default setting this candle is not a doji");
+        check(!rT.isEmpty() && outT[rT.count() - 1] == 100,
+              "the setting made before the refused calls is still the one built");
+    }
+
     public static void main(String[] args) throws Exception {
         defaultsAreDefaults();
         builderSetsOnePeriod();
@@ -508,6 +545,7 @@ public class CoreApiTest {
         compatibilityIsGone();
         misuseThrows();
         unstablePeriodBoundIsABoundNotAnOffByOne();
+        aRejectedCandleSettingWritesNothing();
         sharedAcrossThreads();
 
         if (failures == 0) {

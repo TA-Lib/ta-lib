@@ -1643,6 +1643,46 @@ static ErrorNumber testUnstablePeriodBounds( void )
       return TA_INTERNAL_UNST_BOUND_FAIL_3;
    }
 
+   /* TA_Initialize leaves every unstable period at 0 and every candle setting
+    * at its default, whatever was there. TA_Shutdown resets them too, so only
+    * an initialization over dirty settings can tell the two apart.
+    */
+   {
+      TA_CandleSetting afterInit[TA_NB_CANDLE_SETTING];
+      unsigned int id;
+
+      if( TA_SetCandleSettings( TA_BodyDoji, TA_RangeType_Shadows, 7, 2.5 ) != TA_SUCCESS ||
+          TA_Initialize() != TA_SUCCESS )
+      {
+         printf( "\nFailed: could not initialize over changed settings\n" );
+         return TA_INTERNAL_INIT_RESET_FAIL;
+      }
+      for( id = 0; id < TA_FUNC_UNST_COUNT; id++ )
+      {
+         if( TA_GetUnstablePeriod( (TA_FuncUnstId)id ) != 0 )
+         {
+            printf( "\nFailed: unstable period %u is %u after TA_Initialize, expected 0\n",
+                    id, TA_GetUnstablePeriod( (TA_FuncUnstId)id ) );
+            return TA_INTERNAL_INIT_RESET_FAIL;
+         }
+      }
+      memcpy( afterInit, TA_Globals->candleSettings, sizeof(afterInit) );
+      if( TA_RestoreCandleDefaultSettings( TA_AllCandleSettings ) != TA_SUCCESS )
+         return TA_INTERNAL_INIT_RESET_FAIL;
+      for( id = 0; id < TA_NB_CANDLE_SETTING; id++ )
+      {
+         const TA_CandleSetting *def = &TA_Globals->candleSettings[id];
+         if( afterInit[id].settingType != def->settingType ||
+             afterInit[id].rangeType   != def->rangeType   ||
+             afterInit[id].avgPeriod   != def->avgPeriod   ||
+             afterInit[id].factor      != def->factor )
+         {
+            printf( "\nFailed: candle setting %u is not at its default after TA_Initialize\n", id );
+            return TA_INTERNAL_INIT_RESET_FAIL;
+         }
+      }
+   }
+
    /* Pairs with the allocLib() above (as testCircularBuffer does) -- shutting
     * down zeroes TA_Globals, so the periods set here cannot leak into any
     * later test.

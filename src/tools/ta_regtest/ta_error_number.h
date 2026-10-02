@@ -279,6 +279,7 @@ typedef enum
   TA_INTERNAL_COMPAT_NOOP_FAIL_0    = 737,
   TA_INTERNAL_COMPAT_NOOP_FAIL_1    = 738,
   TA_INTERNAL_COMPAT_NOOP_FAIL_2    = 739,
+  TA_INTERNAL_INIT_RESET_FAIL       = 740,
 
   /* Error code related to CSI data source tests. */
   TA_CSI_ADDDATASOURCE_FAILED    = 800,

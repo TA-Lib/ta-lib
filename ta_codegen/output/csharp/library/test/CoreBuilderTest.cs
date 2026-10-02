@@ -165,6 +165,12 @@ public static class CoreBuilderTest
         CheckThrows<ArgumentOutOfRangeException>(
             () => new Core().UnstablePeriod(FuncUnstId.ALL),
             "the wildcard has no single value to read -> ArgumentOutOfRangeException");
+        CheckThrows<ArgumentOutOfRangeException>(
+            () => new Core().UnstablePeriod((FuncUnstId)(-1)),
+            "reading a negative id cast into the enum -> ArgumentOutOfRangeException");
+        CheckThrows<ArgumentOutOfRangeException>(
+            () => new Core().UnstablePeriod((FuncUnstId)9999),
+            "reading an out-of-range id cast into the enum -> ArgumentOutOfRangeException");
     }
 
     private static void BoundIsABoundNotAnOffByOne()
@@ -339,6 +345,25 @@ public static class CoreBuilderTest
         CheckThrows<ArgumentOutOfRangeException>(
             () => new Core().CandleSettings(CandleSettingType.AllCandleSettings),
             "AllCandleSettings has no single value to read -> ArgumentOutOfRangeException");
+        // A cast can carry any int into a C# enum, so each bound is checked from
+        // both sides, on every call that takes a setting type or a range type.
+        foreach (int outside in new[] { -1, 12 })
+        {
+            var type = (CandleSettingType)outside;
+            CheckThrows<ArgumentOutOfRangeException>(
+                () => Core.Builder().CandleSetting(type, RangeType.HighLow, 10, 1.0),
+                $"CandleSetting with setting type {outside} -> ArgumentOutOfRangeException");
+            CheckThrows<ArgumentOutOfRangeException>(
+                () => Core.Builder().RestoreCandleDefault(type),
+                $"RestoreCandleDefault with setting type {outside} -> ArgumentOutOfRangeException");
+            CheckThrows<ArgumentOutOfRangeException>(
+                () => new Core().CandleSettings(type),
+                $"CandleSettings with setting type {outside} -> ArgumentOutOfRangeException");
+        }
+        CheckThrows<ArgumentOutOfRangeException>(
+            () => Core.Builder().CandleSetting(
+                CandleSettingType.BodyDoji, (RangeType)(-1), 10, 1.0),
+            "a negative range type -> ArgumentOutOfRangeException");
         Check((int)CandleSettingType.AllCandleSettings == 11, "AllCandleSettings is pinned at C's 11");
     }
 
