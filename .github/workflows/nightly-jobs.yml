@@ -1517,6 +1517,45 @@ jobs:
             exit 1
           fi
 
+  # The site deploys only from main (website.yml), so without this a page that
+  # breaks the VuePress build first fails at promotion. Build only: same pnpm,
+  # Node and command as the deploy, nothing published.
+  website-build:
+    name: Website builds (VuePress)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ job.workflow_sha }}
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: "11.2.2"
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: website/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: website
+
+      - name: Build
+        env:
+          NODE_OPTIONS: --max_old_space_size=8192
+        run: pnpm run docs:build
+        working-directory: website
+
   # Instruction-count regression detection for every C entry point (issue #412).
   #
   # A job here rather than its own workflow because it COMMITS to dev: keeping it
