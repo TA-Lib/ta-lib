@@ -1309,6 +1309,9 @@ jobs:
   # cargo). Allocation-failure branches are guarded by generate-time generator
   # tests instead (they require malloc to fail, which no run exercises). C-only,
   # GCC, gated on 'test'.
+  #
+  # Its last step is the one run of the C library on several threads, under
+  # ThreadSanitizer. That one needs clang: see scripts/thread_sanitize.py.
   stream-sanitizers:
     name: ASan/UBSan/LSan (streaming API)
     needs: test
@@ -1336,6 +1339,10 @@ jobs:
       - name: Build sanitized stream server + drive stream_verify (ASan/UBSan/LSan)
         shell: bash
         run: python3 scripts/stream_sanitize.py
+
+      - name: C library on several threads (ThreadSanitizer)
+        shell: bash
+        run: python3 scripts/thread_sanitize.py
 
   # Conan packaging (#86) was never exercised by CI: build the package
   # recipe end to end (library-only; BUILD_DEV_TOOLS stays off in the

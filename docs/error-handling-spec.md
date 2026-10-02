@@ -153,6 +153,7 @@ emitted bodies, and drives a NULL handle and a NULL out-pointer through
 | rT7 | [NaN factor](https://ta-lib.org/spec/settings-threads/#rt7) | ✅ | ✅ | ✅ | ✅ |
 | rT8 | [no change on refusal](https://ta-lib.org/spec/settings-threads/#rt8) | ✅ | ✅<br>[16] | ✅ | ✅ |
 | rT10 | [initial state](https://ta-lib.org/spec/settings-threads/#rt10) | ✅ | — | — | — |
+| rT11 | [threads in C](https://ta-lib.org/spec/settings-threads/#rt11) | ✅ | — | — | — |
 
 [13] The wildcard is a declared member, so it is rejected by value; a target
 outside the declared set is unrepresentable.
@@ -386,12 +387,26 @@ rT4 and rT5 under a cast out of the enum in C#: `CandleMisuseThrows` and
 `MisuseThrows` (`CoreBuilderTest`). rT10: `testUnstablePeriodBounds`
 (`test_internals.c`) changes the settings and initializes over them.
 
+rT11: `scripts/thread_sanitize.py` (nightly) builds the library and
+`scripts/thread_sanitize.c` with clang's ThreadSanitizer and runs eight threads
+through, for every function, its double and float batch entry points, its
+lookup by name, lookback and `TA_CallFunc`, and its `Open`, `OpenAndFill` and
+`Close`; then, for a spread of stream shapes, through `Peek`, `Update` and
+`Advance` on a handle of their own, and `Peek`, `Value`, `OutRange` and `Clone`
+on handles they share. The sanitizer's report is the test: a function-static
+counter, or a `Peek` that stores into its handle, returns the right values on
+every thread, so comparing answers finds neither. Not run on several threads:
+the `Update`, `Peek`, `Advance` and accessors of the functions outside that
+spread, and
+the fused clones gcc builds, since under clang the FMA dispatch compiles away.
+
 ### Versions and determinism
 
 rV2: `testEnumValueContract` pins C's numbers. `MAType` reaches every language
 from `enums.yaml`, and `FuncUnstId` reaches C, Java and C# from it; Rust's
 `FuncUnstId` is a template that `generate` refuses when its member names or
-their order differ from `enums.yaml`. `RangeType` and `CandleSettingType` are
+their order differ from `enums.yaml`, with its wildcard's number pinned by
+`rust_funcunstid_pins_the_all_sentinel`. `RangeType` and `CandleSettingType` are
 written by hand in C's header and in each port:
 `every_backend_candle_enum_member_carries_c_s_number` (generator suite) reads
 C's numbers from `ta_defs.h` and requires them of every Rust, Java and C#

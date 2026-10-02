@@ -12,7 +12,7 @@ C keeps its settings (unstable periods and candle settings) process-wide; Rust, 
 Assume the library detects none of this: a breach is undefined behaviour, not an error code.
 
 - <a id="initialize"></a>**In C, initialize once.** Call `TA_Initialize` once, and only once, per process, before any other TA call. Call `TA_Shutdown` before the process exits; the library must not be used after it. Rust, Java and C# have no lifecycle call: a `Core` is ready when constructed.
-- <a id="idle-settings"></a>**In C, change a setting only while the library is idle.** `TA_SetUnstablePeriod`, `TA_SetCandleSettings` and `TA_RestoreCandleDefaultSettings` change process-wide state: call them only while no TA function is running and no stream is open. `TA_Shutdown` counts as a change. Between changes, the library is designed to be called from any number of threads, each with its own stream handles and parameter holders; it allocates with `malloc` and `free` and assumes both are thread-safe.
+- <a id="idle-settings"></a>**In C, change a setting only while the library is idle.** `TA_SetUnstablePeriod`, `TA_SetCandleSettings` and `TA_RestoreCandleDefaultSettings` change process-wide state: call them only while no TA function is running and no stream is open. `TA_Shutdown` counts as a change. Between changes, the library may be called from any number of threads ([rT11](/spec/settings-threads/#rt11)); it allocates with `malloc` and `free` and assumes both are thread-safe.
 - <a id="one-writer"></a>**Give each stream handle one writer.** `Update`, `Advance` and C's `Close` must not run concurrently with any other call on the same handle. Separate handles, a clone included ([rH8](/spec/streaming/#rh8)), may each be driven on their own thread. Rust enforces this at compile time: the writing calls take `&mut self`, and every handle is `Send + Sync + Clone`.
 - <a id="confine"></a>**Confine holders, builders and sinks to one thread.** A parameter holder (C `TA_ParamHolder`, Java and C# `ParamHolder`) is not thread-safe, and in Java and C# neither is a `CoreBuilder` nor the caller-owned sink a Java multi-output stream writes into (`Core.MacdOut` for MACD). Make one per thread or per call. In C, the `const` in `TA_CallFunc`'s signature does not make a holder shareable: the call writes the output buffers bound to it.
 
@@ -39,3 +39,7 @@ The rows hold for every setter and getter in all four languages, except where a 
 ## Initial state
 
 <a id="rt10"></a>**rT10** In C, `TA_Initialize` leaves every unstable period at 0 and every candle setting at its default.
+
+## Threads in C
+
+<a id="rt11"></a>**rT11** Between setting changes, C calls made from several threads at once, each on its own stream handles and parameter holders, return what a single thread returns. On one handle with no writer running, `Peek`, `Value`, `OutRange` and `Clone` may run from several threads at once.
