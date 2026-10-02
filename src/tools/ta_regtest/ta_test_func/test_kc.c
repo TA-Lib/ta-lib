@@ -357,7 +357,8 @@ static const KcShapeSweep kcSweep[] =
 };
 #define NB_KC_SWEEP (sizeof(kcSweep)/sizeof(kcSweep[0]))
 
-static ErrorNumber test_kc_composition( const TA_History *history )
+static ErrorNumber kc_composition_cells( const TA_History *history,
+                                         int *emaLonger, int *atrLonger )
 {
    TA_RetCode retCode;
    TA_Integer begIdx, nbElement, tpBeg, tpNb, emaBeg, emaNb, atrBeg, atrNb;
@@ -381,6 +382,18 @@ static ErrorNumber test_kc_composition( const TA_History *history )
       int M = kcSweep[s].atrPeriod;
       double dev = kcSweep[s].nbDev;
       int lookback = TA_KC_Lookback( N, M, dev );
+      int emaPath = TA_EMA_Lookback( N );
+      int atrPath = TA_ATR_Lookback( M );
+
+      if( lookback != (emaPath > atrPath ? emaPath : atrPath) )
+      {
+         printf( "KC composition Fail [%d %d %g]: lookback %d is not the longer of its "
+                 "EMA path (%d) and its ATR path (%d)\n",
+                 N, M, dev, lookback, emaPath, atrPath );
+         return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+      }
+      if( emaPath > atrPath ) (*emaLonger)++;
+      if( atrPath > emaPath ) (*atrLonger)++;
 
       retCode = TA_KC( 0, nbBars - 1, history->high, history->low, history->close,
                        N, M, dev, &begIdx, &nbElement, up, mid, lo );
@@ -437,6 +450,42 @@ static ErrorNumber test_kc_composition( const TA_History *history )
       }
    }
 
+   return TA_TEST_PASS;
+}
+
+/* The composition again with an unstable period on either leg: the lookback is
+ * the longer of the two paths, each with its own unstable period, not their
+ * sum. The grid must make each leg the longer one while a period is in force.
+ */
+static ErrorNumber test_kc_composition( const TA_History *history )
+{
+   static const unsigned int grid[][2] = { {0,0}, {0,30}, {30,0}, {7,7} };
+   int emaLonger = 0, atrLonger = 0;
+   unsigned int g;
+
+   for( g = 0; g < sizeof(grid)/sizeof(grid[0]); g++ )
+   {
+      ErrorNumber errNb;
+
+      TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, grid[g][0] );
+      TA_SetUnstablePeriod( TA_FUNC_UNST_ATR, grid[g][1] );
+      errNb = kc_composition_cells( history, &emaLonger, &atrLonger );
+      TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, 0 );
+      TA_SetUnstablePeriod( TA_FUNC_UNST_ATR, 0 );
+      if( errNb != TA_TEST_PASS )
+      {
+         printf( "  (with EMA's unstable period at %u and ATR's at %u)\n",
+                 grid[g][0], grid[g][1] );
+         return errNb;
+      }
+      if( g == 0 ) emaLonger = atrLonger = 0;   /* counted under a period only */
+   }
+   if( emaLonger == 0 || atrLonger == 0 )
+   {
+      printf( "KC composition Fail: under an unstable period the EMA path was the "
+              "longer one %d time(s) and the ATR path %d\n", emaLonger, atrLonger );
+      return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+   }
    return TA_TEST_PASS;
 }
 

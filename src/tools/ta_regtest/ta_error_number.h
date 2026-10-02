@@ -237,6 +237,10 @@ typedef enum
   TA_ABS_TST_FAIL_OUTPUT_ALIAS_VACUOUS  = 630,
   TA_ABS_TST_FAIL_REJECTED_CALL         = 631,
   TA_ABS_TST_FAIL_REJECTED_CALL_VACUOUS = 632,
+  TA_ABS_TST_FAIL_LOOKBACK_SETTINGS         = 633,
+  TA_ABS_TST_FAIL_LOOKBACK_SETTINGS_VACUOUS = 634,
+  TA_ABS_TST_FAIL_FIRST_BAR                 = 635,
+  TA_ABS_TST_FAIL_FIRST_BAR_VACUOUS         = 636,
 
   /* Error code related to internal tests. */
   TA_INTERNAL_CIRC_BUFF_FAIL_0      = 700,
@@ -573,6 +577,10 @@ typedef enum
 
   /* A function with no stream, or one missing from the stream table. */
   TA_OPEN_CONTRACT_NOT_STREAMING     = 1707,
+
+  /* Raising an unstable period: lookback growth and the values that remain. */
+  TA_UNSTABLE_SHIFT_FAIL             = 1708,
+  TA_UNSTABLE_SHIFT_VACUOUS          = 1709,
 
   /* Error code related to bug fix documentented on SourceForge. */
   TA_TEST_FAIL_BUG1359452_1  = 2000,

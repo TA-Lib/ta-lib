@@ -975,6 +975,9 @@ static ErrorNumber testTAFunction_ALL( void )
    DO_TEST_LBL_NOSV( test_func_open_contract,
             "STREAM,OPEN,REJECT,CONTRACT",
             "Open rejection write contract" );
+   DO_TEST_LBL_NOSV( test_func_unstable_shift,
+            "UNSTABLE,LOOKBACK,SHIFT",
+            "Unstable period shift" );
 
    /* A filter that matched nothing must not read as success. The group tags are
     * hand-maintained and cover far fewer names than the library exports, so a

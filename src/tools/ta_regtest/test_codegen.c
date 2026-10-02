@@ -651,7 +651,7 @@ static int json_error_is_unsupported(const char *json)
 /* ---- Unstable period lookup ---- */
 
 /* Map function name to TA_FuncUnstId for range-sweep tolerance selection.
- * Entries are the 20 functions that carry TA_FUNC_FLG_UNST_PER, plus the
+ * Entries are the functions that carry TA_FUNC_FLG_UNST_PER, plus the
  * derived functions (DEMA/TEMA/TRIX/MACD/MACDEXT/MACDFIX + APO/PPO via EMA,
  * ADXR/STOCHRSI via ADX/RSI) that converge through an internal callee. APO and PPO now default to EMA (issue #120), so their
  * default-parameter range sweep is EMA-converging and needs the loose convergence
@@ -1795,6 +1795,276 @@ static void setup_inputs(TA_ParamHolder *paramHolder,
 }
 
 /* Optional inputs are left at defaults (TA_ParamHolderAlloc sets them). */
+
+/* ---- What raising an unstable period does ----
+ *
+ * SERVER_VERIFY: none. Each assertion relates two calls of the C library to
+ * each other; the language servers under a raised unstable period are compared
+ * with C by the --codegen unstable pass.
+ */
+
+#define SHIFT_K    5
+#define SHIFT_CAP  512
+
+/* Parameter vectors: the defaults, every integer range at its minimum, then
+ * every list parameter (an MA type) at its n-th value. */
+#define SHIFT_VEC_DEFAULT   0
+#define SHIFT_VEC_MINIMUM   1
+#define SHIFT_VEC_LIST      2
+
+typedef struct {
+    TA_RetCode rc;
+    TA_Integer lookback, beg, nb;
+    int        moved;   /* parameters this vector took off their default */
+    int        lists;   /* values in the function's longest list parameter */
+    double     real[MAX_OUTPUTS][SHIFT_CAP];
+    int        integer[MAX_OUTPUTS][SHIFT_CAP];
+} ShiftRun;
+
+typedef struct {
+    const TA_History *history;
+    ErrorNumber error;
+    int owners;          /* functions carrying TA_FUNC_FLG_UNST_PER */
+    int ownersAtMinimum; /* of those, compared again with a parameter at its minimum */
+    int movers;          /* functions whose default call an unstable period reaches */
+    int flatDefault;     /* calls no period reaches, compared unchanged: defaults */
+    int flatMinimum;     /* the same, with an integer parameter at its minimum */
+    int flatList;        /* the same, with a list parameter off its default */
+} ShiftCtx;
+
+/* One call over the whole history at one parameter vector. Reads the unstable
+ * periods in force. */
+static void shift_run(const TA_FuncInfo *funcInfo, const TA_History *history,
+                      int vector, ShiftRun *run)
+{
+    TA_ParamHolder *h = NULL;
+    unsigned int i;
+
+    memset(run, 0, sizeof(*run));
+    run->lookback = -1;
+    run->rc = TA_ParamHolderAlloc(funcInfo->handle, &h);
+    if( run->rc != TA_SUCCESS )
+        return;
+    setup_inputs(h, funcInfo, history);
+    for( i = 0; i < funcInfo->nbOptInput; i++ )
+    {
+        const TA_OptInputParameterInfo *oi;
+        int value;
+
+        TA_GetOptInputParameterInfo(funcInfo->handle, i, &oi);
+        if( oi->type == TA_OptInput_IntegerList && oi->dataSet &&
+            (int)((const TA_IntegerList *)oi->dataSet)->nbElement > run->lists )
+            run->lists = (int)((const TA_IntegerList *)oi->dataSet)->nbElement;
+        if( vector == SHIFT_VEC_MINIMUM && oi->type == TA_OptInput_IntegerRange && oi->dataSet )
+            value = ((const TA_IntegerRange *)oi->dataSet)->min;
+        else if( vector >= SHIFT_VEC_LIST && oi->type == TA_OptInput_IntegerList && oi->dataSet &&
+                 (unsigned int)(vector - SHIFT_VEC_LIST) < ((const TA_IntegerList *)oi->dataSet)->nbElement )
+            value = ((const TA_IntegerList *)oi->dataSet)->data[vector - SHIFT_VEC_LIST].value;
+        else
+            continue;
+        if( value != (int)oi->defaultValue )
+            run->moved++;
+        TA_SetOptInputParamInteger(h, i, value);
+    }
+    for( i = 0; i < funcInfo->nbOutput && i < MAX_OUTPUTS; i++ )
+    {
+        const TA_OutputParameterInfo *oo;
+        TA_GetOutputParameterInfo(funcInfo->handle, i, &oo);
+        if( oo->type == TA_Output_Integer )
+            TA_SetOutputParamIntegerPtr(h, i, run->integer[i]);
+        else
+            TA_SetOutputParamRealPtr(h, i, run->real[i]);
+    }
+    if( TA_GetLookback(h, &run->lookback) != TA_SUCCESS )
+        run->lookback = -1;
+    run->rc = TA_CallFunc(h, 0, (TA_Integer)history->nbBars - 1, &run->beg, &run->nb);
+    TA_ParamHolderFree(h);
+}
+
+/* Is `later` the run `first` with its `delta` leading values removed? */
+static int shift_same_tail(const TA_FuncInfo *funcInfo, const ShiftRun *first,
+                           const ShiftRun *later, int delta)
+{
+    unsigned int o;
+
+    if( later->beg != first->beg + delta || later->nb != first->nb - delta )
+        return 0;
+    for( o = 0; o < funcInfo->nbOutput && o < MAX_OUTPUTS; o++ )
+    {
+        if( memcmp(later->real[o], first->real[o] + delta,
+                   sizeof(double) * (size_t)later->nb) != 0 ||
+            memcmp(later->integer[o], first->integer[o] + delta,
+                   sizeof(int) * (size_t)later->nb) != 0 )
+            return 0;
+    }
+    return 1;
+}
+
+/* Any call: with every id set above its lookback, either the lookback moves,
+ * or no unstable period reaches the call and nothing it writes may change.
+ * Returns 0 once the vectors run out. */
+static int shift_recipe(const TA_FuncInfo *funcInfo, ShiftCtx *ctx, int vector)
+{
+    static ShiftRun at0, raised;
+
+    TA_SetUnstablePeriod(TA_FUNC_UNST_ALL, 0);
+    shift_run(funcInfo, ctx->history, vector, &at0);
+    if( vector >= SHIFT_VEC_LIST + at0.lists )
+        return 0;
+    if( vector != SHIFT_VEC_DEFAULT && at0.moved == 0 )
+        return 1;   /* repeats the defaults */
+    if( at0.lookback < 0 )
+    {
+        if( vector == SHIFT_VEC_DEFAULT )
+        {
+            printf("\nUNSTABLE SHIFT [%s]: no lookback at the default parameters\n",
+                   funcInfo->name);
+            ctx->error = TA_UNSTABLE_SHIFT_FAIL;
+        }
+        return 1;   /* a combination the function rejects */
+    }
+    if( at0.rc != TA_SUCCESS )
+    {
+        printf("\nUNSTABLE SHIFT [%s]: the call failed (rc=%d, vector %d)\n",
+               funcInfo->name, (int)at0.rc, vector);
+        ctx->error = TA_UNSTABLE_SHIFT_FAIL;
+        return 0;
+    }
+    TA_SetUnstablePeriod(TA_FUNC_UNST_ALL, (unsigned int)at0.lookback + 1);
+    shift_run(funcInfo, ctx->history, vector, &raised);
+    TA_SetUnstablePeriod(TA_FUNC_UNST_ALL, 0);
+    if( raised.lookback != at0.lookback )
+    {
+        if( vector != SHIFT_VEC_DEFAULT )
+            return 1;
+        ctx->movers++;
+        if( get_unst_id(funcInfo->name) == TA_TEST_UNST_NONE )
+        {
+            printf("\nUNSTABLE SHIFT [%s]: an unstable period moves its lookback (%d to %d) "
+                   "but UNSTABLE_MAP has no row for it\n",
+                   funcInfo->name, (int)at0.lookback, (int)raised.lookback);
+            ctx->error = TA_UNSTABLE_SHIFT_FAIL;
+        }
+        return 1;
+    }
+    if( raised.rc != TA_SUCCESS || !shift_same_tail(funcInfo, &at0, &raised, 0) )
+    {
+        printf("\nUNSTABLE SHIFT [%s]: its lookback does not move with the unstable "
+               "periods, yet its output does (vector %d)\n", funcInfo->name, vector);
+        ctx->error = TA_UNSTABLE_SHIFT_FAIL;
+        return 0;
+    }
+    if( at0.nb > 0 )
+    {
+        if( vector == SHIFT_VEC_DEFAULT )      ctx->flatDefault++;
+        else if( vector == SHIFT_VEC_MINIMUM ) ctx->flatMinimum++;
+        else                                   ctx->flatList++;
+    }
+    return 1;
+}
+
+/* An owner: its own id (its first UNSTABLE_MAP row) adds exactly that many bars
+ * and leaves every value it still reports as it was. */
+static void shift_owner(const TA_FuncInfo *funcInfo, ShiftCtx *ctx, int vector)
+{
+    static ShiftRun at0, raised;
+    const char *where = vector == SHIFT_VEC_MINIMUM ? " at minimum parameters" : "";
+    TA_FuncUnstId own = get_unst_id(funcInfo->name);
+    int delta, heldAtPeriod1;
+
+    if( own == TA_TEST_UNST_NONE )
+    {
+        printf("\nUNSTABLE SHIFT [%s]: owns an unstable period but UNSTABLE_MAP has "
+               "no row for it\n", funcInfo->name);
+        ctx->error = TA_UNSTABLE_SHIFT_FAIL;
+        return;
+    }
+    shift_run(funcInfo, ctx->history, vector, &at0);
+    if( vector == SHIFT_VEC_MINIMUM && at0.moved == 0 )
+        return;   /* no integer parameter: the defaults again */
+    TA_SetUnstablePeriod(own, SHIFT_K);
+    shift_run(funcInfo, ctx->history, vector, &raised);
+    TA_SetUnstablePeriod(own, 0);
+
+    /* The four that take no unstable period at period 1. */
+    heldAtPeriod1 = vector == SHIFT_VEC_MINIMUM &&
+        ( strcmp(funcInfo->name, "MINUS_DI") == 0 || strcmp(funcInfo->name, "MINUS_DM") == 0 ||
+          strcmp(funcInfo->name, "PLUS_DI")  == 0 || strcmp(funcInfo->name, "PLUS_DM")  == 0 );
+    delta = heldAtPeriod1 ? 0 : SHIFT_K;
+
+    if( at0.rc != TA_SUCCESS || raised.rc != TA_SUCCESS ||
+        raised.lookback != at0.lookback + delta )
+    {
+        printf("\nUNSTABLE SHIFT [%s]%s: its own unstable period at %d moved the lookback "
+               "from %d to %d, expected %d more (rc %d, %d)\n",
+               funcInfo->name, where, SHIFT_K, (int)at0.lookback, (int)raised.lookback,
+               delta, (int)at0.rc, (int)raised.rc);
+        ctx->error = TA_UNSTABLE_SHIFT_FAIL;
+        return;
+    }
+    if( raised.nb <= 0 )
+    {
+        printf("\nUNSTABLE SHIFT [%s]%s: no value left to compare on %u bars\n",
+               funcInfo->name, where, ctx->history->nbBars);
+        ctx->error = TA_UNSTABLE_SHIFT_VACUOUS;
+        return;
+    }
+    if( !shift_same_tail(funcInfo, &at0, &raised, delta) )
+    {
+        printf("\nUNSTABLE SHIFT [%s]%s: raising its own unstable period to %d changed "
+               "a value it still reports\n", funcInfo->name, where, SHIFT_K);
+        ctx->error = TA_UNSTABLE_SHIFT_FAIL;
+        return;
+    }
+    if( vector == SHIFT_VEC_MINIMUM ) ctx->ownersAtMinimum++;
+    else                              ctx->owners++;
+}
+
+static void shift_one_function(const TA_FuncInfo *funcInfo, void *opaque)
+{
+    ShiftCtx *ctx = (ShiftCtx *)opaque;
+    int vector;
+
+    for( vector = SHIFT_VEC_DEFAULT; ctx->error == TA_TEST_PASS; vector++ )
+        if( !shift_recipe(funcInfo, ctx, vector) )
+            break;
+    TA_SetUnstablePeriod(TA_FUNC_UNST_ALL, 0);
+    if( ctx->error != TA_TEST_PASS || !(funcInfo->flags & TA_FUNC_FLG_UNST_PER) )
+        return;
+    shift_owner(funcInfo, ctx, SHIFT_VEC_DEFAULT);
+    if( ctx->error == TA_TEST_PASS )
+        shift_owner(funcInfo, ctx, SHIFT_VEC_MINIMUM);
+}
+
+ErrorNumber test_func_unstable_shift( TA_History *history )
+{
+    ShiftCtx ctx;
+
+    memset(&ctx, 0, sizeof(ctx));
+    ctx.history = history;
+    ctx.error = TA_TEST_PASS;
+    if( history->nbBars > SHIFT_CAP )
+    {
+        printf("\nUNSTABLE SHIFT: the history outgrew the test's %d-bar buffers\n", SHIFT_CAP);
+        return TA_UNSTABLE_SHIFT_VACUOUS;
+    }
+    TA_ForEachFunc(shift_one_function, &ctx);
+    TA_SetUnstablePeriod(TA_FUNC_UNST_ALL, 0);
+    if( ctx.error != TA_TEST_PASS )
+        return ctx.error;
+    if( ctx.owners == 0 || ctx.ownersAtMinimum == 0 || ctx.movers <= ctx.owners ||
+        ctx.flatDefault == 0 || ctx.flatMinimum == 0 || ctx.flatList == 0 )
+    {
+        printf("\nUNSTABLE SHIFT: %d owner(s) compared, %d again at a minimum parameter; "
+               "%d function(s) whose lookback moves, which must exceed the owners; "
+               "%d call(s) compared unchanged at the defaults, %d at a minimum parameter "
+               "and %d at another list value\n",
+               ctx.owners, ctx.ownersAtMinimum, ctx.movers, ctx.flatDefault,
+               ctx.flatMinimum, ctx.flatList);
+        return TA_UNSTABLE_SHIFT_VACUOUS;
+    }
+    return TA_TEST_PASS;
+}
 
 static void setup_outputs(CodegenRangeTestParam *p)
 {

@@ -124,6 +124,12 @@ static TA_Test tableTest[] =
    { TST_MINUS_DM, 1, 0, 0, 251, 1, TA_SUCCESS, 0,   0.0,      1,  252-1 },
    { TST_PLUS_DM,  1, 0, 0, 251, 1, TA_SUCCESS, 0,   1.69,     1,  252-1 },
 
+   /* At period 1 these four take no unstable period: same range, same values. */
+   { TST_MINUS_DI, 0, 9, 0, 251, 1, TA_SUCCESS, 0,   0.0, 1,  252-1 },
+   { TST_PLUS_DI,  0, 9, 0, 251, 1, TA_SUCCESS, 0,  0.478,  1,  252-1 },
+   { TST_MINUS_DM, 0, 9, 0, 251, 1, TA_SUCCESS, 0,   0.0,      1,  252-1 },
+   { TST_PLUS_DM,  0, 9, 0, 251, 1, TA_SUCCESS, 0,   1.69,     1,  252-1 },
+
    /* Normal regression tests. */
    { TST_ADXR,1, 0, 0, 251, 14, TA_SUCCESS, 0,   19.8666,   40,  252-40 }, /* First Value */
    { TST_ADXR,0, 0, 0, 251, 14, TA_SUCCESS, 1,   18.9092,   40,  252-40 },

@@ -172,6 +172,38 @@ rejection.
 (regtest `--xlang-hash`); `aNullEnumLookbackIsMinusOne` in `BatchApiTest`
 (Java) for a null MA type.
 
+What enters a lookback, in C, in a bare run:
+
+- rL1's first bar: `checkNoBarBeforeTheFirst` (`test_abstract.c`) overwrites
+  every bar below `max(startIdx, lookback) - lookback` in every input of every
+  function, with NaN and with a large finite value, at unstable periods 0 and
+  5, and requires the same answer bit for bit. Its control overwrites one bar
+  more, which most functions read.
+- rL6: `test_func_unstable_shift` (`test_codegen.c`) raises each owner's id by
+  5, at the default parameters and with every integer parameter at its
+  minimum, and requires five more bars of lookback and the same remaining
+  values (the four DI/DM functions at period 1: no more bars). For every
+  function it sets every id above the lookback, at the default parameters,
+  with every integer parameter at its minimum and at each value of its list
+  parameters: a lookback that does not move must come with outputs that do
+  not move. `test_adx.c` pins the DI/DM rows,
+  `test_period_boundary.c` the DEMA, TEMA and period-1 MA stage counts, and
+  `test_kc.c` KC's longer path over a grid of two unstable periods.
+- rL5, rL7 and rL9: `abstract_lookback_under_settings` (`test_abstract.c`), for
+  every function at its default parameters: another range type and factor on
+  every candle setting moves no lookback; seven more bars on every averaging
+  period move a candlestick lookback by seven or not at all, and no other;
+  all three candle components plus an unstable period move no display shift;
+  with every
+  unstable period, then every averaging period, at `TA_INDEX_MAX` the lookback
+  only grows, at the integer parameters' maxima too.
+- rL2's signal: `abstract_check_display_shift` refuses a negative lookback
+  other than -1 on every vector it drives.
+
+The ports' lookback and display-shift calls are compared with C's at default
+settings only; under a setting a port's lookback is seen through
+the batch `outBegIdx`, and its display shift not at all.
+
 ### rL11
 
 `abstract_check_display_shift` (`test_abstract.c`; against each server under

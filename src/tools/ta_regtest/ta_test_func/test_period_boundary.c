@@ -380,6 +380,43 @@ static ErrorNumber testLookbackContract( void )
    PB_CHECK_INT( "TA_MA_Lookback(100,DISABLED)", TA_MA_Lookback( 100, TA_MAType_DISABLED ), 0 );
    PB_CHECK_INT( "TA_MAVP_Lookback(1,2,SMA)", TA_MAVP_Lookback( 1, 2, TA_MAType_SMA ), 1 );
 
+   /* With every unstable period at 7. Through EMA, DEMA counts it twice and
+    * TEMA three times. An MA stage at period 1 and the DISABLED type take none,
+    * whatever the MA type; MA(30,EMA) shows the period is in force.
+    */
+   {
+      int ema1, dema1, tema1, dema14, tema14, maEma30, maOff30;
+      int ma1Moved = 0, stochMoved = 0, stochfMoved = 0;
+
+      TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 7 );
+      ema1    = TA_EMA_Lookback( 1 );
+      dema1   = TA_DEMA_Lookback( 1 );
+      tema1   = TA_TEMA_Lookback( 1 );
+      dema14  = TA_DEMA_Lookback( 14 );
+      tema14  = TA_TEMA_Lookback( 14 );
+      maEma30 = TA_MA_Lookback( 30, TA_MAType_EMA );
+      maOff30 = TA_MA_Lookback( 30, TA_MAType_DISABLED );
+      for( i = 0; i < (int)maTypes->nbElement; i++ )
+      {
+         TA_MAType t = (TA_MAType)maTypes->data[i].value;
+         if( TA_MA_Lookback( 1, t ) != 0 ) ma1Moved++;
+         if( TA_STOCH_Lookback( 5, 1, t, 1, t ) != 4 ) stochMoved++;
+         if( TA_STOCHF_Lookback( 5, 1, t ) != 4 ) stochfMoved++;
+      }
+      TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
+
+      PB_CHECK_INT( "unstable 7: TA_EMA_Lookback(1)",   ema1,    7 );
+      PB_CHECK_INT( "unstable 7: TA_DEMA_Lookback(1)",  dema1,  14 );
+      PB_CHECK_INT( "unstable 7: TA_TEMA_Lookback(1)",  tema1,  21 );
+      PB_CHECK_INT( "unstable 7: TA_DEMA_Lookback(14)", dema14, 40 );
+      PB_CHECK_INT( "unstable 7: TA_TEMA_Lookback(14)", tema14, 60 );
+      PB_CHECK_INT( "unstable 7: TA_MA_Lookback(30,EMA)",      maEma30, 36 );
+      PB_CHECK_INT( "unstable 7: TA_MA_Lookback(30,DISABLED)", maOff30,  0 );
+      PB_CHECK_INT( "unstable 7: MA types moving TA_MA_Lookback(1,maType)", ma1Moved, 0 );
+      PB_CHECK_INT( "unstable 7: MA types moving TA_STOCH_Lookback(5,1,t,1,t)", stochMoved, 0 );
+      PB_CHECK_INT( "unstable 7: MA types moving TA_STOCHF_Lookback(5,1,t)", stochfMoved, 0 );
+   }
+
    /* TA_INTEGER_DEFAULT maps to the documented default period. */
    PB_CHECK_INT( "TA_SMA_Lookback(TA_INTEGER_DEFAULT)",
                  TA_SMA_Lookback( TA_INTEGER_DEFAULT ), 29 );
@@ -556,6 +593,13 @@ static ErrorNumber testIdentityAtPeriodOne( const TA_History *history )
    if( errNb != TA_TEST_PASS ) return errNb;
    errNb = pbCheckSameSeries( "EMA(1) unstable=3", gBuffer[0].out0,
                               &history->close[outBegIdx], outNbElement );
+   if( errNb != TA_TEST_PASS ) return errNb;
+
+   /* TEMA starts where its lookback says under EMA's unstable period. */
+   TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, 7 );
+   retCode = TA_TEMA( 0, endIdx, gBuffer[0].in, 14, &outBegIdx, &outNbElement, gBuffer[0].out0 );
+   TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, 0 );
+   errNb = pbCheckCallShape( "TEMA(14) unstable=7", retCode, outBegIdx, 60, outNbElement, endIdx );
    if( errNb != TA_TEST_PASS ) return errNb;
 
    /* In-place call: output over the input buffer must give the same result. */
