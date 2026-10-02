@@ -284,7 +284,7 @@ public partial class Core
    /// patterns take an OHLC series they never index, and it is required all the
    /// same. A null input array arrives as an empty span and is rejected as one.</description></item>
    /// <item><description>Two outputs overlap or are one array, a zero-length array included
-   /// (<see href="https://ta-lib.org/spec/errors/#b6">rule B6</see>), or an
+   /// (<see href="https://ta-lib.org/spec/errors/#rb6">rule rB6</see>), or an
    /// output partially overlaps an input. Computing wholly in place (an output
    /// that IS an input) is allowed.</description></item>
    /// </list>
@@ -378,7 +378,7 @@ public partial class Core
    /// patterns take an OHLC series they never index, and it is required all the
    /// same. A null input array arrives as an empty span and is rejected as one.</description></item>
    /// <item><description>Two outputs overlap or are one array, a zero-length array included
-   /// (<see href="https://ta-lib.org/spec/errors/#b6">rule B6</see>), or an
+   /// (<see href="https://ta-lib.org/spec/errors/#rb6">rule rB6</see>), or an
    /// output overlaps an input. An output and a real input never share an
    /// element type in this overload, so the two can never be the same span:
    /// there is no in-place case to allow, and any overlap of their byte ranges
@@ -723,7 +723,7 @@ public partial class Core
    /// <exception cref="System.ArgumentException">The input series have different lengths.</exception>
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.IndexMax"/> + 1, the
-   /// two index faults an opener can have (rules S1 and S2).</exception>
+   /// two index faults an opener can have (rules rS1 and rS2).</exception>
    public WadStream WadOpen( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
    {
       if( inHigh.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "WAD open: history is empty", RetCode.OutOfRangeStartIndex);
@@ -761,7 +761,7 @@ public partial class Core
    /// writes, or an output array aliases an input or another output.</exception>
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.IndexMax"/> + 1, the
-   /// two index faults an opener can have (rules S1 and S2).</exception>
+   /// two index faults an opener can have (rules rS1 and rS2).</exception>
    public WadStream WadOpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<double> outReal )
    {
       if( inHigh.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "WAD openAndFill: history is empty", RetCode.OutOfRangeStartIndex);

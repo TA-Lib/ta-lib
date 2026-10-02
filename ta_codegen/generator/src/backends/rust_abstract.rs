@@ -706,7 +706,7 @@ mod binder_tests {
     }
 
     /// An output sized to the count the call PRODUCES is enough — the bound is
-    /// B5's, `endIdx - max(startIdx, lookback) + 1`, not the width of the
+    /// rB5's, `endIdx - max(startIdx, lookback) + 1`, not the width of the
     /// requested range. Demanding the latter rejects a caller who allocated by
     /// the published formula (#265).
     #[test]
@@ -945,7 +945,7 @@ fn emit_binder(
          \x20       // The buffer bounds are the PUBLIC entry point's, which every arm\n\
          \x20       // below calls (#265). This tier used to hand `_Impl` a hand-rolled\n\
          \x20       // output check of its own, `end_idx - start_idx + 1` -- the width of\n\
-         \x20       // the REQUESTED range, where B5 says the count actually PRODUCED, so\n\
+         \x20       // the REQUESTED range, where rB5 says the count actually PRODUCED, so\n\
          \x20       // it rejected a caller who sized by the published formula on a range\n\
          \x20       // starting below the lookback. It also checked no input at all, which\n\
          \x20       // is what let a short leg reach the numerics and panic. One bound, in\n\
@@ -1165,7 +1165,7 @@ fn emit_call_arm(
             "                let mut o{k} = self.{arr}[{k}].take().ok_or(RetCode::BadParam)?;"
         );
         // The abstract tier always supplies every declared output, so a
-        // `nullable` one (rule B6a, `TA_OUT_NULLABLE`) is handed `Some(..)`
+        // `nullable` one (rule rB7, `TA_OUT_NULLABLE`) is handed `Some(..)`
         // rather than declined: the catalogue's job is to reproduce the direct
         // call, not to choose for the caller.
         args.push(if out.flags & super::abstract_rows::OUT_NULLABLE == 0 {

@@ -89,7 +89,7 @@ OutRange r = s.OutRange;    // the bars it has an output for
 // ...and s is live, ready for Update.
 ```
 
-The output arguments are the batch call's, in the same order. An output must not overlap an input or another output. Passing the same buffer throws `ArgumentException` and mints no stream ([S6](/spec/streaming/#s6)); any other overlap is unspecified ([N8](/spec/inputs-outputs/#n8)).
+The output arguments are the batch call's, in the same order. An output must not overlap an input or another output. Passing the same buffer throws `ArgumentException` and mints no stream ([rS6](/spec/streaming/#rs6)); any other overlap is unspecified ([specification](/spec/inputs-outputs/#no-overlap)).
 
 ## Utility Calls
 

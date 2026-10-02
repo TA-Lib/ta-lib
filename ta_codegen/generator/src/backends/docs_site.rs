@@ -155,7 +155,7 @@ fn mark_declinable_outputs(body: &str, func: &FuncDef) -> String {
         }
         let base = out[last].trim_end().to_string();
         let sep = if base.ends_with('.') { " " } else { ". " };
-        out[last] = format!("{base}{sep}May be declined ([O5](/spec/inputs-outputs/#o5)).");
+        out[last] = format!("{base}{sep}May be declined ([rW5](/spec/inputs-outputs/#rw5)).");
     }
     let mut s = out.join("\n");
     if body.ends_with('\n') {

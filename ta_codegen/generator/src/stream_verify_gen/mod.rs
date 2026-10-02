@@ -272,7 +272,7 @@ enum SvRangeSite {
     /// The prefix handle after one `TA_<N>_Advance` (#384) — the only call
     /// that moves the range without a bar, and the one place its cross-language
     /// contract is stated: it succeeds and reports exactly +1, in every backend.
-    /// Runs everywhere. Its other answer, rule U4's ceiling, is 100 000 000 bars
+    /// Runs everywhere. Its other answer, rule rU4's ceiling, is 100 000 000 bars
     /// out of reach at `stream_verify` sizes and is probed per backend instead.
     Advance = 4,
 }

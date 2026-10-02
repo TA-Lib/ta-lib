@@ -153,14 +153,14 @@ The public methods throw rather than return a status code:
 | `startIdx`/`endIdx` negative, above `Core.IndexMax`, or `endIdx < startIdx` | `TALibArgumentOutOfRangeException` |
 | An optional parameter outside its documented range | `TALibArgumentException` |
 | An input span that does not reach `endIdx`, or an output span shorter than the values produced | `TALibArgumentException` naming the span |
-| Two outputs that are the same buffer ([B6](/spec/errors/#b6)) | `TALibArgumentException` |
+| Two outputs that are the same buffer ([rB6](/spec/errors/#rb6)) | `TALibArgumentException` |
 | An inconsistency in the library's own state: a bug, please report it | `TALibInvalidOperationException` carrying `RetCode.InternalError` |
 
 Each extends the framework type you would reach for and implements
 `ITALibFailure`, so `catch (ArgumentException)` still works and the `RetCode` is
 there when you want it.
 
-Computing wholly in place is allowed and stays supported — passing the same buffer as both an input and an output is how several indicators are meant to be used. Avoid partial overlap, which only spans can express: what it does is unspecified ([N8](/spec/inputs-outputs/#n8)).
+Computing wholly in place is allowed and stays supported — passing the same buffer as both an input and an output is how several indicators are meant to be used. Avoid partial overlap, which only spans can express: what it does is unspecified ([specification](/spec/inputs-outputs/#no-overlap)).
 
 A `NaN` or `±Inf` inside an input series is not detected, and nothing is promised about the output: a running sum or a recursion carries it into every later value, not only the bars whose window holds it. Clean or split the series before calling.
 

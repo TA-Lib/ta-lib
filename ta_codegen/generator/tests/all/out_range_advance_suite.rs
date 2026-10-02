@@ -117,7 +117,7 @@ fn body_of(src: &str, sig: impl Fn(&str) -> bool) -> String {
     src[j..=k].to_string()
 }
 
-/// The one spelling per backend of the advance and of a U3 rejection. Rule U4
+/// The one spelling per backend of the advance and of a rU3 rejection. Rule rU4
 /// answers the index bound ahead of the step, so what is matched is the increment
 /// itself.
 fn spellings(lang: &str) -> (&'static str, &'static str) {
@@ -130,7 +130,7 @@ fn spellings(lang: &str) -> (&'static str, &'static str) {
     }
 }
 
-/// Rule U4's condition, per backend.
+/// Rule rU4's condition, per backend.
 fn ceiling_needle(lang: &str) -> &'static str {
     match lang {
         "c" => "stream->outRangeBegIdx + stream->outRangeCount > TA_INDEX_MAX",
@@ -141,10 +141,10 @@ fn ceiling_needle(lang: &str) -> &'static str {
     }
 }
 
-/// Rule U4's guard, in the ONE slot its table puts it in
-/// (`https://ta-lib.org/spec/streaming/#u4`): first, with only the
+/// Rule rU4's guard, in the ONE slot its table puts it in
+/// (`https://ta-lib.org/spec/streaming/#ru4`): first, with only the
 /// handle-presence check allowed in front of it — exactly as only `!stream` may
-/// precede an opener's S1/S2 pair.
+/// precede an opener's rS1/rS2 pair.
 ///
 /// Position, not presence. C is matched as a substring including that check,
 /// because a composed `Update` opens with `TA_RetCode retCode;` and so has no
@@ -159,13 +159,13 @@ fn assert_ceiling_is_answered_first(what: &str, lang: &str, body: &str) {
         );
         assert!(
             body.contains(want),
-            "{what}: rule U4 is not answered right after the handle check:\n{body}"
+            "{what}: rule rU4 is not answered right after the handle check:\n{body}"
         );
         return;
     }
     // (condition, how it rejects, the code it names). The code is a separate
     // needle from the throw: Java's `failure(...)` and C#'s `StreamFailure(...)`
-    // render several codes, so matching the call alone would let U4 answer any
+    // render several codes, so matching the call alone would let rU4 answer any
     // of them -- and Java's own runtime probe cannot tell them apart either,
     // since `failure` maps both index codes to one exception type.
     let want: [&str; 3] = match lang {
@@ -193,15 +193,15 @@ fn assert_ceiling_is_answered_first(what: &str, lang: &str, body: &str) {
         .filter(|l| !l.is_empty())
         .take(2)
         .collect();
-    assert_eq!(head.len(), 2, "{what}: body too short to carry rule U4:\n{body}");
-    assert_eq!(head[0], want[0], "{what}: rule U4 is not the first thing answered:\n{body}");
+    assert_eq!(head.len(), 2, "{what}: body too short to carry rule rU4:\n{body}");
+    assert_eq!(head[0], want[0], "{what}: rule rU4 is not the first thing answered:\n{body}");
     assert!(
         head[1].starts_with(want[1]),
-        "{what}: rule U4 does not reject:\n{body}"
+        "{what}: rule rU4 does not reject:\n{body}"
     );
     assert!(
         head[1].contains(want[2]),
-        "{what}: rule U4 does not answer TA_OUT_OF_RANGE_END_INDEX:\n{body}"
+        "{what}: rule rU4 does not answer TA_OUT_OF_RANGE_END_INDEX:\n{body}"
     );
 }
 
@@ -297,7 +297,7 @@ fn no_advance_on_any_reject(
 }
 
 /// The per-handle `advance`, in every backend, matched on its signature. Rust's
-/// is fallible because rule U4 gave it something to answer; the other three
+/// is fallible because rule rU4 gave it something to answer; the other three
 /// carry the rejection as a throw or a returned code and keep their shape.
 fn advance_entry_sig(lang: &str, upper: &str) -> Box<dyn Fn(&str) -> bool> {
     match lang {
@@ -320,7 +320,7 @@ fn advance_entry_sig(lang: &str, upper: &str) -> Box<dyn Fn(&str) -> bool> {
 fn only_an_accepted_bar_advances_the_range() {
     let (mut updates, mut peeks, mut guards) = (0usize, 0usize, 0usize);
     let mut advancers = 0usize;
-    // Rule U4's own counter, not a share of the others, so a sweep that stopped
+    // Rule rU4's own counter, not a share of the others, so a sweep that stopped
     // reaching `advance` would still saturate theirs.
     let mut ceilings = 0usize;
     let mut no_bars = Vec::new();
@@ -329,7 +329,7 @@ fn only_an_accepted_bar_advances_the_range() {
         let (func, _) = load(&name);
         let bars = streaming::input_array_names(&func);
         if bars.is_empty() {
-            // No bar input is no U3: there is nothing to test for finiteness and
+            // No bar input is no rU3: there is nothing to test for finiteness and
             // so no rejection that could count a bar.
             no_bars.push(name);
             continue;
@@ -354,7 +354,7 @@ fn only_an_accepted_bar_advances_the_range() {
                 !advances.is_empty(),
                 "{name}: {lang} Update no longer counts the accepted bar:\n{upd}"
             );
-            // U1/U2: the presence guards answer before any bar is looked at, and
+            // rU1/rU2: the presence guards answer before any bar is looked at, and
             // a call that never reached the series must not move its count.
             let at_test = upd.find(&scalar).expect("the finite test");
             assert!(
@@ -383,7 +383,7 @@ fn only_an_accepted_bar_advances_the_range() {
             );
             peeks += 1;
 
-            // Rule U4, on the two entry points that count a bar. `Peek` is
+            // Rule rU4, on the two entry points that count a bar. `Peek` is
             // exempt and must stay so.
             for (verb, body) in [("Update", &upd), ("Advance", &adv)] {
                 assert_ceiling_is_answered_first(
@@ -395,7 +395,7 @@ fn only_an_accepted_bar_advances_the_range() {
             }
             assert!(
                 !peek.contains(ceiling_needle(lang)),
-                "{name}: {lang} Peek answers rule U4. It counts no bar, so it has no \
+                "{name}: {lang} Peek answers rule rU4. It counts no bar, so it has no \
                  index to leave the domain, and the guard is a measurable share of a \
                  cheap peek:\n{peek}"
             );
@@ -404,7 +404,7 @@ fn only_an_accepted_bar_advances_the_range() {
     assert!(
         no_bars.is_empty(),
         "these streaming functions take no bar input, so the sweep silently skipped them \
-         — decide what U3 means for them and widen the sweep rather than leaving a hole: \
+         — decide what rU3 means for them and widen the sweep rather than leaving a hole: \
          {no_bars:?}"
     );
     // Own counters: a refactor that stops reaching these entry points has to
@@ -418,7 +418,7 @@ fn only_an_accepted_bar_advances_the_range() {
     assert!(ceilings >= 1600, "only {ceilings} rule-U4 guards were checked");
     println!(
         "checked {updates} Update reject sites, {peeks} peeks, {guards} guards, \
-         {advancers} advance() bodies, {ceilings} U4 ceilings across {} backends",
+         {advancers} advance() bodies, {ceilings} rU4 ceilings across {} backends",
         LANGS.len()
     );
 }

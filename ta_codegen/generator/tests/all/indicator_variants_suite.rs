@@ -277,18 +277,18 @@ fn c_batch_prologues(c: &str) -> Vec<&str> {
     out
 }
 
-/// The batch order (`https://ta-lib.org/spec/errors/#b1`): B1, B2, then B3, an
-/// optional parameter outside its documented domain, and only then B4, a required
+/// The batch order (`https://ta-lib.org/spec/errors/#rb1`): rB1, rB2, then rB3, an
+/// optional parameter outside its documented domain, and only then rB4, a required
 /// argument that was not supplied.
 ///
 /// The parameter rule leads because it is the one every backend can express: a
-/// Rust slice and a C# span cannot be absent, so B4 is C's and Java's alone, and
+/// Rust slice and a C# span cannot be absent, so rB4 is C's and Java's alone, and
 /// putting it last is what lets a multi-fault call report the same condition in
 /// all four.
 ///
-/// Structural, and it has to be: B3 and B4 both answer `TA_BAD_PARAM`, so no
+/// Structural, and it has to be: rB3 and rB4 both answer `TA_BAD_PARAM`, so no
 /// runtime probe can see the order between them. The range out-parameters are
-/// part of B4 — an absent one used to be dereferenced.
+/// part of rB4 — an absent one used to be dereferenced.
 #[test]
 fn c_batch_prologue_orders_parameters_before_presence() {
     const OUT_META: &str = "if( !outBegIdx || !outNBElement )";
@@ -312,7 +312,7 @@ fn c_batch_prologue_orders_parameters_before_presence() {
             let end = prologue
                 .find("TA_OUT_OF_RANGE_END_INDEX")
                 .unwrap_or_else(|| panic!("{where_}\nno endIdx guard"));
-            assert!(start < end, "{where_}\nB1 must precede B2");
+            assert!(start < end, "{where_}\nrB1 must precede rB2");
 
             let meta = prologue
                 .find(OUT_META)
@@ -338,7 +338,7 @@ fn c_batch_prologue_orders_parameters_before_presence() {
                 presence.push(at);
             }
             let first_presence = *presence.iter().min().expect("out-meta is always present");
-            assert!(end < first_presence, "{where_}\nB2 must precede B4");
+            assert!(end < first_presence, "{where_}\nrB2 must precede rB4");
 
             // The last sentinel substitution sits in the last parameter's block,
             // and its range check is the line right after it — so every presence
@@ -350,8 +350,8 @@ fn c_batch_prologue_orders_parameters_before_presence() {
                 .max();
             if let Some(at) = last_param {
                 with_params += 1;
-                assert!(end < at, "{where_}\nB2 must precede B3");
-                assert!(at < first_presence, "{where_}\nB3 must precede B4");
+                assert!(end < at, "{where_}\nrB2 must precede rB3");
+                assert!(at < first_presence, "{where_}\nrB3 must precede rB4");
             }
             if let (Some(last_in), Some(first_out)) =
                 (inputs.iter().max(), outputs.iter().min())
@@ -366,7 +366,7 @@ fn c_batch_prologue_orders_parameters_before_presence() {
     assert!(prologues >= 340, "only {prologues} C batch prologues scanned");
     assert!(
         with_params >= 150,
-        "only {with_params} prologues carried parameter validation — B3 is barely covered"
+        "only {with_params} prologues carried parameter validation — rB3 is barely covered"
     );
 }
 
@@ -379,7 +379,7 @@ fn c_batch_prologue_orders_parameters_before_presence() {
 /// RUST cannot compare a real output with an integer one: `*const f64 ==
 /// *const i32` is a type error, so a cross-typed pair contributes no term and a
 /// function whose outputs are all cross-typed gets no guard at all. (C can and
-/// does compare them, through `const void *`: rationale B6 in
+/// does compare them, through `const void *`: rationale rB6 in
 /// `docs/error-handling-spec.md`. The rule differs per backend, so do not read
 /// this as a statement about the library.) Without the skip, reconstructing the
 /// guard reads a correctly-absent term as a missing one.
@@ -390,9 +390,9 @@ fn same_typed_outputs(a: &ir::Output, b: &ir::Output) -> bool {
 fn rust_alias_guard(func: &ir::FuncDef) -> Option<String> {
     // Both operands non-empty: two zero-length slices cannot clobber each other,
     // and every unallocated `Vec` hands out the same dangling pointer, so a bare
-    // `as_ptr()` comparison rejected a call rules N1 and B5 both permit
+    // `as_ptr()` comparison rejected a call rules rW2 and rB5 both permit
     // (Appendix D item 11, #262). A nullable output is an `Option` and
-    // contributes a term only when it was supplied (rule B6a).
+    // contributes a term only when it was supplied (rule rB7).
     let mut pairs: Vec<String> = Vec::new();
     for i in 0..func.outputs.len() {
         for j in (i + 1)..func.outputs.len() {
@@ -437,19 +437,19 @@ fn rust_cross_typed_term(a: &ir::Output, b: &ir::Output) -> String {
     format!("{0}.as_ptr() == {1}.as_ptr()", a.name, b.name)
 }
 
-/// The batch order (`https://ta-lib.org/spec/errors/#b1`): B1, B2, B3, then B5, a
-/// buffer too short, and only then B6, two outputs that are the same buffer.
+/// The batch order (`https://ta-lib.org/spec/errors/#rb1`): rB1, rB2, rB3, then rB5, a
+/// buffer too short, and only then rB6, two outputs that are the same buffer.
 ///
 /// Rust is the one backend where the order between those last two is
-/// *observable*, and it had them the wrong way round (#261). Here B5 is an
-/// `assert!` rather than a returned code (rationale B5 in
+/// *observable*, and it had them the wrong way round (#261). Here rB5 is an
+/// `assert!` rather than a returned code (rationale rB5 in
 /// `docs/error-handling-spec.md`: the LLVM proof that elides the per-access bounds
 /// checks), so a call that is both undersized and aliased answered `BadParam`
 /// where the specified order makes it a panic. C, Java and C# answer
 /// `TA_BAD_PARAM` for either, so no order is owed there.
 ///
 /// **This tier, not the shipped one.** Since #265 the public entry point states
-/// B5 as a returned code ahead of both of these
+/// rB5 as a returned code ahead of both of these
 /// ([`rust_public_entry_orders_the_argument_contract`]), so a caller of the
 /// crate meets one code for either fault and cannot see the order at all. What
 /// this pins is `_Impl` as the phantom-I/O sweep reaches it — since #267 the
@@ -490,15 +490,15 @@ fn rust_batch_impl_orders_capacity_before_aliasing() {
         let end = section
             .find("RetCode::OutOfRangeEndIndex")
             .unwrap_or_else(|| panic!("{where_}\nno endIdx guard"));
-        assert!(start < end, "{where_}\nB1 must precede B2");
+        assert!(start < end, "{where_}\nrB1 must precede rB2");
 
         let preamble = section
             .find("let _assertLb")
             .unwrap_or_else(|| panic!("{where_}\nno bounds-assert preamble"));
-        assert!(end < preamble, "{where_}\nB2 must precede B5");
+        assert!(end < preamble, "{where_}\nrB2 must precede rB5");
 
         // The sentinel substitution opens each parameter's block and its range
-        // check is the arm right after, so the last one bounds all of B3.
+        // check is the arm right after, so the last one bounds all of rB3.
         // Reconstructed per parameter, like the guard below: a bare `i32::MIN`
         // could come from a transcribed body. An enum parameter is skipped —
         // it has no out-of-domain value, so it emits a substitution and no check.
@@ -518,8 +518,8 @@ fn rust_batch_impl_orders_capacity_before_aliasing() {
             .max();
         if let Some(at) = last_param {
             with_params += 1;
-            assert!(end < at, "{where_}\nB2 must precede B3");
-            assert!(at < preamble, "{where_}\nB3 must precede B5");
+            assert!(end < at, "{where_}\nrB2 must precede rB3");
+            assert!(at < preamble, "{where_}\nrB3 must precede rB5");
         }
 
         // A function whose outputs are ALL cross-typed gets no guard at all here:
@@ -545,11 +545,11 @@ fn rust_batch_impl_orders_capacity_before_aliasing() {
                 section.len()
             }
         };
-        // Every output's capacity is B5, so the guard has to follow ALL of the
+        // Every output's capacity is rB5, so the guard has to follow ALL of the
         // asserts, not merely the first.
         for output in &func.outputs {
             // A declined output has no capacity to bound, so its assert asks the
-            // question only when one was supplied (rule B6a).
+            // question only when one was supplied (rule rB7).
             let cap = if output.is_nullable() {
                 format!(
                     "assert!(_assertStart > endIdx || {}.as_deref().is_none_or(|o| endIdx - _assertStart < o.len()));",
@@ -564,7 +564,7 @@ fn rust_batch_impl_orders_capacity_before_aliasing() {
             let cap_at = section
                 .find(&cap)
                 .unwrap_or_else(|| panic!("{where_}\n{} has no capacity assert", output.name));
-            assert!(cap_at < guard_at, "{where_}\nB5 must precede B6 ({})", output.name);
+            assert!(cap_at < guard_at, "{where_}\nrB5 must precede rB6 ({})", output.name);
         }
     }
 
@@ -572,12 +572,12 @@ fn rust_batch_impl_orders_capacity_before_aliasing() {
     assert!(scanned >= 15, "only {scanned} multi-output Rust bodies scanned");
     assert!(
         with_params >= 12,
-        "only {with_params} carried parameter validation — B3 is barely covered"
+        "only {with_params} carried parameter validation — rB3 is barely covered"
     );
 }
 
 /// The Rust public entry point states the argument contract in the specified
-/// order: B1, B2, then B3, then B4/B5 — inputs before outputs (#265).
+/// order: rB1, rB2, then rB3, then rB4/rB5 — inputs before outputs (#265).
 ///
 /// **The order is not a style choice.** `SMA(10, 9, ..)` with an eight-element
 /// series has two faults at once, and the specification says `endIdx < startIdx`
@@ -585,7 +585,7 @@ fn rust_batch_impl_orders_capacity_before_aliasing() {
 /// where `test_index_range_xlang` requires `TA_OUT_OF_RANGE_END_INDEX` in every
 /// language — and that leg is also the sole producer of codes 12 and 13 for the
 /// retCode census floor, so getting it wrong fails two gates for one reason.
-/// B3 rides on the `<N>_Lookback(..)?`, which is what makes an out-of-range
+/// rB3 rides on the `<N>_Lookback(..)?`, which is what makes an out-of-range
 /// parameter answer ahead of a short buffer, as it does in Java and C#.
 ///
 /// Structural, because the runtime leg reaches three functions
@@ -625,15 +625,15 @@ fn rust_public_entry_orders_the_argument_contract() {
         let b2 = section
             .find("return Err(RetCode::OutOfRangeEndIndex);")
             .unwrap_or_else(|| panic!("{where_}\nno endIdx guard"));
-        assert!(b1 < b2, "{where_}\nB1 must precede B2");
+        assert!(b1 < b2, "{where_}\nrB1 must precede rB2");
 
-        // B3 arrives as the lookback's `?` — rule L2 makes the lookback's
+        // rB3 arrives as the lookback's `?` — rule rL3 makes the lookback's
         // parameter decision this tier's own, so one call buys the check and the
-        // clamp. It has to sit below B2 and above every buffer bound.
+        // clamp. It has to sit below rB2 and above every buffer bound.
         let b3 = section
             .find(&format!("let _guardLb = self.{snake}_lookback("))
-            .unwrap_or_else(|| panic!("{where_}\nno lookback call to carry B3 and the clamp"));
-        assert!(b2 < b3, "{where_}\nB2 must precede B3");
+            .unwrap_or_else(|| panic!("{where_}\nno lookback call to carry rB3 and the clamp"));
+        assert!(b2 < b3, "{where_}\nrB2 must precede rB3");
         if !func.optional_inputs.is_empty() {
             with_params += 1;
         }
@@ -643,7 +643,7 @@ fn rust_public_entry_orders_the_argument_contract() {
             let at = section
                 .find(&format!("if {}.len() < endIdx + 1 {{", input.name))
                 .unwrap_or_else(|| panic!("{where_}\n{} has no input bound", input.name));
-            assert!(b3 < at, "{where_}\nB3 must precede B5 ({})", input.name);
+            assert!(b3 < at, "{where_}\nrB3 must precede rB5 ({})", input.name);
             inputs_checked += 1;
             last_input = last_input.max(at);
         }
@@ -676,7 +676,7 @@ fn rust_public_entry_orders_the_argument_contract() {
 /// contract states holds through the binder too (#265).
 ///
 /// It called `<N>_Impl` and re-implemented one bound of its own —
-/// `end_idx - start_idx + 1`, the width of the requested range where B5 says the
+/// `end_idx - start_idx + 1`, the width of the requested range where rB5 says the
 /// count actually produced — and checked no input length at all, so a leg
 /// shorter than the range reached the numerics and tripped their `assert!`: a
 /// panic out of a `Result`-typed method. C's frames and Java's `Dispatch` have

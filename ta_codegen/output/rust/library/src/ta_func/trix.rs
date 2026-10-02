@@ -614,7 +614,7 @@ impl Core {
     /// # Errors
     ///
     /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
-    /// values — the batch tier's sizing rule, checked here as it is there (rule S5).
+    /// values — the batch tier's sizing rule, checked here as it is there (rule rS5).
     /// Everything [`Core::trix_open`] rejects is rejected here too.
     ///
     /// # Examples

@@ -53,7 +53,7 @@ TA_RetCode synth13(int startIdx, int endIdx,
    /* Four legs, four guard shapes, one destination. Each leg recomputes the
     * same sma() into `scratch`, and outReal is written ONCE at the end --
     * after every read of inReal. Whole-buffer in place is legal in the batch
-    * tier (rule N4), so a leg that wrote outReal before a later leg re-read
+    * tier (rule rW7), so a leg that wrote outReal before a later leg re-read
     * inReal would corrupt its own input.
     */
    scratch = malloc( (endIdx-startIdx+1) * sizeof(double) );

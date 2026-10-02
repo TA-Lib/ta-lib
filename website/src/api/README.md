@@ -290,6 +290,6 @@ Error 2(TA_BAD_PARAM): A parameter is out of range
   <li><a href="/api/candle-settings/">TA_SetCandleSettings, TA_RestoreCandleDefaultSettings</a></li>
 </ul>
 
-<p>Between changes, the application can call the rest of the API from multiple threads (including the ta_abstract.h interface). The rule in the specification: <a href="/spec/settings-threads/#t2">T2</a>.</p>
+<p>Between changes, the application can call the rest of the API from multiple threads (including the ta_abstract.h interface). In the specification: <a href="/spec/settings-threads/#idle-settings">when a C setting may change</a>.</p>
 
 <p>Note: TA-Lib assumes it is linked against a thread-safe malloc/free runtime, which is the default on all modern platforms (Linux, Windows, Mac). In other words, any toolchain supporting C11 or newer is safe.</p>

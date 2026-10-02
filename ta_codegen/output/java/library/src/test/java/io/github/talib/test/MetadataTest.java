@@ -597,7 +597,7 @@ public class MetadataTest {
             () -> sma.newCall().setInput(0, CLOSE).setOptInput(0, 30)
                      .setOutput(0, new double[4]).call(0, N - 1),
             "an output shorter than the produced count -> BAD_PARAM");
-        // Control: sized to the count actually produced, which is B5's bound --
+        // Control: sized to the count actually produced, which is rB5's bound --
         // not the width of the requested range.
         int lookback = sma.newCall().setOptInput(0, 30).lookback();
         OutRange exact = sma.newCall().setInput(0, CLOSE).setOptInput(0, 30)

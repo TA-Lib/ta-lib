@@ -287,7 +287,7 @@ fn call_args(func: &FuncDef, call_opts: &str) -> String {
     parts.push("&mut _b".to_string());
     parts.push("&mut _n".to_string());
     for o in &func.outputs {
-        // A nullable output takes `Option<&mut [T]>` (rule B6a). The sweep hands
+        // A nullable output takes `Option<&mut [T]>` (rule rB7). The sweep hands
         // it `Some(..)`: declining it would hide exactly the writes it is here
         // to catch.
         if o.is_nullable() {
@@ -332,7 +332,7 @@ fn empty_call(func: &FuncDef, call_opts: &str, end_expr: &str, indent: usize) ->
     // dangling aligned pointer, which a multi-output function's overlap guard
     // once read as aliased buffers -- silently costing this sweep all 14
     // multi-output indicators until the control arm said so. The guard now
-    // excludes empty operands (rule B6, #262), so this is belt and braces: it
+    // excludes empty operands (rule rB6, #262), so this is belt and braces: it
     // keeps the sweep independent of that guard's shape.
     for i in &func.inputs {
         let _ = writeln!(s, "{pad}let {}: Vec<{}> = Vec::with_capacity(1);", i.name, slice_ty(&i.param_type));

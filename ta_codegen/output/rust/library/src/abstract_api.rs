@@ -4262,7 +4262,7 @@ impl<'a> ParamHolder<'a> {
         // The buffer bounds are the PUBLIC entry point's, which every arm
         // below calls (#265). This tier used to hand `_Impl` a hand-rolled
         // output check of its own, `end_idx - start_idx + 1` -- the width of
-        // the REQUESTED range, where B5 says the count actually PRODUCED, so
+        // the REQUESTED range, where rB5 says the count actually PRODUCED, so
         // it rejected a caller who sized by the published formula on a range
         // starting below the lookback. It also checked no input at all, which
         // is what let a short leg reach the numerics and panic. One bound, in
@@ -7107,7 +7107,7 @@ mod binder_tests {
     }
 
     /// An output sized to the count the call PRODUCES is enough — the bound is
-    /// B5's, `endIdx - max(startIdx, lookback) + 1`, not the width of the
+    /// rB5's, `endIdx - max(startIdx, lookback) + 1`, not the width of the
     /// requested range. Demanding the latter rejects a caller who allocated by
     /// the published formula (#265).
     #[test]

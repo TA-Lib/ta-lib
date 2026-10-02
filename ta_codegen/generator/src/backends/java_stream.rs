@@ -506,7 +506,7 @@ pub fn generate(
 /// caller-owned arrays. The batch tier's in-place allowance is revoked here not
 /// because the fill would compute the wrong answer — measured, it does not — but
 /// because the margin between its writes and the capture's seed reads is an
-/// accident nothing asserts (rule S6). Reference equality is complete for two
+/// accident nothing asserts (rule rS6). Reference equality is complete for two
 /// SUPPLIED arrays: they are identical or disjoint. A declined output is null,
 /// which aliases nothing, so the pairs guard it.
 fn alias_condition(func: &FuncDef) -> Option<String> {
@@ -515,7 +515,7 @@ fn alias_condition(func: &FuncDef) -> Option<String> {
     let nullable = super::common::nullable_output_names(func);
     // A declined output aliases nothing — and two of them would otherwise
     // compare equal, `null == null`, rejecting a legal call. The batch emitter
-    // guards the nullable operand for exactly this reason (rule B6a).
+    // guards the nullable operand for exactly this reason (rule rB7).
     let guarded = |a: &str, b: &str| {
         let term = format!("(Object){a} == (Object){b}");
         match (nullable.contains(a), nullable.contains(b)) {
@@ -927,16 +927,16 @@ fn assert_single_output(func: &FuncDef, site: &str) {
     );
 }
 
-/// Rule U4 — the opener's index-pair check read on a live handle, one bar at a
-/// time. Why a sub-handle cannot answer it before its parent: rationale U4 in
+/// Rule rU4 — the opener's index-pair check read on a live handle, one bar at a
+/// time. Why a sub-handle cannot answer it before its parent: rationale rU4 in
 /// `docs/error-handling-spec.md`.
 ///
-/// `>` and not `>=`: an opener may legally take `INDEX_MAX + 1` bars (rule S2),
+/// `>` and not `>=`: an opener may legally take `INDEX_MAX + 1` bars (rule rS2),
 /// so a handle can be born holding the last bar in the domain and it is the NEXT
 /// one that has nowhere to go.
 ///
 /// Through `failure(...)`, so the code is spelled here exactly as
-/// `requireHistory` spells it for rule S2 and not as a fourth exception type.
+/// `requireHistory` spells it for rule rS2 and not as a fourth exception type.
 fn out_range_ceiling_guard(func: &FuncDef, indent: &str, verb: &str) -> String {
     format!(
         "{indent}if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )\n\
@@ -1037,8 +1037,8 @@ fn emit_update_method(o: &mut String, func: &FuncDef) {
          \x20      */"
     );
     let _ = writeln!(o, "      public {vt} update( {sig_bars}{sink} ) {{");
-    // U4 first, then U2 before U3: the index domain ahead of the call's
-    // arguments, as an opener answers S1/S2 ahead of S4; and an absent sink is a
+    // rU4 first, then rU2 before rU3: the index domain ahead of the call's
+    // arguments, as an opener answers rS1/rS2 ahead of rS4; and an absent sink is a
     // fault in the call, not in the bar.
     o.push_str(&out_range_ceiling_guard(func, "         ", "update"));
     o.push_str(&require_sink(func, "         ", "update"));
@@ -2040,9 +2040,9 @@ fn emit_open_head(o: &mut String, func: &FuncDef, _outputs: &[String]) {
 fn emit_open_validation(o: &mut String, func: &FuncDef, mode: OutMode, enums: &HashMap<String, EnumDef>) {
     let inputs = streaming::input_array_names(func);
     let first = &inputs[0];
-    // S1 and S2 run first, ahead of every presence check but the history's
+    // rS1 and rS2 run first, ahead of every presence check but the history's
     // own, answering OUT_OF_RANGE_START_INDEX and OUT_OF_RANGE_END_INDEX
-    // (https://ta-lib.org/spec/streaming/#s1). `historyLen` is the FIRST input's
+    // (https://ta-lib.org/spec/streaming/#rs1). `historyLen` is the FIRST input's
     // length, so a later input of a different length is an argument
     // disagreement, not an empty history.
     let _ = writeln!(o, "      if( historyLen < 1 ) {{");
@@ -2119,7 +2119,7 @@ fn emit_extras_and_candle(
 /// `inserts` / `replaced` statement indices survive it.
 ///
 /// `InsufficientHistory` is what the surviving `count == 0` half of a folded
-/// guard answers — an opener that produced nothing is rule S7, not a success.
+/// guard answers — an opener that produced nothing is rule rS8, not a success.
 /// Spelled as the RetCode member, the same name `map_open_return` hands the
 /// renderer for the body's own early-success returns.
 fn cleanup_open_body(body: &[Statement], registry: &Registry) -> Vec<Statement> {
@@ -2541,7 +2541,7 @@ fn emit_cur_capture(o: &mut String, func: &FuncDef, outputs: &[String], source: 
 // Public wrappers
 // ---------------------------------------------------------------------------
 
-/// The reject-conversion tail shared by openInternal / openAndFill: rule S7
+/// The reject-conversion tail shared by openInternal / openAndFill: rule rS8
 /// with its counts, then `Core.streamFailure` for every other code, which
 /// single-sources the stable message prefix. `anchor` is the seam's
 /// `startIdx`, or `None` at a public frame (anchor 0).
@@ -2628,14 +2628,14 @@ fn emit_open_internal_seam(
 
 }
 
-/// Rule S4 at the PUBLIC opener, with the implied index pair (S1/S2) in the
+/// Rule rS4 at the PUBLIC opener, with the implied index pair (rS1/rS2) in the
 /// middle of it.
 ///
 /// **Exactly one presence check precedes the pair**: the FIRST input's, because
 /// that is the array `historyLen` is read from and a length cannot be taken from
 /// an array that is not there. Every other argument — the remaining price legs
-/// included — is checked after, which is the specified order (rule S1's note,
-/// `https://ta-lib.org/spec/streaming/#s1`; footnote [4] of
+/// included — is checked after, which is the specified order (rule rS1's note,
+/// `https://ta-lib.org/spec/streaming/#rs1`; footnote [4] of
 /// `docs/error-handling-spec.md`). Checking them all up
 /// front reads as tidier and is wrong: a candlestick opened on an empty history
 /// with one null leg would report the leg, where C reports the empty history.
@@ -2651,8 +2651,8 @@ fn emit_public_open_guards(o: &mut String, func: &FuncDef, verb: &str, with_outp
     let _ = writeln!(o, "      requireArgument(\"{n} {verb}\", \"{history}\", {history});");
     let _ = writeln!(o, "      requireHistory(\"{n} {verb}\", {history}.length);");
     // An enum parameter's domain excludes null, and Java is the only backend
-    // where that is expressible (rule S3). It precedes the remaining presence
-    // checks because S3 precedes S4 — the order the batch wrapper was given in
+    // where that is expressible (rule rS3). It precedes the remaining presence
+    // checks because rS3 precedes rS4 — the order the batch wrapper was given in
     // Appendix D items 2 and 3 — and it must in any case precede the
     // `_Lookback` call below, which is where a null one is first switched on.
     for p in &func.optional_inputs {
@@ -2668,7 +2668,7 @@ fn emit_public_open_guards(o: &mut String, func: &FuncDef, verb: &str, with_outp
         let _ = writeln!(o, "      requireArgument(\"{n} {verb}\", \"{input}\", {input});");
     }
     if with_outputs {
-        // Rule S3 first, in the shape the buffer rules need it: `<N>_Lookback`
+        // Rule rS3 first, in the shape the buffer rules need it: `<N>_Lookback`
         // answers `-1` for an out-of-domain parameter and `openFillCount` raises
         // on it, so a bad parameter is reported as a bad parameter rather than
         // as whatever the buffer rules would have said about a call it made no
@@ -2681,15 +2681,15 @@ fn emit_public_open_guards(o: &mut String, func: &FuncDef, verb: &str, with_outp
             method_base(func),
             lb_args.join(", ")
         );
-        // Rule S5, input half before output half — B5 states the two as one
-        // rule, in that order, and this is B5 over `[0, historyLen - 1]`. The
+        // Rule rS5, input half before output half — rB5 states the two as one
+        // rule, in that order, and this is rB5 over `[0, historyLen - 1]`. The
         // core tests the inputs too, but only after the capacity bound below
         // would have answered, so a short input series was reported as an
         // output-capacity fault.
         o.push_str(&history_length_guards(func, &n, verb));
-        // …then the outputs. `requireLength` carries S4 and S5 in one call,
+        // …then the outputs. `requireLength` carries rS4 and rS5 in one call,
         // exactly as the batch wrapper's does, and an output marked `nullable`
-        // is bounded only where it was supplied (rule B6a).
+        // is bounded only where it was supplied (rule rB7).
         let nullable = super::common::nullable_output_names(func);
         for out in &func.outputs {
             let guard = if nullable.contains(&out.name) {
@@ -2704,7 +2704,7 @@ fn emit_public_open_guards(o: &mut String, func: &FuncDef, verb: &str, with_outp
             );
         }
     } else {
-        // Rule S5's input half, which is the whole of S5 here — the plain open
+        // Rule rS5's input half, which is the whole of rS5 here — the plain open
         // writes nothing, so there is no output capacity to bound. It belongs
         // on this frame for the same reason the fill's does: the core makes the
         // test, but answers it as a bare `BadParam` naming nothing, where the
@@ -2713,7 +2713,7 @@ fn emit_public_open_guards(o: &mut String, func: &FuncDef, verb: &str, with_outp
     }
 }
 
-/// Rule S5's input half, the same at both openers: the history's own length IS
+/// Rule rS5's input half, the same at both openers: the history's own length IS
 /// the range, so every other declared input must AGREE with it rather than
 /// merely reach it.
 fn history_length_guards(func: &FuncDef, n: &str, verb: &str) -> String {
@@ -2730,7 +2730,7 @@ fn history_length_guards(func: &FuncDef, n: &str, verb: &str) -> String {
 }
 
 /// The javadoc sentence naming the outputs a caller may decline, or nothing when
-/// the function has none. Rule B6a reads the same at both tiers, and a caller of
+/// the function has none. Rule rB7 reads the same at both tiers, and a caller of
 /// the opener needs telling in the same place a caller of the batch call is told.
 fn declinable_note(func: &FuncDef, class: &str) -> String {
     let names = super::common::nullable_output_list(func);
@@ -3489,7 +3489,7 @@ fn emit_dispatch(
                         // callee's nullable output outright — which is what C
                         // has always passed there, and what a `historyLen`-sized
                         // throwaway buffer per open was standing in for until
-                        // the openers learned rule B6a.
+                        // the openers learned rule rB7.
                         let fill_outs: String = arm
                             .out_map
                             .iter()

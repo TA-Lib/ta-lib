@@ -484,7 +484,7 @@ fn cross_typed_output_pairs_are_compared_where_the_language_can_express_it() {
     );
 }
 
-/// Rule B6a (`https://ta-lib.org/spec/errors/#b6a`, issue #262): an omitted output
+/// Rule rB7 (`https://ta-lib.org/spec/errors/#rb7`, issue #262): an omitted output
 /// is accepted iff the .yaml marks it `nullable`. C has honoured it since #125;
 /// this pins the other three, each of which spells "declined" in its own way.
 ///
@@ -512,7 +512,7 @@ fn test_mama_nullable_fama_is_declinable_in_every_backend() {
         rust.contains(
             "assert!(_assertStart > endIdx || outFAMA.as_deref().is_none_or(|o| endIdx - _assertStart < o.len()));"
         ),
-        "B5 asks for capacity only where an output was supplied"
+        "rB5 asks for capacity only where an output was supplied"
     );
 
     // Java: `null`, and the length check has to be skipped for it and kept for
@@ -632,7 +632,7 @@ fn the_java_argument_helpers_agree_between_the_library_and_the_server() {
         std::fs::read_to_string(root.join("ta_codegen/output/java/tools/TaCodegenServe.java"))
             .expect("the generated Java server");
 
-    // Every helper both copies carry: `checkLength` is where rule S5's
+    // Every helper both copies carry: `checkLength` is where rule rS5's
     // rejection actually happens, and `failure` is the whole RetCode ->
     // exception mapping. Adding one is a line (issue #271 item 3).
     for sig in [
@@ -659,11 +659,11 @@ fn the_java_argument_helpers_agree_between_the_library_and_the_server() {
     }
 }
 
-/// Rule B6a at the STREAMING opener, in all four backends: a nullable output
+/// Rule rB7 at the STREAMING opener, in all four backends: a nullable output
 /// may be declined there exactly as it may in the batch tier.
 ///
 /// C has always allowed it; the other three rejected the declined output as a
-/// capacity fault the moment rule S5 arrived, which is the divergence this pins.
+/// capacity fault the moment rule rS5 arrived, which is the divergence this pins.
 /// Four clauses per backend, because three of them can pass while the feature is
 /// broken: the bound must be conditional, the fill's store must be guarded, the
 /// handle's cached value must NOT be read back from an array the caller declined
@@ -684,7 +684,7 @@ fn test_mama_nullable_fama_is_declinable_at_the_opener_in_every_backend() {
     );
     assert!(
         rust.contains("if outFAMA.as_deref().is_some_and(|o| o.len() < _guardOutLen) {"),
-        "Rust: S5 bounds a nullable output only where it was supplied"
+        "Rust: rS5 bounds a nullable output only where it was supplied"
     );
     assert!(
         rust.contains("Some(&mut sink_outFAMA)"),
@@ -694,7 +694,7 @@ fn test_mama_nullable_fama_is_declinable_at_the_opener_in_every_backend() {
     let java = backends::java::generate(&func, &enums, registry, &helpers);
     assert!(
         java.contains("if( outFAMA != null ) requireLength(\"MAMA openAndFill\", \"outFAMA\", outFAMA, guardOutLen);"),
-        "Java: S5 bounds a nullable output only where it was supplied"
+        "Java: rS5 bounds a nullable output only where it was supplied"
     );
     assert!(
         java.contains("lastCur_outFAMA = fama;") && java.contains("sp.cur_outFAMA = lastCur_outFAMA;"),
@@ -708,7 +708,7 @@ fn test_mama_nullable_fama_is_declinable_at_the_opener_in_every_backend() {
     let csharp = backends::csharp::generate(&func, &enums, registry, &helpers);
     assert!(
         csharp.contains("if( !outFAMA.IsEmpty ) RequireFillLength(\"MAMA\", \"openAndFill\", \"outFAMA\", outFAMA.Length, guardOutLen);"),
-        "C#: S5 bounds a nullable output only where it was supplied"
+        "C#: rS5 bounds a nullable output only where it was supplied"
     );
     assert!(
         csharp.contains("lastCur_outFAMA = fama;") && csharp.contains("sp.cur_outFAMA = lastCur_outFAMA;"),
@@ -790,7 +790,7 @@ fn method<'a>(src: &'a str, sig: &str, what: &str) -> &'a str {
     panic!("{what}: `{sig}` has no body")
 }
 
-/// Rule U6a — a declined output at the ADVANCING tier. C is the only backend
+/// Rule rU5 — a declined output at the ADVANCING tier. C is the only backend
 /// that can spell it there: its `Update` takes one out-pointer per output, where
 /// Rust returns a tuple and Java and C# write a caller-owned value class, none of
 /// which has a way to say "not this one". The ported backends are pinned at the
@@ -803,7 +803,7 @@ fn method<'a>(src: &'a str, sig: &str, what: &str) -> &'a str {
 /// rather than a suppressed computation.
 ///
 /// The handle is not in the guard: it is checked on its own line ahead of rule
-/// U4, which has to read the range head (`https://ta-lib.org/spec/streaming/#u4`).
+/// rU4, which has to read the range head (`https://ta-lib.org/spec/streaming/#ru4`).
 #[test]
 fn test_a_nullable_output_is_declinable_at_update_in_c() {
     let registry = make_registry();
@@ -841,7 +841,7 @@ fn test_a_nullable_output_is_declinable_at_update_in_c() {
     }
 }
 
-/// Rule S6a over the arrangement `MAMA` cannot reach: `SYNTH10` declares three
+/// Rule rS7 over the arrangement `MAMA` cannot reach: `SYNTH10` declares three
 /// outputs with the FIRST and THIRD `nullable` (issue #262's fixture). Two
 /// things only it can show — that the guards are per output rather than one
 /// blanket branch, and that a nullable output at index 0 does not displace the
@@ -903,7 +903,7 @@ fn test_synth10_two_nullable_outputs_are_declinable_at_the_opener() {
         );
     }
 
-    // S6a meets S6: a declined output aliases nothing, so every alias term whose
+    // rS7 meets rS6: a declined output aliases nothing, so every alias term whose
     // operand can be absent guards it first — two declined outputs would
     // otherwise compare equal and reject a legal call.
     assert!(

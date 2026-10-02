@@ -84,7 +84,7 @@ outReal[i] = 4 × SMA(real, optInTimePeriod)[i]
 ## Two things this fixture deliberately does not do
 
 **It never writes `outReal` until every leg has read `inReal`.** Whole-buffer in
-place is legal in the batch tier (rule N4), so a leg that wrote the output
+place is legal in the batch tier (rule rW7), so a leg that wrote the output
 before a later leg re-read the input would corrupt itself — the synth gate's
 in-place probe catches exactly that, and did.
 

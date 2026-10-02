@@ -7130,7 +7130,7 @@ typedef struct {
 /* Parse a plain-batch-shaped response (retCode/outBegIdx/outNBElement plus one
  * array field per output, in ta_abstract's logical order) — shared by the
  * batch and OpenAndFill legs below; Open's response carries no array (its
- * value is never wired to a JSON field — see the doc comment on the S5 leg
+ * value is never wired to a JSON field — see the doc comment on the rS5 leg
  * below), so only its retCode is read, directly, by the caller. */
 static void xlang_tier_parse(const TA_FuncInfo *fi, const char *resp, LbTierResp *out)
 {
@@ -7244,7 +7244,7 @@ static void xlang_tier_self_check(XlangCtx *ctx, const TA_FuncInfo *funcInfo,
     memset(out, 0, sizeof(*out));
     int rejected = (lookbackVerdict < 0);
     /* Streaming carries an extra rejection axis batch/lookback do NOT share:
-     * S7 (https://ta-lib.org/spec/streaming/#s7): Open and OpenAndFill
+     * rS8 (https://ta-lib.org/spec/streaming/#rs8): Open and OpenAndFill
      * reject outright (TA_INSUFFICIENT_HISTORY) when the fixed LB_TIER_N-bar
      * buffer holds fewer than lookback + 1 bars, where batch just returns a
      * coherent EMPTY success. A lookback the params accept but the buffer

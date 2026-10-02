@@ -208,8 +208,8 @@ ErrorNumber test_func_mavp( TA_History *history )
    if( errNb != TA_TEST_PASS ) return errNb;
 
    /* Shape: periods too large for an int. FINITE and within +/-3e37, so inside
-    * the documented input domain (rules I4 and I5,
-    * https://ta-lib.org/spec/inputs-outputs/#i4): ordinary doubles the caller
+    * the documented input domain (input domain and finite inputs,
+    * https://ta-lib.org/spec/inputs-outputs/#input-domain): ordinary doubles the caller
     * may legitimately pass.
     *
     * This is the shape that pins the clamp ORDER. Narrowing before clamping is

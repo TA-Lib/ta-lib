@@ -105,9 +105,9 @@ pub(crate) struct CsRenderCtx<'a> {
     /// builds — the rendering is identical in both languages).
     pub(crate) matype_map: HashMap<String, String>,
     /// Output parameters the caller may decline with an empty span because their
-    /// .yaml marks them `nullable` (rule B6a). Every store into one is wrapped
+    /// .yaml marks them `nullable` (rule rB7). Every store into one is wrapped
     /// in an `if( !outX.IsEmpty )`. Populated for the batch bodies AND for the
-    /// stream open body, since rule B6a reads the same at both tiers.
+    /// stream open body, since rule rB7 reads the same at both tiers.
     pub(crate) nullable_outputs: &'a HashSet<String>,
     /// Emit `lastCur_<out> = <value>;` beside every guarded store into a
     /// nullable output — the streaming open body only, whose handle caches each
@@ -717,7 +717,7 @@ fn gen_public_wrapper(
         }
         for output in &func.outputs {
             let name = &output.name;
-            // A nullable output may be declined (rule O5): any empty span
+            // A nullable output may be declined (rule rW5): any empty span
             // declines it.
             if output.is_nullable() {
                 let _ = writeln!(
@@ -965,7 +965,7 @@ fn gen_func_inner(
         out.push_str("      }\n");
         // Optional parameter validation (default + range)
         out.push_str(&emit_opt_param_validation(func, "RetCode.BadParam", enums));
-        // Output-distinctness (issue #108, rule B6). Input/output overlap stays
+        // Output-distinctness (issue #108, rule rB6). Input/output overlap stays
         // allowed: several bodies are written to compute in place. A cross-typed
         // pair is compared too, never skipped: `MemoryMarshal.Cast` lays one over
         // the other in safe code.
@@ -1343,7 +1343,7 @@ impl CsStmt<'_> {
         let target_str = render_assign_target(target, self.ctx, self.registry, self.helpers);
         let value_str = render_assign_value(&new_value, self.ctx, self.registry, self.helpers);
         // Writing into a nullable output — guard it so a declined (empty) output
-        // is skipped (rule B6a). The `outIdx` advance rides the non-nullable
+        // is skipped (rule rB7). The `outIdx` advance rides the non-nullable
         // partner's write (see mama.c), so guarding this store is complete.
         if let Some(base) = nullable_target_base(target, self.ctx.nullable_outputs) {
             if self.ctx.nullable_shadow {
@@ -1881,7 +1881,7 @@ fn render_cross_indicator_call(
             // NULL for a nullable output the caller declines (#125): an empty
             // span is how C# spells that, the callee skips its stores and its
             // public tier skips the length check, so nothing is allocated —
-            // never a throwaway materialized on every call (B6a, #262).
+            // never a throwaway materialized on every call (rB7, #262).
             Expr::Var(n) if n == "NULL" => "default".to_string(),
             _ => render_expr(a, ctx, registry, helpers),
         });
@@ -1917,7 +1917,7 @@ fn out_meta_target(
 }
 
 /// If `target` stores into one of the `nullable` outputs (a `Span<double>` the
-/// caller may leave empty to decline — rule B6a), return its base name so the
+/// caller may leave empty to decline — rule rB7), return its base name so the
 /// store can be wrapped in `if( !outX.IsEmpty )`. Matches the array store
 /// `outX[i] = …` and the scalar store `outX = …`; the value side is never
 /// involved.
@@ -2567,7 +2567,7 @@ fn render_func_call(
                 // NULL for a nullable output the caller declines (MA passing
                 // NULL for MAMA's FAMA — issue #125). An empty span is how C#
                 // spells that and the callee's stores are guarded, so nothing
-                // is allocated (B6a, #262). NULL appears only here.
+                // is allocated (rB7, #262). NULL appears only here.
                 Expr::Var(n) if n == "NULL" => "default".to_string(),
                 // The caller's own out-params pass through to the callee's
                 // `out int` pair. In C both are `int*` passed bare; C# needs
@@ -2846,7 +2846,7 @@ mod tests {
         assert!(!output.contains("case SMA:"), "unqualified labels are Java-only");
         assert!(
             output.contains("Mama(startIdx, endIdx, inReal, 0.5, 0.05, outReal, default)"),
-            "MAMA's declined FAMA output must be an empty span (rule B6a), not a buffer"
+            "MAMA's declined FAMA output must be an empty span (rule rB7), not a buffer"
         );
         assert!(
             !output.contains("new double[(int)(endIdx - startIdx + 1)]"),

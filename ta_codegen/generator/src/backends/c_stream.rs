@@ -397,9 +397,9 @@ fn finite_bar_check(func: &FuncDef, indent: &str, fail: &str) -> String {
     format!("{indent}if( {} ) return {fail};\n", conds.join(" || "))
 }
 
-/// Rules S1 and S2 run first, ahead of every presence check, answering
+/// Rules rS1 and rS2 run first, ahead of every presence check, answering
 /// `TA_OUT_OF_RANGE_START_INDEX` and `TA_OUT_OF_RANGE_END_INDEX`
-/// (`https://ta-lib.org/spec/streaming/#s1`). Only `!stream` may precede them: the
+/// (`https://ta-lib.org/spec/streaming/#rs1`). Only `!stream` may precede them: the
 /// "`*stream` is NULL on any failure" contract is published through that
 /// pointer, so it is a precondition for reporting anything at all rather than an
 /// argument competing with the pair.
@@ -415,12 +415,12 @@ fn index_pair_guards() -> &'static str {
     )
 }
 
-/// Rule U4 — [`index_pair_guards`] read on a live handle, one bar at a time.
-/// Why a sub-handle cannot answer it before its parent: rationale U4 in
+/// Rule rU4 — [`index_pair_guards`] read on a live handle, one bar at a time.
+/// Why a sub-handle cannot answer it before its parent: rationale rU4 in
 /// `docs/error-handling-spec.md`.
 ///
 /// `>` and not `>=`: an opener may legally take `TA_INDEX_MAX + 1` bars (rule
-/// S2), so a handle can be born holding the last bar in the domain and it is the
+/// rS2), so a handle can be born holding the last bar in the domain and it is the
 /// NEXT one that has nowhere to go.
 fn step_index_guard() -> &'static str {
     concat!(
@@ -434,11 +434,11 @@ fn step_index_guard() -> &'static str {
 /// itself can reorder it silently — every clause answers a different code.
 ///
 /// `ceiling` is false for `Peek`, which counts no bar and so has no index to
-/// leave the domain (rule U4).
+/// leave the domain (rule rU4).
 fn step_prologue(func: &FuncDef, frame: Frame, ceiling: bool) -> String {
     let mut s = String::new();
     if ceiling {
-        // U4 dereferences the handle, so its own check has to stand alone in
+        // rU4 dereferences the handle, so its own check has to stand alone in
         // front of it rather than share the presence clause.
         s.push_str("   if( !stream ) return TA_BAD_PARAM;\n");
         s.push_str(step_index_guard());
@@ -469,13 +469,13 @@ enum Frame {
     StepEveryOutput,
 }
 
-/// Rule S4 / U2 — everything a C frame must find present, in one order: the
+/// Rule rS4 / rU2 — everything a C frame must find present, in one order: the
 /// declared inputs, the range out-parameters, then the outputs a caller is
 /// required to supply. It is the batch prologue's order too, so both tiers state
 /// the same contract the same way.
 ///
 /// The handle is NOT in the list. Every frame checks it first and on its own,
-/// because reading the index domain (S1/S2 at an opener, U4 at a step) is a
+/// because reading the index domain (rS1/rS2 at an opener, rU4 at a step) is a
 /// dereference and so has to follow it.
 ///
 /// One producer, because it is one decision and every frame makes it. Hand-rolled
@@ -484,7 +484,7 @@ enum Frame {
 /// below. Nothing could see any of it: they all answer `TA_BAD_PARAM`.
 ///
 /// **A `nullable` output is in the list only where nothing guards its write.**
-/// Declining one is legal (rule O5), and the transcribed bodies honour that
+/// Declining one is legal (rule rW5), and the transcribed bodies honour that
 /// with an `if( out != NULL )` — so the opener and the transcribed step leave it
 /// out, and only [`Frame::StepEveryOutput`] keeps it. Hand-rolling had both
 /// halves wrong in the same tier: the dispatch OPENER dropped the clause it
@@ -525,7 +525,7 @@ fn required_args(func: &FuncDef, frame: Frame) -> Vec<String> {
 ///
 /// A declined output aliases nothing, and two of them would otherwise compare
 /// equal — `NULL == NULL` — rejecting a legal call. The batch emitter guards the
-/// nullable operand for exactly this reason (rule B6a).
+/// nullable operand for exactly this reason (rule rB7).
 fn alias_term(func: &FuncDef, a: &str, b: &str) -> String {
     let nullable = super::common::nullable_output_names(func);
     let term = format!("(const void *){a} == (const void *){b}");
@@ -539,7 +539,7 @@ fn alias_term(func: &FuncDef, a: &str, b: &str) -> String {
 
 /// [`presence_guard`] with the handle fused into the same clause. The two are
 /// one test wherever nothing has to read the handle between them, which is every
-/// frame except a step that answers rule U4 first.
+/// frame except a step that answers rule rU4 first.
 fn presence_guard_handled(func: &FuncDef, frame: Frame) -> String {
     let nulls: Vec<String> = std::iter::once("stream".to_string())
         .chain(required_args(func, frame))
@@ -3567,7 +3567,7 @@ const RANGE_HEAD_FIELDS: [&str; 2] = ["outRangeBegIdx", "outRangeCount"];
 /// the caller declined to feed.
 ///
 /// Unconditional: every entry point that reaches it has already answered rule
-/// U4 ([`step_index_guard`]), which is the bound.
+/// rU4 ([`step_index_guard`]), which is the bound.
 fn emit_range_head_advance(o: &mut String, indent: &str, handle: &str) {
     let _ = writeln!(o, "{indent}{handle}->outRangeCount++;");
 }
@@ -5691,7 +5691,7 @@ fn emit_identity_fast_path(
 /// Fill mode additionally requires the batch output triplet non-NULL and forbids
 /// any output aliasing an input or another output — not because it would compute
 /// the wrong answer (measured: it does not), but because the margin between the
-/// fill's writes and the capture's seed reads is unasserted (rule S6; #108). The
+/// fill's writes and the capture's seed reads is unasserted (rule rS6; #108). The
 /// scalar path writes only caller scalars and never has the question.
 fn emit_open_validation(o: &mut String, func: &FuncDef, enums: &HashMap<String, EnumDef>) {
     let _ = writeln!(o, "\n   if( !stream ) return TA_BAD_PARAM;");

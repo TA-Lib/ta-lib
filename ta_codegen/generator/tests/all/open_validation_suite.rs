@@ -107,7 +107,7 @@ fn test_composed_open_fuses_every_sub_call() {
     );
 }
 
-/// Rule S5 on EVERY Rust public `OpenAndFill` — corpus-wide, because Rust's own
+/// Rule rS5 on EVERY Rust public `OpenAndFill` — corpus-wide, because Rust's own
 /// probe (`tests/stream_open_contract.rs`) names six functions and runs nightly.
 ///
 /// The width has to come from the function's OWN lookback, not from the
@@ -149,9 +149,9 @@ fn rust_public_fill_bounds_every_output_against_its_own_lookback() {
             "{}: the fill width is not read from the function's own lookback",
             func.name
         );
-        // S5's INPUT half — B5's first clause, read on this range — and its
-        // position: after S3 (the lookback's own rejection) and before the
-        // output capacity, which is the order B5 states.
+        // rS5's INPUT half — rB5's first clause, read on this range — and its
+        // position: after rS3 (the lookback's own rejection) and before the
+        // output capacity, which is the order rB5 states.
         let inputs = streaming::input_array_names(&func);
         if inputs.len() > 1 {
             let disagree: Vec<String> = inputs[1..]
@@ -162,7 +162,7 @@ fn rust_public_fill_bounds_every_output_against_its_own_lookback() {
             let at_in = body.find(&needle).unwrap_or_else(|| {
                 panic!("{}: OpenAndFill does not require the inputs to be the history's length", func.name)
             });
-            // S3 first, in whichever shape this tier spells it: the merged tiers
+            // rS3 first, in whichever shape this tier spells it: the merged tiers
             // take their rejection from `<N>_Lookback(..)?`, the two exempt ones
             // validate each parameter inline. Either way a parameter fault is
             // answered before a length one.
@@ -182,7 +182,7 @@ fn rust_public_fill_bounds_every_output_against_its_own_lookback() {
         }
         for out in &func.outputs {
             // A `nullable` output is `Option<&mut [T]>` and is bounded only when
-            // it was supplied (rule B6a); every other output is bounded flat.
+            // it was supplied (rule rB7); every other output is bounded flat.
             let needle = if out.is_nullable() {
                 format!("if {}.as_deref().is_some_and(|o| o.len() < _guardOutLen) {{", out.name)
             } else {
@@ -208,10 +208,10 @@ fn rust_public_fill_bounds_every_output_against_its_own_lookback() {
     assert!(checked >= 200, "only {checked} public fills inspected");
 }
 
-/// Rule S1 on EVERY C# public opener — corpus-wide, for the same reason as the
+/// Rule rS1 on EVERY C# public opener — corpus-wide, for the same reason as the
 /// Java gate below.
 ///
-/// C# is the backend where the probe/corpus gap is widest. Its live S1 is the
+/// C# is the backend where the probe/corpus gap is widest. Its live rS1 is the
 /// public frame's `IsEmpty` throw, not the core's `historyLen < 1` return, which
 /// the frame makes unreachable from the public API — so
 /// `scripts/check_stream_retcodes.py`, which reads the core, is not evidence
@@ -219,7 +219,7 @@ fn rust_public_fill_bounds_every_output_against_its_own_lookback() {
 /// is what covers the other 175.
 ///
 /// Two clauses, because the first input means something the others do not: it
-/// carries the history, so empty THERE is S1; a later one is a length
+/// carries the history, so empty THERE is rS1; a later one is a length
 /// disagreement, which is the catch-all like every other argument fault.
 #[test]
 fn csharp_public_openers_reject_an_empty_history_as_an_index_fault() {
@@ -250,7 +250,7 @@ fn csharp_public_openers_reject_an_empty_history_as_an_index_fault() {
                 "if( {history}.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof({history}), \"{base} {verb}: history is empty\", RetCode.OutOfRangeStartIndex);"
             );
             let at_s1 = body.find(&s1).unwrap_or_else(|| {
-                panic!("{}: {verb} does not answer S1 on the history", func.name)
+                panic!("{}: {verb} does not answer rS1 on the history", func.name)
             });
             for extra in &inputs[1..] {
                 let other = format!(
@@ -265,8 +265,8 @@ fn csharp_public_openers_reject_an_empty_history_as_an_index_fault() {
                     func.name
                 );
             }
-            // Rule S5, and the width the fill's half is derived from. An
-            // opener's `startIdx` is the constant 0, so B5's produced count
+            // Rule rS5, and the width the fill's half is derived from. An
+            // opener's `startIdx` is the constant 0, so rB5's produced count
             // collapses to `historyLen - lookback` — read from the function's
             // OWN lookback, never from the history's width.
             let at_width = (verb == "openAndFill").then(|| {
@@ -277,11 +277,11 @@ fn csharp_public_openers_reject_an_empty_history_as_an_index_fault() {
                     panic!("{}: openAndFill does not derive the fill width from its own lookback", func.name)
                 })
             });
-            // S5's input half, at BOTH openers (issue #271 item 1): the two
+            // rS5's input half, at BOTH openers (issue #271 item 1): the two
             // used to answer the same fault differently, the fill naming the
             // leg and the plain open reporting a bare `BadParam` from the core.
-            // At the fill it sits after S3 (the width's own rejection) and
-            // before the output capacity — the order B5 states.
+            // At the fill it sits after rS3 (the width's own rejection) and
+            // before the output capacity — the order rB5 states.
             for extra in &inputs[1..] {
                 let needle = format!(
                     "RequireHistoryLength(\"{base}\", \"{verb}\", \"{extra}\", {extra}.Length, {history}.Length);"
@@ -294,7 +294,7 @@ fn csharp_public_openers_reject_an_empty_history_as_an_index_fault() {
             if verb == "openAndFill" {
                 for out in &func.outputs {
                     // A `nullable` output is bounded only when it was supplied
-                    // (rule B6a); the guard is part of the needle, so a
+                    // (rule rB7); the guard is part of the needle, so a
                     // regression to an unconditional bound — or to none — is a
                     // failure rather than a substring that still matches.
                     let bound = format!(
@@ -326,7 +326,7 @@ fn csharp_public_openers_reject_an_empty_history_as_an_index_fault() {
     assert!(checked >= 352, "only {checked} public openers inspected");
 }
 
-/// Rule S4, then S1/S2, on EVERY Java public opener — corpus-wide, because a
+/// Rule rS4, then rS1/rS2, on EVERY Java public opener — corpus-wide, because a
 /// probe on SMA says nothing about the other 175.
 ///
 /// The order is the point, and the assertion is two-sided: the FIRST input's
@@ -337,7 +337,7 @@ fn csharp_public_openers_reject_an_empty_history_as_an_index_fault() {
 /// leg where C reports the empty history.
 ///
 /// An output is checked with `requireLength`, not `requireArgument`: one call
-/// carries S4 and S5, exactly as the batch wrapper's does. Requiring the
+/// carries rS4 and rS5, exactly as the batch wrapper's does. Requiring the
 /// capacity form here is what stops a fill's presence check from silently
 /// reverting to presence alone.
 #[test]
@@ -394,9 +394,9 @@ fn java_public_openers_check_arguments_then_the_index_pair() {
                     func.name
                 );
             }
-            // S5's width, derived from the lookback rather than from the
+            // rS5's width, derived from the lookback rather than from the
             // requested range: an opener's `startIdx` is the constant 0, so
-            // B5's produced count collapses to `historyLen - lookback`. Only
+            // rB5's produced count collapses to `historyLen - lookback`. Only
             // the fill has one — the plain open writes nothing.
             let at_width = with_outputs.then(|| {
                 let width = format!(
@@ -406,11 +406,11 @@ fn java_public_openers_check_arguments_then_the_index_pair() {
                     panic!("{}: openAndFill does not derive the fill width from its own lookback", func.name)
                 })
             });
-            // S5's input half, at BOTH openers (issue #271 item 1): the two
+            // rS5's input half, at BOTH openers (issue #271 item 1): the two
             // used to answer the same fault differently, the fill naming the
             // leg and the plain open reporting a bare `BadParam` from the core.
-            // At the fill it sits after S3 (the width's own rejection) and
-            // before the output capacity — the order B5 states.
+            // At the fill it sits after rS3 (the width's own rejection) and
+            // before the output capacity — the order rB5 states.
             for extra in streaming::input_array_names(&func).iter().skip(1) {
                 let needle = format!(
                     "requireHistoryLength(\"{base} {verb}\", \"{extra}\", {extra}.length, {history}.length);"
@@ -427,7 +427,7 @@ fn java_public_openers_check_arguments_then_the_index_pair() {
             if with_outputs {
                 for out in &func.outputs {
                     // A `nullable` output is bounded only when it was supplied
-                    // (rule B6a). The guard is part of the needle: without it
+                    // (rule rB7). The guard is part of the needle: without it
                     // the bare call is a SUBSTRING of the guarded line, so the
                     // gate would keep passing while going blind on exactly the
                     // output the rule is about.
@@ -469,7 +469,7 @@ fn java_public_openers_check_arguments_then_the_index_pair() {
 /// the surviving half is the count test — reached with `retCode` holding
 /// `Success`, and the arm returned it. Rust said `Err(RetCode::Success)`, a
 /// contradiction that reached the public `<N>_Open` through `?`; Java and C#
-/// minted a handle over an empty range. Rule S7 is what that shape is: a
+/// minted a handle over an empty range. Rule rS8 is what that shape is: a
 /// history that cannot produce a value (issue #271 item 4).
 ///
 /// Corpus-wide over the three ported backends, because the sites are spread
@@ -763,7 +763,7 @@ fn every_open_pass_rejects_an_anchor_past_the_history() {
 ///
 /// A corpus sweep, because the exemption was DERIVED: it was never a list a
 /// reviewer could read, so any future indicator could have joined it silently.
-/// Each backend's own spelling of the check, since B4 and B5 are one condition
+/// Each backend's own spelling of the check, since rB4 and rB5 are one condition
 /// per backend — a NULL test in C, `requireLength` / `RequireLength` in Java and
 /// C#, and **two** in Rust: the public tier's returned `BadParam`, which is what
 /// a caller meets, and the `assert!` bound in `<N>_Impl`, which is what the

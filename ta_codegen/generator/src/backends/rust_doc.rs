@@ -653,7 +653,7 @@ fn example_doctest(
             _ => "0.0",
         };
         lines.push(format!("let mut {var} = vec![{zero}; {EXAMPLE_LEN}];"));
-        // A nullable output takes `Option<&mut [T]>` (rule B6a). The example
+        // A nullable output takes `Option<&mut [T]>` (rule rB7). The example
         // supplies it — `None` is documented on the parameter, and an example
         // that declined an output would not show what the function produces.
         out_args.push(if output.is_nullable() {

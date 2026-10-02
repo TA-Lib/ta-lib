@@ -90,7 +90,7 @@ public class BatchApiTest {
     private static int s4Reject = 0;
     private static int s4Accept = 0;
     private static int s5Reject = 0;
-    /** Rule B6a at the opener — a declined output, counted apart from S5's. */
+    /** Rule rB7 at the opener — a declined output, counted apart from rS5's. */
     private static int b6aOpen = 0;
 
     private static void check(boolean condition, String what) {
@@ -561,7 +561,7 @@ public class BatchApiTest {
      * supplied; that rule now needs no exception list.
      *
      * <p>Both spellings of "not supplied", since the exemption dropped both: an
-     * empty array (B5, naming the two lengths) and a null one (B4). The control
+     * empty array (rB5, naming the two lengths) and a null one (rB4). The control
      * is the leg next to it, which IS read and was never exempt.
      */
     static void anUnreadLegIsCheckedLikeAnyOther() {
@@ -780,7 +780,7 @@ public class BatchApiTest {
 
     /**
      * The index rules are evaluated BEFORE the presence check: the
-     * specification lists B1 and B2 ahead of B4. Every case here is BOTH faults
+     * specification lists rB1 and rB2 ahead of rB4. Every case here is BOTH faults
      * at once; only the order decides which is reported.
      */
     static void anIndexFaultOutranksAnAbsentArgument() {
@@ -807,7 +807,7 @@ public class BatchApiTest {
 
     /**
      * A bad optional parameter outranks an absent or undersized buffer: the
-     * specification lists B3 ahead of B4 and B5.
+     * specification lists rB3 ahead of rB4 and rB5.
      *
      * <p>The parameter rule is the one every backend can express, so putting it
      * first is what makes a multi-fault call report the same condition in all
@@ -857,7 +857,7 @@ public class BatchApiTest {
     }
 
     /**
-     * L1, L2 and L4 for a null enum: the lookback answers -1, as B3 rejects the
+     * rL2 and rL3 for a null enum: the lookback answers -1, as rB3 rejects the
      * batch call. STOCH adds MA's lookback, so it must check its own enums: a -1
      * from MA alone would come back as a positive sum.
      */
@@ -871,14 +871,14 @@ public class BatchApiTest {
     }
 
     /**
-     * Rule B6a: an output the .yaml marks {@code nullable} may be declined with
+     * Rule rB7: an output the .yaml marks {@code nullable} may be declined with
      * {@code null}, and declining it changes nothing about the output that was
      * asked for. MAMA's {@code outFAMA} is the only one in the corpus.
      *
      * <p>Acceptance alone would not test this. A body that stopped computing
      * FAMA, or took a different path without it, would be accepted here just the
      * same — so the declining call has to reproduce the supplied one bit for
-     * bit, and leave everything above its own count untouched (rule N2).
+     * bit, and leave everything above its own count untouched (rule rW3).
      *
      * <p>No cross-language gate can see any of it: the JSON-RPC servers bind
      * every declared output, so a wrapper that went back to requiring
@@ -925,11 +925,11 @@ public class BatchApiTest {
     }
 
     /**
-     * Rules B6 and S6 on empty outputs (Appendix D items 11 and 15): one
+     * Rules rB6 and rS6 on empty outputs (Appendix D items 11 and 15): one
      * zero-length array passed as two outputs is one buffer, and three
      * separately allocated ones are three. A range shorter than the lookback
-     * produces nothing (rule N1), so the distinct call is a success with an
-     * empty range, and the distinct fill answers S7.
+     * produces nothing (rule rW2), so the distinct call is a success with an
+     * empty range, and the distinct fill answers rS8.
      */
     static void oneEmptyArrayIsOneBuffer() {
         final double[] in = closes(252);
@@ -953,7 +953,7 @@ public class BatchApiTest {
         checkCode(RetCode.INSUFFICIENT_HISTORY,
             () -> Core.DEFAULT.accbandsOpenAndFill(history, history, history, 20,
                 new double[0], new double[0], new double[0]),
-            "openAndFill: distinct empty outputs pass S6");
+            "openAndFill: distinct empty outputs pass rS6");
 
         // Control: the same three empty arrays on a range that DOES produce
         // values are still rejected, so this is about the count and not about
@@ -971,9 +971,9 @@ public class BatchApiTest {
     }
 
     /**
-     * Rule S4 is B4 plus the handle, over the same argument shapes, so the
+     * Rule rS4 is rB4 plus the handle, over the same argument shapes, so the
      * streaming openers are driven from here rather than from a suite of their
-     * own — as C's own S4 block rides along inside its batch-argument test.
+     * own — as C's own rS4 block rides along inside its batch-argument test.
      *
      * <p>Java expresses fewer of the shapes than C does: the handle is the
      * RETURN value and the range out-parameters live on it, so what is left is
@@ -995,7 +995,7 @@ public class BatchApiTest {
         final double[] periods = new double[252];
         Arrays.fill(periods, 5.0);
 
-        // B4's shapes, through the openers.
+        // rB4's shapes, through the openers.
         streamRejects(() -> Core.DEFAULT.smaOpen(null, 30),
             "smaOpen(inReal=null)", "SMA open", "inReal");
         streamRejects(() -> Core.DEFAULT.smaOpenAndFill(null, 30, out),
@@ -1023,17 +1023,17 @@ public class BatchApiTest {
         streamRejects(() -> Core.DEFAULT.mavpOpenAndFill(in, periods, 2, 30, MAType.SMA, null),
             "mavpOpenAndFill(outReal=null)", "MAVP openAndFill", "outReal");
         // A nullable output may be DECLINED at the opener, exactly as in the
-        // batch tier (rule B6a) and as C has always allowed: `null` is not an
+        // batch tier (rule rB7) and as C has always allowed: `null` is not an
         // absent argument here, it is an answer. Proved below, in
         // `aDeclinedFillOutputIsStillComputed`, that declining changes nothing
         // but the write.
 
         aDeclinedFillOutputIsStillComputed(in);
 
-        // Rule S3 ahead of the buffer rules, and the one shape that can tell
+        // Rule rS3 ahead of the buffer rules, and the one shape that can tell
         // `openFillCount`'s raise from the flooring it replaced: with a rejected
         // parameter AND an absent output, flooring the `-1` lookback to 0 let
-        // the output be reported (S4), where the fault is the parameter.
+        // the output be reported (rS4), where the fault is the parameter.
         streamRejects(() -> Core.DEFAULT.smaOpenAndFill(in, 0, null),
             "a bad parameter outranks an absent output", "SMA openAndFill", "bad parameter");
         s5Reject++;
@@ -1049,9 +1049,9 @@ public class BatchApiTest {
     }
 
     /**
-     * Rule S1, and its order. S1 and S2 run ahead of every presence check,
+     * Rule rS1, and its order. rS1 and rS2 run ahead of every presence check,
      * answering {@code OUT_OF_RANGE_START_INDEX} and
-     * {@code OUT_OF_RANGE_END_INDEX} (https://ta-lib.org/spec/streaming/#s1).
+     * {@code OUT_OF_RANGE_END_INDEX} (https://ta-lib.org/spec/streaming/#rs1).
      *
      * <p>The order is the part worth a case of its own: the third call below is
      * BOTH an empty history and an absent output, and the empty history is what
@@ -1096,7 +1096,7 @@ public class BatchApiTest {
         check(codeOf(() -> Core.DEFAULT.smaOpen(empty, 30)) == RetCode.OUT_OF_RANGE_START_INDEX,
             "an empty history carries OutOfRangeStartIndex");
 
-        // A history of exactly one bar is inside the domain: that is S7's
+        // A history of exactly one bar is inside the domain: that is rS8's
         // business, and this is what keeps the cases above about EMPTY.
         checkThrows(InsufficientHistoryException.class,
             () -> Core.DEFAULT.smaOpen(new double[1], 30),
@@ -1126,7 +1126,7 @@ public class BatchApiTest {
     }
 
     /**
-     * Rule B6a at the opener: {@code outFAMA} may be declined with {@code null},
+     * Rule rB7 at the opener: {@code outFAMA} may be declined with {@code null},
      * and declining changes nothing but the write.
      *
      * <p>Non-vacuous in three directions. The supplied run is the oracle, so a
@@ -1197,7 +1197,7 @@ public class BatchApiTest {
 
 
     /**
-     * Rule S5, from both sides. The bound is {@code historyLen - lookback} — the
+     * Rule rS5, from both sides. The bound is {@code historyLen - lookback} — the
      * count the fill actually writes, not the width of the history — so an
      * exactly-sized output has to be ACCEPTED and one element shorter REJECTED.
      * Only the pair pins the arithmetic: a bound of {@code historyLen} would
@@ -1295,7 +1295,7 @@ public class BatchApiTest {
             "each output is bounded separately", "BBANDS openAndFill", "outRealLowerBand");
         s5Reject++;
 
-        // A history too short to produce anything is still S7, whatever the
+        // A history too short to produce anything is still rS8, whatever the
         // output holds: the bound floors at zero rather than going negative.
         checkThrows(InsufficientHistoryException.class,
             () -> Core.DEFAULT.smaOpenAndFill(Arrays.copyOf(in, 29), 30, new double[0]),
@@ -1303,9 +1303,9 @@ public class BatchApiTest {
 
         // A null enum is a parameter outside its domain, named — it reaches the
         // lookback call the bound is derived from.
-        // Rule S3, not S5 — a null enum with a full-length output. It belongs
-        // here because the enum check has to precede the lookback call the S5
-        // bound is derived from, but it is not one of S5's cases and is not
+        // Rule rS3, not rS5 — a null enum with a full-length output. It belongs
+        // here because the enum check has to precede the lookback call the rS5
+        // bound is derived from, but it is not one of rS5's cases and is not
         // counted as one.
         checkThrows(IllegalArgumentException.class,
             () -> Core.DEFAULT.maOpenAndFill(in, 30, null, new double[in.length]),
@@ -1350,7 +1350,7 @@ public class BatchApiTest {
         // Literal floors, not derived from the calls above: a count computed
         // from the cases would move with a deleted one and still "pass".
         // s4Reject is 11, not 12: the twelfth was `mamaOpenAndFill(outFAMA=null)`,
-        // which is no longer an absent argument but a declined output — rule B6a,
+        // which is no longer an absent argument but a declined output — rule rB7,
         // and it has its own counter and its own probe.
         if (s4Reject < 11 || s4Accept < 5 || s1Reject < 6 || s5Reject < 5 || b6aOpen < 6) {
             failures++;

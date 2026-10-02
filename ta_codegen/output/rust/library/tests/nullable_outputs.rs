@@ -1,5 +1,5 @@
-//! Rule B6a, the empty-output half of rule B6, and B5's two bounds, for the Rust
-//! batch API (`https://ta-lib.org/spec/errors/#b6a`, rule O5), issues #262 and
+//! Rule rB7, the empty-output half of rule rB6, and rB5's two bounds, for the Rust
+//! batch API (`https://ta-lib.org/spec/errors/#rb7`, rule rW5), issues #262 and
 //! #265.
 //!
 //! None of it is reachable from the cross-language gates. The JSON-RPC servers
@@ -54,7 +54,7 @@ fn declining_an_output_changes_nothing_else() {
     let mut mama = vec![CANARY; 252];
     let r = core
         .mama(0, 251, &data, 0.5, 0.05, &mut mama, None)
-        .expect("declining outFAMA is legal — rule B6a");
+        .expect("declining outFAMA is legal — rule rB7");
 
     assert_eq!((r.beg_idx, r.count), (r_ref.beg_idx, r_ref.count));
     for i in 0..r.count {
@@ -64,14 +64,14 @@ fn declining_an_output_changes_nothing_else() {
             "declining outFAMA changed outMAMA[{i}]"
         );
     }
-    // Rule N2: only the reported range is written, declined output or not.
+    // Rule rW3: only the reported range is written, declined output or not.
     assert!(
         mama[r.count..].iter().all(|v| v.to_bits() == CANARY.to_bits()),
         "the declining call wrote past its own count"
     );
 }
 
-/// The capacity assert (B5) is skipped for a declined output and kept for the
+/// The capacity assert (rB5) is skipped for a declined output and kept for the
 /// one that was supplied — the half a caller actually sees.
 #[test]
 fn a_declined_output_needs_no_capacity() {
@@ -85,7 +85,7 @@ fn a_declined_output_needs_no_capacity() {
         .expect("a declined output imposes no size");
 
     // Control: the supplied output is still bounded. One short must be rejected
-    // — B5, from the public tier, as a code (#265). The body's assert states the
+    // — rB5, from the public tier, as a code (#265). The body's assert states the
     // same bound and is unreachable through here.
     let mut short = vec![0.0; 252 - lookback - 1];
     assert_eq!(
@@ -105,7 +105,7 @@ fn a_declined_output_needs_no_capacity() {
 
 /// Appendix D item 11: three separately allocated empty `Vec`s are three
 /// distinct buffers, and a range shorter than the lookback produces nothing, so
-/// the call is a success with an empty range (rule N1) — as it always was in C
+/// the call is a success with an empty range (rule rW2) — as it always was in C
 /// and Java.
 ///
 /// It used to answer `BadParam`: every unallocated `Vec` hands out the same
@@ -132,7 +132,7 @@ fn distinct_empty_outputs_are_not_aliases() {
     );
     let r = core
         .accbands(0, 251, &data, &data, &data, period, &mut a, &mut b, &mut c)
-        .expect("a sub-lookback range needs no output space — rules N1 and B5");
+        .expect("a sub-lookback range needs no output space — rules rW2 and rB5");
     assert_eq!(r, OutRange { beg_idx: 0, count: 0 });
 
     // Zero-length subslices of one buffer carry real addresses. Same answer.
@@ -158,13 +158,13 @@ fn empty_outputs_on_a_producing_range_still_fault() {
     assert_eq!(
         core.accbands(0, 251, &data, &data, &data, 20, &mut a, &mut b, &mut c),
         Err(RetCode::BadParam),
-        "B5 must still bound an output that has to hold values"
+        "rB5 must still bound an output that has to hold values"
     );
 }
 
-/// B5's input half, which the public tier states without the sub-lookback escape
+/// rB5's input half, which the public tier states without the sub-lookback escape
 /// the body's assert takes — so a short input is refused on a range that
-/// produces nothing as readily as on one that does (#265, rule I2).
+/// produces nothing as readily as on one that does (#265, input length).
 ///
 /// This is the one bound where the crate answers a caller that C cannot: C is
 /// handed bare pointers and reads past the end. Java and C# have said it since

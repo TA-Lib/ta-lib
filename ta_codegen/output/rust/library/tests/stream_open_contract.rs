@@ -1,7 +1,7 @@
-//! Rule S1 for the Rust streaming openers (`https://ta-lib.org/spec/streaming/#s1`),
+//! Rule rS1 for the Rust streaming openers (`https://ta-lib.org/spec/streaming/#rs1`),
 //! issue #268.
 //!
-//! S1 and S2 run first, ahead of every other check, answering
+//! rS1 and rS2 run first, ahead of every other check, answering
 //! `OutOfRangeStartIndex` and `OutOfRangeEndIndex`, so an empty history answers
 //! `OutOfRangeStartIndex` rather than the catch-all.
 //!
@@ -10,12 +10,12 @@
 //! `--codegen` and `--xlang-hash` alike — and the four backends have to agree,
 //! because that is the whole point of giving the fault its own code.
 //!
-//! Rule S5 — the fill output's capacity — is here too, for the same reason:
+//! Rule rS5 — the fill output's capacity — is here too, for the same reason:
 //! the servers hand every opener an output the length of the whole history, so
 //! nothing cross-language reaches a short one.
 //!
-//! Rules S4 (an absent argument) and S2 (a history past `INDEX_MAX`) are not
-//! here: a slice cannot be absent, and provoking S2 needs a 100 000 001-element
+//! Rules rS4 (an absent argument) and rS2 (a history past `INDEX_MAX`) are not
+//! here: a slice cannot be absent, and provoking rS2 needs a 100 000 001-element
 //! allocation.
 
 #![allow(non_snake_case)]
@@ -60,7 +60,7 @@ fn the_other_rejections_keep_their_own_codes() {
     let core = Core::new();
     let data = series(252);
 
-    // A one-bar history is inside the index domain: that is S7's business.
+    // A one-bar history is inside the index domain: that is rS8's business.
     assert_eq!(
         core.sma_open(&data[..1], 30).err(),
         Some(RetCode::InsufficientHistory)
@@ -83,7 +83,7 @@ fn the_other_rejections_keep_their_own_codes() {
     assert!(core.sma_open(&data, 30).is_ok());
 }
 
-/// Rule S5, from both sides. The bound is `historyLen - lookback` — the count
+/// Rule rS5, from both sides. The bound is `historyLen - lookback` — the count
 /// the fill actually writes, not the width of the history — so an
 /// exactly-sized output has to be ACCEPTED and one element shorter REJECTED.
 /// Only the pair pins the arithmetic: a bound of `historyLen` would reject the
@@ -181,7 +181,7 @@ fn the_fill_output_bound_holds_on_every_tier() {
     );
 }
 
-/// A history too short to produce anything must still reach S7. The capacity
+/// A history too short to produce anything must still reach rS8. The capacity
 /// bound floors at zero for exactly this reason: `historyLen - lookback` is
 /// negative there, and the caller's mistake is the history, not the buffer.
 #[test]
@@ -205,11 +205,11 @@ fn a_short_history_reaches_the_warm_up_check_not_the_capacity_one() {
     assert_eq!(
         core.sma_open_and_fill(&data[..lb], 30, &mut nothing).err(),
         Some(RetCode::InsufficientHistory),
-        "a history one short of lookback + 1 is S7, whatever the output holds"
+        "a history one short of lookback + 1 is rS8, whatever the output holds"
     );
 }
 
-/// Rule B6a at the opener: `outFAMA` is `Option<&mut [f64]>`, and `None`
+/// Rule rB7 at the opener: `outFAMA` is `Option<&mut [f64]>`, and `None`
 /// declines it exactly as it does in the batch tier.
 ///
 /// Non-vacuous in three directions. The supplied run is the oracle, so a fill

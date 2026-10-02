@@ -3,15 +3,15 @@
 
 Two rules, one scan each.
 
-Rule S7 (https://ta-lib.org/spec/streaming/#s7): a streaming
+Rule rS8 (https://ta-lib.org/spec/streaming/#rs8): a streaming
 `Open`/`OpenAndFill` given fewer than `lookback + 1` bars reports
 `TA_INSUFFICIENT_HISTORY`. It is the library's one RECOVERABLE condition, so it
 must be distinguishable from `TA_BAD_PARAM`, which always means the call itself
 is wrong.
 
-Rule S1: an EMPTY history reports `TA_OUT_OF_RANGE_START_INDEX`. An opener is a
+Rule rS1: an EMPTY history reports `TA_OUT_OF_RANGE_START_INDEX`. An opener is a
 batch call over `[0, historyLen - 1]`, so the implied `startIdx` of 0 has to name
-a bar, and the fault answers B1's code rather than the catch-all (#268).
+a bar, and the fault answers rB1's code rather than the catch-all (#268).
 
 Why a structural check and not a probe. The condition is emitted from four
 independent backends at half a dozen sites each -- a transcribed early return, an
@@ -46,7 +46,7 @@ import sys
 #             what makes this a non-circular invariant rather than a restatement
 #             of whatever the emitter happens to produce.
 #
-# The `historyLen < 1` arm is a different condition -- rule S1, an EMPTY history
+# The `historyLen < 1` arm is a different condition -- rule rS1, an EMPTY history
 # -- and is scanned separately below, against its own code.
 #
 # The floors are LITERAL, and per backend and per shape. A floor derived from
@@ -81,8 +81,8 @@ BACKENDS = [
 ]
 
 
-# Rule S1, the same idea over the EMPTY-history arm: it is emitted once per
-# entry point in every backend, and answering B1's code rather than the catch-all
+# Rule rS1, the same idea over the EMPTY-history arm: it is emitted once per
+# entry point in every backend, and answering rB1's code rather than the catch-all
 # is the whole of what #268 changed, so a site that reverts has to be loud. Same
 # literal floors, same reason.
 EMPTY_ARMS = [
@@ -149,7 +149,7 @@ def check_stream_retcodes(root_dir: str) -> bool:
                 continue
             if wrong:
                 print(f"Error: {label} {shape}: {len(wrong)} short-history arm(s) answer "
-                      f"{catch_all} instead of {expected} (rule S7):")
+                      f"{catch_all} instead of {expected} (rule rS8):")
                 for w in wrong[:12]:
                     print(f"         {w}")
                 if len(wrong) > 12:
@@ -177,7 +177,7 @@ def check_empty_history_retcodes(root_dir: str) -> bool:
             continue
         if wrong:
             print(f"Error: {label}: {len(wrong)} empty-history arm(s) do not answer "
-                  f"{expected} (rule S1):")
+                  f"{expected} (rule rS1):")
             for w in wrong[:12]:
                 print(f"         {w}")
             if len(wrong) > 12:
@@ -190,9 +190,9 @@ def check_empty_history_retcodes(root_dir: str) -> bool:
 
 def main() -> int:
     root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    print("Short-history return code (rule S7) across all four backends:")
+    print("Short-history return code (rule rS8) across all four backends:")
     ok = check_stream_retcodes(root)
-    print("Empty-history return code (rule S1) across all four backends:")
+    print("Empty-history return code (rule rS1) across all four backends:")
     ok = check_empty_history_retcodes(root) and ok
     return 0 if ok else 1
 

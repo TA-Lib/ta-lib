@@ -258,7 +258,7 @@ public sealed partial class Core
         }
     }
 
-    /* Rules B6 and S6: whether two outputs are one buffer. Overlaps is false
+    /* Rules rB6 and rS6: whether two outputs are one buffer. Overlaps is false
      * whenever a side is empty, so one zero-length buffer passed twice is caught
      * by its reference. A null array converts to a span with a null reference,
      * which is no buffer. Pass a cross-typed pair as bytes. */
@@ -273,19 +273,19 @@ public sealed partial class Core
             && Unsafe.AreSame(ref start, ref MemoryMarshal.GetReference(b));
     }
 
-    /* Rule S5's bound: how many values an OpenAndFill writes.
+    /* Rule rS5's bound: how many values an OpenAndFill writes.
      *
      * An opener is a batch call over [0, historyLen - 1], so ClampedStart's
      * produced count -- endIdx - max(startIdx, lookback) + 1 -- collapses to
      * historyLen - lookback. Unlike the batch tier's it has no legitimate zero
-     * case: rule S7 refuses a history shorter than lookback + 1, so a fill that
+     * case: rule rS8 refuses a history shorter than lookback + 1, so a fill that
      * runs writes at least one value.
      *
-     * A short history is still floored to 0 rather than answered here: S7 has not
-     * run yet, and that rejection is S7's to make. A lookback of -1 is NOT
+     * A short history is still floored to 0 rather than answered here: rS8 has not
+     * run yet, and that rejection is rS8's to make. A lookback of -1 is NOT
      * floored -- it is the parameter contract's rejection signal, and swallowing
-     * it reported an absent output (S4) for a call whose fault was its parameter
-     * (S3). Raising it here is what puts S3 ahead of the buffer rules, exactly as
+     * it reported an absent output (rS4) for a call whose fault was its parameter
+     * (rS3). Raising it here is what puts rS3 ahead of the buffer rules, exactly as
      * ClampedStart does one tier over. */
     internal static int OpenFillCount(string funcName, string verb, int historyLen, int lookback)
     {
@@ -296,11 +296,11 @@ public sealed partial class Core
         return historyLen <= lookback ? 0 : historyLen - lookback;
     }
 
-    /* Rule S5's input half: every declared input carries the history, so every
+    /* Rule rS5's input half: every declared input carries the history, so every
      * one of them is the history's length.
      *
-     * B5 states the two halves as one rule, inputs first, and this is B5 over
-     * [0, historyLen - 1]. The difference from B5's wording is that there is no
+     * rB5 states the two halves as one rule, inputs first, and this is rB5 over
+     * [0, historyLen - 1]. The difference from rB5's wording is that there is no
      * separate endIdx to reach here: the history's own length IS the range, so a
      * longer series is a disagreement rather than a tail to ignore -- which is
      * what the generated docs have always promised. */
@@ -329,7 +329,7 @@ public sealed partial class Core
         }
     }
 
-    /* Rule S7, naming the history and carrying the counts the batch tier's
+    /* Rule rS8, naming the history and carrying the counts the batch tier's
      * length faults carry: max(startIdx, lookback) + 1 is the bound the core
      * tested. */
     internal static InsufficientHistoryException InsufficientHistory(string funcName, string verb,
@@ -342,7 +342,7 @@ public sealed partial class Core
             argName);
     }
 
-    /* Rule U3, naming the bar input the check rejected. */
+    /* Rule rU3, naming the bar input the check rejected. */
     internal static TALibArgumentException NonFiniteBar(string funcName, string verb, string argName)
     {
         return new TALibArgumentException(

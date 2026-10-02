@@ -177,7 +177,7 @@ pub(crate) fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashM
     let mut fargs = String::new();
     for (i, is_int) in out_is_int.iter().enumerate() {
         let (ty, z) = if *is_int { ("i32", "0i32") } else { ("f64", "0.0f64") };
-        // A nullable output takes `Option<&mut [T]>` (rule B6a); this harness
+        // A nullable output takes `Option<&mut [T]>` (rule rB7); this harness
         // compares values, so it always supplies one.
         let some = func.outputs.get(i).is_some_and(crate::ir::Output::is_nullable);
         let (op, cl) = if some { ("Some(", ")") } else { ("", "") };

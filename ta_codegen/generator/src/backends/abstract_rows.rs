@@ -537,7 +537,7 @@ pub fn opt_flag_bits(flags: &[String]) -> u32 {
     b
 }
 
-/// `TA_OUT_NULLABLE` — the caller may decline this output (rule B6a). Named
+/// `TA_OUT_NULLABLE` — the caller may decline this output (rule rB7). Named
 /// because a second reader of the bit exists: the Rust abstract tier has to
 /// wrap such an output in `Some(..)`, and a literal there would be a sixth
 /// place the number lives (see `flag_sync`).

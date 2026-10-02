@@ -110,7 +110,7 @@ constants PascalCase. A bound puts the noun first, as `TA_REAL_MAX` and
 | carrier | `TA_RetCode` return | `Result<_, RetCode>` | thrown | thrown |
 | marker | n/a | n/a | `TALibFailure` | `ITALibFailure` |
 | bad argument | `TA_BAD_PARAM` | `RetCode::BadParam` | `TALibArgumentException` | `TALibArgumentException` |
-| bad index | `TA_OUT_OF_RANGE_*` | `RetCode::OutOfRange*` | `TALibIndexException` | `TALibArgumentOutOfRangeException`, except U4 ([failures](https://ta-lib.org/spec/#failures)) |
+| bad index | `TA_OUT_OF_RANGE_*` | `RetCode::OutOfRange*` | `TALibIndexException` | `TALibArgumentOutOfRangeException`, except rU4 ([failures](https://ta-lib.org/spec/#failures)) |
 | bad state | n/a | n/a | `TALibStateException` | `TALibInvalidOperationException` |
 | short history | `TA_INSUFFICIENT_HISTORY` | `RetCode::InsufficientHistory` | `InsufficientHistoryException` | `InsufficientHistoryException` |
 

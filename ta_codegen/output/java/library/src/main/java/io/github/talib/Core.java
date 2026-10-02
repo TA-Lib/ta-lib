@@ -267,7 +267,7 @@ public final class Core {
    }
 
    /**
-    * Rules B1 and B2, ahead of everything else the wrapper checks.
+    * Rules rB1 and rB2, ahead of everything else the wrapper checks.
     *
     * <p>The core makes the same two tests and answers the same two codes; this
     * runs first only to fix the ORDER. The specification lists the index rules
@@ -290,20 +290,20 @@ public final class Core {
    }
 
    /**
-    * Rule S5's bound: how many values an {@code OpenAndFill} writes.
+    * Rule rS5's bound: how many values an {@code OpenAndFill} writes.
     *
     * <p>An opener is a batch call over {@code [0, historyLen - 1]}, so
     * {@link Core#clampedStart}'s produced count — {@code endIdx -
     * max(startIdx, lookback) + 1} — collapses to {@code historyLen - lookback}.
-    * Unlike the batch tier's it has no legitimate zero case: rule S7 refuses a
+    * Unlike the batch tier's it has no legitimate zero case: rule rS8 refuses a
     * history shorter than {@code lookback + 1}, so a fill that runs writes at
     * least one value.
     *
-    * <p>A short history is still floored to 0 rather than answered here: S7 has
-    * not run yet where this is used, and that rejection is S7's to make. A
+    * <p>A short history is still floored to 0 rather than answered here: rS8 has
+    * not run yet where this is used, and that rejection is rS8's to make. A
     * lookback of {@code -1} is not floored — it is the parameter contract's
-    * rejection signal, and swallowing it reported an absent output (S4) for a
-    * call whose fault was its parameter (S3). Raising it here is what puts S3
+    * rejection signal, and swallowing it reported an absent output (rS4) for a
+    * call whose fault was its parameter (rS3). Raising it here is what puts rS3
     * ahead of the buffer rules, exactly as {@link Core#clampedStart} does one
     * tier over.
     */
@@ -315,11 +315,11 @@ public final class Core {
    }
 
    /**
-    * Rule S5's input half: every declared input carries the history, so every
+    * Rule rS5's input half: every declared input carries the history, so every
     * one of them is the history's length.
     *
-    * <p>B5 states the two halves as one rule, inputs first, and this is B5 over
-    * {@code [0, historyLen - 1]}. The difference from B5's wording is that
+    * <p>rB5 states the two halves as one rule, inputs first, and this is rB5 over
+    * {@code [0, historyLen - 1]}. The difference from rB5's wording is that
     * there is no separate {@code endIdx} to reach here: the history's own
     * length IS the range, so a longer series is a disagreement rather than a
     * tail to ignore, which is also what the generated docs have always
@@ -333,10 +333,10 @@ public final class Core {
    }
 
    /**
-    * Rules S1 and S2 at a streaming opener, ahead of every presence check.
+    * Rules rS1 and rS2 at a streaming opener, ahead of every presence check.
     *
     * <p>Not {@link Core#requireIndexRange} read on {@code [0, historyLen - 1]}:
-    * that answers OUT_OF_RANGE_END_INDEX for an empty history, where S1 answers
+    * that answers OUT_OF_RANGE_END_INDEX for an empty history, where rS1 answers
     * OUT_OF_RANGE_START_INDEX. It runs here to fix the ORDER, since the core
     * makes both tests too.
     *
@@ -353,7 +353,7 @@ public final class Core {
    }
 
    /**
-    * Rule S7, with the counts the batch tier's length faults carry:
+    * Rule rS8, with the counts the batch tier's length faults carry:
     * {@code max(startIdx, lookback) + 1} is the bound the core tested.
     */
    static InsufficientHistoryException insufficientHistory(String funcName, int historyLen, int startIdx, int lookback) {
@@ -363,7 +363,7 @@ public final class Core {
 
    /**
     * The RetCode -> exception mapping for a stream opener's tail, after rule
-    * S7's counted form. {@code funcName} carries the verb ({@code "SMA open"}).
+    * rS8's counted form. {@code funcName} carries the verb ({@code "SMA open"}).
     */
    static RuntimeException streamFailure(String funcName, RetCode retCode) {
       String where = funcName + ": ";
@@ -379,14 +379,14 @@ public final class Core {
       }
    }
 
-   /** Rule U3, naming the bar input the check rejected. */
+   /** Rule rU3, naming the bar input the check rejected. */
    static TALibArgumentException nonFiniteBar(String funcName, String argName) {
       return new TALibArgumentException(funcName + ": " + argName + " is not finite",
             RetCode.BAD_PARAM);
    }
 
    /**
-    * Rule B3 for an enum parameter, whose domain is its declared member set and
+    * Rule rB3 for an enum parameter, whose domain is its declared member set and
     * so excludes null.
     *
     * <p>Java is the only backend where this can happen: C# enums are value
@@ -396,7 +396,7 @@ public final class Core {
     * function nor the parameter.
     *
     * <p>It is an {@link IllegalArgumentException} carrying
-    * {@link RetCode#BAD_PARAM}, the same as every other B3 rejection — the domain
+    * {@link RetCode#BAD_PARAM}, the same as every other rB3 rejection — the domain
     * is what null falls outside of, so nothing here is special enough to warrant
     * its own exception type. {@code MAType.DEFAULT}, not null, is how a caller
     * asks for the documented default. It runs after
@@ -410,14 +410,14 @@ public final class Core {
    }
 
    /**
-    * Rule B3 for the numeric optional parameters, and the requested start after
+    * Rule rB3 for the numeric optional parameters, and the requested start after
     * the lookback clamp — {@code max(startIdx, lookback)} — for the buffer
     * bounds that follow it.
     *
     * <p>A negative {@code lookback} is the rejection signal
     * {@code <n>Lookback} returns for a parameter outside its documented domain,
-    * and rule L2 makes that decision identical to the one the core would reach
-    * on the same parameters. Raising it here is what puts B3 ahead of the buffer
+    * and rule rL3 makes that decision identical to the one the core would reach
+    * on the same parameters. Raising it here is what puts rB3 ahead of the buffer
     * rules: without it a null array reported the array, and the caller never saw
     * the parameter that was also wrong.
     *

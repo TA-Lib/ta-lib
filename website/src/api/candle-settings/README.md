@@ -88,7 +88,7 @@ Core restored = core.ToBuilder()
 
 In C, the unstable period and the candle settings are process-wide. Change them
 only while no TA function is running and no stream is open
-([T2](/spec/settings-threads/#t2)).
+([specification](/spec/settings-threads/#idle-settings)).
 
 ## Setting types and defaults
 

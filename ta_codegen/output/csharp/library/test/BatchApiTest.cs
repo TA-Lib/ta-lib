@@ -973,17 +973,17 @@ public static class BatchApiTest
     }
 
     /// <summary>
-    /// Rule B6a: an output the .yaml marks <c>nullable</c> may be declined, and
+    /// Rule rB7: an output the .yaml marks <c>nullable</c> may be declined, and
     /// declining it changes nothing about the output that was asked for. MAMA's
     /// <c>outFAMA</c> is the only one in the corpus.
     /// </summary>
     /// <remarks>C# cannot spell "absent" apart from "empty" — a <c>Span&lt;T&gt;</c>
     /// is a ref struct and a null array converts to an empty span — so an empty
-    /// span IS the declination (rule O5).
+    /// span IS the declination (rule rW5).
     /// <para>Acceptance alone would not test this: a body that stopped computing
     /// FAMA, or took a different path without it, would be accepted here just the
     /// same. So the declining call has to reproduce the supplied one bit for bit
-    /// and leave everything above its own count untouched (rule N2). No
+    /// and leave everything above its own count untouched (rule rW3). No
     /// cross-language gate can see any of it — the JSON-RPC servers bind every
     /// declared output.</para></remarks>
     private static void ANullableOutputMayBeDeclined()
@@ -1033,11 +1033,11 @@ public static class BatchApiTest
     }
 
     /// <summary>
-    /// Rules B6 and S6 on empty outputs (Appendix D items 11 and 15): one
+    /// Rules rB6 and rS6 on empty outputs (Appendix D items 11 and 15): one
     /// zero-length array passed as two outputs is one buffer, as in C and Java;
     /// two separate ones are not, and a null array is no buffer. A non-declinable
     /// empty output passes the length check only on a call that produces no
-    /// values (rule N1), so in an opener the accepted shapes answer S7.
+    /// values (rule rW2), so in an opener the accepted shapes answer rS8.
     /// </summary>
     private static void OneEmptyArrayIsOneBuffer()
     {
@@ -1081,10 +1081,10 @@ public static class BatchApiTest
         CheckCode(RetCode.InsufficientHistory,
             () => core.AccbandsOpenAndFill(history, history, history, 20,
                       new double[0], new double[0], new double[0]),
-            "OpenAndFill: distinct empty outputs pass S6");
+            "OpenAndFill: distinct empty outputs pass rS6");
         CheckCode(RetCode.InsufficientHistory,
             () => core.AccbandsOpenAndFill(history, history, history, 20, default, default, default),
-            "OpenAndFill: null outputs pass S6");
+            "OpenAndFill: null outputs pass rS6");
     }
 
     /// <summary>The index rules outrank the buffer rules on the output side too.

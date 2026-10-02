@@ -165,7 +165,7 @@ fn emit_csharp_sv_func(
     // Seeded inputs.
     s.push_str("        double[] fz_o = new double[svN];\n        double[] fz_h = new double[svN];\n        double[] fz_l = new double[svN];\n        double[] fz_c = new double[svN];\n        double[] fz_v = new double[svN];\n        double[] fz_oi = new double[svN];\n");
     // INTEGRATION NOTE 1: `FuzzData.FuzzGen` is the C# port of `fuzz_data.h`
-    // that S2 adds as `templates/csharp/FuzzData.cs`. It does not exist yet, so
+    // that rS2 adds as `templates/csharp/FuzzData.cs`. It does not exist yet, so
     // the class name, namespace (global, mirroring the Java port's default
     // package) and argument order are ASSUMED to mirror the Java template's
     // `FuzzData.fuzzGen(shape, seed, n, o, h, l, c, v, oi)`. Reconcile when the
@@ -527,7 +527,7 @@ fn emit_csharp_sv_func(
     //
     // EVERY window is `svN` long or longer, cut from a buffer one element wider
     // than the series. Slicing `f{i}` itself cannot do that: the widest window
-    // inside it that still leaves room to shift is `svN - 1`, which rule S5
+    // inside it that still leaves room to shift is `svN - 1`, which rule rS5
     // rejects for capacity the moment the lookback is 0 — so for the 28
     // unconditional-zero-lookback functions, and every period-taking one at
     // `period = 1`, the probe caught a capacity fault and never reached the
@@ -607,7 +607,7 @@ fn emit_csharp_sv_func(
                 }
                 // The history comes out of `ovIn` so the output window above
                 // overlaps it; every other input stays the fuzz array, and the
-                // two agree in length (rule S5's input half).
+                // two agree in length (rule rS5's input half).
                 let ov_ins = arrays
                     .iter()
                     .enumerate()
@@ -932,7 +932,7 @@ fn emit_csharp_sv_func(
         // answers the same as the unmutated batch then a step reading live
         // settings would match too, and this leg proves nothing for this vector.
         // Reported, never failed -- a pattern that never fires on this shape
-        // legitimately answers all-zero either way, so the S3 gate asserts
+        // legitimately answers all-zero either way, so the rS3 gate asserts
         // `candleMutMoved` rather than this leg guessing.
         s.push_str("                        int mBeg = 0, mNb = 0;\n");
         let _ = writeln!(
@@ -1205,7 +1205,7 @@ pub(crate) fn generate_csharp_stream_verify(
     // INTEGRATION NOTE 2: the driver's existing self-check runs at exactly one
     // seed (gen_seed = 7, n = 240) while the vector loop uses others, and it
     // fails OPEN -- an absent `in_hash` just breaks the loop. Neither is fixable
-    // from this side (both live in test_codegen.c), which is why S2's gate is on
+    // from this side (both live in test_codegen.c), which is why rS2's gate is on
     // the literal printed line "Fuzz-port self-check: 9/9 shapes bit-identical"
     // and not on the absence of a failure message.
     s.push_str("    static string HandleFuzzInHash(JsonElement req) {\n");

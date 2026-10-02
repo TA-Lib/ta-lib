@@ -443,7 +443,7 @@ typedef enum
   TA_STREAM_FINITE_SETUP_FAILED      = 1594,
   TA_STREAM_FINITE_VACUOUS           = 1595,
 
-  /* Streaming short-history rejection (rule S7 / TA_INSUFFICIENT_HISTORY). */
+  /* Streaming short-history rejection (rule rS8 / TA_INSUFFICIENT_HISTORY). */
   TA_STREAM_SHORT_HISTORY_WRONG_CODE = 1596,
   TA_STREAM_SHORT_HISTORY_ACCEPTED   = 1597,
   TA_STREAM_SHORT_HISTORY_CONTROL    = 1598,
@@ -453,7 +453,7 @@ typedef enum
    * nothing else to do. Reported rather than passed silently. */
   TA_REGTEST_FILTER_MATCHED_NOTHING  = 1600,
 
-  /* Streaming empty-history rejection (rule S1 / TA_OUT_OF_RANGE_START_INDEX). */
+  /* Streaming empty-history rejection (rule rS1 / TA_OUT_OF_RANGE_START_INDEX). */
   TA_STREAM_EMPTY_HISTORY_WRONG_CODE = 1607,
   TA_STREAM_EMPTY_HISTORY_VACUOUS    = 1608,
 
@@ -472,14 +472,14 @@ typedef enum
   TA_QUOTE_UNIT_OUT_OF_RANGE         = 1624,
   TA_QUOTE_UNIT_VACUOUS              = 1625,
 
-  /* Batch tier rule B4: a required argument was not supplied. */
+  /* Batch tier rule rB4: a required argument was not supplied. */
   TA_BATCH_ARG_WRONG_CODE            = 1630,
   TA_BATCH_ARG_CONTROL               = 1631,
   TA_BATCH_ARG_VACUOUS               = 1632,
-  /* Rule B6a: declining a nullable output changed what the call produced. */
+  /* Rule rB7: declining a nullable output changed what the call produced. */
   TA_BATCH_ARG_NULLABLE_DIVERGED     = 1633,
 
-  /* Rule U3, stated absolutely: what ONE rejected Update costs. Driving two
+  /* Rule rU3, stated absolutely: what ONE rejected Update costs. Driving two
    * handles off one feed and comparing them is symmetric, so it is blind to any
    * change that moves both; these ids belong to the leg that demands the
    * numbers outright. */

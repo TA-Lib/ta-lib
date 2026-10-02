@@ -202,7 +202,7 @@ fn fold_guard(s: &Statement, var: &str, answered_return: Option<&str>) -> Option
 /// The arm is only reached with `var` holding `SUCCESS` -- the `!= SUCCESS` half
 /// is what was just folded away -- so what the C body returns there is "success
 /// with nothing produced". A batch call may answer that (an empty `OutRange`);
-/// an OPENER may not, and the rule it falls under is S7: a history that cannot
+/// an OPENER may not, and the rule it falls under is rS8: a history that cannot
 /// produce a value is `TA_INSUFFICIENT_HISTORY`. Without the substitution Rust
 /// answered `Err(RetCode::Success)` and Java/C# minted a handle over an empty
 /// range (issue #271 item 4).

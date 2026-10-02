@@ -2910,8 +2910,8 @@ static ErrorNumber checkOutputAliasRejected( const TA_FuncInfo *funcInfo )
           * a real output beside an integer one. C's guard compares the pair
           * through `const void *`; this is what proves it does. Only C can be
           * asked here: Java and safe Rust cannot build the case, and C# compares
-          * by byte range but is not reachable through this sweep (B6,
-          * https://ta-lib.org/spec/errors/#b6).
+          * by byte range but is not reachable through this sweep (rB6,
+          * https://ta-lib.org/spec/errors/#rb6).
           */
          TA_GetOutputParameterInfo( handle, oa, &outInfoA );
          TA_GetOutputParameterInfo( handle, ob, &outInfoB );
@@ -2982,7 +2982,7 @@ static ErrorNumber checkOutputAliasRejected( const TA_FuncInfo *funcInfo )
             return TA_ABS_TST_FAIL_OUTPUT_ALIAS;
          }
 
-         /* B6 holds whatever the length, so the same pair is asked again over a
+         /* rB6 holds whatever the length, so the same pair is asked again over a
           * range that produces no values: C's spelling of one zero-length array
           * passed as two outputs. A guard placed after the lookback's early
           * return passes the full-range call above and fails here. The control

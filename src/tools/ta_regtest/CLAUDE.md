@@ -349,7 +349,7 @@ of floors: every streaming function must report a non-zero `peek_reps`, and
 refusals outnumbering completed probes on one request is a failure of its own.
 
 | **state equivalence** | the whole handle after `Open(P)` + `n-P` updates vs the handle after `Open(n)` | a defect present in BOTH tiers |
-| **range** | the handle's `OutRange` against the batch range, at five sites: the `OpenAndFill` handle, `Open(P)` + updates, the anchored `OpenInternal`, the forked handle, and the same prefix handle after one `Advance` (which must succeed and report exactly one more; rule U4's ceiling is 100 000 000 bars away at these sizes) | an anchor the history does not reach — every site keeps `lb < Sidx < svN - 1`, so the post-clamp history re-check is pinned in the generator instead |
+| **range** | the handle's `OutRange` against the batch range, at five sites: the `OpenAndFill` handle, `Open(P)` + updates, the anchored `OpenInternal`, the forked handle, and the same prefix handle after one `Advance` (which must succeed and report exactly one more; rule rU4's ceiling is 100 000 000 bars away at these sizes) | an anchor the history does not reach — every site keeps `lb < Sidx < svN - 1`, so the post-clamp history re-check is pinned in the generator instead |
 
 Of the five value families, two delegate to the batch transcription — the
 `OpenAndFill` and anchored `OpenInternal` legs — leaving the prefix sweep's
@@ -428,7 +428,7 @@ being zeros. Running the extra shapes on the boundary vectors (`range.min`,
 windows per function — and is right independently of ±0, since those are the
 degenerate-arm periods and were otherwise seeing only `MONO_UP`/`MONO_DOWN`.
 
-Stated once, in spec rule H1 (`website/src/spec/streaming/README.md`), and
+Stated once, in spec rule rH1 (`website/src/spec/streaming/README.md`), and
 nowhere in the user pages: the sign of a zero is below the level a caller
 reasons about, and qualifying every "bit-identical" would cost more clarity
 than it buys.
@@ -484,7 +484,7 @@ tolerance lane.
 **Every bit-exact invariant in this file is stated for `FLT_EVAL_METHOD==0`.**
 The i386 `.deb` gets it from `cmake/toolchain-linux-i386.cmake`; a native 32-bit
 x86 build without `-msse2 -mfpmath=sse` gets x87 math, which no bit-exactness
-claim covers ([D4](https://ta-lib.org/spec/versions/#d4)).
+claim covers ([build flags](https://ta-lib.org/spec/versions/#build-flags)).
 
 MAMA (damped adaptive alpha) and LINEARREG_ANGLE (atan is terminal) reach `atan`
 and stay in: both are smooth in it, and MAMA carries the 8-ULP libm floor.

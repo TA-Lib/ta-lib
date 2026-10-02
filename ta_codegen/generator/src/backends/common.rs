@@ -398,7 +398,7 @@ pub fn max_output_arity(funcs: &[FuncDef]) -> (usize, usize) {
 }
 
 /// The outputs a caller may decline — the `nullable` flag in the .yaml, rule
-/// O5 (`https://ta-lib.org/spec/inputs-outputs/#o5`).
+/// rW5 (`https://ta-lib.org/spec/inputs-outputs/#rw5`).
 ///
 /// One source of truth for the four backends: each spells "declined" in its own
 /// way (`NULL` in C, `null` in Java, `None` in Rust, an empty `Span` in C#), but
@@ -521,7 +521,7 @@ pub(crate) fn csharp_overlap_expr(
     }
 }
 
-/// One C# output/output term (rules B6, S6), for the same two guards as
+/// One C# output/output term (rules rB6, rS6), for the same two guards as
 /// [`csharp_overlap_expr`]. `OutputsAlias` is hand-written in `Core.cs`.
 pub(crate) fn csharp_output_alias_expr(a: &str, a_ty: &str, b: &str, b_ty: &str) -> String {
     if a_ty == b_ty {

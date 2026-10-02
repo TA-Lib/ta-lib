@@ -36,7 +36,7 @@ it has an output for, in the input series' coordinates: `TA_<N>_OutRange`,
 `out_range()`, `outRange()`, `OutRange`. It is the batch tier's range and lives
 in the batch tier's domain, so the last bar a handle can reach is `INDEX_MAX`:
 past it `update` and `advance` refuse, permanently. Which calls move
-it is rules U4, H4 and H5 (https://ta-lib.org/spec/streaming/#u4); how the
+it is rules rU4, rH5 and rH6 (https://ta-lib.org/spec/streaming/#ru4); how the
 refusal is spelled, https://ta-lib.org/spec/#failures.
 
 **`Advance` counts a bar the handle was not fed** — `TA_<N>_Advance`,
@@ -121,7 +121,7 @@ For every function F, parameters p and series `x[0..t]`: after `open(x[0..k], p)
 for any `k+1 >= lookback + 1`, then `update(x[k+1]) … update(x[t])`, the stream
 value at every bar where batch reports an output is **bit-identical** to
 `batch_F(0, t, x[0..t])` at that bar, under the same settings. In C no setting
-may change while a stream is open (https://ta-lib.org/spec/settings-threads/#t2).
+may change while a stream is open (https://ta-lib.org/spec/settings-threads/#idle-settings).
 
 - **The range matches batch too, not just the values.** After a handle has been
   fed `N` bars by an opener and `update`, its `OutRange` is what the batch call
@@ -286,7 +286,7 @@ One rule holds in every language, each enforcing it its own way:
   because `update(&mut self)` makes concurrent updates on one handle a compile
   error.
 - **C** states it as part of its one settings rule
-  (https://ta-lib.org/spec/settings-threads/#t2): change a setting only while no
+  (https://ta-lib.org/spec/settings-threads/#idle-settings): change a setting only while no
   TA function is running and no stream is open. Implementation, not a promise:
   warm-up and ring sizes come from the settings in effect at open, the unstable
   period is read only there, and a CDL step reads the candle settings live.
@@ -377,7 +377,7 @@ selected INDEX is path-dependent and no single deque discipline reproduces it:
 MININDEX at period 2 on `[3,3]` diverges on the first output. That rules a deque
 out for every function that outputs an index or computes from one. It would be
 legal for the value-output subset within
-[H1](https://ta-lib.org/spec/streaming/#h1), and substituting one there is still
+[rH1](https://ta-lib.org/spec/streaming/#rh1), and substituting one there is still
 open.
 
 One ring-order constraint survives from the same family: some batch code sums its

@@ -1,57 +1,63 @@
 ---
 title: Versions and Determinism
-description: "Which TA-Lib results are bit-identical across languages, machines, C builds and equivalent calls, and what a release keeps and may add."
+description: "Which TA-Lib results are bit-identical across languages and equivalent calls, what a C build from source must pass to keep that, and what a release keeps and may add."
 ---
 
-*Part of TA-Lib's exhaustive [specifications](/spec/), intended for precise AI-agent-driven integration with TA-Lib, to minimize errors.*
+*Part of TA-Lib's [specification](/spec/), a reference for AI-agent-driven integration.*
 
-D1 to D4 say where the same call gives the same bits across languages, machines and C builds; the table below also indexes the equivalences other pages own. V1 to V3 say what a release keeps and what it may add.
+Where the same call gives the same bits, and what a release keeps and may add.
+
+## The caller must {#caller}
+
+- <a id="tolerance"></a>**Compare a transcendental call with a tolerance** unless both results come from C or Rust on the same machine ([transcendental functions](/spec/versions/#transcendental)). Their difference starts in the last bit of one math-library result and can grow through the function's arithmetic; the HT_* outputs that round a computed period to whole bars can differ outright on some inputs.
+- <a id="build-flags"></a>**Build C from source with the project's floating-point flags.** [rD1](/spec/versions/#rd1) and [rD2](/spec/versions/#rd2) hold for C only when the compiler evaluates every `double` operation as written:
+
+  | Condition | GCC and Clang | Build files in the source tree |
+  |---|---|---|
+  | no contraction of `a*b+c` into a fused multiply-add | `-ffp-contract=off` | CMake passes it to every compiler but MSVC and those taking MSVC's command line (clang-cl); autotools passes it when the compiler accepts it |
+  | no value-changing optimization | no `-ffast-math` or `-Ofast`, nor any part of them but `-fno-math-errno` | none uses them |
+  | no extended-precision intermediates | on 32-bit x86, `-msse2 -mfpmath=sse` | only CMake's i386 cross-build toolchain, `cmake/toolchain-linux-i386.cmake`; a native 32-bit x86 build does not pass it, so add it yourself |
+
+  Under MSVC or clang-cl, CMake passes no floating-point option; no condition is stated for them, and rD1 and rD2 are not promised for C built with them.
+- <a id="enumerate"></a>**Enumerate, never hard-code a list.** A release may add functions, MA types, unstable-period ids, candle settings and return codes ([rV3](/spec/versions/#rv3)). Enumerate functions through the [abstraction layer](/spec/#abstraction), bound an MA-type value with the enum your code was built with ([rP2](/spec/inputs-outputs/#rp2)), and give every `switch` or `match` over a TA-Lib enum a default branch.
+- <a id="pin"></a>**Validate against the release you ship.** No rule covers output values from one release to the next, nor API compatibility of the Rust, Java and C# packages between releases beyond rV2 and rV3. Which versions and packages exist: [Install](/install/).
 
 ## Determinism {#determinism}
 
-On this page, **bit-identical** means the same return code, the same output range, and every output element with the same bits, except that a NaN matches any NaN: no math library specifies a NaN's payload. **The same call** means the same function, input values, `startIdx` and `endIdx`, optional parameters and settings. **The same settings** means the same unstable periods and candle settings.
+On this page, **bit-identical** means the same return code, the same output range, and every output element with the same bits, except that a NaN matches any NaN: no math library specifies a NaN's payload. **The same call** means the same function, input values, `startIdx` and `endIdx`, optional parameters and settings.
 
-| Compared | Result | Rule |
-|---|---|---|
-| the same call in C and Rust, one machine | bit-identical | [D1](/spec/versions/#d1) |
-| the same call in Java or C# and in C, one machine | bit-identical, except a call that evaluates a transcendental function | [D2](/spec/versions/#d2) |
-| the same call in one backend on two machines | bit-identical, except a call that evaluates a transcendental function | [D3](/spec/versions/#d3) |
-| C built from source | bit-identical only under D4's conditions | [D4](/spec/versions/#d4) |
-| the same bar from batch calls with different `startIdx` | not bit-identical in general | [Lookback](/spec/lookback/#start) |
-| a stream and the batch call over the same bars | bit-identical, as H1 defines | [H1](/spec/streaming/#h1) |
-| `OpenAndFill` and the batch call over its history | bit-identical, as H3 defines | [H3](/spec/streaming/#h3) |
-| `Peek` and the next `Update` with the same bar | bit-identical | [N7](/spec/streaming/#n7) |
-| a `Clone` and its original | the same state, value and range | [H7](/spec/streaming/#h7) |
-| a default sentinel and the explicit default | bit-identical | [N3](/spec/inputs-outputs/#n3) |
-| an output in place on its input, and in a separate buffer | bit-identical | [N4](/spec/inputs-outputs/#n4) |
-| a declinable output declined, and supplied | the other outputs bit-identical | [O5](/spec/inputs-outputs/#o5) |
-| a `float` input, and the `double` call on its widened values | bit-identical | [I6](/spec/inputs-outputs/#i6) |
+<a id="rd1"></a>**rD1** On one machine, C and Rust are bit-identical for the same call, transcendental functions included.
+
+<a id="rd2"></a>**rD2** On one machine, Java and C# are bit-identical to C for every call that evaluates no transcendental function. A call that evaluates one may differ from C's: Java's and .NET's math libraries can round a transcendental result differently from the C library in the last bit, which is beyond TA-Lib's control.
 
 ### Transcendental functions {#transcendental}
 
-A **transcendental function** here is `exp`, `log`, `log10`, or a trigonometric, inverse trigonometric or hyperbolic function. C and Rust take it from the platform's C math library, Java from the JVM, C# from the .NET runtime, and none of them is required to round it correctly. A call evaluates one when its function does, or when an MA-type parameter selects an average that does. **Current behaviour**: the functions that do are ACOS, ALMA, ASIN, ATAN, CHOP, CHOPTR, COS, COSH, EXP, FRAMA, HT_DCPERIOD, HT_DCPHASE, HT_PHASOR, HT_SINE, HT_TRENDLINE, HT_TRENDMODE, LINEARREG_ANGLE, LN, LOG10, MAMA, SIN, SINH, TAN and TANH, and the averages that do are `MAMA` and `ALMA`.
+A **transcendental function** here is `exp`, `log`, `log10`, or a trigonometric, inverse trigonometric or hyperbolic function. C and Rust take it from the platform's C math library, Java from the JVM, C# from the .NET runtime, and none of them is required to round it correctly. A call evaluates one when its function does, or when an MA-type parameter selects an average that does. The functions that do are ACOS, ALMA, ASIN, ATAN, CHOP, CHOPTR, COS, COSH, EXP, FRAMA, HT_DCPERIOD, HT_DCPHASE, HT_PHASOR, HT_SINE, HT_TRENDLINE, HT_TRENDMODE, LINEARREG_ANGLE, LN, LOG10, MAMA, SIN, SINH, TAN and TANH, and the averages that do are `MAMA` and `ALMA`.
 
-Where D2 or D3 lets such a call differ, the difference starts in the last bit of one result and can grow through the function's arithmetic. It can also jump: HT_DCPHASE, HT_SINE, HT_TRENDLINE and HT_TRENDMODE round a period computed with `atan` to the nearest whole number of bars, and on a constant series HT_DCPHASE and HT_SINE take `atan` of a ratio of rounding residues, where a last-bit difference can move the phase by whole degrees. Compare these calls with a tolerance, and expect the HT_* outputs to differ outright on some inputs.
+### Across machines {#machines}
 
-<a id="d1"></a>**D1** On one machine, C built as [D4](/spec/versions/#d4) requires and Rust are bit-identical, transcendental functions included.
+A difference between two machines' math libraries can change the result of a call that evaluates a transcendental function, as it can between languages.
 
-<a id="d2"></a>**D2** On one machine, Java and C# are bit-identical to C built as [D4](/spec/versions/#d4) requires, for every call that evaluates no transcendental function. A call that evaluates one may differ from C's: Java's and .NET's math libraries can round a transcendental result differently from the C library in the last bit, which is beyond TA-Lib's control, and the difference can grow through the rest of the calculation. Whether it does depends on the runtime and the host.
+Functions are tested on several CPUs and compilers against the same golden values. The comparison is bit-exact or within a tolerance, depending on whether the algorithm is sensitive to how floating-point operations are ordered or fused (fused multiply-add, for example) and on whether it uses a transcendental function.
 
-<a id="d3"></a>**D3** Between machines (operating system, math library, CPU), a call that evaluates no transcendental function is bit-identical in every backend, C built as [D4](/spec/versions/#d4) requires. Every fused multiply-add is explicit in the source (C `fma`, Rust `mul_add`, Java `Math.fma`, C# `Math.FusedMultiplyAdd`), so a CPU with or without an FMA unit gives the same bits. A call that evaluates a transcendental function may differ between machines.
+### Equivalent calls {#equivalent}
 
-<a id="d4"></a>**D4** The C sources give [D1](/spec/versions/#d1) and [D3](/spec/versions/#d3) only when the compiler evaluates every `double` operation as written. Stated for GCC and Clang:
-
-| Condition | GCC and Clang | Build files in the source tree |
+| Compared | Result | Rule |
 |---|---|---|
-| no contraction of `a*b+c` into a fused multiply-add | `-ffp-contract=off` | CMake passes it to every compiler but MSVC and those taking MSVC's command line (clang-cl); autotools passes it when the compiler accepts it |
-| no value-changing optimization | no `-ffast-math` or `-Ofast`, nor any part of them but `-fno-math-errno` | none uses them |
-| no extended-precision intermediates | on 32-bit x86, `-msse2 -mfpmath=sse` | only CMake's i386 cross-build toolchain, `cmake/toolchain-linux-i386.cmake`; a native 32-bit x86 build with CMake or autotools does not pass it, so add it yourself |
-
-Neither the optimization level, `-march`, nor `-fno-math-errno` (which CMake and autotools also pass to a compiler that accepts it) changes a value. Under MSVC, or clang-cl, CMake passes no floating-point option, so the compiler's defaults apply; D4 names no condition for them, and D1 and D3 are not promised for C built with them. **Current behaviour**: no `/arch:AVX2` is passed there, so the compiler has no FMA instruction to contract into. D4 concerns C only.
+| a stream and the batch call over the same bars | bit-identical, as rH1 defines | [rH1](/spec/streaming/#rh1) |
+| `OpenAndFill` and the batch call over its history | bit-identical, as rH3 defines | [rH3](/spec/streaming/#rh3) |
+| `Peek` and the next `Update` with the same bar | bit-identical | [rH4](/spec/streaming/#rh4) |
+| a `Clone` and its original | the same value and range | [rH8](/spec/streaming/#rh8) |
+| a default sentinel and the explicit default | bit-identical | [rP3](/spec/inputs-outputs/#rp3) |
+| an output in place on its input, and in a separate buffer | bit-identical | [rW7](/spec/inputs-outputs/#rw7) |
+| a declinable output declined, and supplied | the other outputs bit-identical | [rW5](/spec/inputs-outputs/#rw5) |
+| a C `float` input, and the `double` call on its widened values | bit-identical | [rP4](/spec/inputs-outputs/#rp4) |
+| the same call on two machines | as [across machines](/spec/versions/#machines) describes | |
+| the same bar from batch calls with different `startIdx` | not bit-identical in general | [different starts](/spec/lookback/#start) |
 
 ## Releases {#releases}
 
-<a id="v1"></a>**V1** Within one ABI generation N (the N of the soname `libta-lib.so.N`; the table below shows it on each platform), no function or callback signature, struct layout, typedef, enum value or `TA_` constant that a release shipped in the installed C headers is removed or changed, except that `TA_MATYPE_MAX` and `TA_FUNC_UNST_COUNT` follow their enums ([V3](/spec/versions/#v3)). A release that removes or changes one starts a new N; additions keep it. Deprecated names are part of that surface and keep compiling and linking. V1 covers declarations, not values ([not covered](/spec/versions/#not-covered)). `TA_LIB_SOURCES_DIGEST` is outside V1; it changes whenever the sources do. Rust, Java and C# have no ABI generation, and V1 does not apply to them.
+<a id="rv1"></a>**rV1** Within one ABI generation N (the N of the soname `libta-lib.so.N`; the table below shows it on each platform), no function or callback signature, struct layout, typedef, enum value or `TA_` constant that a release shipped in the installed C headers is removed or changed, except that `TA_MATYPE_MAX` and `TA_FUNC_UNST_COUNT` follow their enums ([rV3](/spec/versions/#rv3)). A release that removes or changes one starts a new N; additions keep it. Deprecated names are part of that surface. rV1 covers declarations, not values. `TA_LIB_SOURCES_DIGEST` is outside it; it changes whenever the sources do. Rust, Java and C# have no ABI generation, and rV1 does not apply to them.
 
 | Platform | Carrier | A program built against an earlier release with the same N |
 |---|---|---|
@@ -59,12 +65,6 @@ Neither the optimization level, `-march`, nor `-fno-math-errno` (which CMake and
 | macOS | install name `libta-lib.N.dylib` | links and runs against a later one without rebuilding |
 | Windows | none: the DLL's name carries no N (`ta-lib.dll` under MSVC) | gets no signal at link or load time when N changes; rebuild against the headers of the DLL you ship |
 
-<a id="v2"></a>**V2** No enum member is renumbered, in any backend. A retired member keeps its number under a reserved name (`TA_FUNC_UNST_UNUSED_1` and the like) instead of being deleted. `TA_AllCandleSettings` is pinned at 11 and `TA_FUNC_UNST_ALL` at 65535; neither tracks the number of members. A Rust, Java or C# enum may omit C members; each member it has carries C's number. Reading the number: for `RetCode`, see the [hub](/spec/#failures); for the other enums, Rust `as i32`, Java `value()` on `FuncUnstId` and `ordinal()` on `MAType`, `RangeType` and `CandleSettingType`, C# an `(int)` cast.
+<a id="rv2"></a>**rV2** No enum member is renumbered, in any language. A retired member keeps its number under a reserved name (`TA_FUNC_UNST_UNUSED_1` and the like) instead of being deleted. `TA_AllCandleSettings` is pinned at 11 and `TA_FUNC_UNST_ALL` at 65535; neither tracks the number of members. A Rust, Java or C# enum may omit C members; each member it has carries C's number. Reading the number: for `RetCode`, see the [hub](/spec/#failures); for the other enums, Rust `as i32`, Java `value()` on `FuncUnstId` and `ordinal()` on `MAType`, `RangeType` and `CandleSettingType`, C# an `(int)` cast.
 
-<a id="v3"></a>**V3** A release may add functions, MA types, unstable-period ids, candle settings and return codes. Enumerate functions through the abstraction layer (`TA_ForEachFunc` in C; each language's catalog is in the hub's [abstraction layer](/spec/#abstraction) table), never from a list fixed when your code was written. `TA_MATYPE_MAX` and `TA_FUNC_UNST_COUNT` grow when a member is appended to their enum; how to bound an MA-type value is [I3](/spec/inputs-outputs/#i3). Rust marks `RetCode`, `FuncUnstId`, `MAType`, `RangeType` and `CandleSettingType` `#[non_exhaustive]`, so a `match` on one needs a wildcard arm; give a Java or C# `switch` over them a default branch.
-
-### Not covered {#not-covered}
-
-- **Output values from one release to the next.** No rule is published, and a release can change a function's values behind an unchanged declaration. Validate against the release you ship.
-- **API compatibility of the Rust, Java and C# packages between releases**, beyond V2 and V3. No rule is published.
-- **Which versions and packages exist**: [Install](/install/).
+<a id="rv3"></a>**rV3** A release may add functions, MA types, unstable-period ids, candle settings and return codes, and adding one starts no new N. `TA_MATYPE_MAX` and `TA_FUNC_UNST_COUNT` grow when a member is appended to their enum. Rust marks `RetCode`, `FuncUnstId`, `MAType`, `RangeType` and `CandleSettingType` `#[non_exhaustive]`, so a `match` on one needs a wildcard arm.

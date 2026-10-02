@@ -1,34 +1,56 @@
 ---
 title: Specification
-description: "The exhaustive contract of TA-Lib's C, Rust, Java and C# APIs, for precise AI-agent-driven integration: how a failure reaches the caller, how names fold, and one page per topic."
+description: "The calling contract of TA-Lib's C, Rust, Java and C# APIs, stated rule by rule as a reference for AI-agent-driven integration: how a failure reaches the caller, how names fold, and one page per topic."
 ---
 
-**These are TA-Lib's exhaustive specifications, intended for precise AI-agent-driven integration with TA-Lib, to minimize errors.** They cover the four native APIs (C, Rust, Java, C#). Each rule has one home page, states what the code does, and is written in C's spelling.
+**TA-Lib's calling contract, stated rule by rule for a robust integration. Every rule is enforced by the test suite, so your code can rely on it.**
 
-This page maps that shared vocabulary onto Rust, Java and C#; a rule that introduces a language-specific name gives all four spellings itself. For a first contact, start with the Core API page of your language: [C/C++](/api/), [Rust](/api/rust/), [Java](/api/java/), [C#](/api/csharp/).
+Written as a reference for AI agents integrating TA-Lib. For a lighter introduction written for people, start with the API pages for [C/C++](/api/), [Rust](/api/rust/), [Java](/api/java/) or [C#](/api/csharp/).
+
+The rules cover the four native APIs (C, Rust, Java, C#). Each rule has one home page, states what the code does, and is written in C's spelling. This page maps that shared vocabulary onto Rust, Java and C#; a rule that introduces a language-specific name gives all four spellings itself.
 
 ## Scope {#scope}
 
-- The four native APIs: batch, lookback, display shift, streams, settings, and the abstraction layer, which is specified only in part ([M1](/spec/errors/#m1)).
-- A wrapper keeps its own conventions. ta-lib-python aligns outputs to the input and fills the warm-up with NaN; the native APIs do not ([N2](/spec/inputs-outputs/#n2)).
+- The four native APIs: batch, lookback, display shift, streams, settings, and the abstraction layer, which is specified only in part ([rM1](/spec/errors/#rm1)).
+- A wrapper keeps its own conventions. ta-lib-python aligns outputs to the input and fills the warm-up with NaN; the native APIs do not ([rW3](/spec/inputs-outputs/#rw3)).
 - Published packages and their versions: [Install](/install/).
 - Owned by other pages: [Unstable Period](/api/unstable-period/), [Candlestick Settings](/api/candle-settings/) (model and defaults), streaming in [C](/api/stream/), [Rust](/api/rust/stream/), [Java](/api/java/stream/) and [C#](/api/csharp/stream/), [Numerical Stability](/functions/stability), and the [function pages](/functions/): inputs, outputs in order, parameters (type, default, accepted values), stability category, flags.
 - Every page except the per-function pages in one file: [/llms-full.txt](/llms-full.txt), whose [function index](/functions/) lists and links each function's page; [/llms.txt](/llms.txt) indexes them all. Each page has a Markdown twin, `/spec/index.md` for this one.
 
 ## Rule pages {#reading}
 
-| Page | Covers | Ids |
-|---|---|---|
-| [Errors](/spec/errors/) | return codes, evaluation order, batch tier, messages, abstraction layer | R1 to R5, B1 to B8, B6a, M1, M2 |
-| [Inputs and Outputs](/spec/inputs-outputs/) | index range, inputs, parameters, outputs, aliasing | I1 to I6, O1 to O7, N1 to N4, N8 |
-| [Lookback](/spec/lookback/) | lookback call, display shift, unstable period, candle averaging, period 1, start dependence | L1 to L12 |
-| [Streaming](/spec/streaming/) | bit-identity with batch, every stream call, lifetime | S1 to S7, S6a, U1 to U4, U6a, X1, H1 to H10, N7 |
-| [Settings and Threads](/spec/settings-threads/) | C lifecycle, when a C setting may change, `Core`, setting validation, threads | G1 to G7, T1 to T6, N5, N6 |
-| [Versions and Determinism](/spec/versions/) | bit-identity across languages and machines; releases | D1 to D4, V1 to V3 |
+In the order a caller meets them:
 
-- `<N>` stands for a function's canonical name: `TA_<N>_Open` is `TA_SMA_Open`.
-- An id's anchor is the id in lower case: [/spec/errors/#b5](/spec/errors/#b5). Its number is not its evaluation order (U4 precedes U2): [R2](/spec/errors/#r2). Its meaning is not promised to stay the same across releases yet; that may be settled once the specification is stable.
-- **Current behaviour** marks what today's code does, verified, where no rule is decided. It promises nothing.
+| Page | Covers | Rule families |
+|---|---|---|
+| [Inputs and Outputs](/spec/inputs-outputs/) | what a call takes, what a successful call writes, computing in place | `rP` parameters, `rW` writes |
+| [Lookback](/spec/lookback/) | lookback call, what enters it, display shift, stability from metadata | `rL` lookback |
+| [Streaming](/spec/streaming/) | bit-identity with batch, opening, advancing, accessors | `rH` handle behaviour, `rS` stream opening, `rU` update |
+| [Settings and Threads](/spec/settings-threads/) | C lifecycle and settings, `Core`, setting validation, threads | `rT` settings and threads |
+| [Errors](/spec/errors/) | return codes, batch conditions, abstraction layer | `rE` errors, `rB` batch conditions, `rM` abstraction layer (metadata) |
+| [Versions and Determinism](/spec/versions/) | bit-identity across languages and equivalent calls; releases | `rD` determinism, `rV` versions |
+
+Each page has two kinds of statement:
+
+- **The caller must**: what the calling code has to ensure. Most of it is not checked by the library, so it comes first on every page, and the next section collects the items that fail silently.
+- **A rule**: what TA-Lib does. Every rule is enforced by the test suite. Its id is `r`, the letter of its family and a number, such as `rB5`, and its anchor is the id in lower case: [/spec/errors/#rb5](/spec/errors/#rb5). An id's meaning can change from one release to the next.
+
+`<N>` stands for a function's canonical name: `TA_<N>_Open` is `TA_SMA_Open`.
+
+## What is not detected {#not-detected}
+
+None of these is reported. The caller avoids them, or treats what follows as undefined.
+
+- [A buffer too short, in C](/spec/inputs-outputs/#input-length): read or written past its end. Rust, Java and C# reject it.
+- [NaN or infinity inside an input series](/spec/inputs-outputs/#finite-inputs), or inside the history a stream opens on.
+- [A real input outside ±3e37](/spec/inputs-outputs/#input-domain).
+- [Intermediate overflow](/spec/inputs-outputs/#overflow) on finite input.
+- [Buffers that partially overlap](/spec/inputs-outputs/#no-overlap), in C.
+- [C used before `TA_Initialize`](/spec/settings-threads/#initialize) or after `TA_Shutdown`, or `TA_Initialize` called twice.
+- [A C setting changed](/spec/settings-threads/#idle-settings) while a TA function is running or a stream is open.
+- [Two threads on one stream handle](/spec/settings-threads/#one-writer), or on one parameter holder or builder (in Rust, the compiler rejects it).
+- [C's unstable-period getter](/spec/settings-threads/#rt4) given a wildcard or unknown id: it returns 0.
+- [The state after an allocation failure](/spec/errors/#stop-on-alloc).
 
 ## Names in each language {#names}
 
@@ -62,12 +84,12 @@ Every function has this surface; in Rust, Java and C# the calls are methods of a
 | integer output | `int[]` | `&mut [i32]` | `int[]` | `Span<int>` |
 | integer, real parameter | `int`, `double` | `i32`, `f64` | `int`, `double` | `int`, `double` |
 | MA-type parameter | `TA_MAType` | `MAType` | `MAType` | `MAType` |
-| absent ([B4](/spec/errors/#b4)) | `NULL` | not expressible | `null` | a `null` array becomes an empty span |
+| absent ([rB4](/spec/errors/#rb4)) | `NULL` | not expressible | `null` | a `null` array becomes an empty span |
 
 | Type | C | Rust | Java | C# |
 |---|---|---|---|---|
 | import | `ta_libc.h` | crate `ta_lib` | `io.github.talib` | `TALib` |
-| settings: default, builder | process globals ([T2](/spec/settings-threads/#t2)) | `Core::new()`, `Core::builder()` | `Core.DEFAULT`, `Core.builder()` | `Core.Default`, `Core.Builder()` |
+| settings: default, builder | process-wide ([settings](/spec/settings-threads/#idle-settings)) | `Core::new()`, `Core::builder()` | `Core.DEFAULT`, `Core.builder()` | `Core.Default`, `Core.Builder()` |
 | output range | `outBegIdx`, `outNBElement` | `OutRange { beg_idx, count }`, `EMPTY`, `is_empty()` | `OutRange(begIdx, count)`, `EMPTY`, `isEmpty()` | `OutRange(BegIdx, Count)`, `Empty`, `IsEmpty` |
 
 Setters per language: [Unstable Period](/api/unstable-period/), [Candlestick Settings](/api/candle-settings/). C has no public candle-setting type: a setting is the four arguments of `TA_SetCandleSettings`.
@@ -87,13 +109,13 @@ Constants: C prefixes `TA_` (`TA_INDEX_MAX`); Rust, Java and C# hold them on `Co
 | Constant | Value |
 |---|---|
 | `INDEX_MAX` | 100000000, the largest index |
-| `REAL_DEFAULT` | -4e37, selects a real parameter's default ([N3](/spec/inputs-outputs/#n3)) |
+| `REAL_DEFAULT` | -4e37, selects a real parameter's default ([rP3](/spec/inputs-outputs/#rp3)) |
 | `INTEGER_DEFAULT` | `INT_MIN`, selects an integer parameter's default |
-| `REAL_MIN`, `REAL_MAX` | -3e37, 3e37 ([I4](/spec/inputs-outputs/#i4)) |
+| `REAL_MIN`, `REAL_MAX` | -3e37, 3e37 ([input domain](/spec/inputs-outputs/#input-domain)) |
 
 ### Abstraction layer {#abstraction}
 
-It describes every function at run time (inputs, outputs, each optional parameter's default and range, flags) and runs its double-precision batch call. Its flags do not give the stability category: [Lookback](/spec/lookback/#start).
+It describes every function at run time (inputs, outputs, each optional parameter's default and range, flags) and runs its double-precision batch call. What its flags say about numerical stability: [Lookback](/spec/lookback/#metadata).
 
 | | C `ta_abstract.h` | Rust `ta_lib::abstract_api` | Java `io.github.talib.metadata` | C# `TALib.Metadata` |
 |---|---|---|---|---|
@@ -114,30 +136,27 @@ It describes every function at run time (inputs, outputs, each optional paramete
 
 | Failure | C | Rust | Java | C# |
 |---|---|---|---|---|
-| carrier, code (messages: [R5](/spec/errors/#r5)) | returned `TA_RetCode` | `Err(RetCode)` | an exception implementing `TALibFailure`; `retCode()` | an exception implementing `ITALibFailure`; `RetCode` |
+| carrier, code | returned `TA_RetCode` | `Err(RetCode)` | an exception implementing `TALibFailure`; `retCode()` | an exception implementing `ITALibFailure`; `RetCode` |
 | C's number | the value | `as_c_int()` | `asCInt()` | `(int)` cast |
-| lookback ([L1](/spec/lookback/#l1)) | `-1` | `Err(RetCode::BadParam)` | `-1` | `-1` |
-| display shift ([L12](/spec/lookback/#l12)) | `INT_MIN` | `Err(RetCode::BadParam)` | `Integer.MIN_VALUE` | `int.MinValue` |
+| lookback ([rL2](/spec/lookback/#rl2)) | `-1` | `Err(RetCode::BadParam)` | `-1` | `-1` |
+| display shift ([rL11](/spec/lookback/#rl11)) | `INT_MIN` | `Err(RetCode::BadParam)` | `Integer.MIN_VALUE` | `int.MinValue` |
 
-One row per function-tier code; `A : B` means `A` extends the platform type `B`, so a `catch` of `B` works.
+One row per code a function call can report; `A : B` means `A` extends the platform type `B`, so a `catch` of `B` works.
 
 | Code | Rust | Java | C# |
 |---|---|---|---|
 | `TA_BAD_PARAM` (2) | `BadParam` | `TALibArgumentException : IllegalArgumentException` | `TALibArgumentException : ArgumentException` |
 | `TA_OUT_OF_RANGE_START_INDEX` (12) | `OutOfRangeStartIndex` | `TALibIndexException : IndexOutOfBoundsException` | `TALibArgumentOutOfRangeException : ArgumentOutOfRangeException` |
-| `TA_OUT_OF_RANGE_END_INDEX` (13) | `OutOfRangeEndIndex` | `TALibIndexException` | `TALibArgumentOutOfRangeException`; `TALibArgumentException` from `Update`, `Advance` ([U4](/spec/streaming/#u4)) |
+| `TA_OUT_OF_RANGE_END_INDEX` (13) | `OutOfRangeEndIndex` | `TALibIndexException` | `TALibArgumentOutOfRangeException`; `TALibArgumentException` from `Update`, `Advance` ([rU4](/spec/streaming/#ru4)) |
 | `TA_INSUFFICIENT_HISTORY` (17) | `InsufficientHistory` | `InsufficientHistoryException : TALibArgumentException` | `InsufficientHistoryException : TALibArgumentException` |
-| `TA_INTERNAL_ERROR` (5000, [B8](/spec/errors/#b8)) | `InternalError` | `TALibStateException : IllegalStateException` | `TALibInvalidOperationException : InvalidOperationException` |
-| `TA_ALLOC_ERR` (3) | `AllocErr`, never returned ([B7](/spec/errors/#b7)) | never thrown | never thrown |
+| `TA_INTERNAL_ERROR` (5000, [rB9](/spec/errors/#rb9)) | `InternalError` | `TALibStateException : IllegalStateException` | `TALibInvalidOperationException : InvalidOperationException` |
+| `TA_ALLOC_ERR` (3) | `AllocErr`, never returned ([rB8](/spec/errors/#rb8)) | never thrown | never thrown |
 
-C# sets `ParamName` of an index exception to `startIdx` or `endIdx` in batch, and to the first input series in an opener.
+Numbering: [rV2](/spec/versions/#rv2).
 
-Rust's and Java's `RetCode` hold exactly `TA_SUCCESS` and these codes; C#'s also holds `InputNotAllInitialize` (10) and `OutputNotAllInitialize` (11). Numbering: [V2](/spec/versions/#v2).
-
-Refusals outside the function tier:
+A refused setting:
 
 | Refusal | C | Rust | Java | C# |
 |---|---|---|---|---|
-| setter ([G1](/spec/settings-threads/#g1)) | returns `TA_BAD_PARAM` | `build()` returns `Err(RetCode::BadParam)` ([G7](/spec/settings-threads/#g7)) | throws `IllegalArgumentException` (`NullPointerException` on null), no code | throws `ArgumentOutOfRangeException`, no code |
-| getter ([G3](/spec/settings-threads/#g3)) | cannot refuse | returns `Err(RetCode::BadParam)` | as the setter | as the setter |
-| abstraction layer's own, current behaviour | a returned [code](/spec/errors/#return-codes) | `Err(RetCode::BadParam)`; lookup returns `None` | `IllegalArgumentException`, no code; lookup returns `null` | .NET exceptions, no code; `TryCall` returns a code instead |
+| setter ([rT2](/spec/settings-threads/#rt2)) | returns `TA_BAD_PARAM` | `build()` returns `Err(RetCode::BadParam)` ([rT8](/spec/settings-threads/#rt8)) | throws `IllegalArgumentException` (`NullPointerException` on null), no code | throws `ArgumentOutOfRangeException`, no code |
+| getter ([rT4](/spec/settings-threads/#rt4)) | cannot refuse | returns `Err(RetCode::BadParam)` | as the setter | as the setter |

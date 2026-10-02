@@ -120,7 +120,7 @@ impl Registry {
 
     /// Which of an indicator's outputs are `nullable` — index-aligned with
     /// [`Self::callee_outputs`], empty if unknown. A cross-call may hand `NULL`
-    /// to a slot only where this is true (rule B6a).
+    /// to a slot only where this is true (rule rB7).
     pub(crate) fn callee_out_nullable(&self, key: &str) -> &[bool] {
         self.callee_sigs.get(key).map_or(&[][..], |s| s.out_nullable.as_slice())
     }

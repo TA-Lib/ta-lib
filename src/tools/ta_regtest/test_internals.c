@@ -168,7 +168,7 @@ ErrorNumber test_internals( void )
    return TA_TEST_PASS; /* Success. */
 }
 
-/* Rule S7: a stream opened on fewer than `lookback + 1` bars reports
+/* Rule rS8: a stream opened on fewer than `lookback + 1` bars reports
  * TA_INSUFFICIENT_HISTORY -- the library's one RECOVERABLE condition.
  *
  * It is worth its own code, and its own probe, because it is the only failure a
@@ -195,8 +195,8 @@ ErrorNumber test_internals( void )
  * against a stream that answered TA_INSUFFICIENT_HISTORY for everything:
  * ONE MORE BAR must succeed (so the rejection is about the length), and a
  * rejection that is NOT about the length must keep its OWN code -- TA_BAD_PARAM
- * for a spoiled parameter, and for CDLDOJI, which has none to spoil, S1's
- * TA_OUT_OF_RANGE_START_INDEX. Either way the point is that S7's code did not
+ * for a spoiled parameter, and for CDLDOJI, which has none to spoil, rS1's
+ * TA_OUT_OF_RANGE_START_INDEX. Either way the point is that rS8's code did not
  * simply swallow every other rejection this tier owns.
  */
 static int shShort, shControl;
@@ -240,7 +240,7 @@ static int shUpper, shEmpty;
       if( rc__ != (otherCode) )                                                \
       {                                                                        \
          printf( "\nFailed: %s bad argument returned %d, expected "             \
-                 "%d -- S7's code must not swallow the others\n",              \
+                 "%d -- rS8's code must not swallow the others\n",              \
                  name, (int)rc__, (int)(otherCode) );                          \
          return TA_STREAM_SHORT_HISTORY_CONTROL;                               \
       }                                                                        \
@@ -331,7 +331,7 @@ static ErrorNumber testStreamShortHistory( void )
                 TA_CDLDOJI_Open( &st, bars, bars, bars, bars, lb, &v ),
                 TA_CDLDOJI_Open( &st, bars, bars, bars, bars, lb + 1, &v ),
                 /* No optional parameter to spoil: an empty history is the
-                 * other rejection this tier owns (rule S1). */
+                 * other rejection this tier owns (rule rS1). */
                 TA_CDLDOJI_Open( &st, bars, bars, bars, bars, 0, &v ),
                 TA_OUT_OF_RANGE_START_INDEX,
                 TA_CDLDOJI_Close( st ) );
@@ -390,8 +390,8 @@ static ErrorNumber testStreamShortHistory( void )
                 TA_SMA_Close( st ) );
    }
 
-   /* Rule S1, the LOWER half of the history bound: an empty history is
-    * TA_OUT_OF_RANGE_START_INDEX (https://ta-lib.org/spec/streaming/#s1).
+   /* Rule rS1, the LOWER half of the history bound: an empty history is
+    * TA_OUT_OF_RANGE_START_INDEX (https://ta-lib.org/spec/streaming/#rs1).
     *
     * What is worth the probe is the ORDER, not the code alone. The pair is
     * evaluated ahead of every presence check, so a call that is BOTH an absent
@@ -420,7 +420,7 @@ static ErrorNumber testStreamShortHistory( void )
       cases[1].rc   = TA_SMA_OpenAndFill( &sst, bars, 0, 30, &beg, &nb, out );
       cases[2].name = "TA_SMA_Open(historyLen=-1)";
       cases[2].rc   = TA_SMA_Open( &sst, bars, -1, 30, &v );
-      /* The order claim: each of these is also an S4 rejection. */
+      /* The order claim: each of these is also an rS4 rejection. */
       cases[3].name = "TA_SMA_Open(historyLen=0, outReal=NULL)";
       cases[3].rc   = TA_SMA_Open( &sst, bars, 0, 30, NULL );
       cases[4].name = "TA_SMA_OpenAndFill(historyLen=0, outBegIdx=NULL)";
@@ -457,7 +457,7 @@ static ErrorNumber testStreamShortHistory( void )
       shEmpty++;
 
       /* Controls. A history of exactly one bar is inside the domain -- it is
-       * S7's business, not S1's -- and the handle still answers first. */
+       * rS8's business, not rS1's -- and the handle still answers first. */
       if( TA_SMA_Open( &sst, bars, 1, 30, &v ) != TA_INSUFFICIENT_HISTORY )
       {
          printf( "\nFailed: a one-bar history did not reach the warm-up check\n" );
@@ -471,7 +471,7 @@ static ErrorNumber testStreamShortHistory( void )
       }
    }
 
-   /* Rule S2, the other half of the history bound: `historyLen - 1` is the
+   /* Rule rS2, the other half of the history bound: `historyLen - 1` is the
     * implied `endIdx`, so a history longer than INDEX_MAX + 1 leaves the index
     * domain. Only C can be probed cheaply -- it takes `historyLen` as a bare
     * `int`, so the rejection answers before a bar is read; the other three
@@ -530,7 +530,7 @@ static ErrorNumber testStreamShortHistory( void )
    return freeLib();
 }
 
-/* Rule B4: a required argument that was not supplied is TA_BAD_PARAM.
+/* Rule rB4: a required argument that was not supplied is TA_BAD_PARAM.
  *
  * The two range out-parameters are required arguments, and they were the one
  * pair the batch prologue never checked -- a NULL `outBegIdx` or `outNBElement`
@@ -540,19 +540,19 @@ static ErrorNumber testStreamShortHistory( void )
  * and every wrapper hand the pair real pointers, so no value gate reaches the
  * call at all.
  *
- * The order between B4 and B3 (an out-of-domain parameter) is NOT observable
+ * The order between rB4 and rB3 (an out-of-domain parameter) is NOT observable
  * from here -- both answer TA_BAD_PARAM. It is pinned structurally, over the
  * whole corpus, by `c_batch_prologue_orders_parameters_before_presence` in
  * ta_codegen's own suite.
  *
- * One case per distinct emission shape, matching the S7 probe above: a plain
+ * One case per distinct emission shape, matching the rS8 probe above: a plain
  * transcribed body (SMA, plus its float twin, which is a separate emission), a
  * composed multi-output (BBANDS), the dispatch tier (MA), the period bank
  * (MAVP), a candlestick with four price legs and an integer output (CDLDOJI),
  * a candlestick leg the body never indexes (CDL3OUTSIDE, CDLHIKKAKE -- #260),
  * and a nullable output (MAMA), which is the control for what "required" means.
  *
- * Rule S4 rides along at the end: it is this rule plus the handle, over the
+ * Rule rS4 rides along at the end: it is this rule plus the handle, over the
  * same argument shapes, so the streaming openers are driven from here rather
  * than from a gate of their own.
  */
@@ -684,8 +684,8 @@ static ErrorNumber testBatchArgumentContract( void )
    /* A price leg the algorithm never INDEXES is a required argument all the
     * same (#260). CDL3OUTSIDE reads open and close only, CDLHIKKAKE everything
     * but open; C has always rejected a NULL there, and Rust, Java and C# used
-    * to accept it. Without these, B4 on a leg the algorithm never reads
-    * (https://ta-lib.org/spec/errors/#b4) is asserted from the source and
+    * to accept it. Without these, rB4 on a leg the algorithm never reads
+    * (https://ta-lib.org/spec/errors/#rb4) is asserted from the source and
     * executed nowhere. */
    BAC_ACCEPT( "TA_CDL3OUTSIDE",
                TA_CDL3OUTSIDE( 0, 251, bars, bars, bars, bars, &beg, &nb, outI ) );
@@ -698,7 +698,7 @@ static ErrorNumber testBatchArgumentContract( void )
    BAC_REJECT( "TA_CDLHIKKAKE(inOpen=NULL)",
                TA_CDLHIKKAKE( 0, 251, NULL, bars, bars, bars, &beg, &nb, outI ) );
 
-   /* Rule B6a: a NULLABLE output is not a required argument. Dropping it is
+   /* Rule rB7: a NULLABLE output is not a required argument. Dropping it is
     * legal, and that is what keeps the rejections above about absence rather
     * than about NULL. The required half of the same call still answers
     * TA_BAD_PARAM. */
@@ -715,7 +715,7 @@ static ErrorNumber testBatchArgumentContract( void )
     * declined call has to reproduce the supplied one, value for value, on the
     * output it DID ask for, and leave the buffer it did not alone.
     *
-    * The canary above the produced count is the other half: rule N2 says only
+    * The canary above the produced count is the other half: rule rW3 says only
     * the reported range is written, and a guard that leaked a store past its
     * own condition would land there. */
    {
@@ -763,13 +763,13 @@ static ErrorNumber testBatchArgumentContract( void )
       bacAccept += 2;
    }
 
-   /* Rule S4 is B4 plus one argument: the handle. The streaming openers take
+   /* Rule rS4 is rB4 plus one argument: the handle. The streaming openers take
     * the same declared inputs and outputs as the batch call, so rather than a
-    * suite of its own, B4's shapes are re-driven through `Open` and
+    * suite of its own, rB4's shapes are re-driven through `Open` and
     * `OpenAndFill` here. What is new is the handle, `OpenAndFill`'s own range
     * out-parameters, and the fact that a rejected open must leave no handle.
     *
-    * Counted separately: sharing B4's counters would let a deleted S4 case
+    * Counted separately: sharing rB4's counters would let a deleted rS4 case
     * hide behind a batch one. */
    {
       TA_SMA_Stream         *sst = NULL;
@@ -783,7 +783,7 @@ static ErrorNumber testBatchArgumentContract( void )
       S4_REJECT( "TA_SMA_OpenAndFill(stream=NULL)",
                  TA_SMA_OpenAndFill( NULL, bars, 252, 30, &beg, &nb, outA ) );
 
-      /* B4's shapes, through the openers. */
+      /* rB4's shapes, through the openers. */
       S4_REJECT( "TA_SMA_Open(inReal=NULL)",
                  TA_SMA_Open( &sst, NULL, 252, 30, &v ) );
       S4_REJECT( "TA_SMA_Open(outReal=NULL)",
@@ -814,7 +814,7 @@ static ErrorNumber testBatchArgumentContract( void )
       }
       s4Reject++;
 
-      /* Controls. The nullable output is B6a's analogue: what the rejections
+      /* Controls. The nullable output is rB7's analogue: what the rejections
        * above reject is absence, not NULL. */
       S4_ACCEPT( "TA_SMA_Open", TA_SMA_Open( &sst, bars, 252, 30, &v ) );
       if( sst ) { TA_SMA_Close( sst ); sst = NULL; }
@@ -832,8 +832,8 @@ static ErrorNumber testBatchArgumentContract( void )
       if( cst ) { TA_CDL3OUTSIDE_Close( cst ); cst = NULL; }
    }
 
-   /* Rule S6 on a history that fills nothing: one buffer passed as two outputs
-    * is still one buffer. The control holds the outputs apart and answers S7,
+   /* Rule rS6 on a history that fills nothing: one buffer passed as two outputs
+    * is still one buffer. The control holds the outputs apart and answers rS8,
     * so the rejection is the alias guard's and not the history's. The batch
     * half is the sub-lookback leg of test_abstract.c's alias sweep. */
    {
@@ -864,7 +864,7 @@ static ErrorNumber testBatchArgumentContract( void )
       s6Probe++;
    }
 
-   /* Rule U6a: a nullable output may be declined at Update too, and the choice
+   /* Rule rU5: a nullable output may be declined at Update too, and the choice
     * is the CALL's -- neither matching the opener's nor recorded on the handle.
     * All four open/update combinations compute the same numbers.
     *
@@ -902,7 +902,7 @@ static ErrorNumber testBatchArgumentContract( void )
           TA_MAMA_OutRange( st, &begRef, &nbRef ) != TA_SUCCESS ||
           TA_MAMA_Peek( st, bars[251], &rpm, &rpf ) != TA_SUCCESS )
       {
-         printf( "\nFailed: the U6a oracle did not run\n" );
+         printf( "\nFailed: the rU5 oracle did not run\n" );
          if( st ) TA_MAMA_Close( st );
          return TA_BATCH_ARG_CONTROL;
       }
@@ -912,7 +912,7 @@ static ErrorNumber testBatchArgumentContract( void )
       {
          if( refM[k] == U6A_CANARY || refF[k] == U6A_CANARY )
          {
-            printf( "\nFailed: the U6a oracle did not write [%d]\n", k );
+            printf( "\nFailed: the rU5 oracle did not write [%d]\n", k );
             return TA_BATCH_ARG_CONTROL;
          }
       }
@@ -1012,7 +1012,7 @@ static ErrorNumber testBatchArgumentContract( void )
          if( TA_MAMA_OpenAndFill( &alt, bars, 252, 0.5, 0.05, &beg, &nb, outA, outB ) != TA_SUCCESS ||
              TA_MAMA_OpenAndFill( &altRef, bars, 252, 0.5, 0.05, &beg, &nb, outA, outB ) != TA_SUCCESS )
          {
-            printf( "\nFailed: the alternating U6a opens did not run\n" );
+            printf( "\nFailed: the alternating rU5 opens did not run\n" );
             if( alt ) TA_MAMA_Close( alt );
             if( altRef ) TA_MAMA_Close( altRef );
             return TA_BATCH_ARG_CONTROL;
@@ -1071,7 +1071,7 @@ static ErrorNumber testBatchArgumentContract( void )
 
          if( TA_MAMA_OpenAndFill( &st, bars, 252, 0.5, 0.05, &beg, &nb, outA, outB ) != TA_SUCCESS )
          {
-            printf( "\nFailed: the U6a peek open did not run\n" );
+            printf( "\nFailed: the rU5 peek open did not run\n" );
             return TA_BATCH_ARG_CONTROL;
          }
          if( TA_MAMA_Peek( st, stepBars[0], &peekBothM, &peekBothF ) != TA_SUCCESS ||
@@ -1096,7 +1096,7 @@ static ErrorNumber testBatchArgumentContract( void )
        * and, like every rejection, it counts no bar. */
       if( TA_MAMA_OpenAndFill( &st, bars, 252, 0.5, 0.05, &beg, &nb, outA, outB ) != TA_SUCCESS )
       {
-         printf( "\nFailed: the U6a control open did not run\n" );
+         printf( "\nFailed: the rU5 control open did not run\n" );
          return TA_BATCH_ARG_CONTROL;
       }
       TA_MAMA_OutRange( st, &beg2, &nbBefore );

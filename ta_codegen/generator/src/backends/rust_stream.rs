@@ -20,7 +20,7 @@
 //!   `&self` and the handle `Sync` — and no buffer is copied.
 //! - Drop replaces Close; RAII replaces every OOM-unwind ladder.
 //! - `historyLen` is the FIRST input slice's length: empty is
-//!   `Err(OutOfRangeStartIndex)` (rule S1), and a multi-input open additionally
+//!   `Err(OutOfRangeStartIndex)` (rule rS1), and a multi-input open additionally
 //!   requires the rest to match that length (`Err(BadParam)` otherwise).
 
 use std::cell::Cell;
@@ -750,12 +750,12 @@ fn emit_open_internal_wrapper_named(
     let _ = writeln!(o, "    }}\n");
 }
 
-/// Rule S5 — the output capacity — at a PUBLIC `OpenAndFill`, with the index
+/// Rule rS5 — the output capacity — at a PUBLIC `OpenAndFill`, with the index
 /// pair it has to be read after.
 ///
 /// Each output must hold `historyLen - lookback` values
-/// (<https://ta-lib.org/spec/streaming/#s5>). The `saturating_sub` is for the
-/// frame's own sake: S7 has not run yet here, and a short history must reach it
+/// (<https://ta-lib.org/spec/streaming/#rs5>). The `saturating_sub` is for the
+/// frame's own sake: rS8 has not run yet here, and a short history must reach it
 /// rather than be answered as a capacity fault.
 ///
 /// **The PUBLIC frame, never `<n>_open_and_fill_internal`.** That seam takes an
@@ -765,10 +765,10 @@ fn emit_open_internal_wrapper_named(
 /// proved those destinations.
 ///
 /// `<N>_Lookback` does its own default substitution and range validation, so the
-/// one call buys S3 and the width together — the same trick the batch entry
+/// one call buys rS3 and the width together — the same trick the batch entry
 /// point plays.
 ///
-/// **S5's input half comes first**: the core makes the test too, but only after
+/// **rS5's input half comes first**: the core makes the test too, but only after
 /// this one would have answered, so an input series shorter than the history
 /// would read as an output-capacity fault. Each input must equal the history's
 /// length, not merely reach it.
@@ -800,7 +800,7 @@ fn open_fill_capacity_guards(func: &FuncDef, with_pair: bool) -> String {
     let _ = writeln!(s, "        let _guardOutLen = {first}.len().saturating_sub(_guardLb);");
     let nullable = super::common::nullable_output_names(func);
     for out in &func.outputs {
-        // A declined output has no capacity to check (rule B6a on this tier).
+        // A declined output has no capacity to check (rule rB7 on this tier).
         let cond = if nullable.contains(&out.name) {
             format!("{}.as_deref().is_some_and(|o| o.len() < _guardOutLen)", out.name)
         } else {
@@ -816,7 +816,7 @@ fn open_fill_capacity_guards(func: &FuncDef, with_pair: bool) -> String {
 
 /// `open_and_fill`: the fill wrapper onto `<n>_open_impl`. It owns the argument
 /// contract for the only path that writes caller-owned slices: the output
-/// capacity (S5). In-place is forbidden not because the fill would compute the
+/// capacity (rS5). In-place is forbidden not because the fill would compute the
 /// wrong answer, but because the margin between its writes and the capture's
 /// seed reads is unasserted.
 fn emit_open_and_fill_wrapper(
@@ -1405,11 +1405,11 @@ fn finite_bar_check(func: &FuncDef, indent: &str) -> String {
     )
 }
 
-/// Rule U4 — the opener's index-pair check read on a live handle, one bar at a
-/// time. Why a sub-handle cannot answer it before its parent: rationale U4 in
+/// Rule rU4 — the opener's index-pair check read on a live handle, one bar at a
+/// time. Why a sub-handle cannot answer it before its parent: rationale rU4 in
 /// `docs/error-handling-spec.md`.
 ///
-/// `>` and not `>=`: an opener may legally take `INDEX_MAX + 1` bars (rule S2),
+/// `>` and not `>=`: an opener may legally take `INDEX_MAX + 1` bars (rule rS2),
 /// so a handle can be born holding the last bar in the domain and it is the NEXT
 /// one that has nowhere to go.
 fn out_range_ceiling_guard(indent: &str) -> String {
@@ -1995,7 +1995,7 @@ fn map_return_code(v: &str) -> String {
         // mapping runs BEFORE the cleanup sequence, so the wrapped form is what
         // `ir_cleanup` then rewrites at a folded guard: the surviving
         // `|| count == 0` half used to answer `Err(RetCode::Success)`, and an
-        // opener that produced nothing is rule S7 (issue #271 item 4).
+        // opener that produced nothing is rule rS8 (issue #271 item 4).
         local if local.starts_with("retCode") => format!("Err({local})"),
         other => panic!("stream open: unmapped return code `{other}`"),
     }
@@ -2162,7 +2162,7 @@ fn emit_open_sig(o: &mut String, func: &FuncDef, mode: OutMode, enums: &HashMap<
             let outs = open_out_params(func, mode);
             let _ = writeln!(
                 o,
-                "    /// [`Core::{sn}_open`] that also fills the output array(s) bit-identically to\n    /// [`Core::{sn}`] over `0..len` in the same single pass, and reports the range it\n    /// wrote as the [`OutRange`] beside the handle.\n    ///\n    /// # Errors\n    ///\n    /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`\n    /// values — the batch tier's sizing rule, checked here as it is there (rule S5).\n    /// Everything [`Core::{sn}_open`] rejects is rejected here too."
+                "    /// [`Core::{sn}_open`] that also fills the output array(s) bit-identically to\n    /// [`Core::{sn}`] over `0..len` in the same single pass, and reports the range it\n    /// wrote as the [`OutRange`] beside the handle.\n    ///\n    /// # Errors\n    ///\n    /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`\n    /// values — the batch tier's sizing rule, checked here as it is there (rule rS5).\n    /// Everything [`Core::{sn}_open`] rejects is rejected here too."
             );
             // The example is the summary's own claim, made runnable.
             if let Some(doctest) = open_and_fill_doctest(func, enums) {
@@ -2208,7 +2208,7 @@ fn emit_open_sig(o: &mut String, func: &FuncDef, mode: OutMode, enums: &HashMap<
 /// One output parameter per declared output, in declaration order.
 ///
 /// A `nullable` output is `Option<&mut [T]>`, the spelling the batch tier took
-/// in #262 and the one rule O5 pins: Rust can say "declined" distinctly from
+/// in #262 and the one rule rW5 pins: Rust can say "declined" distinctly from
 /// "empty", so it does. The `mut` binding rides the Core tier alone — the one
 /// that renders a body and re-borrows with `as_deref_mut()`.
 fn open_out_params(func: &FuncDef, mode: OutMode) -> String {
@@ -2229,9 +2229,9 @@ fn open_out_params(func: &FuncDef, mode: OutMode) -> String {
 /// The open validation head: the implied index pair, the equal-length input
 /// check, then optional-param validation. Shared by every tier.
 ///
-/// S1 and S2 run first, ahead of every other check, answering
+/// rS1 and rS2 run first, ahead of every other check, answering
 /// `OutOfRangeStartIndex` and `OutOfRangeEndIndex`
-/// (`https://ta-lib.org/spec/streaming/#s1`). `historyLen` is the FIRST input's
+/// (`https://ta-lib.org/spec/streaming/#rs1`). `historyLen` is the FIRST input's
 /// length: a later input being empty is a length disagreement, which is
 /// `BadParam` like every other argument fault.
 fn emit_open_validation_head(o: &mut String, func: &FuncDef, mode: OutMode, enums: &HashMap<String, EnumDef>) {
@@ -2254,8 +2254,8 @@ fn emit_open_validation_head(o: &mut String, func: &FuncDef, mode: OutMode, enum
         o,
         "        if {first}.len() > Self::INDEX_MAX + 1 {{\n            return Err(RetCode::OutOfRangeEndIndex);\n        }}"
     );
-    // Rule S3 before the buffer rules: an out-of-domain parameter is its own
-    // fault, not a length one, and B5/S5 are specified after B3/S3.
+    // Rule rS3 before the buffer rules: an out-of-domain parameter is its own
+    // fault, not a length one, and rB5/rS5 are specified after rB3/rS3.
     for p in &func.optional_inputs {
         o.push_str(&gen_opt_param_validation_with(
             p,
@@ -2278,7 +2278,7 @@ fn emit_open_validation_head(o: &mut String, func: &FuncDef, mode: OutMode, enum
     }
     if mode == OutMode::Fill {
         // This IS the public frame for the two exempt tiers, so it owns the
-        // output capacity (S5) as well — the merged tiers get theirs from
+        // output capacity (rS5) as well — the merged tiers get theirs from
         // `emit_open_and_fill_wrapper`, which is their public frame.
         o.push_str(&open_fill_capacity_guards(func, false));
     }
@@ -2397,7 +2397,7 @@ fn emit_open_region(
     let body: &[Statement] = &folded;
 
     // Scoped to the open body: a declined output's store is wrapped in
-    // `if let Some(..) = ..as_deref_mut()`, rule B6a read on this tier. The step
+    // `if let Some(..) = ..as_deref_mut()`, rule rB7 read on this tier. The step
     // body keeps the empty set — a `<n>_step_impl` writes `&mut f64` scalars, and
     // nothing there is declinable.
     let mut open_ctx = typing.ctx.clone();

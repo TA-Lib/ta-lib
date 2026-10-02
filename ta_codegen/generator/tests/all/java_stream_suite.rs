@@ -333,7 +333,7 @@ fn test_java_ma_dispatch() {
         "the record is gone, not renamed"
     );
     // …and the Discard slot DECLINES the callee's nullable output rather than
-    // materializing a throwaway buffer for it (rule B6a at the opener).
+    // materializing a throwaway buffer for it (rule rB7 at the opener).
     assert!(s.contains("mamaOpenAndFill(inReal, 0.5, 0.05, outReal, null)"));
     assert!(!s.contains("new double[historyLen]"));
     // The identity test runs once, at open, and also covers the

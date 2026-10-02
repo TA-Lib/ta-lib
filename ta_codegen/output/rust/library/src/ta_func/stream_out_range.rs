@@ -317,7 +317,7 @@ fn a_rejected_bar_costs_nothing_and_the_caller_chooses() {
     assert_eq!(s.out_range().count, at.count + 2, "and the handle is still usable");
 }
 
-/// Rule U4, which no feed-driven test can reach: `INDEX_MAX` is 100 million
+/// Rule rU4, which no feed-driven test can reach: `INDEX_MAX` is 100 million
 /// bars, and `advance` is the only call that moves the count without also doing
 /// O(period) work per bar.
 ///

@@ -664,8 +664,8 @@ mod tests {
     /// The distinction is the whole point of the member: a short history means
     /// "send more bars" and is recoverable, while `BadParam` always means the
     /// call itself is wrong. Before it existed, both answered `BadParam` and a
-    /// caller could not tell them apart (rule S7,
-    /// `https://ta-lib.org/spec/streaming/#s7`).
+    /// caller could not tell them apart (rule rS8,
+    /// `https://ta-lib.org/spec/streaming/#rs8`).
     ///
     /// Three arms, because the first alone would pass against a body that
     /// answered `InsufficientHistory` for everything: the second shows one more

@@ -147,7 +147,7 @@ Misuse throws rather than returning a return code:
 | Optional parameter outside its documented range | `TALibArgumentException` |
 | Two outputs sharing one array | `TALibArgumentException` |
 | An array too short for the range requested, including an `endIdx` past the end of the input | `TALibArgumentException` |
-| A null array, other than an output that may be declined ([O5](/spec/inputs-outputs/#o5)) | `TALibArgumentException` |
+| A null array, other than an output that may be declined ([rW5](/spec/inputs-outputs/#rw5)) | `TALibArgumentException` |
 
 Each extends the platform type you would reach for — `TALibIndexException` an
 `IndexOutOfBoundsException`, the rest an `IllegalArgumentException` — so catching

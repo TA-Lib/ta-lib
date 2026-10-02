@@ -532,7 +532,7 @@ public static class StreamApiTest
 
         // A span cannot be null, so a null array arrives as an empty one and
         // there is one condition here, not two: the history is empty, which is
-        // rule S1 -- the implied startIdx of 0 names no bar. It answers B1's
+        // rule rS1 -- the implied startIdx of 0 names no bar. It answers rB1's
         // code, because an opener is a batch call over [0, historyLen - 1].
         CheckThrows<ArgumentOutOfRangeException>(
             () => core.SmaOpen(null!, 14),
@@ -604,7 +604,7 @@ public static class StreamApiTest
     }
 
 
-    /// <summary>Rule B6a at the opener: an empty span declines
+    /// <summary>Rule rB7 at the opener: an empty span declines
     /// <c>outFAMA</c>, and declining changes nothing but the write.</summary>
     /// <remarks>Non-vacuous in three directions. The supplied run is the oracle,
     /// so a fill that stopped computing FAMA when it is declined — the easy way
@@ -653,7 +653,7 @@ public static class StreamApiTest
         _b6a++;
     }
 
-    /// <summary>Rule S5, from both sides. The bound is
+    /// <summary>Rule rS5, from both sides. The bound is
     /// <c>historyLen - lookback</c> — the count the fill actually writes, not
     /// the width of the history — so an exactly-sized output has to be ACCEPTED
     /// and one element shorter REJECTED. Only the pair pins the arithmetic: a
@@ -759,7 +759,7 @@ public static class StreamApiTest
             "each output is bounded separately");
         _s5++;
 
-        // A history too short to produce anything is still S7, whatever the
+        // A history too short to produce anything is still rS8, whatever the
         // output holds: the bound floors at zero rather than going negative.
         CheckThrows<InsufficientHistoryException>(
             () => core.SmaOpenAndFill(closes.AsSpan(0, 29), 30, Span<double>.Empty),
@@ -1014,10 +1014,10 @@ public static class StreamApiTest
 
     /* Non-finite counters, incremented AT the assertion rather than derived
        from the loop, so deleting the assertions inside shows up here. */
-    /* Rule S5's own counter and floor: sharing the non-finite ones would let a
+    /* Rule rS5's own counter and floor: sharing the non-finite ones would let a
        deleted capacity case hide behind a bar-rejection one. */
     private static int _s5;
-    /* Rule B6a at the opener — a declined output, counted apart from S5's. */
+    /* Rule rB7 at the opener — a declined output, counted apart from rS5's. */
     private static int _b6a;
 
     private static int _nfOpen;
@@ -1080,8 +1080,8 @@ public static class StreamApiTest
     /// more useful.</para>
     /// <para>The warm-up history handed to <c>Open</c>/<c>OpenAndFill</c> is
     /// deliberately NOT checked: it is an input array, and the library does not
-    /// scan input arrays. Passing a non-finite one is undefined behaviour (rule I5,
-    /// https://ta-lib.org/spec/inputs-outputs/#i5).</para>
+    /// scan input arrays. Passing a non-finite one is undefined behaviour (see
+    /// https://ta-lib.org/spec/inputs-outputs/#finite-inputs).</para>
     /// <para>Coverage is by stream TIER, not by function count. The check is emitted
     /// from one place, but into the entry points of five different tiers: SMA is
     /// the loop tier, MINUS_DI dual-mode, MA the dispatch tier (including its
@@ -1206,7 +1206,7 @@ public static class StreamApiTest
               + $"({_nfOpen}/{_nfBar}/{_nfState})");
     }
 
-    /* ---- rules U3, H4, H5 and N7, stated absolutely (https://ta-lib.org/spec/streaming/#u3, #h4, #h5, #n7) ---- */
+    /* ---- rules rU3, rH5, rH6 and rH4, stated absolutely (https://ta-lib.org/spec/streaming/#ru3, #rh5, #rh6, #rh4) ---- */
 
     /* Advance counters, one per property, each incremented AT its assertion. */
     private static int _advRejects;
@@ -1501,7 +1501,7 @@ public static class StreamApiTest
             AdvSkipHeld("CDLDOJI", jGot, j.Value);
         }
 
-        Console.WriteLine($"  Rejected-Update advance gate (U3, absolute): {_advRejects} "
+        Console.WriteLine($"  Rejected-Update advance gate (rU3, absolute): {_advRejects} "
             + $"rejection(s) that cost nothing, {_advHolds} untouched value(s), {_advResumes} "
             + $"resumed bar(s), {_advValues} value(s) produced, {_advPeekStills} "
             + $"Peek(s) that moved nothing, {_advSkips} Advance(s), {_advSkipHolds} "
@@ -1517,18 +1517,18 @@ public static class StreamApiTest
               + $"/{_advSkips}/{_advSkipHolds})");
     }
 
-    /* Rule U4 counters, one per property, each incremented AT its assertion. */
+    /* Rule rU4 counters, one per property, each incremented AT its assertion. */
     private static int _u4Ceilings;
     private static int _u4Rejects;
     private static int _u4Holds;
 
-    /// <summary>Rule U4: the last bar a stream can count is <c>IndexMax</c>.</summary>
+    /// <summary>Rule rU4: the last bar a stream can count is <c>IndexMax</c>.</summary>
     /// <remarks>
     /// <para>No feed reaches it — <c>IndexMax</c> is 100 million bars — and
     /// <c>Advance()</c> is the only call that moves the count without O(period) work
     /// per bar.</para>
     /// <para>What this adds over the generator's source-text gate is the throw itself:
-    /// that a refusal carries <c>RetCode.OutOfRangeEndIndex</c> and not U3's
+    /// that a refusal carries <c>RetCode.OutOfRangeEndIndex</c> and not rU3's
     /// <c>BadParam</c>, and that a handle that refuses is one that moved nothing.
     /// The ceiling is on the BAR, <c>BegIdx + Count</c>, not on the count, so the
     /// trip count comes from the range the opener reported.</para>
@@ -1562,13 +1562,13 @@ public static class StreamApiTest
               "a refused call past the ceiling moves nothing");
         _u4Holds++;
 
-        Console.WriteLine($"  Index-domain ceiling gate (U4, absolute): {_u4Ceilings} "
+        Console.WriteLine($"  Index-domain ceiling gate (rU4, absolute): {_u4Ceilings} "
             + $"ceiling(s) reached, {_u4Rejects} refusal set(s), {_u4Holds} unmoved range(s)");
         Check(_u4Ceilings >= 1 && _u4Rejects >= 1 && _u4Holds >= 1,
               "the index-domain ceiling gate ran fewer checks than it was written with");
     }
 
-    /* The code, not the exception type: U3 and U4 are both ArgumentExceptions at
+    /* The code, not the exception type: rU3 and rU4 are both ArgumentExceptions at
        this tier, so a type test would pass on the wrong rule. */
     private static bool RefusesPastTheCeiling(Action a)
     {
@@ -1626,7 +1626,7 @@ public static class StreamApiTest
     /// <summary>Every opener tier names an empty leg or output under its own
     /// <c>"&lt;NAME&gt; &lt;verb&gt;: "</c> prefix.</summary>
     /// <remarks>A span cannot be null, so "absent" is an empty span. The history
-    /// leg is the exception: empty there is rule S1, an index fault.</remarks>
+    /// leg is the exception: empty there is rule rS1, an index fault.</remarks>
     private static void OpenersCheckTheirArguments()
     {
         var core = new Core();
@@ -1659,7 +1659,7 @@ public static class StreamApiTest
         StreamRejects(() => core.MaOpenAndFill(input, 30, MAType.EMA, empty),
             "MaOpenAndFill(outReal empty)", "outReal", "MA openAndFill: outReal has length 0");
 
-        // Rule S3 ahead of the buffer rules.
+        // Rule rS3 ahead of the buffer rules.
         StreamRejects(() => core.SmaOpenAndFill(input, 0, empty),
             "a bad parameter outranks an empty output", null, "SMA openAndFill: bad parameter");
         StreamRejects(() => core.StochOpenAndFill(input, input, input, 0, 3, MAType.SMA, 3, MAType.SMA, output, empty),
@@ -1689,7 +1689,7 @@ public static class StreamApiTest
         StreamAccepts(() => core.BbandsOpen(input, 20, 2.0, 2.0, last), $"BbandsOpen({last})");
     }
 
-    /// <summary>Rule S1 ahead of every other opener check: an empty history is
+    /// <summary>Rule rS1 ahead of every other opener check: an empty history is
     /// an index fault whatever else is wrong with the call.</summary>
     private static void AnEmptyHistoryOutranksAnEmptyArgument()
     {

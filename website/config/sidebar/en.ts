@@ -39,11 +39,11 @@ export const enSidebar = sidebar({
           collapsible: true,
           children: [
             "spec/",
-            "spec/errors/",
             "spec/inputs-outputs/",
             "spec/lookback/",
             "spec/streaming/",
             "spec/settings-threads/",
+            "spec/errors/",
             "spec/versions/",
           ],
         },

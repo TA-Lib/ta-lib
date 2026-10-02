@@ -94,7 +94,7 @@ fn an_inverted_range_is_an_end_index_error() {
         Err(RetCode::OutOfRangeEndIndex)
     );
     // With no series at all it is still the range that is answered, not the
-    // length: B1/B2 sit ahead of the buffer bounds.
+    // length: rB1/rB2 sit ahead of the buffer bounds.
     let none: [f64; 0] = [];
     let mut no_out: [f64; 0] = [];
     assert_eq!(

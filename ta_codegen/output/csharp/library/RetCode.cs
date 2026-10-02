@@ -62,10 +62,10 @@ public enum RetCode
     /// only from the dynamic binder.</summary>
     OutputNotAllInitialize = 11,
     /// <summary>An index outside its domain (<c>TA_OUT_OF_RANGE_START_INDEX</c> = 12):
-    /// <see href="https://ta-lib.org/spec/errors/#b1">B1</see>, <see href="https://ta-lib.org/spec/streaming/#s1">S1</see>.</summary>
+    /// <see href="https://ta-lib.org/spec/errors/#rb1">rB1</see>, <see href="https://ta-lib.org/spec/streaming/#rs1">rS1</see>.</summary>
     OutOfRangeStartIndex = 12,
     /// <summary>An index outside its domain (<c>TA_OUT_OF_RANGE_END_INDEX</c> = 13):
-    /// <see href="https://ta-lib.org/spec/errors/#b2">B2</see>, <see href="https://ta-lib.org/spec/streaming/#s2">S2</see>, <see href="https://ta-lib.org/spec/streaming/#u4">U4</see>.</summary>
+    /// <see href="https://ta-lib.org/spec/errors/#rb2">rB2</see>, <see href="https://ta-lib.org/spec/streaming/#rs2">rS2</see>, <see href="https://ta-lib.org/spec/streaming/#ru4">rU4</see>.</summary>
     OutOfRangeEndIndex = 13,
     /// <summary>A stream opener was given fewer than <c>lookback + 1</c> bars
     /// (<c>TA_INSUFFICIENT_HISTORY</c> = 17) — the library's one recoverable

@@ -605,7 +605,7 @@ public static class MetadataTest
         Check(shortOut == RetCode.BadParam && rShortOut.Count == 0,
             $"TryCall reports an output shorter than the produced count as BadParam ({shortOut})");
         /* Control: an output sized to the count actually produced is enough. The
-           bound is B5's -- endIdx - max(startIdx, lookback) + 1 -- not the width
+           bound is rB5's -- endIdx - max(startIdx, lookback) + 1 -- not the width
            of the requested range, so a caller who allocated by the published
            formula must not be rejected. */
         int lookback = sma.CreateCall().SetOptInput(0, 30).Lookback();

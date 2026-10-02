@@ -1015,10 +1015,10 @@ public class NoPhantomIoTest {
                 // written -- so with zero-length outputs the refusal must still be
                 // the documented exception and never an out-of-bounds. (At a
                 // lookback of 0 the short history is empty, which the opener
-                // rejects one line earlier under rule S1; either refusal proves
+                // rejects one line earlier under rule rS1; either refusal proves
                 // the same thing.)
                 //
-                // S1's refusal is ITSELF an IndexOutOfBoundsException, so the
+                // rS1's refusal is ITSELF an IndexOutOfBoundsException, so the
                 // discriminator is the carried code, not the type: what the
                 // library raises implements TALibFailure, and a write past the
                 // end of a zero-length array does not.
@@ -1225,10 +1225,10 @@ public class NoPhantomIoTest {
               "openAndFill fills historyLen - lookback (" + fillCount + " of "
               + (history.length - lookback) + ")");
         // Rejected rather than faulted, since the public frame checks the
-        // capacity (rule S5). What sweep 4 needs from this leg is that an
+        // capacity (rule rS5). What sweep 4 needs from this leg is that an
         // undersized output does not silently succeed — so the assertion is on
         // the REJECTION, not on which exception carries it. Typing it as an
-        // IndexOutOfBoundsException is what broke when S1 became one.
+        // IndexOutOfBoundsException is what broke when rS1 became one.
         check(rejects(() -> core.smaOpenAndFill(history, 30, new double[fillCount - 1])),
               "an openAndFill output one short of outRange is rejected, so sweep 4 can fail");
     }

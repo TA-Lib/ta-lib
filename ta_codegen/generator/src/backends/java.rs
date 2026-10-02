@@ -111,9 +111,9 @@ pub(crate) struct JavaRenderCtx<'a> {
     /// MA-type structurally and leave this empty.
     pub(crate) matype_map: HashMap<String, String>,
     /// Output parameters the caller may decline with `null` because their .yaml
-    /// marks them `nullable` (rule B6a). Every store into one is wrapped in an
+    /// marks them `nullable` (rule rB7). Every store into one is wrapped in an
     /// `if( outX != null )`. Populated for the batch bodies AND for the stream
-    /// open body, since rule B6a reads the same at both tiers.
+    /// open body, since rule rB7 reads the same at both tiers.
     pub(crate) nullable_outputs: &'a HashSet<String>,
     /// Emit `lastCur_<out> = <value>;` beside every guarded store into a
     /// nullable output. Only the streaming open body wants it: its handle
@@ -777,8 +777,8 @@ fn body_name(base: &str) -> String {
 /// in C and a success here (#260).
 ///
 /// `clampedStart` is `max(startIdx, lookback)`; it throws the parameter rejection
-/// when the lookback signals one, which rule L2 makes exactly the batch tier's own
-/// B3 decision on the same parameters.
+/// when the lookback signals one, which rule rL3 makes exactly the batch tier's own
+/// rB3 decision on the same parameters.
 ///
 /// The `_assertStart > endIdx ||` escape is applied to the OUTPUT bound only. A
 /// range that ends before the lookback produces no values, so any output length will
@@ -799,8 +799,8 @@ fn body_name(base: &str) -> String {
 /// A null array is rejected either way — the length check is conditional, the
 /// contract that an argument exists is not.
 ///
-/// **Order.** The index rules (B1, B2), then the optional parameters (B3), then
-/// the buffers (B4, B5). A null enum is a parameter out of its domain, and its
+/// **Order.** The index rules (rB1, rB2), then the optional parameters (rB3), then
+/// the buffers (rB4, rB5). A null enum is a parameter out of its domain, and its
 /// check has to sit ahead of the `_Lookback` call below, because that is where a
 /// null one is first dereferenced.
 fn gen_argument_checks(func: &FuncDef, canonical: &str, method: &str) -> String {
@@ -844,7 +844,7 @@ fn gen_argument_checks(func: &FuncDef, canonical: &str, method: &str) -> String 
     }
     for output in &func.outputs {
         let name = &output.name;
-        // A nullable output may be declined with `null` (rule B6a): the writes
+        // A nullable output may be declined with `null` (rule rB7): the writes
         // to it are guarded, so there is no length to require. Supplied, it is
         // bounded like any other — "declined" is `null` and nothing else.
         if output.is_nullable() {
@@ -1211,13 +1211,13 @@ fn gen_func_inner(
         // has no correct result, so reject it. Input == output stays allowed.
         // A nullable operand is guarded non-null first — a declined output
         // aliases nothing, and two nulls would otherwise compare equal and
-        // spuriously reject (rule B6a).
+        // spuriously reject (rule rB7).
         //
         // Cross-typed pairs are skipped: a `double[]` and an `int[]` are never
         // the same object, so there is nothing to detect. (`double[] == int[]`
         // is also "incomparable types", but that is not the reason — the stream
         // tier spells the same compare through `(Object)` casts and it is dead
-        // there too.) Rationale B6 in docs/error-handling-spec.md, #262.
+        // there too.) Rationale rB6 in docs/error-handling-spec.md, #262.
         if func.outputs.len() >= 2 {
             let mut pairs: Vec<String> = Vec::new();
             for i in 0..func.outputs.len() {
@@ -1670,7 +1670,7 @@ impl StatementEmitter for JavaStmt<'_> {
         let target_str = render_assign_target(target, self.ctx, self.registry, self.helpers);
         let value_str = render_assign_value(&new_value, self.ctx, self.registry, self.helpers);
         // Writing into a nullable output — guard it so a `null` (declined)
-        // output is skipped (rule B6a). The `outIdx` advance rides the
+        // output is skipped (rule rB7). The `outIdx` advance rides the
         // non-nullable partner's write (see mama.c), so guarding this store is
         // complete.
         if let Some(base) = nullable_target_base(target, self.ctx.nullable_outputs) {
@@ -2000,7 +2000,7 @@ pub(crate) fn render_java_switch_label(label: &str, enums: &HashMap<String, Enum
 }
 
 /// If `target` stores into one of the `nullable` outputs (a `double outX[]` the
-/// caller may pass `null` to decline — rule B6a), return its base name so the
+/// caller may pass `null` to decline — rule rB7), return its base name so the
 /// store can be wrapped in `if( outX != null )`. Matches the array store
 /// `outX[i] = …` and the scalar store `outX = …`; the value side is never
 /// involved.
@@ -2686,7 +2686,7 @@ fn render_cross_indicator_call(
         call_args.push(match a {
             // NULL for a nullable output the caller declines (#125): the callee
             // skips its stores and its public tier skips the length check, so
-            // this is a plain `null` (rule B6a, #262) -- never a throwaway buffer
+            // this is a plain `null` (rule rB7, #262) -- never a throwaway buffer
             // allocated on every call.
             Expr::Var(n) if n == "NULL" => "null".to_string(),
             _ => render_expr(a, ctx, registry, helpers),

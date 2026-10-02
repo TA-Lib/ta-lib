@@ -42,7 +42,7 @@
  *
  *  081626 MF,CC  First version. The streaming tier's non-finite input
  *                rejection.
- *  083026 MF,CC  Rule U3 asserted absolutely, not as a tier equivalence.
+ *  083026 MF,CC  Rule rU3 asserted absolutely, not as a tier equivalence.
  *  090526 MF,CC  A rejection costs nothing; TA_StreamAdvance counts a skipped
  *                bar (#384).
  *  092526 MF,CC  Start from the default unstable periods; a setup failure names
@@ -55,7 +55,7 @@
  *
  * An input ARRAY is never scanned, in either tier: keeping one free of NaN and
  * +/-Inf is the caller's responsibility, and passing a non-finite one is
- * undefined behaviour (rule I5, https://ta-lib.org/spec/inputs-outputs/#i5).
+ * undefined behaviour (https://ta-lib.org/spec/inputs-outputs/#finite-inputs).
  * A scan is a whole extra pass over caller memory the main loop is about to
  * walk again, and folding it into that loop instead would buy a worse
  * contract: a rejection partway through a fill, output half written.
@@ -436,7 +436,7 @@ static ErrorNumber sf_cdldoji( void )
    return TA_TEST_PASS;
 }
 
-/* ---- (d) rule U3 stated ABSOLUTELY: what ONE rejected Update costs ------ */
+/* ---- (d) rule rU3 stated ABSOLUTELY: what ONE rejected Update costs ------ */
 /*
  * Everything above compares one tier against another: (b) holds two handles
  * side by side. That equivalence is SYMMETRIC, so it cannot see a change that
@@ -935,7 +935,7 @@ static ErrorNumber sf_advance( void )
    }
    sfAdvNullRejects++;
 
-   /* Rule U4, which no feed reaches: TA_INDEX_MAX is 100 million bars, and
+   /* Rule rU4, which no feed reaches: TA_INDEX_MAX is 100 million bars, and
     * Advance is the only call that moves the count without O(period) work.
     *
     * The ceiling is on the BAR -- outRangeBegIdx + outRangeCount -- not on the
@@ -979,7 +979,7 @@ static ErrorNumber sf_advance( void )
          TA_SMA_Close( s );
          return TA_STREAM_ADVANCE_NOT_REJECTED;
       }
-      /* Its own compare, not SF_ADV_HELD's: that one feeds U3's floor, and a new
+      /* Its own compare, not SF_ADV_HELD's: that one feeds rU3's floor, and a new
        * axis borrowing an old counter lets the old axis shrink by one. Read
        * before the Peek below, which legitimately writes the slot. */
       if( v != SF_ADV_CANARY )

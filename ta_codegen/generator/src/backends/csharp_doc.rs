@@ -28,13 +28,13 @@ use crate::registry::Registry;
 fn aliasing_exception_text(single_precision: bool) -> &'static str {
     if single_precision {
         "Two outputs overlap or are one array, a zero-length array included \
-         (<see href=\"https://ta-lib.org/spec/errors/#b6\">rule B6</see>), or an output \
+         (<see href=\"https://ta-lib.org/spec/errors/#rb6\">rule rB6</see>), or an output \
          overlaps an input. An output and a real input never share an element type in \
          this overload, so the two can never be the same span: there is no in-place case \
          to allow, and any overlap of their byte ranges is rejected."
     } else {
         "Two outputs overlap or are one array, a zero-length array included \
-         (<see href=\"https://ta-lib.org/spec/errors/#b6\">rule B6</see>), or an output \
+         (<see href=\"https://ta-lib.org/spec/errors/#rb6\">rule rB6</see>), or an output \
          partially overlaps an input. Computing wholly in place (an output that IS an \
          input) is allowed."
     }
