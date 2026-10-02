@@ -442,6 +442,8 @@ typedef enum
   TA_CDLSET_VACUOUS_NO_MOVE          = 1584,
   TA_CDLSET_VACUOUS_NO_SYNC          = 1585,
   TA_CDLSET_NOT_RESTORED             = 1586,
+  TA_CDL_VALUE_SET_FAIL              = 1587,
+  TA_CDL_VALUE_SET_VACUOUS           = 1588,
 
   /* Streaming non-finite input rejection (the boundary contract). */
   TA_STREAM_FINITE_BAR_ACCEPTED      = 1591,

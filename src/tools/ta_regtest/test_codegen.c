@@ -464,10 +464,6 @@ static int check_stream_counter_parity( void )
 
 /* ---- Constants ---- */
 
-#define CODEGEN_EPSILON  1e-6   /* float leg (TA_S_*): single-precision noise */
-/* Float leg: a server's single-precision entry point against its own double
- * one on float-widened inputs. Applied as 1e-9 * max(1, |value|). */
-#define CODEGEN_EPSILON_DOUBLE  1e-9
 #define JSON_BUF_SIZE    (128 * 1024)   /* 128KB: enough for OHLCV inputs */
 #define MAX_OUTPUTS      CODEGEN_MAX_OUTPUTS   /* enforced at startup, issue #352 */
 
@@ -962,11 +958,8 @@ typedef struct {
     double optOverride[SWEEP_MAX_OPT];
 
     /* Float-variant leg: build_json_request adds "use_float":1, routing the
-     * servers through the single-precision TA_S_ API. Comparisons then use
-     * an epsilon widened by epsilonScale (float noise from codegen operation
-     * reordering; 0 means the default scale of 1). */
+     * servers through the single-precision TA_S_ API. */
     int    useFloat;
-    double epsilonScale;
     /* Float leg: when set, build_json_request rounds every input value to float
      * and back to double (serialized with %.17g, exact) so the double-variant
      * baseline and the use_float single-precision leg operate on identical
@@ -1395,7 +1388,7 @@ static void compare_codegen_output_generic(
     }
     else
     {
-        /* Real output comparison (epsilon) */
+        /* Real output comparison */
         char fieldName[64];
         codegen_output_field(fieldName, sizeof(fieldName), p->outputIsInteger, outputNb);
 
@@ -1421,7 +1414,10 @@ static void compare_codegen_output_generic(
             double cVal = p->outRealBufs[outputNb][i];
             double diff = fabs(cVal - cg_out[i]);
             double threshold;
-            if( !p->widenFloatInputs && !transcendental )
+            /* The float leg compares one server with itself, its float entry
+             * point against its double one on the same widened inputs: the same
+             * computation, so the same bits in every language. */
+            if( p->widenFloatInputs || !transcendental )
             {
                 if( memcmp(&cVal, &cg_out[i], sizeof(double)) != 0 )
                 {
@@ -1445,19 +1441,7 @@ static void compare_codegen_output_generic(
                 p->codegenError = TA_CODEGEN_OUTPUT_MISMATCH;
                 return;
             }
-            if( p->widenFloatInputs )
-            {
-                /* Float leg: BOTH sides are the same server on the same
-                 * float-widened inputs, its single-precision entry point vs its
-                 * own double one, so equal computation must give equal doubles.
-                 * Keep the bound far below float's resolution: one arithmetic op
-                 * left in float is ~6e-8 relative, which a float-sized bound
-                 * would pass. */
-                double scale = (p->epsilonScale > 0.0) ? p->epsilonScale : 1.0;
-                threshold = CODEGEN_EPSILON_DOUBLE * fmax(1.0, fabs(cVal)) * scale;
-            }
-            else
-                threshold = CODEGEN_TRANSCENDENTAL_TOL * fmax(1.0, fabs(cVal));
+            threshold = CODEGEN_TRANSCENDENTAL_TOL * fmax(1.0, fabs(cVal));
             if( diff > threshold )
             {
                 printf("CODEGEN MISMATCH [TA_%s]: %s[%d] C=%.10f codegen=%.10f diff=%.2e\n",
@@ -2814,7 +2798,6 @@ static struct {
      * re-derive which of these the callers happen to leave at zero. */
     int        useFloat;
     int        widenFloatInputs;
-    double     epsilonScale;
     long long  server_total_ns;
     int        timing_count;
 } g_floatLegSaved;
@@ -2828,7 +2811,6 @@ static void float_leg_save_state(const CodegenRangeTestParam *p)
     g_floatLegSaved.optOverrideActive = p->optOverrideActive;
     g_floatLegSaved.useFloat          = p->useFloat;
     g_floatLegSaved.widenFloatInputs  = p->widenFloatInputs;
-    g_floatLegSaved.epsilonScale      = p->epsilonScale;
     g_floatLegSaved.server_total_ns   = p->server_total_ns;
     g_floatLegSaved.timing_count      = p->timing_count;
     memcpy(g_floatLegSaved.optOverride, p->optOverride,
@@ -2853,7 +2835,6 @@ static void float_leg_restore_state(CodegenRangeTestParam *p)
     p->optOverrideActive = g_floatLegSaved.optOverrideActive;
     p->useFloat          = g_floatLegSaved.useFloat;
     p->widenFloatInputs  = g_floatLegSaved.widenFloatInputs;
-    p->epsilonScale      = g_floatLegSaved.epsilonScale;
     p->server_total_ns   = g_floatLegSaved.server_total_ns;
     p->timing_count      = g_floatLegSaved.timing_count;
     memcpy(p->optOverride, g_floatLegSaved.optOverride,
@@ -2894,7 +2875,6 @@ static int float_leg_pass(CodegenRangeTestParam *p, int strict, const char *what
      * comparison against the frozen single-precision reference, which computed
      * in float. */
     p->widenFloatInputs = 1;
-    p->epsilonScale = 0.0;
 
     /* Baseline: double variant on the float-widened inputs. */
     p->useFloat = 0;
@@ -2950,7 +2930,6 @@ static int float_leg_pass(CodegenRangeTestParam *p, int strict, const char *what
 
     p->useFloat = 0;
     p->widenFloatInputs = 0;
-    p->epsilonScale = 0.0;
     return compared;
 }
 

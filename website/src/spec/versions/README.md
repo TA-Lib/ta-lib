@@ -51,7 +51,7 @@ Everything else is written to give the same bits on every machine: each fused mu
 | a default sentinel and the explicit default | bit-identical | [rP3](/spec/inputs-outputs/#rp3) |
 | an output in place on its input, and in a separate buffer | bit-identical | [rW7](/spec/inputs-outputs/#rw7) |
 | a declinable output declined, and supplied | the other outputs bit-identical | [rW5](/spec/inputs-outputs/#rw5) |
-| a C `float` input, and the `double` call on its widened values | bit-identical | [rP4](/spec/inputs-outputs/#rp4) |
+| a `float` input, and the `double` call on its widened values | bit-identical | [rP4](/spec/inputs-outputs/#rp4) |
 | the same call on two machines | as [across machines](/spec/versions/#machines) describes | |
 | the same bar from batch calls with different `startIdx` | not bit-identical in general | [different starts](/spec/lookback/#start) |
 

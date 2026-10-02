@@ -117,8 +117,7 @@ void codegen_hash_report(const char *who, TA_RetCode goldRc, int goldBeg,
  * absolute otherwise). Every other language, and every non-transcendental call,
  * stays bitwise. Measured Java drift over both gates' scenarios peaks ~9.7e-15
  * (HT_DCPHASE), so 1e-9 keeps ~5 orders of margin over libm noise while still
- * failing any real algorithmic regression (orders of magnitude larger). Equals
- * CODEGEN_EPSILON_DOUBLE. ---- */
+ * failing any real algorithmic regression (orders of magnitude larger). ---- */
 #define CODEGEN_TRANSCENDENTAL_TOL 1e-9
 
 /* Passed as codegen_compare_tol's tol, compares bits: the sign of a zero counts. */

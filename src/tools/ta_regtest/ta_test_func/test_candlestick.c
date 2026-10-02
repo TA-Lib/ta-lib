@@ -11355,6 +11355,8 @@ static ErrorNumber cdl_setting_coverage( const TA_History *history, int perSetti
       }
    }
 
+   /* Every later group inherits these globals. */
+   TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
    free(outA); free(outB);
    return errNb;
 }
@@ -11593,6 +11595,156 @@ static ErrorNumber test_candle_settings_matrix( const TA_History *history )
    return TA_TEST_PASS;
 }
 
+/* Every value a candlestick function writes is one of 0, +-80, +-100, +-200.
+ *
+ * Each pattern writes its own literals, so nothing but a sweep holds the set
+ * closed. The bars are quantized to half ticks, which is what makes equal
+ * prices, and with them the engulfing and harami families' 80, occur at all.
+ */
+#define CVS_NB_BAR  4000
+#define CVS_NB_SEED 3
+
+#define CVS_MAX_FUNC 256
+
+typedef struct
+{
+   ErrorNumber error;
+   int nbFunc;                    /* candlestick functions, per series */
+   int fired[CVS_MAX_FUNC];       /* non-zero values each one wrote, all series */
+   long seen[6];                  /* +80, -80, +100, -100, +200, -200 */
+} CvsCtx;
+
+static double cvsOpen[CVS_NB_BAR], cvsHigh[CVS_NB_BAR], cvsLow[CVS_NB_BAR], cvsClose[CVS_NB_BAR];
+static int    cvsOut[CVS_NB_BAR];
+
+static double cvs_rand01( unsigned int *seed )
+{
+   *seed = (*seed * 1103515245u) + 12345u;
+   return (double)((*seed >> 8) & 0xFFFF) / 65536.0;
+}
+
+static double cvs_half_tick( double v )
+{
+   return (double)((long)(v * 2.0)) / 2.0;
+}
+
+static void cvs_build_series( unsigned int seed )
+{
+   double price = 100.0;
+   int i;
+
+   for( i = 0; i < CVS_NB_BAR; i++ )
+   {
+      double r, open, close, top, bottom, high, low;
+
+      r = cvs_rand01( &seed );  open  = cvs_half_tick( price + (r - 0.5) * 4.0 );
+      r = cvs_rand01( &seed );  close = cvs_half_tick( open + (r - 0.5) * 6.0 );
+      r = cvs_rand01( &seed );  if( r < 0.05 ) close = open;
+      top    = open > close ? open : close;
+      bottom = open < close ? open : close;
+      r = cvs_rand01( &seed );  high = top + cvs_half_tick( r * 3.0 );
+      r = cvs_rand01( &seed );  low  = bottom - cvs_half_tick( r * 3.0 );
+      cvsOpen[i] = open; cvsHigh[i] = high; cvsLow[i] = low; cvsClose[i] = close;
+      price = close;
+   }
+}
+
+static void cvs_one_function( const TA_FuncInfo *funcInfo, void *opaque )
+{
+   static const int legal[6] = { 80, -80, 100, -100, 200, -200 };
+   CvsCtx *ctx = (CvsCtx *)opaque;
+   TA_ParamHolder *paramHolder;
+   TA_Integer begIdx = 0, nbElement = 0;
+   TA_RetCode retCode;
+   int i, k;
+
+   if( ctx->error != TA_TEST_PASS || !(funcInfo->flags & TA_FUNC_FLG_CANDLESTICK) )
+      return;
+   if( ctx->nbFunc >= CVS_MAX_FUNC )
+   {
+      printf( "\nFail: more than %d candlestick functions; raise CVS_MAX_FUNC\n", CVS_MAX_FUNC );
+      ctx->error = TA_CDL_VALUE_SET_FAIL;
+      return;
+   }
+   if( funcInfo->nbInput != 1 || funcInfo->nbOutput != 1 ||
+       TA_ParamHolderAlloc( funcInfo->handle, &paramHolder ) != TA_SUCCESS )
+   {
+      printf( "\nFail: TA_%s does not have the one price input and one output the "
+              "value-set sweep binds\n", funcInfo->name );
+      ctx->error = TA_CDL_VALUE_SET_FAIL;
+      return;
+   }
+   TA_SetInputParamPricePtr( paramHolder, 0, cvsOpen, cvsHigh, cvsLow, cvsClose, NULL, NULL );
+   TA_SetOutputParamIntegerPtr( paramHolder, 0, cvsOut );
+   retCode = TA_CallFunc( paramHolder, 0, CVS_NB_BAR - 1, &begIdx, &nbElement );
+   TA_ParamHolderFree( paramHolder );
+   if( retCode != TA_SUCCESS || nbElement <= 0 )
+   {
+      printf( "\nFail: TA_%s answered rc=%d with %d value(s) on %d bars\n",
+              funcInfo->name, (int)retCode, (int)nbElement, CVS_NB_BAR );
+      ctx->error = TA_CDL_VALUE_SET_FAIL;
+      return;
+   }
+   for( i = 0; i < nbElement; i++ )
+   {
+      if( cvsOut[i] == 0 )
+         continue;
+      for( k = 0; k < 6 && cvsOut[i] != legal[k]; k++ ) { }
+      if( k == 6 )
+      {
+         printf( "\nFail: TA_%s wrote %d at bar %d; a candlestick value is one of "
+                 "0, +-80, +-100, +-200\n", funcInfo->name, cvsOut[i], (int)begIdx + i );
+         ctx->error = TA_CDL_VALUE_SET_FAIL;
+         return;
+      }
+      ctx->seen[k]++;
+      ctx->fired[ctx->nbFunc]++;
+   }
+   ctx->nbFunc++;
+}
+
+static ErrorNumber test_candle_value_set( void )
+{
+   static CvsCtx ctx;
+   unsigned int s;
+   int k, nbFired = 0;
+
+   memset( &ctx, 0, sizeof(ctx) );
+   ctx.error = TA_TEST_PASS;
+   TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
+   for( s = 0; s < CVS_NB_SEED && ctx.error == TA_TEST_PASS; s++ )
+   {
+      cvs_build_series( 20261001u + 37u * s );
+      ctx.nbFunc = 0;
+      TA_ForEachFunc( cvs_one_function, &ctx );
+   }
+   if( ctx.error != TA_TEST_PASS )
+      return ctx.error;
+   for( k = 0; k < ctx.nbFunc; k++ )
+      nbFired += ctx.fired[k] > 0;
+
+   /* A pattern that never fires is held to nothing. Rare patterns do not occur
+    * on a random series, so the floor is a majority, not every function. */
+   if( nbFired * 2 <= ctx.nbFunc )
+   {
+      printf( "\nFail: only %d of %d candlestick function(s) wrote a non-zero value "
+              "in the value-set sweep\n", nbFired, ctx.nbFunc );
+      return TA_CDL_VALUE_SET_VACUOUS;
+   }
+   for( k = 0; k < 6; k++ )
+   {
+      if( ctx.seen[k] == 0 )
+      {
+         printf( "\nFail: the candlestick value-set sweep saw +80 %ld, -80 %ld, "
+                 "+100 %ld, -100 %ld, +200 %ld, -200 %ld time(s); each must occur\n",
+                 ctx.seen[0], ctx.seen[1], ctx.seen[2], ctx.seen[3], ctx.seen[4],
+                 ctx.seen[5] );
+         return TA_CDL_VALUE_SET_VACUOUS;
+      }
+   }
+   return TA_TEST_PASS;
+}
+
 ErrorNumber test_candlestick( TA_History *history )
 {
    unsigned int i;
@@ -11650,6 +11802,13 @@ ErrorNumber test_candlestick( TA_History *history )
    if( retValue != TA_TEST_PASS )
    {
       printf( "Failed: candle settings matrix (retValue=%d)\n", retValue );
+      return retValue;
+   }
+
+   retValue = test_candle_value_set();
+   if( retValue != TA_TEST_PASS )
+   {
+      printf( "Failed: candlestick value set (retValue=%d)\n", retValue );
       return retValue;
    }
 

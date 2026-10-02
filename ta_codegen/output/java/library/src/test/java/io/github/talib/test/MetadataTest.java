@@ -976,12 +976,131 @@ public class MetadataTest {
               + rDefault.count() + " vs " + rTuned.count() + ")");
     }
 
+    /**
+     * An output placed on the very array of one of its inputs: the call must
+     * answer as it does on separate arrays, bit for bit, for every real output
+     * over every real input component a function reads.
+     *
+     * <p>The second real input is a series that moves across MAVP's period range:
+     * a constant period hides a body that reads its input after writing.
+     */
+    static void anOutputOnItsInputAnswersTheSame() {
+        final int[] bits = { InputFlags.PRICE_OPEN, InputFlags.PRICE_HIGH, InputFlags.PRICE_LOW,
+                             InputFlags.PRICE_CLOSE, InputFlags.PRICE_VOLUME,
+                             InputFlags.PRICE_OPENINTEREST };
+        final double[][] bar = { OPEN, HIGH, LOW, CLOSE, VOLUME, OPENINT };
+        final double[] spread = new double[N];
+        for (int i = 0; i < N; i++) {
+            spread[i] = 16.0 + 12.0 * Math.sin(i / 5.0);
+        }
+        int pairs = 0;
+        int pricePairs = 0;
+
+        for (FuncInfo f : Functions.all()) {
+            int nout = f.outputs().size();
+            double[][] ref = new double[nout][N];
+            int[][] iref = new int[nout][N];
+            OutRange want = inPlaceCall(f, spread, -1, -1, null, -1, ref, iref);
+
+            for (int slot = 0; slot < f.inputs().size(); slot++) {
+                InputInfo in = f.inputs().get(slot);
+                if (in.type() == InputType.INTEGER) {
+                    continue;
+                }
+                for (int c = 0; c < (in.type() == InputType.PRICE ? 6 : 1); c++) {
+                    if (in.type() == InputType.PRICE && (in.flags() & bits[c]) == 0) {
+                        continue;
+                    }
+                    double[] source = in.type() == InputType.PRICE ? bar[c]
+                                    : slot == 0 ? CLOSE : spread;
+                    for (int o = 0; o < nout; o++) {
+                        if (f.outputs().get(o).type() != OutputType.REAL) {
+                            continue;
+                        }
+                        double[] shared = source.clone();
+                        double[][] outs = new double[nout][N];
+                        int[][] iouts = new int[nout][N];
+                        OutRange got;
+                        try {
+                            got = inPlaceCall(f, spread, slot, c, shared, o, outs, iouts);
+                        } catch (RuntimeException e) {
+                            check(false, f.name() + ": output " + o + " placed on input " + slot
+                                + " component " + c + " threw " + e);
+                            pairs++;
+                            continue;
+                        }
+                        outs[o] = shared;
+
+                        boolean same = got.equals(want);
+                        for (int k = 0; same && k < nout; k++) {
+                            boolean real = f.outputs().get(k).type() == OutputType.REAL;
+                            for (int i = 0; i < want.count(); i++) {
+                                same &= real
+                                    ? Double.doubleToRawLongBits(outs[k][i])
+                                        == Double.doubleToRawLongBits(ref[k][i])
+                                    : iouts[k][i] == iref[k][i];
+                            }
+                        }
+                        check(same, f.name() + ": output " + o + " placed on input " + slot
+                            + " component " + c + " answers as on separate arrays");
+                        pairs++;
+                        if (in.type() == InputType.PRICE) {
+                            pricePairs++;
+                        }
+                    }
+                }
+            }
+        }
+        check(pricePairs >= 50 && pairs - pricePairs >= 50,
+            "the in-place sweep ran " + pricePairs + " pairs on a price component and "
+            + (pairs - pricePairs) + " on a real input, at least 50 of each expected");
+    }
+
+    /**
+     * One call over the whole series. {@code shared}, when given, is both
+     * component {@code comp} of input {@code slot} and output {@code out}.
+     */
+    private static OutRange inPlaceCall(FuncInfo f, double[] spread, int slot, int comp,
+                                        double[] shared, int out,
+                                        double[][] outs, int[][] iouts) {
+        final double[][] bar = { OPEN, HIGH, LOW, CLOSE, VOLUME, OPENINT };
+        ParamHolder h = f.newCall();
+        for (int i = 0; i < f.inputs().size(); i++) {
+            switch (f.inputs().get(i).type()) {
+                case PRICE -> {
+                    double[][] b = bar.clone();
+                    if (i == slot) {
+                        b[comp] = shared;
+                    }
+                    h.setPriceInput(i, b[0], b[1], b[2], b[3], b[4], b[5]);
+                }
+                case REAL -> h.setInput(i, i == slot ? shared : i == 0 ? CLOSE : spread);
+                case INTEGER -> {
+                    int[] ints = new int[N];
+                    for (int k = 0; k < N; k++) {
+                        ints[k] = k;
+                    }
+                    h.setInput(i, ints);
+                }
+            }
+        }
+        for (int i = 0; i < f.outputs().size(); i++) {
+            if (f.outputs().get(i).type() != OutputType.REAL) {
+                h.setOutput(i, iouts[i]);
+            } else {
+                h.setOutput(i, i == out ? shared : outs[i]);
+            }
+        }
+        return h.call(0, N - 1);
+    }
+
     public static void main(String[] args) throws Exception {
         registryIsComplete();
         byNameFoldsAsciiCase();
         hintsArePopulated();
         flagVocabularyIsComplete();
         callByNameMatchesTheTypedApi();
+        anOutputOnItsInputAnswersTheSame();
         holderRejectsMisuse();
         aRejectedSetterLeavesTheHolderAsItFoundIt();
         explicitParametersReachTheFunction();

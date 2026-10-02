@@ -1010,6 +1010,128 @@ public static class MetadataTest
         Check(covered > 60, $"covered {covered} functions with optional parameters");
     }
 
+    /// <summary>An output placed on the very array of one of its inputs: the
+    /// call must answer as it does on separate arrays, bit for bit, for every
+    /// real output over every real input component a function takes.</summary>
+    /// <remarks>The second real input is a series that moves across MAVP's
+    /// period range: a constant period hides a body that reads its input after
+    /// writing.</remarks>
+    private static void AnOutputOnItsInputAnswersTheSame()
+    {
+        var spread = new double[N];
+        for (int i = 0; i < N; i++)
+        {
+            spread[i] = 16.0 + 12.0 * Math.Sin(i / 5.0);
+        }
+        int pairs = 0;
+        int pricePairs = 0;
+
+        foreach (FuncInfo f in FunctionCatalog.Default)
+        {
+            int nout = f.Outputs.Length;
+            var wantReal = new double[nout][];
+            var wantInt = new int[nout][];
+            OutRange want = InPlaceCall(f, spread, -1, default, null, -1, wantReal, wantInt);
+
+            for (int slot = 0; slot < f.Inputs.Length; slot++)
+            {
+                InputInfo info = f.Inputs[slot];
+                if (info.Kind == InputKind.Integer)
+                {
+                    continue;
+                }
+                PriceComponents[] comps = info.Kind == InputKind.Price
+                    ? info.SignatureOrder.ToArray()
+                    : new[] { default(PriceComponents) };
+                foreach (PriceComponents comp in comps)
+                {
+                    double[] source = info.Kind == InputKind.Price ? ComponentSeries(comp)
+                                    : slot == 0 ? Close : spread;
+                    for (int o = 0; o < nout; o++)
+                    {
+                        if (f.Outputs[o].Kind != OutputKind.Real)
+                        {
+                            continue;
+                        }
+                        var shared = (double[])source.Clone();
+                        var gotReal = new double[nout][];
+                        var gotInt = new int[nout][];
+                        OutRange got;
+                        try
+                        {
+                            got = InPlaceCall(f, spread, slot, comp, shared, o, gotReal, gotInt);
+                        }
+                        catch (Exception e)
+                        {
+                            Check(false, $"{f.Name}: output {o} placed on input {slot} component {comp} threw {e.GetType().Name}: {e.Message}");
+                            pairs++;
+                            continue;
+                        }
+
+                        bool same = got.BegIdx == want.BegIdx && got.Count == want.Count;
+                        for (int k = 0; same && k < nout; k++)
+                        {
+                            for (int i = 0; i < want.Count; i++)
+                            {
+                                same &= f.Outputs[k].Kind == OutputKind.Real
+                                    ? BitConverter.DoubleToInt64Bits(gotReal[k][i])
+                                        == BitConverter.DoubleToInt64Bits(wantReal[k][i])
+                                    : gotInt[k][i] == wantInt[k][i];
+                            }
+                        }
+                        Check(same, $"{f.Name}: output {o} placed on input {slot} component {comp} answers as on separate arrays");
+                        pairs++;
+                        if (info.Kind == InputKind.Price)
+                        {
+                            pricePairs++;
+                        }
+                    }
+                }
+            }
+        }
+        Check(pricePairs >= 50 && pairs - pricePairs >= 50,
+            $"the in-place sweep ran {pricePairs} pairs on a price component and {pairs - pricePairs} on a real input, at least 50 of each expected");
+    }
+
+    /// <summary>One call over the whole series. <paramref name="shared"/>, when
+    /// given, is both component <paramref name="comp"/> of input
+    /// <paramref name="slot"/> and output <paramref name="output"/>.</summary>
+    private static OutRange InPlaceCall(FuncInfo f, double[] spread, int slot, PriceComponents comp,
+                                        double[]? shared, int output,
+                                        double[][] realOut, int[][] intOut)
+    {
+        ParamHolder call = f.CreateCall();
+        for (int i = 0; i < f.Inputs.Length; i++)
+        {
+            InputInfo info = f.Inputs[i];
+            if (info.Kind == InputKind.Price)
+            {
+                foreach (PriceComponents c in info.SignatureOrder)
+                {
+                    call.SetPriceInput(i, c, i == slot && c == comp ? shared! : ComponentSeries(c));
+                }
+            }
+            else
+            {
+                call.SetInput(i, i == slot ? shared! : i == 0 ? Close : spread);
+            }
+        }
+        for (int k = 0; k < f.Outputs.Length; k++)
+        {
+            if (f.Outputs[k].Kind == OutputKind.Real)
+            {
+                realOut[k] = k == output ? shared! : new double[N];
+                call.SetOutput(k, realOut[k]);
+            }
+            else
+            {
+                intOut[k] = new int[N];
+                call.SetOutput(k, intOut[k]);
+            }
+        }
+        return call.Call(0, N - 1);
+    }
+
     private static ParamHolder Bind(FuncInfo f, double[][] realOut, int[][] intOut)
     {
         ParamHolder call = f.CreateCall();
@@ -1256,6 +1378,7 @@ public static class MetadataTest
         CreateCallCarriesTheGivenCore();
         HolderDisplayShiftMatchesTheTypedApi();
         BothCallPathsAgree();
+        AnOutputOnItsInputAnswersTheSame();
         UnboundParametersTakeTheDocumentedDefault();
         MetadataTypesCannotBeConstructedOutside();
         FunctionDescriptionXmlDescribesEveryFunction();

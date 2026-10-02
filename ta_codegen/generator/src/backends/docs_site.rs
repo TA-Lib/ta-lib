@@ -642,6 +642,9 @@ pub fn validate_docs(funcs: &[FuncDef], root: &Path) -> Result<(), Vec<String>> 
         if let Err(e) = validate_inputs(&body, f) {
             errors.push(e);
         }
+        if let Err(e) = validate_outputs(&body, f) {
+            errors.push(e);
+        }
         if let Err(e) = validate_no_bare_urls(&body, f) {
             errors.push(e);
         }
@@ -814,6 +817,37 @@ fn validate_inputs(body: &str, func: &FuncDef) -> Result<(), String> {
             "{}: `## Inputs` bullets {names:?} do not match the call signature {expected:?} \
              — the two must agree in name and order. A price bundle (`inPriceHLC`) is an \
              abstract-API descriptor, not an argument: document its components separately.",
+            func.name
+        ));
+    }
+    Ok(())
+}
+
+/// Check that `## Outputs` lists the output arguments in call order.
+///
+/// The bullets are authored, and a reader takes their order for the positional order
+/// of the call's outputs. Everything else that reads the section looks a bullet up by
+/// name, so nothing else notices two of them swapped.
+fn validate_outputs(body: &str, func: &FuncDef) -> Result<(), String> {
+    let lines: Vec<&str> = body.lines().collect();
+    let Some((heading, end)) = section_span(&lines, "## Outputs") else {
+        return Err(format!(
+            "{}: {}.md has no `## Outputs` section, but the function has {} output(s)",
+            func.name,
+            func.name.to_lowercase(),
+            func.outputs.len()
+        ));
+    };
+
+    let names: Vec<String> = named_bullets(&lines[heading + 1..end])
+        .into_iter()
+        .map(|(n, _)| n)
+        .collect();
+    let expected: Vec<&str> = func.outputs.iter().map(|o| o.name.as_str()).collect();
+    if names != expected {
+        return Err(format!(
+            "{}: `## Outputs` bullets {names:?} do not match the call signature {expected:?}: \
+             the two must agree in name and order",
             func.name
         ));
     }
@@ -1235,7 +1269,7 @@ fn build_index(funcs: &[&FuncDef]) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ir::{EnumVariant, Input, OptInput, PriceComponent, PriceRef};
+    use crate::ir::{EnumVariant, Input, OptInput, Output, PriceComponent, PriceRef};
 
     fn func(name: &str, opts: Vec<OptInput>) -> FuncDef {
         FuncDef {
@@ -1323,6 +1357,39 @@ mod tests {
         let body = "# X\n\n## Outputs\n\n- `outReal` — Values\n";
         let err = validate_inputs(body, &hlc_func("X")).unwrap_err();
         assert!(err.contains("no `## Inputs` section"), "{err}");
+    }
+
+    fn two_output_func() -> FuncDef {
+        let mut f = func("X", vec![]);
+        f.outputs = ["outRealUpperBand", "outRealLowerBand"]
+            .iter()
+            .map(|n| Output {
+                name: (*n).to_string(),
+                param_type: ParamType::Real,
+                flags: vec![],
+            })
+            .collect();
+        f
+    }
+
+    #[test]
+    fn outputs_in_call_order_are_accepted() {
+        let body = "# X\n\n## Outputs\n\n- `outRealUpperBand` — Upper\n- `outRealLowerBand` — Lower\n";
+        assert!(validate_outputs(body, &two_output_func()).is_ok());
+    }
+
+    /// Order is part of the contract: the bullets document positional arguments.
+    #[test]
+    fn outputs_out_of_call_order_are_rejected() {
+        let body = "# X\n\n## Outputs\n\n- `outRealLowerBand` — Lower\n- `outRealUpperBand` — Upper\n";
+        let err = validate_outputs(body, &two_output_func()).unwrap_err();
+        assert!(err.contains("do not match the call signature"), "{err}");
+    }
+
+    #[test]
+    fn a_missing_output_is_rejected() {
+        let body = "# X\n\n## Outputs\n\n- `outRealUpperBand` — Upper\n";
+        assert!(validate_outputs(body, &two_output_func()).is_err());
     }
 
     fn opt(name: &str, pt: ParamType, range: Option<(f64, f64)>, default: f64) -> OptInput {

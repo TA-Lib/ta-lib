@@ -226,6 +226,27 @@ that produces no values: C's form of one zero-length array passed as two outputs
 (Appendix D item 15), with the pair rebound apart as that leg's control.
 Java's and C#'s `BatchApiTest` pass one zero-length array as two outputs.
 
+rW7: `checkInPlaceAliasCorrect` (`test_abstract.c`),
+`anOutputOnItsInputAnswersTheSame` (Java's `MetadataTest`) and
+`AnOutputOnItsInputAnswersTheSame` (C#'s `MetadataTest`) place each real output
+on each real input component of every function and require the answer of the
+separate-buffer call bit for bit.
+
+rP4: the float leg of regtest `--codegen` compares each server's float entry
+point with its own double one on the same widened inputs, bit for bit: C over
+the parameter sweep, Java and C# for every function at its default parameters
+and at the default sentinels. It runs with all three on x86-64 only. C is also
+held by `test_variants.c` in a bare run.
+
+rP5: `validate_inputs`, `try_inject_parameters` and `validate_outputs`
+(`docs_site.rs`) fail `generate` when a function page's Inputs, Parameters or
+Outputs list differs from the call signature in name or order.
+
+rW4's candlestick values: `test_candle_value_set` (`test_candlestick.c`) holds
+every value a candlestick function writes on its series to the published set,
+and requires each non-zero member to occur and most functions to fire. A
+pattern too rare to fire there is held to nothing.
+
 rE3 at a batch call: in C, `abstract_rejected_call_writes_nothing`
 (`test_abstract.c`) paints every output buffer, calls each parameter vector of
 its sweep that the lookback rejects and requires `TA_BAD_PARAM` with no element
