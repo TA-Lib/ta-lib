@@ -778,7 +778,10 @@ public partial class Core
       RequireHistoryLength("WAD", "openAndFill", "inLow", inLow.Length, inHigh.Length);
       RequireHistoryLength("WAD", "openAndFill", "inClose", inClose.Length, inHigh.Length);
       RequireFillLength("WAD", "openAndFill", "outReal", outReal.Length, guardOutLen);
-      if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) ) {
+      if( SameBuffer(outReal, inHigh) || SameBuffer(outReal, inLow) || SameBuffer(outReal, inClose) ) {
+         throw StreamFailure("WAD", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) ) ) {
          throw StreamFailure("WAD", "openAndFill", RetCode.BadParam);
       }
       return WadOpenAndFillInternal(inHigh, inLow, inClose, 0, out _, out _, outReal);

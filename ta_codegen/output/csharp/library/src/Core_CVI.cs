@@ -934,7 +934,10 @@ public partial class Core
       int guardOutLen = OpenFillCount("CVI", "openAndFill", inHigh.Length, CviLookback(optInTimePeriod, optInROCPeriod));
       RequireHistoryLength("CVI", "openAndFill", "inLow", inLow.Length, inHigh.Length);
       RequireFillLength("CVI", "openAndFill", "outReal", outReal.Length, guardOutLen);
-      if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) ) {
+      if( SameBuffer(outReal, inHigh) || SameBuffer(outReal, inLow) ) {
+         throw StreamFailure("CVI", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) ) ) {
          throw StreamFailure("CVI", "openAndFill", RetCode.BadParam);
       }
       return CviOpenAndFillInternal(inHigh, inLow, 0, optInTimePeriod, optInROCPeriod, out _, out _, outReal);

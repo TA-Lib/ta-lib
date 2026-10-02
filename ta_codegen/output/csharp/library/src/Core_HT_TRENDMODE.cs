@@ -2654,7 +2654,10 @@ public partial class Core
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "HT_TRENDMODE openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("HT_TRENDMODE", "openAndFill", inReal.Length, HtTrendmodeLookback());
       RequireFillLength("HT_TRENDMODE", "openAndFill", "outInteger", outInteger.Length, guardOutLen);
-      if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inReal)) ) {
+      if( SameBuffer(System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger), System.Runtime.InteropServices.MemoryMarshal.AsBytes(inReal)) ) {
+         throw StreamFailure("HT_TRENDMODE", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inReal)) ) ) {
          throw StreamFailure("HT_TRENDMODE", "openAndFill", RetCode.BadParam);
       }
       return HtTrendmodeOpenAndFillInternal(inReal, 0, out _, out _, outInteger);

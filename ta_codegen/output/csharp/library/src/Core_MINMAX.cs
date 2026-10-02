@@ -1099,7 +1099,10 @@ public partial class Core
       int guardOutLen = OpenFillCount("MINMAX", "openAndFill", inReal.Length, MinmaxLookback(optInTimePeriod));
       RequireFillLength("MINMAX", "openAndFill", "outMin", outMin.Length, guardOutLen);
       RequireFillLength("MINMAX", "openAndFill", "outMax", outMax.Length, guardOutLen);
-      if( outMin.Overlaps(inReal) || outMax.Overlaps(inReal) || OutputsAlias(outMin, outMax) ) {
+      if( SameBuffer(outMin, inReal) || SameBuffer(outMax, inReal) || SameBuffer(outMin, outMax) ) {
+         throw StreamFailure("MINMAX", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outMin.Overlaps(inReal) || outMax.Overlaps(inReal) || OutputsAlias(outMin, outMax) ) ) {
          throw StreamFailure("MINMAX", "openAndFill", RetCode.BadParam);
       }
       return MinmaxOpenAndFillInternal(inReal, 0, optInTimePeriod, out _, out _, outMin, outMax);

@@ -824,7 +824,10 @@ public partial class Core
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "DPO openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("DPO", "openAndFill", inReal.Length, DpoLookback(optInTimePeriod));
       RequireFillLength("DPO", "openAndFill", "outReal", outReal.Length, guardOutLen);
-      if( outReal.Overlaps(inReal) ) {
+      if( SameBuffer(outReal, inReal) ) {
+         throw StreamFailure("DPO", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outReal.Overlaps(inReal) ) ) {
          throw StreamFailure("DPO", "openAndFill", RetCode.BadParam);
       }
       return DpoOpenAndFillInternal(inReal, 0, optInTimePeriod, out _, out _, outReal);

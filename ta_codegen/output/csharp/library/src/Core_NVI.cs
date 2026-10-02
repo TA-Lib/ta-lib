@@ -735,7 +735,10 @@ public partial class Core
       int guardOutLen = OpenFillCount("NVI", "openAndFill", inClose.Length, NviLookback());
       RequireHistoryLength("NVI", "openAndFill", "inVolume", inVolume.Length, inClose.Length);
       RequireFillLength("NVI", "openAndFill", "outReal", outReal.Length, guardOutLen);
-      if( outReal.Overlaps(inClose) || outReal.Overlaps(inVolume) ) {
+      if( SameBuffer(outReal, inClose) || SameBuffer(outReal, inVolume) ) {
+         throw StreamFailure("NVI", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outReal.Overlaps(inClose) || outReal.Overlaps(inVolume) ) ) {
          throw StreamFailure("NVI", "openAndFill", RetCode.BadParam);
       }
       return NviOpenAndFillInternal(inClose, inVolume, 0, out _, out _, outReal);

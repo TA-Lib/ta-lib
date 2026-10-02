@@ -543,7 +543,10 @@ public partial class Core
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "COS openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("COS", "openAndFill", inReal.Length, CosLookback());
       RequireFillLength("COS", "openAndFill", "outReal", outReal.Length, guardOutLen);
-      if( outReal.Overlaps(inReal) ) {
+      if( SameBuffer(outReal, inReal) ) {
+         throw StreamFailure("COS", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outReal.Overlaps(inReal) ) ) {
          throw StreamFailure("COS", "openAndFill", RetCode.BadParam);
       }
       return CosOpenAndFillInternal(inReal, 0, out _, out _, outReal);

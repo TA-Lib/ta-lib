@@ -1221,7 +1221,10 @@ public partial class Core
       RequireFillLength("MACD", "openAndFill", "outMACD", outMACD.Length, guardOutLen);
       RequireFillLength("MACD", "openAndFill", "outMACDSignal", outMACDSignal.Length, guardOutLen);
       RequireFillLength("MACD", "openAndFill", "outMACDHist", outMACDHist.Length, guardOutLen);
-      if( outMACD.Overlaps(inReal) || outMACDSignal.Overlaps(inReal) || outMACDHist.Overlaps(inReal) || OutputsAlias(outMACD, outMACDSignal) || OutputsAlias(outMACD, outMACDHist) || OutputsAlias(outMACDSignal, outMACDHist) ) {
+      if( SameBuffer(outMACD, inReal) || SameBuffer(outMACDSignal, inReal) || SameBuffer(outMACDHist, inReal) || SameBuffer(outMACD, outMACDSignal) || SameBuffer(outMACD, outMACDHist) || SameBuffer(outMACDSignal, outMACDHist) ) {
+         throw StreamFailure("MACD", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outMACD.Overlaps(inReal) || outMACDSignal.Overlaps(inReal) || outMACDHist.Overlaps(inReal) || OutputsAlias(outMACD, outMACDSignal) || OutputsAlias(outMACD, outMACDHist) || OutputsAlias(outMACDSignal, outMACDHist) ) ) {
          throw StreamFailure("MACD", "openAndFill", RetCode.BadParam);
       }
       return MacdOpenAndFillInternal(inReal, 0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out _, out _, outMACD, outMACDSignal, outMACDHist);

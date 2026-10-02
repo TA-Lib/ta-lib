@@ -2148,7 +2148,10 @@ public partial class Core
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "HT_TRENDLINE openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("HT_TRENDLINE", "openAndFill", inReal.Length, HtTrendlineLookback());
       RequireFillLength("HT_TRENDLINE", "openAndFill", "outReal", outReal.Length, guardOutLen);
-      if( outReal.Overlaps(inReal) ) {
+      if( SameBuffer(outReal, inReal) ) {
+         throw StreamFailure("HT_TRENDLINE", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outReal.Overlaps(inReal) ) ) {
          throw StreamFailure("HT_TRENDLINE", "openAndFill", RetCode.BadParam);
       }
       return HtTrendlineOpenAndFillInternal(inReal, 0, out _, out _, outReal);

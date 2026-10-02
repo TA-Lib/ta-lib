@@ -531,6 +531,16 @@ pub(crate) fn csharp_output_alias_expr(a: &str, a_ty: &str, b: &str, b_ty: &str)
     }
 }
 
+/// One C# opener term for the same buffer: both start at one address, as C
+/// compares. `SameBuffer` is hand-written in `Core.cs`.
+pub(crate) fn csharp_same_buffer_expr(a: &str, a_ty: &str, b: &str, b_ty: &str) -> String {
+    if a_ty == b_ty {
+        format!("SameBuffer({a}, {b})")
+    } else {
+        format!("SameBuffer({}, {})", csharp_as_bytes(a), csharp_as_bytes(b))
+    }
+}
+
 fn csharp_as_bytes(x: &str) -> String {
     format!("System.Runtime.InteropServices.MemoryMarshal.AsBytes({x})")
 }

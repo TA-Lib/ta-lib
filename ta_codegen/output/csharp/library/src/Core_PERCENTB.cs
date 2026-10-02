@@ -1296,7 +1296,10 @@ public partial class Core
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "PERCENTB openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("PERCENTB", "openAndFill", inReal.Length, PercentbLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType));
       RequireFillLength("PERCENTB", "openAndFill", "outReal", outReal.Length, guardOutLen);
-      if( outReal.Overlaps(inReal) ) {
+      if( SameBuffer(outReal, inReal) ) {
+         throw StreamFailure("PERCENTB", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outReal.Overlaps(inReal) ) ) {
          throw StreamFailure("PERCENTB", "openAndFill", RetCode.BadParam);
       }
       return PercentbOpenAndFillInternal(inReal, 0, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, out _, out _, outReal);

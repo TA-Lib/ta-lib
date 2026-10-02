@@ -820,7 +820,10 @@ public partial class Core
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "MAXINDEX openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("MAXINDEX", "openAndFill", inReal.Length, MaxindexLookback(optInTimePeriod));
       RequireFillLength("MAXINDEX", "openAndFill", "outInteger", outInteger.Length, guardOutLen);
-      if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inReal)) ) {
+      if( SameBuffer(System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger), System.Runtime.InteropServices.MemoryMarshal.AsBytes(inReal)) ) {
+         throw StreamFailure("MAXINDEX", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inReal)) ) ) {
          throw StreamFailure("MAXINDEX", "openAndFill", RetCode.BadParam);
       }
       return MaxindexOpenAndFillInternal(inReal, 0, optInTimePeriod, out _, out _, outInteger);

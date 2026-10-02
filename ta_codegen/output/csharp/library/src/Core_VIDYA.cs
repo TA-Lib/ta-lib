@@ -1259,7 +1259,10 @@ public partial class Core
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "VIDYA openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("VIDYA", "openAndFill", inReal.Length, VidyaLookback(optInTimePeriod, optInCMOPeriod));
       RequireFillLength("VIDYA", "openAndFill", "outReal", outReal.Length, guardOutLen);
-      if( outReal.Overlaps(inReal) ) {
+      if( SameBuffer(outReal, inReal) ) {
+         throw StreamFailure("VIDYA", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outReal.Overlaps(inReal) ) ) {
          throw StreamFailure("VIDYA", "openAndFill", RetCode.BadParam);
       }
       return VidyaOpenAndFillInternal(inReal, 0, optInTimePeriod, optInCMOPeriod, out _, out _, outReal);

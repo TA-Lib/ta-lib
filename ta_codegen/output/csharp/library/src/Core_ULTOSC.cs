@@ -1627,7 +1627,10 @@ public partial class Core
       RequireHistoryLength("ULTOSC", "openAndFill", "inLow", inLow.Length, inHigh.Length);
       RequireHistoryLength("ULTOSC", "openAndFill", "inClose", inClose.Length, inHigh.Length);
       RequireFillLength("ULTOSC", "openAndFill", "outReal", outReal.Length, guardOutLen);
-      if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) ) {
+      if( SameBuffer(outReal, inHigh) || SameBuffer(outReal, inLow) || SameBuffer(outReal, inClose) ) {
+         throw StreamFailure("ULTOSC", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) ) ) {
          throw StreamFailure("ULTOSC", "openAndFill", RetCode.BadParam);
       }
       return UltoscOpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, out _, out _, outReal);

@@ -964,7 +964,10 @@ public partial class Core
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "CRSI openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("CRSI", "openAndFill", inReal.Length, CrsiLookback(optInTimePeriod, optInStreakPeriod, optInRankPeriod));
       RequireFillLength("CRSI", "openAndFill", "outReal", outReal.Length, guardOutLen);
-      if( outReal.Overlaps(inReal) ) {
+      if( SameBuffer(outReal, inReal) ) {
+         throw StreamFailure("CRSI", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outReal.Overlaps(inReal) ) ) {
          throw StreamFailure("CRSI", "openAndFill", RetCode.BadParam);
       }
       return CrsiOpenAndFillInternal(inReal, 0, optInTimePeriod, optInStreakPeriod, optInRankPeriod, out _, out _, outReal);

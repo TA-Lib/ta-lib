@@ -693,7 +693,10 @@ public partial class Core
       RequireHistoryLength("MARKETFI", "openAndFill", "inLow", inLow.Length, inHigh.Length);
       RequireHistoryLength("MARKETFI", "openAndFill", "inVolume", inVolume.Length, inHigh.Length);
       RequireFillLength("MARKETFI", "openAndFill", "outReal", outReal.Length, guardOutLen);
-      if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inVolume) ) {
+      if( SameBuffer(outReal, inHigh) || SameBuffer(outReal, inLow) || SameBuffer(outReal, inVolume) ) {
+         throw StreamFailure("MARKETFI", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inVolume) ) ) {
          throw StreamFailure("MARKETFI", "openAndFill", RetCode.BadParam);
       }
       return MarketfiOpenAndFillInternal(inHigh, inLow, inVolume, 0, out _, out _, outReal);

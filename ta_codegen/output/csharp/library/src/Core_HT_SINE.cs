@@ -2309,7 +2309,10 @@ public partial class Core
       int guardOutLen = OpenFillCount("HT_SINE", "openAndFill", inReal.Length, HtSineLookback());
       RequireFillLength("HT_SINE", "openAndFill", "outSine", outSine.Length, guardOutLen);
       RequireFillLength("HT_SINE", "openAndFill", "outLeadSine", outLeadSine.Length, guardOutLen);
-      if( outSine.Overlaps(inReal) || outLeadSine.Overlaps(inReal) || OutputsAlias(outSine, outLeadSine) ) {
+      if( SameBuffer(outSine, inReal) || SameBuffer(outLeadSine, inReal) || SameBuffer(outSine, outLeadSine) ) {
+         throw StreamFailure("HT_SINE", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outSine.Overlaps(inReal) || outLeadSine.Overlaps(inReal) || OutputsAlias(outSine, outLeadSine) ) ) {
          throw StreamFailure("HT_SINE", "openAndFill", RetCode.BadParam);
       }
       return HtSineOpenAndFillInternal(inReal, 0, out _, out _, outSine, outLeadSine);

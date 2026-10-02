@@ -1684,7 +1684,10 @@ public partial class Core
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "RVI openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("RVI", "openAndFill", inReal.Length, RviLookback(optInTimePeriod, optInStdDevPeriod));
       RequireFillLength("RVI", "openAndFill", "outReal", outReal.Length, guardOutLen);
-      if( outReal.Overlaps(inReal) ) {
+      if( SameBuffer(outReal, inReal) ) {
+         throw StreamFailure("RVI", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outReal.Overlaps(inReal) ) ) {
          throw StreamFailure("RVI", "openAndFill", RetCode.BadParam);
       }
       return RviOpenAndFillInternal(inReal, 0, optInTimePeriod, optInStdDevPeriod, out _, out _, outReal);

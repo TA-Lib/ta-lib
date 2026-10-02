@@ -987,7 +987,10 @@ public partial class Core
       RequireHistoryLength("ERI", "openAndFill", "inClose", inClose.Length, inHigh.Length);
       RequireFillLength("ERI", "openAndFill", "outBullPower", outBullPower.Length, guardOutLen);
       RequireFillLength("ERI", "openAndFill", "outBearPower", outBearPower.Length, guardOutLen);
-      if( outBullPower.Overlaps(inHigh) || outBullPower.Overlaps(inLow) || outBullPower.Overlaps(inClose) || outBearPower.Overlaps(inHigh) || outBearPower.Overlaps(inLow) || outBearPower.Overlaps(inClose) || OutputsAlias(outBullPower, outBearPower) ) {
+      if( SameBuffer(outBullPower, inHigh) || SameBuffer(outBullPower, inLow) || SameBuffer(outBullPower, inClose) || SameBuffer(outBearPower, inHigh) || SameBuffer(outBearPower, inLow) || SameBuffer(outBearPower, inClose) || SameBuffer(outBullPower, outBearPower) ) {
+         throw StreamFailure("ERI", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outBullPower.Overlaps(inHigh) || outBullPower.Overlaps(inLow) || outBullPower.Overlaps(inClose) || outBearPower.Overlaps(inHigh) || outBearPower.Overlaps(inLow) || outBearPower.Overlaps(inClose) || OutputsAlias(outBullPower, outBearPower) ) ) {
          throw StreamFailure("ERI", "openAndFill", RetCode.BadParam);
       }
       return EriOpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, out _, out _, outBullPower, outBearPower);

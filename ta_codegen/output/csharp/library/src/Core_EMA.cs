@@ -774,7 +774,10 @@ public partial class Core
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "EMA openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("EMA", "openAndFill", inReal.Length, EmaLookback(optInTimePeriod));
       RequireFillLength("EMA", "openAndFill", "outReal", outReal.Length, guardOutLen);
-      if( outReal.Overlaps(inReal) ) {
+      if( SameBuffer(outReal, inReal) ) {
+         throw StreamFailure("EMA", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outReal.Overlaps(inReal) ) ) {
          throw StreamFailure("EMA", "openAndFill", RetCode.BadParam);
       }
       return EmaOpenAndFillInternal(inReal, 0, optInTimePeriod, out _, out _, outReal);

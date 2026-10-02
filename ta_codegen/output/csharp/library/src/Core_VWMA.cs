@@ -1053,7 +1053,10 @@ public partial class Core
       int guardOutLen = OpenFillCount("VWMA", "openAndFill", inReal.Length, VwmaLookback(optInTimePeriod));
       RequireHistoryLength("VWMA", "openAndFill", "inVolume", inVolume.Length, inReal.Length);
       RequireFillLength("VWMA", "openAndFill", "outReal", outReal.Length, guardOutLen);
-      if( outReal.Overlaps(inReal) || outReal.Overlaps(inVolume) ) {
+      if( SameBuffer(outReal, inReal) || SameBuffer(outReal, inVolume) ) {
+         throw StreamFailure("VWMA", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outReal.Overlaps(inReal) || outReal.Overlaps(inVolume) ) ) {
          throw StreamFailure("VWMA", "openAndFill", RetCode.BadParam);
       }
       return VwmaOpenAndFillInternal(inReal, inVolume, 0, optInTimePeriod, out _, out _, outReal);

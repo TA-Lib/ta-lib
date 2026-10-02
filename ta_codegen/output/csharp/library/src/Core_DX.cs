@@ -1504,7 +1504,10 @@ public partial class Core
       RequireHistoryLength("DX", "openAndFill", "inLow", inLow.Length, inHigh.Length);
       RequireHistoryLength("DX", "openAndFill", "inClose", inClose.Length, inHigh.Length);
       RequireFillLength("DX", "openAndFill", "outReal", outReal.Length, guardOutLen);
-      if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) ) {
+      if( SameBuffer(outReal, inHigh) || SameBuffer(outReal, inLow) || SameBuffer(outReal, inClose) ) {
+         throw StreamFailure("DX", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) ) ) {
          throw StreamFailure("DX", "openAndFill", RetCode.BadParam);
       }
       return DxOpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, out _, out _, outReal);

@@ -986,7 +986,10 @@ public partial class Core
       int guardOutLen = OpenFillCount("EFI", "openAndFill", inClose.Length, EfiLookback(optInTimePeriod));
       RequireHistoryLength("EFI", "openAndFill", "inVolume", inVolume.Length, inClose.Length);
       RequireFillLength("EFI", "openAndFill", "outReal", outReal.Length, guardOutLen);
-      if( outReal.Overlaps(inClose) || outReal.Overlaps(inVolume) ) {
+      if( SameBuffer(outReal, inClose) || SameBuffer(outReal, inVolume) ) {
+         throw StreamFailure("EFI", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outReal.Overlaps(inClose) || outReal.Overlaps(inVolume) ) ) {
          throw StreamFailure("EFI", "openAndFill", RetCode.BadParam);
       }
       return EfiOpenAndFillInternal(inClose, inVolume, 0, optInTimePeriod, out _, out _, outReal);

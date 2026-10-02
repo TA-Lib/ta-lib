@@ -1859,7 +1859,10 @@ public partial class Core
       int guardOutLen = OpenFillCount("SAREXT", "openAndFill", inHigh.Length, SarextLookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort));
       RequireHistoryLength("SAREXT", "openAndFill", "inLow", inLow.Length, inHigh.Length);
       RequireFillLength("SAREXT", "openAndFill", "outReal", outReal.Length, guardOutLen);
-      if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) ) {
+      if( SameBuffer(outReal, inHigh) || SameBuffer(outReal, inLow) ) {
+         throw StreamFailure("SAREXT", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) ) ) {
          throw StreamFailure("SAREXT", "openAndFill", RetCode.BadParam);
       }
       return SarextOpenAndFillInternal(inHigh, inLow, 0, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, out _, out _, outReal);

@@ -1027,7 +1027,10 @@ public partial class Core
       int guardOutLen = OpenFillCount("AROONOSC", "openAndFill", inHigh.Length, AroonoscLookback(optInTimePeriod));
       RequireHistoryLength("AROONOSC", "openAndFill", "inLow", inLow.Length, inHigh.Length);
       RequireFillLength("AROONOSC", "openAndFill", "outReal", outReal.Length, guardOutLen);
-      if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) ) {
+      if( SameBuffer(outReal, inHigh) || SameBuffer(outReal, inLow) ) {
+         throw StreamFailure("AROONOSC", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) ) ) {
          throw StreamFailure("AROONOSC", "openAndFill", RetCode.BadParam);
       }
       return AroonoscOpenAndFillInternal(inHigh, inLow, 0, optInTimePeriod, out _, out _, outReal);

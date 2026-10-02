@@ -978,7 +978,10 @@ public partial class Core
       RequireHistoryLength("CDL3INSIDE", "openAndFill", "inLow", inLow.Length, inOpen.Length);
       RequireHistoryLength("CDL3INSIDE", "openAndFill", "inClose", inClose.Length, inOpen.Length);
       RequireFillLength("CDL3INSIDE", "openAndFill", "outInteger", outInteger.Length, guardOutLen);
-      if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inOpen)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inClose)) ) {
+      if( SameBuffer(System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger), System.Runtime.InteropServices.MemoryMarshal.AsBytes(inOpen)) || SameBuffer(System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger), System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || SameBuffer(System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger), System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || SameBuffer(System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger), System.Runtime.InteropServices.MemoryMarshal.AsBytes(inClose)) ) {
+         throw StreamFailure("CDL3INSIDE", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inOpen)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inClose)) ) ) {
          throw StreamFailure("CDL3INSIDE", "openAndFill", RetCode.BadParam);
       }
       return Cdl3insideOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, out _, out _, outInteger);

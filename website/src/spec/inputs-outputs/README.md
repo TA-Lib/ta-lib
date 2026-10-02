@@ -16,7 +16,7 @@ Nothing here is checked unless the item says so. A call that breaks an unchecked
 - <a id="finite-inputs"></a>**Pass only finite values in a series.** A NaN or infinity in a bar a call reads ([rL1](/spec/lookback/#rl1)), or inside the history a stream opens on, is not detected, and nothing is promised about the output or about a handle opened from it. Clean or split the series first. A single bar passed to `Update` or `Peek` is checked ([rU3](/spec/streaming/#ru3)).
 - <a id="input-domain"></a>**Keep real inputs within `TA_REAL_MIN` to `TA_REAL_MAX`** (±3e37). Nothing checks the bound, and outside it nothing is defined. The bound limits the domain only; it is not an accuracy promise.
 - <a id="overflow"></a>**Expect no overflow detection.** A running sum, a smoothed value or a ratio against a nearly flat window can leave the range of a double on bars that are each finite. Past that point nothing is defined: not the output, not the return code, not a stream handle's state. Open a new handle rather than keep one that went through it.
-- <a id="no-overlap"></a>**Do not overlap buffers**, except an output placed whole on an input ([rW7](/spec/inputs-outputs/#rw7)). Buffers that partially overlap (the same memory from a different start, or in C# a different length), or an output laid over an input of another element type, are not detected in C, where such a call can return `TA_SUCCESS` with wrong values.
+- <a id="no-overlap"></a>**Do not overlap buffers**, except an output placed whole on an input ([rW7](/spec/inputs-outputs/#rw7)). Buffers that partially overlap (the same memory from a different start, or in a C# batch call a different length), or an output laid over an input of another element type, are not detected in C, where such a call can return `TA_SUCCESS` with wrong values.
 
 ## What a call takes
 
@@ -56,5 +56,5 @@ An MA-type parameter accepts every `MAType` member, and a release may add member
 
 | | C | Rust | Java | C# |
 |---|---|---|---|---|
-| "The same buffer" means | the same pointer | not expressible in safe code | the same array | equal spans: same start and length; a null array is no buffer |
+| "The same buffer" means | the same pointer | not expressible in safe code | the same array | equal spans: same start and length; at `OpenAndFill`, the same start; a null array is no buffer |
 | Output on an input | allowed | not expressible | allowed | allowed |

@@ -905,7 +905,10 @@ public partial class Core
       RequireHistoryLength("SI", "openAndFill", "inLow", inLow.Length, inOpen.Length);
       RequireHistoryLength("SI", "openAndFill", "inClose", inClose.Length, inOpen.Length);
       RequireFillLength("SI", "openAndFill", "outReal", outReal.Length, guardOutLen);
-      if( outReal.Overlaps(inOpen) || outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) ) {
+      if( SameBuffer(outReal, inOpen) || SameBuffer(outReal, inHigh) || SameBuffer(outReal, inLow) || SameBuffer(outReal, inClose) ) {
+         throw StreamFailure("SI", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outReal.Overlaps(inOpen) || outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) ) ) {
          throw StreamFailure("SI", "openAndFill", RetCode.BadParam);
       }
       return SiOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, optInLimitMove, out _, out _, outReal);

@@ -1093,7 +1093,10 @@ public partial class Core
       int guardOutLen = OpenFillCount("MIDPRICE", "openAndFill", inHigh.Length, MidpriceLookback(optInTimePeriod));
       RequireHistoryLength("MIDPRICE", "openAndFill", "inLow", inLow.Length, inHigh.Length);
       RequireFillLength("MIDPRICE", "openAndFill", "outReal", outReal.Length, guardOutLen);
-      if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) ) {
+      if( SameBuffer(outReal, inHigh) || SameBuffer(outReal, inLow) ) {
+         throw StreamFailure("MIDPRICE", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) ) ) {
          throw StreamFailure("MIDPRICE", "openAndFill", RetCode.BadParam);
       }
       return MidpriceOpenAndFillInternal(inHigh, inLow, 0, optInTimePeriod, out _, out _, outReal);

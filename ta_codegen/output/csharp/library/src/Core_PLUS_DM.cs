@@ -1274,7 +1274,10 @@ public partial class Core
       int guardOutLen = OpenFillCount("PLUS_DM", "openAndFill", inHigh.Length, PlusDmLookback(optInTimePeriod));
       RequireHistoryLength("PLUS_DM", "openAndFill", "inLow", inLow.Length, inHigh.Length);
       RequireFillLength("PLUS_DM", "openAndFill", "outReal", outReal.Length, guardOutLen);
-      if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) ) {
+      if( SameBuffer(outReal, inHigh) || SameBuffer(outReal, inLow) ) {
+         throw StreamFailure("PLUS_DM", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) ) ) {
          throw StreamFailure("PLUS_DM", "openAndFill", RetCode.BadParam);
       }
       return PlusDmOpenAndFillInternal(inHigh, inLow, 0, optInTimePeriod, out _, out _, outReal);

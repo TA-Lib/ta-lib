@@ -2184,7 +2184,10 @@ public partial class Core
       int guardOutLen = OpenFillCount("MAMA", "openAndFill", inReal.Length, MamaLookback(optInFastLimit, optInSlowLimit));
       RequireFillLength("MAMA", "openAndFill", "outMAMA", outMAMA.Length, guardOutLen);
       if( !outFAMA.IsEmpty ) RequireFillLength("MAMA", "openAndFill", "outFAMA", outFAMA.Length, guardOutLen);
-      if( outMAMA.Overlaps(inReal) || outFAMA.Overlaps(inReal) || OutputsAlias(outMAMA, outFAMA) ) {
+      if( SameBuffer(outMAMA, inReal) || SameBuffer(outFAMA, inReal) || SameBuffer(outMAMA, outFAMA) ) {
+         throw StreamFailure("MAMA", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outMAMA.Overlaps(inReal) || outFAMA.Overlaps(inReal) || OutputsAlias(outMAMA, outFAMA) ) ) {
          throw StreamFailure("MAMA", "openAndFill", RetCode.BadParam);
       }
       return MamaOpenAndFillInternal(inReal, 0, optInFastLimit, optInSlowLimit, out _, out _, outMAMA, outFAMA);

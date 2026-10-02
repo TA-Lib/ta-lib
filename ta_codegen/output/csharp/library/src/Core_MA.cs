@@ -1200,7 +1200,10 @@ public partial class Core
       } else if( (int)optInMAType < MATypes.Min || (int)optInMAType > MATypes.Max ) {
          return RetCode.BadParam;
       }
-      if( outReal.Overlaps(inReal) ) {
+      if( SameBuffer(outReal, inReal) ) {
+         return RetCode.BadParam;
+      }
+      if( inReal.Length > MaLookback(optInTimePeriod, optInMAType) && ( outReal.Overlaps(inReal) ) ) {
          return RetCode.BadParam;
       }
       if( historyLen < MaLookback(optInTimePeriod, optInMAType) + 1 ) {

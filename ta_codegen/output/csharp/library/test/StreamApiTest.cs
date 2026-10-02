@@ -520,6 +520,57 @@ public static class StreamApiTest
             "SupertrendOpenAndFill's int direction output sharing memory with its real trend output is rejected");
     }
 
+    /// <summary>
+    /// A partial overlap is C#'s own check, so it must not change which code a
+    /// call with another fault gets: it runs after the history check, where C
+    /// and Java, which cannot see it, answer InsufficientHistory. The same buffer,
+    /// one start address as C compares, is every language's rule and stays ahead.
+    /// </summary>
+    private static void APartialOverlapIsCheckedAfterTheHistory()
+    {
+        var core = new Core();
+        double[] buf = Closes(120);
+        int lb = core.SmaLookback(30);
+
+        // Output on input.
+        CheckRetCode(() => core.SmaOpenAndFill(buf.AsSpan(0, lb), 30, buf.AsSpan(1, lb)),
+            RetCode.InsufficientHistory, "a partial overlap on a history too short to open");
+        CheckRetCode(() => core.SmaOpenAndFill(buf.AsSpan(0, lb + 10), 30, buf.AsSpan(1, lb + 10)),
+            RetCode.BadParam, "a partial overlap on a history long enough to open");
+        CheckRetCode(() => core.SmaOpenAndFill(buf.AsSpan(0, lb), 30, buf.AsSpan(0, 5)),
+            RetCode.BadParam, "an output starting on the input, short history");
+
+        // The hand-rolled MA opener carries the same split.
+        int maLb = core.MaLookback(30, MAType.EMA);
+        CheckRetCode(() => core.MaOpenAndFill(buf.AsSpan(0, maLb), 30, MAType.EMA, buf.AsSpan(1, maLb)),
+            RetCode.InsufficientHistory, "MA: a partial overlap on a history too short to open");
+        CheckRetCode(() => core.MaOpenAndFill(buf.AsSpan(0, maLb), 30, MAType.EMA, buf.AsSpan(0, 5)),
+            RetCode.BadParam, "MA: an output starting on the input, short history");
+
+        // Output on output.
+        double[] hlc = Closes(64);
+        double[] outs = new double[200];
+        int acLb = core.AccbandsLookback(20);
+        double[] shortHlc = Closes(acLb);
+        CheckRetCode(() => core.AccbandsOpenAndFill(shortHlc, shortHlc, shortHlc, 20,
+                outs.AsSpan(0, 50), outs.AsSpan(1, 50), outs.AsSpan(100, 50)),
+            RetCode.InsufficientHistory, "two outputs overlapping in part, short history");
+        CheckRetCode(() => core.AccbandsOpenAndFill(hlc, hlc, hlc, 20,
+                outs.AsSpan(0, 50), outs.AsSpan(1, 50), outs.AsSpan(100, 50)),
+            RetCode.BadParam, "two outputs overlapping in part, history long enough");
+        CheckRetCode(() => core.AccbandsOpenAndFill(shortHlc, shortHlc, shortHlc, 20,
+                outs.AsSpan(0, 50), outs.AsSpan(0, 40), outs.AsSpan(100, 50)),
+            RetCode.BadParam, "two outputs starting at one address, short history");
+
+        // Cross-typed: an int output laid over a real input from its second element.
+        int dojiLb = core.CdldojiLookback();
+        double[] ohlc = Closes(dojiLb + 40);
+        CheckRetCode(() => core.CdldojiOpenAndFill(ohlc.AsSpan(0, dojiLb), ohlc.AsSpan(0, dojiLb),
+                ohlc.AsSpan(0, dojiLb), ohlc.AsSpan(0, dojiLb),
+                MemoryMarshal.Cast<double, int>(ohlc.AsSpan(1, dojiLb))),
+            RetCode.InsufficientHistory, "an int output over a real input in part, short history");
+    }
+
     /// <summary>Empty spans — which is what a null array becomes — are named.</summary>
     /// <remarks>The public openers are the only place this is checked — the
     /// composition seam and the internal cores are reached only with arrays the
@@ -2108,6 +2159,7 @@ public static class StreamApiTest
         MisuseThrowsTheDocumentedException();
         OpenAndFillRejectsAliasing();
         CrossTypedOpenAndFillOverlapIsRejected();
+        APartialOverlapIsCheckedAfterTheHistory();
         NullArgumentsAreNamed();
         AHistoryPastTheIndexDomainIsAnIndexFault();
         OpenersCheckTheirArguments();

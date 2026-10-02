@@ -541,7 +541,10 @@ public partial class Core
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "ATAN openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("ATAN", "openAndFill", inReal.Length, AtanLookback());
       RequireFillLength("ATAN", "openAndFill", "outReal", outReal.Length, guardOutLen);
-      if( outReal.Overlaps(inReal) ) {
+      if( SameBuffer(outReal, inReal) ) {
+         throw StreamFailure("ATAN", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outReal.Overlaps(inReal) ) ) {
          throw StreamFailure("ATAN", "openAndFill", RetCode.BadParam);
       }
       return AtanOpenAndFillInternal(inReal, 0, out _, out _, outReal);

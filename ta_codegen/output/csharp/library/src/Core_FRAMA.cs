@@ -1286,7 +1286,10 @@ public partial class Core
       int guardOutLen = OpenFillCount("FRAMA", "openAndFill", inHigh.Length, FramaLookback(optInTimePeriod));
       RequireHistoryLength("FRAMA", "openAndFill", "inLow", inLow.Length, inHigh.Length);
       RequireFillLength("FRAMA", "openAndFill", "outReal", outReal.Length, guardOutLen);
-      if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) ) {
+      if( SameBuffer(outReal, inHigh) || SameBuffer(outReal, inLow) ) {
+         throw StreamFailure("FRAMA", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) ) ) {
          throw StreamFailure("FRAMA", "openAndFill", RetCode.BadParam);
       }
       return FramaOpenAndFillInternal(inHigh, inLow, 0, optInTimePeriod, out _, out _, outReal);

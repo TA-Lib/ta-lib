@@ -1336,7 +1336,10 @@ public partial class Core
       RequireHistoryLength("VORTEX", "openAndFill", "inClose", inClose.Length, inHigh.Length);
       RequireFillLength("VORTEX", "openAndFill", "outPlusVI", outPlusVI.Length, guardOutLen);
       RequireFillLength("VORTEX", "openAndFill", "outMinusVI", outMinusVI.Length, guardOutLen);
-      if( outPlusVI.Overlaps(inHigh) || outPlusVI.Overlaps(inLow) || outPlusVI.Overlaps(inClose) || outMinusVI.Overlaps(inHigh) || outMinusVI.Overlaps(inLow) || outMinusVI.Overlaps(inClose) || OutputsAlias(outPlusVI, outMinusVI) ) {
+      if( SameBuffer(outPlusVI, inHigh) || SameBuffer(outPlusVI, inLow) || SameBuffer(outPlusVI, inClose) || SameBuffer(outMinusVI, inHigh) || SameBuffer(outMinusVI, inLow) || SameBuffer(outMinusVI, inClose) || SameBuffer(outPlusVI, outMinusVI) ) {
+         throw StreamFailure("VORTEX", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outPlusVI.Overlaps(inHigh) || outPlusVI.Overlaps(inLow) || outPlusVI.Overlaps(inClose) || outMinusVI.Overlaps(inHigh) || outMinusVI.Overlaps(inLow) || outMinusVI.Overlaps(inClose) || OutputsAlias(outPlusVI, outMinusVI) ) ) {
          throw StreamFailure("VORTEX", "openAndFill", RetCode.BadParam);
       }
       return VortexOpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, out _, out _, outPlusVI, outMinusVI);

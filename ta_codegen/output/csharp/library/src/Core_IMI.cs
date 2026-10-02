@@ -772,7 +772,10 @@ public partial class Core
       int guardOutLen = OpenFillCount("IMI", "openAndFill", inOpen.Length, ImiLookback(optInTimePeriod));
       RequireHistoryLength("IMI", "openAndFill", "inClose", inClose.Length, inOpen.Length);
       RequireFillLength("IMI", "openAndFill", "outReal", outReal.Length, guardOutLen);
-      if( outReal.Overlaps(inOpen) || outReal.Overlaps(inClose) ) {
+      if( SameBuffer(outReal, inOpen) || SameBuffer(outReal, inClose) ) {
+         throw StreamFailure("IMI", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outReal.Overlaps(inOpen) || outReal.Overlaps(inClose) ) ) {
          throw StreamFailure("IMI", "openAndFill", RetCode.BadParam);
       }
       return ImiOpenAndFillInternal(inOpen, inClose, 0, optInTimePeriod, out _, out _, outReal);

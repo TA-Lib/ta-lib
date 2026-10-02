@@ -962,7 +962,10 @@ public partial class Core
       int guardOutLen = OpenFillCount("STOCHRSI", "openAndFill", inReal.Length, StochrsiLookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType));
       RequireFillLength("STOCHRSI", "openAndFill", "outFastK", outFastK.Length, guardOutLen);
       RequireFillLength("STOCHRSI", "openAndFill", "outFastD", outFastD.Length, guardOutLen);
-      if( outFastK.Overlaps(inReal) || outFastD.Overlaps(inReal) || OutputsAlias(outFastK, outFastD) ) {
+      if( SameBuffer(outFastK, inReal) || SameBuffer(outFastD, inReal) || SameBuffer(outFastK, outFastD) ) {
+         throw StreamFailure("STOCHRSI", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outFastK.Overlaps(inReal) || outFastD.Overlaps(inReal) || OutputsAlias(outFastK, outFastD) ) ) {
          throw StreamFailure("STOCHRSI", "openAndFill", RetCode.BadParam);
       }
       return StochrsiOpenAndFillInternal(inReal, 0, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out _, out _, outFastK, outFastD);

@@ -1073,7 +1073,10 @@ public partial class Core
       RequireFillLength("DONCHIAN", "openAndFill", "outRealUpperBand", outRealUpperBand.Length, guardOutLen);
       RequireFillLength("DONCHIAN", "openAndFill", "outRealMiddleBand", outRealMiddleBand.Length, guardOutLen);
       RequireFillLength("DONCHIAN", "openAndFill", "outRealLowerBand", outRealLowerBand.Length, guardOutLen);
-      if( outRealUpperBand.Overlaps(inHigh) || outRealUpperBand.Overlaps(inLow) || outRealMiddleBand.Overlaps(inHigh) || outRealMiddleBand.Overlaps(inLow) || outRealLowerBand.Overlaps(inHigh) || outRealLowerBand.Overlaps(inLow) || OutputsAlias(outRealUpperBand, outRealMiddleBand) || OutputsAlias(outRealUpperBand, outRealLowerBand) || OutputsAlias(outRealMiddleBand, outRealLowerBand) ) {
+      if( SameBuffer(outRealUpperBand, inHigh) || SameBuffer(outRealUpperBand, inLow) || SameBuffer(outRealMiddleBand, inHigh) || SameBuffer(outRealMiddleBand, inLow) || SameBuffer(outRealLowerBand, inHigh) || SameBuffer(outRealLowerBand, inLow) || SameBuffer(outRealUpperBand, outRealMiddleBand) || SameBuffer(outRealUpperBand, outRealLowerBand) || SameBuffer(outRealMiddleBand, outRealLowerBand) ) {
+         throw StreamFailure("DONCHIAN", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outRealUpperBand.Overlaps(inHigh) || outRealUpperBand.Overlaps(inLow) || outRealMiddleBand.Overlaps(inHigh) || outRealMiddleBand.Overlaps(inLow) || outRealLowerBand.Overlaps(inHigh) || outRealLowerBand.Overlaps(inLow) || OutputsAlias(outRealUpperBand, outRealMiddleBand) || OutputsAlias(outRealUpperBand, outRealLowerBand) || OutputsAlias(outRealMiddleBand, outRealLowerBand) ) ) {
          throw StreamFailure("DONCHIAN", "openAndFill", RetCode.BadParam);
       }
       return DonchianOpenAndFillInternal(inHigh, inLow, 0, optInTimePeriod, out _, out _, outRealUpperBand, outRealMiddleBand, outRealLowerBand);

@@ -816,7 +816,10 @@ public partial class Core
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "RMA openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("RMA", "openAndFill", inReal.Length, RmaLookback(optInTimePeriod));
       RequireFillLength("RMA", "openAndFill", "outReal", outReal.Length, guardOutLen);
-      if( outReal.Overlaps(inReal) ) {
+      if( SameBuffer(outReal, inReal) ) {
+         throw StreamFailure("RMA", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outReal.Overlaps(inReal) ) ) {
          throw StreamFailure("RMA", "openAndFill", RetCode.BadParam);
       }
       return RmaOpenAndFillInternal(inReal, 0, optInTimePeriod, out _, out _, outReal);

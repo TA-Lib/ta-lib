@@ -1048,7 +1048,10 @@ public partial class Core
       RequireHistoryLength("VWAP", "openAndFill", "inClose", inClose.Length, inHigh.Length);
       RequireHistoryLength("VWAP", "openAndFill", "inVolume", inVolume.Length, inHigh.Length);
       RequireFillLength("VWAP", "openAndFill", "outReal", outReal.Length, guardOutLen);
-      if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) || outReal.Overlaps(inVolume) ) {
+      if( SameBuffer(outReal, inHigh) || SameBuffer(outReal, inLow) || SameBuffer(outReal, inClose) || SameBuffer(outReal, inVolume) ) {
+         throw StreamFailure("VWAP", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) || outReal.Overlaps(inVolume) ) ) {
          throw StreamFailure("VWAP", "openAndFill", RetCode.BadParam);
       }
       return VwapOpenAndFillInternal(inHigh, inLow, inClose, inVolume, 0, out _, out _, outReal);

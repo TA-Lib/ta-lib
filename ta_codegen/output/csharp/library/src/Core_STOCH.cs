@@ -1535,7 +1535,10 @@ public partial class Core
       RequireHistoryLength("STOCH", "openAndFill", "inClose", inClose.Length, inHigh.Length);
       RequireFillLength("STOCH", "openAndFill", "outSlowK", outSlowK.Length, guardOutLen);
       RequireFillLength("STOCH", "openAndFill", "outSlowD", outSlowD.Length, guardOutLen);
-      if( outSlowK.Overlaps(inHigh) || outSlowK.Overlaps(inLow) || outSlowK.Overlaps(inClose) || outSlowD.Overlaps(inHigh) || outSlowD.Overlaps(inLow) || outSlowD.Overlaps(inClose) || OutputsAlias(outSlowK, outSlowD) ) {
+      if( SameBuffer(outSlowK, inHigh) || SameBuffer(outSlowK, inLow) || SameBuffer(outSlowK, inClose) || SameBuffer(outSlowD, inHigh) || SameBuffer(outSlowD, inLow) || SameBuffer(outSlowD, inClose) || SameBuffer(outSlowK, outSlowD) ) {
+         throw StreamFailure("STOCH", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outSlowK.Overlaps(inHigh) || outSlowK.Overlaps(inLow) || outSlowK.Overlaps(inClose) || outSlowD.Overlaps(inHigh) || outSlowD.Overlaps(inLow) || outSlowD.Overlaps(inClose) || OutputsAlias(outSlowK, outSlowD) ) ) {
          throw StreamFailure("STOCH", "openAndFill", RetCode.BadParam);
       }
       return StochOpenAndFillInternal(inHigh, inLow, inClose, 0, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, out _, out _, outSlowK, outSlowD);

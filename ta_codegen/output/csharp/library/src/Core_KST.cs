@@ -1993,7 +1993,10 @@ public partial class Core
       int guardOutLen = OpenFillCount("KST", "openAndFill", inReal.Length, KstLookback(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod));
       RequireFillLength("KST", "openAndFill", "outKST", outKST.Length, guardOutLen);
       RequireFillLength("KST", "openAndFill", "outKSTSignal", outKSTSignal.Length, guardOutLen);
-      if( outKST.Overlaps(inReal) || outKSTSignal.Overlaps(inReal) || OutputsAlias(outKST, outKSTSignal) ) {
+      if( SameBuffer(outKST, inReal) || SameBuffer(outKSTSignal, inReal) || SameBuffer(outKST, outKSTSignal) ) {
+         throw StreamFailure("KST", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outKST.Overlaps(inReal) || outKSTSignal.Overlaps(inReal) || OutputsAlias(outKST, outKSTSignal) ) ) {
          throw StreamFailure("KST", "openAndFill", RetCode.BadParam);
       }
       return KstOpenAndFillInternal(inReal, 0, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, out _, out _, outKST, outKSTSignal);

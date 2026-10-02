@@ -582,7 +582,10 @@ public partial class Core
       int guardOutLen = OpenFillCount("MEDPRICE", "openAndFill", inHigh.Length, MedpriceLookback());
       RequireHistoryLength("MEDPRICE", "openAndFill", "inLow", inLow.Length, inHigh.Length);
       RequireFillLength("MEDPRICE", "openAndFill", "outReal", outReal.Length, guardOutLen);
-      if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) ) {
+      if( SameBuffer(outReal, inHigh) || SameBuffer(outReal, inLow) ) {
+         throw StreamFailure("MEDPRICE", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) ) ) {
          throw StreamFailure("MEDPRICE", "openAndFill", RetCode.BadParam);
       }
       return MedpriceOpenAndFillInternal(inHigh, inLow, 0, out _, out _, outReal);

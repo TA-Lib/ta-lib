@@ -591,7 +591,11 @@ C# detects more than the rule: its guard
 input/output overlap while allowing whole-buffer in place, `Overlaps` rejects a
 partial output/output overlap, and its `float` overload rejects any overlap
 between a `float` input and a `double` output (#386). Kept because it costs one
-call on a type that already answers the question. If uniformity is ever
+call on a type that already answers the question (ruled 2026-10-02), and made
+last so that a call with another fault answers the code C and Java give it: in
+the batch tier after the same-buffer guard, at an opener after the history
+check. The same buffer at an opener is one start address, as C compares it,
+and stays ahead of the history check in every language. If uniformity is ever
 preferred over the extra safety, removing it is the change, not adding the check
 elsewhere.
 

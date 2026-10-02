@@ -977,7 +977,10 @@ public partial class Core
       int guardOutLen = OpenFillCount("MINMAXINDEX", "openAndFill", inReal.Length, MinmaxindexLookback(optInTimePeriod));
       RequireFillLength("MINMAXINDEX", "openAndFill", "outMinIdx", outMinIdx.Length, guardOutLen);
       RequireFillLength("MINMAXINDEX", "openAndFill", "outMaxIdx", outMaxIdx.Length, guardOutLen);
-      if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outMinIdx).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inReal)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outMaxIdx).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inReal)) || OutputsAlias(outMinIdx, outMaxIdx) ) {
+      if( SameBuffer(System.Runtime.InteropServices.MemoryMarshal.AsBytes(outMinIdx), System.Runtime.InteropServices.MemoryMarshal.AsBytes(inReal)) || SameBuffer(System.Runtime.InteropServices.MemoryMarshal.AsBytes(outMaxIdx), System.Runtime.InteropServices.MemoryMarshal.AsBytes(inReal)) || SameBuffer(outMinIdx, outMaxIdx) ) {
+         throw StreamFailure("MINMAXINDEX", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outMinIdx).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inReal)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outMaxIdx).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inReal)) || OutputsAlias(outMinIdx, outMaxIdx) ) ) {
          throw StreamFailure("MINMAXINDEX", "openAndFill", RetCode.BadParam);
       }
       return MinmaxindexOpenAndFillInternal(inReal, 0, optInTimePeriod, out _, out _, outMinIdx, outMaxIdx);

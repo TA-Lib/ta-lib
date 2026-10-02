@@ -875,7 +875,10 @@ public partial class Core
       RequireHistoryLength("ASI", "openAndFill", "inLow", inLow.Length, inOpen.Length);
       RequireHistoryLength("ASI", "openAndFill", "inClose", inClose.Length, inOpen.Length);
       RequireFillLength("ASI", "openAndFill", "outReal", outReal.Length, guardOutLen);
-      if( outReal.Overlaps(inOpen) || outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) ) {
+      if( SameBuffer(outReal, inOpen) || SameBuffer(outReal, inHigh) || SameBuffer(outReal, inLow) || SameBuffer(outReal, inClose) ) {
+         throw StreamFailure("ASI", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outReal.Overlaps(inOpen) || outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) ) ) {
          throw StreamFailure("ASI", "openAndFill", RetCode.BadParam);
       }
       return AsiOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, optInLimitMove, out _, out _, outReal);

@@ -1002,7 +1002,10 @@ public partial class Core
       RequireHistoryLength("ATR", "openAndFill", "inLow", inLow.Length, inHigh.Length);
       RequireHistoryLength("ATR", "openAndFill", "inClose", inClose.Length, inHigh.Length);
       RequireFillLength("ATR", "openAndFill", "outReal", outReal.Length, guardOutLen);
-      if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) ) {
+      if( SameBuffer(outReal, inHigh) || SameBuffer(outReal, inLow) || SameBuffer(outReal, inClose) ) {
+         throw StreamFailure("ATR", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) ) ) {
          throw StreamFailure("ATR", "openAndFill", RetCode.BadParam);
       }
       return AtrOpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, out _, out _, outReal);

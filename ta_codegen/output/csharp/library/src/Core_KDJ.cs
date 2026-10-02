@@ -973,7 +973,10 @@ public partial class Core
       RequireFillLength("KDJ", "openAndFill", "outK", outK.Length, guardOutLen);
       RequireFillLength("KDJ", "openAndFill", "outD", outD.Length, guardOutLen);
       RequireFillLength("KDJ", "openAndFill", "outJ", outJ.Length, guardOutLen);
-      if( outK.Overlaps(inHigh) || outK.Overlaps(inLow) || outK.Overlaps(inClose) || outD.Overlaps(inHigh) || outD.Overlaps(inLow) || outD.Overlaps(inClose) || outJ.Overlaps(inHigh) || outJ.Overlaps(inLow) || outJ.Overlaps(inClose) || OutputsAlias(outK, outD) || OutputsAlias(outK, outJ) || OutputsAlias(outD, outJ) ) {
+      if( SameBuffer(outK, inHigh) || SameBuffer(outK, inLow) || SameBuffer(outK, inClose) || SameBuffer(outD, inHigh) || SameBuffer(outD, inLow) || SameBuffer(outD, inClose) || SameBuffer(outJ, inHigh) || SameBuffer(outJ, inLow) || SameBuffer(outJ, inClose) || SameBuffer(outK, outD) || SameBuffer(outK, outJ) || SameBuffer(outD, outJ) ) {
+         throw StreamFailure("KDJ", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outK.Overlaps(inHigh) || outK.Overlaps(inLow) || outK.Overlaps(inClose) || outD.Overlaps(inHigh) || outD.Overlaps(inLow) || outD.Overlaps(inClose) || outJ.Overlaps(inHigh) || outJ.Overlaps(inLow) || outJ.Overlaps(inClose) || OutputsAlias(outK, outD) || OutputsAlias(outK, outJ) || OutputsAlias(outD, outJ) ) ) {
          throw StreamFailure("KDJ", "openAndFill", RetCode.BadParam);
       }
       return KdjOpenAndFillInternal(inHigh, inLow, inClose, 0, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, out _, out _, outK, outD, outJ);

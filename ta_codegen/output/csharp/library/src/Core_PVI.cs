@@ -735,7 +735,10 @@ public partial class Core
       int guardOutLen = OpenFillCount("PVI", "openAndFill", inClose.Length, PviLookback());
       RequireHistoryLength("PVI", "openAndFill", "inVolume", inVolume.Length, inClose.Length);
       RequireFillLength("PVI", "openAndFill", "outReal", outReal.Length, guardOutLen);
-      if( outReal.Overlaps(inClose) || outReal.Overlaps(inVolume) ) {
+      if( SameBuffer(outReal, inClose) || SameBuffer(outReal, inVolume) ) {
+         throw StreamFailure("PVI", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outReal.Overlaps(inClose) || outReal.Overlaps(inVolume) ) ) {
          throw StreamFailure("PVI", "openAndFill", RetCode.BadParam);
       }
       return PviOpenAndFillInternal(inClose, inVolume, 0, out _, out _, outReal);

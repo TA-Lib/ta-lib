@@ -1177,7 +1177,10 @@ public partial class Core
       RequireHistoryLength("MFI", "openAndFill", "inClose", inClose.Length, inHigh.Length);
       RequireHistoryLength("MFI", "openAndFill", "inVolume", inVolume.Length, inHigh.Length);
       RequireFillLength("MFI", "openAndFill", "outReal", outReal.Length, guardOutLen);
-      if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) || outReal.Overlaps(inVolume) ) {
+      if( SameBuffer(outReal, inHigh) || SameBuffer(outReal, inLow) || SameBuffer(outReal, inClose) || SameBuffer(outReal, inVolume) ) {
+         throw StreamFailure("MFI", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) || outReal.Overlaps(inVolume) ) ) {
          throw StreamFailure("MFI", "openAndFill", RetCode.BadParam);
       }
       return MfiOpenAndFillInternal(inHigh, inLow, inClose, inVolume, 0, optInTimePeriod, out _, out _, outReal);

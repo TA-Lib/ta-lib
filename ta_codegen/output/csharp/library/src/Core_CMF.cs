@@ -1124,7 +1124,10 @@ public partial class Core
       RequireHistoryLength("CMF", "openAndFill", "inClose", inClose.Length, inHigh.Length);
       RequireHistoryLength("CMF", "openAndFill", "inVolume", inVolume.Length, inHigh.Length);
       RequireFillLength("CMF", "openAndFill", "outReal", outReal.Length, guardOutLen);
-      if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) || outReal.Overlaps(inVolume) ) {
+      if( SameBuffer(outReal, inHigh) || SameBuffer(outReal, inLow) || SameBuffer(outReal, inClose) || SameBuffer(outReal, inVolume) ) {
+         throw StreamFailure("CMF", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) || outReal.Overlaps(inVolume) ) ) {
          throw StreamFailure("CMF", "openAndFill", RetCode.BadParam);
       }
       return CmfOpenAndFillInternal(inHigh, inLow, inClose, inVolume, 0, optInTimePeriod, out _, out _, outReal);

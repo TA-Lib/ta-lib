@@ -1017,7 +1017,10 @@ public partial class Core
       RequireHistoryLength("ADOSC", "openAndFill", "inClose", inClose.Length, inHigh.Length);
       RequireHistoryLength("ADOSC", "openAndFill", "inVolume", inVolume.Length, inHigh.Length);
       RequireFillLength("ADOSC", "openAndFill", "outReal", outReal.Length, guardOutLen);
-      if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) || outReal.Overlaps(inVolume) ) {
+      if( SameBuffer(outReal, inHigh) || SameBuffer(outReal, inLow) || SameBuffer(outReal, inClose) || SameBuffer(outReal, inVolume) ) {
+         throw StreamFailure("ADOSC", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) || outReal.Overlaps(inVolume) ) ) {
          throw StreamFailure("ADOSC", "openAndFill", RetCode.BadParam);
       }
       return AdoscOpenAndFillInternal(inHigh, inLow, inClose, inVolume, 0, optInFastPeriod, optInSlowPeriod, out _, out _, outReal);

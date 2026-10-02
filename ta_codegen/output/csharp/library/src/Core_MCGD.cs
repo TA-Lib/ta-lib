@@ -782,7 +782,10 @@ public partial class Core
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "MCGD openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("MCGD", "openAndFill", inReal.Length, McgdLookback(optInTimePeriod));
       RequireFillLength("MCGD", "openAndFill", "outReal", outReal.Length, guardOutLen);
-      if( outReal.Overlaps(inReal) ) {
+      if( SameBuffer(outReal, inReal) ) {
+         throw StreamFailure("MCGD", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outReal.Overlaps(inReal) ) ) {
          throw StreamFailure("MCGD", "openAndFill", RetCode.BadParam);
       }
       return McgdOpenAndFillInternal(inReal, 0, optInTimePeriod, out _, out _, outReal);

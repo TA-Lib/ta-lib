@@ -1924,7 +1924,10 @@ public partial class Core
       int guardOutLen = OpenFillCount("HT_PHASOR", "openAndFill", inReal.Length, HtPhasorLookback());
       RequireFillLength("HT_PHASOR", "openAndFill", "outInPhase", outInPhase.Length, guardOutLen);
       RequireFillLength("HT_PHASOR", "openAndFill", "outQuadrature", outQuadrature.Length, guardOutLen);
-      if( outInPhase.Overlaps(inReal) || outQuadrature.Overlaps(inReal) || OutputsAlias(outInPhase, outQuadrature) ) {
+      if( SameBuffer(outInPhase, inReal) || SameBuffer(outQuadrature, inReal) || SameBuffer(outInPhase, outQuadrature) ) {
+         throw StreamFailure("HT_PHASOR", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outInPhase.Overlaps(inReal) || outQuadrature.Overlaps(inReal) || OutputsAlias(outInPhase, outQuadrature) ) ) {
          throw StreamFailure("HT_PHASOR", "openAndFill", RetCode.BadParam);
       }
       return HtPhasorOpenAndFillInternal(inReal, 0, out _, out _, outInPhase, outQuadrature);

@@ -712,7 +712,10 @@ public partial class Core
       RequireHistoryLength("AD", "openAndFill", "inClose", inClose.Length, inHigh.Length);
       RequireHistoryLength("AD", "openAndFill", "inVolume", inVolume.Length, inHigh.Length);
       RequireFillLength("AD", "openAndFill", "outReal", outReal.Length, guardOutLen);
-      if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) || outReal.Overlaps(inVolume) ) {
+      if( SameBuffer(outReal, inHigh) || SameBuffer(outReal, inLow) || SameBuffer(outReal, inClose) || SameBuffer(outReal, inVolume) ) {
+         throw StreamFailure("AD", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) || outReal.Overlaps(inVolume) ) ) {
          throw StreamFailure("AD", "openAndFill", RetCode.BadParam);
       }
       return AdOpenAndFillInternal(inHigh, inLow, inClose, inVolume, 0, out _, out _, outReal);

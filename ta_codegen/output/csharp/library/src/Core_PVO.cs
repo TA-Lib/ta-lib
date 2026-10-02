@@ -1326,7 +1326,10 @@ public partial class Core
       if( inVolume.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inVolume), "PVO openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("PVO", "openAndFill", inVolume.Length, PvoLookback(optInFastPeriod, optInSlowPeriod, optInMAType));
       RequireFillLength("PVO", "openAndFill", "outReal", outReal.Length, guardOutLen);
-      if( outReal.Overlaps(inVolume) ) {
+      if( SameBuffer(outReal, inVolume) ) {
+         throw StreamFailure("PVO", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outReal.Overlaps(inVolume) ) ) {
          throw StreamFailure("PVO", "openAndFill", RetCode.BadParam);
       }
       return PvoOpenAndFillInternal(inVolume, 0, optInFastPeriod, optInSlowPeriod, optInMAType, out _, out _, outReal);

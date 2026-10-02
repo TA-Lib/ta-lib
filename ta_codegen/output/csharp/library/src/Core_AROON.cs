@@ -1026,7 +1026,10 @@ public partial class Core
       RequireHistoryLength("AROON", "openAndFill", "inLow", inLow.Length, inHigh.Length);
       RequireFillLength("AROON", "openAndFill", "outAroonDown", outAroonDown.Length, guardOutLen);
       RequireFillLength("AROON", "openAndFill", "outAroonUp", outAroonUp.Length, guardOutLen);
-      if( outAroonDown.Overlaps(inHigh) || outAroonDown.Overlaps(inLow) || outAroonUp.Overlaps(inHigh) || outAroonUp.Overlaps(inLow) || OutputsAlias(outAroonDown, outAroonUp) ) {
+      if( SameBuffer(outAroonDown, inHigh) || SameBuffer(outAroonDown, inLow) || SameBuffer(outAroonUp, inHigh) || SameBuffer(outAroonUp, inLow) || SameBuffer(outAroonDown, outAroonUp) ) {
+         throw StreamFailure("AROON", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outAroonDown.Overlaps(inHigh) || outAroonDown.Overlaps(inLow) || outAroonUp.Overlaps(inHigh) || outAroonUp.Overlaps(inLow) || OutputsAlias(outAroonDown, outAroonUp) ) ) {
          throw StreamFailure("AROON", "openAndFill", RetCode.BadParam);
       }
       return AroonOpenAndFillInternal(inHigh, inLow, 0, optInTimePeriod, out _, out _, outAroonDown, outAroonUp);

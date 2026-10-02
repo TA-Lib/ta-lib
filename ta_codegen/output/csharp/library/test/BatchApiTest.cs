@@ -1032,6 +1032,23 @@ public static class BatchApiTest
             "a SUPPLIED nullable output is still length-checked", "MAMA", "outFAMA");
     }
 
+    /// <summary>A partial overlap is C#'s own check and the last one made: an index
+    /// fault on the same call answers its own code.</summary>
+    private static void APartialOverlapIsCheckedLast()
+    {
+        var core = new Core();
+        double[] buf = Closes(300);
+        CheckCode(RetCode.OutOfRangeStartIndex,
+            () => core.Sma(-1, 199, buf.AsSpan(0, 200), 10, buf.AsSpan(1, 200)),
+            "a partial overlap and a negative startIdx");
+        CheckCode(RetCode.OutOfRangeEndIndex,
+            () => core.Sma(50, 10, buf.AsSpan(0, 200), 10, buf.AsSpan(1, 200)),
+            "a partial overlap and endIdx below startIdx");
+        CheckCode(RetCode.BadParam,
+            () => core.Sma(0, 199, buf.AsSpan(0, 200), 10, buf.AsSpan(1, 200)),
+            "a partial overlap alone");
+    }
+
     /// <summary>
     /// An output that cannot be declined is absent when its span is empty, a
     /// null array included, and the call is refused before any length is looked
@@ -1249,6 +1266,7 @@ public static class BatchApiTest
         EveryFailureCarriesItsCode();
         ANullableOutputMayBeDeclined();
         AnEmptyOutputIsAnAbsentOne();
+        APartialOverlapIsCheckedLast();
 
         if (_failures == 0)
         {

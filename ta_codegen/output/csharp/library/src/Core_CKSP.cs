@@ -1996,7 +1996,10 @@ public partial class Core
       RequireHistoryLength("CKSP", "openAndFill", "inClose", inClose.Length, inHigh.Length);
       RequireFillLength("CKSP", "openAndFill", "outHighStop", outHighStop.Length, guardOutLen);
       RequireFillLength("CKSP", "openAndFill", "outLowStop", outLowStop.Length, guardOutLen);
-      if( outHighStop.Overlaps(inHigh) || outHighStop.Overlaps(inLow) || outHighStop.Overlaps(inClose) || outLowStop.Overlaps(inHigh) || outLowStop.Overlaps(inLow) || outLowStop.Overlaps(inClose) || OutputsAlias(outHighStop, outLowStop) ) {
+      if( SameBuffer(outHighStop, inHigh) || SameBuffer(outHighStop, inLow) || SameBuffer(outHighStop, inClose) || SameBuffer(outLowStop, inHigh) || SameBuffer(outLowStop, inLow) || SameBuffer(outLowStop, inClose) || SameBuffer(outHighStop, outLowStop) ) {
+         throw StreamFailure("CKSP", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outHighStop.Overlaps(inHigh) || outHighStop.Overlaps(inLow) || outHighStop.Overlaps(inClose) || outLowStop.Overlaps(inHigh) || outLowStop.Overlaps(inLow) || outLowStop.Overlaps(inClose) || OutputsAlias(outHighStop, outLowStop) ) ) {
          throw StreamFailure("CKSP", "openAndFill", RetCode.BadParam);
       }
       return CkspOpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, optInMultiplier, optInStopPeriod, out _, out _, outHighStop, outLowStop);

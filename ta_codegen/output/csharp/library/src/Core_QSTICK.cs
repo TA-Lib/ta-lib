@@ -816,7 +816,10 @@ public partial class Core
       int guardOutLen = OpenFillCount("QSTICK", "openAndFill", inOpen.Length, QstickLookback(optInTimePeriod));
       RequireHistoryLength("QSTICK", "openAndFill", "inClose", inClose.Length, inOpen.Length);
       RequireFillLength("QSTICK", "openAndFill", "outReal", outReal.Length, guardOutLen);
-      if( outReal.Overlaps(inOpen) || outReal.Overlaps(inClose) ) {
+      if( SameBuffer(outReal, inOpen) || SameBuffer(outReal, inClose) ) {
+         throw StreamFailure("QSTICK", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outReal.Overlaps(inOpen) || outReal.Overlaps(inClose) ) ) {
          throw StreamFailure("QSTICK", "openAndFill", RetCode.BadParam);
       }
       return QstickOpenAndFillInternal(inOpen, inClose, 0, optInTimePeriod, out _, out _, outReal);

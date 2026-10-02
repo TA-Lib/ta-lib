@@ -1134,7 +1134,10 @@ public partial class Core
       RequireHistoryLength("NATR", "openAndFill", "inLow", inLow.Length, inHigh.Length);
       RequireHistoryLength("NATR", "openAndFill", "inClose", inClose.Length, inHigh.Length);
       RequireFillLength("NATR", "openAndFill", "outReal", outReal.Length, guardOutLen);
-      if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) ) {
+      if( SameBuffer(outReal, inHigh) || SameBuffer(outReal, inLow) || SameBuffer(outReal, inClose) ) {
+         throw StreamFailure("NATR", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) ) ) {
          throw StreamFailure("NATR", "openAndFill", RetCode.BadParam);
       }
       return NatrOpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, out _, out _, outReal);

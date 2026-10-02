@@ -742,7 +742,10 @@ public partial class Core
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "PERCENTRANK openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("PERCENTRANK", "openAndFill", inReal.Length, PercentrankLookback(optInTimePeriod));
       RequireFillLength("PERCENTRANK", "openAndFill", "outReal", outReal.Length, guardOutLen);
-      if( outReal.Overlaps(inReal) ) {
+      if( SameBuffer(outReal, inReal) ) {
+         throw StreamFailure("PERCENTRANK", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outReal.Overlaps(inReal) ) ) {
          throw StreamFailure("PERCENTRANK", "openAndFill", RetCode.BadParam);
       }
       return PercentrankOpenAndFillInternal(inReal, 0, optInTimePeriod, out _, out _, outReal);

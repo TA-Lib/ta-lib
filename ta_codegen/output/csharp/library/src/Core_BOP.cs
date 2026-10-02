@@ -654,7 +654,10 @@ public partial class Core
       RequireHistoryLength("BOP", "openAndFill", "inLow", inLow.Length, inOpen.Length);
       RequireHistoryLength("BOP", "openAndFill", "inClose", inClose.Length, inOpen.Length);
       RequireFillLength("BOP", "openAndFill", "outReal", outReal.Length, guardOutLen);
-      if( outReal.Overlaps(inOpen) || outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) ) {
+      if( SameBuffer(outReal, inOpen) || SameBuffer(outReal, inHigh) || SameBuffer(outReal, inLow) || SameBuffer(outReal, inClose) ) {
+         throw StreamFailure("BOP", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outReal.Overlaps(inOpen) || outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) ) ) {
          throw StreamFailure("BOP", "openAndFill", RetCode.BadParam);
       }
       return BopOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, out _, out _, outReal);

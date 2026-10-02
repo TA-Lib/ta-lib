@@ -1061,7 +1061,10 @@ public partial class Core
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "MIDPOINT openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("MIDPOINT", "openAndFill", inReal.Length, MidpointLookback(optInTimePeriod));
       RequireFillLength("MIDPOINT", "openAndFill", "outReal", outReal.Length, guardOutLen);
-      if( outReal.Overlaps(inReal) ) {
+      if( SameBuffer(outReal, inReal) ) {
+         throw StreamFailure("MIDPOINT", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outReal.Overlaps(inReal) ) ) {
          throw StreamFailure("MIDPOINT", "openAndFill", RetCode.BadParam);
       }
       return MidpointOpenAndFillInternal(inReal, 0, optInTimePeriod, out _, out _, outReal);

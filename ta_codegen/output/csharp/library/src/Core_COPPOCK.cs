@@ -1342,7 +1342,10 @@ public partial class Core
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "COPPOCK openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("COPPOCK", "openAndFill", inReal.Length, CoppockLookback(optInWMAPeriod, optInROC1Period, optInROC2Period));
       RequireFillLength("COPPOCK", "openAndFill", "outReal", outReal.Length, guardOutLen);
-      if( outReal.Overlaps(inReal) ) {
+      if( SameBuffer(outReal, inReal) ) {
+         throw StreamFailure("COPPOCK", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outReal.Overlaps(inReal) ) ) {
          throw StreamFailure("COPPOCK", "openAndFill", RetCode.BadParam);
       }
       return CoppockOpenAndFillInternal(inReal, 0, optInWMAPeriod, optInROC1Period, optInROC2Period, out _, out _, outReal);

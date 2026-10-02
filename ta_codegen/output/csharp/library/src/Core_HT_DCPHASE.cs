@@ -2260,7 +2260,10 @@ public partial class Core
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "HT_DCPHASE openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("HT_DCPHASE", "openAndFill", inReal.Length, HtDcphaseLookback());
       RequireFillLength("HT_DCPHASE", "openAndFill", "outReal", outReal.Length, guardOutLen);
-      if( outReal.Overlaps(inReal) ) {
+      if( SameBuffer(outReal, inReal) ) {
+         throw StreamFailure("HT_DCPHASE", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outReal.Overlaps(inReal) ) ) {
          throw StreamFailure("HT_DCPHASE", "openAndFill", RetCode.BadParam);
       }
       return HtDcphaseOpenAndFillInternal(inReal, 0, out _, out _, outReal);

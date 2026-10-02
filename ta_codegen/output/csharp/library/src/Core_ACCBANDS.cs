@@ -1086,7 +1086,10 @@ public partial class Core
       RequireFillLength("ACCBANDS", "openAndFill", "outRealUpperBand", outRealUpperBand.Length, guardOutLen);
       RequireFillLength("ACCBANDS", "openAndFill", "outRealMiddleBand", outRealMiddleBand.Length, guardOutLen);
       RequireFillLength("ACCBANDS", "openAndFill", "outRealLowerBand", outRealLowerBand.Length, guardOutLen);
-      if( outRealUpperBand.Overlaps(inHigh) || outRealUpperBand.Overlaps(inLow) || outRealUpperBand.Overlaps(inClose) || outRealMiddleBand.Overlaps(inHigh) || outRealMiddleBand.Overlaps(inLow) || outRealMiddleBand.Overlaps(inClose) || outRealLowerBand.Overlaps(inHigh) || outRealLowerBand.Overlaps(inLow) || outRealLowerBand.Overlaps(inClose) || OutputsAlias(outRealUpperBand, outRealMiddleBand) || OutputsAlias(outRealUpperBand, outRealLowerBand) || OutputsAlias(outRealMiddleBand, outRealLowerBand) ) {
+      if( SameBuffer(outRealUpperBand, inHigh) || SameBuffer(outRealUpperBand, inLow) || SameBuffer(outRealUpperBand, inClose) || SameBuffer(outRealMiddleBand, inHigh) || SameBuffer(outRealMiddleBand, inLow) || SameBuffer(outRealMiddleBand, inClose) || SameBuffer(outRealLowerBand, inHigh) || SameBuffer(outRealLowerBand, inLow) || SameBuffer(outRealLowerBand, inClose) || SameBuffer(outRealUpperBand, outRealMiddleBand) || SameBuffer(outRealUpperBand, outRealLowerBand) || SameBuffer(outRealMiddleBand, outRealLowerBand) ) {
+         throw StreamFailure("ACCBANDS", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outRealUpperBand.Overlaps(inHigh) || outRealUpperBand.Overlaps(inLow) || outRealUpperBand.Overlaps(inClose) || outRealMiddleBand.Overlaps(inHigh) || outRealMiddleBand.Overlaps(inLow) || outRealMiddleBand.Overlaps(inClose) || outRealLowerBand.Overlaps(inHigh) || outRealLowerBand.Overlaps(inLow) || outRealLowerBand.Overlaps(inClose) || OutputsAlias(outRealUpperBand, outRealMiddleBand) || OutputsAlias(outRealUpperBand, outRealLowerBand) || OutputsAlias(outRealMiddleBand, outRealLowerBand) ) ) {
          throw StreamFailure("ACCBANDS", "openAndFill", RetCode.BadParam);
       }
       return AccbandsOpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, out _, out _, outRealUpperBand, outRealMiddleBand, outRealLowerBand);

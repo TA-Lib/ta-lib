@@ -919,7 +919,10 @@ public partial class Core
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "DEMA openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("DEMA", "openAndFill", inReal.Length, DemaLookback(optInTimePeriod));
       RequireFillLength("DEMA", "openAndFill", "outReal", outReal.Length, guardOutLen);
-      if( outReal.Overlaps(inReal) ) {
+      if( SameBuffer(outReal, inReal) ) {
+         throw StreamFailure("DEMA", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outReal.Overlaps(inReal) ) ) {
          throw StreamFailure("DEMA", "openAndFill", RetCode.BadParam);
       }
       return DemaOpenAndFillInternal(inReal, 0, optInTimePeriod, out _, out _, outReal);

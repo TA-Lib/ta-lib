@@ -1117,7 +1117,10 @@ public partial class Core
       } else if( (int)optInMAType < MATypes.Min || (int)optInMAType > MATypes.Max ) {
          return RetCode.BadParam;
       }
-      if( outReal.Overlaps(inReal) || outReal.Overlaps(inPeriods) ) {
+      if( SameBuffer(outReal, inReal) || SameBuffer(outReal, inPeriods) ) {
+         return RetCode.BadParam;
+      }
+      if( inReal.Length > MavpLookback(optInMinPeriod, optInMaxPeriod, optInMAType) && ( outReal.Overlaps(inReal) || outReal.Overlaps(inPeriods) ) ) {
          return RetCode.BadParam;
       }
       /* An inverted [min, max] period window is invalid (batch rejects). */

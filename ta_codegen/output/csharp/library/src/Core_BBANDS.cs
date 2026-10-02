@@ -1369,7 +1369,10 @@ public partial class Core
       RequireFillLength("BBANDS", "openAndFill", "outRealUpperBand", outRealUpperBand.Length, guardOutLen);
       RequireFillLength("BBANDS", "openAndFill", "outRealMiddleBand", outRealMiddleBand.Length, guardOutLen);
       RequireFillLength("BBANDS", "openAndFill", "outRealLowerBand", outRealLowerBand.Length, guardOutLen);
-      if( outRealUpperBand.Overlaps(inReal) || outRealMiddleBand.Overlaps(inReal) || outRealLowerBand.Overlaps(inReal) || OutputsAlias(outRealUpperBand, outRealMiddleBand) || OutputsAlias(outRealUpperBand, outRealLowerBand) || OutputsAlias(outRealMiddleBand, outRealLowerBand) ) {
+      if( SameBuffer(outRealUpperBand, inReal) || SameBuffer(outRealMiddleBand, inReal) || SameBuffer(outRealLowerBand, inReal) || SameBuffer(outRealUpperBand, outRealMiddleBand) || SameBuffer(outRealUpperBand, outRealLowerBand) || SameBuffer(outRealMiddleBand, outRealLowerBand) ) {
+         throw StreamFailure("BBANDS", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outRealUpperBand.Overlaps(inReal) || outRealMiddleBand.Overlaps(inReal) || outRealLowerBand.Overlaps(inReal) || OutputsAlias(outRealUpperBand, outRealMiddleBand) || OutputsAlias(outRealUpperBand, outRealLowerBand) || OutputsAlias(outRealMiddleBand, outRealLowerBand) ) ) {
          throw StreamFailure("BBANDS", "openAndFill", RetCode.BadParam);
       }
       return BbandsOpenAndFillInternal(inReal, 0, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, out _, out _, outRealUpperBand, outRealMiddleBand, outRealLowerBand);

@@ -1728,7 +1728,10 @@ public partial class Core
       RequireHistoryLength("SMI", "openAndFill", "inClose", inClose.Length, inHigh.Length);
       RequireFillLength("SMI", "openAndFill", "outSMI", outSMI.Length, guardOutLen);
       RequireFillLength("SMI", "openAndFill", "outSMISignal", outSMISignal.Length, guardOutLen);
-      if( outSMI.Overlaps(inHigh) || outSMI.Overlaps(inLow) || outSMI.Overlaps(inClose) || outSMISignal.Overlaps(inHigh) || outSMISignal.Overlaps(inLow) || outSMISignal.Overlaps(inClose) || OutputsAlias(outSMI, outSMISignal) ) {
+      if( SameBuffer(outSMI, inHigh) || SameBuffer(outSMI, inLow) || SameBuffer(outSMI, inClose) || SameBuffer(outSMISignal, inHigh) || SameBuffer(outSMISignal, inLow) || SameBuffer(outSMISignal, inClose) || SameBuffer(outSMI, outSMISignal) ) {
+         throw StreamFailure("SMI", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outSMI.Overlaps(inHigh) || outSMI.Overlaps(inLow) || outSMI.Overlaps(inClose) || outSMISignal.Overlaps(inHigh) || outSMISignal.Overlaps(inLow) || outSMISignal.Overlaps(inClose) || OutputsAlias(outSMI, outSMISignal) ) ) {
          throw StreamFailure("SMI", "openAndFill", RetCode.BadParam);
       }
       return SmiOpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out _, out _, outSMI, outSMISignal);

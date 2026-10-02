@@ -1247,7 +1247,10 @@ public partial class Core
       int guardOutLen = OpenFillCount("AC", "openAndFill", inHigh.Length, AcLookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod));
       RequireHistoryLength("AC", "openAndFill", "inLow", inLow.Length, inHigh.Length);
       RequireFillLength("AC", "openAndFill", "outReal", outReal.Length, guardOutLen);
-      if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) ) {
+      if( SameBuffer(outReal, inHigh) || SameBuffer(outReal, inLow) ) {
+         throw StreamFailure("AC", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) ) ) {
          throw StreamFailure("AC", "openAndFill", RetCode.BadParam);
       }
       return AcOpenAndFillInternal(inHigh, inLow, 0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out _, out _, outReal);

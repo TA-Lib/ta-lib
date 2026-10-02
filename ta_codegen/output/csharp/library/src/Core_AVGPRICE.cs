@@ -604,7 +604,10 @@ public partial class Core
       RequireHistoryLength("AVGPRICE", "openAndFill", "inLow", inLow.Length, inOpen.Length);
       RequireHistoryLength("AVGPRICE", "openAndFill", "inClose", inClose.Length, inOpen.Length);
       RequireFillLength("AVGPRICE", "openAndFill", "outReal", outReal.Length, guardOutLen);
-      if( outReal.Overlaps(inOpen) || outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) ) {
+      if( SameBuffer(outReal, inOpen) || SameBuffer(outReal, inHigh) || SameBuffer(outReal, inLow) || SameBuffer(outReal, inClose) ) {
+         throw StreamFailure("AVGPRICE", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outReal.Overlaps(inOpen) || outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) ) ) {
          throw StreamFailure("AVGPRICE", "openAndFill", RetCode.BadParam);
       }
       return AvgpriceOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, out _, out _, outReal);

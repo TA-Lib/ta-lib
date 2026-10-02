@@ -1443,7 +1443,10 @@ public partial class Core
       int guardOutLen = OpenFillCount("KSTEXT", "openAndFill", inReal.Length, KstextLookback(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType));
       RequireFillLength("KSTEXT", "openAndFill", "outKST", outKST.Length, guardOutLen);
       RequireFillLength("KSTEXT", "openAndFill", "outKSTSignal", outKSTSignal.Length, guardOutLen);
-      if( outKST.Overlaps(inReal) || outKSTSignal.Overlaps(inReal) || OutputsAlias(outKST, outKSTSignal) ) {
+      if( SameBuffer(outKST, inReal) || SameBuffer(outKSTSignal, inReal) || SameBuffer(outKST, outKSTSignal) ) {
+         throw StreamFailure("KSTEXT", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outKST.Overlaps(inReal) || outKSTSignal.Overlaps(inReal) || OutputsAlias(outKST, outKSTSignal) ) ) {
          throw StreamFailure("KSTEXT", "openAndFill", RetCode.BadParam);
       }
       return KstextOpenAndFillInternal(inReal, 0, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, out _, out _, outKST, outKSTSignal);

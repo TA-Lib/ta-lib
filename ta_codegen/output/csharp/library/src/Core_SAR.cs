@@ -1466,7 +1466,10 @@ public partial class Core
       int guardOutLen = OpenFillCount("SAR", "openAndFill", inHigh.Length, SarLookback(optInAcceleration, optInMaximum));
       RequireHistoryLength("SAR", "openAndFill", "inLow", inLow.Length, inHigh.Length);
       RequireFillLength("SAR", "openAndFill", "outReal", outReal.Length, guardOutLen);
-      if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) ) {
+      if( SameBuffer(outReal, inHigh) || SameBuffer(outReal, inLow) ) {
+         throw StreamFailure("SAR", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) ) ) {
          throw StreamFailure("SAR", "openAndFill", RetCode.BadParam);
       }
       return SarOpenAndFillInternal(inHigh, inLow, 0, optInAcceleration, optInMaximum, out _, out _, outReal);

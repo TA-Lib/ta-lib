@@ -539,7 +539,10 @@ public partial class Core
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "SQRT openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("SQRT", "openAndFill", inReal.Length, SqrtLookback());
       RequireFillLength("SQRT", "openAndFill", "outReal", outReal.Length, guardOutLen);
-      if( outReal.Overlaps(inReal) ) {
+      if( SameBuffer(outReal, inReal) ) {
+         throw StreamFailure("SQRT", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outReal.Overlaps(inReal) ) ) {
          throw StreamFailure("SQRT", "openAndFill", RetCode.BadParam);
       }
       return SqrtOpenAndFillInternal(inReal, 0, out _, out _, outReal);

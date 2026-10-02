@@ -1727,49 +1727,65 @@ fn emit_identity_step_branch(
 // Open transcription
 // ---------------------------------------------------------------------------
 
-/// The output/input and output/output aliasing reject.
+/// The output/input and output/output aliasing rejects, as two conditions.
 ///
-/// An output/input pair takes `MemoryExtensions.Overlaps`, not reference
-/// identity: `buf.Slice(0, n)` and `buf.Slice(1, n)` are different spans over
-/// overlapping memory, and identity would call them unrelated.
+/// The first is the same buffer, one start address, which every language
+/// refuses ahead of the history check. The second is a partial overlap, which
+/// only C# can see: it is tested once the history is known to be long enough,
+/// so a call with a too-short history answers `InsufficientHistory` here as it
+/// does in C and Java.
 ///
-/// This is not only about the reject. Several transcribed bodies branch on
-/// series identity as part of the ALGORITHM (BBANDS elects its scratch with
-/// `if (inReal == outRealUpperBand)`), and on a partially-overlapping pair that
-/// test is false while the buffers do in fact collide, so the body would take
-/// the wrong arm and write through its own input. Rejecting overlap up front is
-/// what keeps those branches sound.
-fn alias_condition(func: &FuncDef, inputs: &[String]) -> Option<String> {
+/// The partial test is not only about the reject. Several transcribed bodies
+/// branch on series identity as part of the ALGORITHM (BBANDS elects its scratch
+/// with `if (inReal == outRealUpperBand)`), and on a partially-overlapping pair
+/// that test is false while the buffers do in fact collide, so the body would
+/// take the wrong arm and write through its own input. Rejecting overlap before
+/// any body runs is what keeps those branches sound.
+fn alias_conditions(func: &FuncDef, inputs: &[String]) -> Option<(String, String)> {
     let outs: Vec<&str> = func.outputs.iter().map(|out| out.name.as_str()).collect();
-    let mut pairs: Vec<String> = Vec::new();
+    let ty = |o: &str| if out_is_int(func, o) { "int" } else { "double" };
+    let mut same: Vec<String> = Vec::new();
+    let mut partial: Vec<String> = Vec::new();
     for out in &outs {
-        let out_int = out_is_int(func, out);
         for input in inputs {
             // Every declared input is a real series, so a mismatch here is
             // exactly the int-output-vs-real-input case.
-            let out_ty = if out_int { "int" } else { "double" };
-            pairs.push(super::common::csharp_overlap_expr(out, out_ty, input, "double", false));
+            same.push(super::common::csharp_same_buffer_expr(out, ty(out), input, "double"));
+            partial.push(super::common::csharp_overlap_expr(out, ty(out), input, "double", false));
         }
     }
     for i in 0..outs.len() {
         for b in &outs[i + 1..] {
-            let ty = |o: &str| if out_is_int(func, o) { "int" } else { "double" };
-            pairs.push(super::common::csharp_output_alias_expr(outs[i], ty(outs[i]), b, ty(b)));
+            same.push(super::common::csharp_same_buffer_expr(outs[i], ty(outs[i]), b, ty(b)));
+            partial.push(super::common::csharp_output_alias_expr(outs[i], ty(outs[i]), b, ty(b)));
         }
     }
-    if pairs.is_empty() { None } else { Some(pairs.join(" || ")) }
+    if same.is_empty() {
+        None
+    } else {
+        Some((same.join(" || "), partial.join(" || ")))
+    }
 }
 
-/// [`alias_condition`] as a reject that answers a code — what a hand-rolled
-/// RetCode-returning fill body (the two exempt tiers) needs. The public frame
-/// throws instead and builds on the condition directly, so neither emitter has
-/// to read the other's text back out.
+/// [`alias_conditions`] as rejects that answer a code, for a hand-rolled
+/// RetCode-returning fill body (the two exempt tiers). The history is long
+/// enough to open exactly when it holds more bars than the lookback.
 fn alias_reject(func: &FuncDef, inputs: &[String]) -> String {
-    let Some(cond) = alias_condition(func, inputs) else {
+    let Some((same, partial)) = alias_conditions(func, inputs) else {
         return String::new();
     };
+    let lb_args: Vec<String> = func.optional_inputs.iter().map(|p| p.name.clone()).collect();
     let mut s = String::new();
-    let _ = writeln!(s, "      if( {cond} ) {{");
+    let _ = writeln!(s, "      if( {same} ) {{");
+    let _ = writeln!(s, "         return RetCode.BadParam;");
+    let _ = writeln!(s, "      }}");
+    let _ = writeln!(
+        s,
+        "      if( {}.Length > {}Lookback({}) && ( {partial} ) ) {{",
+        inputs[0],
+        pascal_words(&func.name),
+        lb_args.join(", ")
+    );
     let _ = writeln!(s, "         return RetCode.BadParam;");
     let _ = writeln!(s, "      }}");
     s
@@ -3021,13 +3037,15 @@ fn emit_open_wrappers(
         // throws here rather than answering a code, producing the identical
         // exception the shared ladder produced when the deleted fill body
         // returned BadParam into it.
-        if let Some(cond) = alias_condition(func, &in_fwd) {
-            let _ = writeln!(o, "      if( {cond} ) {{");
-            let _ = writeln!(
-                o,
-                "         throw StreamFailure(\"{n}\", \"openAndFill\", RetCode.BadParam);"
-            );
-            let _ = writeln!(o, "      }}");
+        if let Some((same, partial)) = alias_conditions(func, &in_fwd) {
+            for cond in [same, format!("guardOutLen > 0 && ( {partial} )")] {
+                let _ = writeln!(o, "      if( {cond} ) {{");
+                let _ = writeln!(
+                    o,
+                    "         throw StreamFailure(\"{n}\", \"openAndFill\", RetCode.BadParam);"
+                );
+                let _ = writeln!(o, "      }}");
+            }
         }
         let mut args: Vec<String> = in_fwd.clone();
         args.push("0".to_string());

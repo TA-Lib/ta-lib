@@ -2487,7 +2487,10 @@ public partial class Core
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "CG openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("CG", "openAndFill", inReal.Length, CgLookback(optInTimePeriod));
       RequireFillLength("CG", "openAndFill", "outReal", outReal.Length, guardOutLen);
-      if( outReal.Overlaps(inReal) ) {
+      if( SameBuffer(outReal, inReal) ) {
+         throw StreamFailure("CG", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outReal.Overlaps(inReal) ) ) {
          throw StreamFailure("CG", "openAndFill", RetCode.BadParam);
       }
       return CgOpenAndFillInternal(inReal, 0, optInTimePeriod, out _, out _, outReal);

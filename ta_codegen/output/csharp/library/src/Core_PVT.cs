@@ -658,7 +658,10 @@ public partial class Core
       int guardOutLen = OpenFillCount("PVT", "openAndFill", inClose.Length, PvtLookback());
       RequireHistoryLength("PVT", "openAndFill", "inVolume", inVolume.Length, inClose.Length);
       RequireFillLength("PVT", "openAndFill", "outReal", outReal.Length, guardOutLen);
-      if( outReal.Overlaps(inClose) || outReal.Overlaps(inVolume) ) {
+      if( SameBuffer(outReal, inClose) || SameBuffer(outReal, inVolume) ) {
+         throw StreamFailure("PVT", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outReal.Overlaps(inClose) || outReal.Overlaps(inVolume) ) ) {
          throw StreamFailure("PVT", "openAndFill", RetCode.BadParam);
       }
       return PvtOpenAndFillInternal(inClose, inVolume, 0, out _, out _, outReal);

@@ -1327,7 +1327,10 @@ public partial class Core
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "KAMA openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("KAMA", "openAndFill", inReal.Length, KamaLookback(optInTimePeriod));
       RequireFillLength("KAMA", "openAndFill", "outReal", outReal.Length, guardOutLen);
-      if( outReal.Overlaps(inReal) ) {
+      if( SameBuffer(outReal, inReal) ) {
+         throw StreamFailure("KAMA", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outReal.Overlaps(inReal) ) ) {
          throw StreamFailure("KAMA", "openAndFill", RetCode.BadParam);
       }
       return KamaOpenAndFillInternal(inReal, 0, optInTimePeriod, out _, out _, outReal);

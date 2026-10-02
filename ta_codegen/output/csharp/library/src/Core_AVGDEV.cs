@@ -714,7 +714,10 @@ public partial class Core
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "AVGDEV openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("AVGDEV", "openAndFill", inReal.Length, AvgdevLookback(optInTimePeriod));
       RequireFillLength("AVGDEV", "openAndFill", "outReal", outReal.Length, guardOutLen);
-      if( outReal.Overlaps(inReal) ) {
+      if( SameBuffer(outReal, inReal) ) {
+         throw StreamFailure("AVGDEV", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outReal.Overlaps(inReal) ) ) {
          throw StreamFailure("AVGDEV", "openAndFill", RetCode.BadParam);
       }
       return AvgdevOpenAndFillInternal(inReal, 0, optInTimePeriod, out _, out _, outReal);

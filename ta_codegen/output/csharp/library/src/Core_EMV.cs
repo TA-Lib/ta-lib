@@ -984,7 +984,10 @@ public partial class Core
       RequireHistoryLength("EMV", "openAndFill", "inLow", inLow.Length, inHigh.Length);
       RequireHistoryLength("EMV", "openAndFill", "inVolume", inVolume.Length, inHigh.Length);
       RequireFillLength("EMV", "openAndFill", "outReal", outReal.Length, guardOutLen);
-      if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inVolume) ) {
+      if( SameBuffer(outReal, inHigh) || SameBuffer(outReal, inLow) || SameBuffer(outReal, inVolume) ) {
+         throw StreamFailure("EMV", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inVolume) ) ) {
          throw StreamFailure("EMV", "openAndFill", RetCode.BadParam);
       }
       return EmvOpenAndFillInternal(inHigh, inLow, inVolume, 0, optInTimePeriod, optInVolumeDivisor, out _, out _, outReal);

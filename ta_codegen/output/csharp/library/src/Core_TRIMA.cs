@@ -1506,7 +1506,10 @@ public partial class Core
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "TRIMA openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("TRIMA", "openAndFill", inReal.Length, TrimaLookback(optInTimePeriod));
       RequireFillLength("TRIMA", "openAndFill", "outReal", outReal.Length, guardOutLen);
-      if( outReal.Overlaps(inReal) ) {
+      if( SameBuffer(outReal, inReal) ) {
+         throw StreamFailure("TRIMA", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outReal.Overlaps(inReal) ) ) {
          throw StreamFailure("TRIMA", "openAndFill", RetCode.BadParam);
       }
       return TrimaOpenAndFillInternal(inReal, 0, optInTimePeriod, out _, out _, outReal);

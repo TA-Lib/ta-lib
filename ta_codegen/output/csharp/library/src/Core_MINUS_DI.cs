@@ -1684,7 +1684,10 @@ public partial class Core
       RequireHistoryLength("MINUS_DI", "openAndFill", "inLow", inLow.Length, inHigh.Length);
       RequireHistoryLength("MINUS_DI", "openAndFill", "inClose", inClose.Length, inHigh.Length);
       RequireFillLength("MINUS_DI", "openAndFill", "outReal", outReal.Length, guardOutLen);
-      if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) ) {
+      if( SameBuffer(outReal, inHigh) || SameBuffer(outReal, inLow) || SameBuffer(outReal, inClose) ) {
+         throw StreamFailure("MINUS_DI", "openAndFill", RetCode.BadParam);
+      }
+      if( guardOutLen > 0 && ( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) ) ) {
          throw StreamFailure("MINUS_DI", "openAndFill", RetCode.BadParam);
       }
       return MinusDiOpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, out _, out _, outReal);

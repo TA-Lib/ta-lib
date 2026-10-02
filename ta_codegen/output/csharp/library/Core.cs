@@ -285,6 +285,20 @@ public sealed partial class Core
             && Unsafe.AreSame(ref start, ref MemoryMarshal.GetReference(b));
     }
 
+    /* Rule rS6 at an opener: the same buffer, as C compares it, is one start
+     * address. A null reference is no buffer, and an empty span beside a
+     * non-empty one is a declined output, not that buffer. */
+    internal static bool SameBuffer<T>(Span<T> a, ReadOnlySpan<T> b)
+        => SameStart(ref MemoryMarshal.GetReference(a), a.IsEmpty,
+                     ref MemoryMarshal.GetReference(b), b.IsEmpty);
+
+    internal static bool SameBuffer<T>(Span<T> a, Span<T> b)
+        => SameStart(ref MemoryMarshal.GetReference(a), a.IsEmpty,
+                     ref MemoryMarshal.GetReference(b), b.IsEmpty);
+
+    private static bool SameStart<T>(ref T a, bool aEmpty, ref T b, bool bEmpty)
+        => aEmpty == bEmpty && !Unsafe.IsNullRef(ref a) && Unsafe.AreSame(ref a, ref b);
+
     /* Rule rS5's bound: how many values an OpenAndFill writes.
      *
      * An opener is a batch call over [0, historyLen - 1], so ClampedStart's
