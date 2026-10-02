@@ -151,7 +151,7 @@ emitted bodies, and drives a NULL handle and a NULL out-pointer through
 | rT4 | [reading](https://ta-lib.org/spec/settings-threads/#rt4) | ⚠️<br>[14] | ✅ | ✅ | ✅ |
 | rT5 | [range type](https://ta-lib.org/spec/settings-threads/#rt5) | ✅ | — | — | ✅ |
 | rT6 | [average period bound](https://ta-lib.org/spec/settings-threads/#rt6) | ✅ | ✅ | ✅ | ✅ |
-| rT7 | [NaN factor](https://ta-lib.org/spec/settings-threads/#rt7) | ✅ | ✅ | ✅ | ✅ |
+| rT7 | [factor domain](https://ta-lib.org/spec/settings-threads/#rt7) | ✅ | ✅ | ✅ | ✅ |
 | rT8 | [no change on refusal](https://ta-lib.org/spec/settings-threads/#rt8) | ✅ | ✅<br>[16] | ✅ | ✅ |
 | rT10 | [initial state](https://ta-lib.org/spec/settings-threads/#rt10) | ✅ | — | — | — |
 | rT11 | [threads in C](https://ta-lib.org/spec/settings-threads/#rt11) | ✅ | — | — | — |
@@ -781,13 +781,14 @@ input while still reporting success. `INDEX_MAX` is the ceiling the index domain
 already enforces, and a warm-up longer than the largest addressable series could
 never produce output, so nothing legitimate is refused.
 
-### rT7: NaN only
+### rT7: finite and not negative
 
-A factor scales a threshold and never indexes anything, so an infinity cannot
-take a function off the end of its input. NaN is refused because it silences
-every comparison it feeds, which is indistinguishable from "this shape never
-occurs". This is the one check on a single value that treats NaN and ±Inf
-differently.
+A factor scales a threshold (ruled 2026-10-02). NaN silences every comparison it
+feeds, which is indistinguishable from "this shape never occurs". An infinity
+does the same on flat bars, where it multiplies a zero average into NaN. A
+negative threshold is below every range, so a test that a range exceeds it
+always passes and its opposite never does. None of the three is a threshold a
+caller means, and zero is the edge that is.
 
 ---
 

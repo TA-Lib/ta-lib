@@ -20020,7 +20020,7 @@ TA_LIB_API TA_Compatibility TA_GetCompatibility( void );
  * Returns TA_BAD_PARAM unless settingType names a single setting
  * (TA_AllCandleSettings selects 'all' for the restore call below,
  * not here), rangeType is a TA_RangeType member, avgPeriod is
- * between 0 and TA_INDEX_MAX, and factor is not NaN.
+ * between 0 and TA_INDEX_MAX, and factor is finite and not negative.
  */
 TA_LIB_API TA_RetCode TA_SetCandleSettings( TA_CandleSettingType settingType,
                                  TA_RangeType rangeType, 

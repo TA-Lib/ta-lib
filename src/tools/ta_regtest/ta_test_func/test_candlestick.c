@@ -338,17 +338,7 @@ static const TA_CDLGlobals cdlGlobalsMatrix[] =
      TA_RangeType_RealBody,12, 0.9 },
 
    /* 4: strict factors -- the opposite direction, so a pattern that stops
-    * firing is visible too, and a negative factor because that is legal and
-    * ta_global.c used to claim it "never matches" when in fact it makes a
-    * `range > factor*avg` test unconditionally TRUE.
-    *
-    * The negative sits on Far, and the earlier claim here that Far's comparison
-    * is "the one place that shows up" was wrong: Far is used as
-    * `rb(b2) > rb(b1) - Far`, where a negative makes the test HARDER, not
-    * unconditionally true. The per-setting sweep is what settled it -- Far moves
-    * 2 pairs, which is both of the two functions that read it, and none of them
-    * through this row's sign. Kept for the strict-factor direction it does
-    * provide; the unconditional-true case is exercised via BodyLong/BodyShort. */
+    * firing is visible too. Far carries zero, the edge of what a factor may be. */
    { TA_RangeType_RealBody, 5, 4.0,
      TA_RangeType_RealBody, 5, 9.0,
      TA_RangeType_RealBody, 5, 0.05,
@@ -358,7 +348,7 @@ static const TA_CDLGlobals cdlGlobalsMatrix[] =
      TA_RangeType_Shadows,  5, 0.05,
      TA_RangeType_HighLow,  5, 0.01,
      TA_RangeType_HighLow,  3, 0.02,
-     TA_RangeType_HighLow,  3, -1.0,
+     TA_RangeType_HighLow,  3, 0.0,
      TA_RangeType_HighLow,  3, 0.005 },
 };
 

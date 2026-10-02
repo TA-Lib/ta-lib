@@ -53,6 +53,7 @@
  *  081126 KL,MF,CC Validate every TA_SetCandleSettings argument, not just the
  *                settingType (#185)
  *  100126 MF,CC Pre-load the candle defaults, also after TA_Shutdown.
+ *  100226 MF,CC A candle factor is finite and not negative (#497).
  */
 
 /* Description:
@@ -60,6 +61,7 @@
  */
 
 /**** Headers ****/
+#include <float.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -193,12 +195,10 @@ TA_RetCode TA_SetCandleSettings( TA_CandleSettingType settingType,
     if( avgPeriod < 0 || avgPeriod > TA_INDEX_MAX )
         return TA_BAD_PARAM;
 
-    /* factor scales a threshold, never an index, so any finite value is legal.
-     * A negative one is legal too: with a positive average, every test that a
-     * range is above the threshold passes and every test that it is at or
-     * below fails. NaN is refused because it silences every comparison it
-     * feeds without being asked to. */
-    if( factor != factor )
+    /* factor scales a threshold: finite and not negative. NaN silences every
+     * comparison it feeds, an infinity times a zero average is NaN, and a
+     * negative threshold is below every range. Written so that NaN fails it. */
+    if( !(factor >= 0.0 && factor <= DBL_MAX) )
         return TA_BAD_PARAM;
 
     TA_Globals->candleSettings[settingType].settingType = settingType;

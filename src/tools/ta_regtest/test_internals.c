@@ -1932,18 +1932,35 @@ static ErrorNumber testCandleSettingsBounds( void )
       return TA_INTERNAL_CANDLE_BOUND_FAIL_1;
    }
 
-   /* factor takes any finite value -- it scales a threshold, never an index --
-    * but not NaN, which silences every comparison it feeds. Both halves are
-    * asserted: a guard written as a range check would accept NaN (every
-    * comparison against it is false), and one written as `!(factor > 0)` would
-    * refuse the legal negative.
+   /* factor is finite and not negative. Each refusal is asserted on its own:
+    * a guard written as `factor < 0` accepts NaN, one written as
+    * `!(factor >= 0)` accepts +Inf, and one written as `!(factor > 0)` refuses
+    * the legal zero.
     */
    if( TA_SetCandleSettings( TA_BodyDoji, TA_RangeType_HighLow, 10, NAN ) != TA_BAD_PARAM )
    {
       printf( "\nFailed: TA_SetCandleSettings accepted a NaN factor\n" );
       return TA_INTERNAL_CANDLE_BOUND_FAIL_1;
    }
-   if( TA_SetCandleSettings( TA_BodyDoji, TA_RangeType_HighLow, 10, -1.0 ) != TA_SUCCESS ||
+   if( TA_SetCandleSettings( TA_BodyDoji, TA_RangeType_HighLow, 10, INFINITY ) != TA_BAD_PARAM ||
+       TA_SetCandleSettings( TA_BodyDoji, TA_RangeType_HighLow, 10, -INFINITY ) != TA_BAD_PARAM )
+   {
+      printf( "\nFailed: TA_SetCandleSettings accepted an infinite factor\n" );
+      return TA_INTERNAL_CANDLE_BOUND_FAIL_1;
+   }
+   if( TA_SetCandleSettings( TA_BodyDoji, TA_RangeType_HighLow, 10, -1.0 ) != TA_BAD_PARAM ||
+       TA_SetCandleSettings( TA_BodyDoji, TA_RangeType_HighLow, 10, -1e-300 ) != TA_BAD_PARAM )
+   {
+      printf( "\nFailed: TA_SetCandleSettings accepted a negative factor\n" );
+      return TA_INTERNAL_CANDLE_BOUND_FAIL_1;
+   }
+   /* Before any accepted write, which would cover a value a refusal stored. */
+   if( checkDoji( inOpen, inHigh, inLow, inClose ) != nbHitDefault )
+   {
+      printf( "\nFailed: a TA_SetCandleSettings that refused its arguments still stored one\n" );
+      return TA_INTERNAL_CANDLE_BOUND_FAIL_2;
+   }
+   if( TA_SetCandleSettings( TA_BodyDoji, TA_RangeType_HighLow, 10, 1e300 ) != TA_SUCCESS ||
        TA_SetCandleSettings( TA_BodyDoji, TA_RangeType_HighLow, 10, 0.0 ) != TA_SUCCESS )
    {
       printf( "\nFailed: TA_SetCandleSettings refused a legal factor\n" );
@@ -1955,9 +1972,7 @@ static ErrorNumber testCandleSettingsBounds( void )
       return TA_INTERNAL_CANDLE_BOUND_FAIL_1;
    }
 
-   /* Nothing above was stored: the defaults are still in force, and the tiers
-    * still agree.
-    */
+   /* The restore brought the default back, and the tiers still agree. */
    if( checkDoji( inOpen, inHigh, inLow, inClose ) != nbHitDefault )
    {
       printf( "\nFailed: a rejected TA_SetCandleSettings still changed the setting\n" );

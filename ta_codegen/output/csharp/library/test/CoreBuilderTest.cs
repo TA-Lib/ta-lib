@@ -381,12 +381,21 @@ public static class CoreBuilderTest
         Check(ceiling.CandleSettings(CandleSettingType.BodyDoji).AvgPeriod == Core.IndexMax,
             "the IndexMax ceiling is accepted, not rejected");
 
-        // Only NaN is refused; a negative factor is unusual but legal, and C
-        // accepts it too.
-        Core negative = Core.Builder()
-            .CandleSetting(CandleSettingType.BodyDoji, RangeType.HighLow, 10, -1.5).Build();
-        Check(negative.CandleSettings(CandleSettingType.BodyDoji).Factor == -1.5,
-            "a negative factor is legal");
+        foreach (double bad in new[] { -1.5, -1e-300, double.PositiveInfinity, double.NegativeInfinity })
+        {
+            CheckThrows<ArgumentOutOfRangeException>(
+                () => Core.Builder().CandleSetting(
+                    CandleSettingType.BodyDoji, RangeType.HighLow, 10, bad),
+                "factor " + bad + " -> ArgumentOutOfRangeException");
+        }
+        // The edges of the accepted range.
+        Core zeroFactor = Core.Builder()
+            .CandleSetting(CandleSettingType.BodyDoji, RangeType.HighLow, 10, 0.0).Build();
+        Core largeFactor = Core.Builder()
+            .CandleSetting(CandleSettingType.BodyDoji, RangeType.HighLow, 10, 1e300).Build();
+        Check(zeroFactor.CandleSettings(CandleSettingType.BodyDoji).Factor == 0.0
+              && largeFactor.CandleSettings(CandleSettingType.BodyDoji).Factor == 1e300,
+            "a zero and a large factor are legal");
     }
 
     private static void ARejectedCandleSettingWritesNothing()
@@ -396,6 +405,9 @@ public static class CoreBuilderTest
         CheckThrows<ArgumentOutOfRangeException>(
             () => b.CandleSetting(CandleSettingType.BodyDoji, RangeType.HighLow, -1, 1.0),
             "the rejected overwrite still throws");
+        CheckThrows<ArgumentOutOfRangeException>(
+            () => b.CandleSetting(CandleSettingType.BodyDoji, RangeType.HighLow, 10, -1.0),
+            "and so does one refused for its factor");
         CandleSetting kept = b.Build().CandleSettings(CandleSettingType.BodyDoji);
         Check(kept.AvgPeriod == 7 && kept.Factor == 2.5 && kept.RangeType == RangeType.Shadows,
             "a rejected candle setting leaves the previous one in place");

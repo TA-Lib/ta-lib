@@ -31,7 +31,7 @@ The rows hold for every setter and getter in all four languages, except where a 
 | <a id="rt4"></a>**rT4** | Reading a setting for the set-all wildcard is refused. | C's `TA_GetUnstablePeriod` cannot refuse: it returns 0, which is also a legal period. The getters on `Core` refuse ([failures](/spec/#failures)): Rust `get_unstable_period`, Java `unstablePeriod`, C# `UnstablePeriod` and `CandleSettings`. |
 | <a id="rt5"></a>**rT5** | A candle setting's range type is a `TA_RangeType` member. | Checked in C and C#. Rust and Java cannot express another value. |
 | <a id="rt6"></a>**rT6** | A candle setting's `avgPeriod` is in `[0, TA_INDEX_MAX]`. | |
-| <a id="rt7"></a>**rT7** | A candle setting's `factor` is not NaN. A negative factor is accepted. | |
+| <a id="rt7"></a>**rT7** | A candle setting's `factor` is finite and not negative. | |
 | <a id="rt8"></a>**rT8** | A refused call leaves every setting as it was, a wildcard call included. | Rust's builder latches the first refusal until `build()`: a later valid setter or `restore_candle_default` does not clear it, and `to_builder()` starts with none latched. |
 
 <a id="rt9"></a>**rT9** A wildcard is legal where a call documents one. `TA_FUNC_UNST_ALL` (`FuncUnstId::ALL`, `FuncUnstId.ALL`) sets every unstable period at once. `TA_AllCandleSettings` restores every candle setting's default through `TA_RestoreCandleDefaultSettings` and the builders' restore call (`restore_candle_default`, `restoreCandleDefault`, `RestoreCandleDefault`). Elsewhere rT2 or rT4 applies.

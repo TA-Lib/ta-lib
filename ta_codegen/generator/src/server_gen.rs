@@ -1879,8 +1879,8 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     // reports its RetCode; this server has no such library to ask, so it spells
     // out the same domain TA_SetCandleSettings enforces — settingType names a
     // single setting (the AllCandleSettings wildcard is NOT a target), rangeType
-    // is 0..2, avgPeriod is a lookback and bounded like one, and factor is any
-    // non-NaN value. Every check precedes the write, so a rejected call leaves
+    // is 0..2, avgPeriod is a lookback and bounded like one, and factor is
+    // finite and not negative. Every check precedes the write, so a rejected call leaves
     // all eleven settings as they were (#186).
     s.push_str("        else if (json.contains(\"\\\"set_candle_settings\\\"\")) {\n");
     s.push_str("            rideGen++;\n");
@@ -1898,7 +1898,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("            if (avgPeriod < 0 || avgPeriod > Core.INDEX_MAX) {\n");
     s.push_str("                return \"{\\\"error\\\":\\\"Invalid candle setting\\\"}\";\n");
     s.push_str("            }\n");
-    s.push_str("            if (Double.isNaN(factor)) {\n");
+    s.push_str("            if (!(factor >= 0.0 && factor <= Double.MAX_VALUE)) {\n");
     s.push_str("                return \"{\\\"error\\\":\\\"Invalid candle setting\\\"}\";\n");
     s.push_str("            }\n");
     s.push_str("            core.candleSettings[settingType] =\n");

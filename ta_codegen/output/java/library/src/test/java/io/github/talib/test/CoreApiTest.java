@@ -378,12 +378,19 @@ public class CoreApiTest {
             () -> Core.builder().candleSetting(
                 CandleSettingType.BODY_DOJI, RangeType.HIGH_LOW, 10, Double.NaN),
             "NaN factor -> IAE");
-        // A negative factor is legal: it scales a threshold nothing can fall
-        // below, so the pattern simply never matches — a plausible thing to ask
-        // for, unlike NaN.
+        for (double bad : new double[] {
+                -1.0, -1e-300, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY }) {
+            checkThrows(IllegalArgumentException.class,
+                () -> Core.builder().candleSetting(
+                    CandleSettingType.BODY_DOJI, RangeType.HIGH_LOW, 10, bad),
+                "factor " + bad + " -> IAE");
+        }
+        // The edges of the accepted range.
         check(Core.builder().candleSetting(
-                  CandleSettingType.BODY_DOJI, RangeType.HIGH_LOW, 10, -1.0) != null,
-              "a negative factor is accepted");
+                  CandleSettingType.BODY_DOJI, RangeType.HIGH_LOW, 10, 0.0) != null
+              && Core.builder().candleSetting(
+                  CandleSettingType.BODY_DOJI, RangeType.HIGH_LOW, 10, 1e300) != null,
+              "a zero and a large factor are accepted");
         // Core.unstablePeriod(id) reads; CoreBuilder.unstablePeriod(id, period)
         // writes. Same name, different class and arity — the immutable Core has
         // no writer for a `get` prefix to disambiguate against.

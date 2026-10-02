@@ -43,6 +43,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  081026 MF,CC  First Version -- the unstable-period builder (#186).
+ *  100226 MF,CC  A candle factor is finite and not negative (#497).
  *
  * ta_codegen never opens this file: it is hand-written scaffolding living one
  * level above library/src/, which is the generated tree.
@@ -148,15 +149,16 @@ public sealed class CoreBuilder
     /// <param name="rangeType">What the candle dimension is measured against.</param>
     /// <param name="avgPeriod">How many prior bars to average, in
     /// <c>0</c>..<see cref="Core.IndexMax"/>. <c>0</c> means no averaging.</param>
-    /// <param name="factor">The multiplier applied to that average. Any value
-    /// except NaN, negatives included.</param>
+    /// <param name="factor">The multiplier applied to that average: finite and
+    /// not negative.</param>
     /// <returns>This builder, for chaining.</returns>
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="settingType"/>
     /// does not name a single setting (<see cref="CandleSettingType.AllCandleSettings"/>
     /// is a wildcard, meaningful only for <see cref="RestoreCandleDefault"/>),
     /// <paramref name="rangeType"/> is not a <see cref="TALib.RangeType"/> member,
     /// <paramref name="avgPeriod"/> is outside its range, or
-    /// <paramref name="factor"/> is NaN. A rejected call writes nothing.</exception>
+    /// <paramref name="factor"/> is NaN, infinite or negative. A rejected call
+    /// writes nothing.</exception>
     public CoreBuilder CandleSetting(CandleSettingType settingType, RangeType rangeType,
                                      int avgPeriod, double factor)
     {
@@ -186,14 +188,12 @@ public sealed class CoreBuilder
             throw new ArgumentOutOfRangeException(nameof(avgPeriod), avgPeriod,
                 "avgPeriod must be in 0.." + Core.IndexMax);
         }
-        /* Only NaN is refused -- a negative factor is an unusual but legal
-         * threshold scale. NaN makes every comparison it feeds false, so the
-         * patterns simply stop matching, indistinguishable from "this shape
-         * never occurs". */
-        if (double.IsNaN(factor))
+        /* NaN makes every comparison it feeds false, an infinity times a zero
+         * average is NaN, and a negative threshold is below every range. */
+        if (!double.IsFinite(factor) || factor < 0.0)
         {
             throw new ArgumentOutOfRangeException(nameof(factor), factor,
-                "factor must not be NaN");
+                "factor must be finite and not negative");
         }
         _candleSettings[slot] = new CandleSetting(rangeType, avgPeriod, factor);
         return this;

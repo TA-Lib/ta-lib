@@ -518,13 +518,12 @@ impl CoreBuilder {
     ///
     /// [`CoreBuilder::build`] reports [`RetCode::BadParam`] unless `setting_type`
     /// names a single setting, `setting.avg_period` is between `0` and
-    /// [`Core::INDEX_MAX`], and `setting.factor` is not NaN. The range type needs no
+    /// [`Core::INDEX_MAX`], and `setting.factor` is finite and not negative. The range type needs no
     /// check: [`RangeType`] has no out-of-domain value to reject, which is the
     /// point of it being an enum rather than the `int` C carries.
     /// `avg_period` is the lookback of every CDL\*
     /// function that reads the setting, so it is bounded like one; `factor`
-    /// scales a threshold and takes any finite value. C rejects the same values
-    /// with `TA_BAD_PARAM`.
+    /// scales a threshold. C rejects the same values with `TA_BAD_PARAM`.
     ///
     /// [`CandleSettingType::AllCandleSettings`] is a wildcard, not a setting, so
     /// there is nothing for it to override — C returns `TA_BAD_PARAM` and Java
@@ -540,7 +539,7 @@ impl CoreBuilder {
         if setting.avg_period < 0 || setting.avg_period as i64 > Core::INDEX_MAX as i64 {
             return self.reject(RetCode::BadParam);
         }
-        if setting.factor.is_nan() {
+        if !setting.factor.is_finite() || setting.factor < 0.0 {
             return self.reject(RetCode::BadParam);
         }
         match setting_type {
@@ -1102,16 +1101,29 @@ mod tests {
     }
 
     #[test]
-    fn candle_setting_accepts_a_negative_factor() {
-        // Only NaN is refused: a negative factor is a legal, if unusual,
-        // threshold scale, so a guard written as `< 0.0 || is_nan()` would be
-        // wrong. C accepts it too.
-        let custom = CandleSetting { range_type: RangeType::HighLow, avg_period: 10, factor: -1.5 };
-        let core = Core::builder()
-            .candle_setting(CandleSettingType::BodyDoji, custom)
-            .build()
-            .expect("a negative factor is legal");
-        assert_eq!(core.candle_settings.body_doji.factor, -1.5);
+    fn candle_setting_rejects_a_negative_or_infinite_factor() {
+        for factor in [-1.5, -1e-300, f64::INFINITY, f64::NEG_INFINITY] {
+            let custom = CandleSetting { range_type: RangeType::HighLow, avg_period: 10, factor };
+            let err = Core::builder()
+                .candle_setting(CandleSettingType::BodyDoji, custom)
+                .build()
+                .unwrap_err();
+            assert_eq!(err, RetCode::BadParam, "factor {factor}");
+        }
+    }
+
+    #[test]
+    fn candle_setting_accepts_a_zero_and_a_large_factor() {
+        // The edges of the accepted range: a guard written as `!(factor > 0.0)`
+        // refuses the first.
+        for factor in [0.0, 1e300] {
+            let custom = CandleSetting { range_type: RangeType::HighLow, avg_period: 10, factor };
+            let core = Core::builder()
+                .candle_setting(CandleSettingType::BodyDoji, custom)
+                .build()
+                .expect("a legal factor");
+            assert_eq!(core.candle_settings.body_doji.factor, factor);
+        }
     }
 
     #[test]

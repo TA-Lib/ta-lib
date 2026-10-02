@@ -45,6 +45,7 @@
  *  -------------------------------------------------------------------
  *  072526 MF,CC  First Version — builder for the immutable Core.
  *  081126 KL,MF,CC Bound avgPeriod above and refuse a NaN factor (#185).
+ *  100226 MF,CC  A candle factor is finite and not negative (#497).
  */
 
 package io.github.talib;
@@ -126,13 +127,13 @@ public final class CoreBuilder {
     *
     * <p>{@code avgPeriod} is the lookback of every {@code CDL*} function that
     * reads the setting, so it is bounded like one; {@code factor} scales a
-    * threshold and takes any finite value.
+    * threshold and is finite and not negative.
     *
     * @throws NullPointerException if {@code settingType} or {@code rangeType} is null
     * @throws IllegalArgumentException if {@code settingType} is
     *         {@link CandleSettingType#ALL_CANDLE_SETTINGS} (not a single-setting
     *         target), if {@code avgPeriod} is outside {@code 0..}{@link
-    *         Core#INDEX_MAX}, or if {@code factor} is NaN
+    *         Core#INDEX_MAX}, or if {@code factor} is NaN, infinite or negative
     */
    public CoreBuilder candleSetting(CandleSettingType settingType, RangeType rangeType,
       int avgPeriod, double factor) {
@@ -153,8 +154,9 @@ public final class CoreBuilder {
          throw new IllegalArgumentException(
             "avgPeriod must be <= " + Core.INDEX_MAX + ", got " + avgPeriod);
       }
-      if (Double.isNaN(factor)) {
-         throw new IllegalArgumentException("factor must not be NaN");
+      if (!(factor >= 0.0 && factor <= Double.MAX_VALUE)) {
+         throw new IllegalArgumentException(
+            "factor must be finite and not negative, got " + factor);
       }
       candleSettings[settingType.ordinal()] =
          new CandleSetting(settingType, rangeType, avgPeriod, factor);

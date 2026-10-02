@@ -215408,7 +215408,7 @@ public class TaCodegenServe {
             if (avgPeriod < 0 || avgPeriod > Core.INDEX_MAX) {
                 return "{\"error\":\"Invalid candle setting\"}";
             }
-            if (Double.isNaN(factor)) {
+            if (!(factor >= 0.0 && factor <= Double.MAX_VALUE)) {
                 return "{\"error\":\"Invalid candle setting\"}";
             }
             core.candleSettings[settingType] =
