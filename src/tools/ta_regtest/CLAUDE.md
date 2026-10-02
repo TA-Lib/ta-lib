@@ -329,7 +329,7 @@ cd ../bin && ./ta_regtest --codegen --language=c,rust --function=SMA,RSI
 
 ## `stream_verify` — what each leg family can and cannot see
 
-One request drives seven families against one seeded series. They are not
+One request drives eight families against one seeded series. They are not
 interchangeable, and the coverage they add is very uneven:
 
 | family | what it compares | blind to |
@@ -349,12 +349,13 @@ of floors: every streaming function must report a non-zero `peek_reps`, and
 refusals outnumbering completed probes on one request is a failure of its own.
 
 | **state equivalence** | the whole handle after `Open(P)` + `n-P` updates vs the handle after `Open(n)` | a defect present in BOTH tiers |
-| **range** | the handle's `OutRange` against the batch range, at five sites: the `OpenAndFill` handle, `Open(P)` + updates, the anchored `OpenInternal`, the forked handle, and the same prefix handle after one `Advance` (which must succeed and report exactly one more; rule rU4's ceiling is 100 000 000 bars away at these sizes) | an anchor the history does not reach — every site keeps `lb < Sidx < svN - 1`, so the post-clamp history re-check is pinned in the generator instead |
+| **fork** | a handle opened by `OpenAndFill` on the shortest history, updated to mid, forked; the fork calls `Advance` once, then both are fed to the end. Every update of the original and of the fork vs batch, and the two against each other bit for bit | what the fill opener captures at any history but the shortest, and an `Advance` anywhere but right after the fork. The only leg that updates a handle `OpenAndFill` returned, or feeds a handle after it counted a bar |
+| **range** | the handle's `OutRange` against the batch range, at five sites: the `OpenAndFill` handle, `Open(P)` + updates, the anchored `OpenInternal`, the fork and its original, and the same prefix handle after one `Advance` (which must succeed and report exactly one more; rule rU4's ceiling is 100 000 000 bars away at these sizes). The fork reports one bar more than its original (see the fork row) | an anchor the history does not reach — every site keeps `lb < Sidx < svN - 1`, so the post-clamp history re-check is pinned in the generator instead |
 
-Of the five value families, two delegate to the batch transcription — the
+Of the six value families, two delegate to the batch transcription — the
 `OpenAndFill` and anchored `OpenInternal` legs — leaving the prefix sweep's
-Update loop as the only one looking at the streaming step against a batch
-reference, and it can only report a difference the **output** shows.
+Update loop and the fork leg as the ones looking at the streaming step against
+a batch reference, and they can only report a difference the **output** shows.
 
 For a candlestick the output is a 3-valued integer, so an arithmetic error in a
 `<Setting>PeriodTotal` is invisible until it crosses a decision threshold.

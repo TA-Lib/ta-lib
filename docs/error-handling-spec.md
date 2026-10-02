@@ -81,7 +81,7 @@ fires one (rationale rB9).
 | Rule | Topic | C | Rust | Java | C# |
 |---|---|:---:|:---:|:---:|:---:|
 | rS1 | [empty history](https://ta-lib.org/spec/streaming/#rs1) | ✅<br>[4] | ✅<br>[4] | ✅<br>[4] | ✅<br>[4] |
-| rS2 | [history too long](https://ta-lib.org/spec/streaming/#rs2) | ✅<br>[5] | ⚠️<br>[5] | ⚠️<br>[5] | ⚠️<br>[5] |
+| rS2 | [history too long](https://ta-lib.org/spec/streaming/#rs2) | ✅<br>[5] | ✅<br>[5] | ⚠️<br>[5] | ✅<br>[5] |
 | rS3 | [parameter value](https://ta-lib.org/spec/streaming/#rs3) | ✅ | ✅ | ✅ | ✅ |
 | rS4 | [absent argument](https://ta-lib.org/spec/streaming/#rs4) | ✅ | —<br>[1] | ✅ | —<br>[2] |
 | rS5 | [buffer length](https://ta-lib.org/spec/streaming/#rs5) | ⚠️<br>[3] | ✅ | ✅ | ✅ |
@@ -99,12 +99,17 @@ one. Java cannot read a length from an array that is not there. A Rust slice
 cannot be absent, and a C# null array arrives as an empty span, so rS1 is how an
 absent history is reported (footnote [2]).
 
-[5] Implemented in all four (the bound is in the opener's own prologue; Java and
-C# answer it from the same frame as rS1) but probed only in C, which takes
-`historyLen` as a bare `int`, so the rejection answers before a bar is read. The
-other three derive the length from the array they are handed, so provoking it
-needs a 100 000 001-element allocation; the legal upper edge, a history of
-exactly `INDEX_MAX + 1` bars, is out of reach everywhere for the same reason.
+[5] The bound is in each opener's own prologue (Java and C# answer it from the
+same frame as rS1). C takes `historyLen` as a bare `int`, so its probe needs no
+array. Rust probes it on a zeroed vector of `INDEX_MAX + 2` elements that is
+never read (`tests/stream_open_contract.rs`, 64-bit targets), and C# on a span
+that claims that length over one element (`StreamApiTest`); both rest on the
+length being refused before a bar is read. Java probes `Core.requireHistory`,
+the helper every public opener calls (`NoPhantomIoTest`), because an array of
+that length needs an 800 MB heap, so no Java opener is driven to it:
+`java_public_openers_check_arguments_then_the_index_pair` holds the call. The
+legal upper edge through an opener, a history of exactly `INDEX_MAX + 1` bars,
+is unprobed in all four.
 
 [22] Cannot be provoked. `OpenAndFill` takes each output as its own `&mut` slice,
 so two outputs, or an output and the input, cannot name the same buffer while the
@@ -225,7 +230,10 @@ argument, which is what makes them about the order and not only the code.
 handle: 12 rejections and 5 controls, counted apart from rB4's. `BatchApiTest`
 does the same for Java, and adds rS1's; `StreamApiTest` covers rS4 in C#, where
 the condition is a zero-length span and so is rS1. Rust cannot express rS4, and
-`tests/stream_open_contract.rs` covers rS1 there.
+`tests/stream_open_contract.rs` covers rS1 and rS2 there. Java's `BatchApiTest`
+asserts `BAD_PARAM`, not only the exception type, at each rS4 rejection, at an
+`OpenAndFill` output placed on its input (rS6) and at a missing non-declinable
+output (rS7).
 
 `scripts/check_stream_retcodes.py` carries rS1 and rS8 over the whole generated
 corpus in all four backends; a probe names one function, and this is what covers
@@ -275,6 +283,25 @@ open/update combinations, and the emitted shape is held on the PR gate by
 `test_a_nullable_output_is_declinable_at_update_in_c`.
 
 The empty triple of Appendix D item 11 is a probe in each backend's own suite.
+
+### rH3, rH6 and rH9
+
+`stream_verify`'s fork leg, in each language server and for every function,
+opens its original with `OpenAndFill` on the shortest history, updates it,
+forks it, calls `Advance` once on the fork, and feeds both to the end. Every
+bar of both must match batch, so a handle that came from `OpenAndFill` is held
+to rH1 under `Update` (rH3), and a counted bar reaches nothing a step reads
+(rH6); the fork reports one bar more than its original. MININDEX, MAXINDEX and
+MINMAXINDEX ride the same leg: their index after the counted bar is still the
+batch index over the bars fed.
+
+rH9: `test_open_contract.c` requires `TA_FUNC_FLG_STREAM` on every function
+`TA_ForEachFunc` lists and as many entries in the stream table.
+
+A bar whose output is not finite: `dz_stream` (`test_div_zero.c`) and the
+streaming halves of the Rust, Java and C# DivZero tests drive DIV, which
+carries the flag rW6 names, through `Peek` and `Update` and require success,
+the value and the bar count.
 
 ### rU3
 

@@ -1252,8 +1252,33 @@ public class NoPhantomIoTest {
         }
     }
 
+    /**
+     * The history-length check at the upper edge of the index domain, on the
+     * helper every public opener calls: an array of that length needs an 800 MB
+     * heap, and the helper takes the length alone.
+     */
+    static void aHistoryPastTheIndexDomainIsRefused() {
+        RetCode got = null;
+        try {
+            Core.requireHistory("SMA open", Core.INDEX_MAX + 2);
+        } catch (RuntimeException e) {
+            got = (e instanceof TALibFailure) ? ((TALibFailure) e).retCode() : null;
+        }
+        check(got == RetCode.OUT_OF_RANGE_END_INDEX,
+            "a history of INDEX_MAX + 2 bars carries OUT_OF_RANGE_END_INDEX");
+
+        boolean accepted = true;
+        try {
+            Core.requireHistory("SMA open", Core.INDEX_MAX + 1);
+        } catch (RuntimeException e) {
+            accepted = false;
+        }
+        check(accepted, "a history of INDEX_MAX + 1 bars passes the length check");
+    }
+
     public static void main(String[] args) {
         theProbesCanFail();
+        aHistoryPastTheIndexDomainIsRefused();
 
         Map<String, TreeSet<String>> legsByWidth = null;
         Map<String, Sig> cores0 = null;

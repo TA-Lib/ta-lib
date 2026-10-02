@@ -250149,10 +250149,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.AcStream sA = c2.acOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.AcStream sA = c2.acOpenAndFill(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), optInFastPeriod, optInSlowPeriod, optInSignalPeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_h[t], fz_l[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.AcStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t]);
@@ -250166,7 +250172,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -250337,12 +250343,24 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.AccbandsStream sA = c2.accbandsOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        double[] f1 = new double[svN];
+                        java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
+                        double[] f2 = new double[svN];
+                        java.util.Arrays.fill(f2, (double)-1.2345678901234e300);
+                        Core.AccbandsStream sA = c2.accbandsOpenAndFill(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, f0, f1, f2);
                         int mid = (p0 + svN) / 2;
                         Core.AccbandsOut uA = new Core.AccbandsOut();
                         Core.AccbandsOut uB = new Core.AccbandsOut();
-                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t], uA);
+                        for (int t = p0; t < mid; t++) {
+                            sA.update(fz_h[t], fz_l[t], fz_c[t], uA);
+                            if (svXtierNe(uA.realUpperBand, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svXtierNe(uA.realMiddleBand, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svXtierNe(uA.realLowerBand, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.AccbandsStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         double[] fk1 = new double[svN];
                         double[] fk2 = new double[svN];
@@ -250364,7 +250382,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -250517,10 +250535,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.AcosStream sA = c2.acosOpen(java.util.Arrays.copyOf(fz_c, p0));
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.AcosStream sA = c2.acosOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.AcosStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -250534,7 +250558,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -250674,10 +250698,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.AdStream sA = c2.adOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0));
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.AdStream sA = c2.adOpenAndFill(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.AdStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
@@ -250691,7 +250721,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -250831,10 +250861,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.AddStream sA = c2.addOpen(java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0));
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.AddStream sA = c2.addOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t], fz_v[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t], fz_v[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.AddStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t], fz_v[t]);
@@ -250848,7 +250884,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -250991,10 +251027,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.AdoscStream sA = c2.adoscOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0), optInFastPeriod, optInSlowPeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.AdoscStream sA = c2.adoscOpenAndFill(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0), optInFastPeriod, optInSlowPeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.AdoscStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
@@ -251008,7 +251050,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -251154,10 +251196,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.AdrStream sA = c2.adrOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.AdrStream sA = c2.adrOpenAndFill(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_h[t], fz_l[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.AdrStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t]);
@@ -251171,7 +251219,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -251318,10 +251366,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.AdxStream sA = c2.adxOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.AdxStream sA = c2.adxOpenAndFill(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_h[t], fz_l[t], fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.AdxStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
@@ -251335,7 +251389,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -251482,10 +251536,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.AdxrStream sA = c2.adxrOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.AdxrStream sA = c2.adxrOpenAndFill(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_h[t], fz_l[t], fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.AdxrStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
@@ -251499,7 +251559,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -251647,10 +251707,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.AlmaStream sA = c2.almaOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInSigma, optInOffset);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.AlmaStream sA = c2.almaOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInSigma, optInOffset, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.AlmaStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -251664,7 +251730,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -251811,10 +251877,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.AoStream sA = c2.aoOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), optInFastPeriod, optInSlowPeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.AoStream sA = c2.aoOpenAndFill(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), optInFastPeriod, optInSlowPeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_h[t], fz_l[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.AoStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t]);
@@ -251828,7 +251900,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -251988,10 +252060,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.ApoStream sA = c2.apoOpen(java.util.Arrays.copyOf(fz_c, p0), optInFastPeriod, optInSlowPeriod, optInMAType);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.ApoStream sA = c2.apoOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInFastPeriod, optInSlowPeriod, optInMAType, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.ApoStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -252005,7 +252083,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -252166,12 +252244,21 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.AroonStream sA = c2.aroonOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        double[] f1 = new double[svN];
+                        java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
+                        Core.AroonStream sA = c2.aroonOpenAndFill(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), optInTimePeriod, f0, f1);
                         int mid = (p0 + svN) / 2;
                         Core.AroonOut uA = new Core.AroonOut();
                         Core.AroonOut uB = new Core.AroonOut();
-                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], uA);
+                        for (int t = p0; t < mid; t++) {
+                            sA.update(fz_h[t], fz_l[t], uA);
+                            if (svXtierNe(uA.aroonDown, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svXtierNe(uA.aroonUp, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.AroonStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         double[] fk1 = new double[svN];
                         for (int t = mid; t < svN; t++) {
@@ -252189,7 +252276,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -252340,10 +252427,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.AroonoscStream sA = c2.aroonoscOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.AroonoscStream sA = c2.aroonoscOpenAndFill(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_h[t], fz_l[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.AroonoscStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t]);
@@ -252357,7 +252450,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -252503,10 +252596,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.AsiStream sA = c2.asiOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInLimitMove);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.AsiStream sA = c2.asiOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInLimitMove, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.AsiStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -252520,7 +252619,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -252660,10 +252759,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.AsinStream sA = c2.asinOpen(java.util.Arrays.copyOf(fz_c, p0));
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.AsinStream sA = c2.asinOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.AsinStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -252677,7 +252782,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -252817,10 +252922,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.AtanStream sA = c2.atanOpen(java.util.Arrays.copyOf(fz_c, p0));
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.AtanStream sA = c2.atanOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.AtanStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -252834,7 +252945,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -252976,10 +253087,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.AtrStream sA = c2.atrOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.AtrStream sA = c2.atrOpenAndFill(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_h[t], fz_l[t], fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.AtrStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
@@ -252993,7 +253110,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -253139,10 +253256,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.AvgdevStream sA = c2.avgdevOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.AvgdevStream sA = c2.avgdevOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.AvgdevStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -253156,7 +253279,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -253301,10 +253424,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.AvgpriceStream sA = c2.avgpriceOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.AvgpriceStream sA = c2.avgpriceOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.AvgpriceStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -253318,7 +253447,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -253499,12 +253628,24 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.BbandsStream sA = c2.bbandsOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        double[] f1 = new double[svN];
+                        java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
+                        double[] f2 = new double[svN];
+                        java.util.Arrays.fill(f2, (double)-1.2345678901234e300);
+                        Core.BbandsStream sA = c2.bbandsOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, f0, f1, f2);
                         int mid = (p0 + svN) / 2;
                         Core.BbandsOut uA = new Core.BbandsOut();
                         Core.BbandsOut uB = new Core.BbandsOut();
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t], uA);
+                        for (int t = p0; t < mid; t++) {
+                            sA.update(fz_c[t], uA);
+                            if (svXtierNe(uA.realUpperBand, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svXtierNe(uA.realMiddleBand, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svXtierNe(uA.realLowerBand, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.BbandsStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         double[] fk1 = new double[svN];
                         double[] fk2 = new double[svN];
@@ -253526,7 +253667,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -253695,10 +253836,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.BbwStream sA = c2.bbwOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.BbwStream sA = c2.bbwOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.BbwStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -253712,7 +253859,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -253858,10 +254005,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.BetaStream sA = c2.betaOpen(java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.BetaStream sA = c2.betaOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t], fz_v[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t], fz_v[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.BetaStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t], fz_v[t]);
@@ -253875,7 +254028,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -254020,10 +254173,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.BopStream sA = c2.bopOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.BopStream sA = c2.bopOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.BopStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -254037,7 +254196,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -254178,10 +254337,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.CciStream sA = c2.cciOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.CciStream sA = c2.cciOpenAndFill(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_h[t], fz_l[t], fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.CciStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
@@ -254195,7 +254360,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -254343,10 +254508,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.Cdl2crowsStream sA = c2.cdl2crowsOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        Core.Cdl2crowsStream sA = c2.cdl2crowsOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.Cdl2crowsStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -254360,7 +254531,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -254503,10 +254674,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.Cdl3blackcrowsStream sA = c2.cdl3blackcrowsOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        Core.Cdl3blackcrowsStream sA = c2.cdl3blackcrowsOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.Cdl3blackcrowsStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -254520,7 +254697,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -254663,10 +254840,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.Cdl3insideStream sA = c2.cdl3insideOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        Core.Cdl3insideStream sA = c2.cdl3insideOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.Cdl3insideStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -254680,7 +254863,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -254823,10 +255006,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.Cdl3linestrikeStream sA = c2.cdl3linestrikeOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        Core.Cdl3linestrikeStream sA = c2.cdl3linestrikeOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.Cdl3linestrikeStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -254840,7 +255029,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -254983,10 +255172,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.Cdl3outsideStream sA = c2.cdl3outsideOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        Core.Cdl3outsideStream sA = c2.cdl3outsideOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.Cdl3outsideStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -255000,7 +255195,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -255143,10 +255338,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.Cdl3starsinsouthStream sA = c2.cdl3starsinsouthOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        Core.Cdl3starsinsouthStream sA = c2.cdl3starsinsouthOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.Cdl3starsinsouthStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -255160,7 +255361,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -255303,10 +255504,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.Cdl3whitesoldiersStream sA = c2.cdl3whitesoldiersOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        Core.Cdl3whitesoldiersStream sA = c2.cdl3whitesoldiersOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.Cdl3whitesoldiersStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -255320,7 +255527,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -255464,10 +255671,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.CdlabandonedbabyStream sA = c2.cdlabandonedbabyOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInPenetration);
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        Core.CdlabandonedbabyStream sA = c2.cdlabandonedbabyOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInPenetration, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.CdlabandonedbabyStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -255481,7 +255694,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -255624,10 +255837,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.CdladvanceblockStream sA = c2.cdladvanceblockOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        Core.CdladvanceblockStream sA = c2.cdladvanceblockOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.CdladvanceblockStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -255641,7 +255860,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -255784,10 +256003,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.CdlbeltholdStream sA = c2.cdlbeltholdOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        Core.CdlbeltholdStream sA = c2.cdlbeltholdOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.CdlbeltholdStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -255801,7 +256026,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -255944,10 +256169,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.CdlbreakawayStream sA = c2.cdlbreakawayOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        Core.CdlbreakawayStream sA = c2.cdlbreakawayOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.CdlbreakawayStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -255961,7 +256192,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -256104,10 +256335,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.CdlclosingmarubozuStream sA = c2.cdlclosingmarubozuOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        Core.CdlclosingmarubozuStream sA = c2.cdlclosingmarubozuOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.CdlclosingmarubozuStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -256121,7 +256358,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -256264,10 +256501,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.CdlconcealbabyswallStream sA = c2.cdlconcealbabyswallOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        Core.CdlconcealbabyswallStream sA = c2.cdlconcealbabyswallOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.CdlconcealbabyswallStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -256281,7 +256524,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -256424,10 +256667,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.CdlcounterattackStream sA = c2.cdlcounterattackOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        Core.CdlcounterattackStream sA = c2.cdlcounterattackOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.CdlcounterattackStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -256441,7 +256690,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -256585,10 +256834,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.CdldarkcloudcoverStream sA = c2.cdldarkcloudcoverOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInPenetration);
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        Core.CdldarkcloudcoverStream sA = c2.cdldarkcloudcoverOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInPenetration, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.CdldarkcloudcoverStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -256602,7 +256857,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -256745,10 +257000,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.CdldojiStream sA = c2.cdldojiOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        Core.CdldojiStream sA = c2.cdldojiOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.CdldojiStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -256762,7 +257023,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -256905,10 +257166,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.CdldojistarStream sA = c2.cdldojistarOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        Core.CdldojistarStream sA = c2.cdldojistarOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.CdldojistarStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -256922,7 +257189,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -257065,10 +257332,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.CdldragonflydojiStream sA = c2.cdldragonflydojiOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        Core.CdldragonflydojiStream sA = c2.cdldragonflydojiOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.CdldragonflydojiStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -257082,7 +257355,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -257225,10 +257498,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.CdlengulfingStream sA = c2.cdlengulfingOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        Core.CdlengulfingStream sA = c2.cdlengulfingOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.CdlengulfingStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -257242,7 +257521,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -257386,10 +257665,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.CdleveningdojistarStream sA = c2.cdleveningdojistarOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInPenetration);
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        Core.CdleveningdojistarStream sA = c2.cdleveningdojistarOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInPenetration, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.CdleveningdojistarStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -257403,7 +257688,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -257547,10 +257832,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.CdleveningstarStream sA = c2.cdleveningstarOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInPenetration);
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        Core.CdleveningstarStream sA = c2.cdleveningstarOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInPenetration, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.CdleveningstarStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -257564,7 +257855,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -257707,10 +257998,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.CdlgapsidesidewhiteStream sA = c2.cdlgapsidesidewhiteOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        Core.CdlgapsidesidewhiteStream sA = c2.cdlgapsidesidewhiteOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.CdlgapsidesidewhiteStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -257724,7 +258021,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -257867,10 +258164,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.CdlgravestonedojiStream sA = c2.cdlgravestonedojiOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        Core.CdlgravestonedojiStream sA = c2.cdlgravestonedojiOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.CdlgravestonedojiStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -257884,7 +258187,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -258027,10 +258330,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.CdlhammerStream sA = c2.cdlhammerOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        Core.CdlhammerStream sA = c2.cdlhammerOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.CdlhammerStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -258044,7 +258353,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -258187,10 +258496,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.CdlhangingmanStream sA = c2.cdlhangingmanOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        Core.CdlhangingmanStream sA = c2.cdlhangingmanOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.CdlhangingmanStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -258204,7 +258519,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -258347,10 +258662,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.CdlharamiStream sA = c2.cdlharamiOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        Core.CdlharamiStream sA = c2.cdlharamiOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.CdlharamiStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -258364,7 +258685,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -258507,10 +258828,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.CdlharamicrossStream sA = c2.cdlharamicrossOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        Core.CdlharamicrossStream sA = c2.cdlharamicrossOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.CdlharamicrossStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -258524,7 +258851,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -258667,10 +258994,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.CdlhighwaveStream sA = c2.cdlhighwaveOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        Core.CdlhighwaveStream sA = c2.cdlhighwaveOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.CdlhighwaveStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -258684,7 +259017,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -258827,10 +259160,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.CdlhikkakeStream sA = c2.cdlhikkakeOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        Core.CdlhikkakeStream sA = c2.cdlhikkakeOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.CdlhikkakeStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -258844,7 +259183,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -258987,10 +259326,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.CdlhikkakemodStream sA = c2.cdlhikkakemodOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        Core.CdlhikkakemodStream sA = c2.cdlhikkakemodOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.CdlhikkakemodStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -259004,7 +259349,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -259147,10 +259492,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.CdlhomingpigeonStream sA = c2.cdlhomingpigeonOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        Core.CdlhomingpigeonStream sA = c2.cdlhomingpigeonOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.CdlhomingpigeonStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -259164,7 +259515,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -259307,10 +259658,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.Cdlidentical3crowsStream sA = c2.cdlidentical3crowsOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        Core.Cdlidentical3crowsStream sA = c2.cdlidentical3crowsOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.Cdlidentical3crowsStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -259324,7 +259681,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -259467,10 +259824,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.CdlinneckStream sA = c2.cdlinneckOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        Core.CdlinneckStream sA = c2.cdlinneckOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.CdlinneckStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -259484,7 +259847,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -259627,10 +259990,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.CdlinvertedhammerStream sA = c2.cdlinvertedhammerOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        Core.CdlinvertedhammerStream sA = c2.cdlinvertedhammerOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.CdlinvertedhammerStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -259644,7 +260013,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -259787,10 +260156,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.CdlkickingStream sA = c2.cdlkickingOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        Core.CdlkickingStream sA = c2.cdlkickingOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.CdlkickingStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -259804,7 +260179,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -259947,10 +260322,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.CdlkickingbylengthStream sA = c2.cdlkickingbylengthOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        Core.CdlkickingbylengthStream sA = c2.cdlkickingbylengthOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.CdlkickingbylengthStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -259964,7 +260345,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -260107,10 +260488,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.CdlladderbottomStream sA = c2.cdlladderbottomOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        Core.CdlladderbottomStream sA = c2.cdlladderbottomOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.CdlladderbottomStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -260124,7 +260511,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -260267,10 +260654,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.CdllongleggeddojiStream sA = c2.cdllongleggeddojiOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        Core.CdllongleggeddojiStream sA = c2.cdllongleggeddojiOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.CdllongleggeddojiStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -260284,7 +260677,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -260427,10 +260820,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.CdllonglineStream sA = c2.cdllonglineOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        Core.CdllonglineStream sA = c2.cdllonglineOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.CdllonglineStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -260444,7 +260843,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -260587,10 +260986,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.CdlmarubozuStream sA = c2.cdlmarubozuOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        Core.CdlmarubozuStream sA = c2.cdlmarubozuOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.CdlmarubozuStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -260604,7 +261009,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -260747,10 +261152,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.CdlmatchinglowStream sA = c2.cdlmatchinglowOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        Core.CdlmatchinglowStream sA = c2.cdlmatchinglowOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.CdlmatchinglowStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -260764,7 +261175,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -260908,10 +261319,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.CdlmatholdStream sA = c2.cdlmatholdOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInPenetration);
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        Core.CdlmatholdStream sA = c2.cdlmatholdOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInPenetration, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.CdlmatholdStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -260925,7 +261342,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -261069,10 +261486,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.CdlmorningdojistarStream sA = c2.cdlmorningdojistarOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInPenetration);
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        Core.CdlmorningdojistarStream sA = c2.cdlmorningdojistarOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInPenetration, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.CdlmorningdojistarStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -261086,7 +261509,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -261230,10 +261653,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.CdlmorningstarStream sA = c2.cdlmorningstarOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInPenetration);
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        Core.CdlmorningstarStream sA = c2.cdlmorningstarOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInPenetration, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.CdlmorningstarStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -261247,7 +261676,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -261390,10 +261819,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.CdlonneckStream sA = c2.cdlonneckOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        Core.CdlonneckStream sA = c2.cdlonneckOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.CdlonneckStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -261407,7 +261842,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -261550,10 +261985,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.CdlpiercingStream sA = c2.cdlpiercingOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        Core.CdlpiercingStream sA = c2.cdlpiercingOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.CdlpiercingStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -261567,7 +262008,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -261710,10 +262151,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.CdlrickshawmanStream sA = c2.cdlrickshawmanOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        Core.CdlrickshawmanStream sA = c2.cdlrickshawmanOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.CdlrickshawmanStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -261727,7 +262174,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -261870,10 +262317,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.Cdlrisefall3methodsStream sA = c2.cdlrisefall3methodsOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        Core.Cdlrisefall3methodsStream sA = c2.cdlrisefall3methodsOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.Cdlrisefall3methodsStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -261887,7 +262340,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -262030,10 +262483,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.CdlseparatinglinesStream sA = c2.cdlseparatinglinesOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        Core.CdlseparatinglinesStream sA = c2.cdlseparatinglinesOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.CdlseparatinglinesStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -262047,7 +262506,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -262190,10 +262649,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.CdlshootingstarStream sA = c2.cdlshootingstarOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        Core.CdlshootingstarStream sA = c2.cdlshootingstarOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.CdlshootingstarStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -262207,7 +262672,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -262350,10 +262815,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.CdlshortlineStream sA = c2.cdlshortlineOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        Core.CdlshortlineStream sA = c2.cdlshortlineOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.CdlshortlineStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -262367,7 +262838,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -262510,10 +262981,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.CdlspinningtopStream sA = c2.cdlspinningtopOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        Core.CdlspinningtopStream sA = c2.cdlspinningtopOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.CdlspinningtopStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -262527,7 +263004,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -262670,10 +263147,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.CdlstalledpatternStream sA = c2.cdlstalledpatternOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        Core.CdlstalledpatternStream sA = c2.cdlstalledpatternOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.CdlstalledpatternStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -262687,7 +263170,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -262830,10 +263313,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.CdlsticksandwichStream sA = c2.cdlsticksandwichOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        Core.CdlsticksandwichStream sA = c2.cdlsticksandwichOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.CdlsticksandwichStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -262847,7 +263336,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -262990,10 +263479,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.CdltakuriStream sA = c2.cdltakuriOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        Core.CdltakuriStream sA = c2.cdltakuriOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.CdltakuriStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -263007,7 +263502,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -263150,10 +263645,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.CdltasukigapStream sA = c2.cdltasukigapOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        Core.CdltasukigapStream sA = c2.cdltasukigapOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.CdltasukigapStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -263167,7 +263668,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -263310,10 +263811,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.CdlthrustingStream sA = c2.cdlthrustingOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        Core.CdlthrustingStream sA = c2.cdlthrustingOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.CdlthrustingStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -263327,7 +263834,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -263470,10 +263977,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.CdltristarStream sA = c2.cdltristarOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        Core.CdltristarStream sA = c2.cdltristarOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.CdltristarStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -263487,7 +264000,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -263630,10 +264143,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.Cdlunique3riverStream sA = c2.cdlunique3riverOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        Core.Cdlunique3riverStream sA = c2.cdlunique3riverOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.Cdlunique3riverStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -263647,7 +264166,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -263790,10 +264309,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.Cdlupsidegap2crowsStream sA = c2.cdlupsidegap2crowsOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        Core.Cdlupsidegap2crowsStream sA = c2.cdlupsidegap2crowsOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.Cdlupsidegap2crowsStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -263807,7 +264332,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -263950,10 +264475,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.Cdlxsidegap3methodsStream sA = c2.cdlxsidegap3methodsOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        Core.Cdlxsidegap3methodsStream sA = c2.cdlxsidegap3methodsOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.Cdlxsidegap3methodsStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -263967,7 +264498,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -264107,10 +264638,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.CeilStream sA = c2.ceilOpen(java.util.Arrays.copyOf(fz_c, p0));
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.CeilStream sA = c2.ceilOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.CeilStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -264124,7 +264661,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -264265,10 +264802,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.CgStream sA = c2.cgOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.CgStream sA = c2.cgOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.CgStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -264282,7 +264825,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -264428,10 +264971,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.ChopStream sA = c2.chopOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.ChopStream sA = c2.chopOpenAndFill(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_h[t], fz_l[t], fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.ChopStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
@@ -264445,7 +264994,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -264591,10 +265140,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.ChoptrStream sA = c2.choptrOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.ChoptrStream sA = c2.choptrOpenAndFill(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_h[t], fz_l[t], fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.ChoptrStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
@@ -264608,7 +265163,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -264772,12 +265327,21 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.CkspStream sA = c2.ckspOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInMultiplier, optInStopPeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        double[] f1 = new double[svN];
+                        java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
+                        Core.CkspStream sA = c2.ckspOpenAndFill(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInMultiplier, optInStopPeriod, f0, f1);
                         int mid = (p0 + svN) / 2;
                         Core.CkspOut uA = new Core.CkspOut();
                         Core.CkspOut uB = new Core.CkspOut();
-                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t], uA);
+                        for (int t = p0; t < mid; t++) {
+                            sA.update(fz_h[t], fz_l[t], fz_c[t], uA);
+                            if (svXtierNe(uA.highStop, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svXtierNe(uA.lowStop, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.CkspStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         double[] fk1 = new double[svN];
                         for (int t = mid; t < svN; t++) {
@@ -264795,7 +265359,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -264946,10 +265510,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.CmfStream sA = c2.cmfOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.CmfStream sA = c2.cmfOpenAndFill(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.CmfStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
@@ -264963,7 +265533,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -265110,10 +265680,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.CmoStream sA = c2.cmoOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.CmoStream sA = c2.cmoOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.CmoStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -265127,7 +265703,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -265273,10 +265849,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.CmouStream sA = c2.cmouOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.CmouStream sA = c2.cmouOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.CmouStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -265290,7 +265872,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -265438,10 +266020,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.CoppockStream sA = c2.coppockOpen(java.util.Arrays.copyOf(fz_c, p0), optInWMAPeriod, optInROC1Period, optInROC2Period);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.CoppockStream sA = c2.coppockOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInWMAPeriod, optInROC1Period, optInROC2Period, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.CoppockStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -265455,7 +266043,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -265601,10 +266189,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.CorrelStream sA = c2.correlOpen(java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.CorrelStream sA = c2.correlOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t], fz_v[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t], fz_v[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.CorrelStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t], fz_v[t]);
@@ -265618,7 +266212,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -265763,10 +266357,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.CosStream sA = c2.cosOpen(java.util.Arrays.copyOf(fz_c, p0));
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.CosStream sA = c2.cosOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.CosStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -265780,7 +266380,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -265920,10 +266520,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.CoshStream sA = c2.coshOpen(java.util.Arrays.copyOf(fz_c, p0));
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.CoshStream sA = c2.coshOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.CoshStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -265937,7 +266543,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -266081,10 +266687,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.CrsiStream sA = c2.crsiOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInStreakPeriod, optInRankPeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.CrsiStream sA = c2.crsiOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInStreakPeriod, optInRankPeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.CrsiStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -266098,7 +266710,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -266244,10 +266856,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.CtiStream sA = c2.ctiOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.CtiStream sA = c2.ctiOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.CtiStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -266261,7 +266879,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -266406,10 +267024,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.CumsumStream sA = c2.cumsumOpen(java.util.Arrays.copyOf(fz_c, p0));
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.CumsumStream sA = c2.cumsumOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.CumsumStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -266423,7 +267047,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -266566,10 +267190,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.CviStream sA = c2.cviOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), optInTimePeriod, optInROCPeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.CviStream sA = c2.cviOpenAndFill(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), optInTimePeriod, optInROCPeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_h[t], fz_l[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.CviStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t]);
@@ -266583,7 +267213,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -266730,10 +267360,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.DemaStream sA = c2.demaOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.DemaStream sA = c2.demaOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.DemaStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -266747,7 +267383,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -266892,10 +267528,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.DivStream sA = c2.divOpen(java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0));
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.DivStream sA = c2.divOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t], fz_v[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t], fz_v[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.DivStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t], fz_v[t]);
@@ -266909,7 +267551,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -267075,12 +267717,24 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.DonchianStream sA = c2.donchianOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        double[] f1 = new double[svN];
+                        java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
+                        double[] f2 = new double[svN];
+                        java.util.Arrays.fill(f2, (double)-1.2345678901234e300);
+                        Core.DonchianStream sA = c2.donchianOpenAndFill(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), optInTimePeriod, f0, f1, f2);
                         int mid = (p0 + svN) / 2;
                         Core.DonchianOut uA = new Core.DonchianOut();
                         Core.DonchianOut uB = new Core.DonchianOut();
-                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], uA);
+                        for (int t = p0; t < mid; t++) {
+                            sA.update(fz_h[t], fz_l[t], uA);
+                            if (svXtierNe(uA.realUpperBand, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svXtierNe(uA.realMiddleBand, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svXtierNe(uA.realLowerBand, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.DonchianStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         double[] fk1 = new double[svN];
                         double[] fk2 = new double[svN];
@@ -267102,7 +267756,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -267256,10 +267910,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.DpoStream sA = c2.dpoOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.DpoStream sA = c2.dpoOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.DpoStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -267273,7 +267933,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -267420,10 +268080,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.DxStream sA = c2.dxOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.DxStream sA = c2.dxOpenAndFill(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_h[t], fz_l[t], fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.DxStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
@@ -267437,7 +268103,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -267584,10 +268250,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.EfiStream sA = c2.efiOpen(java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.EfiStream sA = c2.efiOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t], fz_v[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t], fz_v[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.EfiStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t], fz_v[t]);
@@ -267601,7 +268273,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -267748,10 +268420,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.EmaStream sA = c2.emaOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.EmaStream sA = c2.emaOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.EmaStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -267765,7 +268443,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -267912,10 +268590,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.EmvStream sA = c2.emvOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_v, p0), optInTimePeriod, optInVolumeDivisor);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.EmvStream sA = c2.emvOpenAndFill(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_v, p0), optInTimePeriod, optInVolumeDivisor, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_v[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_h[t], fz_l[t], fz_v[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.EmvStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t], fz_v[t]);
@@ -267929,7 +268613,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -268075,10 +268759,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.ErStream sA = c2.erOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.ErStream sA = c2.erOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.ErStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -268092,7 +268782,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -268254,12 +268944,21 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.EriStream sA = c2.eriOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        double[] f1 = new double[svN];
+                        java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
+                        Core.EriStream sA = c2.eriOpenAndFill(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, f0, f1);
                         int mid = (p0 + svN) / 2;
                         Core.EriOut uA = new Core.EriOut();
                         Core.EriOut uB = new Core.EriOut();
-                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t], uA);
+                        for (int t = p0; t < mid; t++) {
+                            sA.update(fz_h[t], fz_l[t], fz_c[t], uA);
+                            if (svXtierNe(uA.bullPower, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svXtierNe(uA.bearPower, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.EriStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         double[] fk1 = new double[svN];
                         for (int t = mid; t < svN; t++) {
@@ -268277,7 +268976,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -268427,10 +269126,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.ExpStream sA = c2.expOpen(java.util.Arrays.copyOf(fz_c, p0));
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.ExpStream sA = c2.expOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.ExpStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -268444,7 +269149,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -268584,10 +269289,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.FloorStream sA = c2.floorOpen(java.util.Arrays.copyOf(fz_c, p0));
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.FloorStream sA = c2.floorOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.FloorStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -268601,7 +269312,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -268742,10 +269453,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.FoscStream sA = c2.foscOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.FoscStream sA = c2.foscOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.FoscStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -268759,7 +269476,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -268919,12 +269636,21 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.FractalStream sA = c2.fractalOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), optInLeftBars, optInRightBars);
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        int[] f1 = new int[svN];
+                        java.util.Arrays.fill(f1, (int)-987654321);
+                        Core.FractalStream sA = c2.fractalOpenAndFill(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), optInLeftBars, optInRightBars, f0, f1);
                         int mid = (p0 + svN) / 2;
                         Core.FractalOut uA = new Core.FractalOut();
                         Core.FractalOut uB = new Core.FractalOut();
-                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], uA);
+                        for (int t = p0; t < mid; t++) {
+                            sA.update(fz_h[t], fz_l[t], uA);
+                            if (uA.swingHigh != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA.swingLow != b1[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.FractalStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         int[] fk1 = new int[svN];
                         for (int t = mid; t < svN; t++) {
@@ -268942,7 +269668,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -269094,10 +269820,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.FramaStream sA = c2.framaOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.FramaStream sA = c2.framaOpenAndFill(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_h[t], fz_l[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.FramaStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t]);
@@ -269111,7 +269843,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -269292,12 +270024,27 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.HaStream sA = c2.haOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        double[] f1 = new double[svN];
+                        java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
+                        double[] f2 = new double[svN];
+                        java.util.Arrays.fill(f2, (double)-1.2345678901234e300);
+                        double[] f3 = new double[svN];
+                        java.util.Arrays.fill(f3, (double)-1.2345678901234e300);
+                        Core.HaStream sA = c2.haOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), f0, f1, f2, f3);
                         int mid = (p0 + svN) / 2;
                         Core.HaOut uA = new Core.HaOut();
                         Core.HaOut uB = new Core.HaOut();
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t], uA);
+                        for (int t = p0; t < mid; t++) {
+                            sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t], uA);
+                            if (svXtierNe(uA.haOpen, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svXtierNe(uA.haHigh, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svXtierNe(uA.haLow, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svXtierNe(uA.haClose, b3[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.HaStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         double[] fk1 = new double[svN];
                         double[] fk2 = new double[svN];
@@ -269323,7 +270070,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -269470,10 +270217,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.HmaStream sA = c2.hmaOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.HmaStream sA = c2.hmaOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.HmaStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -269487,7 +270240,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -269633,10 +270386,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.HtDcperiodStream sA = c2.htDcperiodOpen(java.util.Arrays.copyOf(fz_c, p0));
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.HtDcperiodStream sA = c2.htDcperiodOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.HtDcperiodStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -269650,7 +270409,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -269791,10 +270550,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.HtDcphaseStream sA = c2.htDcphaseOpen(java.util.Arrays.copyOf(fz_c, p0));
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.HtDcphaseStream sA = c2.htDcphaseOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.HtDcphaseStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -269808,7 +270573,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -269964,12 +270729,21 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.HtPhasorStream sA = c2.htPhasorOpen(java.util.Arrays.copyOf(fz_c, p0));
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        double[] f1 = new double[svN];
+                        java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
+                        Core.HtPhasorStream sA = c2.htPhasorOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), f0, f1);
                         int mid = (p0 + svN) / 2;
                         Core.HtPhasorOut uA = new Core.HtPhasorOut();
                         Core.HtPhasorOut uB = new Core.HtPhasorOut();
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t], uA);
+                        for (int t = p0; t < mid; t++) {
+                            sA.update(fz_c[t], uA);
+                            if (svXtierNe(uA.inPhase, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svXtierNe(uA.quadrature, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.HtPhasorStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         double[] fk1 = new double[svN];
                         for (int t = mid; t < svN; t++) {
@@ -269987,7 +270761,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -270145,12 +270919,21 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.HtSineStream sA = c2.htSineOpen(java.util.Arrays.copyOf(fz_c, p0));
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        double[] f1 = new double[svN];
+                        java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
+                        Core.HtSineStream sA = c2.htSineOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), f0, f1);
                         int mid = (p0 + svN) / 2;
                         Core.HtSineOut uA = new Core.HtSineOut();
                         Core.HtSineOut uB = new Core.HtSineOut();
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t], uA);
+                        for (int t = p0; t < mid; t++) {
+                            sA.update(fz_c[t], uA);
+                            if (svXtierNe(uA.sine, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svXtierNe(uA.leadSine, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.HtSineStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         double[] fk1 = new double[svN];
                         for (int t = mid; t < svN; t++) {
@@ -270168,7 +270951,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -270311,10 +271094,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.HtTrendlineStream sA = c2.htTrendlineOpen(java.util.Arrays.copyOf(fz_c, p0));
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.HtTrendlineStream sA = c2.htTrendlineOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.HtTrendlineStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -270328,7 +271117,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -270468,10 +271257,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.HtTrendmodeStream sA = c2.htTrendmodeOpen(java.util.Arrays.copyOf(fz_c, p0));
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        Core.HtTrendmodeStream sA = c2.htTrendmodeOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            int uA = sA.update(fz_c[t]);
+                            if (uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.HtTrendmodeStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_c[t]);
@@ -270485,7 +271280,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -270625,10 +271420,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.IbsStream sA = c2.ibsOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.IbsStream sA = c2.ibsOpenAndFill(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_h[t], fz_l[t], fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.IbsStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
@@ -270642,7 +271443,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -270783,10 +271584,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.ImiStream sA = c2.imiOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.ImiStream sA = c2.imiOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_o[t], fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.ImiStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_o[t], fz_c[t]);
@@ -270800,7 +271607,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -270947,10 +271754,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.KamaStream sA = c2.kamaOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.KamaStream sA = c2.kamaOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.KamaStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -270964,7 +271777,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -271139,12 +271952,24 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.KcStream sA = c2.kcOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInATRPeriod, optInNbDev);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        double[] f1 = new double[svN];
+                        java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
+                        double[] f2 = new double[svN];
+                        java.util.Arrays.fill(f2, (double)-1.2345678901234e300);
+                        Core.KcStream sA = c2.kcOpenAndFill(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInATRPeriod, optInNbDev, f0, f1, f2);
                         int mid = (p0 + svN) / 2;
                         Core.KcOut uA = new Core.KcOut();
                         Core.KcOut uB = new Core.KcOut();
-                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t], uA);
+                        for (int t = p0; t < mid; t++) {
+                            sA.update(fz_h[t], fz_l[t], fz_c[t], uA);
+                            if (svXtierNe(uA.realUpperBand, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svXtierNe(uA.realMiddleBand, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svXtierNe(uA.realLowerBand, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.KcStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         double[] fk1 = new double[svN];
                         double[] fk2 = new double[svN];
@@ -271166,7 +271991,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -271367,12 +272192,24 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.KdjStream sA = c2.kdjOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        double[] f1 = new double[svN];
+                        java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
+                        double[] f2 = new double[svN];
+                        java.util.Arrays.fill(f2, (double)-1.2345678901234e300);
+                        Core.KdjStream sA = c2.kdjOpenAndFill(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, f0, f1, f2);
                         int mid = (p0 + svN) / 2;
                         Core.KdjOut uA = new Core.KdjOut();
                         Core.KdjOut uB = new Core.KdjOut();
-                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t], uA);
+                        for (int t = p0; t < mid; t++) {
+                            sA.update(fz_h[t], fz_l[t], fz_c[t], uA);
+                            if (svXtierNe(uA.k, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svXtierNe(uA.d, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svXtierNe(uA.j, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.KdjStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         double[] fk1 = new double[svN];
                         double[] fk2 = new double[svN];
@@ -271394,7 +272231,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -271571,12 +272408,21 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.KstStream sA = c2.kstOpen(java.util.Arrays.copyOf(fz_c, p0), optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        double[] f1 = new double[svN];
+                        java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
+                        Core.KstStream sA = c2.kstOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, f0, f1);
                         int mid = (p0 + svN) / 2;
                         Core.KstOut uA = new Core.KstOut();
                         Core.KstOut uB = new Core.KstOut();
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t], uA);
+                        for (int t = p0; t < mid; t++) {
+                            sA.update(fz_c[t], uA);
+                            if (svXtierNe(uA.kst, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svXtierNe(uA.kstSignal, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.KstStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         double[] fk1 = new double[svN];
                         for (int t = mid; t < svN; t++) {
@@ -271594,7 +272440,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -271788,12 +272634,21 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.KstextStream sA = c2.kstextOpen(java.util.Arrays.copyOf(fz_c, p0), optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        double[] f1 = new double[svN];
+                        java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
+                        Core.KstextStream sA = c2.kstextOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, f0, f1);
                         int mid = (p0 + svN) / 2;
                         Core.KstextOut uA = new Core.KstextOut();
                         Core.KstextOut uB = new Core.KstextOut();
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t], uA);
+                        for (int t = p0; t < mid; t++) {
+                            sA.update(fz_c[t], uA);
+                            if (svXtierNe(uA.kst, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svXtierNe(uA.kstSignal, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.KstextStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         double[] fk1 = new double[svN];
                         for (int t = mid; t < svN; t++) {
@@ -271811,7 +272666,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -271962,10 +272817,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.KurtosisStream sA = c2.kurtosisOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.KurtosisStream sA = c2.kurtosisOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.KurtosisStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -271979,7 +272840,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -272125,10 +272986,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.LinearregStream sA = c2.linearregOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.LinearregStream sA = c2.linearregOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.LinearregStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -272142,7 +273009,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -272288,10 +273155,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.LinearregAngleStream sA = c2.linearregAngleOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.LinearregAngleStream sA = c2.linearregAngleOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.LinearregAngleStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -272305,7 +273178,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -272451,10 +273324,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.LinearregInterceptStream sA = c2.linearregInterceptOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.LinearregInterceptStream sA = c2.linearregInterceptOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.LinearregInterceptStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -272468,7 +273347,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -272614,10 +273493,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.LinearregSlopeStream sA = c2.linearregSlopeOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.LinearregSlopeStream sA = c2.linearregSlopeOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.LinearregSlopeStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -272631,7 +273516,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -272776,10 +273661,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.LnStream sA = c2.lnOpen(java.util.Arrays.copyOf(fz_c, p0));
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.LnStream sA = c2.lnOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.LnStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -272793,7 +273684,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -272933,10 +273824,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.Log10Stream sA = c2.log10Open(java.util.Arrays.copyOf(fz_c, p0));
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.Log10Stream sA = c2.log10OpenAndFill(java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.Log10Stream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -272950,7 +273847,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -273104,10 +274001,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.MaStream sA = c2.maOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInMAType);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.MaStream sA = c2.maOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInMAType, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.MaStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -273121,7 +274024,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -273295,12 +274198,24 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.MacdStream sA = c2.macdOpen(java.util.Arrays.copyOf(fz_c, p0), optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        double[] f1 = new double[svN];
+                        java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
+                        double[] f2 = new double[svN];
+                        java.util.Arrays.fill(f2, (double)-1.2345678901234e300);
+                        Core.MacdStream sA = c2.macdOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInFastPeriod, optInSlowPeriod, optInSignalPeriod, f0, f1, f2);
                         int mid = (p0 + svN) / 2;
                         Core.MacdOut uA = new Core.MacdOut();
                         Core.MacdOut uB = new Core.MacdOut();
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t], uA);
+                        for (int t = p0; t < mid; t++) {
+                            sA.update(fz_c[t], uA);
+                            if (svXtierNe(uA.macd, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svXtierNe(uA.macdSignal, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svXtierNe(uA.macdHist, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.MacdStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         double[] fk1 = new double[svN];
                         double[] fk2 = new double[svN];
@@ -273322,7 +274237,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -273530,12 +274445,24 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.MacdextStream sA = c2.macdextOpen(java.util.Arrays.copyOf(fz_c, p0), optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        double[] f1 = new double[svN];
+                        java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
+                        double[] f2 = new double[svN];
+                        java.util.Arrays.fill(f2, (double)-1.2345678901234e300);
+                        Core.MacdextStream sA = c2.macdextOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, f0, f1, f2);
                         int mid = (p0 + svN) / 2;
                         Core.MacdextOut uA = new Core.MacdextOut();
                         Core.MacdextOut uB = new Core.MacdextOut();
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t], uA);
+                        for (int t = p0; t < mid; t++) {
+                            sA.update(fz_c[t], uA);
+                            if (svXtierNe(uA.macd, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svXtierNe(uA.macdSignal, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svXtierNe(uA.macdHist, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.MacdextStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         double[] fk1 = new double[svN];
                         double[] fk2 = new double[svN];
@@ -273557,7 +274484,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -273737,12 +274664,24 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.MacdfixStream sA = c2.macdfixOpen(java.util.Arrays.copyOf(fz_c, p0), optInSignalPeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        double[] f1 = new double[svN];
+                        java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
+                        double[] f2 = new double[svN];
+                        java.util.Arrays.fill(f2, (double)-1.2345678901234e300);
+                        Core.MacdfixStream sA = c2.macdfixOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInSignalPeriod, f0, f1, f2);
                         int mid = (p0 + svN) / 2;
                         Core.MacdfixOut uA = new Core.MacdfixOut();
                         Core.MacdfixOut uB = new Core.MacdfixOut();
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t], uA);
+                        for (int t = p0; t < mid; t++) {
+                            sA.update(fz_c[t], uA);
+                            if (svXtierNe(uA.macd, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svXtierNe(uA.macdSignal, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svXtierNe(uA.macdHist, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.MacdfixStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         double[] fk1 = new double[svN];
                         double[] fk2 = new double[svN];
@@ -273764,7 +274703,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -273935,12 +274874,21 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.MamaStream sA = c2.mamaOpen(java.util.Arrays.copyOf(fz_c, p0), optInFastLimit, optInSlowLimit);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        double[] f1 = new double[svN];
+                        java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
+                        Core.MamaStream sA = c2.mamaOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInFastLimit, optInSlowLimit, f0, f1);
                         int mid = (p0 + svN) / 2;
                         Core.MamaOut uA = new Core.MamaOut();
                         Core.MamaOut uB = new Core.MamaOut();
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t], uA);
+                        for (int t = p0; t < mid; t++) {
+                            sA.update(fz_c[t], uA);
+                            if (svXtierNe(uA.mama, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svXtierNe(uA.fama, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.MamaStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         double[] fk1 = new double[svN];
                         for (int t = mid; t < svN; t++) {
@@ -273958,7 +274906,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -274100,10 +275048,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.MarketfiStream sA = c2.marketfiOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_v, p0));
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.MarketfiStream sA = c2.marketfiOpenAndFill(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_v, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_v[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_h[t], fz_l[t], fz_v[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.MarketfiStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t], fz_v[t]);
@@ -274117,7 +275071,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -274260,10 +275214,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.MassiStream sA = c2.massiOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), optInFastPeriod, optInSlowPeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.MassiStream sA = c2.massiOpenAndFill(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), optInFastPeriod, optInSlowPeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_h[t], fz_l[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.MassiStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t]);
@@ -274277,7 +275237,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -274438,10 +275398,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.MavpStream sA = c2.mavpOpen(java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0), optInMinPeriod, optInMaxPeriod, optInMAType);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.MavpStream sA = c2.mavpOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0), optInMinPeriod, optInMaxPeriod, optInMAType, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t], fz_v[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t], fz_v[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.MavpStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t], fz_v[t]);
@@ -274455,7 +275421,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -274601,10 +275567,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.MaxStream sA = c2.maxOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.MaxStream sA = c2.maxOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.MaxStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -274618,7 +275590,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -274763,10 +275735,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.MaxindexStream sA = c2.maxindexOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        Core.MaxindexStream sA = c2.maxindexOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            int uA = sA.update(fz_c[t]);
+                            if (uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.MaxindexStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_c[t]);
@@ -274780,7 +275758,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -274927,10 +275905,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.McgdStream sA = c2.mcgdOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.McgdStream sA = c2.mcgdOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.McgdStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -274944,7 +275928,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -275090,10 +276074,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.MedianStream sA = c2.medianOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.MedianStream sA = c2.medianOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.MedianStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -275107,7 +276097,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -275252,10 +276242,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.MedpriceStream sA = c2.medpriceOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0));
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.MedpriceStream sA = c2.medpriceOpenAndFill(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_h[t], fz_l[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.MedpriceStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t]);
@@ -275269,7 +276265,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -275410,10 +276406,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.MfiStream sA = c2.mfiOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.MfiStream sA = c2.mfiOpenAndFill(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.MfiStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
@@ -275427,7 +276429,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -275573,10 +276575,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.MidpointStream sA = c2.midpointOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.MidpointStream sA = c2.midpointOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.MidpointStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -275590,7 +276598,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -275736,10 +276744,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.MidpriceStream sA = c2.midpriceOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.MidpriceStream sA = c2.midpriceOpenAndFill(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_h[t], fz_l[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.MidpriceStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t]);
@@ -275753,7 +276767,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -275899,10 +276913,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.MinStream sA = c2.minOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.MinStream sA = c2.minOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.MinStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -275916,7 +276936,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -276061,10 +277081,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.MinindexStream sA = c2.minindexOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        Core.MinindexStream sA = c2.minindexOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            int uA = sA.update(fz_c[t]);
+                            if (uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.MinindexStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_c[t]);
@@ -276078,7 +277104,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -276239,12 +277265,21 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.MinmaxStream sA = c2.minmaxOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        double[] f1 = new double[svN];
+                        java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
+                        Core.MinmaxStream sA = c2.minmaxOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, f0, f1);
                         int mid = (p0 + svN) / 2;
                         Core.MinmaxOut uA = new Core.MinmaxOut();
                         Core.MinmaxOut uB = new Core.MinmaxOut();
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t], uA);
+                        for (int t = p0; t < mid; t++) {
+                            sA.update(fz_c[t], uA);
+                            if (svXtierNe(uA.min, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svXtierNe(uA.max, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.MinmaxStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         double[] fk1 = new double[svN];
                         for (int t = mid; t < svN; t++) {
@@ -276262,7 +277297,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -276426,12 +277461,21 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.MinmaxindexStream sA = c2.minmaxindexOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
+                        int[] f0 = new int[svN];
+                        java.util.Arrays.fill(f0, (int)-987654321);
+                        int[] f1 = new int[svN];
+                        java.util.Arrays.fill(f1, (int)-987654321);
+                        Core.MinmaxindexStream sA = c2.minmaxindexOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, f0, f1);
                         int mid = (p0 + svN) / 2;
                         Core.MinmaxindexOut uA = new Core.MinmaxindexOut();
                         Core.MinmaxindexOut uB = new Core.MinmaxindexOut();
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t], uA);
+                        for (int t = p0; t < mid; t++) {
+                            sA.update(fz_c[t], uA);
+                            if (uA.minIdx != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA.maxIdx != b1[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.MinmaxindexStream sB = sA.clone();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         int[] fk1 = new int[svN];
                         for (int t = mid; t < svN; t++) {
@@ -276449,7 +277493,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -276601,10 +277645,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.MinusDiStream sA = c2.minusDiOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.MinusDiStream sA = c2.minusDiOpenAndFill(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_h[t], fz_l[t], fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.MinusDiStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
@@ -276618,7 +277668,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -276765,10 +277815,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.MinusDmStream sA = c2.minusDmOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.MinusDmStream sA = c2.minusDmOpenAndFill(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_h[t], fz_l[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.MinusDmStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t]);
@@ -276782,7 +277838,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -276928,10 +277984,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.MomStream sA = c2.momOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.MomStream sA = c2.momOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.MomStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -276945,7 +278007,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -277090,10 +278152,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.MultStream sA = c2.multOpen(java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0));
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.MultStream sA = c2.multOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t], fz_v[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t], fz_v[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.MultStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t], fz_v[t]);
@@ -277107,7 +278175,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -277249,10 +278317,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.NatrStream sA = c2.natrOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.NatrStream sA = c2.natrOpenAndFill(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_h[t], fz_l[t], fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.NatrStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
@@ -277266,7 +278340,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -277411,10 +278485,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.NviStream sA = c2.nviOpen(java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0));
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.NviStream sA = c2.nviOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t], fz_v[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t], fz_v[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.NviStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t], fz_v[t]);
@@ -277428,7 +278508,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -277568,10 +278648,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.ObvStream sA = c2.obvOpen(java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0));
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.ObvStream sA = c2.obvOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t], fz_v[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t], fz_v[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.ObvStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t], fz_v[t]);
@@ -277585,7 +278671,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -277741,10 +278827,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.PercentbStream sA = c2.percentbOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.PercentbStream sA = c2.percentbOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.PercentbStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -277758,7 +278850,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -277905,10 +278997,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.PercentileStream sA = c2.percentileOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInPercentile);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.PercentileStream sA = c2.percentileOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInPercentile, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.PercentileStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -277922,7 +279020,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -278068,10 +279166,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.PercentrankStream sA = c2.percentrankOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.PercentrankStream sA = c2.percentrankOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.PercentrankStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -278085,7 +279189,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -278232,10 +279336,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.PlusDiStream sA = c2.plusDiOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.PlusDiStream sA = c2.plusDiOpenAndFill(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_h[t], fz_l[t], fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.PlusDiStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
@@ -278249,7 +279359,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -278396,10 +279506,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.PlusDmStream sA = c2.plusDmOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.PlusDmStream sA = c2.plusDmOpenAndFill(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_h[t], fz_l[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.PlusDmStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t]);
@@ -278413,7 +279529,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -278573,10 +279689,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.PpoStream sA = c2.ppoOpen(java.util.Arrays.copyOf(fz_c, p0), optInFastPeriod, optInSlowPeriod, optInMAType);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.PpoStream sA = c2.ppoOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInFastPeriod, optInSlowPeriod, optInMAType, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.PpoStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -278590,7 +279712,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -278735,10 +279857,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.PviStream sA = c2.pviOpen(java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0));
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.PviStream sA = c2.pviOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t], fz_v[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t], fz_v[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.PviStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t], fz_v[t]);
@@ -278752,7 +279880,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -278907,10 +280035,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.PvoStream sA = c2.pvoOpen(java.util.Arrays.copyOf(fz_v, p0), optInFastPeriod, optInSlowPeriod, optInMAType);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.PvoStream sA = c2.pvoOpenAndFill(java.util.Arrays.copyOf(fz_v, p0), optInFastPeriod, optInSlowPeriod, optInMAType, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_v[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_v[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.PvoStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_v[t]);
@@ -278924,7 +280058,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -279069,10 +280203,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.PvtStream sA = c2.pvtOpen(java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0));
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.PvtStream sA = c2.pvtOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t], fz_v[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t], fz_v[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.PvtStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t], fz_v[t]);
@@ -279086,7 +280226,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -279227,10 +280367,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.QstickStream sA = c2.qstickOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.QstickStream sA = c2.qstickOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_o[t], fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.QstickStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_o[t], fz_c[t]);
@@ -279244,7 +280390,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -279391,10 +280537,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.RmaStream sA = c2.rmaOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.RmaStream sA = c2.rmaOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.RmaStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -279408,7 +280560,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -279554,10 +280706,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.RocStream sA = c2.rocOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.RocStream sA = c2.rocOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.RocStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -279571,7 +280729,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -279717,10 +280875,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.RocpStream sA = c2.rocpOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.RocpStream sA = c2.rocpOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.RocpStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -279734,7 +280898,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -279880,10 +281044,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.RocrStream sA = c2.rocrOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.RocrStream sA = c2.rocrOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.RocrStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -279897,7 +281067,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -280043,10 +281213,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.Rocr100Stream sA = c2.rocr100Open(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.Rocr100Stream sA = c2.rocr100OpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.Rocr100Stream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -280060,7 +281236,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -280207,10 +281383,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.RsiStream sA = c2.rsiOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.RsiStream sA = c2.rsiOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.RsiStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -280224,7 +281406,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -280372,10 +281554,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.RviStream sA = c2.rviOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInStdDevPeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.RviStream sA = c2.rviOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInStdDevPeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.RviStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -280389,7 +281577,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -280537,10 +281725,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.RvirStream sA = c2.rvirOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), optInTimePeriod, optInStdDevPeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.RvirStream sA = c2.rvirOpenAndFill(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), optInTimePeriod, optInStdDevPeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_h[t], fz_l[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.RvirStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t]);
@@ -280554,7 +281748,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -280700,10 +281894,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.RvolStream sA = c2.rvolOpen(java.util.Arrays.copyOf(fz_v, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.RvolStream sA = c2.rvolOpenAndFill(java.util.Arrays.copyOf(fz_v, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_v[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_v[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.RvolStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_v[t]);
@@ -280717,7 +281917,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -280864,10 +282064,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.SarStream sA = c2.sarOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), optInAcceleration, optInMaximum);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.SarStream sA = c2.sarOpenAndFill(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), optInAcceleration, optInMaximum, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_h[t], fz_l[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.SarStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t]);
@@ -280881,7 +282087,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -281029,10 +282235,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.SarextStream sA = c2.sarextOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.SarextStream sA = c2.sarextOpenAndFill(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_h[t], fz_l[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.SarextStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t]);
@@ -281046,7 +282258,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -281187,10 +282399,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.SiStream sA = c2.siOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInLimitMove);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.SiStream sA = c2.siOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInLimitMove, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.SiStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -281204,7 +282422,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -281344,10 +282562,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.SinStream sA = c2.sinOpen(java.util.Arrays.copyOf(fz_c, p0));
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.SinStream sA = c2.sinOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.SinStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -281361,7 +282585,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -281501,10 +282725,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.SinhStream sA = c2.sinhOpen(java.util.Arrays.copyOf(fz_c, p0));
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.SinhStream sA = c2.sinhOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.SinhStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -281518,7 +282748,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -281659,10 +282889,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.SmaStream sA = c2.smaOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.SmaStream sA = c2.smaOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.SmaStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -281676,7 +282912,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -281841,12 +283077,21 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.SmiStream sA = c2.smiOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        double[] f1 = new double[svN];
+                        java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
+                        Core.SmiStream sA = c2.smiOpenAndFill(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, f0, f1);
                         int mid = (p0 + svN) / 2;
                         Core.SmiOut uA = new Core.SmiOut();
                         Core.SmiOut uB = new Core.SmiOut();
-                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t], uA);
+                        for (int t = p0; t < mid; t++) {
+                            sA.update(fz_h[t], fz_l[t], fz_c[t], uA);
+                            if (svXtierNe(uA.smi, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svXtierNe(uA.smiSignal, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.SmiStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         double[] fk1 = new double[svN];
                         for (int t = mid; t < svN; t++) {
@@ -281864,7 +283109,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -282014,10 +283259,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.SqrtStream sA = c2.sqrtOpen(java.util.Arrays.copyOf(fz_c, p0));
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.SqrtStream sA = c2.sqrtOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.SqrtStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -282031,7 +283282,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -282176,10 +283427,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.StcStream sA = c2.stcOpen(java.util.Arrays.copyOf(fz_c, p0), optInFastPeriod, optInSlowPeriod, optInCyclePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.StcStream sA = c2.stcOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInFastPeriod, optInSlowPeriod, optInCyclePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.StcStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -282193,7 +283450,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -282340,10 +283597,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.StddevStream sA = c2.stddevOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInNbDev);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.StddevStream sA = c2.stddevOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInNbDev, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.StddevStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -282357,7 +283620,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -282540,12 +283803,21 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.StochStream sA = c2.stochOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        double[] f1 = new double[svN];
+                        java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
+                        Core.StochStream sA = c2.stochOpenAndFill(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, f0, f1);
                         int mid = (p0 + svN) / 2;
                         Core.StochOut uA = new Core.StochOut();
                         Core.StochOut uB = new Core.StochOut();
-                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t], uA);
+                        for (int t = p0; t < mid; t++) {
+                            sA.update(fz_h[t], fz_l[t], fz_c[t], uA);
+                            if (svXtierNe(uA.slowK, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svXtierNe(uA.slowD, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.StochStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         double[] fk1 = new double[svN];
                         for (int t = mid; t < svN; t++) {
@@ -282563,7 +283835,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -282743,12 +284015,21 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.StochfStream sA = c2.stochfOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        double[] f1 = new double[svN];
+                        java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
+                        Core.StochfStream sA = c2.stochfOpenAndFill(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInFastK_Period, optInFastD_Period, optInFastD_MAType, f0, f1);
                         int mid = (p0 + svN) / 2;
                         Core.StochfOut uA = new Core.StochfOut();
                         Core.StochfOut uB = new Core.StochfOut();
-                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t], uA);
+                        for (int t = p0; t < mid; t++) {
+                            sA.update(fz_h[t], fz_l[t], fz_c[t], uA);
+                            if (svXtierNe(uA.fastK, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svXtierNe(uA.fastD, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.StochfStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         double[] fk1 = new double[svN];
                         for (int t = mid; t < svN; t++) {
@@ -282766,7 +284047,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -282948,12 +284229,21 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.StochrsiStream sA = c2.stochrsiOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        double[] f1 = new double[svN];
+                        java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
+                        Core.StochrsiStream sA = c2.stochrsiOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, f0, f1);
                         int mid = (p0 + svN) / 2;
                         Core.StochrsiOut uA = new Core.StochrsiOut();
                         Core.StochrsiOut uB = new Core.StochrsiOut();
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t], uA);
+                        for (int t = p0; t < mid; t++) {
+                            sA.update(fz_c[t], uA);
+                            if (svXtierNe(uA.fastK, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svXtierNe(uA.fastD, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.StochrsiStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         double[] fk1 = new double[svN];
                         for (int t = mid; t < svN; t++) {
@@ -282971,7 +284261,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -283121,10 +284411,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.SubStream sA = c2.subOpen(java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0));
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.SubStream sA = c2.subOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t], fz_v[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t], fz_v[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.SubStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t], fz_v[t]);
@@ -283138,7 +284434,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -283279,10 +284575,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.SumStream sA = c2.sumOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.SumStream sA = c2.sumOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.SumStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -283296,7 +284598,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -283458,12 +284760,21 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.SupertrendStream sA = c2.supertrendOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInMultiplier);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        int[] f1 = new int[svN];
+                        java.util.Arrays.fill(f1, (int)-987654321);
+                        Core.SupertrendStream sA = c2.supertrendOpenAndFill(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInMultiplier, f0, f1);
                         int mid = (p0 + svN) / 2;
                         Core.SupertrendOut uA = new Core.SupertrendOut();
                         Core.SupertrendOut uB = new Core.SupertrendOut();
-                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t], uA);
+                        for (int t = p0; t < mid; t++) {
+                            sA.update(fz_h[t], fz_l[t], fz_c[t], uA);
+                            if (svXtierNe(uA.supertrend, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA.trend != b1[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.SupertrendStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         int[] fk1 = new int[svN];
                         for (int t = mid; t < svN; t++) {
@@ -283481,7 +284792,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -283634,10 +284945,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.T3Stream sA = c2.t3Open(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInVFactor);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.T3Stream sA = c2.t3OpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInVFactor, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.T3Stream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -283651,7 +284968,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -283796,10 +285113,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.TanStream sA = c2.tanOpen(java.util.Arrays.copyOf(fz_c, p0));
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.TanStream sA = c2.tanOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.TanStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -283813,7 +285136,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -283953,10 +285276,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.TanhStream sA = c2.tanhOpen(java.util.Arrays.copyOf(fz_c, p0));
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.TanhStream sA = c2.tanhOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.TanhStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -283970,7 +285299,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -284112,10 +285441,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.TemaStream sA = c2.temaOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.TemaStream sA = c2.temaOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.TemaStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -284129,7 +285464,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -284274,10 +285609,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.TrangeStream sA = c2.trangeOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.TrangeStream sA = c2.trangeOpenAndFill(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_h[t], fz_l[t], fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.TrangeStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
@@ -284291,7 +285632,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -284432,10 +285773,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.TrimaStream sA = c2.trimaOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.TrimaStream sA = c2.trimaOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.TrimaStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -284449,7 +285796,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -284596,10 +285943,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.TrixStream sA = c2.trixOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.TrixStream sA = c2.trixOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.TrixStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -284613,7 +285966,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -284759,10 +286112,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.TsfStream sA = c2.tsfOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.TsfStream sA = c2.tsfOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.TsfStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -284776,7 +286135,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -284924,10 +286283,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.TsiStream sA = c2.tsiOpen(java.util.Arrays.copyOf(fz_c, p0), optInFirstPeriod, optInSecondPeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.TsiStream sA = c2.tsiOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInFirstPeriod, optInSecondPeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.TsiStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -284941,7 +286306,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -285086,10 +286451,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.TyppriceStream sA = c2.typpriceOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.TyppriceStream sA = c2.typpriceOpenAndFill(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_h[t], fz_l[t], fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.TyppriceStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
@@ -285103,7 +286474,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -285246,10 +286617,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.UltoscStream sA = c2.ultoscOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.UltoscStream sA = c2.ultoscOpenAndFill(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_h[t], fz_l[t], fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.UltoscStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
@@ -285263,7 +286640,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -285410,10 +286787,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.VarStream sA = c2.varOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInNbDev);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.VarStream sA = c2.varOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInNbDev, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.VarStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -285427,7 +286810,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -285573,10 +286956,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.VhfStream sA = c2.vhfOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.VhfStream sA = c2.vhfOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.VhfStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -285590,7 +286979,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -285738,10 +287127,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.VidyaStream sA = c2.vidyaOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInCMOPeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.VidyaStream sA = c2.vidyaOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInCMOPeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.VidyaStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -285755,7 +287150,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -285916,12 +287311,21 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.VortexStream sA = c2.vortexOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        double[] f1 = new double[svN];
+                        java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
+                        Core.VortexStream sA = c2.vortexOpenAndFill(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, f0, f1);
                         int mid = (p0 + svN) / 2;
                         Core.VortexOut uA = new Core.VortexOut();
                         Core.VortexOut uB = new Core.VortexOut();
-                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t], uA);
+                        for (int t = p0; t < mid; t++) {
+                            sA.update(fz_h[t], fz_l[t], fz_c[t], uA);
+                            if (svXtierNe(uA.plusVI, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svXtierNe(uA.minusVI, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.VortexStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         double[] fk1 = new double[svN];
                         for (int t = mid; t < svN; t++) {
@@ -285939,7 +287343,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -286089,10 +287493,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.VwapStream sA = c2.vwapOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0));
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.VwapStream sA = c2.vwapOpenAndFill(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.VwapStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
@@ -286106,7 +287516,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -286247,10 +287657,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.VwmaStream sA = c2.vwmaOpen(java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.VwmaStream sA = c2.vwmaOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t], fz_v[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t], fz_v[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.VwmaStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t], fz_v[t]);
@@ -286264,7 +287680,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -286409,10 +287825,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.WadStream sA = c2.wadOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.WadStream sA = c2.wadOpenAndFill(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_h[t], fz_l[t], fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.WadStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
@@ -286426,7 +287848,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -286566,10 +287988,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.WclpriceStream sA = c2.wclpriceOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.WclpriceStream sA = c2.wclpriceOpenAndFill(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_h[t], fz_l[t], fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.WclpriceStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
@@ -286583,7 +288011,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -286724,10 +288152,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.WillrStream sA = c2.willrOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.WillrStream sA = c2.willrOpenAndFill(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_h[t], fz_l[t], fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.WillrStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
@@ -286741,7 +288175,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -286887,10 +288321,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.WmaStream sA = c2.wmaOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.WmaStream sA = c2.wmaOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.WmaStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -286904,7 +288344,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -287051,10 +288491,16 @@ public class TaCodegenServe {
                 int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
-                        Core.ZlemaStream sA = c2.zlemaOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.ZlemaStream sA = c2.zlemaOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, f0);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         Core.ZlemaStream sB = sA.clone();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -287068,7 +288514,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }

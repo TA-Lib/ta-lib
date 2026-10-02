@@ -301,7 +301,7 @@ pub(crate) fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashM
     s.push_str("                }\n            }\n        }\n        }\n");
 
     emit_rust_sv_prefix_sweep(&mut s, fname, &arrays, &pfx_ins, &opts_tail, &out_is_int);
-    emit_rust_sv_clone_leg(&mut s, fname, &arrays, &pfx_ins, &opts_tail, &out_is_int);
+    emit_rust_sv_clone_leg(&mut s, fname, &arrays, &pfx_ins, &opts_tail, &out_is_int, &fdecls, &fargs);
 
     // Short-history reject leg: at `lb` bars no output is defined for ANY
     // configuration, so open must reject.
@@ -367,6 +367,22 @@ fn emit_rust_sv_prefix_sweep(
         } else {
             let _ = writeln!(s, "                    if sv_xtier_ne({part}, b{i}[p - 1 - beg], &mut zsign) {{ all_ok = false; if diag.is_empty() {{ diag = format!(\",\\\"badBar\\\":{{}},\\\"badOut\\\":{i},\\\"where\\\":\\\"open\\\"\", p - 1); }} }}");
         }
+    }
+    // `open` seeds `value()` from its own expression, which the dispatch tier
+    // and the period bank write apart from `open_and_fill`'s.
+    {
+        let v_open = destructure("v0");
+        let a_open = destructure("va");
+        s.push_str("                    { let va = st.value(); value_checked = 1; value_legs += 1;\n");
+        for (i, is_int) in out_is_int.iter().enumerate() {
+            let cmp = if *is_int {
+                format!("{} != {}", a_open[i], v_open[i])
+            } else {
+                format!("{}.to_bits() != {}.to_bits()", a_open[i], v_open[i])
+            };
+            let _ = writeln!(s, "                      if {cmp} {{ value_ok = false; if diag.is_empty() {{ diag = \",\\\"valueAfterOpen\\\":1\".to_string(); }} }}");
+        }
+        s.push_str("                    }\n");
     }
     // update loop
     s.push_str("                    for t in p..svN {\n");
@@ -446,12 +462,10 @@ fn emit_rust_sv_prefix_sweep(
 /// copy with no gate to see it. That is what the value half asserts: the two
 /// handles agree with each other bitwise and each agrees with batch.
 ///
-/// The range half is honest about what it is worth TODAY: `out` is a plain
-/// `Copy` field of the derived struct, so it comes across by construction and
-/// the compare cannot currently fail on its own. It is here because the site
-/// has to exist in Rust for the ratchet to demand it — and because the day the
-/// handle grows a hand-written `Clone`, or `out` stops being a stored pair,
-/// this is the leg that already asks the question.
+/// The range half: `out` is a plain `Copy` field of the derived struct, so the
+/// clone carries it by construction. What the compare can catch today is the
+/// fork's one `advance`; the day the handle grows a hand-written `Clone`, or
+/// `out` stops being a stored pair, it catches that too.
 fn emit_rust_sv_clone_leg(
     s: &mut String,
     fname: &str,
@@ -459,6 +473,8 @@ fn emit_rust_sv_clone_leg(
     pfx_ins: &str,
     opts_tail: &str,
     out_is_int: &[bool],
+    fdecls: &str,
+    fargs: &str,
 ) {
     let n_out = out_is_int.len();
     let destructure = |var: &str| -> Vec<String> {
@@ -471,12 +487,15 @@ fn emit_rust_sv_clone_leg(
     let t_args = arrays.iter().map(|a| format!("{a}[t]")).collect::<Vec<_>>().join(", ");
     let fname_snake = crate::backends::common::snake_words(fname);
     s.push_str("        if let Some(&p) = pcs.first() {\n");
-    let _ = writeln!(s, "            match c2.{fname_snake}_open({pfx_ins}{opts_tail}) {{");
+    // Opened by `open_and_fill`, which fills exactly one value at this prefix --
+    // see the C server for why.
+    s.push_str(&fdecls.replace("        ", "            "));
+    let _ = writeln!(s, "            match c2.{fname_snake}_open_and_fill({pfx_ins}{opts_tail}{fargs}) {{");
     s.push_str("                Err(_) => { all_ok = false; if diag.is_empty() { diag = \",\\\"copyOpenReject\\\":1\".to_string(); } }\n");
-    s.push_str("                Ok((mut sa, _v0)) => {\n");
-    // The opener seeds `value()`; nothing else in the Rust harness reads it.
+    s.push_str("                Ok((mut sa, _fr)) => {\n");
+    // The one value it filled is also what `value()` must hold.
     {
-        let v_open = destructure("_v0");
+        let v_open: Vec<String> = (0..n_out).map(|i| format!("f{i}[0]")).collect();
         let a_open = destructure("va");
         s.push_str("                    { let va = sa.value(); value_checked = 1; value_legs += 1;\n");
         for (i, is_int) in out_is_int.iter().enumerate() {
@@ -485,14 +504,27 @@ fn emit_rust_sv_clone_leg(
             } else {
                 format!("{}.to_bits() != {}.to_bits()", a_open[i], v_open[i])
             };
-            let _ = writeln!(s, "                      if {cmp} {{ value_ok = false; if diag.is_empty() {{ diag = \",\\\"valueAfterOpen\\\":1\".to_string(); }} }}");
+            let _ = writeln!(s, "                      if {cmp} {{ value_ok = false; if diag.is_empty() {{ diag = \",\\\"valueAfterFill\\\":1\".to_string(); }} }}");
         }
         s.push_str("                    }\n");
     }
     s.push_str("                    let mid = (p + svN) / 2;\n");
     s.push_str("                    let mut forked = true;\n");
-    let _ = writeln!(s, "                    for t in p..mid {{ if sa.update({t_args}).is_err() {{ all_ok = false; forked = false; if diag.is_empty() {{ diag = format!(\",\\\"copyPreRejected\\\":{{}}\", t); }} break; }} }}");
+    // The bars before the fork are the only ones a filled handle takes that no
+    // other handle shadows, so they are compared with batch here.
+    s.push_str("                    for t in p..mid {\n");
+    let _ = writeln!(s, "                        let Ok(u_pre) = sa.update({t_args}) else {{ all_ok = false; forked = false; if diag.is_empty() {{ diag = format!(\",\\\"copyPreRejected\\\":{{}}\", t); }} break; }};");
+    for (i, u_pre) in destructure("u_pre").iter().enumerate() {
+        if out_is_int[i] {
+            let _ = writeln!(s, "                        if {u_pre} != b{i}[t - beg] {{ all_ok = false; if diag.is_empty() {{ diag = format!(\",\\\"copyPreDiverged\\\":{{}}\", t); }} }}");
+        } else {
+            let _ = writeln!(s, "                        if sv_xtier_ne({u_pre}, b{i}[t - beg], &mut zsign) {{ all_ok = false; if diag.is_empty() {{ diag = format!(\",\\\"copyPreDiverged\\\":{{}}\", t); }} }}");
+        }
+    }
+    s.push_str("                    }\n");
     s.push_str("                    let mut sb = sa.clone();\n");
+    // One counted bar on the fork -- see the C server for why.
+    s.push_str("                    if sb.advance().is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = \",\\\"copyAdvanceRejected\\\":1\".to_string(); } }\n");
     // The fork to the end, then the original. A buffer the two shared, written
     // with each bar before it is read, would answer right on both in lockstep.
     s.push_str("                    let mut fk = Vec::with_capacity(svN - mid);\n");
@@ -547,19 +579,18 @@ fn emit_rust_sv_clone_leg(
     value_check(s, "sa", "u_src");
     s.push_str("                    }\n");
     s.push_str("                    }\n");
-    // Both handles have consumed bars [p-1, svN-1] — the fork's own updates
-    // carried it over exactly the bars the original took — so each must report
-    // what batch(0, svN-1) did. The original is the control: it is the prefix
-    // leg's shape, so a failure on it alone says the leg's bookkeeping broke
-    // rather than the fork. Only when the value leg passed, and only when the
-    // fork actually ran every bar: a handle short of its bars has a range that
-    // is legitimately not the batch one.
+    // Both handles have consumed bars [p-1, svN-1], so the original reports
+    // what batch(0, svN-1) did and the fork one bar more, the one it counted.
+    // The original is the control: a failure on it alone says the leg's
+    // bookkeeping broke rather than the fork. Only when the value leg passed,
+    // and only when the fork actually ran every bar: a handle short of its bars
+    // has a range that is legitimately not the batch one.
     s.push_str("                    if all_ok && forked {\n");
     s.push_str("                        range_checked = 1; range_legs += 1; range_sites |= ");
     s.push_str(&sv_range_bit(SvRangeSite::Copy, SV_RANGE_MASK_RUST).to_string());
     s.push_str(";\n");
     s.push_str("                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = \",\\\"copyRangeSrc\\\":1\".to_string(); } }\n");
-    s.push_str("                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = \",\\\"copyRange\\\":1\".to_string(); } }\n");
+    s.push_str("                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb + 1 { range_ok = false; if diag.is_empty() { diag = \",\\\"copyRange\\\":1\".to_string(); } }\n");
     s.push_str("                    }\n");
     s.push_str("                }\n            }\n        }\n");
 }

@@ -571,6 +571,9 @@ typedef enum
   TA_STREAM_NULL_SETUP_FAILED        = 1705,
   TA_STREAM_NULL_VACUOUS             = 1706,
 
+  /* A function with no stream, or one missing from the stream table. */
+  TA_OPEN_CONTRACT_NOT_STREAMING     = 1707,
+
   /* Error code related to bug fix documentented on SourceForge. */
   TA_TEST_FAIL_BUG1359452_1  = 2000,
   TA_TEST_FAIL_BUG1359452_2  = 2001,

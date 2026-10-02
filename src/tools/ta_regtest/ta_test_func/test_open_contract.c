@@ -510,17 +510,42 @@ static int oc_sweep_one( OcCtx *c, const TA_StreamEntry *e )
    return firstOk;
 }
 
+/* counts[0]: functions the abstraction layer lists; counts[1]: those flagged
+ * as streaming. */
+static void oc_count_streaming( const TA_FuncInfo *funcInfo, void *opaque )
+{
+   int *counts = (int *)opaque;
+
+   counts[0]++;
+   if( funcInfo->flags & TA_FUNC_FLG_STREAM )
+      counts[1]++;
+   else
+      printf( "\nFail: TA_%s does not carry TA_FUNC_FLG_STREAM.\n", funcInfo->name );
+}
+
 /**** Global functions. ****/
 
 ErrorNumber test_func_open_contract( TA_History *history )
 {
    static OcCtx ctx;   /* ~40 KB of buffers; not a stack frame. */
    int f, i, firstOk;
+   int listed[2] = { 0, 0 };
 
    (void)history;   /* The lengths are the subject here, so the series is local. */
 
    memset( &ctx, 0, sizeof(ctx) );
    oc_build_series( &ctx );
+
+   /* Every function streams: the table swept below must be the whole library,
+    * not the subset that happens to carry a stream. */
+   if( TA_ForEachFunc( oc_count_streaming, listed ) != TA_SUCCESS ||
+       listed[0] == 0 || listed[1] != listed[0] || listed[0] != TA_STREAM_TABLE_SIZE )
+   {
+      printf( "\nFail: %d function(s) listed, %d flagged as streaming, %d in the"
+              " stream table; the three must be equal.\n",
+              listed[0], listed[1], TA_STREAM_TABLE_SIZE );
+      return TA_OPEN_CONTRACT_NOT_STREAMING;
+   }
 
    for( f = 0; f < TA_STREAM_TABLE_SIZE; f++ )
    {

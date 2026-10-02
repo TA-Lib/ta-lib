@@ -716,6 +716,12 @@ public class BatchApiTest {
         checkCode(RetCode.BAD_PARAM,
             () -> Core.DEFAULT.bbandsOpenAndFill(in, 20, 2.0, 2.0, MAType.SMA, out, out, new double[200]),
             "aliased OpenAndFill outputs carry BadParam");
+        checkCode(RetCode.BAD_PARAM,
+            () -> Core.DEFAULT.smaOpenAndFill(in, 30, in),
+            "an OpenAndFill output placed on its input carries BAD_PARAM");
+        checkCode(RetCode.BAD_PARAM,
+            () -> Core.DEFAULT.mamaOpenAndFill(in, 0.5, 0.05, null, new double[in.length]),
+            "an OpenAndFill without its non-declinable output carries BAD_PARAM");
 
         // ...and it is still an InsufficientHistoryException, so an existing
         // catch keeps working. Its message carries the counts, like a short array's.

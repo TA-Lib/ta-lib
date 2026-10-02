@@ -1034,7 +1034,10 @@ fn emit_sv_clone_leg(
     let _ = writeln!(s, "            TA_{name}_Stream *cA = NULL, *cB = NULL;");
     let _ = writeln!(s, "            {decl_a} {decl_b} {decl_v}");
     // The earliest prefix the opener accepts — the same one the prefix leg uses.
-    s.push_str("            int cp0 = lb + 1, cmid, t, cOk = 1;\n");
+    // Opened by OpenAndFill, which fills exactly one value there: no other leg
+    // updates a handle that opener returned, and the prefix sweep already
+    // covers Open at this prefix.
+    s.push_str("            int cp0 = lb + 1, cmid, t, cOk = 1, cfBeg = 0, cfNb = 0;\n");
     for (i, is_int) in out_is_int.iter().enumerate() {
         let ty = if *is_int { "int" } else { "double" };
         let _ = writeln!(s, "            {ty} *fk{i} = NULL;");
@@ -1042,11 +1045,23 @@ fn emit_sv_clone_leg(
     s.push_str("            if( cp0 <= svN - 1 )\n            {\n");
     let _ = writeln!(
         s,
-        "                if( TA_{name}_Open(&cA, {in_args}cp0, {opt_args}{addr_a}) != TA_SUCCESS || !cA ) {{ cOk = 0; cloneBad = \"open rejected the fork leg's prefix\"; }}"
+        "                if( TA_{name}_OpenAndFill(&cA, {in_args}cp0, {opt_args}&cfBeg, &cfNb, {addr_a}) != TA_SUCCESS || !cA ) {{ cOk = 0; cloneBad = \"OpenAndFill rejected the fork leg's prefix\"; }}"
     );
     s.push_str("                cmid = (cp0 + svN) / 2;\n");
-    s.push_str("                for( t = cp0; cOk && t < cmid; t++ )\n");
+    // The bars before the fork are the only ones a filled handle takes that no
+    // other handle shadows, so they are compared with batch here.
+    s.push_str("                for( t = cp0; cOk && t < cmid; t++ )\n                {\n");
     let _ = writeln!(s, "                    TA_{name}_Update(cA, {bar_args}{addr_a});");
+    for (i, is_int) in out_is_int.iter().enumerate() {
+        let b = &bbuf[i];
+        let cross = if *is_int {
+            format!("ca{i} != {b}[t - svBeg]")
+        } else {
+            format!("sv_xtier_ne(ca{i}, {b}[t - svBeg], &svZsign)")
+        };
+        let _ = writeln!(s, "                    if( {cross} ) {{ cOk = 0; cloneBad = \"the filled handle left batch before the fork\"; }}");
+    }
+    s.push_str("                }\n");
     s.push_str("                if( cOk )\n                {\n");
     let _ = writeln!(
         s,
@@ -1062,6 +1077,10 @@ fn emit_sv_clone_leg(
         let _ = writeln!(s, "                    if( cOk && ({cmp}) ) {{ cOk = 0; cloneBad = \"the fork's Value is not the bar it forked at\"; }}");
     }
     s.push_str("                }\n");
+    // The fork counts one bar it never computed. Every bar it is fed afterwards
+    // must still match batch and the original: a counted bar reaches no state a
+    // step reads.
+    let _ = writeln!(s, "                if( cOk && TA_{name}_Advance(cB) != TA_SUCCESS ) {{ cOk = 0; cloneBad = \"Advance rejected the fork\"; }}");
     // The fork to the end, then the original. A shared buffer diverges here and
     // nowhere earlier.
     for (i, is_int) in out_is_int.iter().enumerate() {
@@ -1103,9 +1122,9 @@ fn emit_sv_clone_leg(
     }
     s.push_str("                cloneChecked = 1; cloneLegs++;\n");
     s.push_str("                if( !cOk ) cloneOk = 0;\n");
-    // Both consumed bars [cp0-1, svN-1], so both report the batch range. The
-    // original is the control: a failure on cA alone is the leg's own
-    // bookkeeping, not the fork.
+    // Both consumed bars [cp0-1, svN-1], so the original reports the batch range
+    // and the fork one bar more, the one it counted. The original is the
+    // control: a failure on cA alone is the leg's own bookkeeping, not the fork.
     s.push_str("                if( cOk )\n                {\n");
     s.push_str("                    int rbA = -1, rnA = -1, rbB = -1, rnB = -1;\n");
     let _ = writeln!(
@@ -1114,7 +1133,7 @@ fn emit_sv_clone_leg(
         sv_range_bit(SvRangeSite::Copy, SV_RANGE_MASK_C)
     );
     let _ = writeln!(s, "                    if( TA_{name}_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) {{ rangeOk = 0; cloneBad = \"the original's range moved\"; }}");
-    let _ = writeln!(s, "                    if( TA_{name}_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb ) {{ rangeOk = 0; cloneBad = \"the fork's range is not the batch range\"; }}");
+    let _ = writeln!(s, "                    if( TA_{name}_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) {{ rangeOk = 0; cloneBad = \"the fork's range is not the batch range plus the bar it counted\"; }}");
     s.push_str("                }\n");
     let _ = writeln!(s, "                if( cA ) TA_{name}_Close(cA);");
     let _ = writeln!(s, "                if( cB ) TA_{name}_Close(cB);");

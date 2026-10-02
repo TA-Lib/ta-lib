@@ -493,7 +493,7 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     // copy() independence leg: open at the earliest prefix, advance to mid,
     // copy, drive the fork to the end, then the original. Both must match batch
     // bitwise and each other (a shallow sub-handle/bank/ring copy diverges
-    // here), and both must report the batch range (#287: a copy that carries
+    // here), and each must report its own range (#287: a copy that carries
     // every numeric field but drops the range pair produced identical values
     // and was invisible here). Fed in lockstep, a buffer the two share and each
     // writes the bar into before reading (MAVP's tape) answers correctly on
@@ -502,24 +502,15 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     s.push_str("                int p0 = lb + 1;\n");
     s.push_str("                if (p0 <= svN - 1) {\n");
     s.push_str("                    try {\n");
+    // Opened by openAndFill, which fills exactly one value at this prefix --
+    // see the C server for why.
+    s.push_str(&fdecls.replace("            ", "                        "));
     let _ = writeln!(
         s,
-        "                        Core.{class} sA = c2.{base_camel}Open({}{opts_tail});",
+        "                        Core.{class} sA = c2.{base_camel}OpenAndFill({}{opts_tail}{fargs});",
         pfx_ins("p0")
     );
     s.push_str("                        int mid = (p0 + svN) / 2;\n");
-    if multi {
-        let _ = writeln!(s, "                        Core.{ocls} uA = new Core.{ocls}();");
-        let _ = writeln!(s, "                        Core.{ocls} uB = new Core.{ocls}();");
-        let _ = writeln!(s, "                        for (int t = p0; t < mid; t++) sA.update({bars_t}, uA);");
-    } else {
-        let _ = writeln!(s, "                        for (int t = p0; t < mid; t++) sA.update({bars_t});");
-    }
-    let _ = writeln!(s, "                        Core.{class} sB = sA.clone();");
-    for (i, is_int) in out_is_int.iter().enumerate() {
-        let ty = if *is_int { "int" } else { "double" };
-        let _ = writeln!(s, "                        {ty}[] fk{i} = new {ty}[svN];");
-    }
     // A read of this bar's value from `u`, output `i`.
     let val = |u: &str, i: usize| if multi { format!("{u}.{}", vfield[i]) } else { u.to_string() };
     let diverged = |cond: String| {
@@ -535,6 +526,29 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
             format!("svXtierNe({a}, b{i}[t - beg.value], zsign)")
         }
     };
+    if multi {
+        let _ = writeln!(s, "                        Core.{ocls} uA = new Core.{ocls}();");
+        let _ = writeln!(s, "                        Core.{ocls} uB = new Core.{ocls}();");
+    }
+    // The bars before the fork are the only ones a filled handle takes that no
+    // other handle shadows, so they are compared with batch here.
+    s.push_str("                        for (int t = p0; t < mid; t++) {\n");
+    if multi {
+        let _ = writeln!(s, "                            sA.update({bars_t}, uA);");
+    } else {
+        let _ = writeln!(s, "                            {up_ty}uA = sA.update({bars_t});");
+    }
+    for i in 0..n_out {
+        s.push_str(&diverged(off_batch(i, val("uA", i))));
+    }
+    s.push_str("                        }\n");
+    let _ = writeln!(s, "                        Core.{class} sB = sA.clone();");
+    // One counted bar on the fork -- see the C server for why.
+    s.push_str("                        sB.advance();\n");
+    for (i, is_int) in out_is_int.iter().enumerate() {
+        let ty = if *is_int { "int" } else { "double" };
+        let _ = writeln!(s, "                        {ty}[] fk{i} = new {ty}[svN];");
+    }
     s.push_str("                        for (int t = mid; t < svN; t++) {\n");
     if multi {
         let _ = writeln!(s, "                            sB.update({bars_t}, uB);");
@@ -557,12 +571,10 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
         s.push_str(&diverged(cond));
     }
     s.push_str("                        }\n");
-    // Both handles have now consumed bars [p0-1, svN-1] — the fork's own
-    // updates carried it over exactly the bars the original took — so each
-    // must report what batch(0, svN-1) did, the same claim the prefix leg
-    // makes about the handle it never copied. The original is the control: it
-    // is the prefix leg's shape, so a failure on sA alone says the leg's own
-    // bookkeeping broke rather than copy().
+    // Both handles have now consumed bars [p0-1, svN-1], so the original
+    // reports what batch(0, svN-1) did and the fork one bar more, the one it
+    // counted. The original is the control: a failure on sA alone says the
+    // leg's own bookkeeping broke rather than copy().
     // Only when the value leg passed: a diverged handle is not one whose range
     // is worth reading.
     s.push_str("                        if (allOk) {\n");
@@ -572,7 +584,7 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
         sv_range_bit(SvRangeSite::Copy, SV_RANGE_MASK_JAVA)
     );
     s.push_str("                            if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = \",\\\"copyRangeSrc\\\":1\"; }\n");
-    s.push_str("                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = \",\\\"copyRange\\\":1\"; }\n");
+    s.push_str("                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = \",\\\"copyRange\\\":1\"; }\n");
     s.push_str("                        }\n");
     s.push_str("                    } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = \",\\\"copyOpenReject\\\":1\"; }\n");
     s.push_str("                }\n");

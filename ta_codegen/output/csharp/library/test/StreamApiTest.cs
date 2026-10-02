@@ -576,6 +576,42 @@ public static class StreamApiTest
         }
     }
 
+    /// <summary>A history one bar longer than the index domain holds.</summary>
+    /// <remarks>The span claims that length over a single element, so nothing
+    /// is allocated. It is safe only while the opener refuses the length before
+    /// it reads a bar, which is the order under test.</remarks>
+    private static void AHistoryPastTheIndexDomainIsAnIndexFault()
+    {
+        var core = new Core();
+        double one = 100.0;
+        var outReal = new double[8];
+        int tooLong = Core.IndexMax + 2;
+
+        for (int leg = 0; leg < 3; leg++)
+        {
+            string what = leg == 0 ? "SmaOpen" : leg == 1 ? "SmaOpenAndFill" : "MaOpen";
+            _checks++;
+            try
+            {
+                ReadOnlySpan<double> history = MemoryMarshal.CreateReadOnlySpan(ref one, tooLong);
+                if (leg == 0) core.SmaOpen(history, 14);
+                else if (leg == 1) core.SmaOpenAndFill(history, 14, outReal);
+                else core.MaOpen(history, 14, MAType.EMA);
+                _failures++;
+                Console.WriteLine("  FAIL: " + what + " accepted a history past IndexMax + 1");
+            }
+            catch (Exception e)
+            {
+                if ((e as ITALibFailure)?.RetCode != RetCode.OutOfRangeEndIndex)
+                {
+                    _failures++;
+                    Console.WriteLine("  FAIL: " + what + " on a history past IndexMax + 1 carried "
+                        + (e as ITALibFailure)?.RetCode + " (" + e.GetType().Name + ")");
+                }
+            }
+        }
+    }
+
     /// <summary>The thrown object carries the code; the type alone cannot say
     /// which of two index rules fired.</summary>
     private static void CheckRetCode(Action body, RetCode expected, string what, string? prefix = null)
@@ -2071,6 +2107,7 @@ public static class StreamApiTest
         OpenAndFillRejectsAliasing();
         CrossTypedOpenAndFillOverlapIsRejected();
         NullArgumentsAreNamed();
+        AHistoryPastTheIndexDomainIsAnIndexFault();
         OpenersCheckTheirArguments();
         AnEmptyHistoryOutranksAnEmptyArgument();
         TheFillOutputBoundFromBothSides();

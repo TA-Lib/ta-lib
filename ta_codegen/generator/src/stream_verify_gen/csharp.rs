@@ -756,8 +756,8 @@ fn emit_csharp_sv_func(
 
     // ---- Clone() independence: open at the earliest prefix, advance to mid,
     // clone, drive the fork to the end, then the original. Both must match
-    // batch (cross-tier) and each other (same-tier), and both must report the
-    // batch range (#287: a clone that carries every numeric field but drops the
+    // batch (cross-tier) and each other (same-tier), and each must report its
+    // own range (#287: a clone that carries every numeric field but drops the
     // range pair produced identical values and was invisible here).
     // Fed in lockstep instead, a buffer the two share and each writes the bar
     // into before reading (MAVP's tape) answers correctly on both, forever.
@@ -766,17 +766,30 @@ fn emit_csharp_sv_func(
     s.push_str("                int p0 = lb + 1;\n");
     s.push_str("                if (p0 <= svN - 1) {\n");
     s.push_str("                    try {\n");
+    // Opened by OpenAndFill, which fills exactly one value at this prefix --
+    // see the C server for why.
+    s.push_str(&fdecls.replace("            ", "                        "));
     let _ = writeln!(
         s,
-        "                        Core.{class} sA = c2.{base_pascal}Open({}{opts_tail});",
+        "                        Core.{class} sA = c2.{base_pascal}OpenAndFill({}{opts_tail}{fargs});",
         pfx_ins("p0")
     );
     s.push_str("                        int mid = (p0 + svN) / 2;\n");
-    let _ = writeln!(
-        s,
-        "                        for (int t = p0; t < mid; t++) sA.Update({bars_t});"
-    );
+    // The bars before the fork are the only ones a filled handle takes that no
+    // other handle shadows, so they are compared with batch here.
+    s.push_str("                        for (int t = p0; t < mid; t++) {\n");
+    let _ = writeln!(s, "                            {up_ty} uP = sA.Update({bars_t});");
+    for i in 0..n_out {
+        let cross = xtier_ne(&rd_out("uP", i), &format!("b{i}[t - beg]"), i, "zsign");
+        let _ = writeln!(
+            s,
+            "                            if ({cross}) {{ allOk = false; if (diag.Length == 0) diag = \",\\\"copyPreDiverged\\\":\" + t; }}"
+        );
+    }
+    s.push_str("                        }\n");
     let _ = writeln!(s, "                        Core.{class} sB = sA.Clone();");
+    // One counted bar on the fork -- see the C server for why.
+    s.push_str("                        sB.Advance();\n");
     let _ = writeln!(s, "                        var fk = new {up_ty}[svN];");
     s.push_str("                        for (int t = mid; t < svN; t++) {\n");
     let _ = writeln!(s, "                            fk[t] = sB.Update({bars_t});");
@@ -799,12 +812,10 @@ fn emit_csharp_sv_func(
         );
     }
     s.push_str("                        }\n");
-    // Both handles have now consumed bars [p0-1, svN-1] — the fork's own
-    // updates carried it over exactly the bars the original took — so each
-    // must report what batch(0, svN-1) did, the same claim the prefix leg
-    // makes about the handle it never cloned. The original is the control: it
-    // is the prefix leg's shape, so a failure on sA alone says the leg's own
-    // bookkeeping broke rather than Clone().
+    // Both handles have now consumed bars [p0-1, svN-1], so the original
+    // reports what batch(0, svN-1) did and the fork one bar more, the one it
+    // counted. The original is the control: a failure on sA alone says the
+    // leg's own bookkeeping broke rather than Clone().
     // Only when the value leg passed: a diverged handle is not one whose range
     // is worth reading.
     s.push_str("                        if (allOk) {\n");
@@ -814,7 +825,7 @@ fn emit_csharp_sv_func(
         sv_range_bit(SvRangeSite::Copy, SV_RANGE_MASK_CSHARP)
     );
     s.push_str("                            if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = \",\\\"copyRangeSrc\\\":1\"; }\n");
-    s.push_str("                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = \",\\\"copyRange\\\":1\"; }\n");
+    s.push_str("                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = \",\\\"copyRange\\\":1\"; }\n");
     s.push_str("                        }\n");
     s.push_str("                    } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = \",\\\"copyOpenReject\\\":1\"; }\n");
     s.push_str("                }\n");

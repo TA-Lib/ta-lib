@@ -473,10 +473,8 @@ static ErrorNumber testStreamShortHistory( void )
 
    /* Rule rS2, the other half of the history bound: `historyLen - 1` is the
     * implied `endIdx`, so a history longer than INDEX_MAX + 1 leaves the index
-    * domain. Only C can be probed cheaply -- it takes `historyLen` as a bare
-    * `int`, so the rejection answers before a bar is read; the other three
-    * derive it from the array and would need a 100 000 001-element one. The
-    * legal upper edge is out of reach here for the same reason. */
+    * domain. C takes `historyLen` as a bare `int`, so the rejection answers
+    * before a bar is read and no array of that length is needed. */
    {
       TA_SMA_Stream *st = NULL;
       static double out[512];
