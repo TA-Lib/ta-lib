@@ -76646,7 +76646,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -76781,7 +76781,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -76915,7 +76915,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -77051,7 +77051,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -77185,7 +77185,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -77325,7 +77325,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -77460,7 +77460,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -77596,7 +77596,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -77733,7 +77733,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -77864,7 +77864,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -77994,7 +77994,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -78123,7 +78123,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -78252,7 +78252,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -78386,7 +78386,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -78525,7 +78525,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -78655,7 +78655,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -78779,7 +78779,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -78913,7 +78913,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -79042,7 +79042,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -79178,7 +79178,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -79312,7 +79312,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -79446,7 +79446,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -79575,7 +79575,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -79713,7 +79713,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -79852,7 +79852,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -79992,7 +79992,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -80134,7 +80134,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -80276,7 +80276,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -80418,7 +80418,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -80560,7 +80560,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -80702,7 +80702,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -80844,7 +80844,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -80987,7 +80987,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -81129,7 +81129,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -81271,7 +81271,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -81413,7 +81413,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -81555,7 +81555,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -81697,7 +81697,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -81839,7 +81839,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -81982,7 +81982,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -82124,7 +82124,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -82266,7 +82266,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -82408,7 +82408,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -82550,7 +82550,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -82693,7 +82693,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -82836,7 +82836,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -82978,7 +82978,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -83120,7 +83120,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -83262,7 +83262,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -83404,7 +83404,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -83546,7 +83546,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -83688,7 +83688,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -83830,7 +83830,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -83972,7 +83972,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -84114,7 +84114,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -84256,7 +84256,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -84398,7 +84398,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -84540,7 +84540,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -84682,7 +84682,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -84824,7 +84824,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -84966,7 +84966,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -85108,7 +85108,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -85250,7 +85250,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -85392,7 +85392,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -85534,7 +85534,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -85676,7 +85676,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -85819,7 +85819,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -85962,7 +85962,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -86105,7 +86105,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -86247,7 +86247,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -86389,7 +86389,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -86531,7 +86531,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -86673,7 +86673,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -86815,7 +86815,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -86957,7 +86957,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -87099,7 +87099,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -87241,7 +87241,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -87383,7 +87383,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -87525,7 +87525,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -87667,7 +87667,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -87809,7 +87809,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -87951,7 +87951,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -88093,7 +88093,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -88235,7 +88235,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -88377,7 +88377,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -88519,7 +88519,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -88649,7 +88649,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -88774,7 +88774,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -88907,7 +88907,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -89044,7 +89044,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -89183,7 +89183,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -89327,7 +89327,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -89459,7 +89459,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -89584,7 +89584,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -89711,7 +89711,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -89840,7 +89840,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -89966,7 +89966,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -90090,7 +90090,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -90217,7 +90217,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -90342,7 +90342,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -90466,7 +90466,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -90596,7 +90596,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -90723,7 +90723,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -90851,7 +90851,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -90982,7 +90982,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -91115,7 +91115,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -91249,7 +91249,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -91382,7 +91382,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -91510,7 +91510,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -91644,7 +91644,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -91773,7 +91773,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -91906,7 +91906,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -92037,7 +92037,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -92161,7 +92161,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -92286,7 +92286,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -92416,7 +92416,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -92551,7 +92551,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -92690,7 +92690,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -92830,7 +92830,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -92955,7 +92955,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -93080,7 +93080,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -93205,7 +93205,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -93333,7 +93333,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -93461,7 +93461,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -93586,7 +93586,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -93718,7 +93718,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -93851,7 +93851,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -93979,7 +93979,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -94114,7 +94114,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -94261,7 +94261,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -94404,7 +94404,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -94542,7 +94542,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -94670,7 +94670,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -94795,7 +94795,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -94920,7 +94920,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -95045,7 +95045,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -95170,7 +95170,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -95294,7 +95294,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -95418,7 +95418,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -95544,7 +95544,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -95671,7 +95671,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -95807,7 +95807,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -95938,7 +95938,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -96071,7 +96071,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -96206,7 +96206,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -96340,7 +96340,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -96473,7 +96473,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -96600,7 +96600,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -96725,7 +96725,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -96851,7 +96851,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -96976,7 +96976,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -97104,7 +97104,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -97243,7 +97243,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -97374,7 +97374,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -97503,7 +97503,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -97630,7 +97630,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -97755,7 +97755,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -97880,7 +97880,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -98008,7 +98008,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -98145,7 +98145,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -98279,7 +98279,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -98406,7 +98406,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -98534,7 +98534,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -98670,7 +98670,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -98802,7 +98802,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -98932,7 +98932,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -99062,7 +99062,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -99188,7 +99188,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -99313,7 +99313,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -99447,7 +99447,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -99581,7 +99581,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -99710,7 +99710,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -99838,7 +99838,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -99967,7 +99967,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -100095,7 +100095,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -100226,7 +100226,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -100354,7 +100354,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -100479,7 +100479,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -100604,7 +100604,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -100729,7 +100729,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -100854,7 +100854,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -100980,7 +100980,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -101107,7 +101107,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -101237,7 +101237,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -101364,7 +101364,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -101494,7 +101494,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -101632,7 +101632,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -101771,7 +101771,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -101901,7 +101901,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -102025,7 +102025,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -102150,7 +102150,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -102286,7 +102286,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -102417,7 +102417,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -102545,7 +102545,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -102671,7 +102671,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -102808,7 +102808,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -102950,7 +102950,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -103085,7 +103085,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -103216,7 +103216,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -103343,7 +103343,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -103477,7 +103477,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -103611,7 +103611,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -103735,7 +103735,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -103859,7 +103859,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -103984,7 +103984,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -104116,7 +104116,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -104245,7 +104245,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -104370,7 +104370,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -104495,7 +104495,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -104621,7 +104621,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -104753,7 +104753,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -104892,7 +104892,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -105022,7 +105022,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -105147,7 +105147,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -105274,7 +105274,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -105407,7 +105407,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -105550,7 +105550,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -105685,7 +105685,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -105819,7 +105819,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -105955,7 +105955,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -106092,7 +106092,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -106221,7 +106221,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -106346,7 +106346,7 @@ public class TaCodegenServe {
         // for a range shorter than the lookback, where the output bound switches off and
         // the spec says any length will do, including none. Sizing to zero here would put
         // every multi-output function on the empty-buffer aliasing edge of
-        // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
         // probes.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.

@@ -2235,7 +2235,7 @@ pub(super) fn rpc_ac(core: &mut Core, ref_data: &mut RefData, params: &Value) ->
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -2628,7 +2628,7 @@ pub(super) fn rpc_accbands(core: &mut Core, ref_data: &mut RefData, params: &Val
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -3057,7 +3057,7 @@ pub(super) fn rpc_acos(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -3444,7 +3444,7 @@ pub(super) fn rpc_ad(core: &mut Core, ref_data: &mut RefData, params: &Value) ->
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -3826,7 +3826,7 @@ pub(super) fn rpc_add(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -4218,7 +4218,7 @@ pub(super) fn rpc_adosc(core: &mut Core, ref_data: &mut RefData, params: &Value)
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -4608,7 +4608,7 @@ pub(super) fn rpc_adr(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -4998,7 +4998,7 @@ pub(super) fn rpc_adx(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -5389,7 +5389,7 @@ pub(super) fn rpc_adxr(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -5768,7 +5768,7 @@ pub(super) fn rpc_alma(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -6152,7 +6152,7 @@ pub(super) fn rpc_ao(core: &mut Core, ref_data: &mut RefData, params: &Value) ->
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -6532,7 +6532,7 @@ pub(super) fn rpc_apo(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -6928,7 +6928,7 @@ pub(super) fn rpc_aroon(core: &mut Core, ref_data: &mut RefData, params: &Value)
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -7335,7 +7335,7 @@ pub(super) fn rpc_aroonosc(core: &mut Core, ref_data: &mut RefData, params: &Val
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -7729,7 +7729,7 @@ pub(super) fn rpc_asi(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -8107,7 +8107,7 @@ pub(super) fn rpc_asin(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -8473,7 +8473,7 @@ pub(super) fn rpc_atan(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -8857,7 +8857,7 @@ pub(super) fn rpc_atr(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -9234,7 +9234,7 @@ pub(super) fn rpc_avgdev(core: &mut Core, ref_data: &mut RefData, params: &Value
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -9624,7 +9624,7 @@ pub(super) fn rpc_avgprice(core: &mut Core, ref_data: &mut RefData, params: &Val
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -10005,7 +10005,7 @@ pub(super) fn rpc_bbands(core: &mut Core, ref_data: &mut RefData, params: &Value
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -10456,7 +10456,7 @@ pub(super) fn rpc_bbw(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -10855,7 +10855,7 @@ pub(super) fn rpc_beta(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -11248,7 +11248,7 @@ pub(super) fn rpc_bop(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -11638,7 +11638,7 @@ pub(super) fn rpc_cci(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -12034,7 +12034,7 @@ pub(super) fn rpc_cdl2crows(core: &mut Core, ref_data: &mut RefData, params: &Va
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -12434,7 +12434,7 @@ pub(super) fn rpc_cdl3blackcrows(core: &mut Core, ref_data: &mut RefData, params
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -12834,7 +12834,7 @@ pub(super) fn rpc_cdl3inside(core: &mut Core, ref_data: &mut RefData, params: &V
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -13234,7 +13234,7 @@ pub(super) fn rpc_cdl3linestrike(core: &mut Core, ref_data: &mut RefData, params
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -13634,7 +13634,7 @@ pub(super) fn rpc_cdl3outside(core: &mut Core, ref_data: &mut RefData, params: &
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -14034,7 +14034,7 @@ pub(super) fn rpc_cdl3starsinsouth(core: &mut Core, ref_data: &mut RefData, para
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -14434,7 +14434,7 @@ pub(super) fn rpc_cdl3whitesoldiers(core: &mut Core, ref_data: &mut RefData, par
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -14835,7 +14835,7 @@ pub(super) fn rpc_cdlabandonedbaby(core: &mut Core, ref_data: &mut RefData, para
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -15238,7 +15238,7 @@ pub(super) fn rpc_cdladvanceblock(core: &mut Core, ref_data: &mut RefData, param
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -15638,7 +15638,7 @@ pub(super) fn rpc_cdlbelthold(core: &mut Core, ref_data: &mut RefData, params: &
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -16038,7 +16038,7 @@ pub(super) fn rpc_cdlbreakaway(core: &mut Core, ref_data: &mut RefData, params: 
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -16438,7 +16438,7 @@ pub(super) fn rpc_cdlclosingmarubozu(core: &mut Core, ref_data: &mut RefData, pa
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -16838,7 +16838,7 @@ pub(super) fn rpc_cdlconcealbabyswall(core: &mut Core, ref_data: &mut RefData, p
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -17238,7 +17238,7 @@ pub(super) fn rpc_cdlcounterattack(core: &mut Core, ref_data: &mut RefData, para
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -17639,7 +17639,7 @@ pub(super) fn rpc_cdldarkcloudcover(core: &mut Core, ref_data: &mut RefData, par
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -18042,7 +18042,7 @@ pub(super) fn rpc_cdldoji(core: &mut Core, ref_data: &mut RefData, params: &Valu
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -18442,7 +18442,7 @@ pub(super) fn rpc_cdldojistar(core: &mut Core, ref_data: &mut RefData, params: &
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -18842,7 +18842,7 @@ pub(super) fn rpc_cdldragonflydoji(core: &mut Core, ref_data: &mut RefData, para
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -19242,7 +19242,7 @@ pub(super) fn rpc_cdlengulfing(core: &mut Core, ref_data: &mut RefData, params: 
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -19643,7 +19643,7 @@ pub(super) fn rpc_cdleveningdojistar(core: &mut Core, ref_data: &mut RefData, pa
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -20047,7 +20047,7 @@ pub(super) fn rpc_cdleveningstar(core: &mut Core, ref_data: &mut RefData, params
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -20450,7 +20450,7 @@ pub(super) fn rpc_cdlgapsidesidewhite(core: &mut Core, ref_data: &mut RefData, p
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -20850,7 +20850,7 @@ pub(super) fn rpc_cdlgravestonedoji(core: &mut Core, ref_data: &mut RefData, par
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -21250,7 +21250,7 @@ pub(super) fn rpc_cdlhammer(core: &mut Core, ref_data: &mut RefData, params: &Va
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -21650,7 +21650,7 @@ pub(super) fn rpc_cdlhangingman(core: &mut Core, ref_data: &mut RefData, params:
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -22050,7 +22050,7 @@ pub(super) fn rpc_cdlharami(core: &mut Core, ref_data: &mut RefData, params: &Va
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -22450,7 +22450,7 @@ pub(super) fn rpc_cdlharamicross(core: &mut Core, ref_data: &mut RefData, params
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -22850,7 +22850,7 @@ pub(super) fn rpc_cdlhighwave(core: &mut Core, ref_data: &mut RefData, params: &
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -23250,7 +23250,7 @@ pub(super) fn rpc_cdlhikkake(core: &mut Core, ref_data: &mut RefData, params: &V
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -23650,7 +23650,7 @@ pub(super) fn rpc_cdlhikkakemod(core: &mut Core, ref_data: &mut RefData, params:
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -24050,7 +24050,7 @@ pub(super) fn rpc_cdlhomingpigeon(core: &mut Core, ref_data: &mut RefData, param
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -24450,7 +24450,7 @@ pub(super) fn rpc_cdlidentical3crows(core: &mut Core, ref_data: &mut RefData, pa
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -24850,7 +24850,7 @@ pub(super) fn rpc_cdlinneck(core: &mut Core, ref_data: &mut RefData, params: &Va
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -25250,7 +25250,7 @@ pub(super) fn rpc_cdlinvertedhammer(core: &mut Core, ref_data: &mut RefData, par
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -25650,7 +25650,7 @@ pub(super) fn rpc_cdlkicking(core: &mut Core, ref_data: &mut RefData, params: &V
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -26050,7 +26050,7 @@ pub(super) fn rpc_cdlkickingbylength(core: &mut Core, ref_data: &mut RefData, pa
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -26450,7 +26450,7 @@ pub(super) fn rpc_cdlladderbottom(core: &mut Core, ref_data: &mut RefData, param
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -26850,7 +26850,7 @@ pub(super) fn rpc_cdllongleggeddoji(core: &mut Core, ref_data: &mut RefData, par
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -27250,7 +27250,7 @@ pub(super) fn rpc_cdllongline(core: &mut Core, ref_data: &mut RefData, params: &
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -27650,7 +27650,7 @@ pub(super) fn rpc_cdlmarubozu(core: &mut Core, ref_data: &mut RefData, params: &
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -28050,7 +28050,7 @@ pub(super) fn rpc_cdlmatchinglow(core: &mut Core, ref_data: &mut RefData, params
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -28451,7 +28451,7 @@ pub(super) fn rpc_cdlmathold(core: &mut Core, ref_data: &mut RefData, params: &V
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -28855,7 +28855,7 @@ pub(super) fn rpc_cdlmorningdojistar(core: &mut Core, ref_data: &mut RefData, pa
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -29259,7 +29259,7 @@ pub(super) fn rpc_cdlmorningstar(core: &mut Core, ref_data: &mut RefData, params
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -29662,7 +29662,7 @@ pub(super) fn rpc_cdlonneck(core: &mut Core, ref_data: &mut RefData, params: &Va
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -30062,7 +30062,7 @@ pub(super) fn rpc_cdlpiercing(core: &mut Core, ref_data: &mut RefData, params: &
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -30462,7 +30462,7 @@ pub(super) fn rpc_cdlrickshawman(core: &mut Core, ref_data: &mut RefData, params
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -30862,7 +30862,7 @@ pub(super) fn rpc_cdlrisefall3methods(core: &mut Core, ref_data: &mut RefData, p
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -31262,7 +31262,7 @@ pub(super) fn rpc_cdlseparatinglines(core: &mut Core, ref_data: &mut RefData, pa
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -31662,7 +31662,7 @@ pub(super) fn rpc_cdlshootingstar(core: &mut Core, ref_data: &mut RefData, param
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -32062,7 +32062,7 @@ pub(super) fn rpc_cdlshortline(core: &mut Core, ref_data: &mut RefData, params: 
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -32462,7 +32462,7 @@ pub(super) fn rpc_cdlspinningtop(core: &mut Core, ref_data: &mut RefData, params
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -32862,7 +32862,7 @@ pub(super) fn rpc_cdlstalledpattern(core: &mut Core, ref_data: &mut RefData, par
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -33262,7 +33262,7 @@ pub(super) fn rpc_cdlsticksandwich(core: &mut Core, ref_data: &mut RefData, para
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -33662,7 +33662,7 @@ pub(super) fn rpc_cdltakuri(core: &mut Core, ref_data: &mut RefData, params: &Va
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -34062,7 +34062,7 @@ pub(super) fn rpc_cdltasukigap(core: &mut Core, ref_data: &mut RefData, params: 
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -34462,7 +34462,7 @@ pub(super) fn rpc_cdlthrusting(core: &mut Core, ref_data: &mut RefData, params: 
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -34862,7 +34862,7 @@ pub(super) fn rpc_cdltristar(core: &mut Core, ref_data: &mut RefData, params: &V
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -35262,7 +35262,7 @@ pub(super) fn rpc_cdlunique3river(core: &mut Core, ref_data: &mut RefData, param
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -35662,7 +35662,7 @@ pub(super) fn rpc_cdlupsidegap2crows(core: &mut Core, ref_data: &mut RefData, pa
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -36062,7 +36062,7 @@ pub(super) fn rpc_cdlxsidegap3methods(core: &mut Core, ref_data: &mut RefData, p
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -36441,7 +36441,7 @@ pub(super) fn rpc_ceil(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -36808,7 +36808,7 @@ pub(super) fn rpc_cg(core: &mut Core, ref_data: &mut RefData, params: &Value) ->
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -37192,7 +37192,7 @@ pub(super) fn rpc_chop(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -37582,7 +37582,7 @@ pub(super) fn rpc_choptr(core: &mut Core, ref_data: &mut RefData, params: &Value
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -37974,7 +37974,7 @@ pub(super) fn rpc_cksp(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -38405,7 +38405,7 @@ pub(super) fn rpc_cmf(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -38787,7 +38787,7 @@ pub(super) fn rpc_cmo(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -39158,7 +39158,7 @@ pub(super) fn rpc_cmou(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -39530,7 +39530,7 @@ pub(super) fn rpc_coppock(core: &mut Core, ref_data: &mut RefData, params: &Valu
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -39913,7 +39913,7 @@ pub(super) fn rpc_correl(core: &mut Core, ref_data: &mut RefData, params: &Value
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -40285,7 +40285,7 @@ pub(super) fn rpc_cos(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -40651,7 +40651,7 @@ pub(super) fn rpc_cosh(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -41020,7 +41020,7 @@ pub(super) fn rpc_crsi(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -41397,7 +41397,7 @@ pub(super) fn rpc_cti(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -41766,7 +41766,7 @@ pub(super) fn rpc_cumsum(core: &mut Core, ref_data: &mut RefData, params: &Value
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -42141,7 +42141,7 @@ pub(super) fn rpc_cvi(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -42518,7 +42518,7 @@ pub(super) fn rpc_dema(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -42895,7 +42895,7 @@ pub(super) fn rpc_div(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -43272,7 +43272,7 @@ pub(super) fn rpc_donchian(core: &mut Core, ref_data: &mut RefData, params: &Val
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -43699,7 +43699,7 @@ pub(super) fn rpc_dpo(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -44086,7 +44086,7 @@ pub(super) fn rpc_dx(core: &mut Core, ref_data: &mut RefData, params: &Value) ->
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -44470,7 +44470,7 @@ pub(super) fn rpc_efi(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -44847,7 +44847,7 @@ pub(super) fn rpc_ema(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -45233,7 +45233,7 @@ pub(super) fn rpc_emv(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -45612,7 +45612,7 @@ pub(super) fn rpc_er(core: &mut Core, ref_data: &mut RefData, params: &Value) ->
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -45996,7 +45996,7 @@ pub(super) fn rpc_eri(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -46399,7 +46399,7 @@ pub(super) fn rpc_exp(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -46765,7 +46765,7 @@ pub(super) fn rpc_floor(core: &mut Core, ref_data: &mut RefData, params: &Value)
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -47132,7 +47132,7 @@ pub(super) fn rpc_fosc(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -47510,7 +47510,7 @@ pub(super) fn rpc_fractal(core: &mut Core, ref_data: &mut RefData, params: &Valu
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -47923,7 +47923,7 @@ pub(super) fn rpc_frama(core: &mut Core, ref_data: &mut RefData, params: &Value)
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -48320,7 +48320,7 @@ pub(super) fn rpc_ha(core: &mut Core, ref_data: &mut RefData, params: &Value) ->
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -48778,7 +48778,7 @@ pub(super) fn rpc_hma(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -49150,7 +49150,7 @@ pub(super) fn rpc_ht_dcperiod(core: &mut Core, ref_data: &mut RefData, params: &
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -49520,7 +49520,7 @@ pub(super) fn rpc_ht_dcphase(core: &mut Core, ref_data: &mut RefData, params: &V
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -49890,7 +49890,7 @@ pub(super) fn rpc_ht_phasor(core: &mut Core, ref_data: &mut RefData, params: &Va
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -50287,7 +50287,7 @@ pub(super) fn rpc_ht_sine(core: &mut Core, ref_data: &mut RefData, params: &Valu
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -50684,7 +50684,7 @@ pub(super) fn rpc_ht_trendline(core: &mut Core, ref_data: &mut RefData, params: 
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -51054,7 +51054,7 @@ pub(super) fn rpc_ht_trendmode(core: &mut Core, ref_data: &mut RefData, params: 
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -51435,7 +51435,7 @@ pub(super) fn rpc_ibs(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -51815,7 +51815,7 @@ pub(super) fn rpc_imi(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -52191,7 +52191,7 @@ pub(super) fn rpc_kama(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -52578,7 +52578,7 @@ pub(super) fn rpc_kc(core: &mut Core, ref_data: &mut RefData, params: &Value) ->
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -53038,7 +53038,7 @@ pub(super) fn rpc_kdj(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -53505,7 +53505,7 @@ pub(super) fn rpc_kst(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -53940,7 +53940,7 @@ pub(super) fn rpc_kstext(core: &mut Core, ref_data: &mut RefData, params: &Value
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -54384,7 +54384,7 @@ pub(super) fn rpc_kurtosis(core: &mut Core, ref_data: &mut RefData, params: &Val
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -54754,7 +54754,7 @@ pub(super) fn rpc_linearreg(core: &mut Core, ref_data: &mut RefData, params: &Va
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -55124,7 +55124,7 @@ pub(super) fn rpc_linearreg_angle(core: &mut Core, ref_data: &mut RefData, param
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -55494,7 +55494,7 @@ pub(super) fn rpc_linearreg_intercept(core: &mut Core, ref_data: &mut RefData, p
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -55864,7 +55864,7 @@ pub(super) fn rpc_linearreg_slope(core: &mut Core, ref_data: &mut RefData, param
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -56233,7 +56233,7 @@ pub(super) fn rpc_ln(core: &mut Core, ref_data: &mut RefData, params: &Value) ->
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -56599,7 +56599,7 @@ pub(super) fn rpc_log10(core: &mut Core, ref_data: &mut RefData, params: &Value)
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -56969,7 +56969,7 @@ pub(super) fn rpc_ma(core: &mut Core, ref_data: &mut RefData, params: &Value) ->
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -57357,7 +57357,7 @@ pub(super) fn rpc_macd(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -57799,7 +57799,7 @@ pub(super) fn rpc_macdext(core: &mut Core, ref_data: &mut RefData, params: &Valu
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -58259,7 +58259,7 @@ pub(super) fn rpc_macdfix(core: &mut Core, ref_data: &mut RefData, params: &Valu
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -58688,7 +58688,7 @@ pub(super) fn rpc_mama(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -59102,7 +59102,7 @@ pub(super) fn rpc_marketfi(core: &mut Core, ref_data: &mut RefData, params: &Val
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -59483,7 +59483,7 @@ pub(super) fn rpc_massi(core: &mut Core, ref_data: &mut RefData, params: &Value)
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -59871,7 +59871,7 @@ pub(super) fn rpc_mavp(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -60264,7 +60264,7 @@ pub(super) fn rpc_max(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -60634,7 +60634,7 @@ pub(super) fn rpc_maxindex(core: &mut Core, ref_data: &mut RefData, params: &Val
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -61007,7 +61007,7 @@ pub(super) fn rpc_mcgd(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -61378,7 +61378,7 @@ pub(super) fn rpc_median(core: &mut Core, ref_data: &mut RefData, params: &Value
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -61754,7 +61754,7 @@ pub(super) fn rpc_medprice(core: &mut Core, ref_data: &mut RefData, params: &Val
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -62145,7 +62145,7 @@ pub(super) fn rpc_mfi(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -62524,7 +62524,7 @@ pub(super) fn rpc_midpoint(core: &mut Core, ref_data: &mut RefData, params: &Val
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -62901,7 +62901,7 @@ pub(super) fn rpc_midprice(core: &mut Core, ref_data: &mut RefData, params: &Val
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -63274,7 +63274,7 @@ pub(super) fn rpc_min(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -63644,7 +63644,7 @@ pub(super) fn rpc_minindex(core: &mut Core, ref_data: &mut RefData, params: &Val
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -64014,7 +64014,7 @@ pub(super) fn rpc_minmax(core: &mut Core, ref_data: &mut RefData, params: &Value
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -64411,7 +64411,7 @@ pub(super) fn rpc_minmaxindex(core: &mut Core, ref_data: &mut RefData, params: &
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -64825,7 +64825,7 @@ pub(super) fn rpc_minus_di(core: &mut Core, ref_data: &mut RefData, params: &Val
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -65212,7 +65212,7 @@ pub(super) fn rpc_minus_dm(core: &mut Core, ref_data: &mut RefData, params: &Val
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -65586,7 +65586,7 @@ pub(super) fn rpc_mom(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -65962,7 +65962,7 @@ pub(super) fn rpc_mult(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -66349,7 +66349,7 @@ pub(super) fn rpc_natr(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -66732,7 +66732,7 @@ pub(super) fn rpc_nvi(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -67108,7 +67108,7 @@ pub(super) fn rpc_obv(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -67483,7 +67483,7 @@ pub(super) fn rpc_percentb(core: &mut Core, ref_data: &mut RefData, params: &Val
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -67876,7 +67876,7 @@ pub(super) fn rpc_percentile(core: &mut Core, ref_data: &mut RefData, params: &V
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -68249,7 +68249,7 @@ pub(super) fn rpc_percentrank(core: &mut Core, ref_data: &mut RefData, params: &
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -68636,7 +68636,7 @@ pub(super) fn rpc_plus_di(core: &mut Core, ref_data: &mut RefData, params: &Valu
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -69023,7 +69023,7 @@ pub(super) fn rpc_plus_dm(core: &mut Core, ref_data: &mut RefData, params: &Valu
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -69401,7 +69401,7 @@ pub(super) fn rpc_ppo(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -69796,7 +69796,7 @@ pub(super) fn rpc_pvi(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -70170,7 +70170,7 @@ pub(super) fn rpc_pvo(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -70565,7 +70565,7 @@ pub(super) fn rpc_pvt(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -70942,7 +70942,7 @@ pub(super) fn rpc_qstick(core: &mut Core, ref_data: &mut RefData, params: &Value
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -71318,7 +71318,7 @@ pub(super) fn rpc_rma(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -71689,7 +71689,7 @@ pub(super) fn rpc_roc(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -72059,7 +72059,7 @@ pub(super) fn rpc_rocp(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -72429,7 +72429,7 @@ pub(super) fn rpc_rocr(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -72799,7 +72799,7 @@ pub(super) fn rpc_rocr100(core: &mut Core, ref_data: &mut RefData, params: &Valu
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -73172,7 +73172,7 @@ pub(super) fn rpc_rsi(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -73547,7 +73547,7 @@ pub(super) fn rpc_rvi(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -73929,7 +73929,7 @@ pub(super) fn rpc_rvir(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -74306,7 +74306,7 @@ pub(super) fn rpc_rvol(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -74684,7 +74684,7 @@ pub(super) fn rpc_sar(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -75074,7 +75074,7 @@ pub(super) fn rpc_sarext(core: &mut Core, ref_data: &mut RefData, params: &Value
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -75489,7 +75489,7 @@ pub(super) fn rpc_si(core: &mut Core, ref_data: &mut RefData, params: &Value) ->
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -75867,7 +75867,7 @@ pub(super) fn rpc_sin(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -76233,7 +76233,7 @@ pub(super) fn rpc_sinh(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -76600,7 +76600,7 @@ pub(super) fn rpc_sma(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -76987,7 +76987,7 @@ pub(super) fn rpc_smi(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -77399,7 +77399,7 @@ pub(super) fn rpc_sqrt(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -77771,7 +77771,7 @@ pub(super) fn rpc_stc(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -78150,7 +78150,7 @@ pub(super) fn rpc_stddev(core: &mut Core, ref_data: &mut RefData, params: &Value
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -78545,7 +78545,7 @@ pub(super) fn rpc_stoch(core: &mut Core, ref_data: &mut RefData, params: &Value)
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -78995,7 +78995,7 @@ pub(super) fn rpc_stochf(core: &mut Core, ref_data: &mut RefData, params: &Value
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -79422,7 +79422,7 @@ pub(super) fn rpc_stochrsi(core: &mut Core, ref_data: &mut RefData, params: &Val
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -79848,7 +79848,7 @@ pub(super) fn rpc_sub(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -80218,7 +80218,7 @@ pub(super) fn rpc_sum(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -80603,7 +80603,7 @@ pub(super) fn rpc_supertrend(core: &mut Core, ref_data: &mut RefData, params: &V
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -81014,7 +81014,7 @@ pub(super) fn rpc_t3(core: &mut Core, ref_data: &mut RefData, params: &Value) ->
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -81387,7 +81387,7 @@ pub(super) fn rpc_tan(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -81753,7 +81753,7 @@ pub(super) fn rpc_tanh(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -82120,7 +82120,7 @@ pub(super) fn rpc_tema(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -82504,7 +82504,7 @@ pub(super) fn rpc_trange(core: &mut Core, ref_data: &mut RefData, params: &Value
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -82877,7 +82877,7 @@ pub(super) fn rpc_trima(core: &mut Core, ref_data: &mut RefData, params: &Value)
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -83247,7 +83247,7 @@ pub(super) fn rpc_trix(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -83618,7 +83618,7 @@ pub(super) fn rpc_tsf(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -83989,7 +83989,7 @@ pub(super) fn rpc_tsi(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -84376,7 +84376,7 @@ pub(super) fn rpc_typprice(core: &mut Core, ref_data: &mut RefData, params: &Val
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -84765,7 +84765,7 @@ pub(super) fn rpc_ultosc(core: &mut Core, ref_data: &mut RefData, params: &Value
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -85148,7 +85148,7 @@ pub(super) fn rpc_var(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -85521,7 +85521,7 @@ pub(super) fn rpc_vhf(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -85895,7 +85895,7 @@ pub(super) fn rpc_vidya(core: &mut Core, ref_data: &mut RefData, params: &Value)
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -86283,7 +86283,7 @@ pub(super) fn rpc_vortex(core: &mut Core, ref_data: &mut RefData, params: &Value
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -86706,7 +86706,7 @@ pub(super) fn rpc_vwap(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -87089,7 +87089,7 @@ pub(super) fn rpc_vwma(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -87475,7 +87475,7 @@ pub(super) fn rpc_wad(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -87861,7 +87861,7 @@ pub(super) fn rpc_wclprice(core: &mut Core, ref_data: &mut RefData, params: &Val
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -88248,7 +88248,7 @@ pub(super) fn rpc_willr(core: &mut Core, ref_data: &mut RefData, params: &Value)
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -88624,7 +88624,7 @@ pub(super) fn rpc_wma(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
@@ -88994,7 +88994,7 @@ pub(super) fn rpc_zlema(core: &mut Core, ref_data: &mut RefData, params: &Value)
             // for a range shorter than the lookback, where the output bound switches off and
             // the spec says any length will do, including none. Sizing to zero here would put
             // every multi-output function on the empty-buffer aliasing edge of
-            // error-handling-spec Appendix D item 11 (fixed), which each backend's own suite
+            // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
             // probes.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.

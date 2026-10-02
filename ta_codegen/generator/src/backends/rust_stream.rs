@@ -1407,7 +1407,7 @@ fn finite_bar_check(func: &FuncDef, indent: &str) -> String {
 
 /// Rule rU4 — the opener's index-pair check read on a live handle, one bar at a
 /// time. Why a sub-handle cannot answer it before its parent: rationale rU4 in
-/// `docs/error-handling-spec.md`.
+/// `docs/spec-conformance.md`.
 ///
 /// `>` and not `>=`: an opener may legally take `INDEX_MAX + 1` bars (rule rS2),
 /// so a handle can be born holding the last bar in the domain and it is the NEXT

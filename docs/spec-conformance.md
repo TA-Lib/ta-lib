@@ -1,4 +1,4 @@
-# API Error-Handling Conformance
+# Spec Conformance
 
 The caller-facing rules are published at https://ta-lib.org/spec/ (source
 `website/src/spec/`) under the `r` ids used below. The public pages hold only

@@ -1082,7 +1082,7 @@ fn gen_guarded_func(
                 // a `&mut [f64]` over a `&mut [i32]` to begin with, so there is
                 // nothing to detect — not because the compare is unspellable
                 // (both `as *const u8` would do). Rationale rB6 in
-                // `docs/error-handling-spec.md`, #262.
+                // `docs/spec-conformance.md`, #262.
                 if (a.param_type == ParamType::Integer) != (b.param_type == ParamType::Integer) {
                     continue;
                 }
@@ -1827,7 +1827,7 @@ fn gen_generic_params(func: &FuncDef) -> String {
 ///
 /// A `nullable` output (rule rB7) is `Option<&mut [T]>`. Rust can spell
 /// "declined" distinctly from "empty" and so it does, which leaves C# the only
-/// backend where the two collapse (rationale rW5 in `docs/error-handling-spec.md`).
+/// backend where the two collapse (rationale rW5 in `docs/spec-conformance.md`).
 /// `None` means *compute it but do not write it out*: every store to that output
 /// is guarded and its capacity assert is skipped.
 fn output_param_type(output: &Output) -> String {

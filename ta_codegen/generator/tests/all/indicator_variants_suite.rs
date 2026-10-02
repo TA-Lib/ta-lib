@@ -380,7 +380,7 @@ fn c_batch_prologue_orders_parameters_before_presence() {
 /// *const i32` is a type error, so a cross-typed pair contributes no term and a
 /// function whose outputs are all cross-typed gets no guard at all. (C can and
 /// does compare them, through `const void *`: rationale rB6 in
-/// `docs/error-handling-spec.md`. The rule differs per backend, so do not read
+/// `docs/spec-conformance.md`. The rule differs per backend, so do not read
 /// this as a statement about the library.) Without the skip, reconstructing the
 /// guard reads a correctly-absent term as a missing one.
 fn same_typed_outputs(a: &ir::Output, b: &ir::Output) -> bool {
@@ -443,7 +443,7 @@ fn rust_cross_typed_term(a: &ir::Output, b: &ir::Output) -> String {
 /// Rust is the one backend where the order between those last two is
 /// *observable*, and it had them the wrong way round (#261). Here rB5 is an
 /// `assert!` rather than a returned code (rationale rB5 in
-/// `docs/error-handling-spec.md`: the LLVM proof that elides the per-access bounds
+/// `docs/spec-conformance.md`: the LLVM proof that elides the per-access bounds
 /// checks), so a call that is both undersized and aliased answered `BadParam`
 /// where the specified order makes it a panic. C, Java and C# answer
 /// `TA_BAD_PARAM` for either, so no order is owed there.

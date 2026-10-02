@@ -1217,7 +1217,7 @@ fn gen_func_inner(
         // the same object, so there is nothing to detect. (`double[] == int[]`
         // is also "incomparable types", but that is not the reason — the stream
         // tier spells the same compare through `(Object)` casts and it is dead
-        // there too.) Rationale rB6 in docs/error-handling-spec.md, #262.
+        // there too.) Rationale rB6 in docs/spec-conformance.md, #262.
         if func.outputs.len() >= 2 {
             let mut pairs: Vec<String> = Vec::new();
             for i in 0..func.outputs.len() {

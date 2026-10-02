@@ -1091,7 +1091,7 @@ fn fresh_value_expr(func: &FuncDef, handle_var: &str) -> String {
 
 /// Rule rU4 — the opener's index-pair check read on a live handle, one bar at a
 /// time. Why a sub-handle cannot answer it before its parent: rationale rU4 in
-/// `docs/error-handling-spec.md`.
+/// `docs/spec-conformance.md`.
 ///
 /// `>` and not `>=`: an opener may legally take `IndexMax + 1` bars (rule rS2),
 /// so a handle can be born holding the last bar in the domain and it is the NEXT

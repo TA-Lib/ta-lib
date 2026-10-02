@@ -4717,7 +4717,7 @@ FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
 for a range shorter than the lookback, where the output bound switches off and\n\
 the spec says any length will do, including none. Sizing to zero here would put\n\
 every multi-output function on the empty-buffer aliasing edge of\n\
-error-handling-spec Appendix D item 11 (fixed), which each backend's own suite\n\
+spec-conformance Appendix D item 11 (fixed), which each backend's own suite\n\
 probes.\n\
 The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no\n\
 sizes and cannot make the check, so an exact buffer would test nothing there.";

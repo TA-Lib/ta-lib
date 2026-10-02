@@ -929,7 +929,7 @@ fn assert_single_output(func: &FuncDef, site: &str) {
 
 /// Rule rU4 — the opener's index-pair check read on a live handle, one bar at a
 /// time. Why a sub-handle cannot answer it before its parent: rationale rU4 in
-/// `docs/error-handling-spec.md`.
+/// `docs/spec-conformance.md`.
 ///
 /// `>` and not `>=`: an opener may legally take `INDEX_MAX + 1` bars (rule rS2),
 /// so a handle can be born holding the last bar in the domain and it is the NEXT
@@ -2636,7 +2636,7 @@ fn emit_open_internal_seam(
 /// an array that is not there. Every other argument — the remaining price legs
 /// included — is checked after, which is the specified order (rule rS1's note,
 /// `https://ta-lib.org/spec/streaming/#rs1`; footnote [4] of
-/// `docs/error-handling-spec.md`). Checking them all up
+/// `docs/spec-conformance.md`). Checking them all up
 /// front reads as tidier and is wrong: a candlestick opened on an empty history
 /// with one null leg would report the leg, where C reports the empty history.
 ///
