@@ -51,9 +51,10 @@ fn rust_template_enums_are_non_exhaustive() {
 }
 
 /// `RangeType` and `CandleSettingType` are in no YAML: C's header and each port
-/// carry a copy written by hand. A member renumbered in one port compiles and
-/// passes every value comparison, because each library matches on the member,
-/// not on its number.
+/// carry a copy written by hand. Nothing on the PR gate compares a Java or C#
+/// candlestick value with C's, and no library reads the number of a Rust
+/// `CandleSettingType` member at all, so a renumbered member is seen here or by
+/// a nightly at best.
 #[test]
 fn every_backend_candle_enum_member_carries_c_s_number() {
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
@@ -421,6 +422,24 @@ fn csharp_matype_emits_every_yaml_variant_with_its_value() {
         ma.variants.len(),
         "MAType.cs emitted {emitted} members for {} YAML variants",
         ma.variants.len()
+    );
+}
+
+/// Rust's `FuncUnstId` is a template whose member names `generate` checks
+/// against `enums.yaml`, not their numbers: the wildcard's is pinned here.
+#[test]
+fn rust_funcunstid_pins_the_all_sentinel() {
+    let src = std::fs::read_to_string(
+        Path::new(env!("CARGO_MANIFEST_DIR")).join("templates/rust/types.rs"),
+    )
+    .expect("templates/rust/types.rs");
+    let at = src.find("pub enum FuncUnstId {").expect("FuncUnstId");
+    let body = &src[at..at + src[at..].find("\n}").expect("the enum closes")];
+    assert!(body.contains("    ALL = 65535,"), "FuncUnstId must pin `ALL = 65535`");
+    assert_eq!(
+        body.matches(" = ").count(),
+        1,
+        "only the wildcard carries a number; every other member takes its position"
     );
 }
 

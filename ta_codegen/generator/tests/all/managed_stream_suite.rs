@@ -386,3 +386,37 @@ fn no_managed_tape_peek_writes_the_handle_or_the_tape() {
     }
     assert!(offenders.is_empty(), "a peek writes the handle or the tape:\n{}", offenders.join("\n"));
 }
+
+/// No public peek of any managed stream stores into its handle. A store that
+/// leaves every value right, a scratch field say, passes each value gate, and
+/// neither language can mark the handle read-only.
+#[test]
+fn no_managed_peek_writes_its_handle() {
+    let funcs = streaming_funcs();
+    let mut offenders = Vec::new();
+    for (lang, needle) in [("java", " peek("), ("csharp", " Peek(")] {
+        let mut swept = 0usize;
+        let mut handle_reads = 0usize;
+        for name in &funcs {
+            let src = section(name, lang);
+            let mut found = false;
+            for (at, _) in src.match_indices(needle) {
+                let line_start = src[..at].rfind('\n').map_or(0, |k| k + 1);
+                if !src[line_start..at].trim_start().starts_with("public ") {
+                    continue;
+                }
+                found = true;
+                for l in body_of(&src[line_start..], needle).lines() {
+                    if handle_or_tape_store(l) {
+                        offenders.push(format!("{lang} {name}: {}", l.trim()));
+                    }
+                    handle_reads += usize::from(l.contains("sp."));
+                }
+            }
+            swept += usize::from(found);
+        }
+        assert_eq!(swept, funcs.len(), "{lang}: {swept} of {} public peeks found", funcs.len());
+        assert!(handle_reads > 0, "{lang}: no peek body reads its handle through `sp.`");
+    }
+    assert!(offenders.is_empty(), "a peek writes its handle:\n{}", offenders.join("\n"));
+}

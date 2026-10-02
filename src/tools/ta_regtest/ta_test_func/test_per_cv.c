@@ -369,6 +369,21 @@ static ErrorNumber do_test( const TA_History *history,
 
    CHECK_EXPECTED_VALUE( gBuffer[0].out0, 0 );
 
+   /* NVI's and PVI's goldens carry every digit and neither function calls the
+    * math library, so they are held far inside the shared 0.01 window. */
+   if( ( test->theFunction == TA_NVI_TEST || test->theFunction == TA_PVI_TEST ) &&
+       retCode == TA_SUCCESS )
+   {
+      double got  = gBuffer[0].out0[test->oneOfTheExpectedOutRealIndex0];
+      double want = test->oneOfTheExpectedOutReal0;
+      if( !( fabs( got - want ) <= PVT_ORACLE_REL * fabs( want ) ) )
+      {
+         printf( "Fail: bar %d is %.17g, expected %.17g within %g relative\n",
+                 (int)test->oneOfTheExpectedOutRealIndex0, got, want, PVT_ORACLE_REL );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+   }
+
    if( server_verify_active() )
    {
       switch( test->theFunction )
