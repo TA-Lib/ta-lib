@@ -845,7 +845,8 @@ static ErrorNumber testTAFunction_ALL( void )
       } \
       }
    DO_TEST_LBL( test_func_1in_1out, "MATH,VECTOR,DCPERIOD/PHASE,TRENDLINE/MODE,"
-                                "HT_DCPERIOD,HT_DCPHASE,HT_TRENDLINE,HT_TRENDMODE,MEDPRICE",
+                                "HT_DCPERIOD,HT_DCPHASE,HT_TRENDLINE,HT_TRENDMODE,MEDPRICE,"
+                                "ACOS,ASIN,ATAN,COS,COSH,EXP,LN,LOG10,SIN,SINH,TAN,TANH",
                                 "Math, vector, Hilbert Transforms, MEDPRICE" );
    DO_TEST_LBL( test_func_ma,   "All Moving Averages,"
                                 "SMA,EMA,WMA,DEMA,TEMA,TRIMA,KAMA,MAMA,T3,MA",

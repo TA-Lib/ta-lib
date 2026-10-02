@@ -404,6 +404,7 @@ public class CoreApiTest {
             "FuncUnstId.ALL is pinned at 65535 and every other id indexes the table by its value");
         check(CandleSettingType.ALL_CANDLE_SETTINGS.ordinal() == 11,
             "ALL_CANDLE_SETTINGS is pinned at C's 11");
+
     }
 
     /**

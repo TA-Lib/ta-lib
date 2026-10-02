@@ -322,3 +322,172 @@ fn closes_as_char_literal(b: &[u8], at: usize) -> bool {
     }
     false
 }
+
+/// The functions whose own source calls a transcendental math routine, or that
+/// reach one through a function they call by name. MA is followed in neither
+/// direction: which average it runs is the caller's choice, and the harness
+/// decides that per call.
+fn transcendental_functions() -> std::collections::BTreeSet<String> {
+    use std::collections::{BTreeMap, BTreeSet};
+    use ta_codegen_lib::backends::builtins::MathFn;
+    use ta_codegen_lib::ir::Expr;
+
+    let names = crate::common::discover_indicators();
+    let known: BTreeSet<String> = names.iter().map(|n| n.to_uppercase()).collect();
+    let mut direct: BTreeSet<String> = BTreeSet::new();
+    let mut calls: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
+    for name in &names {
+        let (func, _) = crate::common::load_indicator(name);
+        let upper = func.name.to_uppercase();
+        let mut seen: BTreeSet<String> = BTreeSet::new();
+        let alternates = func.alternates.iter().flat_map(|a| a.body.iter());
+        for stmt in func.body.iter().chain(func.private_body.iter()).chain(alternates) {
+            ta_codegen_lib::streaming::walk_stmt_exprs(stmt, &mut |e| {
+                ta_codegen_lib::streaming::walk_expr(e, &mut |e| {
+                    if let Expr::FuncCall(callee, _) = e {
+                        seen.insert(callee.clone());
+                    }
+                });
+            });
+        }
+        for callee in &seen {
+            if matches!(
+                MathFn::from_name(callee),
+                Some(
+                    MathFn::Atan
+                        | MathFn::Log
+                        | MathFn::Cos
+                        | MathFn::Sin
+                        | MathFn::Tan
+                        | MathFn::Acos
+                        | MathFn::Asin
+                        | MathFn::Exp
+                        | MathFn::Cosh
+                        | MathFn::Sinh
+                        | MathFn::Tanh
+                        | MathFn::Log10
+                )
+            ) {
+                direct.insert(upper.clone());
+            }
+            let target = callee.trim_start_matches("TA_").to_uppercase();
+            if known.contains(&target) && target != "MA" && upper != "MA" && target != upper {
+                calls.entry(upper.clone()).or_default().insert(target);
+            }
+        }
+    }
+    let mut all = direct;
+    loop {
+        let more: Vec<String> = calls
+            .iter()
+            .filter(|(f, callees)| !all.contains(*f) && callees.iter().any(|c| all.contains(c)))
+            .map(|(f, _)| f.clone())
+            .collect();
+        if more.is_empty() {
+            return all;
+        }
+        all.extend(more);
+    }
+}
+
+/// `CODEGEN_TRANSCENDENTAL[]` is what drops a Java or C# comparison from bitwise
+/// to a tolerance. A name it should not hold loosens a gate in silence, so the
+/// list must be exactly what the sources say.
+#[test]
+fn the_transcendental_list_is_what_the_sources_call() {
+    let derived = transcendental_functions();
+    let harness = std::fs::read_to_string(
+        repo_root().join("src/tools/ta_regtest/test_codegen.c"),
+    )
+    .expect("test_codegen.c");
+    let at = harness
+        .find("CODEGEN_TRANSCENDENTAL[] = {")
+        .expect("CODEGEN_TRANSCENDENTAL[]");
+    let end = harness[at..].find("};").expect("the array closes") + at;
+    let listed: std::collections::BTreeSet<String> = harness[at..end]
+        .split('"')
+        .skip(1)
+        .step_by(2)
+        .map(str::to_string)
+        .collect();
+    assert!(derived.len() >= 20, "derived only {derived:?}");
+    assert_eq!(
+        listed, derived,
+        "CODEGEN_TRANSCENDENTAL[] in test_codegen.c no longer matches the functions \
+         that call a transcendental routine"
+    );
+
+    // The published list is the same one.
+    let page = std::fs::read_to_string(repo_root().join("website/src/spec/versions/README.md"))
+        .expect("the versions page");
+    let from = page.find("The functions that do are ").expect("the published list")
+        + "The functions that do are ".len();
+    let to = page[from..].find(", and the averages").expect("the list's end") + from;
+    let published: std::collections::BTreeSet<String> = page[from..to]
+        .replace(" and ", ", ")
+        .split(", ")
+        .map(|n| n.trim().to_string())
+        .collect();
+    assert_eq!(
+        published, derived,
+        "the transcendental functions listed on website/src/spec/versions/README.md \
+         no longer match the sources"
+    );
+}
+
+/// The flags the three build systems must agree on, and the ones none may use.
+/// `-ffp-contract=off` is the value contract, and the cross-language bit
+/// compares see only CMake's and the generator's builds. The other three change
+/// no value, so no test of any build can see one go missing.
+///
+/// Each needle is a statement that sets the flag, not the flag's name: a build
+/// file also names a flag in the message that probes for it.
+#[test]
+fn the_three_build_systems_carry_the_same_flags() {
+    let strip = |text: String, marker: &str| -> String {
+        text.lines()
+            .map(|l| l.split(marker).next().unwrap_or(""))
+            .collect::<Vec<_>>()
+            .join("\n")
+    };
+    let read = |rel: &str| std::fs::read_to_string(repo_root().join(rel)).expect(rel);
+    let files = [
+        (
+            "CMakeLists.txt",
+            strip(read("CMakeLists.txt"), "#"),
+            vec![
+                "add_compile_options(-ffp-contract=off)",
+                "add_compile_options(-fno-math-errno)",
+                "foreach(flag -falign-functions=64 -falign-loops=64)",
+                "add_compile_options(${flag})",
+            ],
+        ),
+        (
+            "configure.ac",
+            strip(read("configure.ac"), "#"),
+            vec![
+                "CFLAGS=\"$CFLAGS -ffp-contract=off\"",
+                "CFLAGS=\"$CFLAGS -fno-math-errno\"",
+                "for ta_align in -falign-functions=64 -falign-loops=64;",
+                "CFLAGS=\"$CFLAGS $ta_align\"",
+            ],
+        ),
+        (
+            "ta_codegen/generator/src/main.rs",
+            strip(read("ta_codegen/generator/src/main.rs"), "//"),
+            vec![
+                "\"-ffp-contract=off\",",
+                "\"-fno-math-errno\",",
+                "&[\"-falign-functions=64\", \"-falign-loops=64\"]",
+            ],
+        ),
+    ];
+    for (name, text, needles) in &files {
+        for needle in needles {
+            assert!(text.contains(needle), "{name} no longer has `{needle}`");
+        }
+        for banned in ["-ffast-math", "-Ofast", "-funsafe-math-optimizations"] {
+            assert!(!text.contains(banned), "{name} passes {banned}");
+        }
+    }
+}

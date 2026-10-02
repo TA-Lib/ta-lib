@@ -383,6 +383,32 @@ rT4 and rT5 under a cast out of the enum in C#: `CandleMisuseThrows` and
 `MisuseThrows` (`CoreBuilderTest`). rT10: `testUnstablePeriodBounds`
 (`test_internals.c`) changes the settings and initializes over them.
 
+### Versions and determinism
+
+rV2: `testEnumValueContract` pins C's numbers. `MAType` reaches every language
+from `enums.yaml`, and `FuncUnstId` reaches C, Java and C# from it; Rust's
+`FuncUnstId` is a template that `generate` refuses when its member names or
+their order differ from `enums.yaml`. `RangeType` and `CandleSettingType` are
+written by hand in C's header and in each port:
+`every_backend_candle_enum_member_carries_c_s_number` (generator suite) reads
+C's numbers from `ta_defs.h` and requires them of every Rust, Java and C#
+member.
+
+rV3: `rust_matype_emits_every_yaml_variant_and_its_frozen_shape` and
+`rust_template_enums_are_non_exhaustive` (generator suite).
+
+rD2's list of functions: `the_transcendental_list_is_what_the_sources_call`
+(generator suite) derives it from the indicator sources and requires the same
+set on the versions page and in `CODEGEN_TRANSCENDENTAL[]` (`test_codegen.c`),
+the list that moves a Java or C# comparison from bitwise to a tolerance.
+`test_elementary_math` (`test_1in_1out.c`) holds each elementary function to
+the host math library's routine of that name.
+
+The build-flags caller item: `the_three_build_systems_carry_the_same_flags`
+(generator suite) requires the statements that set `-ffp-contract=off`,
+`-fno-math-errno` and the two alignment flags in CMake, autotools and the
+generator, and `-ffast-math` and `-Ofast` in none.
+
 ## Rationale
 
 ### Order

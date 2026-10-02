@@ -57,6 +57,8 @@
 /**** Headers ****/
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
+#include <float.h>
 
 #include "ta_test_priv.h"
 #include "ta_test_func.h"
@@ -146,6 +148,79 @@ static TA_Test tableTest[] =
 #define NB_TEST (sizeof(tableTest)/sizeof(TA_Test))
 
 /**** Global functions definitions.   ****/
+/* Each elementary math function is the C math library's routine of that
+ * name, bar by bar. A committed value cannot say so: the library's result
+ * differs in the last bit from one host to the next. The bound allows a build
+ * that vectorizes the call through another routine of the same library.
+ */
+typedef TA_RetCode (*ElemFunc)( int, int, const double[], int *, int *, double[] );
+
+typedef struct
+{
+   const char *name;
+   ElemFunc    func;
+   double    (*reference)( double );
+   double      divisor;   /* brings a close into the routine's domain */
+} ElemRow;
+
+static const ElemRow elemRows[] =
+{
+   { "ACOS",  TA_ACOS,  acos,  250.0 },
+   { "ASIN",  TA_ASIN,  asin,  250.0 },
+   { "ATAN",  TA_ATAN,  atan,   40.0 },
+   { "COS",   TA_COS,   cos,    40.0 },
+   { "COSH",  TA_COSH,  cosh,   40.0 },
+   { "EXP",   TA_EXP,   exp,    40.0 },
+   { "LN",    TA_LN,    log,    40.0 },
+   { "LOG10", TA_LOG10, log10,  40.0 },
+   { "SIN",   TA_SIN,   sin,    40.0 },
+   { "SINH",  TA_SINH,  sinh,   40.0 },
+   { "TAN",   TA_TAN,   tan,    40.0 },
+   { "TANH",  TA_TANH,  tanh,   40.0 },
+};
+#define NB_ELEM_ROW (sizeof(elemRows)/sizeof(elemRows[0]))
+#define ELEM_CAP 512
+
+static ErrorNumber test_elementary_math( const TA_History *history )
+{
+   static double in[ELEM_CAP], out[ELEM_CAP];
+   int nbBars = (int)history->nbBars;
+   unsigned int r;
+   int i;
+
+   if( nbBars < 1 || nbBars > ELEM_CAP )
+      return TA_TESTUTIL_TFRR_BAD_PARAM;
+
+   for( r = 0; r < NB_ELEM_ROW; r++ )
+   {
+      const ElemRow *row = &elemRows[r];
+      TA_Integer begIdx = -1, nbElement = -1;
+      TA_RetCode retCode;
+
+      for( i = 0; i < nbBars; i++ )
+         in[i] = history->close[i] / row->divisor;
+      retCode = row->func( 0, nbBars - 1, in, &begIdx, &nbElement, out );
+      if( retCode != TA_SUCCESS || begIdx != 0 || nbElement != nbBars )
+      {
+         printf( "\nFail: TA_%s rc=%d begIdx=%d count=%d on %d bars\n",
+                 row->name, (int)retCode, (int)begIdx, (int)nbElement, nbBars );
+         return TA_TESTUTIL_TFRR_BAD_RETCODE;
+      }
+      for( i = 0; i < nbBars; i++ )
+      {
+         double want = row->reference( in[i] );
+         double bound = 4.0 * DBL_EPSILON * fabs( want );
+         if( !( fabs( out[i] - want ) <= bound ) )
+         {
+            printf( "\nFail: TA_%s(%.17g) is %.17g, the math library answers %.17g\n",
+                    row->name, in[i], out[i], want );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+      }
+   }
+   return TA_TEST_PASS;
+}
+
 ErrorNumber test_func_1in_1out( TA_History *history )
 {
    unsigned int i;
@@ -173,6 +248,10 @@ ErrorNumber test_func_1in_1out( TA_History *history )
 
    /* Re-initialize all the unstable period to zero. */
    TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
+
+   retValue = test_elementary_math( history );
+   if( retValue != TA_TEST_PASS )
+      return retValue;
 
    /* All test succeed. */
    return TA_TEST_PASS;

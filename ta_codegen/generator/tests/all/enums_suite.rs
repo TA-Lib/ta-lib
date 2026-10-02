@@ -24,6 +24,128 @@ use ta_codegen_lib::registry::Lang;
 // and until now none of it was asserted anywhere.
 // ---------------------------------------------------------------------------
 
+/// The four enums the Rust crate takes from a template rather than from
+/// `enums.yaml`. The attribute has no effect inside the crate and is invisible
+/// at run time, so its loss compiles and passes everywhere while breaking every
+/// downstream `match` the day a member is appended.
+#[test]
+fn rust_template_enums_are_non_exhaustive() {
+    let src = std::fs::read_to_string(
+        Path::new(env!("CARGO_MANIFEST_DIR")).join("templates/rust/types.rs"),
+    )
+    .expect("templates/rust/types.rs");
+    let lines: Vec<&str> = src.lines().collect();
+    for name in ["RetCode", "FuncUnstId", "RangeType", "CandleSettingType"] {
+        let decl = format!("pub enum {name} {{");
+        let at = lines
+            .iter()
+            .position(|l| l.trim_end() == decl)
+            .unwrap_or_else(|| panic!("`{decl}` not found in the template"));
+        let marked = lines[..at]
+            .iter()
+            .rev()
+            .take_while(|l| l.starts_with("#[") || l.starts_with("///"))
+            .any(|l| l.trim_end() == "#[non_exhaustive]");
+        assert!(marked, "{name} lost #[non_exhaustive]");
+    }
+}
+
+/// `RangeType` and `CandleSettingType` are in no YAML: C's header and each port
+/// carry a copy written by hand. A member renumbered in one port compiles and
+/// passes every value comparison, because each library matches on the member,
+/// not on its number.
+#[test]
+fn every_backend_candle_enum_member_carries_c_s_number() {
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let read = |rel: &str| std::fs::read_to_string(root.join(rel)).expect(rel);
+    let block = |text: &str, open: &str, close: &str| -> String {
+        let at = text.find(open).unwrap_or_else(|| panic!("no `{open}`"));
+        let rest = &text[at + open.len()..];
+        rest[..rest.find(close).unwrap_or_else(|| panic!("no `{close}` after `{open}`"))].to_string()
+    };
+    let screaming = |pascal: &str| {
+        let mut out = String::new();
+        for (i, ch) in pascal.chars().enumerate() {
+            if ch.is_ascii_uppercase() && i > 0 {
+                out.push('_');
+            }
+            out.push(ch.to_ascii_uppercase());
+        }
+        out
+    };
+    // `Name = 3,` lines of a block, comments and attributes skipped.
+    let numbered = |text: &str| -> Vec<(String, i64)> {
+        text.lines()
+            .filter_map(|l| {
+                let l = l.trim().trim_end_matches(',');
+                let (name, value) = l.split_once('=')?;
+                let name = name.trim();
+                let value = value.split("/*").next().unwrap().trim().trim_end_matches(',');
+                (!name.is_empty() && name.chars().all(|c| c.is_ascii_alphanumeric() || c == '_'))
+                    .then(|| (name.to_string(), value.parse::<i64>().expect("a number")))
+            })
+            .collect()
+    };
+
+    let header = read("include/ta_defs.h");
+    for (c_typedef, c_prefix, name, java_file, floor) in [
+        ("} TA_RangeType;", "TA_RangeType_", "RangeType", "RangeType.java", 3),
+        ("} TA_CandleSettingType;", "TA_", "CandleSettingType", "CandleSettingType.java", 12),
+    ] {
+        let upto = &header[..header.find(c_typedef).expect(c_typedef)];
+        let c_enum = &upto[upto.rfind("typedef enum").expect("typedef enum")..];
+        let c: std::collections::HashMap<String, i64> = numbered(c_enum)
+            .into_iter()
+            .map(|(n, v)| (screaming(n.strip_prefix(c_prefix).expect("the C prefix")), v))
+            .collect();
+        assert_eq!(c.len(), floor, "parsed {} members of C's {name}", c.len());
+
+        let mut members: Vec<(&str, String, i64)> = Vec::new();
+        let rust = read("ta_codegen/generator/templates/rust/types.rs");
+        for (n, v) in numbered(&block(&rust, &format!("pub enum {name} {{"), "\n}")) {
+            members.push(("Rust", screaming(&n), v));
+        }
+        let csharp = read(&format!("ta_codegen/output/csharp/library/{name}.cs"));
+        for (n, v) in numbered(&block(&csharp, &format!("public enum {name}"), "\n}")) {
+            members.push(("C#", screaming(&n), v));
+        }
+        // Java's number is the ordinal: the position in the declaration.
+        let mut java = read(&format!(
+            "ta_codegen/output/java/library/src/main/java/io/github/talib/{java_file}"
+        ));
+        while let Some(at) = java.find("/*") {
+            let end = java[at..].find("*/").expect("the comment closes") + at + 2;
+            java.replace_range(at..end, "");
+        }
+        let constants = block(&java, &format!("public enum {name}"), "}");
+        let constants = constants.split('{').nth(1).expect("the enum body");
+        for (ordinal, n) in constants
+            .split(',')
+            .map(|t| t.trim().trim_end_matches(';').trim())
+            .filter(|t| !t.is_empty())
+            .enumerate()
+        {
+            assert!(
+                n.chars().all(|c| c.is_ascii_uppercase() || c == '_'),
+                "Java {name}: `{n}` is not a bare constant"
+            );
+            members.push(("Java", n.to_string(), ordinal as i64));
+        }
+
+        for backend in ["Rust", "C#", "Java"] {
+            let n = members.iter().filter(|m| m.0 == backend).count();
+            assert_eq!(n, floor, "parsed {n} {backend} {name} members");
+        }
+        for (backend, member, value) in &members {
+            assert_eq!(
+                c.get(member),
+                Some(value),
+                "{backend} {name} {member} = {value} is not C's number"
+            );
+        }
+    }
+}
+
 #[test]
 fn rust_matype_emits_every_yaml_variant_and_its_frozen_shape() {
     let enums = load_enums();
