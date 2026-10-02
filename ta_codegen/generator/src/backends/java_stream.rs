@@ -2692,14 +2692,14 @@ fn emit_public_open_guards(o: &mut String, func: &FuncDef, verb: &str, with_outp
         // is bounded only where it was supplied (rule rB7).
         let nullable = super::common::nullable_output_names(func);
         for out in &func.outputs {
-            let call = if nullable.contains(&out.name) {
-                format!("if( {0} != null ) requireCapacity", out.name)
+            let guard = if nullable.contains(&out.name) {
+                format!("if( {0} != null ) ", out.name)
             } else {
-                "requireLength".to_string()
+                String::new()
             };
             let _ = writeln!(
                 o,
-                "      {call}(\"{n} {verb}\", \"{0}\", {0}, guardOutLen);",
+                "      {guard}requireLength(\"{n} {verb}\", \"{0}\", {0}, guardOutLen);",
                 out.name
             );
         }

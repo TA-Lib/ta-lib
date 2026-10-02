@@ -106,9 +106,8 @@ fn a_declined_output_needs_no_capacity() {
 /// An output that cannot be declined is absent when it is empty, and the call
 /// is refused before any length is looked at, on a range that produces nothing
 /// as on one that produces values. One element is enough for the control, which
-/// is what tells this from the length rule. A declinable output is not held to
-/// it: supplied with no room on a call that writes nothing, it is only
-/// length-checked.
+/// is what tells this from the length rule. A declinable output is declined with
+/// `None`, never with an empty slice.
 #[test]
 fn an_empty_output_is_an_absent_one() {
     let data = series(252);
@@ -155,10 +154,25 @@ fn an_empty_output_is_an_absent_one() {
         Err(RetCode::BadParam),
         "an empty outMAMA beside a declined outFAMA"
     );
+    assert_eq!(
+        core.mama(0, mama_end, &data, 0.5, 0.05, &mut one, Some(&mut none)),
+        Err(RetCode::BadParam),
+        "an empty outFAMA is not a declined one"
+    );
     let r = core
-        .mama(0, mama_end, &data, 0.5, 0.05, &mut one, Some(&mut none))
-        .expect("a supplied declinable output with no room is fine when nothing is written");
+        .mama(0, mama_end, &data, 0.5, 0.05, &mut one, None)
+        .expect("None is what declines outFAMA");
     assert_eq!(r.count, 0);
+
+    assert_eq!(
+        core.mama_open_and_fill(&data[..=mama_end], 0.5, 0.05, &mut one, Some(&mut none)).err(),
+        Some(RetCode::BadParam),
+        "the opener refuses an empty outFAMA ahead of the history check"
+    );
+    assert_eq!(
+        core.mama_open_and_fill(&data[..=mama_end], 0.5, 0.05, &mut one, None).err(),
+        Some(RetCode::InsufficientHistory)
+    );
 }
 
 /// rB5's input half, which the public tier states without the sub-lookback escape

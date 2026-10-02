@@ -388,9 +388,7 @@ fn same_typed_outputs(a: &ir::Output, b: &ir::Output) -> bool {
 }
 
 fn rust_alias_guard(func: &ir::FuncDef) -> Option<String> {
-    // Both operands non-empty: two zero-length slices cannot clobber each other,
-    // and every unallocated `Vec` hands out the same dangling pointer, so a bare
-    // `as_ptr()` comparison says nothing about them. A nullable output is an `Option` and
+    // A nullable output is an `Option` and
     // contributes a term only when it was supplied (rule rB7).
     let mut pairs: Vec<String> = Vec::new();
     for i in 0..func.outputs.len() {
@@ -401,19 +399,19 @@ fn rust_alias_guard(func: &ir::FuncDef) -> Option<String> {
             }
             pairs.push(match (a.is_nullable(), b.is_nullable()) {
                 (false, false) => format!(
-                    "(!{0}.is_empty() && !{1}.is_empty() && {0}.as_ptr() == {1}.as_ptr())",
+                    "({0}.as_ptr() == {1}.as_ptr())",
                     a.name, b.name
                 ),
                 (true, false) => format!(
-                    "{0}.as_deref().is_some_and(|a| !a.is_empty() && !{1}.is_empty() && a.as_ptr() == {1}.as_ptr())",
+                    "{0}.as_deref().is_some_and(|a| a.as_ptr() == {1}.as_ptr())",
                     a.name, b.name
                 ),
                 (false, true) => format!(
-                    "{1}.as_deref().is_some_and(|b| !{0}.is_empty() && !b.is_empty() && {0}.as_ptr() == b.as_ptr())",
+                    "{1}.as_deref().is_some_and(|b| {0}.as_ptr() == b.as_ptr())",
                     a.name, b.name
                 ),
                 (true, true) => format!(
-                    "{0}.as_deref().zip({1}.as_deref()).is_some_and(|(a, b)| !a.is_empty() && !b.is_empty() && a.as_ptr() == b.as_ptr())",
+                    "{0}.as_deref().zip({1}.as_deref()).is_some_and(|(a, b)| a.as_ptr() == b.as_ptr())",
                     a.name, b.name
                 ),
             });
@@ -648,7 +646,10 @@ fn rust_public_entry_orders_the_argument_contract() {
         }
         for output in &func.outputs {
             let needle = if output.is_nullable() {
-                format!("if {}.as_deref().is_some_and(|o| o.len() < _guardOutLen) {{", output.name)
+                format!(
+                    "if {}.as_deref().is_some_and(|o| o.is_empty() || o.len() < _guardOutLen) {{",
+                    output.name
+                )
             } else {
                 format!("if {0}.is_empty() || {0}.len() < _guardOutLen {{", output.name)
             };

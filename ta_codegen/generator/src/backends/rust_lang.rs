@@ -992,10 +992,13 @@ fn gen_argument_checks(func: &FuncDef, snake: &str) -> String {
     for output in &func.outputs {
         // A nullable output may be declined with `None` (rule rB7): nothing is
         // written to it, so there is no capacity to owe. Supplied, it is bounded
-        // like any other -- "declined" is `None` and nothing else. An output that
-        // cannot be declined is absent when empty, whatever the call produces.
+        // like any other -- "declined" is `None` and nothing else. An empty
+        // output is absent, whatever the call produces.
         let cond = if output.is_nullable() {
-            format!("{}.as_deref().is_some_and(|o| o.len() < _guardOutLen)", output.name)
+            format!(
+                "{}.as_deref().is_some_and(|o| o.is_empty() || o.len() < _guardOutLen)",
+                output.name
+            )
         } else {
             format!("{0}.is_empty() || {0}.len() < _guardOutLen", output.name)
         };
@@ -1861,29 +1864,28 @@ fn nullable_target_base<'a>(
 /// One term of the output-distinctness guard (#108): do these two outputs name
 /// the same buffer?
 ///
-/// **Both operands must be non-empty.** Two zero-length slices cannot clobber
-/// each other, and every unallocated `Vec` hands out the same dangling aligned
-/// pointer, so a bare `as_ptr()` comparison says nothing about them. An empty
-/// output that cannot be declined is refused by its own check.
+/// Bare addresses: the public entry refuses an empty slice with the same code
+/// before this is reached, so the dangling pointer every unallocated `Vec`
+/// shares cannot turn a legal call into a rejection.
 ///
 /// A nullable output contributes a term only when the caller supplied it: `None`
 /// is a declaration that nothing is written there, not a buffer that could alias.
 fn alias_pair_expr(a: &Output, b: &Output) -> String {
     match (a.is_nullable(), b.is_nullable()) {
         (false, false) => format!(
-            "(!{0}.is_empty() && !{1}.is_empty() && {0}.as_ptr() == {1}.as_ptr())",
+            "({0}.as_ptr() == {1}.as_ptr())",
             a.name, b.name
         ),
         (true, false) => format!(
-            "{0}.as_deref().is_some_and(|a| !a.is_empty() && !{1}.is_empty() && a.as_ptr() == {1}.as_ptr())",
+            "{0}.as_deref().is_some_and(|a| a.as_ptr() == {1}.as_ptr())",
             a.name, b.name
         ),
         (false, true) => format!(
-            "{1}.as_deref().is_some_and(|b| !{0}.is_empty() && !b.is_empty() && {0}.as_ptr() == b.as_ptr())",
+            "{1}.as_deref().is_some_and(|b| {0}.as_ptr() == b.as_ptr())",
             a.name, b.name
         ),
         (true, true) => format!(
-            "{0}.as_deref().zip({1}.as_deref()).is_some_and(|(a, b)| !a.is_empty() && !b.is_empty() && a.as_ptr() == b.as_ptr())",
+            "{0}.as_deref().zip({1}.as_deref()).is_some_and(|(a, b)| a.as_ptr() == b.as_ptr())",
             a.name, b.name
         ),
     }

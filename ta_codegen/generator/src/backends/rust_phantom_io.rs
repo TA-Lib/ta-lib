@@ -329,11 +329,9 @@ fn empty_call(func: &FuncDef, call_opts: &str, end_expr: &str, indent: usize) ->
     let mut s = String::new();
     // `with_capacity(1)`, not `Vec::new()`: the slices must be zero-LENGTH but
     // must not share an ADDRESS. Every unallocated Vec hands out the same
-    // dangling aligned pointer, which a multi-output function's overlap guard
-    // once read as aliased buffers -- silently costing this sweep all 14
-    // multi-output indicators until the control arm said so. The guard now
-    // excludes empty operands (rule rB6, #262), so this is belt and braces: it
-    // keeps the sweep independent of that guard's shape.
+    // dangling aligned pointer, and a multi-output function's overlap guard
+    // compares bare addresses: unallocated, every such function answers a
+    // failure code here and the quiet arm fails.
     for i in &func.inputs {
         let _ = writeln!(s, "{pad}let {}: Vec<{}> = Vec::with_capacity(1);", i.name, slice_ty(&i.param_type));
     }

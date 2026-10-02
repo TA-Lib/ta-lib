@@ -222,7 +222,7 @@ impl Core {
         assert!(_assertStart > endIdx || endIdx < inClose.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outHighStop.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outLowStop.len());
-        if (!outHighStop.is_empty() && !outLowStop.is_empty() && outHighStop.as_ptr() == outLowStop.as_ptr()) {
+        if (outHighStop.as_ptr() == outLowStop.as_ptr()) {
             return RetCode::BadParam;
         }
         let mut startIdx = startIdx;
@@ -660,9 +660,8 @@ impl Core {
     ///
     /// Also [`RetCode::BadParam`] when a slice is too short: every input must cover
     /// `startIdx..=endIdx`, and every output must hold the number of values produced for that
-    /// range. An empty slice for an output that cannot be declined is refused on every range, one
-    /// that produces nothing included. Sizing every output slice to the input length is always
-    /// sufficient.
+    /// range. An empty output slice is refused on every range, one that produces nothing included.
+    /// Sizing every output slice to the input length is always sufficient.
     ///
     /// # Examples
     ///

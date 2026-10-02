@@ -82,7 +82,6 @@ pub fn guarded_docs(
         b.tag(&format!("param {}", opt.name), &param_doc(opt, doc, enums));
     }
     let count = format!("{{@code endIdx - max(startIdx, {java_name}Lookback(...)) + 1}} values");
-    let produced = format!("{count}, the count the call produces (none when that is not positive)");
     for out in &func.outputs {
         // A nullable output may be declined; the signature alone does not say
         // what `null` means there, so the parameter line does.
@@ -90,7 +89,7 @@ pub fn guarded_docs(
             format!(
                 "Pass {{@code null}} to decline it: it is still computed where the \
                  algorithm needs it, but nothing is written out. Supplied, it must \
-                 hold at least {produced}."
+                 hold at least {count}, and never be empty."
             )
         } else {
             format!("Must hold at least {count}, and never be empty: an empty array is an absent output.")

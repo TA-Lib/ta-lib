@@ -182,7 +182,7 @@ impl Core {
         assert!(_assertStart > endIdx || endIdx - _assertStart < outMACD.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outMACDSignal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outMACDHist.len());
-        if (!outMACD.is_empty() && !outMACDSignal.is_empty() && outMACD.as_ptr() == outMACDSignal.as_ptr()) || (!outMACD.is_empty() && !outMACDHist.is_empty() && outMACD.as_ptr() == outMACDHist.as_ptr()) || (!outMACDSignal.is_empty() && !outMACDHist.is_empty() && outMACDSignal.as_ptr() == outMACDHist.as_ptr()) {
+        if (outMACD.as_ptr() == outMACDSignal.as_ptr()) || (outMACD.as_ptr() == outMACDHist.as_ptr()) || (outMACDSignal.as_ptr() == outMACDHist.as_ptr()) {
             return RetCode::BadParam;
         }
         let mut startIdx = startIdx;
@@ -374,9 +374,8 @@ impl Core {
     ///
     /// Also [`RetCode::BadParam`] when a slice is too short: every input must cover
     /// `startIdx..=endIdx`, and every output must hold the number of values produced for that
-    /// range. An empty slice for an output that cannot be declined is refused on every range, one
-    /// that produces nothing included. Sizing every output slice to the input length is always
-    /// sufficient.
+    /// range. An empty output slice is refused on every range, one that produces nothing included.
+    /// Sizing every output slice to the input length is always sufficient.
     ///
     /// # Examples
     ///

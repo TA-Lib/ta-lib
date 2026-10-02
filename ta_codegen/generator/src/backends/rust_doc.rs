@@ -121,9 +121,9 @@ pub fn guarded_docs(
     d.paragraph(
         "Also [`RetCode::BadParam`] when a slice is too short: every input must cover \
          `startIdx..=endIdx`, and every output must hold the number of values produced \
-         for that range. An empty slice for an output that cannot be declined is refused \
-         on every range, one that produces nothing included. Sizing every output slice \
-         to the input length is always sufficient.",
+         for that range. An empty output slice is refused on every range, one that \
+         produces nothing included. Sizing every output slice to the input length is \
+         always sufficient.",
     );
 
     if let Some(example) = example_doctest(func, snake, enums) {

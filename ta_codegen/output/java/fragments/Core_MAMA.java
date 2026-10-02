@@ -852,8 +852,8 @@
     * @param outFAMA Following adaptive moving average, using half the alpha
     *        (slow line) Pass {@code null} to decline it: it is still computed where
     *        the algorithm needs it, but nothing is written out. Supplied, it must hold
-    *        at least {@code endIdx - max(startIdx, mamaLookback(...)) + 1} values, the
-    *        count the call produces (none when that is not positive).
+    *        at least {@code endIdx - max(startIdx, mamaLookback(...)) + 1} values, and
+    *        never be empty.
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -886,7 +886,7 @@
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MAMA", "inReal", inReal, guardInLen);
       requireLength("MAMA", "outMAMA", outMAMA, guardOutLen);
-      if( outFAMA != null ) requireCapacity("MAMA", "outFAMA", outFAMA, guardOutLen);
+      if( outFAMA != null ) requireLength("MAMA", "outFAMA", outFAMA, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = mamaImpl(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA);
@@ -926,8 +926,8 @@
     * @param outFAMA Following adaptive moving average, using half the alpha
     *        (slow line) Pass {@code null} to decline it: it is still computed where
     *        the algorithm needs it, but nothing is written out. Supplied, it must hold
-    *        at least {@code endIdx - max(startIdx, mamaLookback(...)) + 1} values, the
-    *        count the call produces (none when that is not positive).
+    *        at least {@code endIdx - max(startIdx, mamaLookback(...)) + 1} values, and
+    *        never be empty.
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -960,7 +960,7 @@
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MAMA", "inReal", inReal, guardInLen);
       requireLength("MAMA", "outMAMA", outMAMA, guardOutLen);
-      if( outFAMA != null ) requireCapacity("MAMA", "outFAMA", outFAMA, guardOutLen);
+      if( outFAMA != null ) requireLength("MAMA", "outFAMA", outFAMA, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = mamaImpl(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA);
@@ -2096,7 +2096,7 @@
       requireHistory("MAMA openAndFill", inReal.length);
       int guardOutLen = openFillCount("MAMA openAndFill", inReal.length, mamaLookback(optInFastLimit, optInSlowLimit));
       requireLength("MAMA openAndFill", "outMAMA", outMAMA, guardOutLen);
-      if( outFAMA != null ) requireCapacity("MAMA openAndFill", "outFAMA", outFAMA, guardOutLen);
+      if( outFAMA != null ) requireLength("MAMA openAndFill", "outFAMA", outFAMA, guardOutLen);
       if( (Object)outMAMA == (Object)inReal || (outFAMA != null && (Object)outFAMA == (Object)inReal) || (outFAMA != null && (Object)outMAMA == (Object)outFAMA) ) {
          throw streamFailure("MAMA openAndFill", RetCode.BAD_PARAM);
       }

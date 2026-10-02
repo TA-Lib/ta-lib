@@ -850,7 +850,7 @@ fn gen_argument_checks(func: &FuncDef, canonical: &str, method: &str) -> String 
         if output.is_nullable() {
             let _ = writeln!(
                 out,
-                "      if( {name} != null ) requireCapacity(\"{canonical}\", \"{name}\", {name}, guardOutLen);"
+                "      if( {name} != null ) requireLength(\"{canonical}\", \"{name}\", {name}, guardOutLen);"
             );
         } else {
             let _ = writeln!(

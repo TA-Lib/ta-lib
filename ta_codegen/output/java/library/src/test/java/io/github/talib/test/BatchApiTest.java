@@ -941,8 +941,7 @@ public class BatchApiTest {
      * and the call is refused before any length is looked at: on a range that
      * produces nothing, and on a history too short to open. One element is
      * enough for both controls, which is what tells this from the length rule.
-     * A declinable output is not held to it: supplied with no room on a call
-     * that writes nothing, it is only length-checked.
+     * A declinable output is declined with null, never with an empty array.
      */
     static void anEmptyOutputIsAnAbsentOne() {
         final double[] in = closes(252);
@@ -975,8 +974,11 @@ public class BatchApiTest {
         checkCode(RetCode.BAD_PARAM,
             () -> Core.DEFAULT.mama(0, mamaEnd, in, 0.5, 0.05, new double[0], null),
             "an empty outMAMA beside a declined outFAMA");
-        check(Core.DEFAULT.mama(0, mamaEnd, in, 0.5, 0.05, new double[1], new double[0]).count() == 0,
-            "a supplied declinable output with no room is fine when nothing is written");
+        checkCode(RetCode.BAD_PARAM,
+            () -> Core.DEFAULT.mama(0, mamaEnd, in, 0.5, 0.05, new double[1], new double[0]),
+            "an empty outFAMA is not a declined one");
+        check(Core.DEFAULT.mama(0, mamaEnd, in, 0.5, 0.05, new double[1], null).count() == 0,
+            "null is what declines outFAMA");
 
         final double[] history = Arrays.copyOf(in, Core.DEFAULT.accbandsLookback(20));
         checkCode(RetCode.BAD_PARAM,
@@ -987,6 +989,13 @@ public class BatchApiTest {
             () -> Core.DEFAULT.accbandsOpenAndFill(history, history, history, 20,
                 new double[1], new double[1], new double[1]),
             "openAndFill: one element each reaches the history check");
+        final double[] mamaHistory = Arrays.copyOf(in, mamaEnd + 1);
+        checkCode(RetCode.BAD_PARAM,
+            () -> Core.DEFAULT.mamaOpenAndFill(mamaHistory, 0.5, 0.05, new double[1], new double[0]),
+            "openAndFill: an empty outFAMA is not a declined one");
+        checkCode(RetCode.INSUFFICIENT_HISTORY,
+            () -> Core.DEFAULT.mamaOpenAndFill(mamaHistory, 0.5, 0.05, new double[1], null),
+            "openAndFill: a declined outFAMA reaches the history check");
 
         // A REAL alias of two outputs is still rejected.
         double[] shared = new double[252];

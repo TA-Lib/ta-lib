@@ -184,7 +184,10 @@ fn rust_public_fill_bounds_every_output_against_its_own_lookback() {
             // A `nullable` output is `Option<&mut [T]>` and is bounded only when
             // it was supplied (rule rB7); every other output is bounded flat.
             let needle = if out.is_nullable() {
-                format!("if {}.as_deref().is_some_and(|o| o.len() < _guardOutLen) {{", out.name)
+                format!(
+                    "if {}.as_deref().is_some_and(|o| o.is_empty() || o.len() < _guardOutLen) {{",
+                    out.name
+                )
             } else {
                 format!("if {0}.is_empty() || {0}.len() < _guardOutLen {{", out.name)
             };
@@ -378,9 +381,7 @@ fn java_public_openers_check_arguments_then_the_index_pair() {
             }
             for (arg, is_output) in &names {
                 let needle = if *is_output {
-                    let declinable = func.outputs.iter().any(|o| o.name == *arg && o.is_nullable());
-                    let call = if declinable { "requireCapacity" } else { "requireLength" };
-                    format!("{call}(\"{base} {verb}\", \"{arg}\", {arg}, guardOutLen);")
+                    format!("requireLength(\"{base} {verb}\", \"{arg}\", {arg}, guardOutLen);")
                 } else {
                     format!("requireArgument(\"{base} {verb}\", \"{arg}\", {arg});")
                 };
@@ -429,18 +430,18 @@ fn java_public_openers_check_arguments_then_the_index_pair() {
             if with_outputs {
                 for out in &func.outputs {
                     // A `nullable` output is bounded only when it was supplied
-                    // (rule rB7), and by its length alone. The guard is part of
-                    // the needle: the rule is about exactly that output.
+                    // (rule rB7). The guard is part of the needle: without it
+                    // the bare call is a SUBSTRING of the guarded line, so the
+                    // gate would keep passing while going blind on exactly the
+                    // output the rule is about.
+                    let bound = format!(
+                        "requireLength(\"{base} {verb}\", \"{0}\", {0}, guardOutLen);",
+                        out.name
+                    );
                     let needle = if out.is_nullable() {
-                        format!(
-                            "if( {0} != null ) requireCapacity(\"{base} {verb}\", \"{0}\", {0}, guardOutLen);",
-                            out.name
-                        )
+                        format!("if( {} != null ) {bound}", out.name)
                     } else {
-                        format!(
-                            "requireLength(\"{base} {verb}\", \"{0}\", {0}, guardOutLen);",
-                            out.name
-                        )
+                        bound.clone()
                     };
                     assert!(
                         body.contains(&needle),
@@ -450,7 +451,7 @@ fn java_public_openers_check_arguments_then_the_index_pair() {
                     );
                     if !out.is_nullable() {
                         assert!(
-                            !body.contains(&format!("if( {} != null ) ", out.name)),
+                            !body.contains(&format!("if( {} != null ) {bound}", out.name)),
                             "{}: `{}` is not nullable and must be bounded unconditionally",
                             func.name,
                             out.name

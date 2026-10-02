@@ -520,7 +520,7 @@ fn test_mama_nullable_fama_is_declinable_in_every_backend() {
     let java = backends::java::generate(&func, &enums, registry, &helpers);
     assert!(
         java.contains(
-            "if( outFAMA != null ) requireCapacity(\"MAMA\", \"outFAMA\", outFAMA, guardOutLen);"
+            "if( outFAMA != null ) requireLength(\"MAMA\", \"outFAMA\", outFAMA, guardOutLen);"
         ),
         "Java requires a length only for a supplied output"
     );
@@ -642,7 +642,6 @@ fn the_java_argument_helpers_agree_between_the_library_and_the_server() {
         "static void requireLength(String funcName, String argName, float[] array, int required) {",
         "static void requireLength(String funcName, String argName, int[] array, int required) {",
         "static void checkLength(String funcName, String argName, int actual, int required) {",
-        "static void requireCapacity(String funcName, String argName, double[] array, int required) {",
         "static int openFillCount(String funcName, int historyLen, int lookback) {",
         "static void requireHistoryLength(String funcName, String argName, int actual, int historyLen) {",
         "static void requireHistory(String funcName, int historyLen) {",
@@ -684,7 +683,7 @@ fn test_mama_nullable_fama_is_declinable_at_the_opener_in_every_backend() {
         "Rust: the opener family takes Option, `mut` on the transcription alone"
     );
     assert!(
-        rust.contains("if outFAMA.as_deref().is_some_and(|o| o.len() < _guardOutLen) {"),
+        rust.contains("if outFAMA.as_deref().is_some_and(|o| o.is_empty() || o.len() < _guardOutLen) {"),
         "Rust: rS5 bounds a nullable output only where it was supplied"
     );
     assert!(
@@ -694,7 +693,7 @@ fn test_mama_nullable_fama_is_declinable_at_the_opener_in_every_backend() {
 
     let java = backends::java::generate(&func, &enums, registry, &helpers);
     assert!(
-        java.contains("if( outFAMA != null ) requireCapacity(\"MAMA openAndFill\", \"outFAMA\", outFAMA, guardOutLen);"),
+        java.contains("if( outFAMA != null ) requireLength(\"MAMA openAndFill\", \"outFAMA\", outFAMA, guardOutLen);"),
         "Java: rS5 bounds a nullable output only where it was supplied"
     );
     assert!(
@@ -880,8 +879,8 @@ fn test_synth10_two_nullable_outputs_are_declinable_at_the_opener() {
             "Java",
             &java,
             vec![
-                "if( outFirstOptional != null ) requireCapacity(\"SYNTH10 openAndFill\", \"outFirstOptional\", outFirstOptional, guardOutLen);",
-                "if( outSecondOptional != null ) requireCapacity(\"SYNTH10 openAndFill\", \"outSecondOptional\", outSecondOptional, guardOutLen);",
+                "if( outFirstOptional != null ) requireLength(\"SYNTH10 openAndFill\", \"outFirstOptional\", outFirstOptional, guardOutLen);",
+                "if( outSecondOptional != null ) requireLength(\"SYNTH10 openAndFill\", \"outSecondOptional\", outSecondOptional, guardOutLen);",
             ],
             "requireLength(\"SYNTH10 openAndFill\", \"outRequired\", outRequired, guardOutLen);",
         ),

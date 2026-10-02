@@ -237,9 +237,10 @@ a one-element control for each. Java `anEmptyOutputIsAnAbsentOne` and C#
 `an_empty_output_is_an_absent_one` (`tests/nullable_outputs.rs`),
 `a_sub_lookback_range_frees_the_output_bound_and_not_the_input_bound`
 (`tests/empty_range.rs`) and the short-history test of
-`tests/stream_open_contract.rs`. The same tests hold a supplied declinable
-output to its length only in Java and Rust, and an empty span to declining in
-C#. An empty input was already refused by the length rule.
+`tests/stream_open_contract.rs`. The same tests refuse an empty declinable
+output in Java and Rust, with `null` and `None` as the controls that decline, and
+hold an empty span to declining in C#. An empty input was already refused by the
+length rule.
 
 rW7: `checkInPlaceAliasCorrect` (`test_abstract.c`),
 `anOutputOnItsInputAnswersTheSame` (Java's `MetadataTest`) and
@@ -531,9 +532,10 @@ buffer behind a success or behind `TA_INSUFFICIENT_HISTORY`. C sees only `NULL`:
 a buffer of no capacity is invisible there, as every length is.
 
 Two things are not part of it. A stream's empty history answers rS1, which sits
-ahead of rS4 as `historyLen < 1` sits ahead of C's NULL checks. A declinable
-output is exempt: C# declines with an empty span, and in Java and Rust a
-supplied one with no room is held to its length only.
+ahead of rS4 as `historyLen < 1` sits ahead of C's NULL checks. An empty span
+is how C# declines an output, the one case that is not refused: Java and Rust
+decline with `null` and `None`, so an empty declinable output is absent there
+like any other.
 
 ### rB5, rS5: C
 
@@ -564,13 +566,12 @@ which is C, and C is the one language where the check is not merely expensive
 but not straightforwardly expressible. Java and Rust satisfy the stronger rule
 for free by making the state unreachable, which is not the same as enforcing it.
 
-Outputs must be different buffers in every language. An empty output that
-cannot be declined never reaches the pair guard: it is absent (rB4). A
-zero-length buffer therefore meets the guard only as a declinable output, in
-Java and in C# as an empty span over a real array, and beside a partner that is
-not empty it never trips it. One zero-length array as two outputs (ruled
-2026-10-01, Appendix D item 15) now needs two declinable outputs, which no
-shipped function has. Rust's guard requires both slices non-empty. A call that is both undersized and identical answers rB5, the earlier
+Outputs must be different buffers in every language. An empty output that is
+not a declination is absent (rB4) and never reaches a verdict of the pair guard.
+In C# an empty span declines, and the guard still rejects one zero-length array
+passed as two declinable outputs (ruled 2026-10-01, Appendix D item 15), which
+no shipped function has; a span with a null reference is the only operand it
+skips. A call that is both undersized and identical answers rB5, the earlier
 rule (#261).
 
 Outputs of different element types can only be the same buffer through a
@@ -669,8 +670,8 @@ An omitted output is not an alias, so rB6's pair guard skips a pair whose
 operands are not both present. C and Java guard each nullable operand non-null
 before comparing (two `NULL`s compare equal), and C# skips a span whose
 reference is null, which is what a null array becomes; an empty span over a real
-array is still compared. Rust's guard requires both slices non-empty; safe code
-cannot pass one slice twice, so that is unobservable.
+array is still compared. Rust's guard compares the addresses of the slices supplied; safe
+code cannot pass one slice twice, so that is unobservable.
 
 A declined output is still computed, which is what MAMA needs: FAMA feeds the
 next bar. `MA`'s MAMA arm declines `outFAMA` outright in all four backends.

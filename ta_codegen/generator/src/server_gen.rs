@@ -1573,12 +1573,6 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("            throw new TALibArgumentException(funcName + \": \" + argName + \" is empty\", RetCode.BAD_PARAM);\n");
     s.push_str("        }\n");
     s.push_str("    }\n\n");
-    s.push_str("    static void requireCapacity(String funcName, String argName, double[] array, int required) {\n");
-    s.push_str("        if (array.length < required) {\n");
-    s.push_str("            throw new TALibArgumentException(funcName + \": \" + argName\n");
-    s.push_str("                + \" has length \" + array.length + \", needs \" + required, RetCode.BAD_PARAM);\n");
-    s.push_str("        }\n");
-    s.push_str("    }\n\n");
     s.push_str("    static void requireIndexRange(String funcName, int startIdx, int endIdx) {\n");
     s.push_str("        if (startIdx < 0 || startIdx > INDEX_MAX) {\n");
     s.push_str("            throw failure(funcName, RetCode.OUT_OF_RANGE_START_INDEX);\n");

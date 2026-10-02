@@ -124,7 +124,7 @@ impl Core {
         assert!(_assertStart > endIdx || endIdx - _assertStart < outHAHigh.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outHALow.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outHAClose.len());
-        if (!outHAOpen.is_empty() && !outHAHigh.is_empty() && outHAOpen.as_ptr() == outHAHigh.as_ptr()) || (!outHAOpen.is_empty() && !outHALow.is_empty() && outHAOpen.as_ptr() == outHALow.as_ptr()) || (!outHAOpen.is_empty() && !outHAClose.is_empty() && outHAOpen.as_ptr() == outHAClose.as_ptr()) || (!outHAHigh.is_empty() && !outHALow.is_empty() && outHAHigh.as_ptr() == outHALow.as_ptr()) || (!outHAHigh.is_empty() && !outHAClose.is_empty() && outHAHigh.as_ptr() == outHAClose.as_ptr()) || (!outHALow.is_empty() && !outHAClose.is_empty() && outHALow.as_ptr() == outHAClose.as_ptr()) {
+        if (outHAOpen.as_ptr() == outHAHigh.as_ptr()) || (outHAOpen.as_ptr() == outHALow.as_ptr()) || (outHAOpen.as_ptr() == outHAClose.as_ptr()) || (outHAHigh.as_ptr() == outHALow.as_ptr()) || (outHAHigh.as_ptr() == outHAClose.as_ptr()) || (outHALow.as_ptr() == outHAClose.as_ptr()) {
             return RetCode::BadParam;
         }
         let mut startIdx = startIdx;
@@ -277,9 +277,8 @@ impl Core {
     ///
     /// Also [`RetCode::BadParam`] when a slice is too short: every input must cover
     /// `startIdx..=endIdx`, and every output must hold the number of values produced for that
-    /// range. An empty slice for an output that cannot be declined is refused on every range, one
-    /// that produces nothing included. Sizing every output slice to the input length is always
-    /// sufficient.
+    /// range. An empty output slice is refused on every range, one that produces nothing included.
+    /// Sizing every output slice to the input length is always sufficient.
     ///
     /// # Examples
     ///

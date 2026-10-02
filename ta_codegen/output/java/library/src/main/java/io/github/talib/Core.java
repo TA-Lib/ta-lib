@@ -466,8 +466,8 @@ public final class Core {
     *
     * <p>{@code required} is {@code 0} on a range that produces nothing, which
     * leaves only the absent check: a null or empty array is a bug regardless of
-    * how much of it would have been read. An output a caller may decline goes
-    * through {@link #requireCapacity} instead.
+    * how much of it would have been read. An output a caller may decline is
+    * passed here only when it is not null.
     */
    static void requireLength(String funcName, String argName, double[] array, int required) {
       checkLength(funcName, argName, array == null ? -1 : array.length, required);
@@ -481,17 +481,6 @@ public final class Core {
    /** {@code int[]} overload of {@link Core#requireLength(String,String,double[],int)}. */
    static void requireLength(String funcName, String argName, int[] array, int required) {
       checkLength(funcName, argName, array == null ? -1 : array.length, required);
-   }
-
-   /**
-    * The length bound alone, for a supplied output a caller may decline: with no
-    * room on a call that writes nothing, it is not an absent argument.
-    */
-   static void requireCapacity(String funcName, String argName, double[] array, int required) {
-      if (array.length < required) {
-         throw new TALibArgumentException(funcName + ": " + argName + " has length "
-               + array.length + ", needs " + required, RetCode.BAD_PARAM);
-      }
    }
 
    /** {@code actual < 0} means the array was null. */
@@ -139210,8 +139199,8 @@ public final class Core {
     * @param outFAMA Following adaptive moving average, using half the alpha
     *        (slow line) Pass {@code null} to decline it: it is still computed where
     *        the algorithm needs it, but nothing is written out. Supplied, it must hold
-    *        at least {@code endIdx - max(startIdx, mamaLookback(...)) + 1} values, the
-    *        count the call produces (none when that is not positive).
+    *        at least {@code endIdx - max(startIdx, mamaLookback(...)) + 1} values, and
+    *        never be empty.
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -139244,7 +139233,7 @@ public final class Core {
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MAMA", "inReal", inReal, guardInLen);
       requireLength("MAMA", "outMAMA", outMAMA, guardOutLen);
-      if( outFAMA != null ) requireCapacity("MAMA", "outFAMA", outFAMA, guardOutLen);
+      if( outFAMA != null ) requireLength("MAMA", "outFAMA", outFAMA, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = mamaImpl(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA);
@@ -139284,8 +139273,8 @@ public final class Core {
     * @param outFAMA Following adaptive moving average, using half the alpha
     *        (slow line) Pass {@code null} to decline it: it is still computed where
     *        the algorithm needs it, but nothing is written out. Supplied, it must hold
-    *        at least {@code endIdx - max(startIdx, mamaLookback(...)) + 1} values, the
-    *        count the call produces (none when that is not positive).
+    *        at least {@code endIdx - max(startIdx, mamaLookback(...)) + 1} values, and
+    *        never be empty.
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -139318,7 +139307,7 @@ public final class Core {
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MAMA", "inReal", inReal, guardInLen);
       requireLength("MAMA", "outMAMA", outMAMA, guardOutLen);
-      if( outFAMA != null ) requireCapacity("MAMA", "outFAMA", outFAMA, guardOutLen);
+      if( outFAMA != null ) requireLength("MAMA", "outFAMA", outFAMA, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = mamaImpl(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA);
@@ -140454,7 +140443,7 @@ public final class Core {
       requireHistory("MAMA openAndFill", inReal.length);
       int guardOutLen = openFillCount("MAMA openAndFill", inReal.length, mamaLookback(optInFastLimit, optInSlowLimit));
       requireLength("MAMA openAndFill", "outMAMA", outMAMA, guardOutLen);
-      if( outFAMA != null ) requireCapacity("MAMA openAndFill", "outFAMA", outFAMA, guardOutLen);
+      if( outFAMA != null ) requireLength("MAMA openAndFill", "outFAMA", outFAMA, guardOutLen);
       if( (Object)outMAMA == (Object)inReal || (outFAMA != null && (Object)outFAMA == (Object)inReal) || (outFAMA != null && (Object)outMAMA == (Object)outFAMA) ) {
          throw streamFailure("MAMA openAndFill", RetCode.BAD_PARAM);
       }

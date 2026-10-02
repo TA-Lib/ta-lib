@@ -55,7 +55,7 @@ A batch call accepts `0 <= startIdx <= endIdx <= TA_INDEX_MAX` ([`TA_INDEX_MAX`]
 | <a id="rb8"></a>**rB8** | A memory allocation failed. | `TA_ALLOC_ERR` (C only) | none |
 | <a id="rb9"></a>**rB9** | The library found an inconsistency in its own state. | `TA_INTERNAL_ERROR` + id | none |
 
-**rB4.** An input or output is absent when it is `NULL` in C, `null` or empty in Java, and empty in Rust and C#, where a `null` array becomes an empty span. It is refused whatever the call would produce, a range that produces no values ([rW2](/spec/inputs-outputs/#rw2)) included. An output a caller may decline ([rW5](/spec/inputs-outputs/#rw5)) is exempt.
+**rB4.** An input or output is absent when it is `NULL` in C, `null` or empty in Java, and empty in Rust and C#, where a `null` array becomes an empty span. It is refused whatever the call would produce, a range that produces no values ([rW2](/spec/inputs-outputs/#rw2)) included. The one exception is how C# declines an output ([rW5](/spec/inputs-outputs/#rw5)): with an empty span.
 
 **rB6.** Identity only: an input reused whole as an output is legal ([rW7](/spec/inputs-outputs/#rw7)), and partial overlap is the caller's to avoid ([no overlap](/spec/inputs-outputs/#no-overlap)). One buffer passed as two outputs is rejected.
 
