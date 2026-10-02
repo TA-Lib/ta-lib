@@ -1730,6 +1730,8 @@ static ErrorNumber abstract_lookback_under_settings( const char *funcName,
     TA_Integer base = -1, got = -1;
     const char *bad = NULL;
     int isCdl = (funcInfo->flags & TA_FUNC_FLG_CANDLESTICK) != 0;
+    /* A gate fixture may read a candle setting without being a candlestick. */
+    int readsCandle = isCdl || strncmp(funcName, "SYNTH", 5) == 0;
     unsigned int k, o;
     int pass;
 
@@ -1755,11 +1757,11 @@ static ErrorNumber abstract_lookback_under_settings( const char *funcName,
                               (TA_RangeType)((savedCandle[k].rangeType + 1) % 3),
                               savedCandle[k].avgPeriod + LS_BUMP, savedCandle[k].factor * 3.7 );
     TA_GetLookback(paramHolder, &got);
-    if( !bad && got != base && !( isCdl && got == base + LS_BUMP ) )
-        bad = isCdl ? "a candle averaging period moved the lookback by another amount"
-                    : "a candle averaging period moved the lookback of a function that is "
-                      "not a candlestick";
-    if( !bad && got != base )
+    if( !bad && got != base && !( readsCandle && got == base + LS_BUMP ) )
+        bad = readsCandle ? "a candle averaging period moved the lookback by another amount"
+                          : "a candle averaging period moved the lookback of a function that "
+                            "is not a candlestick";
+    if( !bad && got != base && isCdl )
         g_lsCdlMoved++;
 
     /* Display shifts, with an unstable period in force as well. */
