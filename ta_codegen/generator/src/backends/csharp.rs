@@ -21,9 +21,8 @@
 //!      `if (inReal == outRealUpperBand)` reads false on a partially
 //!      overlapping pair whose buffers do collide.
 //!   3. **Null converts to a length-0 span**, so `ThrowIfNull` does not even
-//!      compile. The public wrappers test `IsEmpty` on INPUTS instead — any
-//!      valid range needs at least one element. Outputs stay unchecked: an
-//!      empty output is legitimate below the lookback.
+//!      compile. The public wrappers test emptiness instead: an empty input
+//!      or non-declinable output is the absent argument.
 //!
 //!   A pointer local becomes `Span<T>`: it aliases either an output parameter
 //!   or an allocated buffer, and only a span holds both. A fixed-size array
@@ -725,6 +724,12 @@ fn gen_public_wrapper(
                     "      if( !{name}.IsEmpty ) RequireLength(\"{canonical}\", \"{name}\", {name}.Length, guardOutLen);"
                 );
             } else {
+                // Not while the core is about to reject the call: its diagnosis
+                // outranks an absent buffer.
+                let _ = writeln!(
+                    out,
+                    "      if( guardStart >= 0 ) RequirePresent(\"{canonical}\", \"{name}\", {name}.Length);"
+                );
                 let _ = writeln!(
                     out,
                     "      RequireLength(\"{canonical}\", \"{name}\", {name}.Length, guardOutLen);"

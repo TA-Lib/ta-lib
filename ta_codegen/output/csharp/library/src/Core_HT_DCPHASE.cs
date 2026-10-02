@@ -888,8 +888,8 @@ public partial class Core
    /// <param name="endIdx">Last bar of the requested range (inclusive).</param>
    /// <param name="inReal">Price series to analyze.</param>
    /// <param name="outReal">Dominant cycle phase in degrees. Must hold at least <c>endIdx -
-   /// max(startIdx, HtDcphaseLookback(...)) + 1</c> values, the count the call
-   /// produces (none when that is not positive).</param>
+   /// max(startIdx, HtDcphaseLookback(...)) + 1</c> values, and never be empty:
+   /// an empty span is an absent output.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
    /// <c>Count</c> how many were written.</returns>
    /// <exception cref="System.ArgumentOutOfRangeException"><c>startIdx</c> or <c>endIdx</c> is negative or above
@@ -903,8 +903,10 @@ public partial class Core
    /// <i>declares</i> that does not reach <c>endIdx</c>, or an output that
    /// cannot hold the values produced. Declared, not read: a few candlestick
    /// patterns take an OHLC series they never index, and it is required all the
-   /// same. A null input array arrives as an empty span and is rejected as one.</description></item>
-   /// <item><description>Two outputs overlap or are one array, a zero-length array included
+   /// same. A null array arrives as an empty span, and an empty span is an
+   /// absent argument: for an input, or an output that cannot be declined, it is
+   /// rejected even when the call would produce nothing.</description></item>
+   /// <item><description>Two outputs overlap or are one array
    /// (<see href="https://ta-lib.org/spec/errors/#rb6">rule rB6</see>), or an
    /// output partially overlaps an input. Computing wholly in place (an output
    /// that IS an input) is allowed.</description></item>
@@ -926,6 +928,7 @@ public partial class Core
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("HT_DCPHASE", "inReal", inReal.Length, guardInLen);
+      if( guardStart >= 0 ) RequirePresent("HT_DCPHASE", "outReal", outReal.Length);
       RequireLength("HT_DCPHASE", "outReal", outReal.Length, guardOutLen);
       RetCode retCode = HtDcphaseImpl(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
@@ -967,8 +970,8 @@ public partial class Core
    /// <param name="endIdx">Last bar of the requested range (inclusive).</param>
    /// <param name="inReal">Price series to analyze.</param>
    /// <param name="outReal">Dominant cycle phase in degrees. Must hold at least <c>endIdx -
-   /// max(startIdx, HtDcphaseLookback(...)) + 1</c> values, the count the call
-   /// produces (none when that is not positive).</param>
+   /// max(startIdx, HtDcphaseLookback(...)) + 1</c> values, and never be empty:
+   /// an empty span is an absent output.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
    /// <c>Count</c> how many were written.</returns>
    /// <exception cref="System.ArgumentOutOfRangeException"><c>startIdx</c> or <c>endIdx</c> is negative or above
@@ -982,8 +985,10 @@ public partial class Core
    /// <i>declares</i> that does not reach <c>endIdx</c>, or an output that
    /// cannot hold the values produced. Declared, not read: a few candlestick
    /// patterns take an OHLC series they never index, and it is required all the
-   /// same. A null input array arrives as an empty span and is rejected as one.</description></item>
-   /// <item><description>Two outputs overlap or are one array, a zero-length array included
+   /// same. A null array arrives as an empty span, and an empty span is an
+   /// absent argument: for an input, or an output that cannot be declined, it is
+   /// rejected even when the call would produce nothing.</description></item>
+   /// <item><description>Two outputs overlap or are one array
    /// (<see href="https://ta-lib.org/spec/errors/#rb6">rule rB6</see>), or an
    /// output overlaps an input. An output and a real input never share an
    /// element type in this overload, so the two can never be the same span:
@@ -1007,6 +1012,7 @@ public partial class Core
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("HT_DCPHASE", "inReal", inReal.Length, guardInLen);
+      if( guardStart >= 0 ) RequirePresent("HT_DCPHASE", "outReal", outReal.Length);
       RequireLength("HT_DCPHASE", "outReal", outReal.Length, guardOutLen);
       RetCode retCode = HtDcphaseImpl(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {

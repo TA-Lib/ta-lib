@@ -508,8 +508,8 @@
     *        halves (default 16; range 2..100000; {@code Integer.MIN_VALUE} selects the
     *        default).
     * @param outReal Adaptive moving average line. Must hold at least
-    *        {@code endIdx - max(startIdx, framaLookback(...)) + 1} values, the count
-    *        the call produces (none when that is not positive).
+    *        {@code endIdx - max(startIdx, framaLookback(...)) + 1} values, and never
+    *        be empty: an empty array is an absent output.
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -580,8 +580,8 @@
     *        halves (default 16; range 2..100000; {@code Integer.MIN_VALUE} selects the
     *        default).
     * @param outReal Adaptive moving average line. Must hold at least
-    *        {@code endIdx - max(startIdx, framaLookback(...)) + 1} values, the count
-    *        the call produces (none when that is not positive).
+    *        {@code endIdx - max(startIdx, framaLookback(...)) + 1} values, and never
+    *        be empty: an empty array is an absent output.
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is

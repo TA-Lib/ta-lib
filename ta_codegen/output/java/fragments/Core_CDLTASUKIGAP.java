@@ -226,8 +226,8 @@
     * @param outInteger +100 on a bullish (upside-gap) tasuki gap, -100 on a
     *        bearish (downside-gap) tasuki gap, 0 otherwise. Sign equals the color of
     *        the gap candle i-1 (candlecolor(i-1)*100) Must hold at least
-    *        {@code endIdx - max(startIdx, cdltasukigapLookback(...)) + 1} values, the
-    *        count the call produces (none when that is not positive).
+    *        {@code endIdx - max(startIdx, cdltasukigapLookback(...)) + 1} values, and
+    *        never be empty: an empty array is an absent output.
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -300,8 +300,8 @@
     * @param outInteger +100 on a bullish (upside-gap) tasuki gap, -100 on a
     *        bearish (downside-gap) tasuki gap, 0 otherwise. Sign equals the color of
     *        the gap candle i-1 (candlecolor(i-1)*100) Must hold at least
-    *        {@code endIdx - max(startIdx, cdltasukigapLookback(...)) + 1} values, the
-    *        count the call produces (none when that is not positive).
+    *        {@code endIdx - max(startIdx, cdltasukigapLookback(...)) + 1} values, and
+    *        never be empty: an empty array is an absent output.
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is

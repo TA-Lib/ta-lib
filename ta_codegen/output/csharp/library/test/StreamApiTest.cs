@@ -795,11 +795,13 @@ public static class StreamApiTest
             "each output is bounded separately");
         _s5++;
 
-        // A history too short to produce anything is still rS8, whatever the
-        // output holds: the bound floors at zero rather than going negative.
+        // A history too short to produce anything is still rS8 for any output
+        // that is there: the bound floors at zero rather than going negative.
         CheckThrows<InsufficientHistoryException>(
-            () => core.SmaOpenAndFill(closes.AsSpan(0, 29), 30, Span<double>.Empty),
+            () => core.SmaOpenAndFill(closes.AsSpan(0, 29), 30, new double[1]),
             "a short history reaches the warm-up check, not the capacity one");
+        CheckRetCode(() => core.SmaOpenAndFill(closes.AsSpan(0, 29), 30, Span<double>.Empty),
+            RetCode.BadParam, "an empty output is absent, short history or not");
 
         // The floors for this method and the declined-output one live in Run(),
         // where a deleted CALL cannot take its own floor with it.

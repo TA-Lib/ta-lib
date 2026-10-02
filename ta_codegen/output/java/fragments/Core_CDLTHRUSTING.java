@@ -247,8 +247,8 @@
     * @param inClose Close price of each bar.
     * @param outInteger -100 when the pattern is detected, 0 otherwise. Always
     *        bearish; never emits +100. Must hold at least
-    *        {@code endIdx - max(startIdx, cdlthrustingLookback(...)) + 1} values, the
-    *        count the call produces (none when that is not positive).
+    *        {@code endIdx - max(startIdx, cdlthrustingLookback(...)) + 1} values, and
+    *        never be empty: an empty array is an absent output.
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -323,8 +323,8 @@
     * @param inClose Close price of each bar.
     * @param outInteger -100 when the pattern is detected, 0 otherwise. Always
     *        bearish; never emits +100. Must hold at least
-    *        {@code endIdx - max(startIdx, cdlthrustingLookback(...)) + 1} values, the
-    *        count the call produces (none when that is not positive).
+    *        {@code endIdx - max(startIdx, cdlthrustingLookback(...)) + 1} values, and
+    *        never be empty: an empty array is an absent output.
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is

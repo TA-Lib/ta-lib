@@ -945,16 +945,16 @@ fn gen_public_entry(
 /// past the end of the series the caller supplied is a caller bug on every
 /// range, and the only reason C answers it with `TA_SUCCESS` is that it has no
 /// size to check against. `guardOutLen` is the count actually produced, which on
-/// a range that ends before the lookback is `0`: no output space is owed, so any
-/// length will do, including none (rule rW2).
+/// a range that ends before the lookback is `0`: no output space is owed beyond
+/// not being empty, which an output that cannot be declined is checked for on
+/// every range.
 ///
 /// rB3 rides on `<N>_Lookback`'s `?`. Rule rL3 makes the lookback's parameter
 /// decision the batch tier's own rB3 decision on the same parameters, so one call
 /// buys the check and the clamp together — which is what Java's `clampedStart`
 /// does, and what puts rB3 ahead of rB4/rB5.
 ///
-/// No `requireArgument` counterpart: a Rust enum cannot be absent, so rB4's
-/// presence half is the type system's, as it is in C#.
+/// No `requireArgument` counterpart: a Rust enum cannot be absent.
 fn gen_argument_checks(func: &FuncDef, snake: &str) -> String {
     let mut out = String::new();
     // rB1/rB2 first. `_Impl` states them again -- it is reachable on its own from
@@ -992,11 +992,12 @@ fn gen_argument_checks(func: &FuncDef, snake: &str) -> String {
     for output in &func.outputs {
         // A nullable output may be declined with `None` (rule rB7): nothing is
         // written to it, so there is no capacity to owe. Supplied, it is bounded
-        // like any other -- "declined" is `None` and nothing else.
+        // like any other -- "declined" is `None` and nothing else. An output that
+        // cannot be declined is absent when empty, whatever the call produces.
         let cond = if output.is_nullable() {
             format!("{}.as_deref().is_some_and(|o| o.len() < _guardOutLen)", output.name)
         } else {
-            format!("{}.len() < _guardOutLen", output.name)
+            format!("{0}.is_empty() || {0}.len() < _guardOutLen", output.name)
         };
         out.push_str(&format!(
             "        if {cond} {{\n            return Err(RetCode::BadParam);\n        }}\n"
@@ -1862,11 +1863,8 @@ fn nullable_target_base<'a>(
 ///
 /// **Both operands must be non-empty.** Two zero-length slices cannot clobber
 /// each other, and every unallocated `Vec` hands out the same dangling aligned
-/// pointer — so a bare `as_ptr()` comparison rejected three separately allocated
-/// empty `Vec`s while accepting three zero-length subslices of one buffer, which
-/// is worse than either answer. A range that ends before the lookback produces
-/// nothing and needs no output space (rule rW2), so those calls are legal and C
-/// and Java always accepted them (Appendix D item 11).
+/// pointer, so a bare `as_ptr()` comparison says nothing about them. An empty
+/// output that cannot be declined is refused by its own check.
 ///
 /// A nullable output contributes a term only when the caller supplied it: `None`
 /// is a declaration that nothing is written there, not a buffer that could alias.

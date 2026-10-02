@@ -821,7 +821,9 @@ impl Core {
     ///
     /// Also [`RetCode::BadParam`] when a slice is too short: every input must cover
     /// `startIdx..=endIdx`, and every output must hold the number of values produced for that
-    /// range. Sizing every output slice to the input length is always sufficient.
+    /// range. An empty slice for an output that cannot be declined is refused on every range, one
+    /// that produces nothing included. Sizing every output slice to the input length is always
+    /// sufficient.
     ///
     /// # Examples
     ///
@@ -891,10 +893,10 @@ impl Core {
             return Err(RetCode::BadParam);
         }
         let _guardOutLen = if _guardStart > endIdx { 0 } else { endIdx - _guardStart + 1 };
-        if outKST.len() < _guardOutLen {
+        if outKST.is_empty() || outKST.len() < _guardOutLen {
             return Err(RetCode::BadParam);
         }
-        if outKSTSignal.len() < _guardOutLen {
+        if outKSTSignal.is_empty() || outKSTSignal.len() < _guardOutLen {
             return Err(RetCode::BadParam);
         }
         let mut outBegIdx: usize = 0;
@@ -1580,10 +1582,10 @@ impl Core {
         }
         let _guardLb = self.kst_lookback(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod)?;
         let _guardOutLen = inReal.len().saturating_sub(_guardLb);
-        if outKST.len() < _guardOutLen {
+        if outKST.is_empty() || outKST.len() < _guardOutLen {
             return Err(RetCode::BadParam);
         }
-        if outKSTSignal.len() < _guardOutLen {
+        if outKSTSignal.is_empty() || outKSTSignal.len() < _guardOutLen {
             return Err(RetCode::BadParam);
         }
         let mut outBegIdx: usize = 0;

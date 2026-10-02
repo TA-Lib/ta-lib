@@ -1,11 +1,11 @@
-//! Rule rB7, the empty-output half of rule rB6, and rB5's two bounds, for the Rust
+//! Rule rB7, rule rB4's empty output, and rB5's two bounds, for the Rust
 //! batch API (`https://ta-lib.org/spec/errors/#rb7`, rule rW5), issues #262 and
 //! #265.
 //!
 //! None of it is reachable from the cross-language gates. The JSON-RPC servers
 //! supply every declared output and floor its length at one, and hand every
 //! input the full series, so a backend that went back to requiring `outFAMA`, to
-//! rejecting distinct empty buffers, or to accepting a slice that does not reach
+//! accepting an empty output, or to accepting a slice that does not reach
 //! `endIdx`, stays green in `--codegen`, `--xlang-hash` and `--ref` alike.
 //! That is what this file is for.
 //!
@@ -103,17 +103,14 @@ fn a_declined_output_needs_no_capacity() {
     );
 }
 
-/// Appendix D item 11: three separately allocated empty `Vec`s are three
-/// distinct buffers, and a range shorter than the lookback produces nothing, so
-/// the call is a success with an empty range (rule rW2) — as it always was in C
-/// and Java.
-///
-/// It used to answer `BadParam`: every unallocated `Vec` hands out the same
-/// dangling aligned pointer, and the guard compared `as_ptr()`. Zero-length
-/// SUBSLICES of one buffer have real addresses and were accepted, so Rust
-/// rejected some empty triples and accepted others.
+/// An output that cannot be declined is absent when it is empty, and the call
+/// is refused before any length is looked at, on a range that produces nothing
+/// as on one that produces values. One element is enough for the control, which
+/// is what tells this from the length rule. A declinable output is not held to
+/// it: supplied with no room on a call that writes nothing, it is only
+/// length-checked.
 #[test]
-fn distinct_empty_outputs_are_not_aliases() {
+fn an_empty_output_is_an_absent_one() {
     let data = series(252);
     let core = Core::new();
     let period = 253; // longer than the range, so nothing is produced
@@ -126,40 +123,42 @@ fn distinct_empty_outputs_are_not_aliases() {
     let mut b: Vec<f64> = Vec::new();
     let mut c: Vec<f64> = Vec::new();
     assert_eq!(
-        (a.as_ptr(), b.as_ptr()),
-        (b.as_ptr(), c.as_ptr()),
-        "the probe is only interesting while empty Vecs share one dangling pointer"
+        core.accbands(0, 251, &data, &data, &data, period, &mut a, &mut b, &mut c),
+        Err(RetCode::BadParam),
+        "empty outputs on a range that produces nothing"
     );
-    let r = core
-        .accbands(0, 251, &data, &data, &data, period, &mut a, &mut b, &mut c)
-        .expect("a sub-lookback range needs no output space — rules rW2 and rB5");
-    assert_eq!(r, OutRange { beg_idx: 0, count: 0 });
-
-    // Zero-length subslices of one buffer carry real addresses. Same answer.
-    let mut buf = [0.0_f64; 3];
-    let (x, rest) = buf.split_at_mut(1);
-    let (y, z) = rest.split_at_mut(1);
-    let r = core
-        .accbands(0, 251, &data, &data, &data, period, &mut x[..0], &mut y[..0], &mut z[..0])
-        .expect("distinct empty subslices are distinct buffers too");
-    assert_eq!(r, OutRange { beg_idx: 0, count: 0 });
-}
-
-/// Control for the test above: empty outputs are accepted because nothing is
-/// produced, not because the bound went away. On a range that DOES produce
-/// values the same three empty buffers must still be refused.
-#[test]
-fn empty_outputs_on_a_producing_range_still_fault() {
-    let data = series(252);
-    let core = Core::new();
-    let mut a: Vec<f64> = Vec::new();
-    let mut b: Vec<f64> = Vec::new();
-    let mut c: Vec<f64> = Vec::new();
     assert_eq!(
         core.accbands(0, 251, &data, &data, &data, 20, &mut a, &mut b, &mut c),
         Err(RetCode::BadParam),
-        "rB5 must still bound an output that has to hold values"
+        "and on a range that produces values"
     );
+
+    // Zero-length subslices of a real buffer are empty all the same.
+    let mut buf = [0.0_f64; 3];
+    let (x, rest) = buf.split_at_mut(1);
+    let (y, z) = rest.split_at_mut(1);
+    assert_eq!(
+        core.accbands(0, 251, &data, &data, &data, period, x, &mut y[..0], z),
+        Err(RetCode::BadParam),
+        "one empty output among three"
+    );
+    let r = core
+        .accbands(0, 251, &data, &data, &data, period, x, y, z)
+        .expect("one element each is enough when nothing is produced");
+    assert_eq!(r, OutRange { beg_idx: 0, count: 0 });
+
+    let mama_end = core.mama_lookback(0.5, 0.05).expect("a valid lookback") - 1;
+    let mut one = [0.0_f64; 1];
+    let mut none: [f64; 0] = [];
+    assert_eq!(
+        core.mama(0, mama_end, &data, 0.5, 0.05, &mut none, None),
+        Err(RetCode::BadParam),
+        "an empty outMAMA beside a declined outFAMA"
+    );
+    let r = core
+        .mama(0, mama_end, &data, 0.5, 0.05, &mut one, Some(&mut none))
+        .expect("a supplied declinable output with no room is fine when nothing is written");
+    assert_eq!(r.count, 0);
 }
 
 /// rB5's input half, which the public tier states without the sub-lookback escape
@@ -184,9 +183,9 @@ fn a_short_input_is_refused_on_every_range() {
     );
 
     // And one that does not: startIdx..=endIdx is shorter than the lookback, so
-    // no value is produced and no output space is owed — the input bound holds
-    // anyway.
-    let mut none: Vec<f64> = Vec::new();
+    // no value is produced and one element of output is enough. The input bound
+    // holds anyway.
+    let mut none = vec![0.0; 1];
     assert!(
         core.sma_lookback(30).expect("a valid lookback") > 10,
         "the probe needs a sub-lookback range, or it repeats the case above"

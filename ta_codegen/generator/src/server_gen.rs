@@ -1569,6 +1569,15 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("            throw new TALibArgumentException(funcName + \": \" + argName\n");
     s.push_str("                + \" has length \" + actual + \", needs \" + required, RetCode.BAD_PARAM);\n");
     s.push_str("        }\n");
+    s.push_str("        if (actual == 0) {\n");
+    s.push_str("            throw new TALibArgumentException(funcName + \": \" + argName + \" is empty\", RetCode.BAD_PARAM);\n");
+    s.push_str("        }\n");
+    s.push_str("    }\n\n");
+    s.push_str("    static void requireCapacity(String funcName, String argName, double[] array, int required) {\n");
+    s.push_str("        if (array.length < required) {\n");
+    s.push_str("            throw new TALibArgumentException(funcName + \": \" + argName\n");
+    s.push_str("                + \" has length \" + array.length + \", needs \" + required, RetCode.BAD_PARAM);\n");
+    s.push_str("        }\n");
     s.push_str("    }\n\n");
     s.push_str("    static void requireIndexRange(String funcName, int startIdx, int endIdx) {\n");
     s.push_str("        if (startIdx < 0 || startIdx > INDEX_MAX) {\n");
@@ -4714,11 +4723,9 @@ full-range value comparison sends one (slack is legal). Sizing every call one wa
 would silently drop the other property.\n\
 FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call\n\
 (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and\n\
-for a range shorter than the lookback, where the output bound switches off and\n\
-the spec says any length will do, including none. Sizing to zero here would put\n\
-every multi-output function on the empty-buffer aliasing edge of\n\
-spec-conformance Appendix D item 11 (fixed), which each backend's own suite\n\
-probes.\n\
+for a range shorter than the lookback, where the output bound switches off.\n\
+An empty output is an absent one, so sizing to zero here would turn the second\n\
+into a rejection of the buffer.\n\
 The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no\n\
 sizes and cannot make the check, so an exact buffer would test nothing there.";
 

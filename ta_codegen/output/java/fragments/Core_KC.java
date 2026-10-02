@@ -311,13 +311,13 @@
     *        {@link Core#REAL_DEFAULT} selects the default).
     * @param outRealUpperBand Centre line plus the scaled Average True Range.
     *        Must hold at least {@code endIdx - max(startIdx, kcLookback(...)) + 1}
-    *        values, the count the call produces (none when that is not positive).
+    *        values, and never be empty: an empty array is an absent output.
     * @param outRealMiddleBand Exponential moving average of the typical price.
     *        Must hold at least {@code endIdx - max(startIdx, kcLookback(...)) + 1}
-    *        values, the count the call produces (none when that is not positive).
+    *        values, and never be empty: an empty array is an absent output.
     * @param outRealLowerBand Centre line minus the scaled Average True Range.
     *        Must hold at least {@code endIdx - max(startIdx, kcLookback(...)) + 1}
-    *        values, the count the call produces (none when that is not positive).
+    *        values, and never be empty: an empty array is an absent output.
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -406,13 +406,13 @@
     *        {@link Core#REAL_DEFAULT} selects the default).
     * @param outRealUpperBand Centre line plus the scaled Average True Range.
     *        Must hold at least {@code endIdx - max(startIdx, kcLookback(...)) + 1}
-    *        values, the count the call produces (none when that is not positive).
+    *        values, and never be empty: an empty array is an absent output.
     * @param outRealMiddleBand Exponential moving average of the typical price.
     *        Must hold at least {@code endIdx - max(startIdx, kcLookback(...)) + 1}
-    *        values, the count the call produces (none when that is not positive).
+    *        values, and never be empty: an empty array is an absent output.
     * @param outRealLowerBand Centre line minus the scaled Average True Range.
     *        Must hold at least {@code endIdx - max(startIdx, kcLookback(...)) + 1}
-    *        values, the count the call produces (none when that is not positive).
+    *        values, and never be empty: an empty array is an absent output.
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is

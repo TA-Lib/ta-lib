@@ -293,12 +293,12 @@
     *        {@code Integer.MIN_VALUE} selects the default).
     * @param outSwingHigh 100 when the bar {@code optInRightBars} back is a
     *        strict swing high, 0 otherwise. Must hold at least
-    *        {@code endIdx - max(startIdx, fractalLookback(...)) + 1} values, the count
-    *        the call produces (none when that is not positive).
+    *        {@code endIdx - max(startIdx, fractalLookback(...)) + 1} values, and never
+    *        be empty: an empty array is an absent output.
     * @param outSwingLow 100 when the bar {@code optInRightBars} back is a
     *        strict swing low, 0 otherwise. Must hold at least
-    *        {@code endIdx - max(startIdx, fractalLookback(...)) + 1} values, the count
-    *        the call produces (none when that is not positive).
+    *        {@code endIdx - max(startIdx, fractalLookback(...)) + 1} values, and never
+    *        be empty: an empty array is an absent output.
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -385,12 +385,12 @@
     *        {@code Integer.MIN_VALUE} selects the default).
     * @param outSwingHigh 100 when the bar {@code optInRightBars} back is a
     *        strict swing high, 0 otherwise. Must hold at least
-    *        {@code endIdx - max(startIdx, fractalLookback(...)) + 1} values, the count
-    *        the call produces (none when that is not positive).
+    *        {@code endIdx - max(startIdx, fractalLookback(...)) + 1} values, and never
+    *        be empty: an empty array is an absent output.
     * @param outSwingLow 100 when the bar {@code optInRightBars} back is a
     *        strict swing low, 0 otherwise. Must hold at least
-    *        {@code endIdx - max(startIdx, fractalLookback(...)) + 1} values, the count
-    *        the call produces (none when that is not positive).
+    *        {@code endIdx - max(startIdx, fractalLookback(...)) + 1} values, and never
+    *        be empty: an empty array is an absent output.
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is

@@ -108,7 +108,7 @@ fn an_inverted_range_is_an_end_index_error() {
 /// the three sibling comments say Rust does not have.
 ///
 /// `SMA(0, 5, .., 30, ..)` is `Core.cs`'s own example: lookback 29, range 6 bars,
-/// so nothing is produced. The four rows vary only the two lengths.
+/// so nothing is produced. The rows vary only the two lengths.
 #[test]
 fn a_sub_lookback_range_frees_the_output_bound_and_not_the_input_bound() {
     let core = Core::new();
@@ -118,25 +118,30 @@ fn a_sub_lookback_range_frees_the_output_bound_and_not_the_input_bound() {
     let mut out_six = vec![0.0; 6];
     let mut out_none: [f64; 0] = [];
 
-    // Output bound off: no values are produced, so no output space is owed.
+    // Output bound off: no values are produced, so an output owes no length
+    // beyond not being empty. An empty one is absent.
+    let mut out_one = [0.0_f64; 1];
     assert_eq!(
         core.sma(0, 5, &six, 30, &mut out_six),
         Ok(OutRange { beg_idx: 0, count: 0 })
     );
     assert_eq!(
-        core.sma(0, 5, &six, 30, &mut out_none),
+        core.sma(0, 5, &six, 30, &mut out_one),
         Ok(OutRange { beg_idx: 0, count: 0 })
+    );
+    assert_eq!(
+        core.sma(0, 5, &six, 30, &mut out_none),
+        Err(RetCode::BadParam)
     );
 
     // Input bound on: the series must still reach `endIdx`, sub-lookback or not.
+    // The output has its one element, so the input is what answers.
     assert_eq!(
-        core.sma(0, 5, &five, 30, &mut out_none),
+        core.sma(0, 5, &five, 30, &mut out_one),
         Err(RetCode::BadParam)
     );
-    // The row `Core.cs` names as `Ok(count 0)` here and a throw there. It is
-    // `BadParam` here, which is the same verdict C# reaches by throwing.
     assert_eq!(
-        core.sma(0, 5, &none, 30, &mut out_none),
+        core.sma(0, 5, &none, 30, &mut out_one),
         Err(RetCode::BadParam)
     );
 }

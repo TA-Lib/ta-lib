@@ -281,9 +281,9 @@ fn c_batch_prologues(c: &str) -> Vec<&str> {
 /// optional parameter outside its documented domain, and only then rB4, a required
 /// argument that was not supplied.
 ///
-/// The parameter rule leads because it is the one every backend can express: a
-/// Rust slice and a C# span cannot be absent, so rB4 is C's and Java's alone, and
-/// putting it last is what lets a multi-fault call report the same condition in
+/// The parameter rule leads because every backend states it the same way, where
+/// "absent" is spelled per language (`NULL`, `null`, an empty slice or span), and
+/// putting rB4 last is what lets a multi-fault call report the same condition in
 /// all four.
 ///
 /// Structural, and it has to be: rB3 and rB4 both answer `TA_BAD_PARAM`, so no
@@ -390,8 +390,7 @@ fn same_typed_outputs(a: &ir::Output, b: &ir::Output) -> bool {
 fn rust_alias_guard(func: &ir::FuncDef) -> Option<String> {
     // Both operands non-empty: two zero-length slices cannot clobber each other,
     // and every unallocated `Vec` hands out the same dangling pointer, so a bare
-    // `as_ptr()` comparison rejected a call rules rW2 and rB5 both permit
-    // (Appendix D item 11, #262). A nullable output is an `Option` and
+    // `as_ptr()` comparison says nothing about them. A nullable output is an `Option` and
     // contributes a term only when it was supplied (rule rB7).
     let mut pairs: Vec<String> = Vec::new();
     for i in 0..func.outputs.len() {
@@ -651,7 +650,7 @@ fn rust_public_entry_orders_the_argument_contract() {
             let needle = if output.is_nullable() {
                 format!("if {}.as_deref().is_some_and(|o| o.len() < _guardOutLen) {{", output.name)
             } else {
-                format!("if {}.len() < _guardOutLen {{", output.name)
+                format!("if {0}.is_empty() || {0}.len() < _guardOutLen {{", output.name)
             };
             let at = section
                 .find(&needle)

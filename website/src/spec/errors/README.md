@@ -48,16 +48,16 @@ A batch call accepts `0 <= startIdx <= endIdx <= TA_INDEX_MAX` ([`TA_INDEX_MAX`]
 | <a id="rb1"></a>**rB1** | `startIdx` is below 0 or above `TA_INDEX_MAX`. | `TA_OUT_OF_RANGE_START_INDEX` | Rust, below 0 (`usize`) |
 | <a id="rb2"></a>**rB2** | `endIdx` is below 0, above `TA_INDEX_MAX`, or below `startIdx`. | `TA_OUT_OF_RANGE_END_INDEX` | Rust, below 0 |
 | <a id="rb3"></a>**rB3** | An optional parameter is outside its accepted values, or the parameters form a combination the function rejects ([rP2](/spec/inputs-outputs/#rp2)). | `TA_BAD_PARAM` | none |
-| <a id="rb4"></a>**rB4** | A required argument is absent: an input, an output, or a range out-parameter. | `TA_BAD_PARAM` | Rust, C# |
+| <a id="rb4"></a>**rB4** | A required argument is absent: an input, an output, or in C a range out-parameter. | `TA_BAD_PARAM` | none |
 | <a id="rb5"></a>**rB5** | A buffer is too short: an input does not reach `endIdx` ([input length](/spec/inputs-outputs/#input-length)), or an output cannot hold the count the call produces ([output size](/spec/inputs-outputs/#output-size)). | `TA_BAD_PARAM` | none; C cannot detect it |
 | <a id="rb6"></a>**rB6** | Two outputs are the same buffer. | `TA_BAD_PARAM` | Rust (safe code) |
-| <a id="rb7"></a>**rB7** | An output is omitted that the function does not let a caller decline ([rW5](/spec/inputs-outputs/#rw5)). | `TA_BAD_PARAM` | Rust: cannot decline. C#: an empty span is a too-short output (rB5) |
+| <a id="rb7"></a>**rB7** | An output is omitted that the function does not let a caller decline ([rW5](/spec/inputs-outputs/#rw5)). | `TA_BAD_PARAM` | Rust: cannot decline |
 | <a id="rb8"></a>**rB8** | A memory allocation failed. | `TA_ALLOC_ERR` (C only) | none |
 | <a id="rb9"></a>**rB9** | The library found an inconsistency in its own state. | `TA_INTERNAL_ERROR` + id | none |
 
-**rB5.** An empty output is accepted on a range that produces no values ([rW2](/spec/inputs-outputs/#rw2)) and rejected on one that does.
+**rB4.** An input or output is absent when it is `NULL` in C, `null` or empty in Java, and empty in Rust and C#, where a `null` array becomes an empty span. It is refused whatever the call would produce, a range that produces no values ([rW2](/spec/inputs-outputs/#rw2)) included. An output a caller may decline ([rW5](/spec/inputs-outputs/#rw5)) is exempt.
 
-**rB6.** Identity only: an input reused whole as an output is legal ([rW7](/spec/inputs-outputs/#rw7)), and partial overlap is the caller's to avoid ([no overlap](/spec/inputs-outputs/#no-overlap)). One buffer passed as two outputs is rejected whatever its length, a zero-length array included; two distinct empty outputs never collide. In .NET, `Array.Empty<T>()`, the collection expression `[]` assigned to an array, `ArrayPool<T>.Shared.Rent(0)` and the `ToArray()` of an empty sequence return one shared array, so using them for two outputs passes one buffer twice: allocate a distinct array per output (`new double[n]`), or pass `null` or `default` for an output that may be declined ([rW5](/spec/inputs-outputs/#rw5)).
+**rB6.** Identity only: an input reused whole as an output is legal ([rW7](/spec/inputs-outputs/#rw7)), and partial overlap is the caller's to avoid ([no overlap](/spec/inputs-outputs/#no-overlap)). One buffer passed as two outputs is rejected.
 
 **rB8.** Rust aborts the process, and Java and C# raise their runtime's out-of-memory error.
 

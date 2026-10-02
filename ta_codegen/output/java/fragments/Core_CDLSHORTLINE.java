@@ -229,8 +229,8 @@
     * @param outInteger +100 for a matching white candle (close&gt;=open), -100
     *        for a matching black candle (close&lt;open), 0 when no pattern. Sign is
     *        candle color, NOT bullish/bearish. Must hold at least
-    *        {@code endIdx - max(startIdx, cdlshortlineLookback(...)) + 1} values, the
-    *        count the call produces (none when that is not positive).
+    *        {@code endIdx - max(startIdx, cdlshortlineLookback(...)) + 1} values, and
+    *        never be empty: an empty array is an absent output.
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -298,8 +298,8 @@
     * @param outInteger +100 for a matching white candle (close&gt;=open), -100
     *        for a matching black candle (close&lt;open), 0 when no pattern. Sign is
     *        candle color, NOT bullish/bearish. Must hold at least
-    *        {@code endIdx - max(startIdx, cdlshortlineLookback(...)) + 1} values, the
-    *        count the call produces (none when that is not positive).
+    *        {@code endIdx - max(startIdx, cdlshortlineLookback(...)) + 1} values, and
+    *        never be empty: an empty array is an absent output.
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is

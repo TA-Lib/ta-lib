@@ -240,7 +240,7 @@
     *        -100. The +100 does not itself imply bullishness (must be read against the
     *        trend) Must hold at least
     *        {@code endIdx - max(startIdx, cdldragonflydojiLookback(...)) + 1} values,
-    *        the count the call produces (none when that is not positive).
+    *        and never be empty: an empty array is an absent output.
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -318,7 +318,7 @@
     *        -100. The +100 does not itself imply bullishness (must be read against the
     *        trend) Must hold at least
     *        {@code endIdx - max(startIdx, cdldragonflydojiLookback(...)) + 1} values,
-    *        the count the call produces (none when that is not positive).
+    *        and never be empty: an empty array is an absent output.
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is

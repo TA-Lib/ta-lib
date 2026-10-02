@@ -315,8 +315,8 @@
     * @param optInTimePeriod Smoothing period for both EMA passes (default 30;
     *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param outReal DEMA line. Must hold at least
-    *        {@code endIdx - max(startIdx, demaLookback(...)) + 1} values, the count
-    *        the call produces (none when that is not positive).
+    *        {@code endIdx - max(startIdx, demaLookback(...)) + 1} values, and never be
+    *        empty: an empty array is an absent output.
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -379,8 +379,8 @@
     * @param optInTimePeriod Smoothing period for both EMA passes (default 30;
     *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param outReal DEMA line. Must hold at least
-    *        {@code endIdx - max(startIdx, demaLookback(...)) + 1} values, the count
-    *        the call produces (none when that is not positive).
+    *        {@code endIdx - max(startIdx, demaLookback(...)) + 1} values, and never be
+    *        empty: an empty array is an absent output.
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is

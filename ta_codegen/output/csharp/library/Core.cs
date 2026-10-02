@@ -210,7 +210,8 @@ public sealed partial class Core
      *
      * A result ABOVE endIdx is not an error: the range ends before the
      * lookback, so the call produces no values. That switches the OUTPUT bound
-     * off -- any length will do, including none -- but not the input bound. An
+     * off -- any length will do but none, which RequirePresent refuses -- and
+     * not the input bound. An
      * endIdx past the end of the series the caller supplied is a caller bug in
      * any range; C answers it with TA_SUCCESS only because it has no size to
      * check against.
@@ -255,6 +256,17 @@ public sealed partial class Core
                 funcName + ": " + argName + " has length " + actual
                     + ", needs " + required,
                 argName, RetCode.BadParam);
+        }
+    }
+
+    /* An output that cannot be declined is absent when its span is empty, a
+     * null array included, whatever the call would have written. */
+    internal static void RequirePresent(string funcName, string argName, int actual)
+    {
+        if (actual == 0)
+        {
+            throw new TALibArgumentException(
+                funcName + ": " + argName + " is empty", argName, RetCode.BadParam);
         }
     }
 
@@ -326,6 +338,14 @@ public sealed partial class Core
                 funcName + " " + verb + ": " + argName + " has length " + actual
                     + ", needs " + required,
                 argName, RetCode.BadParam);
+        }
+        /* Reached with required == 0 only, on a history too short to open: an
+         * empty output is absent, and that outranks the history check. A
+         * declinable one is not passed here when empty. */
+        if (actual == 0)
+        {
+            throw new TALibArgumentException(
+                funcName + " " + verb + ": " + argName + " is empty", argName, RetCode.BadParam);
         }
     }
 

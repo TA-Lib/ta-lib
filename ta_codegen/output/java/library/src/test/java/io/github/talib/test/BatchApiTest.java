@@ -423,20 +423,21 @@ public class BatchApiTest {
     }
 
     /**
-     * A valid range shorter than the lookback produces nothing, so it reads
-     * nothing and any output length is fine — including none. This is the
-     * {@code _assertStart > endIdx ||} short-circuit in front of the Rust
-     * asserts; without it the length check would throw exactly where
-     * {@link #shortRangeIsAnEmptySuccessNotAnException} promises a success.
-     * It applies to the OUTPUT bound only — see
-     * {@link #anEndIdxPastTheInputIsRejectedEvenProducingNothing}.
+     * A valid range shorter than the lookback produces nothing, so the output
+     * owes no length beyond not being empty: an empty array is an absent one,
+     * whatever the call would have written.
      */
     static void aRangeThatProducesNothingChecksNoLength() {
         double[] in = closes(10);
 
         check(Core.DEFAULT.smaLookback(30) > 9, "the 30-period lookback exceeds this range");
-        OutRange r = Core.DEFAULT.sma(0, 9, in, 30, new double[0]);
-        check(r.count() == 0, "a zero-length output is fine when nothing is produced");
+        OutRange r = Core.DEFAULT.sma(0, 9, in, 30, new double[1]);
+        check(r.count() == 0, "a one-element output is fine when nothing is produced");
+        // Not checkCode: its seen-code set is a reach floor these probes must not satisfy.
+        check(codeOf(() -> Core.DEFAULT.sma(0, 9, in, 30, new double[0])) == RetCode.BAD_PARAM,
+            "an empty output is absent, even when nothing is produced");
+        check(codeOf(() -> Core.DEFAULT.sma(0, 9, in, 30, null)) == RetCode.BAD_PARAM,
+            "and so is a null one");
     }
 
     /**
@@ -479,13 +480,12 @@ public class BatchApiTest {
             "PVO likewise", "PVO", "inVolume", "24", "25");
 
         // The controls. An input that DOES reach endIdx is an empty success again,
-        // with a zero-length output — so the fix tightened the input bound only, and
-        // did not turn the documented empty success into an error.
-        check(Core.DEFAULT.apo(0, 24, wide, 12, 26, MAType.EMA, new double[0]).count() == 0,
-              "APO with an input reaching endIdx is an empty success, zero-length output");
-        check(Core.DEFAULT.pvo(0, 24, volWide, 12, 26, MAType.EMA, new double[0]).count() == 0,
+        // so the input bound is what rejected the calls above.
+        check(Core.DEFAULT.apo(0, 24, wide, 12, 26, MAType.EMA, new double[1]).count() == 0,
+              "APO with an input reaching endIdx is an empty success");
+        check(Core.DEFAULT.pvo(0, 24, volWide, 12, 26, MAType.EMA, new double[1]).count() == 0,
               "PVO likewise");
-        check(Core.DEFAULT.sma(0, 24, wide, 26, new double[0]).count() == 0,
+        check(Core.DEFAULT.sma(0, 24, wide, 26, new double[1]).count() == 0,
               "and a function that reads nothing is unaffected");
     }
 
@@ -937,44 +937,58 @@ public class BatchApiTest {
     }
 
     /**
-     * Rules rB6 and rS6 on empty outputs (Appendix D items 11 and 15): one
-     * zero-length array passed as two outputs is one buffer, and three
-     * separately allocated ones are three. A range shorter than the lookback
-     * produces nothing (rule rW2), so the distinct call is a success with an
-     * empty range, and the distinct fill answers rS8.
+     * An output that cannot be declined is absent when it is null or empty,
+     * and the call is refused before any length is looked at: on a range that
+     * produces nothing, and on a history too short to open. One element is
+     * enough for both controls, which is what tells this from the length rule.
+     * A declinable output is not held to it: supplied with no room on a call
+     * that writes nothing, it is only length-checked.
      */
-    static void oneEmptyArrayIsOneBuffer() {
+    static void anEmptyOutputIsAnAbsentOne() {
         final double[] in = closes(252);
         final int period = 253;
         check(Core.DEFAULT.accbandsLookback(period) > 251,
             "the probe needs a lookback past the range, or it proves nothing");
 
-        final double[] empty = new double[0];
         checkCode(RetCode.BAD_PARAM,
-            () -> Core.DEFAULT.accbands(0, 251, in, in, in, period, empty, empty, new double[0]),
-            "one empty array as two outputs is rejected");
+            () -> Core.DEFAULT.accbands(0, 251, in, in, in, period,
+                new double[0], new double[0], new double[0]),
+            "empty outputs on a range that produces nothing");
+        checkCode(RetCode.BAD_PARAM,
+            () -> Core.DEFAULT.accbands(0, 251, in, in, in, period,
+                new double[1], new double[0], new double[1]),
+            "one empty output among three");
+        checkCode(RetCode.BAD_PARAM,
+            () -> Core.DEFAULT.accbands(0, 251, in, in, in, period, new double[1], null, new double[1]),
+            "one null output among three");
         OutRange r = Core.DEFAULT.accbands(0, 251, in, in, in, period,
-            new double[0], new double[0], new double[0]);
-        check(r.count() == 0, "a sub-lookback range needs no output space");
+            new double[1], new double[1], new double[1]);
+        check(r.count() == 0, "one element each is enough when nothing is produced");
+
+        final int[] noInts = new int[0];
+        final int stEnd = Core.DEFAULT.supertrendLookback(10, 3.0) - 1;
+        checkCode(RetCode.BAD_PARAM,
+            () -> Core.DEFAULT.supertrend(0, stEnd, in, in, in, 10, 3.0, new double[1], noInts),
+            "an empty integer output");
+
+        final int mamaEnd = Core.DEFAULT.mamaLookback(0.5, 0.05) - 1;
+        checkCode(RetCode.BAD_PARAM,
+            () -> Core.DEFAULT.mama(0, mamaEnd, in, 0.5, 0.05, new double[0], null),
+            "an empty outMAMA beside a declined outFAMA");
+        check(Core.DEFAULT.mama(0, mamaEnd, in, 0.5, 0.05, new double[1], new double[0]).count() == 0,
+            "a supplied declinable output with no room is fine when nothing is written");
 
         final double[] history = Arrays.copyOf(in, Core.DEFAULT.accbandsLookback(20));
         checkCode(RetCode.BAD_PARAM,
             () -> Core.DEFAULT.accbandsOpenAndFill(history, history, history, 20,
-                empty, empty, new double[0]),
-            "openAndFill: one empty array as two outputs is rejected");
+                new double[0], new double[0], new double[0]),
+            "openAndFill: empty outputs on a history too short to open");
         checkCode(RetCode.INSUFFICIENT_HISTORY,
             () -> Core.DEFAULT.accbandsOpenAndFill(history, history, history, 20,
-                new double[0], new double[0], new double[0]),
-            "openAndFill: distinct empty outputs pass rS6");
+                new double[1], new double[1], new double[1]),
+            "openAndFill: one element each reaches the history check");
 
-        // Control: the same three empty arrays on a range that DOES produce
-        // values are still rejected, so this is about the count and not about
-        // the bound having gone away.
-        checkThrows(IllegalArgumentException.class,
-            () -> Core.DEFAULT.accbands(0, 251, in, in, in, 20,
-                new double[0], new double[0], new double[0]),
-            "an output that has to hold values is still bounded", "ACCBANDS");
-        // And a REAL alias of two outputs is still rejected.
+        // A REAL alias of two outputs is still rejected.
         double[] shared = new double[252];
         checkThrows(IllegalArgumentException.class,
             () -> Core.DEFAULT.accbands(0, 251, in, in, in, 20,
@@ -993,11 +1007,6 @@ public class BatchApiTest {
      * none of them was checked — {@code inReal.length} was read straight off a
      * null array and a null output faulted inside the fill loop, both with a raw
      * JVM exception naming neither the function nor the argument.
-     *
-     * <p>{@code outFAMA} is here rather than among the controls even though it
-     * is declared {@code nullable}: unlike C's, this fill guards no output write,
-     * so declining one has never worked in the streaming tier. Naming it is the
-     * whole change — the call was already rejected.
      */
     static void streamingOpenersCheckTheirArguments() {
         final double[] in = closes(252);
@@ -1308,11 +1317,14 @@ public class BatchApiTest {
             "each output is bounded separately", "BBANDS openAndFill", "outRealLowerBand");
         s5Reject++;
 
-        // A history too short to produce anything is still rS8, whatever the
-        // output holds: the bound floors at zero rather than going negative.
+        // A history too short to produce anything is still rS8 for any output
+        // that is there: the bound floors at zero rather than going negative.
         checkThrows(InsufficientHistoryException.class,
-            () -> Core.DEFAULT.smaOpenAndFill(Arrays.copyOf(in, 29), 30, new double[0]),
+            () -> Core.DEFAULT.smaOpenAndFill(Arrays.copyOf(in, 29), 30, new double[1]),
             "a short history reaches the warm-up check, not the capacity one");
+        checkCode(RetCode.BAD_PARAM,
+            () -> Core.DEFAULT.smaOpenAndFill(Arrays.copyOf(in, 29), 30, new double[0]),
+            "an empty output is absent, short history or not");
 
         // A null enum is a parameter outside its domain, named — it reaches the
         // lookback call the bound is derived from.
@@ -1354,7 +1366,7 @@ public class BatchApiTest {
         aNullEnumIsNamed();
         aNullEnumLookbackIsMinusOne();
         aNullableOutputMayBeDeclined();
-        oneEmptyArrayIsOneBuffer();
+        anEmptyOutputIsAnAbsentOne();
         streamingOpenersCheckTheirArguments();
         anEmptyHistoryOutranksAnAbsentArgument();
         theFillOutputBoundFromBothSides();

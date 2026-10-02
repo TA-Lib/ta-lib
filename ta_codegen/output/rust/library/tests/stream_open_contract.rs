@@ -13,8 +13,6 @@
 //! Rule rS5 — the fill output's capacity — is here too, for the same reason:
 //! the servers hand every opener an output the length of the whole history, so
 //! nothing cross-language reaches a short one.
-//!
-//! Rule rS4 (an absent argument) is not here: a slice cannot be absent.
 
 #![allow(non_snake_case)]
 
@@ -218,8 +216,7 @@ fn a_short_history_reaches_the_warm_up_check_not_the_capacity_one() {
     let lb = core.sma_lookback(30).expect("valid");
     // A full-size output is the only shape that can observe a write: the
     // capacity bound floors at zero here, so the body runs with the caller's
-    // buffer bound and rejects from inside it. That is #389's class, and it is
-    // asserted before the empty-output probe below, which can only panic.
+    // buffer bound and rejects from inside it. That is #389's class.
     const SENTINEL: f64 = -777.0;
     let mut armed = vec![SENTINEL; data.len()];
     assert_eq!(
@@ -228,11 +225,18 @@ fn a_short_history_reaches_the_warm_up_check_not_the_capacity_one() {
     );
     assert!(armed.iter().all(|v| *v == SENTINEL), "a rejection from inside the body wrote nothing");
 
+    let mut one = [0.0_f64; 1];
+    assert_eq!(
+        core.sma_open_and_fill(&data[..lb], 30, &mut one).err(),
+        Some(RetCode::InsufficientHistory),
+        "a history one short of lookback + 1 is rS8 for any output that is there"
+    );
+
+    // An empty output is an absent one, short history or not.
     let mut nothing: [f64; 0] = [];
     assert_eq!(
         core.sma_open_and_fill(&data[..lb], 30, &mut nothing).err(),
-        Some(RetCode::InsufficientHistory),
-        "a history one short of lookback + 1 is rS8, whatever the output holds"
+        Some(RetCode::BadParam)
     );
 }
 

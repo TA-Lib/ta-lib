@@ -32,10 +32,10 @@ For `Open` and `OpenAndFill`, the history is the first declared input and `histo
 | <a id="rs1"></a>**rS1** | The history is empty (`historyLen < 1`) | `TA_OUT_OF_RANGE_START_INDEX` | |
 | <a id="rs2"></a>**rS2** | The history holds more than `TA_INDEX_MAX + 1` bars | `TA_OUT_OF_RANGE_END_INDEX` | |
 | <a id="rs3"></a>**rS3** | An optional parameter is outside its accepted values, or the parameters form a combination the function rejects ([rP2](/spec/inputs-outputs/#rp2)) | `TA_BAD_PARAM` | |
-| <a id="rs4"></a>**rS4** | A required argument is absent: the handle out-parameter, an input, an output, or C's `outBegIdx` or `outNBElement` | `TA_BAD_PARAM` | Rust, C#: cannot be absent |
+| <a id="rs4"></a>**rS4** | A required argument is absent ([rB4](/spec/errors/#rb4)): an input, an output, or in C the handle out-parameter, `outBegIdx` or `outNBElement` | `TA_BAD_PARAM` | |
 | <a id="rs5"></a>**rS5** | An input's length differs from `historyLen`, or an `OpenAndFill` output holds fewer than `historyLen - lookback` values | `TA_BAD_PARAM` | C: cannot check ([input length](/spec/inputs-outputs/#input-length)) |
 | <a id="rs6"></a>**rS6** | `OpenAndFill`: an output is the buffer of an input or of another output | `TA_BAD_PARAM` | Rust: cannot alias |
-| <a id="rs7"></a>**rS7** | `OpenAndFill`: an output that is not declinable is declined ([rW5](/spec/inputs-outputs/#rw5)) | `TA_BAD_PARAM` | Rust: cannot decline. C#: an empty span is a too-short output (rS5) |
+| <a id="rs7"></a>**rS7** | `OpenAndFill`: an output that is not declinable is declined ([rW5](/spec/inputs-outputs/#rw5)) | `TA_BAD_PARAM` | Rust: cannot decline |
 | <a id="rs8"></a>**rS8** | The history holds at least one bar, but fewer than [lookback](/spec/lookback/#rl1) `+ 1` | `TA_INSUFFICIENT_HISTORY` | |
 
 A loop that waits for enough history starts at one bar: an empty history is rS1.

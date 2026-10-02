@@ -743,7 +743,7 @@
     *        (default 0.2; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
     * @param outReal SAR stop level; positive while long, negative while short.
     *        Must hold at least {@code endIdx - max(startIdx, sarextLookback(...)) + 1}
-    *        values, the count the call produces (none when that is not positive).
+    *        values, and never be empty: an empty array is an absent output.
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -831,7 +831,7 @@
     *        (default 0.2; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
     * @param outReal SAR stop level; positive while long, negative while short.
     *        Must hold at least {@code endIdx - max(startIdx, sarextLookback(...)) + 1}
-    *        values, the count the call produces (none when that is not positive).
+    *        values, and never be empty: an empty array is an absent output.
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is

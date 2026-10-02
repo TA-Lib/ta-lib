@@ -186,7 +186,7 @@ fn rust_public_fill_bounds_every_output_against_its_own_lookback() {
             let needle = if out.is_nullable() {
                 format!("if {}.as_deref().is_some_and(|o| o.len() < _guardOutLen) {{", out.name)
             } else {
-                format!("if {}.len() < _guardOutLen {{", out.name)
+                format!("if {0}.is_empty() || {0}.len() < _guardOutLen {{", out.name)
             };
             let at_out = body.find(&needle).unwrap_or_else(|| {
                 panic!("{}: OpenAndFill does not bound `{}`", func.name, out.name)
@@ -378,7 +378,9 @@ fn java_public_openers_check_arguments_then_the_index_pair() {
             }
             for (arg, is_output) in &names {
                 let needle = if *is_output {
-                    format!("requireLength(\"{base} {verb}\", \"{arg}\", {arg}, guardOutLen);")
+                    let declinable = func.outputs.iter().any(|o| o.name == *arg && o.is_nullable());
+                    let call = if declinable { "requireCapacity" } else { "requireLength" };
+                    format!("{call}(\"{base} {verb}\", \"{arg}\", {arg}, guardOutLen);")
                 } else {
                     format!("requireArgument(\"{base} {verb}\", \"{arg}\", {arg});")
                 };
@@ -427,18 +429,18 @@ fn java_public_openers_check_arguments_then_the_index_pair() {
             if with_outputs {
                 for out in &func.outputs {
                     // A `nullable` output is bounded only when it was supplied
-                    // (rule rB7). The guard is part of the needle: without it
-                    // the bare call is a SUBSTRING of the guarded line, so the
-                    // gate would keep passing while going blind on exactly the
-                    // output the rule is about.
-                    let bound = format!(
-                        "requireLength(\"{base} {verb}\", \"{0}\", {0}, guardOutLen);",
-                        out.name
-                    );
+                    // (rule rB7), and by its length alone. The guard is part of
+                    // the needle: the rule is about exactly that output.
                     let needle = if out.is_nullable() {
-                        format!("if( {} != null ) {bound}", out.name)
+                        format!(
+                            "if( {0} != null ) requireCapacity(\"{base} {verb}\", \"{0}\", {0}, guardOutLen);",
+                            out.name
+                        )
                     } else {
-                        bound.clone()
+                        format!(
+                            "requireLength(\"{base} {verb}\", \"{0}\", {0}, guardOutLen);",
+                            out.name
+                        )
                     };
                     assert!(
                         body.contains(&needle),
@@ -448,7 +450,7 @@ fn java_public_openers_check_arguments_then_the_index_pair() {
                     );
                     if !out.is_nullable() {
                         assert!(
-                            !body.contains(&format!("if( {} != null ) {bound}", out.name)),
+                            !body.contains(&format!("if( {} != null ) ", out.name)),
                             "{}: `{}` is not nullable and must be bounded unconditionally",
                             func.name,
                             out.name
@@ -748,6 +750,44 @@ fn every_open_pass_rejects_an_anchor_past_the_history() {
         );
     }
     assert!(checked > 600, "only {checked} bodies checked across four backends");
+}
+
+/// C#'s batch entries refuse an empty output that cannot be declined, and only
+/// once the index and parameter rules have had their say: the run-time rows that
+/// prove both are in `BatchApiTest`, which the PR gate compiles and does not run.
+#[test]
+fn csharp_batch_entries_refuse_an_empty_output_behind_the_core_s_own_verdict() {
+    let registry = make_registry();
+    let helpers = common::make_helpers();
+    let mut outputs_pinned = 0usize;
+    let mut declinable_seen = 0usize;
+    for name in discover_indicators() {
+        let Some((func, enums)) = try_load_indicator(&name) else {
+            continue;
+        };
+        let csharp = backends::csharp::generate(&func, &enums, registry, helpers);
+        let f = &func.name;
+        for out in &func.outputs {
+            let n = &out.name;
+            let present = format!("if( guardStart >= 0 ) RequirePresent(\"{f}\", \"{n}\", {n}.Length);");
+            if out.is_nullable() {
+                declinable_seen += 1;
+                assert!(!csharp.contains(&present), "{f}: `{n}` may be declined and must not be required");
+                continue;
+            }
+            let pair = format!(
+                "{present}\n      RequireLength(\"{f}\", \"{n}\", {n}.Length, guardOutLen);"
+            );
+            // The double overload and the float one.
+            assert!(
+                csharp.matches(&pair).count() >= 2,
+                "{f}: `{n}` is not refused when empty on both batch entries, expected `{pair}`"
+            );
+            outputs_pinned += 1;
+        }
+    }
+    assert!(outputs_pinned >= 200, "only {outputs_pinned} outputs pinned");
+    assert!(declinable_seen > 0, "no declinable output was seen");
 }
 
 /// Every DECLARED input is checked in every backend (#260).

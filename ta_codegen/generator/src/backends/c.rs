@@ -1020,8 +1020,8 @@ fn gen_func_inner(
 
         // Optional parameter validation (default + range). Ahead of every
         // argument-presence check: a parameter domain is language-neutral, an
-        // absent argument is not (Rust slices and C# spans cannot be absent), so
-        // putting the shared rule first is what lets all four backends agree on
+        // absent argument is spelled per language (an empty slice or span in
+        // Rust and C#), so putting the shared rule first is what lets all four backends agree on
         // which condition a multi-fault call reports.
         out.push_str(&emit_opt_param_validation(func, "TA_BAD_PARAM", enums));
 

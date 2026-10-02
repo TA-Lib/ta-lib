@@ -276,7 +276,7 @@
     *        {@code Integer.MIN_VALUE} selects the default).
     * @param outReal Zero-lag exponential moving average of the input. Must hold
     *        at least {@code endIdx - max(startIdx, zlemaLookback(...)) + 1} values,
-    *        the count the call produces (none when that is not positive).
+    *        and never be empty: an empty array is an absent output.
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -361,7 +361,7 @@
     *        {@code Integer.MIN_VALUE} selects the default).
     * @param outReal Zero-lag exponential moving average of the input. Must hold
     *        at least {@code endIdx - max(startIdx, zlemaLookback(...)) + 1} values,
-    *        the count the call produces (none when that is not positive).
+    *        and never be empty: an empty array is an absent output.
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is

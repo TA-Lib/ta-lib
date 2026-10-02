@@ -76643,11 +76643,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.AcLookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
@@ -76778,11 +76776,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.AccbandsLookback(optInTimePeriod);
@@ -76912,11 +76908,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.AcosLookback();
@@ -77048,11 +77042,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.AdLookback();
@@ -77182,11 +77174,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.AddLookback();
@@ -77322,11 +77312,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.AdoscLookback(optInFastPeriod, optInSlowPeriod);
@@ -77457,11 +77445,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.AdrLookback(optInTimePeriod);
@@ -77593,11 +77579,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.AdxLookback(optInTimePeriod);
@@ -77730,11 +77714,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.AdxrLookback(optInTimePeriod);
@@ -77861,11 +77843,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.AlmaLookback(optInTimePeriod, optInSigma, optInOffset);
@@ -77991,11 +77971,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.AoLookback(optInFastPeriod, optInSlowPeriod);
@@ -78120,11 +78098,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.ApoLookback(optInFastPeriod, optInSlowPeriod, optInMAType);
@@ -78249,11 +78225,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.AroonLookback(optInTimePeriod);
@@ -78383,11 +78357,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.AroonoscLookback(optInTimePeriod);
@@ -78522,11 +78494,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.AsiLookback(optInLimitMove);
@@ -78652,11 +78622,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.AsinLookback();
@@ -78776,11 +78744,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.AtanLookback();
@@ -78910,11 +78876,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.AtrLookback(optInTimePeriod);
@@ -79039,11 +79003,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.AvgdevLookback(optInTimePeriod);
@@ -79175,11 +79137,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.AvgpriceLookback();
@@ -79309,11 +79269,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.BbandsLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
@@ -79443,11 +79401,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.BbwLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
@@ -79572,11 +79528,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.BetaLookback(optInTimePeriod);
@@ -79710,11 +79664,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.BopLookback();
@@ -79849,11 +79801,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CciLookback(optInTimePeriod);
@@ -79989,11 +79939,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.Cdl2crowsLookback();
@@ -80131,11 +80079,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.Cdl3blackcrowsLookback();
@@ -80273,11 +80219,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.Cdl3insideLookback();
@@ -80415,11 +80359,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.Cdl3linestrikeLookback();
@@ -80557,11 +80499,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.Cdl3outsideLookback();
@@ -80699,11 +80639,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.Cdl3starsinsouthLookback();
@@ -80841,11 +80779,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.Cdl3whitesoldiersLookback();
@@ -80984,11 +80920,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CdlabandonedbabyLookback(optInPenetration);
@@ -81126,11 +81060,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CdladvanceblockLookback();
@@ -81268,11 +81200,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CdlbeltholdLookback();
@@ -81410,11 +81340,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CdlbreakawayLookback();
@@ -81552,11 +81480,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CdlclosingmarubozuLookback();
@@ -81694,11 +81620,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CdlconcealbabyswallLookback();
@@ -81836,11 +81760,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CdlcounterattackLookback();
@@ -81979,11 +81901,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CdldarkcloudcoverLookback(optInPenetration);
@@ -82121,11 +82041,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CdldojiLookback();
@@ -82263,11 +82181,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CdldojistarLookback();
@@ -82405,11 +82321,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CdldragonflydojiLookback();
@@ -82547,11 +82461,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CdlengulfingLookback();
@@ -82690,11 +82602,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CdleveningdojistarLookback(optInPenetration);
@@ -82833,11 +82743,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CdleveningstarLookback(optInPenetration);
@@ -82975,11 +82883,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CdlgapsidesidewhiteLookback();
@@ -83117,11 +83023,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CdlgravestonedojiLookback();
@@ -83259,11 +83163,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CdlhammerLookback();
@@ -83401,11 +83303,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CdlhangingmanLookback();
@@ -83543,11 +83443,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CdlharamiLookback();
@@ -83685,11 +83583,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CdlharamicrossLookback();
@@ -83827,11 +83723,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CdlhighwaveLookback();
@@ -83969,11 +83863,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CdlhikkakeLookback();
@@ -84111,11 +84003,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CdlhikkakemodLookback();
@@ -84253,11 +84143,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CdlhomingpigeonLookback();
@@ -84395,11 +84283,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.Cdlidentical3crowsLookback();
@@ -84537,11 +84423,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CdlinneckLookback();
@@ -84679,11 +84563,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CdlinvertedhammerLookback();
@@ -84821,11 +84703,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CdlkickingLookback();
@@ -84963,11 +84843,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CdlkickingbylengthLookback();
@@ -85105,11 +84983,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CdlladderbottomLookback();
@@ -85247,11 +85123,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CdllongleggeddojiLookback();
@@ -85389,11 +85263,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CdllonglineLookback();
@@ -85531,11 +85403,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CdlmarubozuLookback();
@@ -85673,11 +85543,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CdlmatchinglowLookback();
@@ -85816,11 +85684,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CdlmatholdLookback(optInPenetration);
@@ -85959,11 +85825,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CdlmorningdojistarLookback(optInPenetration);
@@ -86102,11 +85966,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CdlmorningstarLookback(optInPenetration);
@@ -86244,11 +86106,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CdlonneckLookback();
@@ -86386,11 +86246,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CdlpiercingLookback();
@@ -86528,11 +86386,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CdlrickshawmanLookback();
@@ -86670,11 +86526,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.Cdlrisefall3methodsLookback();
@@ -86812,11 +86666,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CdlseparatinglinesLookback();
@@ -86954,11 +86806,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CdlshootingstarLookback();
@@ -87096,11 +86946,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CdlshortlineLookback();
@@ -87238,11 +87086,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CdlspinningtopLookback();
@@ -87380,11 +87226,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CdlstalledpatternLookback();
@@ -87522,11 +87366,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CdlsticksandwichLookback();
@@ -87664,11 +87506,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CdltakuriLookback();
@@ -87806,11 +87646,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CdltasukigapLookback();
@@ -87948,11 +87786,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CdlthrustingLookback();
@@ -88090,11 +87926,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CdltristarLookback();
@@ -88232,11 +88066,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.Cdlunique3riverLookback();
@@ -88374,11 +88206,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.Cdlupsidegap2crowsLookback();
@@ -88516,11 +88346,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.Cdlxsidegap3methodsLookback();
@@ -88646,11 +88474,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CeilLookback();
@@ -88771,11 +88597,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CgLookback(optInTimePeriod);
@@ -88904,11 +88728,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.ChopLookback(optInTimePeriod);
@@ -89041,11 +88863,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.ChoptrLookback(optInTimePeriod);
@@ -89180,11 +89000,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CkspLookback(optInTimePeriod, optInMultiplier, optInStopPeriod);
@@ -89324,11 +89142,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CmfLookback(optInTimePeriod);
@@ -89456,11 +89272,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CmoLookback(optInTimePeriod);
@@ -89581,11 +89395,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CmouLookback(optInTimePeriod);
@@ -89708,11 +89520,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CoppockLookback(optInWMAPeriod, optInROC1Period, optInROC2Period);
@@ -89837,11 +89647,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CorrelLookback(optInTimePeriod);
@@ -89963,11 +89771,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CosLookback();
@@ -90087,11 +89893,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CoshLookback();
@@ -90214,11 +90018,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CrsiLookback(optInTimePeriod, optInStreakPeriod, optInRankPeriod);
@@ -90339,11 +90141,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CtiLookback(optInTimePeriod);
@@ -90463,11 +90263,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CumsumLookback();
@@ -90593,11 +90391,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CviLookback(optInTimePeriod, optInROCPeriod);
@@ -90720,11 +90516,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.DemaLookback(optInTimePeriod);
@@ -90848,11 +90642,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.DivLookback();
@@ -90979,11 +90771,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.DonchianLookback(optInTimePeriod);
@@ -91112,11 +90902,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.DpoLookback(optInTimePeriod);
@@ -91246,11 +91034,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.DxLookback(optInTimePeriod);
@@ -91379,11 +91165,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.EfiLookback(optInTimePeriod);
@@ -91507,11 +91291,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.EmaLookback(optInTimePeriod);
@@ -91641,11 +91423,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.EmvLookback(optInTimePeriod, optInVolumeDivisor);
@@ -91770,11 +91550,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.ErLookback(optInTimePeriod);
@@ -91903,11 +91681,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.EriLookback(optInTimePeriod);
@@ -92034,11 +91810,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.ExpLookback();
@@ -92158,11 +91932,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.FloorLookback();
@@ -92283,11 +92055,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.FoscLookback(optInTimePeriod);
@@ -92413,11 +92183,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.FractalLookback(optInLeftBars, optInRightBars);
@@ -92548,11 +92316,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.FramaLookback(optInTimePeriod);
@@ -92687,11 +92453,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.HaLookback();
@@ -92827,11 +92591,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.HmaLookback(optInTimePeriod);
@@ -92952,11 +92714,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.HtDcperiodLookback();
@@ -93077,11 +92837,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.HtDcphaseLookback();
@@ -93202,11 +92960,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.HtPhasorLookback();
@@ -93330,11 +93086,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.HtSineLookback();
@@ -93458,11 +93212,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.HtTrendlineLookback();
@@ -93583,11 +93335,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.HtTrendmodeLookback();
@@ -93715,11 +93465,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.IbsLookback();
@@ -93848,11 +93596,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.ImiLookback(optInTimePeriod);
@@ -93976,11 +93722,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.KamaLookback(optInTimePeriod);
@@ -94111,11 +93855,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.KcLookback(optInTimePeriod, optInATRPeriod, optInNbDev);
@@ -94258,11 +94000,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.KdjLookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
@@ -94401,11 +94141,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.KstLookback(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod);
@@ -94539,11 +94277,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.KstextLookback(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType);
@@ -94667,11 +94403,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.KurtosisLookback(optInTimePeriod);
@@ -94792,11 +94526,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.LinearregLookback(optInTimePeriod);
@@ -94917,11 +94649,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.LinearregAngleLookback(optInTimePeriod);
@@ -95042,11 +94772,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.LinearregInterceptLookback(optInTimePeriod);
@@ -95167,11 +94895,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.LinearregSlopeLookback(optInTimePeriod);
@@ -95291,11 +95017,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.LnLookback();
@@ -95415,11 +95139,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.Log10Lookback();
@@ -95541,11 +95263,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.MaLookback(optInTimePeriod, optInMAType);
@@ -95668,11 +95388,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.MacdLookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
@@ -95804,11 +95522,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.MacdextLookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType);
@@ -95935,11 +95651,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.MacdfixLookback(optInSignalPeriod);
@@ -96068,11 +95782,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.MamaLookback(optInFastLimit, optInSlowLimit);
@@ -96203,11 +95915,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.MarketfiLookback();
@@ -96337,11 +96047,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.MassiLookback(optInFastPeriod, optInSlowPeriod);
@@ -96470,11 +96178,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.MavpLookback(optInMinPeriod, optInMaxPeriod, optInMAType);
@@ -96597,11 +96303,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.MaxLookback(optInTimePeriod);
@@ -96722,11 +96426,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.MaxindexLookback(optInTimePeriod);
@@ -96848,11 +96550,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.McgdLookback(optInTimePeriod);
@@ -96973,11 +96673,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.MedianLookback(optInTimePeriod);
@@ -97101,11 +96799,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.MedpriceLookback();
@@ -97240,11 +96936,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.MfiLookback(optInTimePeriod);
@@ -97371,11 +97065,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.MidpointLookback(optInTimePeriod);
@@ -97500,11 +97192,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.MidpriceLookback(optInTimePeriod);
@@ -97627,11 +97317,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.MinLookback(optInTimePeriod);
@@ -97752,11 +97440,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.MinindexLookback(optInTimePeriod);
@@ -97877,11 +97563,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.MinmaxLookback(optInTimePeriod);
@@ -98005,11 +97689,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.MinmaxindexLookback(optInTimePeriod);
@@ -98142,11 +97824,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.MinusDiLookback(optInTimePeriod);
@@ -98276,11 +97956,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.MinusDmLookback(optInTimePeriod);
@@ -98403,11 +98081,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.MomLookback(optInTimePeriod);
@@ -98531,11 +98207,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.MultLookback();
@@ -98667,11 +98341,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.NatrLookback(optInTimePeriod);
@@ -98799,11 +98471,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.NviLookback();
@@ -98929,11 +98599,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.ObvLookback();
@@ -99059,11 +98727,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.PercentbLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
@@ -99185,11 +98851,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.PercentileLookback(optInTimePeriod, optInPercentile);
@@ -99310,11 +98974,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.PercentrankLookback(optInTimePeriod);
@@ -99444,11 +99106,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.PlusDiLookback(optInTimePeriod);
@@ -99578,11 +99238,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.PlusDmLookback(optInTimePeriod);
@@ -99707,11 +99365,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.PpoLookback(optInFastPeriod, optInSlowPeriod, optInMAType);
@@ -99835,11 +99491,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.PviLookback();
@@ -99964,11 +99618,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.PvoLookback(optInFastPeriod, optInSlowPeriod, optInMAType);
@@ -100092,11 +99744,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.PvtLookback();
@@ -100223,11 +99873,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.QstickLookback(optInTimePeriod);
@@ -100351,11 +99999,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.RmaLookback(optInTimePeriod);
@@ -100476,11 +100122,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.RocLookback(optInTimePeriod);
@@ -100601,11 +100245,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.RocpLookback(optInTimePeriod);
@@ -100726,11 +100368,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.RocrLookback(optInTimePeriod);
@@ -100851,11 +100491,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.Rocr100Lookback(optInTimePeriod);
@@ -100977,11 +100615,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.RsiLookback(optInTimePeriod);
@@ -101104,11 +100740,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.RviLookback(optInTimePeriod, optInStdDevPeriod);
@@ -101234,11 +100868,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.RvirLookback(optInTimePeriod, optInStdDevPeriod);
@@ -101361,11 +100993,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.RvolLookback(optInTimePeriod);
@@ -101491,11 +101121,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.SarLookback(optInAcceleration, optInMaximum);
@@ -101629,11 +101257,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.SarextLookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
@@ -101768,11 +101394,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.SiLookback(optInLimitMove);
@@ -101898,11 +101522,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.SinLookback();
@@ -102022,11 +101644,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.SinhLookback();
@@ -102147,11 +101767,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.SmaLookback(optInTimePeriod);
@@ -102283,11 +101901,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.SmiLookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
@@ -102414,11 +102030,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.SqrtLookback();
@@ -102542,11 +102156,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.StcLookback(optInFastPeriod, optInSlowPeriod, optInCyclePeriod);
@@ -102668,11 +102280,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.StddevLookback(optInTimePeriod, optInNbDev);
@@ -102805,11 +102415,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.StochLookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
@@ -102947,11 +102555,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.StochfLookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
@@ -103082,11 +102688,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.StochrsiLookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
@@ -103213,11 +102817,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.SubLookback();
@@ -103340,11 +102942,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.SumLookback(optInTimePeriod);
@@ -103474,11 +103074,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.SupertrendLookback(optInTimePeriod, optInMultiplier);
@@ -103608,11 +103206,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.T3Lookback(optInTimePeriod, optInVFactor);
@@ -103732,11 +103328,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.TanLookback();
@@ -103856,11 +103450,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.TanhLookback();
@@ -103981,11 +103573,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.TemaLookback(optInTimePeriod);
@@ -104113,11 +103703,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.TrangeLookback();
@@ -104242,11 +103830,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.TrimaLookback(optInTimePeriod);
@@ -104367,11 +103953,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.TrixLookback(optInTimePeriod);
@@ -104492,11 +104076,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.TsfLookback(optInTimePeriod);
@@ -104618,11 +104200,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.TsiLookback(optInFirstPeriod, optInSecondPeriod);
@@ -104750,11 +104330,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.TyppriceLookback();
@@ -104889,11 +104467,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.UltoscLookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
@@ -105019,11 +104595,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.VarLookback(optInTimePeriod, optInNbDev);
@@ -105144,11 +104718,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.VhfLookback(optInTimePeriod);
@@ -105271,11 +104843,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.VidyaLookback(optInTimePeriod, optInCMOPeriod);
@@ -105404,11 +104974,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.VortexLookback(optInTimePeriod);
@@ -105547,11 +105115,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.VwapLookback();
@@ -105682,11 +105248,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.VwmaLookback(optInTimePeriod);
@@ -105816,11 +105380,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.WadLookback();
@@ -105952,11 +105514,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.WclpriceLookback();
@@ -106089,11 +105649,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.WillrLookback(optInTimePeriod);
@@ -106218,11 +105776,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.WmaLookback(optInTimePeriod);
@@ -106343,11 +105899,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.ZlemaLookback(optInTimePeriod);

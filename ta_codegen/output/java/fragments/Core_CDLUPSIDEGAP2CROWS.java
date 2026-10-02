@@ -251,7 +251,7 @@
     * @param outInteger -100 on a pattern bar, 0 otherwise. Bearish-only: this
     *        pattern never emits +100. Must hold at least
     *        {@code endIdx - max(startIdx, cdlupsidegap2crowsLookback(...)) + 1}
-    *        values, the count the call produces (none when that is not positive).
+    *        values, and never be empty: an empty array is an absent output.
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -325,7 +325,7 @@
     * @param outInteger -100 on a pattern bar, 0 otherwise. Bearish-only: this
     *        pattern never emits +100. Must hold at least
     *        {@code endIdx - max(startIdx, cdlupsidegap2crowsLookback(...)) + 1}
-    *        values, the count the call produces (none when that is not positive).
+    *        values, and never be empty: an empty array is an absent output.
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is

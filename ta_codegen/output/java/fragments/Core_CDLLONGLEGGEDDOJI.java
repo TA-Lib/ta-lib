@@ -235,7 +235,7 @@
     *        is emitted; the code never emits -100, and the positive sign does NOT mean
     *        bullish. Must hold at least
     *        {@code endIdx - max(startIdx, cdllongleggeddojiLookback(...)) + 1} values,
-    *        the count the call produces (none when that is not positive).
+    *        and never be empty: an empty array is an absent output.
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -310,7 +310,7 @@
     *        is emitted; the code never emits -100, and the positive sign does NOT mean
     *        bullish. Must hold at least
     *        {@code endIdx - max(startIdx, cdllongleggeddojiLookback(...)) + 1} values,
-    *        the count the call produces (none when that is not positive).
+    *        and never be empty: an empty array is an absent output.
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is

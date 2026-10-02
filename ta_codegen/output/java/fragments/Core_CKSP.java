@@ -951,12 +951,12 @@
     *        default).
     * @param outHighStop Highest of the recent first high stops; usually plotted
     *        as the short stop. Must hold at least
-    *        {@code endIdx - max(startIdx, ckspLookback(...)) + 1} values, the count
-    *        the call produces (none when that is not positive).
+    *        {@code endIdx - max(startIdx, ckspLookback(...)) + 1} values, and never be
+    *        empty: an empty array is an absent output.
     * @param outLowStop Lowest of the recent first low stops; usually plotted as
     *        the long stop. Must hold at least
-    *        {@code endIdx - max(startIdx, ckspLookback(...)) + 1} values, the count
-    *        the call produces (none when that is not positive).
+    *        {@code endIdx - max(startIdx, ckspLookback(...)) + 1} values, and never be
+    *        empty: an empty array is an absent output.
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -1049,12 +1049,12 @@
     *        default).
     * @param outHighStop Highest of the recent first high stops; usually plotted
     *        as the short stop. Must hold at least
-    *        {@code endIdx - max(startIdx, ckspLookback(...)) + 1} values, the count
-    *        the call produces (none when that is not positive).
+    *        {@code endIdx - max(startIdx, ckspLookback(...)) + 1} values, and never be
+    *        empty: an empty array is an absent output.
     * @param outLowStop Lowest of the recent first low stops; usually plotted as
     *        the long stop. Must hold at least
-    *        {@code endIdx - max(startIdx, ckspLookback(...)) + 1} values, the count
-    *        the call produces (none when that is not positive).
+    *        {@code endIdx - max(startIdx, ckspLookback(...)) + 1} values, and never be
+    *        empty: an empty array is an absent output.
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is

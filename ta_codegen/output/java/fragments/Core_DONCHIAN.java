@@ -311,14 +311,14 @@
     * @param optInTimePeriod Number of bars in the extrema window (default 20;
     *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param outRealUpperBand Highest high of the window. Must hold at least
-    *        {@code endIdx - max(startIdx, donchianLookback(...)) + 1} values, the
-    *        count the call produces (none when that is not positive).
+    *        {@code endIdx - max(startIdx, donchianLookback(...)) + 1} values, and
+    *        never be empty: an empty array is an absent output.
     * @param outRealMiddleBand Midpoint of the upper and lower bands. Must hold
     *        at least {@code endIdx - max(startIdx, donchianLookback(...)) + 1} values,
-    *        the count the call produces (none when that is not positive).
+    *        and never be empty: an empty array is an absent output.
     * @param outRealLowerBand Lowest low of the window. Must hold at least
-    *        {@code endIdx - max(startIdx, donchianLookback(...)) + 1} values, the
-    *        count the call produces (none when that is not positive).
+    *        {@code endIdx - max(startIdx, donchianLookback(...)) + 1} values, and
+    *        never be empty: an empty array is an absent output.
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -392,14 +392,14 @@
     * @param optInTimePeriod Number of bars in the extrema window (default 20;
     *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param outRealUpperBand Highest high of the window. Must hold at least
-    *        {@code endIdx - max(startIdx, donchianLookback(...)) + 1} values, the
-    *        count the call produces (none when that is not positive).
+    *        {@code endIdx - max(startIdx, donchianLookback(...)) + 1} values, and
+    *        never be empty: an empty array is an absent output.
     * @param outRealMiddleBand Midpoint of the upper and lower bands. Must hold
     *        at least {@code endIdx - max(startIdx, donchianLookback(...)) + 1} values,
-    *        the count the call produces (none when that is not positive).
+    *        and never be empty: an empty array is an absent output.
     * @param outRealLowerBand Lowest low of the window. Must hold at least
-    *        {@code endIdx - max(startIdx, donchianLookback(...)) + 1} values, the
-    *        count the call produces (none when that is not positive).
+    *        {@code endIdx - max(startIdx, donchianLookback(...)) + 1} values, and
+    *        never be empty: an empty array is an absent output.
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is

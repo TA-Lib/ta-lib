@@ -119,6 +119,16 @@ class Core {
             throw new TALibArgumentException(funcName + ": " + argName
                 + " has length " + actual + ", needs " + required, RetCode.BAD_PARAM);
         }
+        if (actual == 0) {
+            throw new TALibArgumentException(funcName + ": " + argName + " is empty", RetCode.BAD_PARAM);
+        }
+    }
+
+    static void requireCapacity(String funcName, String argName, double[] array, int required) {
+        if (array.length < required) {
+            throw new TALibArgumentException(funcName + ": " + argName
+                + " has length " + array.length + ", needs " + required, RetCode.BAD_PARAM);
+        }
     }
 
     static void requireIndexRange(String funcName, int startIdx, int endIdx) {
@@ -609,8 +619,8 @@ class Core {
         * @param outReal Distance of the Awesome Oscillator (<a
         *        href="https://ta-lib.org/functions/ao">{@code AO}</a>) from its own moving
         *        average, centred on zero. Must hold at least
-        *        {@code endIdx - max(startIdx, acLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, acLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -699,8 +709,8 @@ class Core {
         * @param outReal Distance of the Awesome Oscillator (<a
         *        href="https://ta-lib.org/functions/ao">{@code AO}</a>) from its own moving
         *        average, centred on zero. Must hold at least
-        *        {@code endIdx - max(startIdx, acLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, acLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -1642,13 +1652,13 @@ class Core {
         *        20; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outRealUpperBand SMA of the range-scaled high band. Must hold at
         *        least {@code endIdx - max(startIdx, accbandsLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @param outRealMiddleBand SMA of the close. Must hold at least
-        *        {@code endIdx - max(startIdx, accbandsLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, accbandsLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @param outRealLowerBand SMA of the range-scaled low band. Must hold at
         *        least {@code endIdx - max(startIdx, accbandsLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -1718,13 +1728,13 @@ class Core {
         *        20; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outRealUpperBand SMA of the range-scaled high band. Must hold at
         *        least {@code endIdx - max(startIdx, accbandsLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @param outRealMiddleBand SMA of the close. Must hold at least
-        *        {@code endIdx - max(startIdx, accbandsLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, accbandsLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @param outRealLowerBand SMA of the range-scaled low band. Must hold at
         *        least {@code endIdx - max(startIdx, accbandsLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -2399,8 +2409,8 @@ class Core {
         * @param endIdx Last bar of the requested range (inclusive).
         * @param inReal input values (expected in [-1, 1])
         * @param outReal arc cosine of each input, in radians. Must hold at least
-        *        {@code endIdx - max(startIdx, acosLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, acosLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -2459,8 +2469,8 @@ class Core {
         * @param endIdx Last bar of the requested range (inclusive).
         * @param inReal input values (expected in [-1, 1])
         * @param outReal arc cosine of each input, in radians. Must hold at least
-        *        {@code endIdx - max(startIdx, acosLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, acosLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -2909,8 +2919,8 @@ class Core {
         * @param inClose Close price of each bar.
         * @param inVolume Volume of each bar.
         * @param outReal Cumulative A/D line value per bar. Must hold at least
-        *        {@code endIdx - max(startIdx, adLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, adLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -2976,8 +2986,8 @@ class Core {
         * @param inClose Close price of each bar.
         * @param inVolume Volume of each bar.
         * @param outReal Cumulative A/D line value per bar. Must hold at least
-        *        {@code endIdx - max(startIdx, adLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, adLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -3440,8 +3450,8 @@ class Core {
         * @param inReal0 First operand series.
         * @param inReal1 Second operand series.
         * @param outReal Element-wise sum of the two inputs. Must hold at least
-        *        {@code endIdx - max(startIdx, addLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, addLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -3499,8 +3509,8 @@ class Core {
         * @param inReal0 First operand series.
         * @param inReal1 Second operand series.
         * @param outReal Element-wise sum of the two inputs. Must hold at least
-        *        {@code endIdx - max(startIdx, addLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, addLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -4133,8 +4143,8 @@ class Core {
         * @param optInSlowPeriod Period of the slow A/D EMA (default 10; range
         *        2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Fast-EMA minus slow-EMA of the A/D line. Must hold at least
-        *        {@code endIdx - max(startIdx, adoscLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, adoscLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -4206,8 +4216,8 @@ class Core {
         * @param optInSlowPeriod Period of the slow A/D EMA (default 10; range
         *        2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Fast-EMA minus slow-EMA of the A/D line. Must hold at least
-        *        {@code endIdx - max(startIdx, adoscLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, adoscLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -4931,7 +4941,7 @@ class Core {
         *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Average bar range over the window, in price units. Must
         *        hold at least {@code endIdx - max(startIdx, adrLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -5015,7 +5025,7 @@ class Core {
         *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Average bar range over the window, in price units. Must
         *        hold at least {@code endIdx - max(startIdx, adrLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -6127,8 +6137,8 @@ class Core {
         *        (default 14; range 2..100000; {@code Integer.MIN_VALUE} selects the
         *        default).
         * @param outReal Smoothed directional trend-strength index (0-100) Must hold
-        *        at least {@code endIdx - max(startIdx, adxLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        at least {@code endIdx - max(startIdx, adxLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -6205,8 +6215,8 @@ class Core {
         *        (default 14; range 2..100000; {@code Integer.MIN_VALUE} selects the
         *        default).
         * @param outReal Smoothed directional trend-strength index (0-100) Must hold
-        *        at least {@code endIdx - max(startIdx, adxLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        at least {@code endIdx - max(startIdx, adxLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -7224,8 +7234,8 @@ class Core {
         *        averaged ADX values (default 14; range 2..100000;
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param outReal ADXR line (averaged ADX) Must hold at least
-        *        {@code endIdx - max(startIdx, adxrLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, adxrLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -7298,8 +7308,8 @@ class Core {
         *        averaged ADX values (default 14; range 2..100000;
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param outReal ADXR line (averaged ADX) Must hold at least
-        *        {@code endIdx - max(startIdx, adxrLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, adxrLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -8060,8 +8070,8 @@ class Core {
         *        at the newest (default 0.85; range 0..1; {@link Core#REAL_DEFAULT} selects
         *        the default).
         * @param outReal Arnaud Legoux Moving Average line. Must hold at least
-        *        {@code endIdx - max(startIdx, almaLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, almaLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -8143,8 +8153,8 @@ class Core {
         *        at the newest (default 0.85; range 0..1; {@link Core#REAL_DEFAULT} selects
         *        the default).
         * @param outReal Arnaud Legoux Moving Average line. Must hold at least
-        *        {@code endIdx - max(startIdx, almaLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, almaLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -8961,7 +8971,7 @@ class Core {
         *        34; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Spread between the two moving averages, centred on zero.
         *        Must hold at least {@code endIdx - max(startIdx, aoLookback(...)) + 1}
-        *        values, the count the call produces (none when that is not positive).
+        *        values, and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -9041,7 +9051,7 @@ class Core {
         *        34; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Spread between the two moving averages, centred on zero.
         *        Must hold at least {@code endIdx - max(startIdx, aoLookback(...)) + 1}
-        *        values, the count the call produces (none when that is not positive).
+        *        values, and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -10076,8 +10086,8 @@ class Core {
         *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
         *        {@code MAType.DEFAULT} selects the default).
         * @param outReal Fast MA minus slow MA. Must hold at least
-        *        {@code endIdx - max(startIdx, apoLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, apoLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -10154,8 +10164,8 @@ class Core {
         *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
         *        {@code MAType.DEFAULT} selects the default).
         * @param outReal Fast MA minus slow MA. Must hold at least
-        *        {@code endIdx - max(startIdx, apoLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, apoLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -10826,12 +10836,12 @@ class Core {
         *        2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outAroonDown Recency of the lowest low (100 = it is the current
         *        bar, decaying as it ages) Must hold at least
-        *        {@code endIdx - max(startIdx, aroonLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, aroonLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @param outAroonUp Recency of the highest high (100 = it is the current
         *        bar, decaying as it ages) Must hold at least
-        *        {@code endIdx - max(startIdx, aroonLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, aroonLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -10900,12 +10910,12 @@ class Core {
         *        2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outAroonDown Recency of the lowest low (100 = it is the current
         *        bar, decaying as it ages) Must hold at least
-        *        {@code endIdx - max(startIdx, aroonLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, aroonLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @param outAroonUp Recency of the highest high (100 = it is the current
         *        bar, decaying as it ages) Must hold at least
-        *        {@code endIdx - max(startIdx, aroonLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, aroonLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -11764,7 +11774,7 @@ class Core {
         *        the default).
         * @param outReal Aroon oscillator value (AroonUp - AroonDown) Must hold at
         *        least {@code endIdx - max(startIdx, aroonoscLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -11829,7 +11839,7 @@ class Core {
         *        the default).
         * @param outReal Aroon oscillator value (AroonUp - AroonDown) Must hold at
         *        least {@code endIdx - max(startIdx, aroonoscLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -12627,8 +12637,8 @@ class Core {
         *        {@link Core#REAL_DEFAULT} selects the default).
         * @param outReal Running total of the swing index from the first bar of the
         *        range. Must hold at least
-        *        {@code endIdx - max(startIdx, asiLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, asiLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -12707,8 +12717,8 @@ class Core {
         *        {@link Core#REAL_DEFAULT} selects the default).
         * @param outReal Running total of the swing index from the first bar of the
         *        range. Must hold at least
-        *        {@code endIdx - max(startIdx, asiLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, asiLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -13250,8 +13260,8 @@ class Core {
         * @param endIdx Last bar of the requested range (inclusive).
         * @param inReal Input values (domain [-1,1] for a real result)
         * @param outReal Arcsine of each input, in radians. Must hold at least
-        *        {@code endIdx - max(startIdx, asinLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, asinLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -13311,8 +13321,8 @@ class Core {
         * @param endIdx Last bar of the requested range (inclusive).
         * @param inReal Input values (domain [-1,1] for a real result)
         * @param outReal Arcsine of each input, in radians. Must hold at least
-        *        {@code endIdx - max(startIdx, asinLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, asinLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -13694,8 +13704,8 @@ class Core {
         * @param endIdx Last bar of the requested range (inclusive).
         * @param inReal Input values.
         * @param outReal Arc tangent of each input, in radians. Must hold at least
-        *        {@code endIdx - max(startIdx, atanLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, atanLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -13750,8 +13760,8 @@ class Core {
         * @param endIdx Last bar of the requested range (inclusive).
         * @param inReal Input values.
         * @param outReal Arc tangent of each input, in radians. Must hold at least
-        *        {@code endIdx - max(startIdx, atanLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, atanLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -14396,8 +14406,8 @@ class Core {
         * @param optInTimePeriod Smoothing period (default 14; range 1..100000;
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Average True Range value. Must hold at least
-        *        {@code endIdx - max(startIdx, atrLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, atrLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -14464,8 +14474,8 @@ class Core {
         * @param optInTimePeriod Smoothing period (default 14; range 1..100000;
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Average True Range value. Must hold at least
-        *        {@code endIdx - max(startIdx, atrLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, atrLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -15144,8 +15154,8 @@ class Core {
         * @param optInTimePeriod Window length (default 14; range 2..100000;
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param outReal mean absolute deviation over the window. Must hold at least
-        *        {@code endIdx - max(startIdx, avgdevLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, avgdevLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -15206,8 +15216,8 @@ class Core {
         * @param optInTimePeriod Window length (default 14; range 2..100000;
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param outReal mean absolute deviation over the window. Must hold at least
-        *        {@code endIdx - max(startIdx, avgdevLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, avgdevLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -15689,8 +15699,8 @@ class Core {
         * @param inLow Low price of each bar.
         * @param inClose Close price of each bar.
         * @param outReal Per-bar average of the four OHLC prices. Must hold at least
-        *        {@code endIdx - max(startIdx, avgpriceLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, avgpriceLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -15756,8 +15766,8 @@ class Core {
         * @param inLow Low price of each bar.
         * @param inClose Close price of each bar.
         * @param outReal Per-bar average of the four OHLC prices. Must hold at least
-        *        {@code endIdx - max(startIdx, avgpriceLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, avgpriceLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -16750,13 +16760,13 @@ class Core {
         *        {@code MAType.DEFAULT} selects the default).
         * @param outRealUpperBand Middle band plus nbDevUp standard deviations. Must
         *        hold at least {@code endIdx - max(startIdx, bbandsLookback(...)) + 1}
-        *        values, the count the call produces (none when that is not positive).
+        *        values, and never be empty: an empty array is an absent output.
         * @param outRealMiddleBand The moving average. Must hold at least
-        *        {@code endIdx - max(startIdx, bbandsLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, bbandsLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @param outRealLowerBand Middle band minus nbDevDn standard deviations.
         *        Must hold at least {@code endIdx - max(startIdx, bbandsLookback(...)) + 1}
-        *        values, the count the call produces (none when that is not positive).
+        *        values, and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -16833,13 +16843,13 @@ class Core {
         *        {@code MAType.DEFAULT} selects the default).
         * @param outRealUpperBand Middle band plus nbDevUp standard deviations. Must
         *        hold at least {@code endIdx - max(startIdx, bbandsLookback(...)) + 1}
-        *        values, the count the call produces (none when that is not positive).
+        *        values, and never be empty: an empty array is an absent output.
         * @param outRealMiddleBand The moving average. Must hold at least
-        *        {@code endIdx - max(startIdx, bbandsLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, bbandsLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @param outRealLowerBand Middle band minus nbDevDn standard deviations.
         *        Must hold at least {@code endIdx - max(startIdx, bbandsLookback(...)) + 1}
-        *        values, the count the call produces (none when that is not positive).
+        *        values, and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -17943,7 +17953,7 @@ class Core {
         *        {@code MAType.DEFAULT} selects the default).
         * @param outReal Width of the bands as a percentage of the middle band. Must
         *        hold at least {@code endIdx - max(startIdx, bbwLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -18026,7 +18036,7 @@ class Core {
         *        {@code MAType.DEFAULT} selects the default).
         * @param outReal Width of the bands as a percentage of the middle band. Must
         *        hold at least {@code endIdx - max(startIdx, bbwLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -19125,8 +19135,8 @@ class Core {
         *        selects the default).
         * @param outReal Beta: regression slope of inReal1-returns on
         *        inReal0-returns. Must hold at least
-        *        {@code endIdx - max(startIdx, betaLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, betaLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -19194,8 +19204,8 @@ class Core {
         *        selects the default).
         * @param outReal Beta: regression slope of inReal1-returns on
         *        inReal0-returns. Must hold at least
-        *        {@code endIdx - max(startIdx, betaLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, betaLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -20410,8 +20420,8 @@ class Core {
         * @param inLow Low price of each bar.
         * @param inClose Close price of each bar.
         * @param outReal Balance of Power value per bar. Must hold at least
-        *        {@code endIdx - max(startIdx, bopLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, bopLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -20474,8 +20484,8 @@ class Core {
         * @param inLow Low price of each bar.
         * @param inClose Close price of each bar.
         * @param outReal Balance of Power value per bar. Must hold at least
-        *        {@code endIdx - max(startIdx, bopLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, bopLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -21142,8 +21152,8 @@ class Core {
         *        (default 14; range 2..100000; {@code Integer.MIN_VALUE} selects the
         *        default).
         * @param outReal CCI value per bar. Must hold at least
-        *        {@code endIdx - max(startIdx, cciLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, cciLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -21210,8 +21220,8 @@ class Core {
         *        (default 14; range 2..100000; {@code Integer.MIN_VALUE} selects the
         *        default).
         * @param outReal CCI value per bar. Must hold at least
-        *        {@code endIdx - max(startIdx, cciLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, cciLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -21979,8 +21989,8 @@ class Core {
         * @param inClose Close price of each bar.
         * @param outInteger -100 on a detected pattern (always bearish), 0
         *        otherwise. Never emits +100. Must hold at least
-        *        {@code endIdx - max(startIdx, cdl2crowsLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, cdl2crowsLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -22053,8 +22063,8 @@ class Core {
         * @param inClose Close price of each bar.
         * @param outInteger -100 on a detected pattern (always bearish), 0
         *        otherwise. Never emits +100. Must hold at least
-        *        {@code endIdx - max(startIdx, cdl2crowsLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, cdl2crowsLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -22760,7 +22770,7 @@ class Core {
         * @param outInteger -100 when the bearish pattern is detected, 0 otherwise.
         *        Never emits +100. Must hold at least
         *        {@code endIdx - max(startIdx, cdl3blackcrowsLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -22833,7 +22843,7 @@ class Core {
         * @param outInteger -100 when the bearish pattern is detected, 0 otherwise.
         *        Never emits +100. Must hold at least
         *        {@code endIdx - max(startIdx, cdl3blackcrowsLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -23592,8 +23602,8 @@ class Core {
         * @param outInteger +100 for three inside up (bullish reversal, first candle
         *        black), -100 for three inside down (bearish reversal, first candle white),
         *        0 when no pattern. Computed as -candlecolor(1st)*100. Must hold at least
-        *        {@code endIdx - max(startIdx, cdl3insideLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, cdl3insideLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -23668,8 +23678,8 @@ class Core {
         * @param outInteger +100 for three inside up (bullish reversal, first candle
         *        black), -100 for three inside down (bearish reversal, first candle white),
         *        0 when no pattern. Computed as -candlecolor(1st)*100. Must hold at least
-        *        {@code endIdx - max(startIdx, cdl3insideLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, cdl3insideLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -24440,7 +24450,7 @@ class Core {
         *        black (falling) three-line strike, 0 otherwise. Sign is the color of the
         *        first three candles: candlecolor(i-1)*100. Must hold at least
         *        {@code endIdx - max(startIdx, cdl3linestrikeLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -24516,7 +24526,7 @@ class Core {
         *        black (falling) three-line strike, 0 otherwise. Sign is the color of the
         *        first three candles: candlecolor(i-1)*100. Must hold at least
         *        {@code endIdx - max(startIdx, cdl3linestrikeLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -25218,8 +25228,8 @@ class Core {
         * @param outInteger +100 for Three Outside Up (bullish), -100 for Three
         *        Outside Down (bearish), 0 when no pattern. Emits both signs; value is
         *        candle i-1's color * 100. Must hold at least
-        *        {@code endIdx - max(startIdx, cdl3outsideLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, cdl3outsideLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -25293,8 +25303,8 @@ class Core {
         * @param outInteger +100 for Three Outside Up (bullish), -100 for Three
         *        Outside Down (bearish), 0 when no pattern. Emits both signs; value is
         *        candle i-1's color * 100. Must hold at least
-        *        {@code endIdx - max(startIdx, cdl3outsideLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, cdl3outsideLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -26015,7 +26025,7 @@ class Core {
         * @param outInteger +100 on the bar where the pattern completes (always
         *        bullish), 0 otherwise. Never emits -100. Must hold at least
         *        {@code endIdx - max(startIdx, cdl3starsinsouthLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -26091,7 +26101,7 @@ class Core {
         * @param outInteger +100 on the bar where the pattern completes (always
         *        bullish), 0 otherwise. Never emits -100. Must hold at least
         *        {@code endIdx - max(startIdx, cdl3starsinsouthLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -27120,7 +27130,7 @@ class Core {
         * @param outInteger +100 when the pattern is detected, 0 otherwise; never
         *        negative (three white soldiers is always bullish) Must hold at least
         *        {@code endIdx - max(startIdx, cdl3whitesoldiersLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -27194,7 +27204,7 @@ class Core {
         * @param outInteger +100 when the pattern is detected, 0 otherwise; never
         *        negative (three white soldiers is always bullish) Must hold at least
         *        {@code endIdx - max(startIdx, cdl3whitesoldiersLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -28202,7 +28212,7 @@ class Core {
         *        white), -100 at a bearish abandoned baby top (3rd candle black), 0
         *        otherwise; sign = color of the 3rd candle. Must hold at least
         *        {@code endIdx - max(startIdx, cdlabandonedbabyLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -28281,7 +28291,7 @@ class Core {
         *        white), -100 at a bearish abandoned baby top (3rd candle black), 0
         *        otherwise; sign = color of the 3rd candle. Must hold at least
         *        {@code endIdx - max(startIdx, cdlabandonedbabyLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -29291,7 +29301,7 @@ class Core {
         * @param outInteger -100 on a detected pattern (always bearish), 0
         *        otherwise; never emits +100. Must hold at least
         *        {@code endIdx - max(startIdx, cdladvanceblockLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -29365,7 +29375,7 @@ class Core {
         * @param outInteger -100 on a detected pattern (always bearish), 0
         *        otherwise; never emits +100. Must hold at least
         *        {@code endIdx - max(startIdx, cdladvanceblockLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -30375,8 +30385,8 @@ class Core {
         * @param inClose Close price of each bar.
         * @param outInteger +100 for a bullish (white) belt-hold, -100 for a bearish
         *        (black) belt-hold, 0 otherwise. Must hold at least
-        *        {@code endIdx - max(startIdx, cdlbeltholdLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, cdlbeltholdLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -30450,8 +30460,8 @@ class Core {
         * @param inClose Close price of each bar.
         * @param outInteger +100 for a bullish (white) belt-hold, -100 for a bearish
         *        (black) belt-hold, 0 otherwise. Must hold at least
-        *        {@code endIdx - max(startIdx, cdlbeltholdLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, cdlbeltholdLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -31162,8 +31172,8 @@ class Core {
         * @param inClose Close price of each bar.
         * @param outInteger +100 when the fifth candle is white (bullish breakaway),
         *        -100 when it is black (bearish breakaway), 0 otherwise. Must hold at least
-        *        {@code endIdx - max(startIdx, cdlbreakawayLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, cdlbreakawayLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -31237,8 +31247,8 @@ class Core {
         * @param inClose Close price of each bar.
         * @param outInteger +100 when the fifth candle is white (bullish breakaway),
         *        -100 when it is black (bearish breakaway), 0 otherwise. Must hold at least
-        *        {@code endIdx - max(startIdx, cdlbreakawayLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, cdlbreakawayLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -32014,7 +32024,7 @@ class Core {
         * @param outInteger +100 for a white (bullish) closing marubozu, -100 for a
         *        black (bearish) one, 0 otherwise. Must hold at least
         *        {@code endIdx - max(startIdx, cdlclosingmarubozuLookback(...)) + 1}
-        *        values, the count the call produces (none when that is not positive).
+        *        values, and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -32087,7 +32097,7 @@ class Core {
         * @param outInteger +100 for a white (bullish) closing marubozu, -100 for a
         *        black (bearish) one, 0 otherwise. Must hold at least
         *        {@code endIdx - max(startIdx, cdlclosingmarubozuLookback(...)) + 1}
-        *        values, the count the call produces (none when that is not positive).
+        *        values, and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -32803,7 +32813,7 @@ class Core {
         * @param outInteger +100 on a match, 0 otherwise; never emits -100 (pattern
         *        is always bullish) Must hold at least
         *        {@code endIdx - max(startIdx, cdlconcealbabyswallLookback(...)) + 1}
-        *        values, the count the call produces (none when that is not positive).
+        *        values, and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -32875,7 +32885,7 @@ class Core {
         * @param outInteger +100 on a match, 0 otherwise; never emits -100 (pattern
         *        is always bullish) Must hold at least
         *        {@code endIdx - max(startIdx, cdlconcealbabyswallLookback(...)) + 1}
-        *        values, the count the call produces (none when that is not positive).
+        *        values, and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -33636,7 +33646,7 @@ class Core {
         * @param outInteger +100 when the second candle is white (bullish), -100
         *        when it is black (bearish), 0 when no pattern. Must hold at least
         *        {@code endIdx - max(startIdx, cdlcounterattackLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -33710,7 +33720,7 @@ class Core {
         * @param outInteger +100 when the second candle is white (bullish), -100
         *        when it is black (bearish), 0 when no pattern. Must hold at least
         *        {@code endIdx - max(startIdx, cdlcounterattackLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -34465,7 +34475,7 @@ class Core {
         * @param outInteger -100 when the pattern is detected (always bearish), 0
         *        otherwise; never emits +100. Must hold at least
         *        {@code endIdx - max(startIdx, cdldarkcloudcoverLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -34543,7 +34553,7 @@ class Core {
         * @param outInteger -100 when the pattern is detected (always bearish), 0
         *        otherwise; never emits +100. Must hold at least
         *        {@code endIdx - max(startIdx, cdldarkcloudcoverLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -35197,8 +35207,8 @@ class Core {
         * @param inLow Low price of each bar.
         * @param inClose Close price of each bar.
         * @param outInteger 100 when a doji is detected, else 0. Must hold at least
-        *        {@code endIdx - max(startIdx, cdldojiLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, cdldojiLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -35265,8 +35275,8 @@ class Core {
         * @param inLow Low price of each bar.
         * @param inClose Close price of each bar.
         * @param outInteger 100 when a doji is detected, else 0. Must hold at least
-        *        {@code endIdx - max(startIdx, cdldojiLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, cdldojiLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -35921,8 +35931,8 @@ class Core {
         * @param outInteger Emits +100 or -100 on a hit, 0 otherwise. Value is
         *        -candlecolor(candle1)*100: -100 when candle 1 is white (gap up), +100 when
         *        candle 1 is black (gap down) Must hold at least
-        *        {@code endIdx - max(startIdx, cdldojistarLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, cdldojistarLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -36000,8 +36010,8 @@ class Core {
         * @param outInteger Emits +100 or -100 on a hit, 0 otherwise. Value is
         *        -candlecolor(candle1)*100: -100 when candle 1 is white (gap up), +100 when
         *        candle 1 is black (gap down) Must hold at least
-        *        {@code endIdx - max(startIdx, cdldojistarLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, cdldojistarLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -36747,7 +36757,7 @@ class Core {
         *        -100. The +100 does not itself imply bullishness (must be read against the
         *        trend) Must hold at least
         *        {@code endIdx - max(startIdx, cdldragonflydojiLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -36825,7 +36835,7 @@ class Core {
         *        -100. The +100 does not itself imply bullishness (must be read against the
         *        trend) Must hold at least
         *        {@code endIdx - max(startIdx, cdldragonflydojiLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -37493,8 +37503,8 @@ class Core {
         *        (bearish, black engulfs white), 0 otherwise. Magnitude 100 when the second
         *        body strictly engulfs both ends; 80 when the bodies share an exact
         *        endpoint (open[i]==close[i-1] or close[i]==open[i-1]) Must hold at least
-        *        {@code endIdx - max(startIdx, cdlengulfingLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, cdlengulfingLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -37569,8 +37579,8 @@ class Core {
         *        (bearish, black engulfs white), 0 otherwise. Magnitude 100 when the second
         *        body strictly engulfs both ends; 80 when the bodies share an exact
         *        endpoint (open[i]==close[i-1] or close[i]==open[i-1]) Must hold at least
-        *        {@code endIdx - max(startIdx, cdlengulfingLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, cdlengulfingLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -38281,7 +38291,7 @@ class Core {
         * @param outInteger -100 when the pattern is detected, 0 otherwise. Always
         *        bearish; never emits +100. Must hold at least
         *        {@code endIdx - max(startIdx, cdleveningdojistarLookback(...)) + 1}
-        *        values, the count the call produces (none when that is not positive).
+        *        values, and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -38359,7 +38369,7 @@ class Core {
         * @param outInteger -100 when the pattern is detected, 0 otherwise. Always
         *        bearish; never emits +100. Must hold at least
         *        {@code endIdx - max(startIdx, cdleveningdojistarLookback(...)) + 1}
-        *        values, the count the call produces (none when that is not positive).
+        *        values, and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -39245,7 +39255,7 @@ class Core {
         * @param outInteger -100 when detected (always bearish), 0 otherwise. Never
         *        emits +100. Must hold at least
         *        {@code endIdx - max(startIdx, cdleveningstarLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -39324,7 +39334,7 @@ class Core {
         * @param outInteger -100 when detected (always bearish), 0 otherwise. Never
         *        emits +100. Must hold at least
         *        {@code endIdx - max(startIdx, cdleveningstarLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -40123,7 +40133,7 @@ class Core {
         *        down-gap (bearish continuation), 0 when no pattern. Sign is set solely by
         *        the C2-vs-C1 gap direction (realbodygapup ? 100 : -100) Must hold at least
         *        {@code endIdx - max(startIdx, cdlgapsidesidewhiteLookback(...)) + 1}
-        *        values, the count the call produces (none when that is not positive).
+        *        values, and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -40198,7 +40208,7 @@ class Core {
         *        down-gap (bearish continuation), 0 when no pattern. Sign is set solely by
         *        the C2-vs-C1 gap direction (realbodygapup ? 100 : -100) Must hold at least
         *        {@code endIdx - max(startIdx, cdlgapsidesidewhiteLookback(...)) + 1}
-        *        values, the count the call produces (none when that is not positive).
+        *        values, and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -40965,7 +40975,7 @@ class Core {
         *        negative; the positive sign is not a directional signal (evaluate relative
         *        to the trend) Must hold at least
         *        {@code endIdx - max(startIdx, cdlgravestonedojiLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -41043,7 +41053,7 @@ class Core {
         *        negative; the positive sign is not a directional signal (evaluate relative
         *        to the trend) Must hold at least
         *        {@code endIdx - max(startIdx, cdlgravestonedojiLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -41816,8 +41826,8 @@ class Core {
         * @param inClose Close price of each bar.
         * @param outInteger +100 when the hammer is detected, 0 otherwise. Bullish
         *        only; never emits -100. Must hold at least
-        *        {@code endIdx - max(startIdx, cdlhammerLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, cdlhammerLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -41889,8 +41899,8 @@ class Core {
         * @param inClose Close price of each bar.
         * @param outInteger +100 when the hammer is detected, 0 otherwise. Bullish
         *        only; never emits -100. Must hold at least
-        *        {@code endIdx - max(startIdx, cdlhammerLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, cdlhammerLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -42810,8 +42820,8 @@ class Core {
         * @param inClose Close price of each bar.
         * @param outInteger -100 when detected (always bearish), 0 otherwise. Never
         *        emits +100. Must hold at least
-        *        {@code endIdx - max(startIdx, cdlhangingmanLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, cdlhangingmanLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -42885,8 +42895,8 @@ class Core {
         * @param inClose Close price of each bar.
         * @param outInteger -100 when detected (always bearish), 0 otherwise. Never
         *        emits +100. Must hold at least
-        *        {@code endIdx - max(startIdx, cdlhangingmanLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, cdlhangingmanLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -43773,8 +43783,8 @@ class Core {
         *        -100/-80 when it is white (bearish), 0 otherwise; 80 when the two real
         *        bodies share an end, 100 when the 1st body strictly overhangs both ends of
         *        the 2nd. Must hold at least
-        *        {@code endIdx - max(startIdx, cdlharamiLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, cdlharamiLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -43847,8 +43857,8 @@ class Core {
         *        -100/-80 when it is white (bearish), 0 otherwise; 80 when the two real
         *        bodies share an end, 100 when the 1st body strictly overhangs both ends of
         *        the 2nd. Must hold at least
-        *        {@code endIdx - max(startIdx, cdlharamiLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, cdlharamiLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -44654,7 +44664,7 @@ class Core {
         *        100 for strict containment inside the first body, 80 when one real-body
         *        end matches. Must hold at least
         *        {@code endIdx - max(startIdx, cdlharamicrossLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -44729,7 +44739,7 @@ class Core {
         *        100 for strict containment inside the first body, 80 when one real-body
         *        end matches. Must hold at least
         *        {@code endIdx - max(startIdx, cdlharamicrossLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -45496,8 +45506,8 @@ class Core {
         * @param outInteger On a hit, +100 when the candle is white (close &gt;=
         *        open) or -100 when black (close &lt; open); 0 otherwise. Sign denotes
         *        color, NOT bull/bear. Must hold at least
-        *        {@code endIdx - max(startIdx, cdlhighwaveLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, cdlhighwaveLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -45572,8 +45582,8 @@ class Core {
         * @param outInteger On a hit, +100 when the candle is white (close &gt;=
         *        open) or -100 when black (close &lt; open); 0 otherwise. Sign denotes
         *        color, NOT bull/bear. Must hold at least
-        *        {@code endIdx - max(startIdx, cdlhighwaveLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, cdlhighwaveLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -46313,8 +46323,8 @@ class Core {
         * @param inClose Close price of each bar.
         * @param outInteger +100/-100 at the hikkake (breakout) bar for bull/bear;
         *        +200/-200 at a later confirmation bar; 0 otherwise. Must hold at least
-        *        {@code endIdx - max(startIdx, cdlhikkakeLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, cdlhikkakeLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -46386,8 +46396,8 @@ class Core {
         * @param inClose Close price of each bar.
         * @param outInteger +100/-100 at the hikkake (breakout) bar for bull/bear;
         *        +200/-200 at a later confirmation bar; 0 otherwise. Must hold at least
-        *        {@code endIdx - max(startIdx, cdlhikkakeLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, cdlhikkakeLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -47185,8 +47195,8 @@ class Core {
         * @param outInteger +100 bullish hikkake bar, -100 bearish; +200 confirmed
         *        bullish, -200 confirmed bearish (confirmation adds another +/-100); 0
         *        otherwise. Must hold at least
-        *        {@code endIdx - max(startIdx, cdlhikkakemodLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, cdlhikkakemodLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -47258,8 +47268,8 @@ class Core {
         * @param outInteger +100 bullish hikkake bar, -100 bearish; +200 confirmed
         *        bullish, -200 confirmed bearish (confirmation adds another +/-100); 0
         *        otherwise. Must hold at least
-        *        {@code endIdx - max(startIdx, cdlhikkakemodLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, cdlhikkakemodLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -48085,7 +48095,7 @@ class Core {
         * @param outInteger +100 when the pattern is detected, 0 otherwise. Never
         *        emits -100 (always bullish) Must hold at least
         *        {@code endIdx - max(startIdx, cdlhomingpigeonLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -48157,7 +48167,7 @@ class Core {
         * @param outInteger +100 when the pattern is detected, 0 otherwise. Never
         *        emits -100 (always bullish) Must hold at least
         *        {@code endIdx - max(startIdx, cdlhomingpigeonLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -48936,7 +48946,7 @@ class Core {
         * @param outInteger -100 when the pattern is detected (always bearish), 0
         *        otherwise. Never emits +100. Must hold at least
         *        {@code endIdx - max(startIdx, cdlidentical3crowsLookback(...)) + 1}
-        *        values, the count the call produces (none when that is not positive).
+        *        values, and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -49009,7 +49019,7 @@ class Core {
         * @param outInteger -100 when the pattern is detected (always bearish), 0
         *        otherwise. Never emits +100. Must hold at least
         *        {@code endIdx - max(startIdx, cdlidentical3crowsLookback(...)) + 1}
-        *        values, the count the call produces (none when that is not positive).
+        *        values, and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -49810,8 +49820,8 @@ class Core {
         * @param outInteger -100 when the in-neck pattern is detected, 0 otherwise.
         *        This pattern only ever emits the negative (bearish) signal; it never emits
         *        +100. Must hold at least
-        *        {@code endIdx - max(startIdx, cdlinneckLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, cdlinneckLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -49885,8 +49895,8 @@ class Core {
         * @param outInteger -100 when the in-neck pattern is detected, 0 otherwise.
         *        This pattern only ever emits the negative (bearish) signal; it never emits
         *        +100. Must hold at least
-        *        {@code endIdx - max(startIdx, cdlinneckLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, cdlinneckLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -50662,7 +50672,7 @@ class Core {
         * @param outInteger +100 when the inverted hammer is detected, 0 otherwise.
         *        Never emits -100; the pattern is always bullish. Must hold at least
         *        {@code endIdx - max(startIdx, cdlinvertedhammerLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -50735,7 +50745,7 @@ class Core {
         * @param outInteger +100 when the inverted hammer is detected, 0 otherwise.
         *        Never emits -100; the pattern is always bullish. Must hold at least
         *        {@code endIdx - max(startIdx, cdlinvertedhammerLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -51542,8 +51552,8 @@ class Core {
         * @param inClose Close price of each bar.
         * @param outInteger +100 when the second candle is white (bullish), -100
         *        when it is black (bearish), 0 otherwise. Must hold at least
-        *        {@code endIdx - max(startIdx, cdlkickingLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, cdlkickingLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -51614,8 +51624,8 @@ class Core {
         * @param inClose Close price of each bar.
         * @param outInteger +100 when the second candle is white (bullish), -100
         *        when it is black (bearish), 0 otherwise. Must hold at least
-        *        {@code endIdx - max(startIdx, cdlkickingLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, cdlkickingLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -52403,7 +52413,7 @@ class Core {
         *        realbody(i-1), else i-1; tie goes to i-1): +100 if that marubozu is white,
         *        -100 if black. Must hold at least
         *        {@code endIdx - max(startIdx, cdlkickingbylengthLookback(...)) + 1}
-        *        values, the count the call produces (none when that is not positive).
+        *        values, and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -52473,7 +52483,7 @@ class Core {
         *        realbody(i-1), else i-1; tie goes to i-1): +100 if that marubozu is white,
         *        -100 if black. Must hold at least
         *        {@code endIdx - max(startIdx, cdlkickingbylengthLookback(...)) + 1}
-        *        values, the count the call produces (none when that is not positive).
+        *        values, and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -53225,7 +53235,7 @@ class Core {
         * @param outInteger +100 on a detected ladder bottom, 0 otherwise. Only ever
         *        emits +100 (never -100); inherently bullish. Must hold at least
         *        {@code endIdx - max(startIdx, cdlladderbottomLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -53300,7 +53310,7 @@ class Core {
         * @param outInteger +100 on a detected ladder bottom, 0 otherwise. Only ever
         *        emits +100 (never -100); inherently bullish. Must hold at least
         *        {@code endIdx - max(startIdx, cdlladderbottomLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -54023,7 +54033,7 @@ class Core {
         *        is emitted; the code never emits -100, and the positive sign does NOT mean
         *        bullish. Must hold at least
         *        {@code endIdx - max(startIdx, cdllongleggeddojiLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -54098,7 +54108,7 @@ class Core {
         *        is emitted; the code never emits -100, and the positive sign does NOT mean
         *        bullish. Must hold at least
         *        {@code endIdx - max(startIdx, cdllongleggeddojiLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -54794,8 +54804,8 @@ class Core {
         * @param inClose Close price of each bar.
         * @param outInteger +100 on a white (close&gt;=open) long line, -100 on a
         *        black long line, 0 when no pattern. Must hold at least
-        *        {@code endIdx - max(startIdx, cdllonglineLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, cdllonglineLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -54864,8 +54874,8 @@ class Core {
         * @param inClose Close price of each bar.
         * @param outInteger +100 on a white (close&gt;=open) long line, -100 on a
         *        black long line, 0 when no pattern. Must hold at least
-        *        {@code endIdx - max(startIdx, cdllonglineLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, cdllonglineLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -55564,7 +55574,7 @@ class Core {
         * @param outInteger +100 on a white (bullish) marubozu, -100 on a black
         *        (bearish) marubozu, 0 when no pattern. Sign follows the candle color. Must
         *        hold at least {@code endIdx - max(startIdx, cdlmarubozuLookback(...)) + 1}
-        *        values, the count the call produces (none when that is not positive).
+        *        values, and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -55636,7 +55646,7 @@ class Core {
         * @param outInteger +100 on a white (bullish) marubozu, -100 on a black
         *        (bearish) marubozu, 0 when no pattern. Sign follows the candle color. Must
         *        hold at least {@code endIdx - max(startIdx, cdlmarubozuLookback(...)) + 1}
-        *        values, the count the call produces (none when that is not positive).
+        *        values, and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -56311,7 +56321,7 @@ class Core {
         * @param outInteger +100 when the pattern is present, 0 otherwise. Only +100
         *        is ever emitted (matching low is always bullish); never -100. Must hold at
         *        least {@code endIdx - max(startIdx, cdlmatchinglowLookback(...)) + 1}
-        *        values, the count the call produces (none when that is not positive).
+        *        values, and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -56383,7 +56393,7 @@ class Core {
         * @param outInteger +100 when the pattern is present, 0 otherwise. Only +100
         *        is ever emitted (matching low is always bullish); never -100. Must hold at
         *        least {@code endIdx - max(startIdx, cdlmatchinglowLookback(...)) + 1}
-        *        values, the count the call produces (none when that is not positive).
+        *        values, and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -57122,8 +57132,8 @@ class Core {
         *        {@link Core#REAL_DEFAULT} selects the default).
         * @param outInteger +100 when the bullish Mat Hold is detected, 0 otherwise.
         *        Never emits -100. Must hold at least
-        *        {@code endIdx - max(startIdx, cdlmatholdLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, cdlmatholdLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -57201,8 +57211,8 @@ class Core {
         *        {@link Core#REAL_DEFAULT} selects the default).
         * @param outInteger +100 when the bullish Mat Hold is detected, 0 otherwise.
         *        Never emits -100. Must hold at least
-        *        {@code endIdx - max(startIdx, cdlmatholdLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, cdlmatholdLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -58121,7 +58131,7 @@ class Core {
         * @param outInteger +100 when the pattern is detected, 0 otherwise. Always
         *        bullish; never emits -100. Must hold at least
         *        {@code endIdx - max(startIdx, cdlmorningdojistarLookback(...)) + 1}
-        *        values, the count the call produces (none when that is not positive).
+        *        values, and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -58202,7 +58212,7 @@ class Core {
         * @param outInteger +100 when the pattern is detected, 0 otherwise. Always
         *        bullish; never emits -100. Must hold at least
         *        {@code endIdx - max(startIdx, cdlmorningdojistarLookback(...)) + 1}
-        *        values, the count the call produces (none when that is not positive).
+        *        values, and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -59087,7 +59097,7 @@ class Core {
         * @param outInteger +100 when the morning star is detected, 0 otherwise.
         *        Never negative (pattern is exclusively bullish) Must hold at least
         *        {@code endIdx - max(startIdx, cdlmorningstarLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -59168,7 +59178,7 @@ class Core {
         * @param outInteger +100 when the morning star is detected, 0 otherwise.
         *        Never negative (pattern is exclusively bullish) Must hold at least
         *        {@code endIdx - max(startIdx, cdlmorningstarLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -59958,8 +59968,8 @@ class Core {
         * @param inClose Close price of each bar.
         * @param outInteger -100 on a match, 0 otherwise. Only -100 is ever emitted
         *        (never +100); on-neck is always bearish. Must hold at least
-        *        {@code endIdx - max(startIdx, cdlonneckLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, cdlonneckLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -60031,8 +60041,8 @@ class Core {
         * @param inClose Close price of each bar.
         * @param outInteger -100 on a match, 0 otherwise. Only -100 is ever emitted
         *        (never +100); on-neck is always bearish. Must hold at least
-        *        {@code endIdx - max(startIdx, cdlonneckLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, cdlonneckLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -60759,8 +60769,8 @@ class Core {
         * @param inClose Close price of each bar.
         * @param outInteger +100 when the piercing pattern is detected; 0 otherwise.
         *        Always bullish, never emits -100. Must hold at least
-        *        {@code endIdx - max(startIdx, cdlpiercingLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, cdlpiercingLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -60832,8 +60842,8 @@ class Core {
         * @param inClose Close price of each bar.
         * @param outInteger +100 when the piercing pattern is detected; 0 otherwise.
         *        Always bullish, never emits -100. Must hold at least
-        *        {@code endIdx - max(startIdx, cdlpiercingLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, cdlpiercingLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -61562,7 +61572,7 @@ class Core {
         *        -100; the code notes the positive value does NOT imply bullish, it signals
         *        uncertainty. Must hold at least
         *        {@code endIdx - max(startIdx, cdlrickshawmanLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -61636,7 +61646,7 @@ class Core {
         *        -100; the code notes the positive value does NOT imply bullish, it signals
         *        uncertainty. Must hold at least
         *        {@code endIdx - max(startIdx, cdlrickshawmanLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -62458,7 +62468,7 @@ class Core {
         *        continuation), -100 when candle 1 is black (falling/bearish continuation),
         *        0 otherwise. Sign = 100 * color of candle 1. Must hold at least
         *        {@code endIdx - max(startIdx, cdlrisefall3methodsLookback(...)) + 1}
-        *        values, the count the call produces (none when that is not positive).
+        *        values, and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -62535,7 +62545,7 @@ class Core {
         *        continuation), -100 when candle 1 is black (falling/bearish continuation),
         *        0 otherwise. Sign = 100 * color of candle 1. Must hold at least
         *        {@code endIdx - max(startIdx, cdlrisefall3methodsLookback(...)) + 1}
-        *        values, the count the call produces (none when that is not positive).
+        *        values, and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -63415,7 +63425,7 @@ class Core {
         * @param outInteger +100 for a bullish (white second candle) hit, -100 for a
         *        bearish (black second candle) hit, 0 otherwise. Must hold at least
         *        {@code endIdx - max(startIdx, cdlseparatinglinesLookback(...)) + 1}
-        *        values, the count the call produces (none when that is not positive).
+        *        values, and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -63486,7 +63496,7 @@ class Core {
         * @param outInteger +100 for a bullish (white second candle) hit, -100 for a
         *        bearish (black second candle) hit, 0 otherwise. Must hold at least
         *        {@code endIdx - max(startIdx, cdlseparatinglinesLookback(...)) + 1}
-        *        values, the count the call produces (none when that is not positive).
+        *        values, and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -64325,7 +64335,7 @@ class Core {
         * @param outInteger -100 when the shooting star is detected, 0 otherwise.
         *        Only ever emits negative (bearish); never +100. Must hold at least
         *        {@code endIdx - max(startIdx, cdlshootingstarLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -64400,7 +64410,7 @@ class Core {
         * @param outInteger -100 when the shooting star is detected, 0 otherwise.
         *        Only ever emits negative (bearish); never +100. Must hold at least
         *        {@code endIdx - max(startIdx, cdlshootingstarLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -65178,8 +65188,8 @@ class Core {
         * @param outInteger +100 for a matching white candle (close&gt;=open), -100
         *        for a matching black candle (close&lt;open), 0 when no pattern. Sign is
         *        candle color, NOT bullish/bearish. Must hold at least
-        *        {@code endIdx - max(startIdx, cdlshortlineLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, cdlshortlineLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -65247,8 +65257,8 @@ class Core {
         * @param outInteger +100 for a matching white candle (close&gt;=open), -100
         *        for a matching black candle (close&lt;open), 0 when no pattern. Sign is
         *        candle color, NOT bullish/bearish. Must hold at least
-        *        {@code endIdx - max(startIdx, cdlshortlineLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, cdlshortlineLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -65914,7 +65924,7 @@ class Core {
         *        when black (close&lt;open), 0 when no pattern. Sign is candle color, NOT
         *        bullish/bearish. Must hold at least
         *        {@code endIdx - max(startIdx, cdlspinningtopLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -65983,7 +65993,7 @@ class Core {
         *        when black (close&lt;open), 0 when no pattern. Sign is candle color, NOT
         *        bullish/bearish. Must hold at least
         *        {@code endIdx - max(startIdx, cdlspinningtopLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -66725,7 +66735,7 @@ class Core {
         * @param outInteger -100 when the pattern is detected (always bearish), 0
         *        otherwise. Never emits +100. Must hold at least
         *        {@code endIdx - max(startIdx, cdlstalledpatternLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -66799,7 +66809,7 @@ class Core {
         * @param outInteger -100 when the pattern is detected (always bearish), 0
         *        otherwise. Never emits +100. Must hold at least
         *        {@code endIdx - max(startIdx, cdlstalledpatternLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -67687,7 +67697,7 @@ class Core {
         * @param outInteger +100 when the pattern is present, 0 otherwise. Never
         *        -100 — Stick Sandwich is always bullish. Must hold at least
         *        {@code endIdx - max(startIdx, cdlsticksandwichLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -67760,7 +67770,7 @@ class Core {
         * @param outInteger +100 when the pattern is present, 0 otherwise. Never
         *        -100 — Stick Sandwich is always bullish. Must hold at least
         *        {@code endIdx - max(startIdx, cdlsticksandwichLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -68488,8 +68498,8 @@ class Core {
         * @param outInteger +100 when the takuri pattern is detected, 0 otherwise.
         *        Never negative; the positive sign is a convention and does not by itself
         *        imply bullishness. Must hold at least
-        *        {@code endIdx - max(startIdx, cdltakuriLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, cdltakuriLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -68563,8 +68573,8 @@ class Core {
         * @param outInteger +100 when the takuri pattern is detected, 0 otherwise.
         *        Never negative; the positive sign is a convention and does not by itself
         *        imply bullishness. Must hold at least
-        *        {@code endIdx - max(startIdx, cdltakuriLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, cdltakuriLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -69319,8 +69329,8 @@ class Core {
         * @param outInteger +100 on a bullish (upside-gap) tasuki gap, -100 on a
         *        bearish (downside-gap) tasuki gap, 0 otherwise. Sign equals the color of
         *        the gap candle i-1 (candlecolor(i-1)*100) Must hold at least
-        *        {@code endIdx - max(startIdx, cdltasukigapLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, cdltasukigapLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -69393,8 +69403,8 @@ class Core {
         * @param outInteger +100 on a bullish (upside-gap) tasuki gap, -100 on a
         *        bearish (downside-gap) tasuki gap, 0 otherwise. Sign equals the color of
         *        the gap candle i-1 (candlecolor(i-1)*100) Must hold at least
-        *        {@code endIdx - max(startIdx, cdltasukigapLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, cdltasukigapLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -70126,8 +70136,8 @@ class Core {
         * @param inClose Close price of each bar.
         * @param outInteger -100 when the pattern is detected, 0 otherwise. Always
         *        bearish; never emits +100. Must hold at least
-        *        {@code endIdx - max(startIdx, cdlthrustingLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, cdlthrustingLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -70202,8 +70212,8 @@ class Core {
         * @param inClose Close price of each bar.
         * @param outInteger -100 when the pattern is detected, 0 otherwise. Always
         *        bearish; never emits +100. Must hold at least
-        *        {@code endIdx - max(startIdx, cdlthrustingLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, cdlthrustingLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -70936,7 +70946,7 @@ class Core {
         * @param outInteger +100 (bullish, star gapped down), -100 (bearish, star
         *        gapped up), or 0 when no pattern. Both signs are emitted. Must hold at
         *        least {@code endIdx - max(startIdx, cdltristarLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -71010,7 +71020,7 @@ class Core {
         * @param outInteger +100 (bullish, star gapped down), -100 (bearish, star
         *        gapped up), or 0 when no pattern. Both signs are emitted. Must hold at
         *        least {@code endIdx - max(startIdx, cdltristarLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -71739,7 +71749,7 @@ class Core {
         * @param outInteger +100 when the pattern is present, 0 otherwise.
         *        Bullish-only: never emits -100. Must hold at least
         *        {@code endIdx - max(startIdx, cdlunique3riverLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -71813,7 +71823,7 @@ class Core {
         * @param outInteger +100 when the pattern is present, 0 otherwise.
         *        Bullish-only: never emits -100. Must hold at least
         *        {@code endIdx - max(startIdx, cdlunique3riverLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -72593,7 +72603,7 @@ class Core {
         * @param outInteger -100 on a pattern bar, 0 otherwise. Bearish-only: this
         *        pattern never emits +100. Must hold at least
         *        {@code endIdx - max(startIdx, cdlupsidegap2crowsLookback(...)) + 1}
-        *        values, the count the call produces (none when that is not positive).
+        *        values, and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -72667,7 +72677,7 @@ class Core {
         * @param outInteger -100 on a pattern bar, 0 otherwise. Bearish-only: this
         *        pattern never emits +100. Must hold at least
         *        {@code endIdx - max(startIdx, cdlupsidegap2crowsLookback(...)) + 1}
-        *        values, the count the call produces (none when that is not positive).
+        *        values, and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -73386,7 +73396,7 @@ class Core {
         *        continuation), 0 otherwise. Equals candlecolor(1st candle) * 100. Must
         *        hold at least
         *        {@code endIdx - max(startIdx, cdlxsidegap3methodsLookback(...)) + 1}
-        *        values, the count the call produces (none when that is not positive).
+        *        values, and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -73462,7 +73472,7 @@ class Core {
         *        continuation), 0 otherwise. Equals candlecolor(1st candle) * 100. Must
         *        hold at least
         *        {@code endIdx - max(startIdx, cdlxsidegap3methodsLookback(...)) + 1}
-        *        values, the count the call produces (none when that is not positive).
+        *        values, and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -73961,8 +73971,8 @@ class Core {
         * @param endIdx Last bar of the requested range (inclusive).
         * @param inReal Input values.
         * @param outReal Each input rounded up to nearest integer. Must hold at
-        *        least {@code endIdx - max(startIdx, ceilLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        least {@code endIdx - max(startIdx, ceilLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -74016,8 +74026,8 @@ class Core {
         * @param endIdx Last bar of the requested range (inclusive).
         * @param inReal Input values.
         * @param outReal Each input rounded up to nearest integer. Must hold at
-        *        least {@code endIdx - max(startIdx, ceilLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        least {@code endIdx - max(startIdx, ceilLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -75189,8 +75199,8 @@ class Core {
         * @param optInTimePeriod Number of bars in the window (default 10; range
         *        2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Negated center of gravity of the window. Must hold at least
-        *        {@code endIdx - max(startIdx, cgLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, cgLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -75262,8 +75272,8 @@ class Core {
         * @param optInTimePeriod Number of bars in the window (default 10; range
         *        2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Negated center of gravity of the window. Must hold at least
-        *        {@code endIdx - max(startIdx, cgLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, cgLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -76969,8 +76979,8 @@ class Core {
         * @param optInTimePeriod Number of bars in the window (default 14; range
         *        2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Choppiness Index value. Must hold at least
-        *        {@code endIdx - max(startIdx, chopLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, chopLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -77047,8 +77057,8 @@ class Core {
         * @param optInTimePeriod Number of bars in the window (default 14; range
         *        2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Choppiness Index value. Must hold at least
-        *        {@code endIdx - max(startIdx, chopLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, chopLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -77835,8 +77845,8 @@ class Core {
         * @param optInTimePeriod Number of bars in the window (default 14; range
         *        2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Choppiness Index value. Must hold at least
-        *        {@code endIdx - max(startIdx, choptrLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, choptrLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -77913,8 +77923,8 @@ class Core {
         * @param optInTimePeriod Number of bars in the window (default 14; range
         *        2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Choppiness Index value. Must hold at least
-        *        {@code endIdx - max(startIdx, choptrLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, choptrLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -79392,12 +79402,12 @@ class Core {
         *        default).
         * @param outHighStop Highest of the recent first high stops; usually plotted
         *        as the short stop. Must hold at least
-        *        {@code endIdx - max(startIdx, ckspLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, ckspLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @param outLowStop Lowest of the recent first low stops; usually plotted as
         *        the long stop. Must hold at least
-        *        {@code endIdx - max(startIdx, ckspLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, ckspLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -79490,12 +79500,12 @@ class Core {
         *        default).
         * @param outHighStop Highest of the recent first high stops; usually plotted
         *        as the short stop. Must hold at least
-        *        {@code endIdx - max(startIdx, ckspLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, ckspLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @param outLowStop Lowest of the recent first low stops; usually plotted as
         *        the long stop. Must hold at least
-        *        {@code endIdx - max(startIdx, ckspLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, ckspLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -80946,8 +80956,8 @@ class Core {
         * @param optInTimePeriod Number of bars in the window (default 20; range
         *        2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Chaikin money flow, in the range -1 to +1. Must hold at
-        *        least {@code endIdx - max(startIdx, cmfLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        least {@code endIdx - max(startIdx, cmfLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -81040,8 +81050,8 @@ class Core {
         * @param optInTimePeriod Number of bars in the window (default 20; range
         *        2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Chaikin money flow, in the range -1 to +1. Must hold at
-        *        least {@code endIdx - max(startIdx, cmfLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        least {@code endIdx - max(startIdx, cmfLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -81894,8 +81904,8 @@ class Core {
         * @param optInTimePeriod Bars over which gains/losses are smoothed (default
         *        14; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal CMO oscillator value. Must hold at least
-        *        {@code endIdx - max(startIdx, cmoLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, cmoLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -81958,8 +81968,8 @@ class Core {
         * @param optInTimePeriod Bars over which gains/losses are smoothed (default
         *        14; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal CMO oscillator value. Must hold at least
-        *        {@code endIdx - max(startIdx, cmoLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, cmoLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -82753,8 +82763,8 @@ class Core {
         * @param optInTimePeriod Number of trailing price changes summed (default
         *        14; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal CMOU oscillator value. Must hold at least
-        *        {@code endIdx - max(startIdx, cmouLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, cmouLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -82818,8 +82828,8 @@ class Core {
         * @param optInTimePeriod Number of trailing price changes summed (default
         *        14; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal CMOU oscillator value. Must hold at least
-        *        {@code endIdx - max(startIdx, cmouLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, cmouLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -83837,8 +83847,8 @@ class Core {
         * @param optInROC2Period Long rate-of-change period (default 14; range
         *        1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Coppock Curve value. Must hold at least
-        *        {@code endIdx - max(startIdx, coppockLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, coppockLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -83907,8 +83917,8 @@ class Core {
         * @param optInROC2Period Long rate-of-change period (default 14; range
         *        1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Coppock Curve value. Must hold at least
-        *        {@code endIdx - max(startIdx, coppockLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, coppockLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -85138,8 +85148,8 @@ class Core {
         * @param optInTimePeriod Rolling window length (default 30; range 1..100000;
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Correlation coefficient r in [-1, 1]. Must hold at least
-        *        {@code endIdx - max(startIdx, correlLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, correlLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -85207,8 +85217,8 @@ class Core {
         * @param optInTimePeriod Rolling window length (default 30; range 1..100000;
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Correlation coefficient r in [-1, 1]. Must hold at least
-        *        {@code endIdx - max(startIdx, correlLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, correlLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -86289,8 +86299,8 @@ class Core {
         * @param endIdx Last bar of the requested range (inclusive).
         * @param inReal Input values, treated as angles in radians.
         * @param outReal Cosine of each input value. Must hold at least
-        *        {@code endIdx - max(startIdx, cosLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, cosLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -86346,8 +86356,8 @@ class Core {
         * @param endIdx Last bar of the requested range (inclusive).
         * @param inReal Input values, treated as angles in radians.
         * @param outReal Cosine of each input value. Must hold at least
-        *        {@code endIdx - max(startIdx, cosLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, cosLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -86728,8 +86738,8 @@ class Core {
         * @param endIdx Last bar of the requested range (inclusive).
         * @param inReal Input values to transform.
         * @param outReal Hyperbolic cosine of each input. Must hold at least
-        *        {@code endIdx - max(startIdx, coshLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, coshLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -86784,8 +86794,8 @@ class Core {
         * @param endIdx Last bar of the requested range (inclusive).
         * @param inReal Input values to transform.
         * @param outReal Hyperbolic cosine of each input. Must hold at least
-        *        {@code endIdx - max(startIdx, coshLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, coshLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -87390,8 +87400,8 @@ class Core {
         *        ranked against (default 100; range 2..10000; {@code Integer.MIN_VALUE}
         *        selects the default).
         * @param outReal The averaged reading, 0 to 100. Must hold at least
-        *        {@code endIdx - max(startIdx, crsiLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, crsiLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -87470,8 +87480,8 @@ class Core {
         *        ranked against (default 100; range 2..10000; {@code Integer.MIN_VALUE}
         *        selects the default).
         * @param outReal The averaged reading, 0 to 100. Must hold at least
-        *        {@code endIdx - max(startIdx, crsiLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, crsiLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -88344,8 +88354,8 @@ class Core {
         *        ramp (default 20; range 2..100000; {@code Integer.MIN_VALUE} selects the
         *        default).
         * @param outReal Correlation against the ramp, in -1..+1. Must hold at least
-        *        {@code endIdx - max(startIdx, ctiLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, ctiLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -88419,8 +88429,8 @@ class Core {
         *        ramp (default 20; range 2..100000; {@code Integer.MIN_VALUE} selects the
         *        default).
         * @param outReal Correlation against the ramp, in -1..+1. Must hold at least
-        *        {@code endIdx - max(startIdx, ctiLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, ctiLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -89305,8 +89315,8 @@ class Core {
         * @param inReal Source series (canonically a per-bar net figure, e.g.
         *        advances − declines)
         * @param outReal Running total since the anchor bar. Must hold at least
-        *        {@code endIdx - max(startIdx, cumsumLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, cumsumLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -89371,8 +89381,8 @@ class Core {
         * @param inReal Source series (canonically a per-bar net figure, e.g.
         *        advances − declines)
         * @param outReal Running total since the anchor bar. Must hold at least
-        *        {@code endIdx - max(startIdx, cumsumLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, cumsumLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -89977,8 +89987,8 @@ class Core {
         *        (default 10; range 1..100000; {@code Integer.MIN_VALUE} selects the
         *        default).
         * @param outReal Percent change of the smoothed high-low spread. Must hold
-        *        at least {@code endIdx - max(startIdx, cviLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        at least {@code endIdx - max(startIdx, cviLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -90063,8 +90073,8 @@ class Core {
         *        (default 10; range 1..100000; {@code Integer.MIN_VALUE} selects the
         *        default).
         * @param outReal Percent change of the smoothed high-low spread. Must hold
-        *        at least {@code endIdx - max(startIdx, cviLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        at least {@code endIdx - max(startIdx, cviLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -90816,8 +90826,8 @@ class Core {
         * @param optInTimePeriod Smoothing period for both EMA passes (default 30;
         *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal DEMA line. Must hold at least
-        *        {@code endIdx - max(startIdx, demaLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, demaLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -90880,8 +90890,8 @@ class Core {
         * @param optInTimePeriod Smoothing period for both EMA passes (default 30;
         *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal DEMA line. Must hold at least
-        *        {@code endIdx - max(startIdx, demaLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, demaLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -91440,8 +91450,8 @@ class Core {
         * @param inReal0 Dividend (numerator) series.
         * @param inReal1 Divisor (denominator) series.
         * @param outReal Per-element quotient inReal0/inReal1. Must hold at least
-        *        {@code endIdx - max(startIdx, divLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, divLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -91503,8 +91513,8 @@ class Core {
         * @param inReal0 Dividend (numerator) series.
         * @param inReal1 Divisor (denominator) series.
         * @param outReal Per-element quotient inReal0/inReal1. Must hold at least
-        *        {@code endIdx - max(startIdx, divLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, divLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -92104,14 +92114,14 @@ class Core {
         * @param optInTimePeriod Number of bars in the extrema window (default 20;
         *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outRealUpperBand Highest high of the window. Must hold at least
-        *        {@code endIdx - max(startIdx, donchianLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, donchianLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @param outRealMiddleBand Midpoint of the upper and lower bands. Must hold
         *        at least {@code endIdx - max(startIdx, donchianLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @param outRealLowerBand Lowest low of the window. Must hold at least
-        *        {@code endIdx - max(startIdx, donchianLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, donchianLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -92185,14 +92195,14 @@ class Core {
         * @param optInTimePeriod Number of bars in the extrema window (default 20;
         *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outRealUpperBand Highest high of the window. Must hold at least
-        *        {@code endIdx - max(startIdx, donchianLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, donchianLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @param outRealMiddleBand Midpoint of the upper and lower bands. Must hold
         *        at least {@code endIdx - max(startIdx, donchianLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @param outRealLowerBand Lowest low of the window. Must hold at least
-        *        {@code endIdx - max(startIdx, donchianLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, donchianLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -92999,8 +93009,8 @@ class Core {
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Detrended Price Oscillator value, in the units of the
         *        input. Must hold at least
-        *        {@code endIdx - max(startIdx, dpoLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, dpoLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -93071,8 +93081,8 @@ class Core {
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Detrended Price Oscillator value, in the units of the
         *        input. Must hold at least
-        *        {@code endIdx - max(startIdx, dpoLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, dpoLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -94094,8 +94104,8 @@ class Core {
         * @param optInTimePeriod Smoothing period for the DM and TR sums (default
         *        14; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal DX directional movement index value. Must hold at least
-        *        {@code endIdx - max(startIdx, dxLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, dxLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -94171,8 +94181,8 @@ class Core {
         * @param optInTimePeriod Smoothing period for the DM and TR sums (default
         *        14; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal DX directional movement index value. Must hold at least
-        *        {@code endIdx - max(startIdx, dxLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, dxLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -95220,8 +95230,8 @@ class Core {
         * @param optInTimePeriod EMA period applied to the force series (default 13;
         *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Smoothed force. Must hold at least
-        *        {@code endIdx - max(startIdx, efiLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, efiLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -95296,8 +95306,8 @@ class Core {
         * @param optInTimePeriod EMA period applied to the force series (default 13;
         *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Smoothed force. Must hold at least
-        *        {@code endIdx - max(startIdx, efiLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, efiLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -96029,8 +96039,8 @@ class Core {
         *        2/(period+1) (default 30; range 1..100000; {@code Integer.MIN_VALUE}
         *        selects the default).
         * @param outReal the exponential moving average. Must hold at least
-        *        {@code endIdx - max(startIdx, emaLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, emaLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -96099,8 +96109,8 @@ class Core {
         *        2/(period+1) (default 30; range 1..100000; {@code Integer.MIN_VALUE}
         *        selects the default).
         * @param outReal the exponential moving average. Must hold at least
-        *        {@code endIdx - max(startIdx, emaLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, emaLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -96801,8 +96811,8 @@ class Core {
         *        box ratio (default 10000; minimum 1; {@link Core#REAL_DEFAULT} selects the
         *        default).
         * @param outReal Ease of Movement, averaged over the window. Must hold at
-        *        least {@code endIdx - max(startIdx, emvLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        least {@code endIdx - max(startIdx, emvLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -96889,8 +96899,8 @@ class Core {
         *        box ratio (default 10000; minimum 1; {@link Core#REAL_DEFAULT} selects the
         *        default).
         * @param outReal Ease of Movement, averaged over the window. Must hold at
-        *        least {@code endIdx - max(startIdx, emvLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        least {@code endIdx - max(startIdx, emvLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -97702,8 +97712,8 @@ class Core {
         *        default) (default 10; range 2..100000; {@code Integer.MIN_VALUE} selects
         *        the default).
         * @param outReal Efficiency ratio. Must hold at least
-        *        {@code endIdx - max(startIdx, erLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, erLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -97775,8 +97785,8 @@ class Core {
         *        default) (default 10; range 2..100000; {@code Integer.MIN_VALUE} selects
         *        the default).
         * @param outReal Efficiency ratio. Must hold at least
-        *        {@code endIdx - max(startIdx, erLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, erLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -98597,11 +98607,11 @@ class Core {
         * @param optInTimePeriod Number of bars in the EMA of close (default 13;
         *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outBullPower High minus the EMA of close. Must hold at least
-        *        {@code endIdx - max(startIdx, eriLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, eriLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @param outBearPower Low minus the EMA of close. Must hold at least
-        *        {@code endIdx - max(startIdx, eriLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, eriLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -98676,11 +98686,11 @@ class Core {
         * @param optInTimePeriod Number of bars in the EMA of close (default 13;
         *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outBullPower High minus the EMA of close. Must hold at least
-        *        {@code endIdx - max(startIdx, eriLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, eriLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @param outBearPower Low minus the EMA of close. Must hold at least
-        *        {@code endIdx - max(startIdx, eriLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, eriLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -99292,8 +99302,8 @@ class Core {
         * @param endIdx Last bar of the requested range (inclusive).
         * @param inReal Input values.
         * @param outReal e raised to each input value. Must hold at least
-        *        {@code endIdx - max(startIdx, expLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, expLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -99347,8 +99357,8 @@ class Core {
         * @param endIdx Last bar of the requested range (inclusive).
         * @param inReal Input values.
         * @param outReal e raised to each input value. Must hold at least
-        *        {@code endIdx - max(startIdx, expLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, expLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -99728,8 +99738,8 @@ class Core {
         * @param endIdx Last bar of the requested range (inclusive).
         * @param inReal Input values.
         * @param outReal Each input rounded down to nearest integer. Must hold at
-        *        least {@code endIdx - max(startIdx, floorLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        least {@code endIdx - max(startIdx, floorLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -99783,8 +99793,8 @@ class Core {
         * @param endIdx Last bar of the requested range (inclusive).
         * @param inReal Input values.
         * @param outReal Each input rounded down to nearest integer. Must hold at
-        *        least {@code endIdx - max(startIdx, floorLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        least {@code endIdx - max(startIdx, floorLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -100386,8 +100396,8 @@ class Core {
         *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Percentage deviation of the close from the previous bar's
         *        forecast. Must hold at least
-        *        {@code endIdx - max(startIdx, foscLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, foscLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -100456,8 +100466,8 @@ class Core {
         *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Percentage deviation of the close from the previous bar's
         *        forecast. Must hold at least
-        *        {@code endIdx - max(startIdx, foscLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, foscLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -101282,12 +101292,12 @@ class Core {
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param outSwingHigh 100 when the bar {@code optInRightBars} back is a
         *        strict swing high, 0 otherwise. Must hold at least
-        *        {@code endIdx - max(startIdx, fractalLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, fractalLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @param outSwingLow 100 when the bar {@code optInRightBars} back is a
         *        strict swing low, 0 otherwise. Must hold at least
-        *        {@code endIdx - max(startIdx, fractalLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, fractalLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -101374,12 +101384,12 @@ class Core {
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param outSwingHigh 100 when the bar {@code optInRightBars} back is a
         *        strict swing high, 0 otherwise. Must hold at least
-        *        {@code endIdx - max(startIdx, fractalLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, fractalLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @param outSwingLow 100 when the bar {@code optInRightBars} back is a
         *        strict swing low, 0 otherwise. Must hold at least
-        *        {@code endIdx - max(startIdx, fractalLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, fractalLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -102405,8 +102415,8 @@ class Core {
         *        halves (default 16; range 2..100000; {@code Integer.MIN_VALUE} selects the
         *        default).
         * @param outReal Adaptive moving average line. Must hold at least
-        *        {@code endIdx - max(startIdx, framaLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, framaLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -102477,8 +102487,8 @@ class Core {
         *        halves (default 16; range 2..100000; {@code Integer.MIN_VALUE} selects the
         *        default).
         * @param outReal Adaptive moving average line. Must hold at least
-        *        {@code endIdx - max(startIdx, framaLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, framaLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -103455,17 +103465,17 @@ class Core {
         * @param inLow Low price of each bar.
         * @param inClose Close price of each bar.
         * @param outHAOpen Heikin-Ashi open. Must hold at least
-        *        {@code endIdx - max(startIdx, haLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, haLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @param outHAHigh Heikin-Ashi high. Must hold at least
-        *        {@code endIdx - max(startIdx, haLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, haLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @param outHALow Heikin-Ashi low. Must hold at least
-        *        {@code endIdx - max(startIdx, haLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, haLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @param outHAClose Heikin-Ashi close. Must hold at least
-        *        {@code endIdx - max(startIdx, haLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, haLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -103555,17 +103565,17 @@ class Core {
         * @param inLow Low price of each bar.
         * @param inClose Close price of each bar.
         * @param outHAOpen Heikin-Ashi open. Must hold at least
-        *        {@code endIdx - max(startIdx, haLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, haLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @param outHAHigh Heikin-Ashi high. Must hold at least
-        *        {@code endIdx - max(startIdx, haLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, haLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @param outHALow Heikin-Ashi low. Must hold at least
-        *        {@code endIdx - max(startIdx, haLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, haLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @param outHAClose Heikin-Ashi close. Must hold at least
-        *        {@code endIdx - max(startIdx, haLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, haLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -104832,8 +104842,8 @@ class Core {
         *        square-root periods derive from it (default 20; range 1..100000;
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Hull moving average of the input. Must hold at least
-        *        {@code endIdx - max(startIdx, hmaLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, hmaLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -104913,8 +104923,8 @@ class Core {
         *        square-root periods derive from it (default 20; range 1..100000;
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Hull moving average of the input. Must hold at least
-        *        {@code endIdx - max(startIdx, hmaLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, hmaLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -107135,8 +107145,8 @@ class Core {
         * @param endIdx Last bar of the requested range (inclusive).
         * @param inReal Source price/value series.
         * @param outReal Smoothed dominant cycle period in bars. Must hold at least
-        *        {@code endIdx - max(startIdx, htDcperiodLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, htDcperiodLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -107196,8 +107206,8 @@ class Core {
         * @param endIdx Last bar of the requested range (inclusive).
         * @param inReal Source price/value series.
         * @param outReal Smoothed dominant cycle period in bars. Must hold at least
-        *        {@code endIdx - max(startIdx, htDcperiodLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, htDcperiodLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -109081,8 +109091,8 @@ class Core {
         * @param endIdx Last bar of the requested range (inclusive).
         * @param inReal Price series to analyze.
         * @param outReal Dominant cycle phase in degrees. Must hold at least
-        *        {@code endIdx - max(startIdx, htDcphaseLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, htDcphaseLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -109144,8 +109154,8 @@ class Core {
         * @param endIdx Last bar of the requested range (inclusive).
         * @param inReal Price series to analyze.
         * @param outReal Dominant cycle phase in degrees. Must hold at least
-        *        {@code endIdx - max(startIdx, htDcphaseLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, htDcphaseLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -111112,11 +111122,11 @@ class Core {
         * @param inReal Source price series.
         * @param outInPhase In-phase component (detrender delayed 3 bars) Must hold
         *        at least {@code endIdx - max(startIdx, htPhasorLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @param outQuadrature Quadrature component (Q1 of the Hilbert Transform)
         *        Must hold at least
-        *        {@code endIdx - max(startIdx, htPhasorLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, htPhasorLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -111181,11 +111191,11 @@ class Core {
         * @param inReal Source price series.
         * @param outInPhase In-phase component (detrender delayed 3 bars) Must hold
         *        at least {@code endIdx - max(startIdx, htPhasorLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @param outQuadrature Quadrature component (Q1 of the Hilbert Transform)
         *        Must hold at least
-        *        {@code endIdx - max(startIdx, htPhasorLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, htPhasorLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -113064,11 +113074,11 @@ class Core {
         * @param endIdx Last bar of the requested range (inclusive).
         * @param inReal Source price series.
         * @param outSine Sine of the dominant-cycle phase. Must hold at least
-        *        {@code endIdx - max(startIdx, htSineLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, htSineLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @param outLeadSine Sine of the phase advanced 45 degrees (lead) Must hold
         *        at least {@code endIdx - max(startIdx, htSineLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -113130,11 +113140,11 @@ class Core {
         * @param endIdx Last bar of the requested range (inclusive).
         * @param inReal Source price series.
         * @param outSine Sine of the dominant-cycle phase. Must hold at least
-        *        {@code endIdx - max(startIdx, htSineLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, htSineLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @param outLeadSine Sine of the phase advanced 45 degrees (lead) Must hold
         *        at least {@code endIdx - max(startIdx, htSineLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -115209,8 +115219,8 @@ class Core {
         * @param endIdx Last bar of the requested range (inclusive).
         * @param inReal Source price series.
         * @param outReal Instantaneous trendline value. Must hold at least
-        *        {@code endIdx - max(startIdx, htTrendlineLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, htTrendlineLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -115268,8 +115278,8 @@ class Core {
         * @param endIdx Last bar of the requested range (inclusive).
         * @param inReal Source price series.
         * @param outReal Instantaneous trendline value. Must hold at least
-        *        {@code endIdx - max(startIdx, htTrendlineLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, htTrendlineLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -117437,8 +117447,8 @@ class Core {
         * @param endIdx Last bar of the requested range (inclusive).
         * @param inReal Source price series.
         * @param outInteger 1 = trend mode, 0 = cycle mode. Must hold at least
-        *        {@code endIdx - max(startIdx, htTrendmodeLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, htTrendmodeLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -117498,8 +117508,8 @@ class Core {
         * @param endIdx Last bar of the requested range (inclusive).
         * @param inReal Source price series.
         * @param outInteger 1 = trend mode, 0 = cycle mode. Must hold at least
-        *        {@code endIdx - max(startIdx, htTrendmodeLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, htTrendmodeLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -119148,8 +119158,8 @@ class Core {
         * @param inClose Close price of each bar.
         * @param outReal Position of the close within the bar's range, 0 to 1 on a
         *        bar with range. Must hold at least
-        *        {@code endIdx - max(startIdx, ibsLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, ibsLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -119213,8 +119223,8 @@ class Core {
         * @param inClose Close price of each bar.
         * @param outReal Position of the close within the bar's range, 0 to 1 on a
         *        bar with range. Must hold at least
-        *        {@code endIdx - max(startIdx, ibsLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, ibsLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -119742,8 +119752,8 @@ class Core {
         *        (default 14; range 2..100000; {@code Integer.MIN_VALUE} selects the
         *        default).
         * @param outReal IMI oscillator value, 0-100. Must hold at least
-        *        {@code endIdx - max(startIdx, imiLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, imiLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -119805,8 +119815,8 @@ class Core {
         *        (default 14; range 2..100000; {@code Integer.MIN_VALUE} selects the
         *        default).
         * @param outReal IMI oscillator value, 0-100. Must hold at least
-        *        {@code endIdx - max(startIdx, imiLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, imiLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -120716,8 +120726,8 @@ class Core {
         * @param optInTimePeriod Lookback window for the efficiency ratio (default
         *        30; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Adaptive moving average line. Must hold at least
-        *        {@code endIdx - max(startIdx, kamaLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, kamaLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -120784,8 +120794,8 @@ class Core {
         * @param optInTimePeriod Lookback window for the efficiency ratio (default
         *        30; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Adaptive moving average line. Must hold at least
-        *        {@code endIdx - max(startIdx, kamaLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, kamaLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -121885,13 +121895,13 @@ class Core {
         *        {@link Core#REAL_DEFAULT} selects the default).
         * @param outRealUpperBand Centre line plus the scaled Average True Range.
         *        Must hold at least {@code endIdx - max(startIdx, kcLookback(...)) + 1}
-        *        values, the count the call produces (none when that is not positive).
+        *        values, and never be empty: an empty array is an absent output.
         * @param outRealMiddleBand Exponential moving average of the typical price.
         *        Must hold at least {@code endIdx - max(startIdx, kcLookback(...)) + 1}
-        *        values, the count the call produces (none when that is not positive).
+        *        values, and never be empty: an empty array is an absent output.
         * @param outRealLowerBand Centre line minus the scaled Average True Range.
         *        Must hold at least {@code endIdx - max(startIdx, kcLookback(...)) + 1}
-        *        values, the count the call produces (none when that is not positive).
+        *        values, and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -121980,13 +121990,13 @@ class Core {
         *        {@link Core#REAL_DEFAULT} selects the default).
         * @param outRealUpperBand Centre line plus the scaled Average True Range.
         *        Must hold at least {@code endIdx - max(startIdx, kcLookback(...)) + 1}
-        *        values, the count the call produces (none when that is not positive).
+        *        values, and never be empty: an empty array is an absent output.
         * @param outRealMiddleBand Exponential moving average of the typical price.
         *        Must hold at least {@code endIdx - max(startIdx, kcLookback(...)) + 1}
-        *        values, the count the call produces (none when that is not positive).
+        *        values, and never be empty: an empty array is an absent output.
         * @param outRealLowerBand Centre line minus the scaled Average True Range.
         *        Must hold at least {@code endIdx - max(startIdx, kcLookback(...)) + 1}
-        *        values, the count the call produces (none when that is not positive).
+        *        values, and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -122762,14 +122772,14 @@ class Core {
         *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
         *        {@code MAType.DEFAULT} selects the default).
         * @param outK Raw stochastic smoothed by SlowK_Period MA. Must hold at least
-        *        {@code endIdx - max(startIdx, kdjLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, kdjLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @param outD Signal line: K smoothed by SlowD_Period MA. Must hold at least
-        *        {@code endIdx - max(startIdx, kdjLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, kdjLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @param outJ Divergence line, three parts K less two parts D. Must hold at
-        *        least {@code endIdx - max(startIdx, kdjLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        least {@code endIdx - max(startIdx, kdjLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -122873,14 +122883,14 @@ class Core {
         *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
         *        {@code MAType.DEFAULT} selects the default).
         * @param outK Raw stochastic smoothed by SlowK_Period MA. Must hold at least
-        *        {@code endIdx - max(startIdx, kdjLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, kdjLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @param outD Signal line: K smoothed by SlowD_Period MA. Must hold at least
-        *        {@code endIdx - max(startIdx, kdjLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, kdjLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @param outJ Divergence line, three parts K less two parts D. Must hold at
-        *        least {@code endIdx - max(startIdx, kdjLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        least {@code endIdx - max(startIdx, kdjLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -124119,11 +124129,11 @@ class Core {
         *        (default 9; range 1..100000; {@code Integer.MIN_VALUE} selects the
         *        default).
         * @param outKST Know Sure Thing line. Must hold at least
-        *        {@code endIdx - max(startIdx, kstLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, kstLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @param outKSTSignal Simple moving average of the line. Must hold at least
-        *        {@code endIdx - max(startIdx, kstLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, kstLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -124229,11 +124239,11 @@ class Core {
         *        (default 9; range 1..100000; {@code Integer.MIN_VALUE} selects the
         *        default).
         * @param outKST Know Sure Thing line. Must hold at least
-        *        {@code endIdx - max(startIdx, kstLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, kstLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @param outKSTSignal Simple moving average of the line. Must hold at least
-        *        {@code endIdx - max(startIdx, kstLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, kstLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -125781,11 +125791,11 @@ class Core {
         *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
         *        {@code MAType.DEFAULT} selects the default).
         * @param outKST Know Sure Thing line. Must hold at least
-        *        {@code endIdx - max(startIdx, kstextLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, kstextLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @param outKSTSignal Signal line: MA of the line. Must hold at least
-        *        {@code endIdx - max(startIdx, kstextLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, kstextLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -125899,11 +125909,11 @@ class Core {
         *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
         *        {@code MAType.DEFAULT} selects the default).
         * @param outKST Know Sure Thing line. Must hold at least
-        *        {@code endIdx - max(startIdx, kstextLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, kstextLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @param outKSTSignal Signal line: MA of the line. Must hold at least
-        *        {@code endIdx - max(startIdx, kstextLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, kstextLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -126947,8 +126957,8 @@ class Core {
         *        30; range 4..10000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Excess kurtosis of the trailing window, or NaN where the
         *        window has no spread. Must hold at least
-        *        {@code endIdx - max(startIdx, kurtosisLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, kurtosisLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -127020,8 +127030,8 @@ class Core {
         *        30; range 4..10000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Excess kurtosis of the trailing window, or NaN where the
         *        window has no spread. Must hold at least
-        *        {@code endIdx - max(startIdx, kurtosisLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, kurtosisLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -128153,7 +128163,7 @@ class Core {
         *        14; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Regression line value at the window endpoint. Must hold at
         *        least {@code endIdx - max(startIdx, linearregLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -128215,7 +128225,7 @@ class Core {
         *        14; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Regression line value at the window endpoint. Must hold at
         *        least {@code endIdx - max(startIdx, linearregLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -129286,7 +129296,7 @@ class Core {
         * @param outReal Regression line slope expressed as an angle in degrees.
         *        Must hold at least
         *        {@code endIdx - max(startIdx, linearregAngleLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -129350,7 +129360,7 @@ class Core {
         * @param outReal Regression line slope expressed as an angle in degrees.
         *        Must hold at least
         *        {@code endIdx - max(startIdx, linearregAngleLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -130409,7 +130419,7 @@ class Core {
         *        2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Intercept b of the fitted line at each bar. Must hold at
         *        least {@code endIdx - max(startIdx, linearregInterceptLookback(...)) + 1}
-        *        values, the count the call produces (none when that is not positive).
+        *        values, and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -130471,7 +130481,7 @@ class Core {
         *        2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Intercept b of the fitted line at each bar. Must hold at
         *        least {@code endIdx - max(startIdx, linearregInterceptLookback(...)) + 1}
-        *        values, the count the call produces (none when that is not positive).
+        *        values, and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -131525,7 +131535,7 @@ class Core {
         *        14; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Slope m of the fitted line. Must hold at least
         *        {@code endIdx - max(startIdx, linearregSlopeLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -131588,7 +131598,7 @@ class Core {
         *        14; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Slope m of the fitted line. Must hold at least
         *        {@code endIdx - max(startIdx, linearregSlopeLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -132375,8 +132385,8 @@ class Core {
         * @param endIdx Last bar of the requested range (inclusive).
         * @param inReal Input value series.
         * @param outReal Natural log of each input value. Must hold at least
-        *        {@code endIdx - max(startIdx, lnLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, lnLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -132435,8 +132445,8 @@ class Core {
         * @param endIdx Last bar of the requested range (inclusive).
         * @param inReal Input value series.
         * @param outReal Natural log of each input value. Must hold at least
-        *        {@code endIdx - max(startIdx, lnLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, lnLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -132820,8 +132830,8 @@ class Core {
         * @param endIdx Last bar of the requested range (inclusive).
         * @param inReal Input values.
         * @param outReal Base-10 logarithm of each input. Must hold at least
-        *        {@code endIdx - max(startIdx, log10Lookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, log10Lookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -132879,8 +132889,8 @@ class Core {
         * @param endIdx Last bar of the requested range (inclusive).
         * @param inReal Input values.
         * @param outReal Base-10 logarithm of each input. Must hold at least
-        *        {@code endIdx - max(startIdx, log10Lookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, log10Lookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -133620,8 +133630,8 @@ class Core {
         *        7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA,
         *        15=ALMA; {@code MAType.DEFAULT} selects the default).
         * @param outReal Selected moving average of the input. Must hold at least
-        *        {@code endIdx - max(startIdx, maLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, maLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -133704,8 +133714,8 @@ class Core {
         *        7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA,
         *        15=ALMA; {@code MAType.DEFAULT} selects the default).
         * @param outReal Selected moving average of the input. Must hold at least
-        *        {@code endIdx - max(startIdx, maLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, maLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -135273,14 +135283,14 @@ class Core {
         * @param optInSignalPeriod Smoothing period of the signal line (default 9;
         *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outMACD Fast EMA minus slow EMA. Must hold at least
-        *        {@code endIdx - max(startIdx, macdLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, macdLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @param outMACDSignal EMA of the MACD line. Must hold at least
-        *        {@code endIdx - max(startIdx, macdLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, macdLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @param outMACDHist MACD minus signal line. Must hold at least
-        *        {@code endIdx - max(startIdx, macdLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, macdLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -135357,14 +135367,14 @@ class Core {
         * @param optInSignalPeriod Smoothing period of the signal line (default 9;
         *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outMACD Fast EMA minus slow EMA. Must hold at least
-        *        {@code endIdx - max(startIdx, macdLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, macdLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @param outMACDSignal EMA of the MACD line. Must hold at least
-        *        {@code endIdx - max(startIdx, macdLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, macdLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @param outMACDHist MACD minus signal line. Must hold at least
-        *        {@code endIdx - max(startIdx, macdLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, macdLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -136376,14 +136386,14 @@ class Core {
         *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
         *        {@code MAType.DEFAULT} selects the default).
         * @param outMACD MACD line: fast MA minus slow MA. Must hold at least
-        *        {@code endIdx - max(startIdx, macdextLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, macdextLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @param outMACDSignal Signal line: MA of the MACD line. Must hold at least
-        *        {@code endIdx - max(startIdx, macdextLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, macdextLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @param outMACDHist Histogram: MACD minus signal. Must hold at least
-        *        {@code endIdx - max(startIdx, macdextLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, macdextLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -136481,14 +136491,14 @@ class Core {
         *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
         *        {@code MAType.DEFAULT} selects the default).
         * @param outMACD MACD line: fast MA minus slow MA. Must hold at least
-        *        {@code endIdx - max(startIdx, macdextLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, macdextLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @param outMACDSignal Signal line: MA of the MACD line. Must hold at least
-        *        {@code endIdx - max(startIdx, macdextLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, macdextLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @param outMACDHist Histogram: MACD minus signal. Must hold at least
-        *        {@code endIdx - max(startIdx, macdextLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, macdextLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -137389,14 +137399,14 @@ class Core {
         * @param optInSignalPeriod Smoothing period for the signal line (default 9;
         *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outMACD Fixed EMA12 minus EMA26. Must hold at least
-        *        {@code endIdx - max(startIdx, macdfixLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, macdfixLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @param outMACDSignal EMA of the MACD line. Must hold at least
-        *        {@code endIdx - max(startIdx, macdfixLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, macdfixLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @param outMACDHist MACD minus signal. Must hold at least
-        *        {@code endIdx - max(startIdx, macdfixLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, macdfixLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -137465,14 +137475,14 @@ class Core {
         * @param optInSignalPeriod Smoothing period for the signal line (default 9;
         *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outMACD Fixed EMA12 minus EMA26. Must hold at least
-        *        {@code endIdx - max(startIdx, macdfixLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, macdfixLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @param outMACDSignal EMA of the MACD line. Must hold at least
-        *        {@code endIdx - max(startIdx, macdfixLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, macdfixLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @param outMACDHist MACD minus signal. Must hold at least
-        *        {@code endIdx - max(startIdx, macdfixLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, macdfixLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -138850,8 +138860,8 @@ class Core {
         *        (default 0.05; range 0.01..0.99; {@link Core#REAL_DEFAULT} selects the
         *        default).
         * @param outMAMA Adaptive moving average (fast line) Must hold at least
-        *        {@code endIdx - max(startIdx, mamaLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, mamaLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @param outFAMA Following adaptive moving average, using half the alpha
         *        (slow line) Pass {@code null} to decline it: it is still computed where
         *        the algorithm needs it, but nothing is written out. Supplied, it must hold
@@ -138889,7 +138899,7 @@ class Core {
           int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
           requireLength("MAMA", "inReal", inReal, guardInLen);
           requireLength("MAMA", "outMAMA", outMAMA, guardOutLen);
-          if( outFAMA != null ) requireLength("MAMA", "outFAMA", outFAMA, guardOutLen);
+          if( outFAMA != null ) requireCapacity("MAMA", "outFAMA", outFAMA, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = mamaImpl(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA);
@@ -138924,8 +138934,8 @@ class Core {
         *        (default 0.05; range 0.01..0.99; {@link Core#REAL_DEFAULT} selects the
         *        default).
         * @param outMAMA Adaptive moving average (fast line) Must hold at least
-        *        {@code endIdx - max(startIdx, mamaLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, mamaLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @param outFAMA Following adaptive moving average, using half the alpha
         *        (slow line) Pass {@code null} to decline it: it is still computed where
         *        the algorithm needs it, but nothing is written out. Supplied, it must hold
@@ -138963,7 +138973,7 @@ class Core {
           int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
           requireLength("MAMA", "inReal", inReal, guardInLen);
           requireLength("MAMA", "outMAMA", outMAMA, guardOutLen);
-          if( outFAMA != null ) requireLength("MAMA", "outFAMA", outFAMA, guardOutLen);
+          if( outFAMA != null ) requireCapacity("MAMA", "outFAMA", outFAMA, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = mamaImpl(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA);
@@ -140099,7 +140109,7 @@ class Core {
           requireHistory("MAMA openAndFill", inReal.length);
           int guardOutLen = openFillCount("MAMA openAndFill", inReal.length, mamaLookback(optInFastLimit, optInSlowLimit));
           requireLength("MAMA openAndFill", "outMAMA", outMAMA, guardOutLen);
-          if( outFAMA != null ) requireLength("MAMA openAndFill", "outFAMA", outFAMA, guardOutLen);
+          if( outFAMA != null ) requireCapacity("MAMA openAndFill", "outFAMA", outFAMA, guardOutLen);
           if( (Object)outMAMA == (Object)inReal || (outFAMA != null && (Object)outFAMA == (Object)inReal) || (outFAMA != null && (Object)outMAMA == (Object)outFAMA) ) {
              throw streamFailure("MAMA openAndFill", RetCode.BAD_PARAM);
           }
@@ -140611,7 +140621,7 @@ class Core {
         * @param inVolume Volume of each bar.
         * @param outReal Range travelled per unit of volume, per bar. Must hold at
         *        least {@code endIdx - max(startIdx, marketfiLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -140685,7 +140695,7 @@ class Core {
         * @param inVolume Volume of each bar.
         * @param outReal Range travelled per unit of volume, per bar. Must hold at
         *        least {@code endIdx - max(startIdx, marketfiLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -141446,7 +141456,7 @@ class Core {
         *        25; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Summed ratio of the two smoothed high-low ranges. Must hold
         *        at least {@code endIdx - max(startIdx, massiLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -141532,7 +141542,7 @@ class Core {
         *        25; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Summed ratio of the two smoothed high-low ranges. Must hold
         *        at least {@code endIdx - max(startIdx, massiLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -142597,8 +142607,8 @@ class Core {
         *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
         *        {@code MAType.DEFAULT} selects the default).
         * @param outReal variable-period moving average. Must hold at least
-        *        {@code endIdx - max(startIdx, mavpLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, mavpLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -142677,8 +142687,8 @@ class Core {
         *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
         *        {@code MAType.DEFAULT} selects the default).
         * @param outReal variable-period moving average. Must hold at least
-        *        {@code endIdx - max(startIdx, mavpLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, mavpLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -143564,8 +143574,8 @@ class Core {
         * @param optInTimePeriod Window length in bars (default 30; range 2..100000;
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Highest value within each trailing window. Must hold at
-        *        least {@code endIdx - max(startIdx, maxLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        least {@code endIdx - max(startIdx, maxLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -143624,8 +143634,8 @@ class Core {
         * @param optInTimePeriod Window length in bars (default 30; range 2..100000;
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Highest value within each trailing window. Must hold at
-        *        least {@code endIdx - max(startIdx, maxLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        least {@code endIdx - max(startIdx, maxLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -144285,8 +144295,8 @@ class Core {
         *        default).
         * @param outInteger Absolute index (into inReal) of the highest value in
         *        each window. Must hold at least
-        *        {@code endIdx - max(startIdx, maxindexLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, maxindexLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -144353,8 +144363,8 @@ class Core {
         *        default).
         * @param outInteger Absolute index (into inReal) of the highest value in
         *        each window. Must hold at least
-        *        {@code endIdx - max(startIdx, maxindexLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, maxindexLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -145011,8 +145021,8 @@ class Core {
         * @param optInTimePeriod The N of the step's denominator (default 14; range
         *        2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal McGinley Dynamic line. Must hold at least
-        *        {@code endIdx - max(startIdx, mcgdLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, mcgdLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -145085,8 +145095,8 @@ class Core {
         * @param optInTimePeriod The N of the step's denominator (default 14; range
         *        2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal McGinley Dynamic line. Must hold at least
-        *        {@code endIdx - max(startIdx, mcgdLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, mcgdLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -145926,8 +145936,8 @@ class Core {
         * @param optInTimePeriod Number of trailing values in the window (default
         *        30; range 2..10000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Median of the trailing window. Must hold at least
-        *        {@code endIdx - max(startIdx, medianLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, medianLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -146000,8 +146010,8 @@ class Core {
         * @param optInTimePeriod Number of trailing values in the window (default
         *        30; range 2..10000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Median of the trailing window. Must hold at least
-        *        {@code endIdx - max(startIdx, medianLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, medianLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -146781,8 +146791,8 @@ class Core {
         * @param inHigh High price of each bar.
         * @param inLow Low price of each bar.
         * @param outReal Midpoint of each bar's high and low. Must hold at least
-        *        {@code endIdx - max(startIdx, medpriceLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, medpriceLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -146842,8 +146852,8 @@ class Core {
         * @param inHigh High price of each bar.
         * @param inLow Low price of each bar.
         * @param outReal Midpoint of each bar's high and low. Must hold at least
-        *        {@code endIdx - max(startIdx, medpriceLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, medpriceLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -147548,8 +147558,8 @@ class Core {
         * @param optInTimePeriod Lookback window for summing money flow (default 14;
         *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Money Flow Index. Must hold at least
-        *        {@code endIdx - max(startIdx, mfiLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, mfiLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -147623,8 +147633,8 @@ class Core {
         * @param optInTimePeriod Lookback window for summing money flow (default 14;
         *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Money Flow Index. Must hold at least
-        *        {@code endIdx - max(startIdx, mfiLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, mfiLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -148604,8 +148614,8 @@ class Core {
         * @param optInTimePeriod Lookback window length (default 14; range
         *        2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Midpoint of the period's high/low range. Must hold at least
-        *        {@code endIdx - max(startIdx, midpointLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, midpointLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -148665,8 +148675,8 @@ class Core {
         * @param optInTimePeriod Lookback window length (default 14; range
         *        2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Midpoint of the period's high/low range. Must hold at least
-        *        {@code endIdx - max(startIdx, midpointLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, midpointLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -149595,7 +149605,7 @@ class Core {
         *        default).
         * @param outReal Midpoint of the period's high/low extremes. Must hold at
         *        least {@code endIdx - max(startIdx, midpriceLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -149659,7 +149669,7 @@ class Core {
         *        default).
         * @param outReal Midpoint of the period's high/low extremes. Must hold at
         *        least {@code endIdx - max(startIdx, midpriceLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -150514,8 +150524,8 @@ class Core {
         * @param optInTimePeriod Number of bars in the trailing window (default 30;
         *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Lowest input value over the trailing window. Must hold at
-        *        least {@code endIdx - max(startIdx, minLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        least {@code endIdx - max(startIdx, minLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -150573,8 +150583,8 @@ class Core {
         * @param optInTimePeriod Number of bars in the trailing window (default 30;
         *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Lowest input value over the trailing window. Must hold at
-        *        least {@code endIdx - max(startIdx, minLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        least {@code endIdx - max(startIdx, minLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -151232,8 +151242,8 @@ class Core {
         *        default).
         * @param outInteger Absolute index in inReal of the lowest value in each
         *        window. Must hold at least
-        *        {@code endIdx - max(startIdx, minindexLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, minindexLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -151300,8 +151310,8 @@ class Core {
         *        default).
         * @param outInteger Absolute index in inReal of the lowest value in each
         *        window. Must hold at least
-        *        {@code endIdx - max(startIdx, minindexLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, minindexLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -152132,11 +152142,11 @@ class Core {
         * @param optInTimePeriod Rolling window length (default 30; range 2..100000;
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param outMin Lowest value in each rolling window. Must hold at least
-        *        {@code endIdx - max(startIdx, minmaxLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, minmaxLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @param outMax Highest value in each rolling window. Must hold at least
-        *        {@code endIdx - max(startIdx, minmaxLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, minmaxLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -152200,11 +152210,11 @@ class Core {
         * @param optInTimePeriod Rolling window length (default 30; range 2..100000;
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param outMin Lowest value in each rolling window. Must hold at least
-        *        {@code endIdx - max(startIdx, minmaxLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, minmaxLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @param outMax Highest value in each rolling window. Must hold at least
-        *        {@code endIdx - max(startIdx, minmaxLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, minmaxLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -153026,10 +153036,10 @@ class Core {
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param outMinIdx Absolute index (into inReal) of the window minimum. Must
         *        hold at least {@code endIdx - max(startIdx, minmaxindexLookback(...)) + 1}
-        *        values, the count the call produces (none when that is not positive).
+        *        values, and never be empty: an empty array is an absent output.
         * @param outMaxIdx Absolute index (into inReal) of the window maximum. Must
         *        hold at least {@code endIdx - max(startIdx, minmaxindexLookback(...)) + 1}
-        *        values, the count the call produces (none when that is not positive).
+        *        values, and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -153097,10 +153107,10 @@ class Core {
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param outMinIdx Absolute index (into inReal) of the window minimum. Must
         *        hold at least {@code endIdx - max(startIdx, minmaxindexLookback(...)) + 1}
-        *        values, the count the call produces (none when that is not positive).
+        *        values, and never be empty: an empty array is an absent output.
         * @param outMaxIdx Absolute index (into inReal) of the window maximum. Must
         *        hold at least {@code endIdx - max(startIdx, minmaxindexLookback(...)) + 1}
-        *        values, the count the call produces (none when that is not positive).
+        *        values, and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -154261,8 +154271,8 @@ class Core {
         * @param optInTimePeriod Smoothing/lookback period for -DM and TR (default
         *        14; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal The Minus Directional Indicator (-DI) line. Must hold at
-        *        least {@code endIdx - max(startIdx, minusDiLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        least {@code endIdx - max(startIdx, minusDiLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -154336,8 +154346,8 @@ class Core {
         * @param optInTimePeriod Smoothing/lookback period for -DM and TR (default
         *        14; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal The Minus Directional Indicator (-DI) line. Must hold at
-        *        least {@code endIdx - max(startIdx, minusDiLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        least {@code endIdx - max(startIdx, minusDiLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -155679,8 +155689,8 @@ class Core {
         * @param optInTimePeriod Wilder smoothing period (default 14; range
         *        1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Smoothed minus directional movement. Must hold at least
-        *        {@code endIdx - max(startIdx, minusDmLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, minusDmLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -155746,8 +155756,8 @@ class Core {
         * @param optInTimePeriod Wilder smoothing period (default 14; range
         *        1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Smoothed minus directional movement. Must hold at least
-        *        {@code endIdx - max(startIdx, minusDmLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, minusDmLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -156617,7 +156627,7 @@ class Core {
         *        1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Momentum (current minus value optInTimePeriod bars ago)
         *        Must hold at least {@code endIdx - max(startIdx, momLookback(...)) + 1}
-        *        values, the count the call produces (none when that is not positive).
+        *        values, and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -156679,7 +156689,7 @@ class Core {
         *        1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Momentum (current minus value optInTimePeriod bars ago)
         *        Must hold at least {@code endIdx - max(startIdx, momLookback(...)) + 1}
-        *        values, the count the call produces (none when that is not positive).
+        *        values, and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -157157,8 +157167,8 @@ class Core {
         * @param inReal0 First operand series.
         * @param inReal1 Second operand series.
         * @param outReal Product of the two inputs at each index. Must hold at least
-        *        {@code endIdx - max(startIdx, multLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, multLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -157216,8 +157226,8 @@ class Core {
         * @param inReal0 First operand series.
         * @param inReal1 Second operand series.
         * @param outReal Product of the two inputs at each index. Must hold at least
-        *        {@code endIdx - max(startIdx, multLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, multLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -157946,8 +157956,8 @@ class Core {
         *        (default 14; range 1..100000; {@code Integer.MIN_VALUE} selects the
         *        default).
         * @param outReal ATR as a percentage of the close. Must hold at least
-        *        {@code endIdx - max(startIdx, natrLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, natrLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -158015,8 +158025,8 @@ class Core {
         *        (default 14; range 1..100000; {@code Integer.MIN_VALUE} selects the
         *        default).
         * @param outReal ATR as a percentage of the close. Must hold at least
-        *        {@code endIdx - max(startIdx, natrLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, natrLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -158751,8 +158761,8 @@ class Core {
         * @param inClose Close price of each bar.
         * @param inVolume Volume of each bar.
         * @param outReal Cumulative negative volume index (seeded at 1000) Must hold
-        *        at least {@code endIdx - max(startIdx, nviLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        at least {@code endIdx - max(startIdx, nviLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -158814,8 +158824,8 @@ class Core {
         * @param inClose Close price of each bar.
         * @param inVolume Volume of each bar.
         * @param outReal Cumulative negative volume index (seeded at 1000) Must hold
-        *        at least {@code endIdx - max(startIdx, nviLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        at least {@code endIdx - max(startIdx, nviLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -159341,8 +159351,8 @@ class Core {
         * @param inReal Price series, typically close.
         * @param inVolume Volume of each bar.
         * @param outReal Cumulative on-balance volume. Must hold at least
-        *        {@code endIdx - max(startIdx, obvLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, obvLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -159398,8 +159408,8 @@ class Core {
         * @param inReal Price series, typically close.
         * @param inVolume Volume of each bar.
         * @param outReal Cumulative on-balance volume. Must hold at least
-        *        {@code endIdx - max(startIdx, obvLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, obvLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -160358,8 +160368,8 @@ class Core {
         *        {@code MAType.DEFAULT} selects the default).
         * @param outReal Position of the input between the lower band (0) and the
         *        upper band (1) Must hold at least
-        *        {@code endIdx - max(startIdx, percentbLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, percentbLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -160440,8 +160450,8 @@ class Core {
         *        {@code MAType.DEFAULT} selects the default).
         * @param outReal Position of the input between the lower band (0) and the
         *        upper band (1) Must hold at least
-        *        {@code endIdx - max(startIdx, percentbLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, percentbLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -161370,8 +161380,8 @@ class Core {
         *        (default 50; range 0..100; {@link Core#REAL_DEFAULT} selects the default).
         * @param outReal The value at the requested rank within the trailing window.
         *        Must hold at least
-        *        {@code endIdx - max(startIdx, percentileLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, percentileLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -161446,8 +161456,8 @@ class Core {
         *        (default 50; range 0..100; {@link Core#REAL_DEFAULT} selects the default).
         * @param outReal The value at the requested rank within the trailing window.
         *        Must hold at least
-        *        {@code endIdx - max(startIdx, percentileLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, percentileLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -162267,8 +162277,8 @@ class Core {
         *        selects the default).
         * @param outReal Percentage of the preceding window strictly below the
         *        current value, 0 to 100. Must hold at least
-        *        {@code endIdx - max(startIdx, percentrankLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, percentrankLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -162345,8 +162355,8 @@ class Core {
         *        selects the default).
         * @param outReal Percentage of the preceding window strictly below the
         *        current value, 0 to 100. Must hold at least
-        *        {@code endIdx - max(startIdx, percentrankLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, percentrankLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -163350,8 +163360,8 @@ class Core {
         * @param optInTimePeriod Wilder smoothing period (default 14; range
         *        1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Plus Directional Indicator. Must hold at least
-        *        {@code endIdx - max(startIdx, plusDiLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, plusDiLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -163425,8 +163435,8 @@ class Core {
         * @param optInTimePeriod Wilder smoothing period (default 14; range
         *        1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Plus Directional Indicator. Must hold at least
-        *        {@code endIdx - max(startIdx, plusDiLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, plusDiLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -164770,8 +164780,8 @@ class Core {
         * @param optInTimePeriod Wilder smoothing period (default 14; range
         *        1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Smoothed plus directional movement. Must hold at least
-        *        {@code endIdx - max(startIdx, plusDmLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, plusDmLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -164837,8 +164847,8 @@ class Core {
         * @param optInTimePeriod Wilder smoothing period (default 14; range
         *        1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Smoothed plus directional movement. Must hold at least
-        *        {@code endIdx - max(startIdx, plusDmLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, plusDmLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -166170,8 +166180,8 @@ class Core {
         *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
         *        {@code MAType.DEFAULT} selects the default).
         * @param outReal PPO value in percent. Must hold at least
-        *        {@code endIdx - max(startIdx, ppoLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, ppoLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -166247,8 +166257,8 @@ class Core {
         *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
         *        {@code MAType.DEFAULT} selects the default).
         * @param outReal PPO value in percent. Must hold at least
-        *        {@code endIdx - max(startIdx, ppoLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, ppoLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -166897,8 +166907,8 @@ class Core {
         * @param inClose Close price of each bar.
         * @param inVolume Volume of each bar.
         * @param outReal Cumulative positive volume index (seeded at 1000) Must hold
-        *        at least {@code endIdx - max(startIdx, pviLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        at least {@code endIdx - max(startIdx, pviLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -166960,8 +166970,8 @@ class Core {
         * @param inClose Close price of each bar.
         * @param inVolume Volume of each bar.
         * @param outReal Cumulative positive volume index (seeded at 1000) Must hold
-        *        at least {@code endIdx - max(startIdx, pviLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        at least {@code endIdx - max(startIdx, pviLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -168004,8 +168014,8 @@ class Core {
         *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
         *        {@code MAType.DEFAULT} selects the default).
         * @param outReal PVO value in percent. Must hold at least
-        *        {@code endIdx - max(startIdx, pvoLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, pvoLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -168083,8 +168093,8 @@ class Core {
         *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
         *        {@code MAType.DEFAULT} selects the default).
         * @param outReal PVO value in percent. Must hold at least
-        *        {@code endIdx - max(startIdx, pvoLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, pvoLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -168704,8 +168714,8 @@ class Core {
         * @param inClose Close price of each bar.
         * @param inVolume Volume of each bar.
         * @param outReal Cumulative price volume trend, seeded at zero. Must hold at
-        *        least {@code endIdx - max(startIdx, pvtLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        least {@code endIdx - max(startIdx, pvtLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -168779,8 +168789,8 @@ class Core {
         * @param inClose Close price of each bar.
         * @param inVolume Volume of each bar.
         * @param outReal Cumulative price volume trend, seeded at zero. Must hold at
-        *        least {@code endIdx - max(startIdx, pvtLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        least {@code endIdx - max(startIdx, pvtLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -169341,8 +169351,8 @@ class Core {
         *        documents 1, and AmiBroker community code commonly uses 8 (default 10;
         *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Average candle body over the window. Must hold at least
-        *        {@code endIdx - max(startIdx, qstickLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, qstickLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -169410,8 +169420,8 @@ class Core {
         *        documents 1, and AmiBroker community code commonly uses 8 (default 10;
         *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Average candle body over the window. Must hold at least
-        *        {@code endIdx - max(startIdx, qstickLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, qstickLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -170073,8 +170083,8 @@ class Core {
         *        reciprocal of the smoothing factor (default 30; range 1..100000;
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Wilder's smoothed moving average of the input. Must hold at
-        *        least {@code endIdx - max(startIdx, rmaLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        least {@code endIdx - max(startIdx, rmaLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -170161,8 +170171,8 @@ class Core {
         *        reciprocal of the smoothing factor (default 30; range 1..100000;
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Wilder's smoothed moving average of the input. Must hold at
-        *        least {@code endIdx - max(startIdx, rmaLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        least {@code endIdx - max(startIdx, rmaLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -170747,8 +170757,8 @@ class Core {
         * @param optInTimePeriod Lookback distance to the prior price (default 10;
         *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Percent rate of change. Must hold at least
-        *        {@code endIdx - max(startIdx, rocLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, rocLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -170810,8 +170820,8 @@ class Core {
         * @param optInTimePeriod Lookback distance to the prior price (default 10;
         *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Percent rate of change. Must hold at least
-        *        {@code endIdx - max(startIdx, rocLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, rocLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -171400,8 +171410,8 @@ class Core {
         *        10; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Fractional rate of change vs the value optInTimePeriod bars
         *        earlier. Must hold at least
-        *        {@code endIdx - max(startIdx, rocpLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, rocpLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -171463,8 +171473,8 @@ class Core {
         *        10; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Fractional rate of change vs the value optInTimePeriod bars
         *        earlier. Must hold at least
-        *        {@code endIdx - max(startIdx, rocpLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, rocpLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -172055,8 +172065,8 @@ class Core {
         *        (default 10; range 1..100000; {@code Integer.MIN_VALUE} selects the
         *        default).
         * @param outReal Ratio of current price to prior price. Must hold at least
-        *        {@code endIdx - max(startIdx, rocrLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, rocrLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -172118,8 +172128,8 @@ class Core {
         *        (default 10; range 1..100000; {@code Integer.MIN_VALUE} selects the
         *        default).
         * @param outReal Ratio of current price to prior price. Must hold at least
-        *        {@code endIdx - max(startIdx, rocrLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, rocrLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -172711,8 +172721,8 @@ class Core {
         *        price (default 10; range 1..100000; {@code Integer.MIN_VALUE} selects the
         *        default).
         * @param outReal Rate-of-change ratio times 100. Must hold at least
-        *        {@code endIdx - max(startIdx, rocr100Lookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, rocr100Lookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -172775,8 +172785,8 @@ class Core {
         *        price (default 10; range 1..100000; {@code Integer.MIN_VALUE} selects the
         *        default).
         * @param outReal Rate-of-change ratio times 100. Must hold at least
-        *        {@code endIdx - max(startIdx, rocr100Lookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, rocr100Lookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -173507,8 +173517,8 @@ class Core {
         * @param optInTimePeriod Lookback for the gain/loss averaging (default 14;
         *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal RSI value. Must hold at least
-        *        {@code endIdx - max(startIdx, rsiLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, rsiLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -173572,8 +173582,8 @@ class Core {
         * @param optInTimePeriod Lookback for the gain/loss averaging (default 14;
         *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal RSI value. Must hold at least
-        *        {@code endIdx - max(startIdx, rsiLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, rsiLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -174747,8 +174757,8 @@ class Core {
         *        spans (default 10; range 2..100000; {@code Integer.MIN_VALUE} selects the
         *        default).
         * @param outReal Relative Volatility Index value. Must hold at least
-        *        {@code endIdx - max(startIdx, rviLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, rviLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -174826,8 +174836,8 @@ class Core {
         *        spans (default 10; range 2..100000; {@code Integer.MIN_VALUE} selects the
         *        default).
         * @param outReal Relative Volatility Index value. Must hold at least
-        *        {@code endIdx - max(startIdx, rviLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, rviLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -175885,8 +175895,8 @@ class Core {
         *        spans (default 10; range 2..100000; {@code Integer.MIN_VALUE} selects the
         *        default).
         * @param outReal The averaged index, in 0..100. Must hold at least
-        *        {@code endIdx - max(startIdx, rvirLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, rvirLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -175963,8 +175973,8 @@ class Core {
         *        spans (default 10; range 2..100000; {@code Integer.MIN_VALUE} selects the
         *        default).
         * @param outReal The averaged index, in 0..100. Must hold at least
-        *        {@code endIdx - max(startIdx, rvirLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, rvirLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -176592,8 +176602,8 @@ class Core {
         *        the default).
         * @param outReal Ratio of the current bar's volume to the average of the
         *        preceding window. Must hold at least
-        *        {@code endIdx - max(startIdx, rvolLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, rvolLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -176667,8 +176677,8 @@ class Core {
         *        the default).
         * @param outReal Ratio of the current bar's volume to the average of the
         *        preceding window. Must hold at least
-        *        {@code endIdx - max(startIdx, rvolLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, rvolLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -177595,8 +177605,8 @@ class Core {
         * @param optInMaximum Ceiling on the acceleration factor (default 0.2;
         *        minimum 0; {@link Core#REAL_DEFAULT} selects the default).
         * @param outReal Parabolic SAR stop/reverse level per bar. Must hold at
-        *        least {@code endIdx - max(startIdx, sarLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        least {@code endIdx - max(startIdx, sarLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -177664,8 +177674,8 @@ class Core {
         * @param optInMaximum Ceiling on the acceleration factor (default 0.2;
         *        minimum 0; {@link Core#REAL_DEFAULT} selects the default).
         * @param outReal Parabolic SAR stop/reverse level per bar. Must hold at
-        *        least {@code endIdx - max(startIdx, sarLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        least {@code endIdx - max(startIdx, sarLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -179187,7 +179197,7 @@ class Core {
         *        (default 0.2; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
         * @param outReal SAR stop level; positive while long, negative while short.
         *        Must hold at least {@code endIdx - max(startIdx, sarextLookback(...)) + 1}
-        *        values, the count the call produces (none when that is not positive).
+        *        values, and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -179275,7 +179285,7 @@ class Core {
         *        (default 0.2; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
         * @param outReal SAR stop level; positive while long, negative while short.
         *        Must hold at least {@code endIdx - max(startIdx, sarextLookback(...)) + 1}
-        *        values, the count the call produces (none when that is not positive).
+        *        values, and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -180437,8 +180447,8 @@ class Core {
         *        is scaled against, in price units (default 3; minimum 0.00000001;
         *        {@link Core#REAL_DEFAULT} selects the default).
         * @param outReal Swing index of the bar against the previous bar. Must hold
-        *        at least {@code endIdx - max(startIdx, siLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        at least {@code endIdx - max(startIdx, siLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -180519,8 +180529,8 @@ class Core {
         *        is scaled against, in price units (default 3; minimum 0.00000001;
         *        {@link Core#REAL_DEFAULT} selects the default).
         * @param outReal Swing index of the bar against the previous bar. Must hold
-        *        at least {@code endIdx - max(startIdx, siLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        at least {@code endIdx - max(startIdx, siLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -181070,8 +181080,8 @@ class Core {
         * @param endIdx Last bar of the requested range (inclusive).
         * @param inReal Input values (radians)
         * @param outReal Sine of each input. Must hold at least
-        *        {@code endIdx - max(startIdx, sinLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, sinLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -181126,8 +181136,8 @@ class Core {
         * @param endIdx Last bar of the requested range (inclusive).
         * @param inReal Input values (radians)
         * @param outReal Sine of each input. Must hold at least
-        *        {@code endIdx - max(startIdx, sinLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, sinLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -181507,8 +181517,8 @@ class Core {
         * @param endIdx Last bar of the requested range (inclusive).
         * @param inReal Input series.
         * @param outReal Hyperbolic sine of each input value. Must hold at least
-        *        {@code endIdx - max(startIdx, sinhLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, sinhLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -181562,8 +181572,8 @@ class Core {
         * @param endIdx Last bar of the requested range (inclusive).
         * @param inReal Input series.
         * @param outReal Hyperbolic sine of each input value. Must hold at least
-        *        {@code endIdx - max(startIdx, sinhLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, sinhLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -182047,8 +182057,8 @@ class Core {
         * @param optInTimePeriod Number of bars in the averaging window (default 30;
         *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Simple moving average of the input. Must hold at least
-        *        {@code endIdx - max(startIdx, smaLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, smaLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -182113,8 +182123,8 @@ class Core {
         * @param optInTimePeriod Number of bars in the averaging window (default 30;
         *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Simple moving average of the input. Must hold at least
-        *        {@code endIdx - max(startIdx, smaLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, smaLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -183204,11 +183214,11 @@ class Core {
         * @param optInSignalPeriod Smoothing period of the signal line (default 9;
         *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outSMI Stochastic Momentum Index, -100 to +100. Must hold at least
-        *        {@code endIdx - max(startIdx, smiLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, smiLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @param outSMISignal Exponential average of the SMI line. Must hold at
-        *        least {@code endIdx - max(startIdx, smiLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        least {@code endIdx - max(startIdx, smiLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -183301,11 +183311,11 @@ class Core {
         * @param optInSignalPeriod Smoothing period of the signal line (default 9;
         *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outSMI Stochastic Momentum Index, -100 to +100. Must hold at least
-        *        {@code endIdx - max(startIdx, smiLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, smiLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @param outSMISignal Exponential average of the SMI line. Must hold at
-        *        least {@code endIdx - max(startIdx, smiLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        least {@code endIdx - max(startIdx, smiLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -184250,8 +184260,8 @@ class Core {
         * @param endIdx Last bar of the requested range (inclusive).
         * @param inReal Input values.
         * @param outReal Square root of each input value. Must hold at least
-        *        {@code endIdx - max(startIdx, sqrtLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, sqrtLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -184306,8 +184316,8 @@ class Core {
         * @param endIdx Last bar of the requested range (inclusive).
         * @param inReal Input values.
         * @param outReal Square root of each input value. Must hold at least
-        *        {@code endIdx - max(startIdx, sqrtLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, sqrtLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -185497,8 +185507,8 @@ class Core {
         * @param optInCyclePeriod Window of both stochastic stages (default 10;
         *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Schaff Trend Cycle, from 0 to 100. Must hold at least
-        *        {@code endIdx - max(startIdx, stcLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, stcLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -185572,8 +185582,8 @@ class Core {
         * @param optInCyclePeriod Window of both stochastic stages (default 10;
         *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Schaff Trend Cycle, from 0 to 100. Must hold at least
-        *        {@code endIdx - max(startIdx, stcLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, stcLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -186836,7 +186846,7 @@ class Core {
         *        {@link Core#REAL_DEFAULT} selects the default).
         * @param outReal Standard deviation at each bar, scaled by optInNbDev. Must
         *        hold at least {@code endIdx - max(startIdx, stddevLookback(...)) + 1}
-        *        values, the count the call produces (none when that is not positive).
+        *        values, and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -186903,7 +186913,7 @@ class Core {
         *        {@link Core#REAL_DEFAULT} selects the default).
         * @param outReal Standard deviation at each bar, scaled by optInNbDev. Must
         *        hold at least {@code endIdx - max(startIdx, stddevLookback(...)) + 1}
-        *        values, the count the call produces (none when that is not positive).
+        *        values, and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -187821,11 +187831,11 @@ class Core {
         *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
         *        {@code MAType.DEFAULT} selects the default).
         * @param outSlowK Raw FastK smoothed by SlowK_Period MA. Must hold at least
-        *        {@code endIdx - max(startIdx, stochLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, stochLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @param outSlowD Signal line: SlowK smoothed by SlowD_Period MA. Must hold
         *        at least {@code endIdx - max(startIdx, stochLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -187919,11 +187929,11 @@ class Core {
         *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
         *        {@code MAType.DEFAULT} selects the default).
         * @param outSlowK Raw FastK smoothed by SlowK_Period MA. Must hold at least
-        *        {@code endIdx - max(startIdx, stochLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, stochLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @param outSlowD Signal line: SlowK smoothed by SlowD_Period MA. Must hold
         *        at least {@code endIdx - max(startIdx, stochLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -189172,11 +189182,11 @@ class Core {
         *        6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA,
         *        14=VIDYA, 15=ALMA; {@code MAType.DEFAULT} selects the default).
         * @param outFastK Raw %K stochastic line. Must hold at least
-        *        {@code endIdx - max(startIdx, stochfLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, stochfLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @param outFastD MA-smoothed %K (signal line) Must hold at least
-        *        {@code endIdx - max(startIdx, stochfLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, stochfLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -189259,11 +189269,11 @@ class Core {
         *        6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA,
         *        14=VIDYA, 15=ALMA; {@code MAType.DEFAULT} selects the default).
         * @param outFastK Raw %K stochastic line. Must hold at least
-        *        {@code endIdx - max(startIdx, stochfLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, stochfLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @param outFastD MA-smoothed %K (signal line) Must hold at least
-        *        {@code endIdx - max(startIdx, stochfLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, stochfLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -190310,10 +190320,10 @@ class Core {
         *        {@code MAType.DEFAULT} selects the default).
         * @param outFastK Unsmoothed stochastic of the RSI (raw %K) Must hold at
         *        least {@code endIdx - max(startIdx, stochrsiLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @param outFastD %K smoothed over FastD_Period (signal line) Must hold at
         *        least {@code endIdx - max(startIdx, stochrsiLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -190396,10 +190406,10 @@ class Core {
         *        {@code MAType.DEFAULT} selects the default).
         * @param outFastK Unsmoothed stochastic of the RSI (raw %K) Must hold at
         *        least {@code endIdx - max(startIdx, stochrsiLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @param outFastD %K smoothed over FastD_Period (signal line) Must hold at
         *        least {@code endIdx - max(startIdx, stochrsiLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -190953,8 +190963,8 @@ class Core {
         * @param inReal0 Minuend series.
         * @param inReal1 Subtrahend series.
         * @param outReal Per-element difference inReal0 - inReal1. Must hold at
-        *        least {@code endIdx - max(startIdx, subLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        least {@code endIdx - max(startIdx, subLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -191012,8 +191022,8 @@ class Core {
         * @param inReal0 Minuend series.
         * @param inReal1 Subtrahend series.
         * @param outReal Per-element difference inReal0 - inReal1. Must hold at
-        *        least {@code endIdx - max(startIdx, subLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        least {@code endIdx - max(startIdx, subLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -191495,8 +191505,8 @@ class Core {
         * @param optInTimePeriod Window length summed (default 30; range 2..100000;
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Windowed sum over the period. Must hold at least
-        *        {@code endIdx - max(startIdx, sumLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, sumLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -191553,8 +191563,8 @@ class Core {
         * @param optInTimePeriod Window length summed (default 30; range 2..100000;
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Windowed sum over the period. Must hold at least
-        *        {@code endIdx - max(startIdx, sumLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, sumLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -192376,12 +192386,12 @@ class Core {
         *        the default).
         * @param outSupertrend The SuperTrend line: the band the trend is currently
         *        riding. Must hold at least
-        *        {@code endIdx - max(startIdx, supertrendLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, supertrendLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @param outTrend Trend direction: +1 while the trend rides the lower band,
         *        -1 while it rides the upper one. Must hold at least
-        *        {@code endIdx - max(startIdx, supertrendLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, supertrendLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -192467,12 +192477,12 @@ class Core {
         *        the default).
         * @param outSupertrend The SuperTrend line: the band the trend is currently
         *        riding. Must hold at least
-        *        {@code endIdx - max(startIdx, supertrendLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, supertrendLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @param outTrend Trend direction: +1 while the trend rides the lower band,
         *        -1 while it rides the upper one. Must hold at least
-        *        {@code endIdx - max(startIdx, supertrendLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, supertrendLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -193557,8 +193567,8 @@ class Core {
         *        triple EMA, higher = more DEMA-like sharpening) (default 0.7; range 0..1;
         *        {@link Core#REAL_DEFAULT} selects the default).
         * @param outReal T3 smoothed line. Must hold at least
-        *        {@code endIdx - max(startIdx, t3Lookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, t3Lookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -193627,8 +193637,8 @@ class Core {
         *        triple EMA, higher = more DEMA-like sharpening) (default 0.7; range 0..1;
         *        {@link Core#REAL_DEFAULT} selects the default).
         * @param outReal T3 smoothed line. Must hold at least
-        *        {@code endIdx - max(startIdx, t3Lookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, t3Lookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -194261,8 +194271,8 @@ class Core {
         * @param endIdx Last bar of the requested range (inclusive).
         * @param inReal input values.
         * @param outReal tangent of each input. Must hold at least
-        *        {@code endIdx - max(startIdx, tanLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, tanLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -194318,8 +194328,8 @@ class Core {
         * @param endIdx Last bar of the requested range (inclusive).
         * @param inReal input values.
         * @param outReal tangent of each input. Must hold at least
-        *        {@code endIdx - max(startIdx, tanLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, tanLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -194700,8 +194710,8 @@ class Core {
         * @param endIdx Last bar of the requested range (inclusive).
         * @param inReal Input value series.
         * @param outReal Hyperbolic tangent of each input. Must hold at least
-        *        {@code endIdx - max(startIdx, tanhLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, tanhLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -194756,8 +194766,8 @@ class Core {
         * @param endIdx Last bar of the requested range (inclusive).
         * @param inReal Input value series.
         * @param outReal Hyperbolic tangent of each input. Must hold at least
-        *        {@code endIdx - max(startIdx, tanhLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, tanhLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -195390,8 +195400,8 @@ class Core {
         * @param optInTimePeriod EMA period used for all three passes (default 30;
         *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal The TEMA line. Must hold at least
-        *        {@code endIdx - max(startIdx, temaLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, temaLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -195455,8 +195465,8 @@ class Core {
         * @param optInTimePeriod EMA period used for all three passes (default 30;
         *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal The TEMA line. Must hold at least
-        *        {@code endIdx - max(startIdx, temaLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, temaLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -196131,8 +196141,8 @@ class Core {
         * @param inLow Low price of each bar.
         * @param inClose Close price of each bar.
         * @param outReal True Range value per bar. Must hold at least
-        *        {@code endIdx - max(startIdx, trangeLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, trangeLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -196199,8 +196209,8 @@ class Core {
         * @param inLow Low price of each bar.
         * @param inClose Close price of each bar.
         * @param outReal True Range value per bar. Must hold at least
-        *        {@code endIdx - max(startIdx, trangeLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, trangeLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -197075,8 +197085,8 @@ class Core {
         * @param optInTimePeriod Number of bars in the averaging window (default 30;
         *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Triangular moving average. Must hold at least
-        *        {@code endIdx - max(startIdx, trimaLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, trimaLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -197142,8 +197152,8 @@ class Core {
         * @param optInTimePeriod Number of bars in the averaging window (default 30;
         *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Triangular moving average. Must hold at least
-        *        {@code endIdx - max(startIdx, trimaLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, trimaLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -198397,8 +198407,8 @@ class Core {
         *        passes (default 30; range 1..100000; {@code Integer.MIN_VALUE} selects the
         *        default).
         * @param outReal 1-day percent ROC of the triple EMA. Must hold at least
-        *        {@code endIdx - max(startIdx, trixLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, trixLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -198465,8 +198475,8 @@ class Core {
         *        passes (default 30; range 1..100000; {@code Integer.MIN_VALUE} selects the
         *        default).
         * @param outReal 1-day percent ROC of the triple EMA. Must hold at least
-        *        {@code endIdx - max(startIdx, trixLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, trixLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -199266,8 +199276,8 @@ class Core {
         *        14; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Regression line value projected to x=period (one step past
         *        LINEARREG) Must hold at least
-        *        {@code endIdx - max(startIdx, tsfLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, tsfLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -199329,8 +199339,8 @@ class Core {
         *        14; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Regression line value projected to x=period (one step past
         *        LINEARREG) Must hold at least
-        *        {@code endIdx - max(startIdx, tsfLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, tsfLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -200439,8 +200449,8 @@ class Core {
         *        first (default 13; range 2..100000; {@code Integer.MIN_VALUE} selects the
         *        default).
         * @param outReal True Strength Index, -100 to +100. Must hold at least
-        *        {@code endIdx - max(startIdx, tsiLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, tsiLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -200523,8 +200533,8 @@ class Core {
         *        first (default 13; range 2..100000; {@code Integer.MIN_VALUE} selects the
         *        default).
         * @param outReal True Strength Index, -100 to +100. Must hold at least
-        *        {@code endIdx - max(startIdx, tsiLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, tsiLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -201133,8 +201143,8 @@ class Core {
         * @param inLow Low price of each bar.
         * @param inClose Close price of each bar.
         * @param outReal typical price per bar. Must hold at least
-        *        {@code endIdx - max(startIdx, typpriceLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, typpriceLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -201196,8 +201206,8 @@ class Core {
         * @param inLow Low price of each bar.
         * @param inClose Close price of each bar.
         * @param outReal typical price per bar. Must hold at least
-        *        {@code endIdx - max(startIdx, typpriceLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, typpriceLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -202123,8 +202133,8 @@ class Core {
         * @param optInTimePeriod3 Bars for another averaging window (default 28;
         *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Ultimate Oscillator value. Must hold at least
-        *        {@code endIdx - max(startIdx, ultoscLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, ultoscLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -202202,8 +202212,8 @@ class Core {
         * @param optInTimePeriod3 Bars for another averaging window (default 28;
         *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Ultimate Oscillator value. Must hold at least
-        *        {@code endIdx - max(startIdx, ultoscLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, ultoscLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -203420,8 +203430,8 @@ class Core {
         *        the computation (default 1; {@link Core#REAL_DEFAULT} selects the
         *        default).
         * @param outReal Rolling population variance. Must hold at least
-        *        {@code endIdx - max(startIdx, varLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, varLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -203488,8 +203498,8 @@ class Core {
         *        the computation (default 1; {@link Core#REAL_DEFAULT} selects the
         *        default).
         * @param outReal Rolling population variance. Must hold at least
-        *        {@code endIdx - max(startIdx, varLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, varLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -204383,8 +204393,8 @@ class Core {
         *        (default 28; range 2..100000; {@code Integer.MIN_VALUE} selects the
         *        default).
         * @param outReal Vertical Horizontal Filter value. Must hold at least
-        *        {@code endIdx - max(startIdx, vhfLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, vhfLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -204455,8 +204465,8 @@ class Core {
         *        (default 28; range 2..100000; {@code Integer.MIN_VALUE} selects the
         *        default).
         * @param outReal Vertical Horizontal Filter value. Must hold at least
-        *        {@code endIdx - max(startIdx, vhfLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, vhfLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -205369,8 +205379,8 @@ class Core {
         * @param optInCMOPeriod Number of trailing price changes in the CMO (default
         *        9; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Variable Index Dynamic Average line. Must hold at least
-        *        {@code endIdx - max(startIdx, vidyaLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, vidyaLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -205444,8 +205454,8 @@ class Core {
         * @param optInCMOPeriod Number of trailing price changes in the CMO (default
         *        9; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Variable Index Dynamic Average line. Must hold at least
-        *        {@code endIdx - max(startIdx, vidyaLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, vidyaLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -206570,11 +206580,11 @@ class Core {
         * @param optInTimePeriod Number of bars in the rolling sums (default 14;
         *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outPlusVI Positive vortex line (+VI) Must hold at least
-        *        {@code endIdx - max(startIdx, vortexLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, vortexLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @param outMinusVI Negative vortex line (−VI) Must hold at least
-        *        {@code endIdx - max(startIdx, vortexLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, vortexLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -206652,11 +206662,11 @@ class Core {
         * @param optInTimePeriod Number of bars in the rolling sums (default 14;
         *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outPlusVI Positive vortex line (+VI) Must hold at least
-        *        {@code endIdx - max(startIdx, vortexLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, vortexLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @param outMinusVI Negative vortex line (−VI) Must hold at least
-        *        {@code endIdx - max(startIdx, vortexLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, vortexLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -207688,8 +207698,8 @@ class Core {
         * @param inVolume Volume of each bar.
         * @param outReal Volume weighted average price, cumulative from the first
         *        bar of the range. Must hold at least
-        *        {@code endIdx - max(startIdx, vwapLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, vwapLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -207772,8 +207782,8 @@ class Core {
         * @param inVolume Volume of each bar.
         * @param outReal Volume weighted average price, cumulative from the first
         *        bar of the range. Must hold at least
-        *        {@code endIdx - max(startIdx, vwapLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, vwapLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -208688,8 +208698,8 @@ class Core {
         * @param optInTimePeriod Number of bars in the weighting window (default 30;
         *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Volume weighted moving average of the input. Must hold at
-        *        least {@code endIdx - max(startIdx, vwmaLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        least {@code endIdx - max(startIdx, vwmaLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -208765,8 +208775,8 @@ class Core {
         * @param optInTimePeriod Number of bars in the weighting window (default 30;
         *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Volume weighted moving average of the input. Must hold at
-        *        least {@code endIdx - max(startIdx, vwmaLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        least {@code endIdx - max(startIdx, vwmaLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -209518,8 +209528,8 @@ class Core {
         * @param inLow Low price of each bar.
         * @param inClose Close price of each bar.
         * @param outReal Cumulative accumulation/distribution. Must hold at least
-        *        {@code endIdx - max(startIdx, wadLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, wadLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -209596,8 +209606,8 @@ class Core {
         * @param inLow Low price of each bar.
         * @param inClose Close price of each bar.
         * @param outReal Cumulative accumulation/distribution. Must hold at least
-        *        {@code endIdx - max(startIdx, wadLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, wadLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -210109,8 +210119,8 @@ class Core {
         * @param inLow Low price of each bar.
         * @param inClose Close price of each bar.
         * @param outReal Weighted close price per bar. Must hold at least
-        *        {@code endIdx - max(startIdx, wclpriceLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, wclpriceLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -210172,8 +210182,8 @@ class Core {
         * @param inLow Low price of each bar.
         * @param inClose Close price of each bar.
         * @param outReal Weighted close price per bar. Must hold at least
-        *        {@code endIdx - max(startIdx, wclpriceLookback(...)) + 1} values, the
-        *        count the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, wclpriceLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -210944,8 +210954,8 @@ class Core {
         * @param optInTimePeriod Lookback bars for the high/low range (default 14;
         *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Williams' %R value in [-100, 0]. Must hold at least
-        *        {@code endIdx - max(startIdx, willrLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, willrLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -211012,8 +211022,8 @@ class Core {
         * @param optInTimePeriod Lookback bars for the high/low range (default 14;
         *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Williams' %R value in [-100, 0]. Must hold at least
-        *        {@code endIdx - max(startIdx, willrLookback(...)) + 1} values, the count
-        *        the call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, willrLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -211961,8 +211971,8 @@ class Core {
         * @param optInTimePeriod Number of bars in the weighting window (default 30;
         *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Weighted moving average series. Must hold at least
-        *        {@code endIdx - max(startIdx, wmaLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, wmaLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -212028,8 +212038,8 @@ class Core {
         * @param optInTimePeriod Number of bars in the weighting window (default 30;
         *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Weighted moving average series. Must hold at least
-        *        {@code endIdx - max(startIdx, wmaLookback(...)) + 1} values, the count the
-        *        call produces (none when that is not positive).
+        *        {@code endIdx - max(startIdx, wmaLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -213184,7 +213194,7 @@ class Core {
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Zero-lag exponential moving average of the input. Must hold
         *        at least {@code endIdx - max(startIdx, zlemaLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -213269,7 +213279,7 @@ class Core {
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Zero-lag exponential moving average of the input. Must hold
         *        at least {@code endIdx - max(startIdx, zlemaLookback(...)) + 1} values,
-        *        the count the call produces (none when that is not positive).
+        *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -213717,7 +213727,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "30b5d451578e0ac5";
+    static final String SPLICED_GENCODE_DIGEST = "495b00bacd09129b";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];
@@ -215490,11 +215500,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.acLookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
@@ -215645,11 +215653,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.accbandsLookback(optInTimePeriod);
@@ -215800,11 +215806,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.acosLookback();
@@ -215955,11 +215959,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.adLookback();
@@ -216111,11 +216113,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.addLookback();
@@ -216271,11 +216271,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.adoscLookback(optInFastPeriod, optInSlowPeriod);
@@ -216428,11 +216426,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.adrLookback(optInTimePeriod);
@@ -216584,11 +216580,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.adxLookback(optInTimePeriod);
@@ -216742,11 +216736,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.adxrLookback(optInTimePeriod);
@@ -216894,11 +216886,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.almaLookback(optInTimePeriod, optInSigma, optInOffset);
@@ -217043,11 +217033,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.aoLookback(optInFastPeriod, optInSlowPeriod);
@@ -217194,11 +217182,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.apoLookback(optInFastPeriod, optInSlowPeriod, optInMAType);
@@ -217342,11 +217328,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.aroonLookback(optInTimePeriod);
@@ -217496,11 +217480,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.aroonoscLookback(optInTimePeriod);
@@ -217655,11 +217637,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.asiLookback(optInLimitMove);
@@ -217807,11 +217787,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.asinLookback();
@@ -217950,11 +217928,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.atanLookback();
@@ -218103,11 +218079,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.atrLookback(optInTimePeriod);
@@ -218253,11 +218227,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.avgdevLookback(optInTimePeriod);
@@ -218408,11 +218380,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.avgpriceLookback();
@@ -218566,11 +218536,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.bbandsLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
@@ -218721,11 +218689,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.bbwLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
@@ -218869,11 +218835,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.betaLookback(optInTimePeriod);
@@ -219027,11 +218991,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.bopLookback();
@@ -219188,11 +219150,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cciLookback(optInTimePeriod);
@@ -219349,11 +219309,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdl2crowsLookback();
@@ -219513,11 +219471,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdl3blackcrowsLookback();
@@ -219677,11 +219633,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdl3insideLookback();
@@ -219841,11 +219795,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdl3linestrikeLookback();
@@ -220005,11 +219957,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdl3outsideLookback();
@@ -220169,11 +220119,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdl3starsinsouthLookback();
@@ -220333,11 +220281,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdl3whitesoldiersLookback();
@@ -220498,11 +220444,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlabandonedbabyLookback(optInPenetration);
@@ -220662,11 +220606,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdladvanceblockLookback();
@@ -220826,11 +220768,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlbeltholdLookback();
@@ -220990,11 +220930,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlbreakawayLookback();
@@ -221154,11 +221092,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlclosingmarubozuLookback();
@@ -221318,11 +221254,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlconcealbabyswallLookback();
@@ -221482,11 +221416,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlcounterattackLookback();
@@ -221647,11 +221579,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdldarkcloudcoverLookback(optInPenetration);
@@ -221811,11 +221741,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdldojiLookback();
@@ -221975,11 +221903,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdldojistarLookback();
@@ -222139,11 +222065,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdldragonflydojiLookback();
@@ -222303,11 +222227,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlengulfingLookback();
@@ -222468,11 +222390,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdleveningdojistarLookback(optInPenetration);
@@ -222633,11 +222553,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdleveningstarLookback(optInPenetration);
@@ -222797,11 +222715,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlgapsidesidewhiteLookback();
@@ -222961,11 +222877,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlgravestonedojiLookback();
@@ -223125,11 +223039,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlhammerLookback();
@@ -223289,11 +223201,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlhangingmanLookback();
@@ -223453,11 +223363,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlharamiLookback();
@@ -223617,11 +223525,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlharamicrossLookback();
@@ -223781,11 +223687,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlhighwaveLookback();
@@ -223945,11 +223849,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlhikkakeLookback();
@@ -224109,11 +224011,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlhikkakemodLookback();
@@ -224273,11 +224173,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlhomingpigeonLookback();
@@ -224437,11 +224335,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlidentical3crowsLookback();
@@ -224601,11 +224497,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlinneckLookback();
@@ -224765,11 +224659,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlinvertedhammerLookback();
@@ -224929,11 +224821,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlkickingLookback();
@@ -225093,11 +224983,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlkickingbylengthLookback();
@@ -225257,11 +225145,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlladderbottomLookback();
@@ -225421,11 +225307,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdllongleggeddojiLookback();
@@ -225585,11 +225469,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdllonglineLookback();
@@ -225749,11 +225631,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlmarubozuLookback();
@@ -225913,11 +225793,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlmatchinglowLookback();
@@ -226078,11 +225956,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlmatholdLookback(optInPenetration);
@@ -226243,11 +226119,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlmorningdojistarLookback(optInPenetration);
@@ -226408,11 +226282,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlmorningstarLookback(optInPenetration);
@@ -226572,11 +226444,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlonneckLookback();
@@ -226736,11 +226606,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlpiercingLookback();
@@ -226900,11 +226768,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlrickshawmanLookback();
@@ -227064,11 +226930,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlrisefall3methodsLookback();
@@ -227228,11 +227092,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlseparatinglinesLookback();
@@ -227392,11 +227254,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlshootingstarLookback();
@@ -227556,11 +227416,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlshortlineLookback();
@@ -227720,11 +227578,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlspinningtopLookback();
@@ -227884,11 +227740,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlstalledpatternLookback();
@@ -228048,11 +227902,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlsticksandwichLookback();
@@ -228212,11 +228064,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdltakuriLookback();
@@ -228376,11 +228226,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdltasukigapLookback();
@@ -228540,11 +228388,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlthrustingLookback();
@@ -228704,11 +228550,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdltristarLookback();
@@ -228868,11 +228712,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlunique3riverLookback();
@@ -229032,11 +228874,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlupsidegap2crowsLookback();
@@ -229196,11 +229036,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cdlxsidegap3methodsLookback();
@@ -229348,11 +229186,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.ceilLookback();
@@ -229492,11 +229328,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cgLookback(optInTimePeriod);
@@ -229644,11 +229478,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.chopLookback(optInTimePeriod);
@@ -229802,11 +229634,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.choptrLookback(optInTimePeriod);
@@ -229962,11 +229792,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.ckspLookback(optInTimePeriod, optInMultiplier, optInStopPeriod);
@@ -230127,11 +229955,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cmfLookback(optInTimePeriod);
@@ -230281,11 +230107,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cmoLookback(optInTimePeriod);
@@ -230425,11 +230249,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cmouLookback(optInTimePeriod);
@@ -230571,11 +230393,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.coppockLookback(optInWMAPeriod, optInROC1Period, optInROC2Period);
@@ -230719,11 +230539,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.correlLookback(optInTimePeriod);
@@ -230865,11 +230683,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cosLookback();
@@ -231008,11 +230824,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.coshLookback();
@@ -231154,11 +230968,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.crsiLookback(optInTimePeriod, optInStreakPeriod, optInRankPeriod);
@@ -231298,11 +231110,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.ctiLookback(optInTimePeriod);
@@ -231441,11 +231251,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cumsumLookback();
@@ -231590,11 +231398,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.cviLookback(optInTimePeriod, optInROCPeriod);
@@ -231737,11 +231543,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.demaLookback(optInTimePeriod);
@@ -231884,11 +231688,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.divLookback();
@@ -232035,11 +231837,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.donchianLookback(optInTimePeriod);
@@ -232188,11 +231988,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.dpoLookback(optInTimePeriod);
@@ -232341,11 +232139,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.dxLookback(optInTimePeriod);
@@ -232495,11 +232291,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.efiLookback(optInTimePeriod);
@@ -232643,11 +232437,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.emaLookback(optInTimePeriod);
@@ -232796,11 +232588,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.emvLookback(optInTimePeriod, optInVolumeDivisor);
@@ -232946,11 +232736,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.erLookback(optInTimePeriod);
@@ -233098,11 +232886,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.eriLookback(optInTimePeriod);
@@ -233250,11 +233036,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.expLookback();
@@ -233393,11 +233177,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.floorLookback();
@@ -233537,11 +233319,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.foscLookback(optInTimePeriod);
@@ -233686,11 +233466,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.fractalLookback(optInLeftBars, optInRightBars);
@@ -233841,11 +233619,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.framaLookback(optInTimePeriod);
@@ -234000,11 +233776,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.haLookback();
@@ -234162,11 +233936,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.hmaLookback(optInTimePeriod);
@@ -234306,11 +234078,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.htDcperiodLookback();
@@ -234450,11 +234220,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.htDcphaseLookback();
@@ -234594,11 +234362,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.htPhasorLookback();
@@ -234741,11 +234507,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.htSineLookback();
@@ -234888,11 +234652,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.htTrendlineLookback();
@@ -235032,11 +234794,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.htTrendmodeLookback();
@@ -235183,11 +234943,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.ibsLookback();
@@ -235337,11 +235095,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.imiLookback(optInTimePeriod);
@@ -235485,11 +235241,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.kamaLookback(optInTimePeriod);
@@ -235639,11 +235393,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.kcLookback(optInTimePeriod, optInATRPeriod, optInNbDev);
@@ -235811,11 +235563,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.kdjLookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
@@ -235975,11 +235725,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.kstLookback(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod);
@@ -236136,11 +235884,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.kstextLookback(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType);
@@ -236283,11 +236029,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.kurtosisLookback(optInTimePeriod);
@@ -236427,11 +236171,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.linearregLookback(optInTimePeriod);
@@ -236571,11 +236313,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.linearregAngleLookback(optInTimePeriod);
@@ -236715,11 +236455,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.linearregInterceptLookback(optInTimePeriod);
@@ -236859,11 +236597,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.linearregSlopeLookback(optInTimePeriod);
@@ -237002,11 +236738,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.lnLookback();
@@ -237145,11 +236879,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.log10Lookback();
@@ -237292,11 +237024,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.maLookback(optInTimePeriod, optInMAType);
@@ -237438,11 +237168,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.macdLookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
@@ -237599,11 +237327,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.macdextLookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType);
@@ -237749,11 +237475,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.macdfixLookback(optInSignalPeriod);
@@ -237901,11 +237625,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.mamaLookback(optInFastLimit, optInSlowLimit);
@@ -238055,11 +237777,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.marketfiLookback();
@@ -238210,11 +237930,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.massiLookback(optInFastPeriod, optInSlowPeriod);
@@ -238365,11 +238083,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.mavpLookback(optInMinPeriod, optInMaxPeriod, optInMAType);
@@ -238512,11 +238228,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.maxLookback(optInTimePeriod);
@@ -238656,11 +238370,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.maxindexLookback(optInTimePeriod);
@@ -238801,11 +238513,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.mcgdLookback(optInTimePeriod);
@@ -238945,11 +238655,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.medianLookback(optInTimePeriod);
@@ -239092,11 +238800,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.medpriceLookback();
@@ -239251,11 +238957,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.mfiLookback(optInTimePeriod);
@@ -239404,11 +239108,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.midpointLookback(optInTimePeriod);
@@ -239552,11 +239254,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.midpriceLookback(optInTimePeriod);
@@ -239699,11 +239399,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.minLookback(optInTimePeriod);
@@ -239843,11 +239541,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.minindexLookback(optInTimePeriod);
@@ -239987,11 +239683,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.minmaxLookback(optInTimePeriod);
@@ -240134,11 +239828,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.minmaxindexLookback(optInTimePeriod);
@@ -240290,11 +239982,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.minusDiLookback(optInTimePeriod);
@@ -240445,11 +240135,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.minusDmLookback(optInTimePeriod);
@@ -240592,11 +240280,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.momLookback(optInTimePeriod);
@@ -240739,11 +240425,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.multLookback();
@@ -240895,11 +240579,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.natrLookback(optInTimePeriod);
@@ -241048,11 +240730,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.nviLookback();
@@ -241198,11 +240878,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.obvLookback();
@@ -241350,11 +241028,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.percentbLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
@@ -241495,11 +241171,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.percentileLookback(optInTimePeriod, optInPercentile);
@@ -241639,11 +241313,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.percentrankLookback(optInTimePeriod);
@@ -241792,11 +241464,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.plusDiLookback(optInTimePeriod);
@@ -241947,11 +241617,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.plusDmLookback(optInTimePeriod);
@@ -242098,11 +241766,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.ppoLookback(optInFastPeriod, optInSlowPeriod, optInMAType);
@@ -242245,11 +241911,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.pviLookback();
@@ -242396,11 +242060,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.pvoLookback(optInFastPeriod, optInSlowPeriod, optInMAType);
@@ -242543,11 +242205,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.pvtLookback();
@@ -242694,11 +242354,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.qstickLookback(optInTimePeriod);
@@ -242842,11 +242500,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.rmaLookback(optInTimePeriod);
@@ -242986,11 +242642,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.rocLookback(optInTimePeriod);
@@ -243130,11 +242784,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.rocpLookback(optInTimePeriod);
@@ -243274,11 +242926,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.rocrLookback(optInTimePeriod);
@@ -243418,11 +243068,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.rocr100Lookback(optInTimePeriod);
@@ -243563,11 +243211,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.rsiLookback(optInTimePeriod);
@@ -243709,11 +243355,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.rviLookback(optInTimePeriod, optInStdDevPeriod);
@@ -243858,11 +243502,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.rvirLookback(optInTimePeriod, optInStdDevPeriod);
@@ -244005,11 +243647,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.rvolLookback(optInTimePeriod);
@@ -244154,11 +243794,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.sarLookback(optInAcceleration, optInMaximum);
@@ -244312,11 +243950,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.sarextLookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
@@ -244471,11 +244107,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.siLookback(optInLimitMove);
@@ -244623,11 +244257,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.sinLookback();
@@ -244766,11 +244398,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.sinhLookback();
@@ -244910,11 +244540,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.smaLookback(optInTimePeriod);
@@ -245065,11 +244693,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.smiLookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
@@ -245217,11 +244843,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.sqrtLookback();
@@ -245364,11 +244988,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.stcLookback(optInFastPeriod, optInSlowPeriod, optInCyclePeriod);
@@ -245509,11 +245131,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.stddevLookback(optInTimePeriod, optInNbDev);
@@ -245669,11 +245289,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.stochLookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
@@ -245834,11 +245452,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.stochfLookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
@@ -245992,11 +245608,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.stochrsiLookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
@@ -246142,11 +245756,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.subLookback();
@@ -246289,11 +245901,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.sumLookback(optInTimePeriod);
@@ -246442,11 +246052,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.supertrendLookback(optInTimePeriod, optInMultiplier);
@@ -246597,11 +246205,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.t3Lookback(optInTimePeriod, optInVFactor);
@@ -246740,11 +246346,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.tanLookback();
@@ -246883,11 +246487,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.tanhLookback();
@@ -247027,11 +246629,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.temaLookback(optInTimePeriod);
@@ -247178,11 +246778,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.trangeLookback();
@@ -247328,11 +246926,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.trimaLookback(optInTimePeriod);
@@ -247472,11 +247068,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.trixLookback(optInTimePeriod);
@@ -247616,11 +247210,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.tsfLookback(optInTimePeriod);
@@ -247761,11 +247353,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.tsiLookback(optInFirstPeriod, optInSecondPeriod);
@@ -247912,11 +247502,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.typpriceLookback();
@@ -248072,11 +247660,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.ultoscLookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
@@ -248223,11 +247809,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.varLookback(optInTimePeriod, optInNbDev);
@@ -248367,11 +247951,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.vhfLookback(optInTimePeriod);
@@ -248513,11 +248095,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.vidyaLookback(optInTimePeriod, optInCMOPeriod);
@@ -248665,11 +248245,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.vortexLookback(optInTimePeriod);
@@ -248829,11 +248407,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.vwapLookback();
@@ -248986,11 +248562,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.vwmaLookback(optInTimePeriod);
@@ -249140,11 +248714,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.wadLookback();
@@ -249297,11 +248869,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.wclpriceLookback();
@@ -249455,11 +249025,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.willrLookback(optInTimePeriod);
@@ -249605,11 +249173,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.wmaLookback(optInTimePeriod);
@@ -249749,11 +249315,9 @@ public class TaCodegenServe {
         // would silently drop the other property.
         // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
         // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. Sizing to zero here would put
-        // every multi-output function on the empty-buffer aliasing edge of
-        // spec-conformance Appendix D item 11 (fixed), which each backend's own suite
-        // probes.
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.zlemaLookback(optInTimePeriod);

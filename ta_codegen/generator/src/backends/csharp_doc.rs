@@ -27,13 +27,13 @@ use crate::registry::Registry;
 /// a `double` output are never the same span.
 fn aliasing_exception_text(single_precision: bool) -> &'static str {
     if single_precision {
-        "Two outputs overlap or are one array, a zero-length array included \
+        "Two outputs overlap or are one array \
          (<see href=\"https://ta-lib.org/spec/errors/#rb6\">rule rB6</see>), or an output \
          overlaps an input. An output and a real input never share an element type in \
          this overload, so the two can never be the same span: there is no in-place case \
          to allow, and any overlap of their byte ranges is rejected."
     } else {
-        "Two outputs overlap or are one array, a zero-length array included \
+        "Two outputs overlap or are one array \
          (<see href=\"https://ta-lib.org/spec/errors/#rb6\">rule rB6</see>), or an output \
          partially overlaps an input. Computing wholly in place (an output that IS an \
          input) is allowed."
@@ -104,10 +104,8 @@ pub fn guarded_docs(
     for opt in &func.optional_inputs {
         b.param(&opt.name, &param_doc(opt, doc, enums));
     }
-    let produced = format!(
-        "<c>endIdx - max(startIdx, {cs_name}Lookback(...)) + 1</c> values, the count \
-         the call produces (none when that is not positive)"
-    );
+    let count = format!("<c>endIdx - max(startIdx, {cs_name}Lookback(...)) + 1</c> values");
+    let produced = format!("{count}, the count the call produces (none when that is not positive)");
     for out in &func.outputs {
         // A nullable output may be declined; C# spells "declined" as an empty
         // span, which the signature cannot say on its own.
@@ -118,7 +116,7 @@ pub fn guarded_docs(
                  Supplied, it must hold at least {produced}."
             )
         } else {
-            format!("Must hold at least {produced}.")
+            format!("Must hold at least {count}, and never be empty: an empty span is an absent output.")
         };
         b.param(&out.name, &format!("{} {sizing}", output_desc(out, doc)));
     }
@@ -144,8 +142,10 @@ pub fn guarded_docs(
         "A span is too short for the range requested: any input this function \
          <i>declares</i> that does not reach <c>endIdx</c>, or an output that cannot hold \
          the values produced. Declared, not read: a few candlestick patterns take an OHLC \
-         series they never index, and it is required all the same. A null input array \
-         arrives as an empty span and is rejected as one.",
+         series they never index, and it is required all the same. A null array \
+         arrives as an empty span, and an empty span is an absent argument: for an input, \
+         or an output that cannot be declined, it is rejected even when the call would \
+         produce nothing.",
     );
     b.item(aliasing_exception_text(single_precision));
     b.raw("</list>");

@@ -259,7 +259,7 @@
     *        realbody(i-1), else i-1; tie goes to i-1): +100 if that marubozu is white,
     *        -100 if black. Must hold at least
     *        {@code endIdx - max(startIdx, cdlkickingbylengthLookback(...)) + 1}
-    *        values, the count the call produces (none when that is not positive).
+    *        values, and never be empty: an empty array is an absent output.
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -329,7 +329,7 @@
     *        realbody(i-1), else i-1; tie goes to i-1): +100 if that marubozu is white,
     *        -100 if black. Must hold at least
     *        {@code endIdx - max(startIdx, cdlkickingbylengthLookback(...)) + 1}
-    *        values, the count the call produces (none when that is not positive).
+    *        values, and never be empty: an empty array is an absent output.
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is

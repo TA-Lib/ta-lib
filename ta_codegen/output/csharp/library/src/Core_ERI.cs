@@ -355,11 +355,11 @@ public partial class Core
    /// <param name="optInTimePeriod">Number of bars in the EMA of close (default 13; range 1..100000;
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="outBullPower">High minus the EMA of close. Must hold at least <c>endIdx - max(startIdx,
-   /// EriLookback(...)) + 1</c> values, the count the call produces (none when
-   /// that is not positive).</param>
+   /// EriLookback(...)) + 1</c> values, and never be empty: an empty span is an
+   /// absent output.</param>
    /// <param name="outBearPower">Low minus the EMA of close. Must hold at least <c>endIdx - max(startIdx,
-   /// EriLookback(...)) + 1</c> values, the count the call produces (none when
-   /// that is not positive).</param>
+   /// EriLookback(...)) + 1</c> values, and never be empty: an empty span is an
+   /// absent output.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
    /// <c>Count</c> how many were written.</returns>
    /// <exception cref="System.ArgumentOutOfRangeException"><c>startIdx</c> or <c>endIdx</c> is negative or above
@@ -373,8 +373,10 @@ public partial class Core
    /// <i>declares</i> that does not reach <c>endIdx</c>, or an output that
    /// cannot hold the values produced. Declared, not read: a few candlestick
    /// patterns take an OHLC series they never index, and it is required all the
-   /// same. A null input array arrives as an empty span and is rejected as one.</description></item>
-   /// <item><description>Two outputs overlap or are one array, a zero-length array included
+   /// same. A null array arrives as an empty span, and an empty span is an
+   /// absent argument: for an input, or an output that cannot be declined, it is
+   /// rejected even when the call would produce nothing.</description></item>
+   /// <item><description>Two outputs overlap or are one array
    /// (<see href="https://ta-lib.org/spec/errors/#rb6">rule rB6</see>), or an
    /// output partially overlaps an input. Computing wholly in place (an output
    /// that IS an input) is allowed.</description></item>
@@ -398,7 +400,9 @@ public partial class Core
       RequireLength("ERI", "inHigh", inHigh.Length, guardInLen);
       RequireLength("ERI", "inLow", inLow.Length, guardInLen);
       RequireLength("ERI", "inClose", inClose.Length, guardInLen);
+      if( guardStart >= 0 ) RequirePresent("ERI", "outBullPower", outBullPower.Length);
       RequireLength("ERI", "outBullPower", outBullPower.Length, guardOutLen);
+      if( guardStart >= 0 ) RequirePresent("ERI", "outBearPower", outBearPower.Length);
       RequireLength("ERI", "outBearPower", outBearPower.Length, guardOutLen);
       RetCode retCode = EriImpl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outBullPower, outBearPower);
       if( retCode != RetCode.Success ) {
@@ -449,11 +453,11 @@ public partial class Core
    /// <param name="optInTimePeriod">Number of bars in the EMA of close (default 13; range 1..100000;
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="outBullPower">High minus the EMA of close. Must hold at least <c>endIdx - max(startIdx,
-   /// EriLookback(...)) + 1</c> values, the count the call produces (none when
-   /// that is not positive).</param>
+   /// EriLookback(...)) + 1</c> values, and never be empty: an empty span is an
+   /// absent output.</param>
    /// <param name="outBearPower">Low minus the EMA of close. Must hold at least <c>endIdx - max(startIdx,
-   /// EriLookback(...)) + 1</c> values, the count the call produces (none when
-   /// that is not positive).</param>
+   /// EriLookback(...)) + 1</c> values, and never be empty: an empty span is an
+   /// absent output.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
    /// <c>Count</c> how many were written.</returns>
    /// <exception cref="System.ArgumentOutOfRangeException"><c>startIdx</c> or <c>endIdx</c> is negative or above
@@ -467,8 +471,10 @@ public partial class Core
    /// <i>declares</i> that does not reach <c>endIdx</c>, or an output that
    /// cannot hold the values produced. Declared, not read: a few candlestick
    /// patterns take an OHLC series they never index, and it is required all the
-   /// same. A null input array arrives as an empty span and is rejected as one.</description></item>
-   /// <item><description>Two outputs overlap or are one array, a zero-length array included
+   /// same. A null array arrives as an empty span, and an empty span is an
+   /// absent argument: for an input, or an output that cannot be declined, it is
+   /// rejected even when the call would produce nothing.</description></item>
+   /// <item><description>Two outputs overlap or are one array
    /// (<see href="https://ta-lib.org/spec/errors/#rb6">rule rB6</see>), or an
    /// output overlaps an input. An output and a real input never share an
    /// element type in this overload, so the two can never be the same span:
@@ -494,7 +500,9 @@ public partial class Core
       RequireLength("ERI", "inHigh", inHigh.Length, guardInLen);
       RequireLength("ERI", "inLow", inLow.Length, guardInLen);
       RequireLength("ERI", "inClose", inClose.Length, guardInLen);
+      if( guardStart >= 0 ) RequirePresent("ERI", "outBullPower", outBullPower.Length);
       RequireLength("ERI", "outBullPower", outBullPower.Length, guardOutLen);
+      if( guardStart >= 0 ) RequirePresent("ERI", "outBearPower", outBearPower.Length);
       RequireLength("ERI", "outBearPower", outBearPower.Length, guardOutLen);
       RetCode retCode = EriImpl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outBullPower, outBearPower);
       if( retCode != RetCode.Success ) {

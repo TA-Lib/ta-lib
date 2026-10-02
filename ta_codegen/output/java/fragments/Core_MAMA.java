@@ -847,8 +847,8 @@
     *        (default 0.05; range 0.01..0.99; {@link Core#REAL_DEFAULT} selects the
     *        default).
     * @param outMAMA Adaptive moving average (fast line) Must hold at least
-    *        {@code endIdx - max(startIdx, mamaLookback(...)) + 1} values, the count
-    *        the call produces (none when that is not positive).
+    *        {@code endIdx - max(startIdx, mamaLookback(...)) + 1} values, and never be
+    *        empty: an empty array is an absent output.
     * @param outFAMA Following adaptive moving average, using half the alpha
     *        (slow line) Pass {@code null} to decline it: it is still computed where
     *        the algorithm needs it, but nothing is written out. Supplied, it must hold
@@ -886,7 +886,7 @@
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MAMA", "inReal", inReal, guardInLen);
       requireLength("MAMA", "outMAMA", outMAMA, guardOutLen);
-      if( outFAMA != null ) requireLength("MAMA", "outFAMA", outFAMA, guardOutLen);
+      if( outFAMA != null ) requireCapacity("MAMA", "outFAMA", outFAMA, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = mamaImpl(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA);
@@ -921,8 +921,8 @@
     *        (default 0.05; range 0.01..0.99; {@link Core#REAL_DEFAULT} selects the
     *        default).
     * @param outMAMA Adaptive moving average (fast line) Must hold at least
-    *        {@code endIdx - max(startIdx, mamaLookback(...)) + 1} values, the count
-    *        the call produces (none when that is not positive).
+    *        {@code endIdx - max(startIdx, mamaLookback(...)) + 1} values, and never be
+    *        empty: an empty array is an absent output.
     * @param outFAMA Following adaptive moving average, using half the alpha
     *        (slow line) Pass {@code null} to decline it: it is still computed where
     *        the algorithm needs it, but nothing is written out. Supplied, it must hold
@@ -960,7 +960,7 @@
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MAMA", "inReal", inReal, guardInLen);
       requireLength("MAMA", "outMAMA", outMAMA, guardOutLen);
-      if( outFAMA != null ) requireLength("MAMA", "outFAMA", outFAMA, guardOutLen);
+      if( outFAMA != null ) requireCapacity("MAMA", "outFAMA", outFAMA, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = mamaImpl(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA);
@@ -2096,7 +2096,7 @@
       requireHistory("MAMA openAndFill", inReal.length);
       int guardOutLen = openFillCount("MAMA openAndFill", inReal.length, mamaLookback(optInFastLimit, optInSlowLimit));
       requireLength("MAMA openAndFill", "outMAMA", outMAMA, guardOutLen);
-      if( outFAMA != null ) requireLength("MAMA openAndFill", "outFAMA", outFAMA, guardOutLen);
+      if( outFAMA != null ) requireCapacity("MAMA openAndFill", "outFAMA", outFAMA, guardOutLen);
       if( (Object)outMAMA == (Object)inReal || (outFAMA != null && (Object)outFAMA == (Object)inReal) || (outFAMA != null && (Object)outMAMA == (Object)outFAMA) ) {
          throw streamFailure("MAMA openAndFill", RetCode.BAD_PARAM);
       }

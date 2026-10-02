@@ -295,8 +295,8 @@ public partial class Core
    /// <param name="inClose">Close price of each bar.</param>
    /// <param name="outInteger">+100 on a white (bullish) marubozu, -100 on a black (bearish) marubozu, 0
    /// when no pattern. Sign follows the candle color. Must hold at least
-   /// <c>endIdx - max(startIdx, CdlmarubozuLookback(...)) + 1</c> values, the
-   /// count the call produces (none when that is not positive).</param>
+   /// <c>endIdx - max(startIdx, CdlmarubozuLookback(...)) + 1</c> values, and
+   /// never be empty: an empty span is an absent output.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
    /// <c>Count</c> how many were written.</returns>
    /// <exception cref="System.ArgumentOutOfRangeException"><c>startIdx</c> or <c>endIdx</c> is negative or above
@@ -310,8 +310,10 @@ public partial class Core
    /// <i>declares</i> that does not reach <c>endIdx</c>, or an output that
    /// cannot hold the values produced. Declared, not read: a few candlestick
    /// patterns take an OHLC series they never index, and it is required all the
-   /// same. A null input array arrives as an empty span and is rejected as one.</description></item>
-   /// <item><description>Two outputs overlap or are one array, a zero-length array included
+   /// same. A null array arrives as an empty span, and an empty span is an
+   /// absent argument: for an input, or an output that cannot be declined, it is
+   /// rejected even when the call would produce nothing.</description></item>
+   /// <item><description>Two outputs overlap or are one array
    /// (<see href="https://ta-lib.org/spec/errors/#rb6">rule rB6</see>), or an
    /// output partially overlaps an input. Computing wholly in place (an output
    /// that IS an input) is allowed.</description></item>
@@ -335,6 +337,7 @@ public partial class Core
       RequireLength("CDLMARUBOZU", "inHigh", inHigh.Length, guardInLen);
       RequireLength("CDLMARUBOZU", "inLow", inLow.Length, guardInLen);
       RequireLength("CDLMARUBOZU", "inClose", inClose.Length, guardInLen);
+      if( guardStart >= 0 ) RequirePresent("CDLMARUBOZU", "outInteger", outInteger.Length);
       RequireLength("CDLMARUBOZU", "outInteger", outInteger.Length, guardOutLen);
       RetCode retCode = CdlmarubozuImpl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
@@ -382,8 +385,8 @@ public partial class Core
    /// <param name="inClose">Close price of each bar.</param>
    /// <param name="outInteger">+100 on a white (bullish) marubozu, -100 on a black (bearish) marubozu, 0
    /// when no pattern. Sign follows the candle color. Must hold at least
-   /// <c>endIdx - max(startIdx, CdlmarubozuLookback(...)) + 1</c> values, the
-   /// count the call produces (none when that is not positive).</param>
+   /// <c>endIdx - max(startIdx, CdlmarubozuLookback(...)) + 1</c> values, and
+   /// never be empty: an empty span is an absent output.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
    /// <c>Count</c> how many were written.</returns>
    /// <exception cref="System.ArgumentOutOfRangeException"><c>startIdx</c> or <c>endIdx</c> is negative or above
@@ -397,8 +400,10 @@ public partial class Core
    /// <i>declares</i> that does not reach <c>endIdx</c>, or an output that
    /// cannot hold the values produced. Declared, not read: a few candlestick
    /// patterns take an OHLC series they never index, and it is required all the
-   /// same. A null input array arrives as an empty span and is rejected as one.</description></item>
-   /// <item><description>Two outputs overlap or are one array, a zero-length array included
+   /// same. A null array arrives as an empty span, and an empty span is an
+   /// absent argument: for an input, or an output that cannot be declined, it is
+   /// rejected even when the call would produce nothing.</description></item>
+   /// <item><description>Two outputs overlap or are one array
    /// (<see href="https://ta-lib.org/spec/errors/#rb6">rule rB6</see>), or an
    /// output overlaps an input. An output and a real input never share an
    /// element type in this overload, so the two can never be the same span:
@@ -424,6 +429,7 @@ public partial class Core
       RequireLength("CDLMARUBOZU", "inHigh", inHigh.Length, guardInLen);
       RequireLength("CDLMARUBOZU", "inLow", inLow.Length, guardInLen);
       RequireLength("CDLMARUBOZU", "inClose", inClose.Length, guardInLen);
+      if( guardStart >= 0 ) RequirePresent("CDLMARUBOZU", "outInteger", outInteger.Length);
       RequireLength("CDLMARUBOZU", "outInteger", outInteger.Length, guardOutLen);
       RetCode retCode = CdlmarubozuImpl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {

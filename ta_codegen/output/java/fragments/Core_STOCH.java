@@ -555,11 +555,11 @@
     *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
     *        {@code MAType.DEFAULT} selects the default).
     * @param outSlowK Raw FastK smoothed by SlowK_Period MA. Must hold at least
-    *        {@code endIdx - max(startIdx, stochLookback(...)) + 1} values, the count
-    *        the call produces (none when that is not positive).
+    *        {@code endIdx - max(startIdx, stochLookback(...)) + 1} values, and never
+    *        be empty: an empty array is an absent output.
     * @param outSlowD Signal line: SlowK smoothed by SlowD_Period MA. Must hold
     *        at least {@code endIdx - max(startIdx, stochLookback(...)) + 1} values,
-    *        the count the call produces (none when that is not positive).
+    *        and never be empty: an empty array is an absent output.
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -653,11 +653,11 @@
     *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
     *        {@code MAType.DEFAULT} selects the default).
     * @param outSlowK Raw FastK smoothed by SlowK_Period MA. Must hold at least
-    *        {@code endIdx - max(startIdx, stochLookback(...)) + 1} values, the count
-    *        the call produces (none when that is not positive).
+    *        {@code endIdx - max(startIdx, stochLookback(...)) + 1} values, and never
+    *        be empty: an empty array is an absent output.
     * @param outSlowD Signal line: SlowK smoothed by SlowD_Period MA. Must hold
     *        at least {@code endIdx - max(startIdx, stochLookback(...)) + 1} values,
-    *        the count the call produces (none when that is not positive).
+    *        and never be empty: an empty array is an absent output.
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is

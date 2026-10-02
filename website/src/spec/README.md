@@ -84,7 +84,7 @@ Every function has this surface; in Rust, Java and C# the calls are methods of a
 | integer output | `int[]` | `&mut [i32]` | `int[]` | `Span<int>` |
 | integer, real parameter | `int`, `double` | `i32`, `f64` | `int`, `double` | `int`, `double` |
 | MA-type parameter | `TA_MAType` | `MAType` | `MAType` | `MAType` |
-| absent ([rB4](/spec/errors/#rb4)) | `NULL` | not expressible | `null` | a `null` array becomes an empty span |
+| absent ([rB4](/spec/errors/#rb4)) | `NULL` | an empty slice | `null` or an empty array | an empty span, which a `null` array becomes |
 
 | Type | C | Rust | Java | C# |
 |---|---|---|---|---|

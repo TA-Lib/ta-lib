@@ -292,19 +292,19 @@ public static class BatchApiTest
             }
         }
 
-        // An empty output is legitimate when the requested range is shorter than
-        // the lookback and the call writes nothing, so the output bound is
-        // switched off on exactly that branch. (Outputs ARE capacity-checked
-        // otherwise — see TheLengthBoundFromBothSides below.)
+        // A range shorter than the lookback writes nothing, so the output owes
+        // no length beyond not being empty: an empty span is an absent output.
         _checks++;
         {
-            OutRange r = core.Sma(0, 5, input, 30, Array.Empty<double>());
+            OutRange r = core.Sma(0, 5, input, 30, new double[1]);
             if (!r.IsEmpty)
             {
                 _failures++;
                 Console.WriteLine("  FAIL: a range shorter than the lookback must write nothing");
             }
         }
+        CarriesBadParam(() => core.Sma(0, 5, input, 30, Array.Empty<double>()),
+            "an empty output is absent, even when nothing is produced");
 
         // Two outputs sharing one array has no correct answer (issue #108).
         var shared = new double[100];
@@ -584,8 +584,8 @@ public static class BatchApiTest
         CheckThrows<ArgumentException>(
             () => core.Apo(0, 24, input, 12, 26, MAType.EMA, Array.Empty<double>()),
             "endIdx past the input, producing nothing", "APO", "inReal", "24", "25");
-        Check(core.Apo(0, 24, wide, 12, 26, MAType.EMA, Array.Empty<double>()).Count == 0,
-              "an input reaching endIdx is an empty success, zero-length output");
+        Check(core.Apo(0, 24, wide, 12, 26, MAType.EMA, new double[1]).Count == 0,
+              "an input reaching endIdx is an empty success");
     }
 
     /// <summary>
@@ -1033,58 +1033,68 @@ public static class BatchApiTest
     }
 
     /// <summary>
-    /// Rules rB6 and rS6 on empty outputs (Appendix D items 11 and 15): one
-    /// zero-length array passed as two outputs is one buffer, as in C and Java;
-    /// two separate ones are not, and a null array is no buffer. A non-declinable
-    /// empty output passes the length check only on a call that produces no
-    /// values (rule rW2), so in an opener the accepted shapes answer rS8.
+    /// An output that cannot be declined is absent when its span is empty, a
+    /// null array included, and the call is refused before any length is looked
+    /// at: on a range that produces nothing, and on a history too short to open.
+    /// One element is enough for both controls, which is what tells this from
+    /// the length rule. An empty span still declines a declinable output.
     /// </summary>
-    private static void OneEmptyArrayIsOneBuffer()
+    private static void AnEmptyOutputIsAnAbsentOne()
     {
         var core = new Core();
         double[] input = Closes(252);
         const int period = 253;
         Check(core.AccbandsLookback(period) > 251,
             "the probe needs a lookback past the range, or it proves nothing");
-        var empty = new double[0];
 
         CheckCode(RetCode.BadParam,
-            () => core.Accbands(0, 251, input, input, input, period, empty, empty, new double[0]),
-            "one empty array as two outputs is rejected");
+            () => core.Accbands(0, 251, input, input, input, period,
+                      new double[0], new double[0], new double[0]),
+            "empty outputs on a range that produces nothing");
+        CheckCode(RetCode.BadParam,
+            () => core.Accbands(0, 251, input, input, input, period, default, default, default),
+            "null outputs on a range that produces nothing");
+        CheckCode(RetCode.BadParam,
+            () => core.Accbands(0, 251, input, input, input, period,
+                      new double[1], new double[0], new double[1]),
+            "one empty output among three");
         Check(core.Accbands(0, 251, input, input, input, period,
-                  new double[0], new double[0], new double[0]).Count == 0,
-            "distinct empty outputs are accepted");
-        Check(core.Accbands(0, 251, input, input, input, period, default, default, default).Count == 0,
-            "null outputs are accepted");
+                  new double[1], new double[1], new double[1]).Count == 0,
+            "one element each is enough when nothing is produced");
+
+        int stEnd = core.SupertrendLookback(10, 3.0) - 1;
+        CheckCode(RetCode.BadParam,
+            () => core.Supertrend(0, stEnd, input, input, input, 10, 3.0, new double[1], new int[0]),
+            "an empty integer output");
 
         int mamaEnd = core.MamaLookback(0.5, 0.05) - 1;
         CheckCode(RetCode.BadParam,
-            () => core.Mama(0, mamaEnd, input, 0.5, 0.05, empty, empty),
-            "an empty array as outMAMA and outFAMA is rejected");
-        Check(core.Mama(0, mamaEnd, input, 0.5, 0.05, empty, default).Count == 0,
-            "a declined outFAMA beside an empty outMAMA is accepted");
-
-        // Cross-typed: the int output is the real output's own bytes.
-        int stEnd = core.SupertrendLookback(10, 3.0) - 1;
-        CheckCode(RetCode.BadParam,
-            () => core.Supertrend(0, stEnd, input, input, input, 10, 3.0,
-                      empty, MemoryMarshal.Cast<double, int>(empty.AsSpan())),
-            "an empty real output reinterpreted as the int output is rejected");
-        Check(core.Supertrend(0, stEnd, input, input, input, 10, 3.0,
-                  new double[0], new int[0]).Count == 0,
-            "distinct empty outputs of two element types are accepted");
+            () => core.Mama(0, mamaEnd, input, 0.5, 0.05, new double[0], default),
+            "an empty outMAMA beside a declined outFAMA");
+        Check(core.Mama(0, mamaEnd, input, 0.5, 0.05, new double[1], default).Count == 0,
+            "an empty span still declines outFAMA");
 
         double[] history = Closes(core.AccbandsLookback(20));
         CheckCode(RetCode.BadParam,
-            () => core.AccbandsOpenAndFill(history, history, history, 20, empty, empty, new double[0]),
-            "OpenAndFill: one empty array as two outputs is rejected");
-        CheckCode(RetCode.InsufficientHistory,
             () => core.AccbandsOpenAndFill(history, history, history, 20,
                       new double[0], new double[0], new double[0]),
-            "OpenAndFill: distinct empty outputs pass rS6");
-        CheckCode(RetCode.InsufficientHistory,
+            "OpenAndFill: empty outputs on a history too short to open");
+        CheckCode(RetCode.BadParam,
             () => core.AccbandsOpenAndFill(history, history, history, 20, default, default, default),
-            "OpenAndFill: null outputs pass rS6");
+            "OpenAndFill: null outputs on a history too short to open");
+        CheckCode(RetCode.InsufficientHistory,
+            () => core.AccbandsOpenAndFill(history, history, history, 20,
+                      new double[1], new double[1], new double[1]),
+            "OpenAndFill: one element each reaches the history check");
+
+        // One array as two outputs is still one buffer.
+        var both = new double[252];
+        CheckCode(RetCode.BadParam,
+            () => core.Mama(0, 251, input, 0.5, 0.05, both, both),
+            "one array as outMAMA and outFAMA is rejected");
+        CheckCode(RetCode.BadParam,
+            () => core.AccbandsOpenAndFill(input, input, input, 20, both, both, new double[252]),
+            "OpenAndFill: one array as two outputs is rejected");
     }
 
     /// <summary>The index rules outrank the buffer rules on the output side too.
@@ -1238,7 +1248,7 @@ public static class BatchApiTest
         IntegerSentinelSelectsTheDocumentedDefault();
         EveryFailureCarriesItsCode();
         ANullableOutputMayBeDeclined();
-        OneEmptyArrayIsOneBuffer();
+        AnEmptyOutputIsAnAbsentOne();
 
         if (_failures == 0)
         {

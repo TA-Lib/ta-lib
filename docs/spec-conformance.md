@@ -22,10 +22,10 @@ adds a column; it does not change a rule.
 | — | Not applicable: the condition cannot be expressed in this backend's types. |
 | *(blank)* | Not yet verified. |
 
-`—` is not a pass. It means the language removes the failure mode (a Rust slice
-cannot be null, a C# `Span<T>` cannot be absent, an enum has no out-of-domain
-value), so there is nothing for the backend to check and nothing for a caller to
-hit.
+`—` is not a pass. It means the language removes the failure mode (safe Rust
+cannot pass one buffer twice, a Rust output that is not an `Option` cannot be
+omitted, an enum has no out-of-domain value), so there is nothing for the backend
+to check and nothing for a caller to hit.
 
 ## Conformance
 
@@ -51,24 +51,25 @@ retired footnote leaves a gap, so a citation of `[4]` keeps its meaning.
 | rB1 | [start index](https://ta-lib.org/spec/errors/#rb1) | ✅ | ✅ | ✅ | ✅ |
 | rB2 | [end index](https://ta-lib.org/spec/errors/#rb2) | ✅ | ✅ | ✅ | ✅ |
 | rB3 | [parameter value](https://ta-lib.org/spec/errors/#rb3) | ✅ | ✅ | ✅ | ✅ |
-| rB4 | [absent argument](https://ta-lib.org/spec/errors/#rb4) | ✅ | —<br>[1] | ✅ | —<br>[2] |
+| rB4 | [absent argument](https://ta-lib.org/spec/errors/#rb4) | ✅ | ✅<br>[1] | ✅ | ✅<br>[2] |
 | rB5 | [buffer length](https://ta-lib.org/spec/errors/#rb5) | ⚠️<br>[3] | ✅ | ✅ | ✅ |
 | rB6 | [one buffer, two outputs](https://ta-lib.org/spec/errors/#rb6) | ✅ | ✅ | ✅ | ✅ |
-| rB7 | [omitted output](https://ta-lib.org/spec/errors/#rb7) | ✅ | —<br>[20] | ✅ | —<br>[20] |
+| rB7 | [omitted output](https://ta-lib.org/spec/errors/#rb7) | ✅ | —<br>[20] | ✅ | ✅<br>[2] |
 | rB8 | [allocation failure](https://ta-lib.org/spec/errors/#rb8) | ⚠️<br>[23] | ⚠️<br>[23] | ⚠️<br>[23] | ⚠️<br>[23] |
 | rB9 | [internal error](https://ta-lib.org/spec/errors/#rb9) | ⚠️<br>[21] | ⚠️<br>[21] | ⚠️<br>[21] | ⚠️<br>[21] |
 
-[1] Rust slices cannot be null, and what C writes through a pointer (the
-index/count pair, a stream handle) is returned instead.
+[1] Rust slices cannot be null: an empty one is the absent argument. What C
+writes through a pointer (the index/count pair, a stream handle) is returned
+instead.
 
-[2] C# `Span<T>` cannot be absent. A null array converts to an empty span, so
-absence surfaces as a zero length: rB5 in the batch tier, rS1 for a stream's
-history. A zero-length output is rS5's case.
+[2] A C# span cannot be null. A null array converts to an empty span, and an
+empty span is the absent argument: rB4 or rS4 for an input or for an output that
+cannot be declined, rS1 for a stream's history.
 
 [3] C has no sizes to check against: a property of the ABI, not a defect.
 
-[20] Rust takes a non-declinable output as `&mut [T]`, which cannot be omitted.
-C# has no check of its own (footnote [2]).
+[20] Rust takes a non-declinable output as `&mut [T]`, which cannot be omitted;
+an empty one is rB4.
 
 [21] Implemented, but the individual sites are not tested: no reachable input
 fires one (rationale rB9).
@@ -83,10 +84,10 @@ fires one (rationale rB9).
 | rS1 | [empty history](https://ta-lib.org/spec/streaming/#rs1) | ✅<br>[4] | ✅<br>[4] | ✅<br>[4] | ✅<br>[4] |
 | rS2 | [history too long](https://ta-lib.org/spec/streaming/#rs2) | ✅<br>[5] | ✅<br>[5] | ⚠️<br>[5] | ✅<br>[5] |
 | rS3 | [parameter value](https://ta-lib.org/spec/streaming/#rs3) | ✅ | ✅ | ✅ | ✅ |
-| rS4 | [absent argument](https://ta-lib.org/spec/streaming/#rs4) | ✅ | —<br>[1] | ✅ | —<br>[2] |
+| rS4 | [absent argument](https://ta-lib.org/spec/streaming/#rs4) | ✅ | ✅<br>[1] | ✅ | ✅<br>[2] |
 | rS5 | [buffer length](https://ta-lib.org/spec/streaming/#rs5) | ⚠️<br>[3] | ✅ | ✅ | ✅ |
 | rS6 | [aliasing](https://ta-lib.org/spec/streaming/#rs6) | ✅ | —<br>[22] | ✅ | ✅ |
-| rS7 | [declined output](https://ta-lib.org/spec/streaming/#rs7) | ✅ | —<br>[20] | ✅ | —<br>[20] |
+| rS7 | [declined output](https://ta-lib.org/spec/streaming/#rs7) | ✅ | —<br>[20] | ✅ | ✅<br>[2] |
 | rS8 | [short history](https://ta-lib.org/spec/streaming/#rs8) | ✅ | ✅ | ✅ | ✅ |
 
 The openers do not scan the history for non-finite values (rationale: finite
@@ -226,9 +227,19 @@ no phantom io and `--xlang-hash` for behaviour matching.
 rB6: `checkOutputAliasRejected` (`test_abstract.c`) sweeps every ordered output
 pair of every function, cross-typed pairs included, binding both onto one buffer
 and requiring `TA_BAD_PARAM`, once over the full range and once over a range
-that produces no values: C's form of one zero-length array passed as two outputs
-(Appendix D item 15), with the pair rebound apart as that leg's control.
-Java's and C#'s `BatchApiTest` pass one zero-length array as two outputs.
+that produces no values (Appendix D item 15), with the pair rebound apart as
+that leg's control. Java's and C#'s `BatchApiTest` pass one array as two outputs.
+
+rB4 and rS4, an empty argument: an output that cannot be declined is refused when
+empty, on a range that produces nothing and on a history too short to open, with
+a one-element control for each. Java `anEmptyOutputIsAnAbsentOne` and C#
+`AnEmptyOutputIsAnAbsentOne` (`BatchApiTest`), C# `StreamApiTest`, Rust
+`an_empty_output_is_an_absent_one` (`tests/nullable_outputs.rs`),
+`a_sub_lookback_range_frees_the_output_bound_and_not_the_input_bound`
+(`tests/empty_range.rs`) and the short-history test of
+`tests/stream_open_contract.rs`. The same tests hold a supplied declinable
+output to its length only in Java and Rust, and an empty span to declining in
+C#. An empty input was already refused by the length rule.
 
 rW7: `checkInPlaceAliasCorrect` (`test_abstract.c`),
 `anOutputOnItsInputAnswersTheSame` (Java's `MetadataTest`) and
@@ -276,8 +287,7 @@ rS1, rS2, rS4, rS5, rS7 and rS8 are mapped below; rS3 is driven by the parameter
 leg of `test_open_contract.c` over the C openers; rS6 is mapped only for one buffer
 passed as two outputs: `testBatchArgumentContract` passes one buffer as
 ACCBANDS's first two `OpenAndFill` outputs on a history of lookback bars
-(`TA_BAD_PARAM`), with a separate-outputs control answering rS8; Java's and C#'s
-`BatchApiTest` do the same with one zero-length array.
+(`TA_BAD_PARAM`), with a separate-outputs control answering rS8.
 
 `testStreamShortHistory` drives rS1, rS2's rejecting side and rS8 in C: 9, 3 and 8
 rejections, with rS8's 16 controls. Three of rS1's cases are *also* an absent
@@ -285,8 +295,8 @@ argument, which is what makes them about the order and not only the code.
 `testBatchArgumentContract` drives rS4 with rB4's own argument shapes plus the
 handle: 12 rejections and 5 controls, counted apart from rB4's. `BatchApiTest`
 does the same for Java, and adds rS1's; `StreamApiTest` covers rS4 in C#, where
-the condition is a zero-length span and so is rS1. Rust cannot express rS4, and
-`tests/stream_open_contract.rs` covers rS1 and rS2 there. Java's `BatchApiTest`
+the condition is a zero-length span and so is rS1. In Rust
+`tests/stream_open_contract.rs` covers rS1, rS2 and rS4's empty output. Java's `BatchApiTest`
 asserts `BAD_PARAM`, not only the exception type, at each rS4 rejection, at an
 `OpenAndFill` output placed on its input (rS6) and at a missing non-declinable
 output (rS7).
@@ -317,7 +327,7 @@ the history's length, that the bound REJECT rather than merely exist, and that a
 
 No cross-language gate reaches a declination: the JSON-RPC servers bind every
 declared output and floor its length at one, so a backend that went back to
-requiring `outFAMA`, or to rejecting distinct empty buffers, would stay green in
+requiring `outFAMA`, or to accepting an empty output, would stay green in
 `--codegen`, `--xlang-hash` and `--ref` alike. Each backend therefore carries
 its own probe: `testBatchArgumentContract` (C), `tests/nullable_outputs.rs` and
 `tests/stream_open_contract.rs` (Rust), `BatchApiTest` (Java) and `BatchApiTest`
@@ -337,8 +347,6 @@ emitted opener shape in all four on the PR gate, because the runtime probes are
 nightly. rU5 itself is C's alone: `testBatchArgumentContract` drives all four
 open/update combinations, and the emitted shape is held on the PR gate by
 `test_a_nullable_output_is_declinable_at_update_in_c`.
-
-The empty triple of Appendix D item 11 is a probe in each backend's own suite.
 
 ### rH3, rH6 and rH9
 
@@ -511,6 +519,22 @@ Known gap: Java's and C#'s MA stream throw a plain `IllegalStateException` /
 sub-stream", `Core_MA.java`, `Core_MA.cs`) with no code and no prefix.
 Unreachable by construction.
 
+### rB4, rS4: empty is absent
+
+An argument that cannot be declined is absent when it is `NULL` in C, null or
+zero-length in Java, zero-length in Rust and C#, and the call answers
+`TA_BAD_PARAM` at the absent check: after the index and parameter conditions,
+before any length (ruled 2026-10-02). A zero-length buffer is almost always a
+mistake, and a caller cannot cheaply tell whether a call will produce nothing.
+"No room is owed when nothing is written" protected no real use, and hid a null
+buffer behind a success or behind `TA_INSUFFICIENT_HISTORY`. C sees only `NULL`:
+a buffer of no capacity is invisible there, as every length is.
+
+Two things are not part of it. A stream's empty history answers rS1, which sits
+ahead of rS4 as `historyLen < 1` sits ahead of C's NULL checks. A declinable
+output is exempt: C# declines with an empty span, and in Java and Rust a
+supplied one with no room is held to its length only.
+
 ### rB5, rS5: C
 
 Measured with guard-paged buffers: an input that does not reach `endIdx`, or an
@@ -540,11 +564,14 @@ which is C, and C is the one language where the check is not merely expensive
 but not straightforwardly expressible. Java and Rust satisfy the stronger rule
 for free by making the state unreachable, which is not the same as enforcing it.
 
-Outputs must be different buffers in every language, a zero-length one included
-(ruled 2026-10-01, Appendix D item 15): rE2 then holds with no exception, and C
-and Java already compared identity whatever the length. Two distinct empty
-outputs are different buffers and never collide (item 11, #262). A call that
-is both undersized and identical answers rB5, the earlier rule (#261).
+Outputs must be different buffers in every language. An empty output that
+cannot be declined never reaches the pair guard: it is absent (rB4). A
+zero-length buffer therefore meets the guard only as a declinable output, in
+Java and in C# as an empty span over a real array, and beside a partner that is
+not empty it never trips it. One zero-length array as two outputs (ruled
+2026-10-01, Appendix D item 15) now needs two declinable outputs, which no
+shipped function has. Rust's guard requires both slices non-empty. A call that is both undersized and identical answers rB5, the earlier
+rule (#261).
 
 Outputs of different element types can only be the same buffer through a
 reinterpreting cast. C compares both through `const void *` (well defined, not
@@ -635,9 +662,8 @@ empty span over a real array decline alike there. That costs nothing: a declined
 output is written to no more than one that has nothing to hold, and the length
 check is still applied to a supplied output. Only the pair guard tells the two
 apart (next paragraph). Rust could have read a zero-length slice the same way,
-and does not: `Option` is the shape a Rust caller expects, it makes the
-declination visible at the call site, and it keeps `&mut []` for a non-nullable
-output a sizing mistake.
+and does not: `Option` is the shape a Rust caller expects, and it makes the
+declination visible at the call site.
 
 An omitted output is not an alias, so rB6's pair guard skips a pair whose
 operands are not both present. C and Java guard each nullable operand non-null
@@ -845,7 +871,7 @@ implemented but not covered by a CI probe; the rule's own footnote says which.
 | ~~8~~ | all | rS8 | *Fixed.* `TA_RetCode` had **no member** for "history shorter than the lookback", so C and Rust fell back to the catch-all and Java and C# borrowed `TA_OUT_OF_RANGE_END_INDEX`. `TA_INSUFFICIENT_HISTORY = 17` was appended and all four now report it, which leaves rS2 as the opening tier's only producer of `TA_OUT_OF_RANGE_END_INDEX`. |
 | ~~9~~ | Rust, Java, C# | rS5 | *Fixed.* `OpenAndFill` validated no output capacity, so an undersized output faulted inside the fill with the buffer already partly written. The public frame now bounds every output by `historyLen - <N>_Lookback(...)`. (C still cannot: no sizes.) |
 | ~~10~~ | C | | *Obsolete.* `TA_SetCompatibility` accepted any value; #388 removed the behaviour it selected, and the pair is kept declared and inert. |
-| ~~11~~ | C#, Rust | rB6 | *Fixed.* Two distinct **empty** output buffers were rejected as aliased in C# and Rust and accepted in C and Java, measured on `ACCBANDS(0, 251, …, optInTimePeriod 253, …)` with three distinct zero-length outputs. Both now accept them (#262). |
+| ~~11~~ | C#, Rust | rB6 | *Fixed.* Two distinct **empty** output buffers were rejected as aliased in C# and Rust and accepted in C and Java, measured on `ACCBANDS(0, 251, …, optInTimePeriod 253, …)` with three distinct zero-length outputs. Both then accepted them (#262). Superseded 2026-10-02: an empty output that cannot be declined is absent (rB4), so the call is refused in Rust, Java and C#. |
 | ~~13~~ | all | rS1 | *Fixed.* An empty history answered `TA_BAD_PARAM` where rS1 specifies `TA_OUT_OF_RANGE_START_INDEX`, and C checked argument presence ahead of the index pair. All four openers now answer the pair ahead of every presence check, except for the one check each language makes a precondition of reading the length (footnote [4]). |
 | ~~14~~ | Java | rL2, rL3, rL11 | *Fixed.* A lookback call did not check a null MA type: `maLookback(1, null)` returned 0 and `maLookback(2, null)` threw `NullPointerException` from its `switch`, and every lookback with an MA-type parameter did the same. Each now returns -1, as rB3 rejects the batch call. |
 | ~~15~~ | C# | rB6, rS6 | *Fixed.* One zero-length array passed as two outputs, on a range that produces no values, answered `TA_SUCCESS` in C# (`Overlaps` is false for an empty span) and `TA_BAD_PARAM` in C and Java. Ruled 2026-10-01: outputs must be different buffers in every language. C#'s batch and `OpenAndFill` guards now also reject two empty outputs on the same non-null reference. |
