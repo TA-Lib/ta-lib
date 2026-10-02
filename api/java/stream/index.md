@@ -134,8 +134,8 @@ See [Rules](#rules) for when concurrent reads of these are safe.
 
 | Call | Behaviour |
 |------|-----------|
-| `<name>Open` / `<name>OpenAndFill` | Too little history throws `InsufficientHistoryException` (a subclass of `IllegalArgumentException` — catch it to accumulate more bars and retry). Out-of-range parameters throw plain `IllegalArgumentException`. |
-| `update` / `peek` | <ul><li>`IllegalArgumentException` on invalid input such as NaN or ±Inf</li><li>`IndexOutOfBoundsException` once the range has reached bar `Core.INDEX_MAX`, the last index the batch API addresses</li></ul>A rejection changes nothing at all — no state, no value, and no range. |
+| `<name>Open` / `<name>OpenAndFill` | Too little history throws `InsufficientHistoryException` (a subclass of `IllegalArgumentException` — catch it to accumulate more bars and retry). Out-of-range parameters throw `TALibArgumentException`. |
+| `update` / `peek` | <ul><li>`IllegalArgumentException` on invalid input such as NaN or ±Inf</li><li>`IndexOutOfBoundsException` from `update` (never `peek`) once the range has reached bar `Core.INDEX_MAX`, the last index the batch API addresses</li></ul>A rejection changes nothing at all — no state, no value, and no range. |
 | `advance` | `IndexOutOfBoundsException` once the range has reached bar `Core.INDEX_MAX`, the last index the batch API addresses. |
 | `value()` / `clone` / `outRange` | Never throw. `value(out)` throws `IllegalArgumentException` on a null sink, as `update` and `peek` do. |
 

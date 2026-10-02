@@ -2,7 +2,8 @@
 url: 'https://ta-lib.org/api/java/index.md'
 description: >-
   io.github.talib: a native Java port with no JNI, indicators as methods on a
-  Core instance over double arrays, bit-identical to the reference C library.
+  Core instance over double arrays, bit-identical to the reference C library
+  apart from last-bit rounding in the math library.
 ---
 # Java Core API
 
@@ -15,7 +16,8 @@ description: >-
 <blockquote>
 <p><a href="#direct_call">3.1 Batch Processing</a><br>
 <a href="#output_size">3.2 Output Size and Lookback</a><br>
-<a href="#retcode">3.3 Errors</a><br></p>
+<a href="#display_shift">3.3 Display Shift</a><br>
+<a href="#retcode">3.4 Errors</a><br></p>
 </blockquote>
 
 <p><a href="#advanced">4.0 Advanced Features</a></p>
@@ -33,7 +35,7 @@ description: >-
 
 ## 1.0 Introduction {#intro}
 
-The Java library is a native port of TA-Lib in the `io.github.talib` package — no JNI, pure Java. Every indicator is a method on a `Core` instance, operates on `double[]` arrays (or `float[]`, see [4.4](#input_type)), and is **bit-identical** to the reference C library over the same inputs.
+The Java library is a native port of TA-Lib in the `io.github.talib` package — no JNI, pure Java. Every indicator is a method on a `Core` instance, operates on `double[]` arrays (or `float[]`, see [4.4](#input_type)), and is **bit-identical** to the reference C library over the same inputs, with one exception beyond TA-Lib's control: where a calculation calls a transcendental math function (such as `exp`, `log`, `sin` or `atan`), Java's math library can round the result differently from the C library in the last bit. That difference can grow through the rest of the calculation. Details: [Versions and Determinism](/spec/versions/).
 
 The **Core API** provides:
 
@@ -118,7 +120,7 @@ Every indicator is overloaded for `float[]` inputs as well as `double[]` — see
 
 ### 3.2 Output Size and Lookback {#output_size}
 
-An output is written only where the indicator is defined — a 30-period SMA has no value until the 30th bar. `begIdx()` is the first valid bar and `count()` is the number written; the rest of the array is left untouched, never padded with NaN. Size the output array to at least `endIdx - startIdx + 1`, or exactly with the lookback:
+An output is written only where the indicator is defined — a 30-period SMA has no value until the 30th bar. `begIdx()` is the first valid bar and `count()` is the number written; the array is never padded with NaN. Size the output array to at least `endIdx - startIdx + 1`, or exactly with the lookback:
 
 ```java
 int lookback = Core.DEFAULT.smaLookback(30);    // 29 for a 30-period SMA
@@ -128,7 +130,17 @@ Each TA method has a matching `<name>Lookback` method, taking the same optional 
 
 **Too little data is a success, not an error.** A valid range that ends before the lookback simply produces no values: `count()` is 0 and `isEmpty()` is true. No exception is thrown — this matches the C library's `TA_SUCCESS` with `outNBElement == 0`. Nothing is written, so the output array's length is not checked on such a call — it may even be zero-length. The input is still checked, though: an `endIdx` past the end of the series you passed is a mistake worth hearing about in any range, and an empty range would otherwise hide it behind a "no data yet" result.
 
-### 3.3 Errors {#retcode}
+### 3.3 Display Shift {#display_shift}
+
+A few indicators are conventionally drawn at another bar than the one that computes them. The values are never moved: the matching `<name>DisplayShift` method gives the number of bars to shift one output when charting it, positive ahead and negative behind. It is 0 for almost every function.
+
+```java
+int shift = Core.DEFAULT.dpoDisplayShift(20, 0);   // period 20, first output: -11
+```
+
+The same answer comes from the [abstraction layer](/api/abstract/). The rules are in the [specification](/spec/lookback/#display-shift).
+
+### 3.4 Errors {#retcode}
 
 Misuse throws rather than returning a return code:
 
@@ -138,7 +150,7 @@ Misuse throws rather than returning a return code:
 | Optional parameter outside its documented range | `TALibArgumentException` |
 | Two outputs sharing one array | `TALibArgumentException` |
 | An array too short for the range requested, including an `endIdx` past the end of the input | `TALibArgumentException` |
-| A null input or output array | `TALibArgumentException` |
+| A null array, other than an output that may be declined ([rW5](/spec/inputs-outputs/#rw5)) | `TALibArgumentException` |
 
 Each extends the platform type you would reach for — `TALibIndexException` an
 `IndexOutOfBoundsException`, the rest an `IllegalArgumentException` — so catching
@@ -152,38 +164,9 @@ A `NaN` or `±Inf` inside an input series is not detected, and nothing is promis
 
 ### 4.1 Abstraction Layer {#abstract}
 
-The `io.github.talib.metadata` package describes every function at run time and calls it without naming it at compile time — the Java equivalent of C's [abstraction layer](/api/#abstract). Useful for a UI, a scripting bridge, or anything that enumerates indicators.
+The `io.github.talib.metadata` package describes every function at run time and calls it without naming it at compile time. Useful for a UI, a scripting bridge, or anything that enumerates indicators. See the [Abstraction Layer](/api/abstract/) page.
 
-```java
-import io.github.talib.metadata.FuncInfo;
-import io.github.talib.metadata.Functions;
-
-FuncInfo f = Functions.byName("SMA");
-
-f.name();       // "SMA"
-f.group();      // "Overlap Studies"
-f.hint();       // one-line description
-f.inputs();     // List<InputInfo>    -- one entry per input
-f.optInputs();  // List<OptInputInfo> -- one entry per optional parameter
-f.outputs();    // List<OutputInfo>   -- one entry per output
-
-Functions.all().forEach(fi -> System.out.println(fi.name() + " (" + fi.group() + ")"));
-```
-
-Binding arguments at run time goes through a `ParamHolder`, obtained from `FuncInfo#newCall()`:
-
-```java
-FuncInfo f = Functions.byName("SMA");
-OutRange r = f.newCall()
-    .setInput(0, close)
-    .setOptInput(0, 30)
-    .setOutput(0, out)
-    .call(0, close.length - 1);
-```
-
-Everything is validated against the `FuncInfo` row: an index out of bounds, a type that does not match the declared parameter, or an unset parameter at `call()` time throws `IllegalArgumentException`. The call itself then behaves exactly like the typed method, including throwing on misuse and returning an empty `OutRange` when the range ends before the lookback. A `ParamHolder` is not thread-safe: confine one to one thread, or build one per call.
-
-Streamable functions carry the `FuncFlags.STREAMING` bit in `FuncInfo#flags()` — check it with `f.hasFlags(FuncFlags.STREAMING)`.
+A misused holder (an index out of bounds, a type that does not match the declared parameter, an unbound input or output at `call()` time) throws `IllegalArgumentException`.
 
 ### 4.2 Numerical Stability {#numerical_stability}
 

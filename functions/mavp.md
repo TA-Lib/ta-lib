@@ -18,6 +18,7 @@ p_i = clamp((int)inPeriods\[startIdx+i], optInMinPeriod, optInMaxPeriod); outRea
 
 * Fractional per-bar periods are truncated to whole numbers before being clamped to the minimum and maximum period.
 * Period values of 1 perform no smoothing (the bar's output equals its input); the minimum allowed period is 1 since 0.6.5.
+* `optInMinPeriod` must not exceed `optInMaxPeriod`; a larger minimum is rejected.
 
 ## Inputs
 
@@ -51,6 +52,7 @@ p_i = clamp((int)inPeriods\[startIdx+i], optInMinPeriod, optInMaxPeriod); outRea
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Candlestick</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Can Output NaN or ±Inf</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Identity at Period 1</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Display Shift</span> |
 
 </div>
 

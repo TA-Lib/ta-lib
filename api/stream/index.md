@@ -50,7 +50,7 @@ TA_SMA_Close( s );
 
 * **Warm-up.** `Open` succeeds only if `historyLen >= TA_<NAME>_Lookback(params) + 1` — with fewer bars there is no defined value yet. After `Open`, the history buffer can be freed — the stream keeps everything it needs.
 * **Closed vs forming bar.** `Update` commits state irreversibly, so use it only for **closed** bars. `Peek` returns the exact value `Update` would, but without committing — call it as often as the forming bar ticks.
-* **Parameters are fixed at `Open`.** Changing a parameter means a new stream. [Unstable period](/api/#numerical_stability) and [candle settings](/api/#candle_settings) are first read at `Open` and must not change during the stream's life.
+* **Parameters are fixed at `Open`.** Changing a parameter means a new stream. The [unstable period](/api/#numerical_stability) and the [candle settings](/api/#candle_settings) are process-wide: change them only while no TA function is running and no stream is open ([specification](/spec/settings-threads/#idle-settings)).
 * **Threads.** A stream is single-writer: an `Update` or `TA_<NAME>_Advance` must not race with any other call on the same stream. Processing forks are possible by cloning the stream, and each clone becomes fully independent and can be updated concurrently.
 
 ## Multi-input / multi-output
@@ -111,7 +111,7 @@ See [Rules](#rules) for when concurrent reads of these are safe.
 | Call | Returns |
 |------|---------|
 | `TA_<NAME>_Open` / `TA_<NAME>_OpenAndFill` | <ul><li>`TA_INSUFFICIENT_HISTORY` when `historyLen` is below `lookback + 1` — the one failure worth retrying, since another bar might fix it</li><li>`TA_OUT_OF_RANGE_START_INDEX` when `historyLen` is 0</li><li>`TA_OUT_OF_RANGE_END_INDEX` when `historyLen` exceeds `TA_INDEX_MAX + 1`</li><li>`TA_BAD_PARAM` — a NULL pointer, or a parameter out of range</li><li>`TA_ALLOC_ERR` — a memory allocation failure</li></ul>On any of these, `*stream` is NULL. |
-| `TA_<NAME>_Update` / `TA_<NAME>_Peek` | <ul><li>`TA_BAD_PARAM` on NULL arguments, or invalid input such as NaN or ±Inf</li><li>`TA_OUT_OF_RANGE_END_INDEX` once the range has reached bar `TA_INDEX_MAX`, the last index the batch API addresses</li><li>`TA_ALLOC_ERR`: a memory allocation failure</li></ul>Apart from `TA_ALLOC_ERR`, after which nothing is defined, a rejection changes nothing at all: no state, no output and no range. The next call sees exactly what the last accepted bar left. |
+| `TA_<NAME>_Update` / `TA_<NAME>_Peek` | <ul><li>`TA_BAD_PARAM` on NULL arguments, or invalid input such as NaN or ±Inf</li><li>`TA_OUT_OF_RANGE_END_INDEX` from `Update` (never `Peek`) once the range has reached bar `TA_INDEX_MAX`, the last index the batch API addresses</li><li>`TA_ALLOC_ERR`: a memory allocation failure</li></ul>Apart from `TA_ALLOC_ERR`, after which nothing is defined, a rejection changes nothing at all: no state, no output and no range. The next call sees exactly what the last accepted bar left. |
 | `TA_<NAME>_Close`  | `TA_SUCCESS`; `TA_<NAME>_Close(NULL)` is a no-op |
 | `TA_<NAME>_Value` | `TA_BAD_PARAM` on a NULL stream or a NULL out-pointer for a required output. A declinable output may be NULL, and is then simply not written. |
 | `TA_<NAME>_Clone` | `TA_BAD_PARAM` on a NULL stream or a NULL `clone`; `TA_ALLOC_ERR` if any allocation fails. On either, `*clone` is NULL and the original is untouched. |

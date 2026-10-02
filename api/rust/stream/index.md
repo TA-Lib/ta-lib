@@ -47,7 +47,7 @@ let provisional = s.peek(forming_close)?;            // state left unchanged
 // dropping `s` closes the stream
 ```
 
-`open` returns a `Result` — `Err(RetCode::InsufficientHistory)` if there is too little history (another bar might fix it, so this is the one worth retrying), `Err(RetCode::BadParam)` if a parameter is out of range. `update` and `peek` return a `Result` too, and after a successful `open` what they reject is invalid input such as NaN or ±Inf. They also reject a bar past `Core::INDEX_MAX`, the last index the batch API addresses. A rejection changes nothing at all — no state, no value, and no range.
+`open` returns a `Result` — `Err(RetCode::InsufficientHistory)` if there is too little history (another bar might fix it, so this is the one worth retrying), `Err(RetCode::BadParam)` if a parameter is out of range. `update` and `peek` return a `Result` too, and after a successful `open` what they reject is invalid input such as NaN or ±Inf. `update` also rejects a bar past `Core::INDEX_MAX`, the last index the batch API addresses. A rejection changes nothing at all — no state, no value, and no range.
 
 ## Rules
 

@@ -17,7 +17,8 @@ description: >-
 <p><a href="#init">3.1 Initialize and Shutdown</a><br>
 <a href="#direct_call">3.2 Batch Processing</a><br>
 <a href="#output_size">3.3 Output Size and Lookback</a><br>
-<a href="#retcode">3.4 Return Codes</a><br></p>
+<a href="#display_shift">3.4 Display Shift</a><br>
+<a href="#retcode">3.5 Return Codes</a><br></p>
 </blockquote>
 
 <p><a href="#advanced">4.0 Advanced Features</a></p>
@@ -80,8 +81,8 @@ For Windows, look into <b>C:\Program Files\TA-Lib</b> for 64-bit and <b>C:\Progr
 <pre>TA_RetCode TA_Initialize( void );
 TA_RetCode TA_Shutdown( void );</pre>
 
-<p><b>TA_Initialize</b> must be called once (and only once), from a single thread, prior to any other API function. After it returns TA_SUCCESS, you can start processing your data in three ways: <a href="#direct_call">batch processing</a>, the <a href="/api/stream/">streaming API</a> or through the <a href="#abstract">abstraction layer</a>.</p>
-<p><b>TA_Shutdown</b> releases the resources acquired by TA_Initialize. Call it single-threaded, typically from the last remaining thread just before your application exits.</p>
+<p><b>TA_Initialize</b> must be called once, and only once, per process, before any other API function. After it returns TA_SUCCESS, you can start processing your data in three ways: <a href="#direct_call">batch processing</a>, the <a href="/api/stream/">streaming API</a> or through the <a href="#abstract">abstraction layer</a>.</p>
+<p><b>TA_Shutdown</b> releases the resources acquired by TA_Initialize. Call it while no other TA function is running and no stream is open, typically just before your application exits; the library must not be used after it.</p>
 
 ### 3.2 Batch Processing {#direct_call}
 
@@ -181,7 +182,17 @@ It is important that the output array is large enough. Here are three ways to de
 it is TA_SMA_Lookback.</p>
 <p>The lookback is the number of input elements consumed before the first output can be calculated. Example: a simple moving average (SMA) of period 10 has a lookback of 9.</p>
 
-### 3.4 Return Codes {#retcode}
+### 3.4 Display Shift {#display_shift}
+
+<p>A few indicators are conventionally drawn at another bar than the one that computes them: the Detrended Price Oscillator, for example, is drawn half a period back. TA-Lib never moves the values. Each TA function has a matching TA_XXXX_DisplayShift function that tells a charting app where to draw one output:</p>
+
+```c
+int shift = TA_DPO_DisplayShift( 20, 0 );   /* period 20, first output: -11 */
+```
+
+<p>It takes the optional parameters of TA_XXXX_Lookback, then the index of the output, counted from zero. The result is a number of bars: positive ahead, negative behind, and zero for almost every function. The same answer comes from <b>TA_GetDisplayShift</b> in the <a href="/api/abstract/">abstraction layer</a>. The rules are in the <a href="/spec/lookback/#display-shift">specification</a>.</p>
+
+### 3.5 Return Codes {#retcode}
 
 <p>Every TA function returns a <b>TA_RetCode</b>. <b>TA_SUCCESS</b> (zero) means the call completed and wrote its outputs; on anything else, treat outBegIdx and outNBElement as undefined and the output buffers as untouched. <b>TA_ALLOC_ERR</b> is the exception: it is fatal, and nothing about the call is defined past it.</p>
 <p>The codes a caller normally encounters:</p>
@@ -189,7 +200,7 @@ it is TA_SMA_Lookback.</p>
 | Code | Meaning |
 |------|---------|
 | `TA_SUCCESS` | No error. |
-| `TA_LIB_NOT_INITIALIZE` | [TA_Initialize](#init) was not called, or did not succeed. |
+| `TA_LIB_NOT_INITIALIZE` | Not returned to a program that follows the [lifecycle rule](#init). |
 | `TA_BAD_PARAM` | A parameter is out of range, or a required pointer is NULL. |
 | `TA_ALLOC_ERR` | Allocation failed, most likely out of memory. Fatal: nothing about the call is defined past it. |
 | `TA_OUT_OF_RANGE_START_INDEX` | startIdx is negative or above [TA_INDEX_MAX](#index_range). |
@@ -210,30 +221,16 @@ if( retCode != TA_SUCCESS )
 <p>which prints, for example:</p>
 
 ```
-Error 1(TA_LIB_NOT_INITIALIZE): TA_Initialize was not successfully called
+Error 2(TA_BAD_PARAM): A parameter is out of range
 ```
 
-<p>The <a href="#output_size">TA_XXXX_Lookback</a> functions are the exception to the pattern: they return an int rather than a TA_RetCode, and answer <b>-1</b> when a parameter is out of range. Check for that before using the value as an allocation size.</p>
+<p>The <a href="#output_size">TA_XXXX_Lookback</a> and <a href="#display_shift">TA_XXXX_DisplayShift</a> functions are the exception to the pattern: they return an int rather than a TA_RetCode. A lookback answers <b>-1</b> when a parameter is out of range. Check for that before using the value as an allocation size.</p>
 
 ## 4.0 Advanced Features {#advanced}
 
 ### 4.1 Abstraction Layer {#abstract}
 
-<p>Instead of hard-coding calls to specific TA functions, an app can look them up by name at runtime through the interface in <a href="https://github.com/TA-Lib/ta-lib/blob/main/include/ta_abstract.h">ta_abstract.h</a>. For any function it reports:</p>
-<ul>
-  <li>the inputs it takes,</li>
-  <li>its optional parameters with their valid ranges,</li>
-  <li>the outputs it produces, and</li>
-  <li>metadata about numerical properties and suggested default, range and display hints.</li>
-</ul>
-<p>This is what you want when the function or its parameters are not fixed in your code. Typical uses:</p>
-<ul>
-  <li>Generating glue code or wrappers for higher-level languages.</li>
-  <li>Automatically picking up new functions after a TA-Lib upgrade, with no code change.</li>
-  <li>"Mutating" the function and its parameters while searching for strategies (e.g. a genetic or neural-network algorithm).</li>
-  <li>Populating a charting app: the indicator menu and each settings dialog come straight from the metadata.</li>
-</ul>
-<p>If you only need a handful of specific functions, calling them directly — with <a href="#direct_call">batch processing</a> or the <a href="/api/stream/">streaming API</a> — is simpler.</p>
+<p>Instead of hard-coding calls to specific TA functions, an app can look them up by name at run time through the interface in <a href="https://github.com/TA-Lib/ta-lib/blob/main/include/ta_abstract.h">ta_abstract.h</a>, read their inputs, parameters and outputs, and call them. See the <a href="/api/abstract/">Abstraction Layer</a> page.</p>
 
 ### 4.2 Numerical Stability {#numerical_stability}
 
@@ -245,7 +242,7 @@ Error 1(TA_LIB_NOT_INITIALIZE): TA_Initialize was not successfully called
 
 ### 4.3 Candlestick Settings {#candle_settings}
 
-<p>The candlestick pattern functions (<b>TA_CDL*</b>) judge each candle against tunable thresholds — is its body "long", its shadow "short", two candles "near". These thresholds are global settings: change them once, from a single thread, before any concurrent calls (see <a href="#multithreading">multi-threading</a>).</p>
+<p>The candlestick pattern functions (<b>TA_CDL*</b>) judge each candle against tunable thresholds: is its body "long", its shadow "short", are two candles "near". These thresholds are process-wide settings: change them only while no TA function is running and no stream is open (see <a href="#multithreading">multi-threading</a>).</p>
 <p>See the <a href="/api/candle-settings/">Candlestick Settings</a> page for the API, the setting types and their defaults.</p>
 
 ### 4.4 Input Type: float vs. double {#input_type}
@@ -291,15 +288,13 @@ Error 1(TA_LIB_NOT_INITIALIZE): TA_Initialize was not successfully called
 
 <p>TA-Lib is multi-thread safe where it matters most for performance: calling the TA functions themselves (TA_SMA, TA_RSI, ...).</p>
 
-<p>One important caveat: the "global settings" must first be initialized from a single thread. That includes calls to:</p>
+<p>One important caveat: the unstable period and the candle settings are process-wide. Change them only while no TA function is running and no stream is open; the effect of a change made otherwise is undefined. TA_Shutdown counts as a change. The calls that change them:</p>
 <ul>
-  <li><a href="#init">TA_Initialize</a></li>
+  <li><a href="#init">TA_Shutdown</a></li>
   <li><a href="/api/unstable-period/">TA_SetUnstablePeriod</a></li>
   <li><a href="/api/candle-settings/">TA_SetCandleSettings, TA_RestoreCandleDefaultSettings</a></li>
 </ul>
 
-<p>Once these initial calls are done, the application can call the rest of the API from multiple threads (including the ta_abstract.h interface).</p>
-
-<p>The exception at the other end is <a href="#init">TA_Shutdown</a>, which is single-threaded as well.</p>
+<p>Between changes, the application can call the rest of the API from multiple threads (including the ta_abstract.h interface). In the specification: <a href="/spec/settings-threads/#idle-settings">when a C setting may change</a>.</p>
 
 <p>Note: TA-Lib assumes it is linked against a thread-safe malloc/free runtime, which is the default on all modern platforms (Linux, Windows, Mac). In other words, any toolchain supporting C11 or newer is safe.</p>

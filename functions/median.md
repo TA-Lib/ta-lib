@@ -55,6 +55,7 @@ n even:   MEDIAN = ( W[n/2] + W[n/2 + 1] ) / 2
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Candlestick</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Can Output NaN or ±Inf</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Identity at Period 1</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Display Shift</span> |
 
 </div>
 

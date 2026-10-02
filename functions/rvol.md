@@ -48,6 +48,7 @@ RVOL_t = Volume_t / ( (1/N) \* sum\_{i=t-N}^{t-1} Volume_i ), N = optInTimePerio
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Candlestick</span> |
 | <span class="flag-box">✅</span> **Can Output NaN or ±Inf** <span class="flag-tip" tabindex="0" role="note" aria-label="Some inputs have no finite result, so a successful call can return NaN or ±Inf — a gap with nothing to plot. See Notes for when." data-tip="Some inputs have no finite result, so a successful call can return NaN or ±Inf — a gap with nothing to plot. See Notes for when.">i</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Identity at Period 1</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Display Shift</span> |
 
 </div>
 
