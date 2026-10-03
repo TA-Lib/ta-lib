@@ -95,7 +95,6 @@ typedef struct
 /* This is the hidden implementation of TA_Libc. */
 typedef struct
 {
-   unsigned int magicNb; /* Unique identifier of this object. */
    TA_ModuleControl moduleControl[TA_NB_GLOBAL_ID];
 
    unsigned int traceEnabled;

@@ -395,6 +395,13 @@ rT4 and rT5 under a cast out of the enum in C#: `CandleMisuseThrows` and
 `MisuseThrows` (`CoreBuilderTest`). rT10: `testUnstablePeriodBounds`
 (`test_internals.c`) changes the settings and initializes over them.
 
+`TA_Initialize` and `TA_Shutdown` are idempotent (ruled 2026-10-02): a repeated
+call of either answers `TA_SUCCESS` and leaves every setting at its default,
+settings changed in between included. The public contract still asks for one
+call of each, so this is held to, not promised: `testUnstablePeriodBounds`
+calls each twice over changed settings. Nothing reads an initialized flag, so
+`TA_LIB_NOT_INITIALIZE` has no producer.
+
 rT11: `scripts/thread_sanitize.py` (nightly) builds the library and
 `scripts/thread_sanitize.c` with clang's ThreadSanitizer and runs eight threads
 through, for every function, its double and float batch entry points, its

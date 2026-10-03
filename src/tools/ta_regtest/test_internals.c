@@ -1700,6 +1700,51 @@ static ErrorNumber testUnstablePeriodBounds( void )
       }
    }
 
+   /* Both lifecycle calls are idempotent: a repeated call of either succeeds
+    * and leaves every setting at its default, settings changed in between
+    * included. The contract still asks for one call of each.
+    */
+   {
+      unsigned int id;
+      int pass;
+      for( pass = 0; pass < 2; pass++ )
+      {
+         TA_RetCode first, second;
+         TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 5 );
+         TA_SetCandleSettings( TA_BodyDoji, TA_RangeType_Shadows, 7, 2.5 );
+         first = pass == 0 ? TA_Initialize() : TA_Shutdown();
+         TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 5 );
+         TA_SetCandleSettings( TA_BodyDoji, TA_RangeType_Shadows, 7, 2.5 );
+         second = pass == 0 ? TA_Initialize() : TA_Shutdown();
+         if( first != TA_SUCCESS || second != TA_SUCCESS )
+         {
+            printf( "\nFailed: TA_%s answered %d then %d, expected TA_SUCCESS twice\n",
+                    pass == 0 ? "Initialize" : "Shutdown", (int)first, (int)second );
+            return TA_INTERNAL_INIT_RESET_FAIL;
+         }
+         for( id = 0; id < TA_FUNC_UNST_COUNT; id++ )
+         {
+            if( TA_GetUnstablePeriod( (TA_FuncUnstId)id ) != 0 )
+            {
+               printf( "\nFailed: unstable period %u is %u after a repeated TA_%s\n",
+                       id, TA_GetUnstablePeriod( (TA_FuncUnstId)id ),
+                       pass == 0 ? "Initialize" : "Shutdown" );
+               return TA_INTERNAL_INIT_RESET_FAIL;
+            }
+         }
+         if( TA_Globals->candleSettings[TA_BodyDoji].rangeType != TA_RangeType_HighLow ||
+             TA_Globals->candleSettings[TA_BodyDoji].avgPeriod != 10 ||
+             TA_Globals->candleSettings[TA_BodyDoji].factor != 0.1 )
+         {
+            printf( "\nFailed: BodyDoji is not at its default after a repeated TA_%s\n",
+                    pass == 0 ? "Initialize" : "Shutdown" );
+            return TA_INTERNAL_INIT_RESET_FAIL;
+         }
+      }
+      if( TA_Initialize() != TA_SUCCESS )
+         return TA_INTERNAL_INIT_RESET_FAIL;
+   }
+
    /* Pairs with the allocLib() above (as testCircularBuffer does) -- shutting
     * down zeroes TA_Globals, so the periods set here cannot leak into any
     * later test.

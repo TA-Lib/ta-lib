@@ -29,7 +29,7 @@ The codes a batch, lookback or stream call can answer:
 | 17 | `TA_INSUFFICIENT_HISTORY` | Stream openers only ([rS8](/spec/streaming/#rs8)). A batch call never returns it. |
 | 5000 to 5999 | `TA_INTERNAL_ERROR` + id | [rB9](/spec/errors/#rb9). |
 
-`TA_RetCode` has further members, declared in `ta_defs.h`. Only `TA_Shutdown` and the abstraction layer return them.
+`TA_RetCode` has further members, declared in `ta_defs.h`. Only the abstraction layer returns them.
 
 ## General rules
 

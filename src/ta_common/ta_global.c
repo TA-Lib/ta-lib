@@ -54,6 +54,7 @@
  *                settingType (#185)
  *  100126 MF,CC Pre-load the candle defaults, also after TA_Shutdown.
  *  100226 MF,CC A candle factor is finite and not negative (#497).
+ *  100226 MF,CC TA_Initialize and TA_Shutdown are idempotent (#497).
  */
 
 /* Description:
@@ -67,7 +68,6 @@
 #include <time.h>
 
 #include "ta_common.h"
-#include "ta_magic_nb.h"
 #include "ta_global.h"
 #include "ta_func.h"
 
@@ -132,9 +132,6 @@ TA_RetCode TA_Initialize( void )
     * variables of all other modules...
     */
    memset( TA_Globals, 0, sizeof( TA_LibcPriv ) );
-   TA_Globals->magicNb = TA_LIBC_PRIV_MAGIC_NB;
-
-   /*** At this point, TA_Shutdown can be called to clean-up. ***/
 
    /* Set the default value to global variables. The return is checked: it is
     * how the defaults table's own completeness guard reaches a caller, and a
@@ -149,10 +146,7 @@ TA_RetCode TA_Initialize( void )
 
 TA_RetCode TA_Shutdown( void )
 {
-   if( TA_Globals->magicNb != TA_LIBC_PRIV_MAGIC_NB )
-      return TA_LIB_NOT_INITIALIZE;
-
-   /* Initialize to all zero to make sure we invalidate that object. */
+   /* Idempotent, like TA_Initialize: every call leaves the defaults in force. */
    memset( TA_Globals, 0, sizeof( TA_LibcPriv ) );
 
    return TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
