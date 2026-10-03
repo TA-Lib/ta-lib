@@ -6,8 +6,8 @@
 #policy	monotone
 #toolchain	x86_64/x86_64-linux-gnu/13.3.0
 #corpus	points=20000 regime_period=14 seed=42 shape=randwalk stream_iters=1024 trend_strength=0.500000
-#commit	72e58a9661e9caf2228fb11159af3cff8dcb6c15
-#generated	2026-10-01T16:30:11Z
+#commit	f5d10ed21d763b5afbb4d5a50001490b8f967ff2
+#generated	2026-10-03T10:08:57Z
 AC	batch	0	703438
 AC	open	0	704171
 AC	openfill	0	692624
@@ -588,7 +588,7 @@ FRACTAL	open	0	1620259
 FRACTAL	openfill	0	1620329
 FRACTAL	peek	0	201741
 FRACTAL	update	0	207057
-FRAMA	batch	0	4539146
+FRAMA	batch	0	4529154
 FRAMA	open	0	4733805
 FRAMA	openfill	0	4733795
 FRAMA	peek	0	213836
