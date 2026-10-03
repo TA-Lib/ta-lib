@@ -1080,6 +1080,13 @@ public static class MetadataTest
                             }
                         }
                         Check(same, $"{f.Name}: output {o} placed on input {slot} component {comp} answers as on separate arrays");
+                        bool tailKept = true;
+                        for (int i = N - InPlaceTail; i < N; i++)
+                        {
+                            tailKept &= BitConverter.DoubleToInt64Bits(shared[i])
+                                == BitConverter.DoubleToInt64Bits(source[i]);
+                        }
+                        Check(tailKept, $"{f.Name}: output {o} placed on input {slot} component {comp} writes nothing past endIdx");
                         pairs++;
                         if (info.Kind == InputKind.Price)
                         {
@@ -1093,7 +1100,7 @@ public static class MetadataTest
             $"the in-place sweep ran {pricePairs} pairs on a price component and {pairs - pricePairs} on a real input, at least 50 of each expected");
     }
 
-    /// <summary>One call over the whole series. <paramref name="shared"/>, when
+    /// <summary>One call, ending <c>InPlaceTail</c> bars before the series. <paramref name="shared"/>, when
     /// given, is both component <paramref name="comp"/> of input
     /// <paramref name="slot"/> and output <paramref name="output"/>.</summary>
     private static OutRange InPlaceCall(FuncInfo f, double[] spread, int slot, PriceComponents comp,
@@ -1129,8 +1136,11 @@ public static class MetadataTest
                 call.SetOutput(k, intOut[k]);
             }
         }
-        return call.Call(0, N - 1);
+        return call.Call(0, N - 1 - InPlaceTail);
     }
+
+    /// <summary>Bars past endIdx in the in-place sweep, which must keep their input.</summary>
+    private const int InPlaceTail = 16;
 
     private static ParamHolder Bind(FuncInfo f, double[][] realOut, int[][] intOut)
     {

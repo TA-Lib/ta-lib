@@ -3521,6 +3521,9 @@ static void testIndexRange( const TA_FuncInfo *funcInfo, void *opaqueData )
  * they are still compared for collateral damage. */
 
 #define IO_ALIAS_SIZE    252
+/* Bars past endIdx: an output placed on an input must leave them as they were. */
+#define IO_ALIAS_TAIL    16
+#define IO_ALIAS_END     (IO_ALIAS_SIZE - 1 - IO_ALIAS_TAIL)
 #define IO_ALIAS_MAX_IN  4
 #define IO_ALIAS_MAX_OUT 4
 
@@ -3647,7 +3650,7 @@ static ErrorNumber checkInPlaceAliasCorrect( const TA_FuncInfo *funcInfo )
       else
          TA_SetOutputParamRealPtr( paramHolder, k, &ioAliasRefOut[k][0] );
    }
-   retCode = TA_CallFunc( paramHolder, 0, IO_ALIAS_SIZE-1, &refBegIdx, &refNbElement );
+   retCode = TA_CallFunc( paramHolder, 0, IO_ALIAS_END, &refBegIdx, &refNbElement );
    TA_ParamHolderFree( paramHolder );
    if( retCode != TA_SUCCESS )
    {
@@ -3719,7 +3722,7 @@ static ErrorNumber checkInPlaceAliasCorrect( const TA_FuncInfo *funcInfo )
                else
                   TA_SetOutputParamRealPtr( paramHolder, k, &ioAliasOut[k][0] );
             }
-            retCode = TA_CallFunc( paramHolder, 0, IO_ALIAS_SIZE-1,
+            retCode = TA_CallFunc( paramHolder, 0, IO_ALIAS_END,
                                    &outBegIdx, &outNbElement );
             TA_ParamHolderFree( paramHolder );
 
@@ -3773,6 +3776,14 @@ static ErrorNumber checkInPlaceAliasCorrect( const TA_FuncInfo *funcInfo )
                      errNumber = TA_ABS_TST_FAIL_INPLACE_ALIAS;
                   }
                }
+            }
+            if( memcmp( &ioAliasScratch[IO_ALIAS_END + 1], &series[IO_ALIAS_END + 1],
+                        IO_ALIAS_TAIL * sizeof(double) ) != 0 )
+            {
+               printf( "  IN-PLACE ALIAS [%s]: out%u <- in%u.%s: an element past endIdx was written\n",
+                       funcInfo->name, o, i,
+                       inputInfo->type == TA_Input_Real ? "real" : compName[c] );
+               errNumber = TA_ABS_TST_FAIL_INPLACE_ALIAS;
             }
             if( refNbElement > 0 )
                ioAliasNbChecked++;
