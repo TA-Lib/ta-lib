@@ -10,6 +10,7 @@ all generated from one source and tested against the C reference.
 [![release](https://img.shields.io/github/v/release/TA-Lib/ta-lib)](https://github.com/TA-Lib/ta-lib/releases)
 [![license](https://img.shields.io/github/license/TA-Lib/ta-lib)](LICENSE)
 [![main nightly tests](https://github.com/TA-Lib/ta-lib/actions/workflows/main-nightly-tests.yml/badge.svg)](https://github.com/TA-Lib/ta-lib/actions/workflows/main-nightly-tests.yml)
+[![dev nightly tests](https://github.com/TA-Lib/ta-lib/actions/workflows/dev-nightly-tests.yml/badge.svg)](https://github.com/TA-Lib/ta-lib/actions/workflows/dev-nightly-tests.yml)
 [![Discord chat](https://img.shields.io/discord/1038616996062953554.svg?logo=discord&style=flat-square)](https://discord.gg/Erb6SwsVbH)
 
 ## Install
