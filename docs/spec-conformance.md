@@ -387,20 +387,66 @@ demands the refusal, the code, and that nothing moved. The code is asserted
 twice because the type cannot stand in for it: Java renders rS1's code and rU4's
 as one exception class.
 
-### Abstraction layer rules
+### Abstract API rules
 
-rM3 in C: `checkHolderErrorContract` (`test_abstract.c`) drives, for every
-function, each setter with a wrong index, a wrong kind and a NULL, `TA_CallFunc`
-with the inputs, then the outputs, unbound, with each NULL argument and with a
-holder the layer did not make, and then a fully bound holder whose index or
-parameter the function refuses, which must come back as the function's code. The
-lookups and the two table frees are checked once, after the sweep. In the ports:
-`the_setters_refuse_what_does_not_belong` (Rust), `holderRejectsMisuse` (Java
-`MetadataTest`) and `BinderRejectsMisuse` (C# `MetadataTest`). Across languages:
-under `--codegen`, `test_abstract.c` sends every function's `abstract_call` with
-input 0, then output 0, left unbound (`skipInput`, `skipOutput`) and requires
-C's code from each server. These tests pin today's codes, which is more than rM3
-asks: a deliberate refinement changes them together.
+rA1: in C, `checkHolderErrorContract` (`test_abstract.c`) ends on a fully bound
+holder whose index or parameter the function refuses, which must come back as
+the function's code. In the ports, through a bound holder: a short input and a
+short output (`an_undersized_input_is_rejected_not_read_past`,
+`an_undersized_output_is_rejected_not_written_past`) and both index codes
+(`a_bound_holder_answers_the_batch_index_codes`) in Rust; `holderRejectsMisuse`
+(Java) and `BinderRejectsMisuse` (C#) send a short input, a short output, an end
+index below the start index and one array bound as two outputs. The generator's `rust_binder_calls_the_public_tier` pins that every
+Rust arm calls the public entry point. Across languages: under `--codegen`,
+`d2_param_vectors` sends each function's rejected parameter vectors through
+`abstract_call`.
+
+rA2: `testHolderStaysReusable` (C), `a_rejected_setter_leaves_the_holder_as_it_found_it`
+(Rust), `aRejectedSetterLeavesTheHolderAsItFoundIt` (Java),
+`ARejectedSetterLeavesTheCallAsItFoundIt` (C#), and the generator's
+`metadata_price_setter_validates_before_writing` for all four.
+
+rA3 in C: `checkHolderErrorContract` drives, for every function, each setter
+with a wrong index, a wrong kind and a NULL, `TA_CallFunc` with the inputs, then
+the outputs, unbound, with each NULL argument and with a holder the API did not
+make. `test_default_calls` then checks, once, the lookups by name, the two table
+frees, a handle the API did not give out, an absent one, and a parameter index
+that names nothing. In the ports: `the_setters_refuse_what_does_not_belong`
+(Rust), `holderRejectsMisuse` (Java) and `BinderRejectsMisuse` (C#), whose
+helpers also require the exception to be a `TALibArgumentException`. Across
+languages: under `--codegen`, `test_abstract.c` sends every function's
+`abstract_call` with input 0, then output 0, left unbound (`skipInput`,
+`skipOutput`) and requires C's code from each server. These tests pin today's
+codes, which is more than rA3 asks: a deliberate refinement changes them
+together.
+
+rA4: `checkFuncHandleFoldsCase` (C), `lookup_is_ascii_case_insensitive`,
+`the_fold_does_not_widen_what_resolves` and `unknown_name_is_none` (Rust),
+`byNameFoldsAsciiCase` and `registryIsComplete` (Java), `ByNameFoldsAsciiCase`
+and `CatalogueIsComplete` (C#).
+
+rA5: in C, `callWithDefaults` calls every function through a holder with no
+optional parameter set and, under `--codegen`, requires each server to give the
+same answer with the declared defaults bound. In the ports:
+`unset_matches_the_documented_default` (Rust), `callByNameMatchesTheTypedApi`
+and `choiceListSentinelMatchesTheDefault` (Java),
+`UnboundParametersTakeTheDocumentedDefault` (C#).
+
+rA6: `test_default_calls` (C, over `TA_ForEachFunc`),
+`every_function_binds_calls_and_agrees_with_its_lookback` (Rust),
+`callByNameMatchesTheTypedApi` (Java), `BothCallPathsAgree` (C#). Each walks the
+registry it tests. Across languages, under `--codegen`: `callWithDefaults` sends
+an `abstract_call` for every function C enumerates, which each server resolves
+in its shipped registry, and `abstract_verify_for_each_func` requires each
+server's enumeration to be C's, as a set (Java's server enumerates a table of
+its own).
+
+rA7: the generator's `the_spec_flag_catalog_is_complete` requires every flag
+member of the three ports to carry the value of the C `#define` its catalog row
+names. The same test holds the catalog itself, which is more than rA7 asks: a
+row for every flag `#define` of `ta_abstract.h`, no port flag without a row, no
+flag family beyond the four it reads, and "No function sets it" exactly on the
+flags no function carries.
 
 ### Settings rules
 
@@ -525,7 +571,7 @@ two tiers.
 
 The settings builders raise plain platform types for their own refusals: they
 are not function calls, so they have no `TA_RetCode` a caller would be
-recovering. The abstraction layer's refusals carry a code (rM3), and its
+recovering. The Abstract API's refusals carry a code (rA3), and its
 *dispatch* calls the public entry point, so an indicator's rejection reaches the
 caller carrying its own code in every backend.
 
@@ -651,7 +697,7 @@ advanced (`TA_APO_StepImpl` steps its first sub-stream before the second can
 fail), which is why the public rH5 excludes rB9.
 
 `ta_codegen/input/internal_error_ids.yaml` maps a function-tier id back to the
-function and the state field it guards. The abstraction layer hand-allocates
+function and the state field it guards. The Abstract API hand-allocates
 ids 1 to 5, most of them shared by several sites (id 2 by 13 in `ta_abstract.c`),
 so an id there names a kind of check, not one guard.
 
@@ -868,8 +914,8 @@ committed and run.
 
 ## Appendix C: Not yet specified
 
-- **Which code the abstraction layer answers for a given misuse**:
-  [rM3](https://ta-lib.org/spec/errors/#rm3) names the set and leaves the choice
+- **Which code the Abstract API answers for a given misuse**:
+  [rA3](https://ta-lib.org/spec/abstract/#ra3) names the set and leaves the choice
   open, so a backend can become more specific. Today all four answer 10 for an
   unbound input, 11 for an unbound output and 8 for a mistyped setter.
 - **JSON-RPC servers**: a test harness, not a shipped API. Their error behaviour

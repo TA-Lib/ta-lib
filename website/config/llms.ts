@@ -43,6 +43,7 @@ const PAGE_ORDER = [
   "/spec/inputs-outputs/",
   "/spec/lookback/",
   "/spec/streaming/",
+  "/spec/abstract/",
   "/spec/settings-threads/",
   "/spec/errors/",
   "/spec/versions/",

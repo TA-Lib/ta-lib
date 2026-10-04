@@ -1,5 +1,5 @@
 ---
-title: Inputs and Outputs
+title: Batch Inputs and Outputs
 description: "What a TA-Lib call takes and what a successful call writes: what the caller must pass, index range, optional parameters, output range and size, argument order, integer and declinable outputs, and computing in place."
 ---
 
@@ -22,7 +22,7 @@ Nothing here is checked unless the item says so. A call that breaks an unchecked
 
 <a id="rp1"></a>**rP1** `startIdx` and `endIdx` are zero-based, inclusive indices into the input series passed. They select the bars to produce output for; bars before `startIdx` are read as history when the lookback needs them. In C# they index the span passed, not the array behind it: a slice holds no bars before its first element. Bounds and codes: [rB1](/spec/errors/#rb1), [rB2](/spec/errors/#rb2).
 
-<a id="rp2"></a>**rP2** Each optional parameter's default and accepted values are per function: the Parameters table of its [function page](/functions/), and the same data through the [abstraction layer](/spec/#abstraction). A value outside them is rejected, and so is a NaN or infinite value for a real parameter and, in Java, a null `MAType`. A function may also reject a single value inside the listed range, or a combination of values that are each accepted; its page's Notes state it ([FRAMA](/functions/frama) rejects an odd `optInTimePeriod`, [MAVP](/functions/mavp) rejects `optInMinPeriod > optInMaxPeriod`). Rejections: [rB3](/spec/errors/#rb3), [rS3](/spec/streaming/#rs3), [rL2](/spec/lookback/#rl2).
+<a id="rp2"></a>**rP2** Each optional parameter's default and accepted values are per function: the Parameters table of its [function page](/functions/), and the same data through the [Abstract API](/spec/abstract/#provides). A value outside them is rejected, and so is a NaN or infinite value for a real parameter and, in Java, a null `MAType`. A function may also reject a single value inside the listed range, or a combination of values that are each accepted; its page's Notes state it ([FRAMA](/functions/frama) rejects an odd `optInTimePeriod`, [MAVP](/functions/mavp) rejects `optInMinPeriod > optInMaxPeriod`). Rejections: [rB3](/spec/errors/#rb3), [rS3](/spec/streaming/#rs3), [rL2](/spec/lookback/#rl2).
 
 An MA-type parameter accepts every `MAType` member, and a release may add members ([rV3](/spec/versions/#rv3)). To check a raw integer, use the enum your code was built with, never a fixed list: in C the range `TA_MATYPE_MIN` to `TA_MATYPE_MAX`, in Rust `MAType::try_from`, in Java `MAType.values()`, in C# `Enum.IsDefined`.
 
@@ -46,9 +46,9 @@ An MA-type parameter accepts every `MAType` member, and a release may add member
 - **Index outputs** ([MININDEX](/functions/minindex), [MAXINDEX](/functions/maxindex), [MINMAXINDEX](/functions/minmaxindex)): the position of a bar in the input passed, not relative to `startIdx` or `begIdx`. Which of several tied bars it names is unspecified.
 - **Other integer outputs** (for example [HT_TRENDMODE](/functions/ht_trendmode)): as their function page says.
 
-<a id="rw5"></a>**rW5** An output whose metadata flags include `TA_OUT_NULLABLE` (Rust `OutputFlags::NULLABLE`, Java `OutputFlags.NULLABLE`, C# `OutputFlags.Nullable`) may be declined, for example MAMA's `outFAMA`; read the flag rather than a list of names. Decline it with `NULL` in C, `None` in Rust (the parameter is an `Option`), `null` in Java, an empty span such as `default` in C#. It is still computed: every other output is bit-identical to the same call with it supplied, and a stream opened that way still reports its value. No other output can be declined: [rB7](/spec/errors/#rb7), [rS7](/spec/streaming/#rs7), [rU5](/spec/streaming/#ru5).
+<a id="rw5"></a>**rW5** An output whose [metadata flags](/spec/abstract/#flags) include `TA_OUT_NULLABLE` (Rust `OutputFlags::NULLABLE`, Java `OutputFlags.NULLABLE`, C# `OutputFlags.Nullable`) may be declined, for example MAMA's `outFAMA`; read the flag rather than a list of names. Decline it with `NULL` in C, `None` in Rust (the parameter is an `Option`), `null` in Java, an empty span such as `default` in C#. It is still computed: every other output is bit-identical to the same call with it supplied, and a stream opened that way still reports its value. No other output can be declined: [rB7](/spec/errors/#rb7), [rS7](/spec/streaming/#rs7), [rU5](/spec/streaming/#ru5).
 
-<a id="rw6"></a>**rW6** A function whose flags include `TA_FUNC_FLG_NAN_INF_OUT` (Rust `FuncFlags::NAN_INF_OUTPUT`, Java `FuncFlags.NAN_INF_OUTPUT`, C# `FuncFlags.NanInfOutput`; "Can Output NaN or ±Inf" on its function page) can write NaN or ±Inf in a successful call on ordinary finite input. The Notes on its function page say when.
+<a id="rw6"></a>**rW6** A function whose [metadata flags](/spec/abstract/#flags) include `TA_FUNC_FLG_NAN_INF_OUT` (Rust `FuncFlags::NAN_INF_OUTPUT`, Java `FuncFlags.NAN_INF_OUTPUT`, C# `FuncFlags.NanInfOutput`; "Can Output NaN or ±Inf" on its function page) can write NaN or ±Inf in a successful call on ordinary finite input. The Notes on its function page say when.
 
 ## Computing in place {#aliasing}
 

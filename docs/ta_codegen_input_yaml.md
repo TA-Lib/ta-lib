@@ -256,7 +256,7 @@ server still passes, 0 against 0.
 |------|-------------|--------------|
 | `pattern_bool` | 0 = no pattern, != 0 = pattern exists | `TA_OUT_PATTERN_BOOL` |
 | `pattern_bull_bear` | >0 = bullish, <0 = bearish, 0 = none | `TA_OUT_PATTERN_BULL_BEAR` |
-| `pattern_strength` | 0..100 = bullish, -100..0 = bearish | `TA_OUT_PATTERN_STRENGTH` |
+| `pattern_strength` | 0 neutral; up to 100 getting bullish, above it bullish; down to -100 getting bearish, below it bearish | `TA_OUT_PATTERN_STRENGTH` |
 
 **Value range hints**:
 

@@ -117,4 +117,4 @@ See [Rules](#rules) for when concurrent reads of these are safe.
 
 ## Discovering streamable functions
 
-When driving TA-Lib through the [abstraction layer](/api/#abstract), streamable functions carry the `TA_FUNC_FLG_STREAM` flag in their function info.
+When driving TA-Lib through the [Abstract API](/api/#abstract), streamable functions carry the `TA_FUNC_FLG_STREAM` flag in their function info.

@@ -1,5 +1,5 @@
 ---
-title: Lookback
+title: Lookback and Shift
 description: "How the lookback is defined and queried, what enters it (unstable period, candle averaging, a period of 1), the display shift a chart applies to an output, and how to tell from metadata whether the start of the series matters."
 ---
 
@@ -31,26 +31,28 @@ Every function has a lookback call. It takes exactly the batch call's optional p
 
 <a id="rl6"></a>**rL6** An unstable period adds exactly that many bars to the lookback of the function that owns its id; MINUS_DI, MINUS_DM, PLUS_DI and PLUS_DM at period 1 take none and keep a lookback of 1. For a batch call from bar 0, the values the owner still reports are unchanged, bit for bit. An unstable period also lengthens the lookback of functions computed through the owner, directly or through an MA type the caller selects. There, how many bars it adds depends on the function and its parameters: it can count more than once (through EMA, DEMA counts it twice and TEMA three times), count only where its path is the longest (KC takes the longer of its EMA and ATR paths), or not count at all (an MA stage at period 1 or of the `DISABLED` type takes none). Its bound is [rT3](/spec/settings-threads/#rt3). The functions that own an id, and how to set one: [Unstable Period](/api/unstable-period/). An inheriting function names its source in the Numerical Stability line of its [function page](/functions/).
 
-<a id="rl7"></a>**rL7** A candle setting's `avgPeriod` enters the lookback of the CDL functions that read that setting. CDL functions carry `TA_FUNC_FLG_CANDLESTICK` (Rust `FuncFlags::CANDLESTICK`, Java `FuncFlags.CANDLESTICK`, C# `FuncFlags.Candlestick`). Only `avgPeriod` enters: a range type or a factor changes no lookback, and a candle setting changes the lookback of no function without the flag. Its bound is [rT6](/spec/settings-threads/#rt6). The model and the defaults: [Candlestick Settings](/api/candle-settings/).
+<a id="rl7"></a>**rL7** A candle setting's `avgPeriod` enters the lookback of the CDL functions that read that setting. CDL functions carry the [metadata flag](/spec/abstract/#flags) `TA_FUNC_FLG_CANDLESTICK` (Rust `FuncFlags::CANDLESTICK`, Java `FuncFlags.CANDLESTICK`, C# `FuncFlags.Candlestick`). Only `avgPeriod` enters: a range type or a factor changes no lookback, and a candle setting changes the lookback of no function without the flag. Its bound is [rT6](/spec/settings-threads/#rt6). The model and the defaults: [Candlestick Settings](/api/candle-settings/).
 
-<a id="rl8"></a>**rL8** A function flagged `TA_FUNC_FLG_PERIOD1_IDENTITY` (Rust `FuncFlags::PERIOD1_IDENTITY`, Java `FuncFlags.PERIOD1_IDENTITY`, C# `FuncFlags.Period1Identity`), called with `optInTimePeriod` at 1, writes every output value as a bit-for-bit copy of its input at the same bar (VWMA copies the close). When no unstable period reaches it, its lookback at period 1 is 0. Which functions carry the flag: the "Identity at Period 1" row of each [function page](/functions/).
+<a id="rl8"></a>**rL8** A function whose [metadata flags](/spec/abstract/#flags) include `TA_FUNC_FLG_PERIOD1_IDENTITY` (Rust `FuncFlags::PERIOD1_IDENTITY`, Java `FuncFlags.PERIOD1_IDENTITY`, C# `FuncFlags.Period1Identity`), called with `optInTimePeriod` at 1, writes every output value as a bit-for-bit copy of its input at the same bar (VWMA copies the close). When no unstable period reaches it, its lookback at period 1 is 0. Which functions carry the flag: the "Identity at Period 1" row of each [function page](/functions/).
 
 ## Display shift {#display-shift}
 
-Every function has a display-shift call. It takes the lookback call's parameters followed by the index of one output, counted from 0 over every output in the batch call's output order. Its name and return type in each language: [names](/spec/#names). The abstraction layer's holder answers the same query ([abstraction layer](/spec/#abstraction)); in C that call returns `TA_SUCCESS` and carries a rejection in the value, as `TA_GetLookback` does.
+Every function has a display-shift call. It takes the lookback call's parameters followed by the index of one output, counted from 0 over every output in the batch call's output order. Its name and return type in each language: [names](/spec/#names). A parameter holder of the [Abstract API](/spec/abstract/#range-at-call) answers the same query.
 
 | Rule | Statement |
 |---|---|
 | <a id="rl9"></a>**rL9** | A display shift of `s` means a chart draws the value computed at bar `i` at bar `i + s`. It describes drawing only: every output value is written at the bar that computed it, and no value, lookback, `outBegIdx` or `outNBElement` depends on it. It depends on the optional parameters and the output index, never on a setting. |
-| <a id="rl10"></a>**rL10** | An output without `TA_OUT_DISPLAY_SHIFT` (Rust `OutputFlags::DISPLAY_SHIFT`, Java `OutputFlags.DISPLAY_SHIFT`, C# `OutputFlags.DisplayShift`) has a display shift of 0; a flagged output can report 0 for some parameters. A function carries `TA_FUNC_FLG_DISPLAY_SHIFT` (Rust `FuncFlags::DISPLAY_SHIFT`, Java `FuncFlags.DISPLAY_SHIFT`, C# `FuncFlags.DisplayShift`) exactly when at least one of its outputs carries the output flag. |
+| <a id="rl10"></a>**rL10** | An output without the [metadata flag](/spec/abstract/#flags) `TA_OUT_DISPLAY_SHIFT` (Rust `OutputFlags::DISPLAY_SHIFT`, Java `OutputFlags.DISPLAY_SHIFT`, C# `OutputFlags.DisplayShift`) has a display shift of 0; a flagged output can report 0 for some parameters. A function carries `TA_FUNC_FLG_DISPLAY_SHIFT` (Rust `FuncFlags::DISPLAY_SHIFT`, Java `FuncFlags.DISPLAY_SHIFT`, C# `FuncFlags.DisplayShift`) exactly when at least one of its outputs carries the output flag. |
 | <a id="rl11"></a>**rL11** | The call returns its rejection signal ([per language](/spec/#failures)) exactly when the lookback call rejects the same parameters ([rL2](/spec/lookback/#rl2)) or the index names no output. Rust, Java and C# reach the same decision as C and, wherever both accept, return the same shift. |
 
 ## Stability from metadata {#metadata}
+
+What the [metadata](/spec/abstract/) says about a function's numerical stability:
 
 | Property | C | Rust | Java | C# |
 |---|---|---|---|---|
 | Owns an unstable-period id | `TA_FUNC_FLG_UNST_PER` | `FuncFlags::UNSTABLE_PERIOD` | `FuncFlags.UNSTABLE_PERIOD` | `FuncFlags.UnstablePeriod` |
 | Path-dependent | `TA_FUNC_FLG_PATH_DEP` | `FuncFlags::PATH_DEPENDENT` | `FuncFlags.PATH_DEPENDENT` | `FuncFlags.PathDependent` |
 
-- **Depends on the MA type**: an optional parameter whose name ends in `MAType`. The abstraction layer describes it as an integer list of the MA types.
+- **Depends on the MA type**: an optional parameter whose name ends in `MAType`. The Abstract API describes it as an [integer list](/spec/abstract/#provides) of the MA types.
 - **Inherits an unstable period**: no flag marks it (DEMA through EMA). The function page is the complete classification. To test one call, compare its lookback with every id at 0 and with every id set above that first lookback (the `ALL` wildcard): when the two are equal, no unstable period reaches the call.

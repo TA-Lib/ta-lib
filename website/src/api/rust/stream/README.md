@@ -110,4 +110,4 @@ See [Rules](#rules) for when concurrent reads of these are safe.
 
 ## Discovering streamable functions
 
-When driving TA-Lib through the [abstraction layer](/api/rust/#abstract), streamable functions carry `FuncFlags::STREAM` in `FuncInfo::flags`.
+When driving TA-Lib through the [Abstract API](/api/rust/#abstract), streamable functions carry `FuncFlags::STREAM` in `FuncInfo::flags`.
