@@ -526,11 +526,13 @@ TA_LIB_API TA_RetCode TA_GetOutputParameterInfo( const TA_FuncHandle *handle,
  * will always be used in that case.
  *
  * If there is an attempts to set a parameter with the wrong function
- * (and thus the wrong type), TA_BAD_PARAM will be immediatly returned.
+ * (and thus the wrong type), an error is immediatly returned.
  *
  * Although this mechanism looks complicated, it is written for being fairly solid.
  * If you provide a wrong parameter value, or wrong type, or wrong pointer etc. the
- * library shall return TA_BAD_PARAM or TA_BAD_OBJECT and not hang.
+ * library shall return an error and not hang. No TA function returns the codes
+ * 4 to 11 and 15 of TA_RetCode: one of them from TA_CallFunc means the call was
+ * refused here and the function did not run.
  */
 typedef struct TA_ParamHolder
 {

@@ -180,7 +180,7 @@ On success you get an [`OutRange`](https://docs.rs/ta-lib): `beg_idx` is the inp
 | `RetCode::OutOfRangeStartIndex` | `startIdx` is above `Core::INDEX_MAX` (100,000,000). |
 | `RetCode::OutOfRangeEndIndex` | `endIdx` is above `Core::INDEX_MAX`, or below `startIdx`. |
 
-`RetCode` also carries `Success` (the code C returns and the one the other ports expose), plus `AllocErr`, never returned ([rB8](/spec/errors/#rb8)), and `InternalError`, a bug in TA-Lib to report ([rB9](/spec/errors/#rb9)).
+`RetCode` also carries `Success` (the code C returns and the one the other ports expose), plus `AllocErr`, never returned ([rB8](/spec/errors/#rb8)), `InternalError`, a bug in TA-Lib to report ([rB9](/spec/errors/#rb9)), and three codes only the [abstraction layer](/api/abstract/) answers: `InvalidParamHolderType`, `InputNotAllInitialize` and `OutputNotAllInitialize` ([rM3](/spec/errors/#rm3)).
 
 Indexing is safe throughout: the crate is `#![forbid(unsafe_code)]`, so nothing here can read or write out of bounds. Slice sizes are checked before the call runs and reported as `BadParam`; a violated precondition anywhere below that is a panic, never memory corruption.
 

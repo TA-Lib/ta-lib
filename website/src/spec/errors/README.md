@@ -82,7 +82,7 @@ A batch call accepts `0 <= startIdx <= endIdx <= TA_INDEX_MAX` ([`TA_INDEX_MAX`]
 
 <a id="rm2"></a>**rM2** A rejected setter leaves the parameter holder as it found it, so a rejected re-bind cannot leave the next call to succeed, silently, over a mix of old and new arguments.
 
-<a id="rm3"></a>**rM3** A misuse of the layer's own surface (an unknown name, an unbound or mistyped argument, a holder or table the layer did not make) answers `TA_BAD_PARAM` or a [layer code](#layer-codes). Which one is not specified, and a release may make it more specific. When the layer refuses a call for the state of its holder, the function did not run and the code is a layer code, so it cannot be mistaken for the function's own.
+<a id="rm3"></a>**rM3** A misuse of a parameter holder (an unbound or mistyped argument, an index that names no slot, a holder the layer did not make) answers `TA_BAD_PARAM` or a [layer code](#layer-codes), and so does a misuse of C's lookups and tables. Which one is not specified, and a release may make it more specific. When the layer refuses a call for the state of its holder, the function did not run and the code is a layer code, so it cannot be mistaken for the function's own. How a lookup in Rust, Java or C# reports an unknown name is not specified.
 
 ## Conditions on other pages
 

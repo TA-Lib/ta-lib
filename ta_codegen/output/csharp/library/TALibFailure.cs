@@ -65,7 +65,8 @@ public interface ITALibFailure
 
 /// <summary>An argument was rejected: an optional parameter outside its
 /// documented range, two outputs sharing one buffer, or a span too short for the
-/// values the call would read or write.</summary>
+/// values the call would read or write. Also what the <c>TALib.Metadata</c>
+/// binder throws for a misuse of its own, with the layer's code.</summary>
 public class TALibArgumentException : ArgumentException, ITALibFailure
 {
     private readonly RetCode _retCode;
