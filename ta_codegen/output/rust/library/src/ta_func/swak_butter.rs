@@ -233,7 +233,7 @@ impl Core {
             let _w0 = &inReal[today..][.._wn];
             for _wk in 0.._wn {
                 x0 = _w0[_wk];
-                y = (a2 as f64).mul_add(y2, (c0 as f64).mul_add((2.0 as f64).mul_add(x1, x0) + x2, a1 * y1));
+                y = (a1 as f64).mul_add(y1, (a2 as f64).mul_add(y2, c0 * ((2.0 as f64).mul_add(x1, x0) + x2)));
                 x2 = x1;
                 x1 = x0;
                 y2 = y1;
@@ -251,7 +251,7 @@ impl Core {
                 // The evaluation order is the bit-exactness contract across backends:
                 // the numerator as (x0 + 2*x1) + x2, then the a1 feedback, then a2.
                 x0 = _w0[_wk];
-                y = (a2 as f64).mul_add(y2, (c0 as f64).mul_add((2.0 as f64).mul_add(x1, x0) + x2, a1 * y1));
+                y = (a1 as f64).mul_add(y1, (a2 as f64).mul_add(y2, c0 * ((2.0 as f64).mul_add(x1, x0) + x2)));
                 x2 = x1;
                 x1 = x0;
                 y2 = y1;
@@ -420,7 +420,7 @@ impl Core {
         // The evaluation order is the bit-exactness contract across backends:
         // the numerator as (x0 + 2*x1) + x2, then the a1 feedback, then a2.
         x0 = inReal;
-        y = (sp.a2 as f64).mul_add(sp.y2, (sp.c0 as f64).mul_add((2.0 as f64).mul_add(sp.x1, x0) + sp.x2, sp.a1 * sp.y1));
+        y = (sp.a1 as f64).mul_add(sp.y1, (sp.a2 as f64).mul_add(sp.y2, sp.c0 * ((2.0 as f64).mul_add(sp.x1, x0) + sp.x2)));
         sp.x2 = sp.x1;
         sp.x1 = x0;
         sp.y2 = sp.y1;
@@ -510,7 +510,7 @@ impl Core {
         i = lookbackTotal;
         while i != 0 {
             x0 = inReal[today];
-            y = (a2 as f64).mul_add(y2, (c0 as f64).mul_add((2.0 as f64).mul_add(x1, x0) + x2, a1 * y1));
+            y = (a1 as f64).mul_add(y1, (a2 as f64).mul_add(y2, c0 * ((2.0 as f64).mul_add(x1, x0) + x2)));
             x2 = x1;
             x1 = x0;
             y2 = y1;
@@ -523,7 +523,7 @@ impl Core {
             // The evaluation order is the bit-exactness contract across backends:
             // the numerator as (x0 + 2*x1) + x2, then the a1 feedback, then a2.
             x0 = inReal[today];
-            y = (a2 as f64).mul_add(y2, (c0 as f64).mul_add((2.0 as f64).mul_add(x1, x0) + x2, a1 * y1));
+            y = (a1 as f64).mul_add(y1, (a2 as f64).mul_add(y2, c0 * ((2.0 as f64).mul_add(x1, x0) + x2)));
             x2 = x1;
             x1 = x0;
             y2 = y1;
@@ -734,7 +734,7 @@ impl SwakButterStream {
             // The evaluation order is the bit-exactness contract across backends:
             // the numerator as (x0 + 2*x1) + x2, then the a1 feedback, then a2.
             x0 = inReal;
-            y = (sp.a2 as f64).mul_add(y2, (sp.c0 as f64).mul_add((2.0 as f64).mul_add(x1, x0) + x2, sp.a1 * y1));
+            y = (sp.a1 as f64).mul_add(y1, (sp.a2 as f64).mul_add(y2, sp.c0 * ((2.0 as f64).mul_add(x1, x0) + x2)));
             x2 = x1;
             x1 = x0;
             y2 = y1;

@@ -161,7 +161,7 @@ TA_LIB_API TA_RetCode TA_SWAK_HP( int    startIdx,
    while( i != 0 )
    {
       x0 = inReal[today];
-      y = fma(c0, x0 - x1, a1 * y1);
+      y = fma(a1, y1, c0 * (x0 - x1));
       x1 = x0;
       y1 = y;
       today += 1;
@@ -177,7 +177,7 @@ TA_LIB_API TA_RetCode TA_SWAK_HP( int    startIdx,
        * same bits, +0.0 for a cancelled numerator included.
        */
       x0 = inReal[today];
-      y = fma(c0, x0 - x1, a1 * y1);
+      y = fma(a1, y1, c0 * (x0 - x1));
       x1 = x0;
       y1 = y;
       outReal[outIdx] = y;
@@ -251,7 +251,7 @@ TA_RetCode TA_S_SWAK_HP( int    startIdx,
    while( i != 0 )
    {
       x0 = (double)inReal[today];
-      y = fma(c0, x0 - x1, a1 * y1);
+      y = fma(a1, y1, c0 * (x0 - x1));
       x1 = x0;
       y1 = y;
       today += 1;
@@ -261,7 +261,7 @@ TA_RetCode TA_S_SWAK_HP( int    startIdx,
    while( today <= endIdx )
    {
       x0 = (double)inReal[today];
-      y = fma(c0, x0 - x1, a1 * y1);
+      y = fma(a1, y1, c0 * (x0 - x1));
       x1 = x0;
       y1 = y;
       outReal[outIdx] = y;
@@ -302,7 +302,7 @@ static TA_FMA_STEP_INLINE void TA_SWAK_HP_StepImpl( struct TA_SWAK_HP_Stream *sp
     * same bits, +0.0 for a cancelled numerator included.
     */
    x0 = inReal;
-   y = fma(sp->c0, x0 - sp->x1, sp->a1 * sp->y1);
+   y = fma(sp->a1, sp->y1, sp->c0 * (x0 - sp->x1));
    sp->x1 = x0;
    sp->y1 = y;
    *outReal= y;
@@ -389,7 +389,7 @@ static TA_RetCode TA_SWAK_HP_OpenImpl( struct TA_SWAK_HP_Stream **stream, const 
       while( i != 0 )
       {
          x0 = inReal[today];
-         y = fma(c0, x0 - x1, a1 * y1);
+         y = fma(a1, y1, c0 * (x0 - x1));
          x1 = x0;
          y1 = y;
          today += 1;
@@ -405,7 +405,7 @@ static TA_RetCode TA_SWAK_HP_OpenImpl( struct TA_SWAK_HP_Stream **stream, const 
           * same bits, +0.0 for a cancelled numerator included.
           */
          x0 = inReal[today];
-         y = fma(c0, x0 - x1, a1 * y1);
+         y = fma(a1, y1, c0 * (x0 - x1));
          x1 = x0;
          y1 = y;
          outReal[outIdx * outStride] = y;
@@ -507,7 +507,7 @@ TA_LIB_API TA_RetCode TA_SWAK_HP_Peek( const TA_SWAK_HP_Stream *stream, double i
     * same bits, +0.0 for a cancelled numerator included.
     */
    x0 = inReal;
-   y = fma(sp->c0, x0 - x1, sp->a1 * y1);
+   y = fma(sp->a1, y1, sp->c0 * (x0 - x1));
    x1 = x0;
    y1 = y;
    *outReal= y;

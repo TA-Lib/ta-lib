@@ -193,7 +193,7 @@ public partial class Core
       i = lookbackTotal;
       while( i != 0 ) {
          x0 = inReal[today];
-         y = Math.FusedMultiplyAdd(a2, y2, Math.FusedMultiplyAdd(c0, Math.FusedMultiplyAdd(2.0, x1, x0) + x2, a1 * y1));
+         y = Math.FusedMultiplyAdd(a1, y1, Math.FusedMultiplyAdd(a2, y2, c0 * (Math.FusedMultiplyAdd(2.0, x1, x0) + x2)));
          x2 = x1;
          x1 = x0;
          y2 = y1;
@@ -207,7 +207,7 @@ public partial class Core
           * the numerator as (x0 + 2*x1) + x2, then the a1 feedback, then a2.
           */
          x0 = inReal[today];
-         y = Math.FusedMultiplyAdd(a2, y2, Math.FusedMultiplyAdd(c0, Math.FusedMultiplyAdd(2.0, x1, x0) + x2, a1 * y1));
+         y = Math.FusedMultiplyAdd(a1, y1, Math.FusedMultiplyAdd(a2, y2, c0 * (Math.FusedMultiplyAdd(2.0, x1, x0) + x2)));
          x2 = x1;
          x1 = x0;
          y2 = y1;
@@ -286,7 +286,7 @@ public partial class Core
       i = lookbackTotal;
       while( i != 0 ) {
          x0 = (double)inReal[today];
-         y = Math.FusedMultiplyAdd(a2, y2, Math.FusedMultiplyAdd(c0, Math.FusedMultiplyAdd(2.0, x1, x0) + x2, a1 * y1));
+         y = Math.FusedMultiplyAdd(a1, y1, Math.FusedMultiplyAdd(a2, y2, c0 * (Math.FusedMultiplyAdd(2.0, x1, x0) + x2)));
          x2 = x1;
          x1 = x0;
          y2 = y1;
@@ -297,7 +297,7 @@ public partial class Core
       outIdx = 0;
       while( today <= endIdx ) {
          x0 = (double)inReal[today];
-         y = Math.FusedMultiplyAdd(a2, y2, Math.FusedMultiplyAdd(c0, Math.FusedMultiplyAdd(2.0, x1, x0) + x2, a1 * y1));
+         y = Math.FusedMultiplyAdd(a1, y1, Math.FusedMultiplyAdd(a2, y2, c0 * (Math.FusedMultiplyAdd(2.0, x1, x0) + x2)));
          x2 = x1;
          x1 = x0;
          y2 = y1;
@@ -629,7 +629,7 @@ public partial class Core
           * the numerator as (x0 + 2*x1) + x2, then the a1 feedback, then a2.
           */
          x0 = inReal;
-         y = Math.FusedMultiplyAdd(sp.a2, y2, Math.FusedMultiplyAdd(sp.c0, Math.FusedMultiplyAdd(2.0, x1, x0) + x2, sp.a1 * y1));
+         y = Math.FusedMultiplyAdd(sp.a1, y1, Math.FusedMultiplyAdd(sp.a2, y2, sp.c0 * (Math.FusedMultiplyAdd(2.0, x1, x0) + x2)));
          x2 = x1;
          x1 = x0;
          y2 = y1;
@@ -663,7 +663,7 @@ public partial class Core
        * the numerator as (x0 + 2*x1) + x2, then the a1 feedback, then a2.
        */
       x0 = inReal;
-      y = Math.FusedMultiplyAdd(sp.a2, sp.y2, Math.FusedMultiplyAdd(sp.c0, Math.FusedMultiplyAdd(2.0, sp.x1, x0) + sp.x2, sp.a1 * sp.y1));
+      y = Math.FusedMultiplyAdd(sp.a1, sp.y1, Math.FusedMultiplyAdd(sp.a2, sp.y2, sp.c0 * (Math.FusedMultiplyAdd(2.0, sp.x1, x0) + sp.x2)));
       sp.x2 = sp.x1;
       sp.x1 = x0;
       sp.y2 = sp.y1;
@@ -751,7 +751,7 @@ public partial class Core
       i = lookbackTotal;
       while( i != 0 ) {
          x0 = inReal[today];
-         y = Math.FusedMultiplyAdd(a2, y2, Math.FusedMultiplyAdd(c0, Math.FusedMultiplyAdd(2.0, x1, x0) + x2, a1 * y1));
+         y = Math.FusedMultiplyAdd(a1, y1, Math.FusedMultiplyAdd(a2, y2, c0 * (Math.FusedMultiplyAdd(2.0, x1, x0) + x2)));
          x2 = x1;
          x1 = x0;
          y2 = y1;
@@ -765,7 +765,7 @@ public partial class Core
           * the numerator as (x0 + 2*x1) + x2, then the a1 feedback, then a2.
           */
          x0 = inReal[today];
-         y = Math.FusedMultiplyAdd(a2, y2, Math.FusedMultiplyAdd(c0, Math.FusedMultiplyAdd(2.0, x1, x0) + x2, a1 * y1));
+         y = Math.FusedMultiplyAdd(a1, y1, Math.FusedMultiplyAdd(a2, y2, c0 * (Math.FusedMultiplyAdd(2.0, x1, x0) + x2)));
          x2 = x1;
          x1 = x0;
          y2 = y1;

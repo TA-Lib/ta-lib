@@ -81,7 +81,7 @@ TA_RetCode swak_gauss(int startIdx, int endIdx,
    i = lookbackTotal;
    while( i != 0 )
    {
-      y  = ((c0 * inReal[today] + a1 * y1) + a2 * y2);
+      y  = a1 * y1 + (a2 * y2 + c0 * inReal[today]);
       y2 = y1;
       y1 = y;
       today++;
@@ -94,7 +94,7 @@ TA_RetCode swak_gauss(int startIdx, int endIdx,
       /* The evaluation order is the bit-exactness contract across backends:
        * the numerator first, then the a1 feedback, then the a2 feedback.
        */
-      y  = ((c0 * inReal[today] + a1 * y1) + a2 * y2);
+      y  = a1 * y1 + (a2 * y2 + c0 * inReal[today]);
       y2 = y1;
       y1 = y;
 

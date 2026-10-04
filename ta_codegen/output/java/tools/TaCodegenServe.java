@@ -193288,7 +193288,7 @@ class Core {
           i = lookbackTotal;
           while( i != 0 ) {
              x0 = inReal[today];
-             y = Math.fma(a2, y2, Math.fma(c0, x0 - 2.0 * x1 + x2, a1 * y1));
+             y = Math.fma(a1, y1, Math.fma(a2, y2, c0 * (x0 - 2.0 * x1 + x2)));
              x2 = x1;
              x1 = x0;
              y2 = y1;
@@ -193302,7 +193302,7 @@ class Core {
               * the numerator as (x0 - 2*x1) + x2, then the a1 feedback, then a2.
               */
              x0 = inReal[today];
-             y = Math.fma(a2, y2, Math.fma(c0, x0 - 2.0 * x1 + x2, a1 * y1));
+             y = Math.fma(a1, y1, Math.fma(a2, y2, c0 * (x0 - 2.0 * x1 + x2)));
              x2 = x1;
              x1 = x0;
              y2 = y1;
@@ -193375,7 +193375,7 @@ class Core {
           i = lookbackTotal;
           while( i != 0 ) {
              x0 = (double)inReal[today];
-             y = Math.fma(a2, y2, Math.fma(c0, x0 - 2.0 * x1 + x2, a1 * y1));
+             y = Math.fma(a1, y1, Math.fma(a2, y2, c0 * (x0 - 2.0 * x1 + x2)));
              x2 = x1;
              x1 = x0;
              y2 = y1;
@@ -193386,7 +193386,7 @@ class Core {
           outIdx = 0;
           while( today <= endIdx ) {
              x0 = (double)inReal[today];
-             y = Math.fma(a2, y2, Math.fma(c0, x0 - 2.0 * x1 + x2, a1 * y1));
+             y = Math.fma(a1, y1, Math.fma(a2, y2, c0 * (x0 - 2.0 * x1 + x2)));
              x2 = x1;
              x1 = x0;
              y2 = y1;
@@ -193666,7 +193666,7 @@ class Core {
               * the numerator as (x0 - 2*x1) + x2, then the a1 feedback, then a2.
               */
              x0 = inReal;
-             y = Math.fma(sp.a2, y2, Math.fma(sp.c0, x0 - 2.0 * x1 + x2, sp.a1 * y1));
+             y = Math.fma(sp.a1, y1, Math.fma(sp.a2, y2, sp.c0 * (x0 - 2.0 * x1 + x2)));
              x2 = x1;
              x1 = x0;
              y2 = y1;
@@ -193709,7 +193709,7 @@ class Core {
            * the numerator as (x0 - 2*x1) + x2, then the a1 feedback, then a2.
            */
           x0 = inReal;
-          y = Math.fma(sp.a2, sp.y2, Math.fma(sp.c0, x0 - 2.0 * sp.x1 + sp.x2, sp.a1 * sp.y1));
+          y = Math.fma(sp.a1, sp.y1, Math.fma(sp.a2, sp.y2, sp.c0 * (x0 - 2.0 * sp.x1 + sp.x2)));
           sp.x2 = sp.x1;
           sp.x1 = x0;
           sp.y2 = sp.y1;
@@ -193795,7 +193795,7 @@ class Core {
           i = lookbackTotal;
           while( i != 0 ) {
              x0 = inReal[today];
-             y = Math.fma(a2, y2, Math.fma(c0, x0 - 2.0 * x1 + x2, a1 * y1));
+             y = Math.fma(a1, y1, Math.fma(a2, y2, c0 * (x0 - 2.0 * x1 + x2)));
              x2 = x1;
              x1 = x0;
              y2 = y1;
@@ -193809,7 +193809,7 @@ class Core {
               * the numerator as (x0 - 2*x1) + x2, then the a1 feedback, then a2.
               */
              x0 = inReal[today];
-             y = Math.fma(a2, y2, Math.fma(c0, x0 - 2.0 * x1 + x2, a1 * y1));
+             y = Math.fma(a1, y1, Math.fma(a2, y2, c0 * (x0 - 2.0 * x1 + x2)));
              x2 = x1;
              x1 = x0;
              y2 = y1;
@@ -194074,7 +194074,7 @@ class Core {
           i = lookbackTotal;
           while( i != 0 ) {
              x0 = inReal[today];
-             y = Math.fma(a2, y2, Math.fma(c0, x0 - x2, a1 * y1));
+             y = Math.fma(a1, y1, Math.fma(a2, y2, c0 * (x0 - x2)));
              x2 = x1;
              x1 = x0;
              y2 = y1;
@@ -194091,7 +194091,7 @@ class Core {
               * same bits, +0.0 for a cancelled numerator included.
               */
              x0 = inReal[today];
-             y = Math.fma(a2, y2, Math.fma(c0, x0 - x2, a1 * y1));
+             y = Math.fma(a1, y1, Math.fma(a2, y2, c0 * (x0 - x2)));
              x2 = x1;
              x1 = x0;
              y2 = y1;
@@ -194170,7 +194170,7 @@ class Core {
           i = lookbackTotal;
           while( i != 0 ) {
              x0 = (double)inReal[today];
-             y = Math.fma(a2, y2, Math.fma(c0, x0 - x2, a1 * y1));
+             y = Math.fma(a1, y1, Math.fma(a2, y2, c0 * (x0 - x2)));
              x2 = x1;
              x1 = x0;
              y2 = y1;
@@ -194181,7 +194181,7 @@ class Core {
           outIdx = 0;
           while( today <= endIdx ) {
              x0 = (double)inReal[today];
-             y = Math.fma(a2, y2, Math.fma(c0, x0 - x2, a1 * y1));
+             y = Math.fma(a1, y1, Math.fma(a2, y2, c0 * (x0 - x2)));
              x2 = x1;
              x1 = x0;
              y2 = y1;
@@ -194478,7 +194478,7 @@ class Core {
               * same bits, +0.0 for a cancelled numerator included.
               */
              x0 = inReal;
-             y = Math.fma(sp.a2, y2, Math.fma(sp.c0, x0 - x2, sp.a1 * y1));
+             y = Math.fma(sp.a1, y1, Math.fma(sp.a2, y2, sp.c0 * (x0 - x2)));
              x2 = x1;
              x1 = x0;
              y2 = y1;
@@ -194524,7 +194524,7 @@ class Core {
            * same bits, +0.0 for a cancelled numerator included.
            */
           x0 = inReal;
-          y = Math.fma(sp.a2, sp.y2, Math.fma(sp.c0, x0 - sp.x2, sp.a1 * sp.y1));
+          y = Math.fma(sp.a1, sp.y1, Math.fma(sp.a2, sp.y2, sp.c0 * (x0 - sp.x2)));
           sp.x2 = sp.x1;
           sp.x1 = x0;
           sp.y2 = sp.y1;
@@ -194619,7 +194619,7 @@ class Core {
           i = lookbackTotal;
           while( i != 0 ) {
              x0 = inReal[today];
-             y = Math.fma(a2, y2, Math.fma(c0, x0 - x2, a1 * y1));
+             y = Math.fma(a1, y1, Math.fma(a2, y2, c0 * (x0 - x2)));
              x2 = x1;
              x1 = x0;
              y2 = y1;
@@ -194636,7 +194636,7 @@ class Core {
               * same bits, +0.0 for a cancelled numerator included.
               */
              x0 = inReal[today];
-             y = Math.fma(a2, y2, Math.fma(c0, x0 - x2, a1 * y1));
+             y = Math.fma(a1, y1, Math.fma(a2, y2, c0 * (x0 - x2)));
              x2 = x1;
              x1 = x0;
              y2 = y1;
@@ -194881,7 +194881,7 @@ class Core {
           i = lookbackTotal;
           while( i != 0 ) {
              x0 = inReal[today];
-             y = Math.fma(a2, y2, Math.fma(c0, Math.fma(2.0, x1, x0) + x2, a1 * y1));
+             y = Math.fma(a1, y1, Math.fma(a2, y2, c0 * (Math.fma(2.0, x1, x0) + x2)));
              x2 = x1;
              x1 = x0;
              y2 = y1;
@@ -194895,7 +194895,7 @@ class Core {
               * the numerator as (x0 + 2*x1) + x2, then the a1 feedback, then a2.
               */
              x0 = inReal[today];
-             y = Math.fma(a2, y2, Math.fma(c0, Math.fma(2.0, x1, x0) + x2, a1 * y1));
+             y = Math.fma(a1, y1, Math.fma(a2, y2, c0 * (Math.fma(2.0, x1, x0) + x2)));
              x2 = x1;
              x1 = x0;
              y2 = y1;
@@ -194969,7 +194969,7 @@ class Core {
           i = lookbackTotal;
           while( i != 0 ) {
              x0 = (double)inReal[today];
-             y = Math.fma(a2, y2, Math.fma(c0, Math.fma(2.0, x1, x0) + x2, a1 * y1));
+             y = Math.fma(a1, y1, Math.fma(a2, y2, c0 * (Math.fma(2.0, x1, x0) + x2)));
              x2 = x1;
              x1 = x0;
              y2 = y1;
@@ -194980,7 +194980,7 @@ class Core {
           outIdx = 0;
           while( today <= endIdx ) {
              x0 = (double)inReal[today];
-             y = Math.fma(a2, y2, Math.fma(c0, Math.fma(2.0, x1, x0) + x2, a1 * y1));
+             y = Math.fma(a1, y1, Math.fma(a2, y2, c0 * (Math.fma(2.0, x1, x0) + x2)));
              x2 = x1;
              x1 = x0;
              y2 = y1;
@@ -195268,7 +195268,7 @@ class Core {
               * the numerator as (x0 + 2*x1) + x2, then the a1 feedback, then a2.
               */
              x0 = inReal;
-             y = Math.fma(sp.a2, y2, Math.fma(sp.c0, Math.fma(2.0, x1, x0) + x2, sp.a1 * y1));
+             y = Math.fma(sp.a1, y1, Math.fma(sp.a2, y2, sp.c0 * (Math.fma(2.0, x1, x0) + x2)));
              x2 = x1;
              x1 = x0;
              y2 = y1;
@@ -195311,7 +195311,7 @@ class Core {
            * the numerator as (x0 + 2*x1) + x2, then the a1 feedback, then a2.
            */
           x0 = inReal;
-          y = Math.fma(sp.a2, sp.y2, Math.fma(sp.c0, Math.fma(2.0, sp.x1, x0) + sp.x2, sp.a1 * sp.y1));
+          y = Math.fma(sp.a1, sp.y1, Math.fma(sp.a2, sp.y2, sp.c0 * (Math.fma(2.0, sp.x1, x0) + sp.x2)));
           sp.x2 = sp.x1;
           sp.x1 = x0;
           sp.y2 = sp.y1;
@@ -195396,7 +195396,7 @@ class Core {
           i = lookbackTotal;
           while( i != 0 ) {
              x0 = inReal[today];
-             y = Math.fma(a2, y2, Math.fma(c0, Math.fma(2.0, x1, x0) + x2, a1 * y1));
+             y = Math.fma(a1, y1, Math.fma(a2, y2, c0 * (Math.fma(2.0, x1, x0) + x2)));
              x2 = x1;
              x1 = x0;
              y2 = y1;
@@ -195410,7 +195410,7 @@ class Core {
               * the numerator as (x0 + 2*x1) + x2, then the a1 feedback, then a2.
               */
              x0 = inReal[today];
-             y = Math.fma(a2, y2, Math.fma(c0, Math.fma(2.0, x1, x0) + x2, a1 * y1));
+             y = Math.fma(a1, y1, Math.fma(a2, y2, c0 * (Math.fma(2.0, x1, x0) + x2)));
              x2 = x1;
              x1 = x0;
              y2 = y1;
@@ -195649,7 +195649,7 @@ class Core {
           /* Skip the unstable period: run the recurrence but publish nothing. */
           i = lookbackTotal;
           while( i != 0 ) {
-             y = Math.fma(a2, y2, Math.fma(c0, inReal[today], a1 * y1));
+             y = Math.fma(a1, y1, Math.fma(a2, y2, c0 * inReal[today]));
              y2 = y1;
              y1 = y;
              today += 1;
@@ -195660,7 +195660,7 @@ class Core {
              /* The evaluation order is the bit-exactness contract across backends:
               * the numerator first, then the a1 feedback, then the a2 feedback.
               */
-             y = Math.fma(a2, y2, Math.fma(c0, inReal[today], a1 * y1));
+             y = Math.fma(a1, y1, Math.fma(a2, y2, c0 * inReal[today]));
              y2 = y1;
              y1 = y;
              outReal[outIdx] = y;
@@ -195725,7 +195725,7 @@ class Core {
           y2 = y1;
           i = lookbackTotal;
           while( i != 0 ) {
-             y = Math.fma(a2, y2, Math.fma(c0, (double)inReal[today], a1 * y1));
+             y = Math.fma(a1, y1, Math.fma(a2, y2, c0 * (double)inReal[today]));
              y2 = y1;
              y1 = y;
              today += 1;
@@ -195733,7 +195733,7 @@ class Core {
           }
           outIdx = 0;
           while( today <= endIdx ) {
-             y = Math.fma(a2, y2, Math.fma(c0, (double)inReal[today], a1 * y1));
+             y = Math.fma(a1, y1, Math.fma(a2, y2, c0 * (double)inReal[today]));
              y2 = y1;
              y1 = y;
              outReal[outIdx] = y;
@@ -196015,7 +196015,7 @@ class Core {
              /* The evaluation order is the bit-exactness contract across backends:
               * the numerator first, then the a1 feedback, then the a2 feedback.
               */
-             y = Math.fma(sp.a2, y2, Math.fma(sp.c0, inReal, sp.a1 * y1));
+             y = Math.fma(sp.a1, y1, Math.fma(sp.a2, y2, sp.c0 * inReal));
              y2 = y1;
              y1 = y;
              cur_outReal = y;
@@ -196054,7 +196054,7 @@ class Core {
           /* The evaluation order is the bit-exactness contract across backends:
            * the numerator first, then the a1 feedback, then the a2 feedback.
            */
-          y = Math.fma(sp.a2, sp.y2, Math.fma(sp.c0, inReal, sp.a1 * sp.y1));
+          y = Math.fma(sp.a1, sp.y1, Math.fma(sp.a2, sp.y2, sp.c0 * inReal));
           sp.y2 = sp.y1;
           sp.y1 = y;
           sp.cur_outReal = y;
@@ -196131,7 +196131,7 @@ class Core {
           /* Skip the unstable period: run the recurrence but publish nothing. */
           i = lookbackTotal;
           while( i != 0 ) {
-             y = Math.fma(a2, y2, Math.fma(c0, inReal[today], a1 * y1));
+             y = Math.fma(a1, y1, Math.fma(a2, y2, c0 * inReal[today]));
              y2 = y1;
              y1 = y;
              today += 1;
@@ -196142,7 +196142,7 @@ class Core {
              /* The evaluation order is the bit-exactness contract across backends:
               * the numerator first, then the a1 feedback, then the a2 feedback.
               */
-             y = Math.fma(a2, y2, Math.fma(c0, inReal[today], a1 * y1));
+             y = Math.fma(a1, y1, Math.fma(a2, y2, c0 * inReal[today]));
              y2 = y1;
              y1 = y;
              outReal[outIdx * outStride] = y;
@@ -196376,7 +196376,7 @@ class Core {
           i = lookbackTotal;
           while( i != 0 ) {
              x0 = inReal[today];
-             y = Math.fma(c0, x0 - x1, a1 * y1);
+             y = Math.fma(a1, y1, c0 * (x0 - x1));
              x1 = x0;
              y1 = y;
              today += 1;
@@ -196391,7 +196391,7 @@ class Core {
               * same bits, +0.0 for a cancelled numerator included.
               */
              x0 = inReal[today];
-             y = Math.fma(c0, x0 - x1, a1 * y1);
+             y = Math.fma(a1, y1, c0 * (x0 - x1));
              x1 = x0;
              y1 = y;
              outReal[outIdx] = y;
@@ -196454,7 +196454,7 @@ class Core {
           i = lookbackTotal;
           while( i != 0 ) {
              x0 = (double)inReal[today];
-             y = Math.fma(c0, x0 - x1, a1 * y1);
+             y = Math.fma(a1, y1, c0 * (x0 - x1));
              x1 = x0;
              y1 = y;
              today += 1;
@@ -196463,7 +196463,7 @@ class Core {
           outIdx = 0;
           while( today <= endIdx ) {
              x0 = (double)inReal[today];
-             y = Math.fma(c0, x0 - x1, a1 * y1);
+             y = Math.fma(a1, y1, c0 * (x0 - x1));
              x1 = x0;
              y1 = y;
              outReal[outIdx] = y;
@@ -196738,7 +196738,7 @@ class Core {
               * same bits, +0.0 for a cancelled numerator included.
               */
              x0 = inReal;
-             y = Math.fma(sp.c0, x0 - x1, sp.a1 * y1);
+             y = Math.fma(sp.a1, y1, sp.c0 * (x0 - x1));
              x1 = x0;
              y1 = y;
              cur_outReal = y;
@@ -196782,7 +196782,7 @@ class Core {
            * same bits, +0.0 for a cancelled numerator included.
            */
           x0 = inReal;
-          y = Math.fma(sp.c0, x0 - sp.x1, sp.a1 * sp.y1);
+          y = Math.fma(sp.a1, sp.y1, sp.c0 * (x0 - sp.x1));
           sp.x1 = x0;
           sp.y1 = y;
           sp.cur_outReal = y;
@@ -196860,7 +196860,7 @@ class Core {
           i = lookbackTotal;
           while( i != 0 ) {
              x0 = inReal[today];
-             y = Math.fma(c0, x0 - x1, a1 * y1);
+             y = Math.fma(a1, y1, c0 * (x0 - x1));
              x1 = x0;
              y1 = y;
              today += 1;
@@ -196875,7 +196875,7 @@ class Core {
               * same bits, +0.0 for a cancelled numerator included.
               */
              x0 = inReal[today];
-             y = Math.fma(c0, x0 - x1, a1 * y1);
+             y = Math.fma(a1, y1, c0 * (x0 - x1));
              x1 = x0;
              y1 = y;
              outReal[outIdx * outStride] = y;
@@ -217546,7 +217546,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "6e24594cb1183e3c";
+    static final String SPLICED_GENCODE_DIGEST = "ed81ca91dc3556b0";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];

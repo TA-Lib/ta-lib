@@ -137,7 +137,7 @@
       i = lookbackTotal;
       while( i != 0 ) {
          x0 = inReal[today];
-         y = Math.fma(c0, x0 - x1, a1 * y1);
+         y = Math.fma(a1, y1, c0 * (x0 - x1));
          x1 = x0;
          y1 = y;
          today += 1;
@@ -152,7 +152,7 @@
           * same bits, +0.0 for a cancelled numerator included.
           */
          x0 = inReal[today];
-         y = Math.fma(c0, x0 - x1, a1 * y1);
+         y = Math.fma(a1, y1, c0 * (x0 - x1));
          x1 = x0;
          y1 = y;
          outReal[outIdx] = y;
@@ -215,7 +215,7 @@
       i = lookbackTotal;
       while( i != 0 ) {
          x0 = (double)inReal[today];
-         y = Math.fma(c0, x0 - x1, a1 * y1);
+         y = Math.fma(a1, y1, c0 * (x0 - x1));
          x1 = x0;
          y1 = y;
          today += 1;
@@ -224,7 +224,7 @@
       outIdx = 0;
       while( today <= endIdx ) {
          x0 = (double)inReal[today];
-         y = Math.fma(c0, x0 - x1, a1 * y1);
+         y = Math.fma(a1, y1, c0 * (x0 - x1));
          x1 = x0;
          y1 = y;
          outReal[outIdx] = y;
@@ -499,7 +499,7 @@
           * same bits, +0.0 for a cancelled numerator included.
           */
          x0 = inReal;
-         y = Math.fma(sp.c0, x0 - x1, sp.a1 * y1);
+         y = Math.fma(sp.a1, y1, sp.c0 * (x0 - x1));
          x1 = x0;
          y1 = y;
          cur_outReal = y;
@@ -543,7 +543,7 @@
        * same bits, +0.0 for a cancelled numerator included.
        */
       x0 = inReal;
-      y = Math.fma(sp.c0, x0 - sp.x1, sp.a1 * sp.y1);
+      y = Math.fma(sp.a1, sp.y1, sp.c0 * (x0 - sp.x1));
       sp.x1 = x0;
       sp.y1 = y;
       sp.cur_outReal = y;
@@ -621,7 +621,7 @@
       i = lookbackTotal;
       while( i != 0 ) {
          x0 = inReal[today];
-         y = Math.fma(c0, x0 - x1, a1 * y1);
+         y = Math.fma(a1, y1, c0 * (x0 - x1));
          x1 = x0;
          y1 = y;
          today += 1;
@@ -636,7 +636,7 @@
           * same bits, +0.0 for a cancelled numerator included.
           */
          x0 = inReal[today];
-         y = Math.fma(c0, x0 - x1, a1 * y1);
+         y = Math.fma(a1, y1, c0 * (x0 - x1));
          x1 = x0;
          y1 = y;
          outReal[outIdx * outStride] = y;

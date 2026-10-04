@@ -83,7 +83,7 @@ TA_RetCode swak_butter(int startIdx, int endIdx,
    while( i != 0 )
    {
       x0 = inReal[today];
-      y  = ((c0 * ((x0 + 2.0 * x1) + x2) + a1 * y1) + a2 * y2);
+      y  = a1 * y1 + (a2 * y2 + c0 * ((x0 + 2.0 * x1) + x2));
       x2 = x1;
       x1 = x0;
       y2 = y1;
@@ -99,7 +99,7 @@ TA_RetCode swak_butter(int startIdx, int endIdx,
        * the numerator as (x0 + 2*x1) + x2, then the a1 feedback, then a2.
        */
       x0 = inReal[today];
-      y  = ((c0 * ((x0 + 2.0 * x1) + x2) + a1 * y1) + a2 * y2);
+      y  = a1 * y1 + (a2 * y2 + c0 * ((x0 + 2.0 * x1) + x2));
       x2 = x1;
       x1 = x0;
       y2 = y1;

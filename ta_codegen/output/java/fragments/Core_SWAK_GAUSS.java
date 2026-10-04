@@ -138,7 +138,7 @@
       /* Skip the unstable period: run the recurrence but publish nothing. */
       i = lookbackTotal;
       while( i != 0 ) {
-         y = Math.fma(a2, y2, Math.fma(c0, inReal[today], a1 * y1));
+         y = Math.fma(a1, y1, Math.fma(a2, y2, c0 * inReal[today]));
          y2 = y1;
          y1 = y;
          today += 1;
@@ -149,7 +149,7 @@
          /* The evaluation order is the bit-exactness contract across backends:
           * the numerator first, then the a1 feedback, then the a2 feedback.
           */
-         y = Math.fma(a2, y2, Math.fma(c0, inReal[today], a1 * y1));
+         y = Math.fma(a1, y1, Math.fma(a2, y2, c0 * inReal[today]));
          y2 = y1;
          y1 = y;
          outReal[outIdx] = y;
@@ -214,7 +214,7 @@
       y2 = y1;
       i = lookbackTotal;
       while( i != 0 ) {
-         y = Math.fma(a2, y2, Math.fma(c0, (double)inReal[today], a1 * y1));
+         y = Math.fma(a1, y1, Math.fma(a2, y2, c0 * (double)inReal[today]));
          y2 = y1;
          y1 = y;
          today += 1;
@@ -222,7 +222,7 @@
       }
       outIdx = 0;
       while( today <= endIdx ) {
-         y = Math.fma(a2, y2, Math.fma(c0, (double)inReal[today], a1 * y1));
+         y = Math.fma(a1, y1, Math.fma(a2, y2, c0 * (double)inReal[today]));
          y2 = y1;
          y1 = y;
          outReal[outIdx] = y;
@@ -504,7 +504,7 @@
          /* The evaluation order is the bit-exactness contract across backends:
           * the numerator first, then the a1 feedback, then the a2 feedback.
           */
-         y = Math.fma(sp.a2, y2, Math.fma(sp.c0, inReal, sp.a1 * y1));
+         y = Math.fma(sp.a1, y1, Math.fma(sp.a2, y2, sp.c0 * inReal));
          y2 = y1;
          y1 = y;
          cur_outReal = y;
@@ -543,7 +543,7 @@
       /* The evaluation order is the bit-exactness contract across backends:
        * the numerator first, then the a1 feedback, then the a2 feedback.
        */
-      y = Math.fma(sp.a2, sp.y2, Math.fma(sp.c0, inReal, sp.a1 * sp.y1));
+      y = Math.fma(sp.a1, sp.y1, Math.fma(sp.a2, sp.y2, sp.c0 * inReal));
       sp.y2 = sp.y1;
       sp.y1 = y;
       sp.cur_outReal = y;
@@ -620,7 +620,7 @@
       /* Skip the unstable period: run the recurrence but publish nothing. */
       i = lookbackTotal;
       while( i != 0 ) {
-         y = Math.fma(a2, y2, Math.fma(c0, inReal[today], a1 * y1));
+         y = Math.fma(a1, y1, Math.fma(a2, y2, c0 * inReal[today]));
          y2 = y1;
          y1 = y;
          today += 1;
@@ -631,7 +631,7 @@
          /* The evaluation order is the bit-exactness contract across backends:
           * the numerator first, then the a1 feedback, then the a2 feedback.
           */
-         y = Math.fma(a2, y2, Math.fma(c0, inReal[today], a1 * y1));
+         y = Math.fma(a1, y1, Math.fma(a2, y2, c0 * inReal[today]));
          y2 = y1;
          y1 = y;
          outReal[outIdx * outStride] = y;

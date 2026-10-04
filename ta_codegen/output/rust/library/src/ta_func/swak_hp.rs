@@ -227,7 +227,7 @@ impl Core {
             let _w0 = &inReal[today..][.._wn];
             for _wk in 0.._wn {
                 x0 = _w0[_wk];
-                y = (c0 as f64).mul_add(x0 - x1, a1 * y1);
+                y = (a1 as f64).mul_add(y1, c0 * (x0 - x1));
                 x1 = x0;
                 y1 = y;
                 today += 1;
@@ -246,7 +246,7 @@ impl Core {
                 // operation per bar and nothing else: adding 0.0*y2 would land on the
                 // same bits, +0.0 for a cancelled numerator included.
                 x0 = _w0[_wk];
-                y = (c0 as f64).mul_add(x0 - x1, a1 * y1);
+                y = (a1 as f64).mul_add(y1, c0 * (x0 - x1));
                 x1 = x0;
                 y1 = y;
                 _w1[_wk] = y;
@@ -410,7 +410,7 @@ impl Core {
         // operation per bar and nothing else: adding 0.0*y2 would land on the
         // same bits, +0.0 for a cancelled numerator included.
         x0 = inReal;
-        y = (sp.c0 as f64).mul_add(x0 - sp.x1, sp.a1 * sp.y1);
+        y = (sp.a1 as f64).mul_add(sp.y1, sp.c0 * (x0 - sp.x1));
         sp.x1 = x0;
         sp.y1 = y;
         (*outReal) = y;
@@ -493,7 +493,7 @@ impl Core {
         i = lookbackTotal;
         while i != 0 {
             x0 = inReal[today];
-            y = (c0 as f64).mul_add(x0 - x1, a1 * y1);
+            y = (a1 as f64).mul_add(y1, c0 * (x0 - x1));
             x1 = x0;
             y1 = y;
             today += 1;
@@ -507,7 +507,7 @@ impl Core {
             // operation per bar and nothing else: adding 0.0*y2 would land on the
             // same bits, +0.0 for a cancelled numerator included.
             x0 = inReal[today];
-            y = (c0 as f64).mul_add(x0 - x1, a1 * y1);
+            y = (a1 as f64).mul_add(y1, c0 * (x0 - x1));
             x1 = x0;
             y1 = y;
             outReal[(outIdx * outStride) as usize] = y;
@@ -700,7 +700,7 @@ impl SwakHpStream {
             // operation per bar and nothing else: adding 0.0*y2 would land on the
             // same bits, +0.0 for a cancelled numerator included.
             x0 = inReal;
-            y = (sp.c0 as f64).mul_add(x0 - x1, sp.a1 * y1);
+            y = (sp.a1 as f64).mul_add(y1, sp.c0 * (x0 - x1));
             x1 = x0;
             y1 = y;
             (*outReal) = y;

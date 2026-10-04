@@ -228,7 +228,7 @@ impl Core {
             let _wn: usize = i;
             let _w0 = &inReal[today..][.._wn];
             for _wk in 0.._wn {
-                y = (a2 as f64).mul_add(y2, (c0 as f64).mul_add(_w0[_wk], a1 * y1));
+                y = (a1 as f64).mul_add(y1, (a2 as f64).mul_add(y2, c0 * _w0[_wk]));
                 y2 = y1;
                 y1 = y;
                 today += 1;
@@ -243,7 +243,7 @@ impl Core {
             for _wk in 0.._wn {
                 // The evaluation order is the bit-exactness contract across backends:
                 // the numerator first, then the a1 feedback, then the a2 feedback.
-                y = (a2 as f64).mul_add(y2, (c0 as f64).mul_add(_w0[_wk], a1 * y1));
+                y = (a1 as f64).mul_add(y1, (a2 as f64).mul_add(y2, c0 * _w0[_wk]));
                 y2 = y1;
                 y1 = y;
                 _w1[_wk] = y;
@@ -407,7 +407,7 @@ impl Core {
         let mut y: f64 = 0.0_f64;
         // The evaluation order is the bit-exactness contract across backends:
         // the numerator first, then the a1 feedback, then the a2 feedback.
-        y = (sp.a2 as f64).mul_add(sp.y2, (sp.c0 as f64).mul_add(inReal, sp.a1 * sp.y1));
+        y = (sp.a1 as f64).mul_add(sp.y1, (sp.a2 as f64).mul_add(sp.y2, sp.c0 * inReal));
         sp.y2 = sp.y1;
         sp.y1 = y;
         (*outReal) = y;
@@ -489,7 +489,7 @@ impl Core {
         // Skip the unstable period: run the recurrence but publish nothing.
         i = lookbackTotal;
         while i != 0 {
-            y = (a2 as f64).mul_add(y2, (c0 as f64).mul_add(inReal[today], a1 * y1));
+            y = (a1 as f64).mul_add(y1, (a2 as f64).mul_add(y2, c0 * inReal[today]));
             y2 = y1;
             y1 = y;
             today += 1;
@@ -499,7 +499,7 @@ impl Core {
         while today <= endIdx {
             // The evaluation order is the bit-exactness contract across backends:
             // the numerator first, then the a1 feedback, then the a2 feedback.
-            y = (a2 as f64).mul_add(y2, (c0 as f64).mul_add(inReal[today], a1 * y1));
+            y = (a1 as f64).mul_add(y1, (a2 as f64).mul_add(y2, c0 * inReal[today]));
             y2 = y1;
             y1 = y;
             outReal[(outIdx * outStride) as usize] = y;
@@ -688,7 +688,7 @@ impl SwakGaussStream {
             let mut y2 = sp.y2;
             // The evaluation order is the bit-exactness contract across backends:
             // the numerator first, then the a1 feedback, then the a2 feedback.
-            y = (sp.a2 as f64).mul_add(y2, (sp.c0 as f64).mul_add(inReal, sp.a1 * y1));
+            y = (sp.a1 as f64).mul_add(y1, (sp.a2 as f64).mul_add(y2, sp.c0 * inReal));
             y2 = y1;
             y1 = y;
             (*outReal) = y;

@@ -180,7 +180,7 @@ TA_LIB_API TA_RetCode TA_SWAK_BP( int    startIdx,
    while( i != 0 )
    {
       x0 = inReal[today];
-      y = fma(a2, y2, fma(c0, x0 - x2, a1 * y1));
+      y = fma(a1, y1, fma(a2, y2, c0 * (x0 - x2)));
       x2 = x1;
       x1 = x0;
       y2 = y1;
@@ -198,7 +198,7 @@ TA_LIB_API TA_RetCode TA_SWAK_BP( int    startIdx,
        * same bits, +0.0 for a cancelled numerator included.
        */
       x0 = inReal[today];
-      y = fma(a2, y2, fma(c0, x0 - x2, a1 * y1));
+      y = fma(a1, y1, fma(a2, y2, c0 * (x0 - x2)));
       x2 = x1;
       x1 = x0;
       y2 = y1;
@@ -287,7 +287,7 @@ TA_RetCode TA_S_SWAK_BP( int    startIdx,
    while( i != 0 )
    {
       x0 = (double)inReal[today];
-      y = fma(a2, y2, fma(c0, x0 - x2, a1 * y1));
+      y = fma(a1, y1, fma(a2, y2, c0 * (x0 - x2)));
       x2 = x1;
       x1 = x0;
       y2 = y1;
@@ -299,7 +299,7 @@ TA_RetCode TA_S_SWAK_BP( int    startIdx,
    while( today <= endIdx )
    {
       x0 = (double)inReal[today];
-      y = fma(a2, y2, fma(c0, x0 - x2, a1 * y1));
+      y = fma(a1, y1, fma(a2, y2, c0 * (x0 - x2)));
       x2 = x1;
       x1 = x0;
       y2 = y1;
@@ -346,7 +346,7 @@ static TA_FMA_STEP_INLINE void TA_SWAK_BP_StepImpl( struct TA_SWAK_BP_Stream *sp
     * same bits, +0.0 for a cancelled numerator included.
     */
    x0 = inReal;
-   y = fma(sp->a2, sp->y2, fma(sp->c0, x0 - sp->x2, sp->a1 * sp->y1));
+   y = fma(sp->a1, sp->y1, fma(sp->a2, sp->y2, sp->c0 * (x0 - sp->x2)));
    sp->x2 = sp->x1;
    sp->x1 = x0;
    sp->y2 = sp->y1;
@@ -449,7 +449,7 @@ static TA_RetCode TA_SWAK_BP_OpenImpl( struct TA_SWAK_BP_Stream **stream, const 
       while( i != 0 )
       {
          x0 = inReal[today];
-         y = fma(a2, y2, fma(c0, x0 - x2, a1 * y1));
+         y = fma(a1, y1, fma(a2, y2, c0 * (x0 - x2)));
          x2 = x1;
          x1 = x0;
          y2 = y1;
@@ -467,7 +467,7 @@ static TA_RetCode TA_SWAK_BP_OpenImpl( struct TA_SWAK_BP_Stream **stream, const 
           * same bits, +0.0 for a cancelled numerator included.
           */
          x0 = inReal[today];
-         y = fma(a2, y2, fma(c0, x0 - x2, a1 * y1));
+         y = fma(a1, y1, fma(a2, y2, c0 * (x0 - x2)));
          x2 = x1;
          x1 = x0;
          y2 = y1;
@@ -579,7 +579,7 @@ TA_LIB_API TA_RetCode TA_SWAK_BP_Peek( const TA_SWAK_BP_Stream *stream, double i
     * same bits, +0.0 for a cancelled numerator included.
     */
    x0 = inReal;
-   y = fma(sp->a2, y2, fma(sp->c0, x0 - x2, sp->a1 * y1));
+   y = fma(sp->a1, y1, fma(sp->a2, y2, sp->c0 * (x0 - x2)));
    x2 = x1;
    x1 = x0;
    y2 = y1;

@@ -188,7 +188,7 @@ public partial class Core
       /* Skip the unstable period: run the recurrence but publish nothing. */
       i = lookbackTotal;
       while( i != 0 ) {
-         y = Math.FusedMultiplyAdd(a2, y2, Math.FusedMultiplyAdd(c0, inReal[today], a1 * y1));
+         y = Math.FusedMultiplyAdd(a1, y1, Math.FusedMultiplyAdd(a2, y2, c0 * inReal[today]));
          y2 = y1;
          y1 = y;
          today += 1;
@@ -199,7 +199,7 @@ public partial class Core
          /* The evaluation order is the bit-exactness contract across backends:
           * the numerator first, then the a1 feedback, then the a2 feedback.
           */
-         y = Math.FusedMultiplyAdd(a2, y2, Math.FusedMultiplyAdd(c0, inReal[today], a1 * y1));
+         y = Math.FusedMultiplyAdd(a1, y1, Math.FusedMultiplyAdd(a2, y2, c0 * inReal[today]));
          y2 = y1;
          y1 = y;
          outReal[outIdx] = y;
@@ -269,7 +269,7 @@ public partial class Core
       y2 = y1;
       i = lookbackTotal;
       while( i != 0 ) {
-         y = Math.FusedMultiplyAdd(a2, y2, Math.FusedMultiplyAdd(c0, (double)inReal[today], a1 * y1));
+         y = Math.FusedMultiplyAdd(a1, y1, Math.FusedMultiplyAdd(a2, y2, c0 * (double)inReal[today]));
          y2 = y1;
          y1 = y;
          today += 1;
@@ -277,7 +277,7 @@ public partial class Core
       }
       outIdx = 0;
       while( today <= endIdx ) {
-         y = Math.FusedMultiplyAdd(a2, y2, Math.FusedMultiplyAdd(c0, (double)inReal[today], a1 * y1));
+         y = Math.FusedMultiplyAdd(a1, y1, Math.FusedMultiplyAdd(a2, y2, c0 * (double)inReal[today]));
          y2 = y1;
          y1 = y;
          outReal[outIdx] = y;
@@ -603,7 +603,7 @@ public partial class Core
          /* The evaluation order is the bit-exactness contract across backends:
           * the numerator first, then the a1 feedback, then the a2 feedback.
           */
-         y = Math.FusedMultiplyAdd(sp.a2, y2, Math.FusedMultiplyAdd(sp.c0, inReal, sp.a1 * y1));
+         y = Math.FusedMultiplyAdd(sp.a1, y1, Math.FusedMultiplyAdd(sp.a2, y2, sp.c0 * inReal));
          y2 = y1;
          y1 = y;
          cur_outReal = y;
@@ -633,7 +633,7 @@ public partial class Core
       /* The evaluation order is the bit-exactness contract across backends:
        * the numerator first, then the a1 feedback, then the a2 feedback.
        */
-      y = Math.FusedMultiplyAdd(sp.a2, sp.y2, Math.FusedMultiplyAdd(sp.c0, inReal, sp.a1 * sp.y1));
+      y = Math.FusedMultiplyAdd(sp.a1, sp.y1, Math.FusedMultiplyAdd(sp.a2, sp.y2, sp.c0 * inReal));
       sp.y2 = sp.y1;
       sp.y1 = y;
       sp.cur_outReal = y;
@@ -713,7 +713,7 @@ public partial class Core
       /* Skip the unstable period: run the recurrence but publish nothing. */
       i = lookbackTotal;
       while( i != 0 ) {
-         y = Math.FusedMultiplyAdd(a2, y2, Math.FusedMultiplyAdd(c0, inReal[today], a1 * y1));
+         y = Math.FusedMultiplyAdd(a1, y1, Math.FusedMultiplyAdd(a2, y2, c0 * inReal[today]));
          y2 = y1;
          y1 = y;
          today += 1;
@@ -724,7 +724,7 @@ public partial class Core
          /* The evaluation order is the bit-exactness contract across backends:
           * the numerator first, then the a1 feedback, then the a2 feedback.
           */
-         y = Math.FusedMultiplyAdd(a2, y2, Math.FusedMultiplyAdd(c0, inReal[today], a1 * y1));
+         y = Math.FusedMultiplyAdd(a1, y1, Math.FusedMultiplyAdd(a2, y2, c0 * inReal[today]));
          y2 = y1;
          y1 = y;
          outReal[outIdx * outStride] = y;

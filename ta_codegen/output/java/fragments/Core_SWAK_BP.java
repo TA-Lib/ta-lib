@@ -164,7 +164,7 @@
       i = lookbackTotal;
       while( i != 0 ) {
          x0 = inReal[today];
-         y = Math.fma(a2, y2, Math.fma(c0, x0 - x2, a1 * y1));
+         y = Math.fma(a1, y1, Math.fma(a2, y2, c0 * (x0 - x2)));
          x2 = x1;
          x1 = x0;
          y2 = y1;
@@ -181,7 +181,7 @@
           * same bits, +0.0 for a cancelled numerator included.
           */
          x0 = inReal[today];
-         y = Math.fma(a2, y2, Math.fma(c0, x0 - x2, a1 * y1));
+         y = Math.fma(a1, y1, Math.fma(a2, y2, c0 * (x0 - x2)));
          x2 = x1;
          x1 = x0;
          y2 = y1;
@@ -260,7 +260,7 @@
       i = lookbackTotal;
       while( i != 0 ) {
          x0 = (double)inReal[today];
-         y = Math.fma(a2, y2, Math.fma(c0, x0 - x2, a1 * y1));
+         y = Math.fma(a1, y1, Math.fma(a2, y2, c0 * (x0 - x2)));
          x2 = x1;
          x1 = x0;
          y2 = y1;
@@ -271,7 +271,7 @@
       outIdx = 0;
       while( today <= endIdx ) {
          x0 = (double)inReal[today];
-         y = Math.fma(a2, y2, Math.fma(c0, x0 - x2, a1 * y1));
+         y = Math.fma(a1, y1, Math.fma(a2, y2, c0 * (x0 - x2)));
          x2 = x1;
          x1 = x0;
          y2 = y1;
@@ -568,7 +568,7 @@
           * same bits, +0.0 for a cancelled numerator included.
           */
          x0 = inReal;
-         y = Math.fma(sp.a2, y2, Math.fma(sp.c0, x0 - x2, sp.a1 * y1));
+         y = Math.fma(sp.a1, y1, Math.fma(sp.a2, y2, sp.c0 * (x0 - x2)));
          x2 = x1;
          x1 = x0;
          y2 = y1;
@@ -614,7 +614,7 @@
        * same bits, +0.0 for a cancelled numerator included.
        */
       x0 = inReal;
-      y = Math.fma(sp.a2, sp.y2, Math.fma(sp.c0, x0 - sp.x2, sp.a1 * sp.y1));
+      y = Math.fma(sp.a1, sp.y1, Math.fma(sp.a2, sp.y2, sp.c0 * (x0 - sp.x2)));
       sp.x2 = sp.x1;
       sp.x1 = x0;
       sp.y2 = sp.y1;
@@ -709,7 +709,7 @@
       i = lookbackTotal;
       while( i != 0 ) {
          x0 = inReal[today];
-         y = Math.fma(a2, y2, Math.fma(c0, x0 - x2, a1 * y1));
+         y = Math.fma(a1, y1, Math.fma(a2, y2, c0 * (x0 - x2)));
          x2 = x1;
          x1 = x0;
          y2 = y1;
@@ -726,7 +726,7 @@
           * same bits, +0.0 for a cancelled numerator included.
           */
          x0 = inReal[today];
-         y = Math.fma(a2, y2, Math.fma(c0, x0 - x2, a1 * y1));
+         y = Math.fma(a1, y1, Math.fma(a2, y2, c0 * (x0 - x2)));
          x2 = x1;
          x1 = x0;
          y2 = y1;

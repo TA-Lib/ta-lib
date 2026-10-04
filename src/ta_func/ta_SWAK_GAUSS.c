@@ -162,7 +162,7 @@ TA_LIB_API TA_RetCode TA_SWAK_GAUSS( int    startIdx,
    i = lookbackTotal;
    while( i != 0 )
    {
-      y = fma(a2, y2, fma(c0, inReal[today], a1 * y1));
+      y = fma(a1, y1, fma(a2, y2, c0 * inReal[today]));
       y2 = y1;
       y1 = y;
       today += 1;
@@ -174,7 +174,7 @@ TA_LIB_API TA_RetCode TA_SWAK_GAUSS( int    startIdx,
       /* The evaluation order is the bit-exactness contract across backends:
        * the numerator first, then the a1 feedback, then the a2 feedback.
        */
-      y = fma(a2, y2, fma(c0, inReal[today], a1 * y1));
+      y = fma(a1, y1, fma(a2, y2, c0 * inReal[today]));
       y2 = y1;
       y1 = y;
       outReal[outIdx] = y;
@@ -250,7 +250,7 @@ TA_RetCode TA_S_SWAK_GAUSS( int    startIdx,
    i = lookbackTotal;
    while( i != 0 )
    {
-      y = fma(a2, y2, fma(c0, (double)inReal[today], a1 * y1));
+      y = fma(a1, y1, fma(a2, y2, c0 * (double)inReal[today]));
       y2 = y1;
       y1 = y;
       today += 1;
@@ -259,7 +259,7 @@ TA_RetCode TA_S_SWAK_GAUSS( int    startIdx,
    outIdx = 0;
    while( today <= endIdx )
    {
-      y = fma(a2, y2, fma(c0, (double)inReal[today], a1 * y1));
+      y = fma(a1, y1, fma(a2, y2, c0 * (double)inReal[today]));
       y2 = y1;
       y1 = y;
       outReal[outIdx] = y;
@@ -296,7 +296,7 @@ static TA_FMA_STEP_INLINE void TA_SWAK_GAUSS_StepImpl( struct TA_SWAK_GAUSS_Stre
    /* The evaluation order is the bit-exactness contract across backends:
     * the numerator first, then the a1 feedback, then the a2 feedback.
     */
-   y = fma(sp->a2, sp->y2, fma(sp->c0, inReal, sp->a1 * sp->y1));
+   y = fma(sp->a1, sp->y1, fma(sp->a2, sp->y2, sp->c0 * inReal));
    sp->y2 = sp->y1;
    sp->y1 = y;
    *outReal= y;
@@ -382,7 +382,7 @@ static TA_RetCode TA_SWAK_GAUSS_OpenImpl( struct TA_SWAK_GAUSS_Stream **stream, 
       i = lookbackTotal;
       while( i != 0 )
       {
-         y = fma(a2, y2, fma(c0, inReal[today], a1 * y1));
+         y = fma(a1, y1, fma(a2, y2, c0 * inReal[today]));
          y2 = y1;
          y1 = y;
          today += 1;
@@ -394,7 +394,7 @@ static TA_RetCode TA_SWAK_GAUSS_OpenImpl( struct TA_SWAK_GAUSS_Stream **stream, 
          /* The evaluation order is the bit-exactness contract across backends:
           * the numerator first, then the a1 feedback, then the a2 feedback.
           */
-         y = fma(a2, y2, fma(c0, inReal[today], a1 * y1));
+         y = fma(a1, y1, fma(a2, y2, c0 * inReal[today]));
          y2 = y1;
          y1 = y;
          outReal[outIdx * outStride] = y;
@@ -492,7 +492,7 @@ TA_LIB_API TA_RetCode TA_SWAK_GAUSS_Peek( const TA_SWAK_GAUSS_Stream *stream, do
    /* The evaluation order is the bit-exactness contract across backends:
     * the numerator first, then the a1 feedback, then the a2 feedback.
     */
-   y = fma(sp->a2, y2, fma(sp->c0, inReal, sp->a1 * y1));
+   y = fma(sp->a1, y1, fma(sp->a2, y2, sp->c0 * inReal));
    y2 = y1;
    y1 = y;
    *outReal= y;

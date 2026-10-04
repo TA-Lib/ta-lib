@@ -90,7 +90,7 @@ TA_RetCode swak_bp(int startIdx, int endIdx,
    while( i != 0 )
    {
       x0 = inReal[today];
-      y  = ((c0 * (x0 - x2) + a1 * y1) + a2 * y2);
+      y  = a1 * y1 + (a2 * y2 + c0 * (x0 - x2));
       x2 = x1;
       x1 = x0;
       y2 = y1;
@@ -109,7 +109,7 @@ TA_RetCode swak_bp(int startIdx, int endIdx,
        * same bits, +0.0 for a cancelled numerator included.
        */
       x0 = inReal[today];
-      y  = ((c0 * (x0 - x2) + a1 * y1) + a2 * y2);
+      y  = a1 * y1 + (a2 * y2 + c0 * (x0 - x2));
       x2 = x1;
       x1 = x0;
       y2 = y1;
