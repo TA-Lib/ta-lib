@@ -2980,7 +2980,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         name: "FRACTAL",
         group: FunctionGroup.MomentumIndicators,
         hint: "Williams Fractal",
-        flags: FuncFlags.Stream,
+        flags: FuncFlags.Stream | FuncFlags.DisplayShift,
         unstableId: null,
         inputs:
         [
@@ -2993,8 +2993,8 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Integer, "outSwingHigh", OutputFlags.Line),
-            new OutputInfo(OutputKind.Integer, "outSwingLow", OutputFlags.Line),
+            new OutputInfo(OutputKind.Integer, "outSwingHigh", OutputFlags.Line | OutputFlags.DisplayShift),
+            new OutputInfo(OutputKind.Integer, "outSwingLow", OutputFlags.Line | OutputFlags.DisplayShift),
         ],
         lookback: static (core, c) => core.FractalLookback(c.IntOpt(0), c.IntOpt(1)),
         displayShift: static (core, c, outputIdx) => core.FractalDisplayShift(c.IntOpt(0), c.IntOpt(1), outputIdx),

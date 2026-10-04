@@ -2106,10 +2106,10 @@ static FUNC_TABLE: [FuncInfo; 228] = [
         name: "FRACTAL",
         group: Group::MomentumIndicators,
         hint: "Williams Fractal",
-        flags: FuncFlags(0x02000000),
+        flags: FuncFlags(0x02000002),
         inputs: &[InputInfo { param_name: "inPriceHL", kind: InputType::Price, flags: InputFlags(0x00000006) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInLeftBars", display_name: "Left Bars", hint: "Number of bars required to be lower/higher before the pivot", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 2, suggested: (1, 10, 1) } }, OptInputInfo { param_name: "optInRightBars", display_name: "Right Bars", hint: "Number of bars required to be lower/higher after the pivot", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 2, suggested: (1, 10, 1) } }, ],
-        outputs: &[OutputInfo { param_name: "outSwingHigh", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outSwingLow", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        outputs: &[OutputInfo { param_name: "outSwingHigh", kind: OutputType::Integer, flags: OutputFlags(0x00004001) }, OutputInfo { param_name: "outSwingLow", kind: OutputType::Integer, flags: OutputFlags(0x00004001) }, ],
         unst_id: None,
     },
     FuncInfo {

@@ -54,6 +54,7 @@ public partial class Core
     *  MMDDYY BY     Description
     *  -------------------------------------------------------------------
     *  090526 MF,CC  Initial version (#371).
+    *  100426 MF,CC  Display shift (#500).
     */
    /// <summary>
    /// Number of leading input bars <c>Fractal</c> consumes before it can produce
@@ -90,7 +91,7 @@ public partial class Core
    /// computed it a chart draws one output of <c>Fractal</c>.
    /// </summary>
    /// <remarks>
-   /// Every output of this function is drawn at its own bar, so the answer is 0.
+   /// The values are never shifted: this describes the drawing only.
    /// </remarks>
    /// <param name="optInLeftBars">Bars before the pivot that it must strictly dominate (default 2; range
    /// 1..100000; <c>int.MinValue</c> selects the default).</param>
@@ -105,10 +106,24 @@ public partial class Core
       if( FractalLookback( optInLeftBars, optInRightBars ) < 0 ) {
          return int.MinValue;
       }
+      if( optInLeftBars == int.MinValue ) {
+         optInLeftBars = 2;
+      } else if( optInLeftBars < 1 || optInLeftBars > 100000 ) {
+         return int.MinValue;
+      }
+      if( optInRightBars == int.MinValue ) {
+         optInRightBars = 2;
+      } else if( optInRightBars < 1 || optInRightBars > 100000 ) {
+         return int.MinValue;
+      }
       if( outputIdx < 0 || outputIdx >= 2 ) {
          return int.MinValue;
       }
-      return 0;
+      /* The flag written at a bar names the pivot this many bars back, which is
+       * where a chart draws it.
+       */
+      return -optInRightBars ;
+
    }
    internal RetCode FractalImpl( int startIdx,
                                  int endIdx,
@@ -304,14 +319,16 @@ public partial class Core
    /// before it and the <c>optInRightBars</c> bars after it; a swing low is the
    /// mirror on the lows. Bill Williams' original is the symmetric five-candle
    /// case; independent left and right arms generalise it. The right arm cannot
-   /// be known until it has closed, so the verdict is reported on the
-   /// confirmation bar, <c>optInRightBars</c> bars after the pivot itself. Each
-   /// output value therefore describes the bar <c>optInRightBars</c> back, not
-   /// the bar it is written at: a flag at output index <c>k</c> names input bar
-   /// <c>outBegIdx + k - optInRightBars</c>, whose price is <c>inHigh[...]</c> /
-   /// <c>inLow[...]</c> at that index. The two outputs are independent flags
-   /// rather than one signed value, because an outside bar can be a swing high
-   /// and a swing low at once.
+   /// be known until it has closed, so the value is written on the bar that
+   /// completes the pivot, <c>optInRightBars</c> bars after the pivot itself.
+   /// Each output value therefore describes the bar <c>optInRightBars</c> back,
+   /// not the bar it is written at: a flag at output index <c>k</c> names input
+   /// bar <c>outBegIdx + k - optInRightBars</c>, whose price is
+   /// <c>inHigh[...]</c> / <c>inLow[...]</c> at that index. The display shift
+   /// both outputs report, <c>-optInRightBars</c>, is that offset: a chart draws
+   /// each flag that many bars to the left. The two outputs are independent
+   /// flags rather than one signed value, because an outside bar can be a swing
+   /// high and a swing low at once.
    /// </summary>
    /// <remarks>
    /// <para>
@@ -408,14 +425,16 @@ public partial class Core
    /// before it and the <c>optInRightBars</c> bars after it; a swing low is the
    /// mirror on the lows. Bill Williams' original is the symmetric five-candle
    /// case; independent left and right arms generalise it. The right arm cannot
-   /// be known until it has closed, so the verdict is reported on the
-   /// confirmation bar, <c>optInRightBars</c> bars after the pivot itself. Each
-   /// output value therefore describes the bar <c>optInRightBars</c> back, not
-   /// the bar it is written at: a flag at output index <c>k</c> names input bar
-   /// <c>outBegIdx + k - optInRightBars</c>, whose price is <c>inHigh[...]</c> /
-   /// <c>inLow[...]</c> at that index. The two outputs are independent flags
-   /// rather than one signed value, because an outside bar can be a swing high
-   /// and a swing low at once.
+   /// be known until it has closed, so the value is written on the bar that
+   /// completes the pivot, <c>optInRightBars</c> bars after the pivot itself.
+   /// Each output value therefore describes the bar <c>optInRightBars</c> back,
+   /// not the bar it is written at: a flag at output index <c>k</c> names input
+   /// bar <c>outBegIdx + k - optInRightBars</c>, whose price is
+   /// <c>inHigh[...]</c> / <c>inLow[...]</c> at that index. The display shift
+   /// both outputs report, <c>-optInRightBars</c>, is that offset: a chart draws
+   /// each flag that many bars to the left. The two outputs are independent
+   /// flags rather than one signed value, because an outside bar can be a swing
+   /// high and a swing low at once.
    /// </summary>
    /// <remarks>
    /// <para>

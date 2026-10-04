@@ -5128,6 +5128,7 @@ public static class FunctionDescription
 		<GroupId>Momentum Indicators</GroupId>
 		<Flags>
 			<Flag>Streaming</Flag>
+			<Flag>Display Shift</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -5173,6 +5174,7 @@ public static class FunctionDescription
 				<Name>outSwingHigh</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Display Shift</Flag>
 				</Flags>
 			</OutputArgument>
 			<OutputArgument>
@@ -5180,6 +5182,7 @@ public static class FunctionDescription
 				<Name>outSwingLow</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Display Shift</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>

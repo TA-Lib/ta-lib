@@ -101002,6 +101002,7 @@ class Core {
      *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
      *  090526 MF,CC  Initial version (#371).
+     *  100426 MF,CC  Display shift (#500).
      */
 
        /**
@@ -101037,8 +101038,7 @@ class Core {
        /**
         * How many bars ahead (positive) or behind (negative) of the bar that
         * computed it a chart draws one output of {@link Core#fractal}.
-        * <p>Every output of this function is drawn at its own bar, so the answer is
-        * 0.
+        * <p>The values are never shifted: this describes the drawing only.
         *
         * @param optInLeftBars Bars before the pivot that it must strictly dominate
         *        (default 2; range 1..100000; {@code Integer.MIN_VALUE} selects the
@@ -101055,10 +101055,24 @@ class Core {
           if( fractalLookback( optInLeftBars, optInRightBars ) < 0 ) {
              return Integer.MIN_VALUE;
           }
+          if( optInLeftBars == Integer.MIN_VALUE ) {
+             optInLeftBars = 2;
+          } else if( optInLeftBars < 1 || optInLeftBars > 100000 ) {
+             return Integer.MIN_VALUE;
+          }
+          if( optInRightBars == Integer.MIN_VALUE ) {
+             optInRightBars = 2;
+          } else if( optInRightBars < 1 || optInRightBars > 100000 ) {
+             return Integer.MIN_VALUE;
+          }
           if( outputIdx < 0 || outputIdx >= 2 ) {
              return Integer.MIN_VALUE;
           }
-          return 0;
+          /* The flag written at a bar names the pivot this many bars back, which is
+           * where a chart draws it.
+           */
+          return -optInRightBars ;
+
        }
        RetCode fractalImpl( int startIdx,
                             int endIdx,
@@ -101252,14 +101266,16 @@ class Core {
         * before it and the {@code optInRightBars} bars after it; a swing low is the
         * mirror on the lows. Bill Williams' original is the symmetric five-candle
         * case; independent left and right arms generalise it. The right arm cannot
-        * be known until it has closed, so the verdict is reported on the
-        * confirmation bar, {@code optInRightBars} bars after the pivot itself. Each
-        * output value therefore describes the bar {@code optInRightBars} back, not
-        * the bar it is written at: a flag at output index {@code k} names input bar
-        * {@code outBegIdx + k - optInRightBars}, whose price is {@code inHigh[...]}
-        * / {@code inLow[...]} at that index. The two outputs are independent flags
-        * rather than one signed value, because an outside bar can be a swing high
-        * and a swing low at once.
+        * be known until it has closed, so the value is written on the bar that
+        * completes the pivot, {@code optInRightBars} bars after the pivot itself.
+        * Each output value therefore describes the bar {@code optInRightBars} back,
+        * not the bar it is written at: a flag at output index {@code k} names input
+        * bar {@code outBegIdx + k - optInRightBars}, whose price is
+        * {@code inHigh[...]} / {@code inLow[...]} at that index. The display shift
+        * both outputs report, {@code -optInRightBars}, is that offset: a chart
+        * draws each flag that many bars to the left. The two outputs are
+        * independent flags rather than one signed value, because an outside bar can
+        * be a swing high and a swing low at once.
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/fractal">ta-lib.org/functions/fractal</a>.
         * <p><b>Notes</b>
@@ -101341,14 +101357,16 @@ class Core {
         * before it and the {@code optInRightBars} bars after it; a swing low is the
         * mirror on the lows. Bill Williams' original is the symmetric five-candle
         * case; independent left and right arms generalise it. The right arm cannot
-        * be known until it has closed, so the verdict is reported on the
-        * confirmation bar, {@code optInRightBars} bars after the pivot itself. Each
-        * output value therefore describes the bar {@code optInRightBars} back, not
-        * the bar it is written at: a flag at output index {@code k} names input bar
-        * {@code outBegIdx + k - optInRightBars}, whose price is {@code inHigh[...]}
-        * / {@code inLow[...]} at that index. The two outputs are independent flags
-        * rather than one signed value, because an outside bar can be a swing high
-        * and a swing low at once.
+        * be known until it has closed, so the value is written on the bar that
+        * completes the pivot, {@code optInRightBars} bars after the pivot itself.
+        * Each output value therefore describes the bar {@code optInRightBars} back,
+        * not the bar it is written at: a flag at output index {@code k} names input
+        * bar {@code outBegIdx + k - optInRightBars}, whose price is
+        * {@code inHigh[...]} / {@code inLow[...]} at that index. The display shift
+        * both outputs report, {@code -optInRightBars}, is that offset: a chart
+        * draws each flag that many bars to the left. The two outputs are
+        * independent flags rather than one signed value, because an outside bar can
+        * be a swing high and a swing low at once.
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/fractal">ta-lib.org/functions/fractal</a>.
         * <p><b>Notes</b>
@@ -217550,7 +217568,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "e60a6d77acee7384";
+    static final String SPLICED_GENCODE_DIGEST = "c14c053d88f1fff4";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];
@@ -218174,10 +218192,10 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",5.0, 0,0,0,0,0,0, 2,100000,2,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
-        ABSTRACT.put("FRACTAL", new AbsFunc("FRACTAL", "Momentum Indicators", "Williams Fractal", 33554432,
+        ABSTRACT.put("FRACTAL", new AbsFunc("FRACTAL", "Momentum Indicators", "Williams Fractal", 33554434,
             new AbsIn[]{ new AbsIn(0,"inPriceHL",6) },
             new AbsOpt[]{ new AbsOpt(2,"optInLeftBars",0,"Left Bars","Number of bars required to be lower/higher before the pivot",2.0, 0,0,0,0,0,0, 1,100000,1,10,1, null), new AbsOpt(2,"optInRightBars",0,"Right Bars","Number of bars required to be lower/higher after the pivot",2.0, 0,0,0,0,0,0, 1,100000,1,10,1, null) },
-            new AbsOut[]{ new AbsOut(1,"outSwingHigh",1), new AbsOut(1,"outSwingLow",1) }));
+            new AbsOut[]{ new AbsOut(1,"outSwingHigh",16385), new AbsOut(1,"outSwingLow",16385) }));
         ABSTRACT.put("FRAMA", new AbsFunc("FRAMA", "Overlap Studies", "Fractal Adaptive Moving Average", 184549376,
             new AbsIn[]{ new AbsIn(0,"inPriceHL",6) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Number of bars, even; the window is split into two halves of optInTimePeriod/2 bars",16.0, 0,0,0,0,0,0, 2,100000,4,200,2, null) },

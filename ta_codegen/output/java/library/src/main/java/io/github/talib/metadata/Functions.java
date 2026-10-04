@@ -2142,7 +2142,7 @@ public final class Functions {
 
    private static FuncInfo f_FRACTAL() {
       return new FuncInfo(
-         "FRACTAL", "Momentum Indicators", "Williams Fractal", 0x02000000,
+         "FRACTAL", "Momentum Indicators", "Williams Fractal", 0x02000002,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceHL", 0x00000006)
          ),
@@ -2159,8 +2159,8 @@ public final class Functions {
                1, 100000, 1, 10, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outSwingHigh", 0x00000001),
-            new OutputInfo(OutputType.INTEGER, "outSwingLow", 0x00000001)
+            new OutputInfo(OutputType.INTEGER, "outSwingHigh", 0x00004001),
+            new OutputInfo(OutputType.INTEGER, "outSwingLow", 0x00004001)
          ));
    }
 

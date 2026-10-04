@@ -43,6 +43,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  090526 MF,CC  First version (issue #371).
+ *  100426 MF,CC  Display shift (#500).
  */
 
 /* Description:
@@ -71,6 +72,8 @@
  *     4. SHAPE: the lookback identity, the exactly-one-output range, and the
  *        below-lookback range that succeeds with nothing.
  *     5. The startIdx/endIdx range sweep, in the EXACT class.
+ *     6. DISPLAY SHIFT: -optInRightBars on both outputs, direct and abstract,
+ *        and tied to the values on a series with one peak and one trough.
  *
  *   There is no differential leg: nothing in the library decomposes into a
  *   CENTRED window test, and no composition over shipped primitives would be
@@ -275,6 +278,18 @@ static const int fractalDegPairs[][2] =
    { {1,1}, {2,2}, {3,3}, {5,5}, {2,5}, {5,2} };
 #define NB_FRACTAL_DEG_PAIRS ((int)(sizeof(fractalDegPairs)/sizeof(fractalDegPairs[0])))
 
+/* Leg 6. Defaults are 2/2. */
+static const struct { int optInLeftBars; int optInRightBars; int shift; } fractalShift[] =
+{
+   { 1, 1, -1 }, { 2, 2, -2 }, { 5, 2, -2 }, { 2, 5, -5 }, { 1, 10, -10 },
+   { 10, 1, -1 }, { 100000, 100000, -100000 }, { 100000, 1, -1 },
+   { TA_INTEGER_DEFAULT, TA_INTEGER_DEFAULT, -2 },
+   { 7, TA_INTEGER_DEFAULT, -2 }, { TA_INTEGER_DEFAULT, 7, -7 },
+};
+#define NB_FRACTAL_SHIFT ((int)(sizeof(fractalShift)/sizeof(fractalShift[0])))
+#define FRACTAL_SHIFT_PEAK   25
+#define FRACTAL_SHIFT_TROUGH 31
+
 /* Coverage counters. Every leg is silent on success, so a count that reached
  * zero is the only remaining way one could run while comparing nothing. */
 static int g_fractalCorpusCmp;
@@ -282,6 +297,7 @@ static int g_fractalSynCmp;
 static int g_fractalDegCmp;
 static int g_fractalBothCmp;
 static int g_fractalShapeCmp;
+static int g_fractalShiftCmp;
 
 /**** Local functions declarations. ****/
 static ErrorNumber test_fractal_goldens( const char *tag,
@@ -294,6 +310,7 @@ static ErrorNumber test_fractal_goldens( const char *tag,
 static ErrorNumber test_fractal_both_fire( void );
 static ErrorNumber test_fractal_degenerate( void );
 static ErrorNumber test_fractal_shape( void );
+static ErrorNumber test_fractal_display_shift( void );
 static ErrorNumber test_fractal_range( const TA_History *history );
 
 /**** Global functions definitions. ****/
@@ -306,7 +323,7 @@ ErrorNumber test_func_fractal( TA_History *history )
    TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
 
    g_fractalCorpusCmp = g_fractalSynCmp = g_fractalDegCmp = 0;
-   g_fractalBothCmp = g_fractalShapeCmp = 0;
+   g_fractalBothCmp = g_fractalShapeCmp = g_fractalShiftCmp = 0;
 
    if( history->nbBars == 252 )
    {
@@ -343,6 +360,10 @@ ErrorNumber test_func_fractal( TA_History *history )
    if( err != TA_TEST_PASS )
       return err;
 
+   err = test_fractal_display_shift();
+   if( err != TA_TEST_PASS )
+      return err;
+
    err = test_fractal_range( history );
    if( err != TA_TEST_PASS )
       return err;
@@ -352,13 +373,13 @@ ErrorNumber test_func_fractal( TA_History *history )
    if( history->nbBars == 252
        && ( g_fractalCorpusCmp != 3916 || g_fractalSynCmp != 328
             || g_fractalDegCmp != 1296 || g_fractalBothCmp != 8
-            || g_fractalShapeCmp != 432 ) )
+            || g_fractalShapeCmp != 432 || g_fractalShiftCmp != 44 ) )
    {
       printf( "FRACTAL Fail: coverage counters (corpus %d, synthetic %d, "
-              "degenerate %d, both-fire %d, shape %d) are not what this file "
-              "was written with (3916, 328, 1296, 8, 432)\n",
+              "degenerate %d, both-fire %d, shape %d, shift %d) are not what "
+              "this file was written with (3916, 328, 1296, 8, 432, 44)\n",
               g_fractalCorpusCmp, g_fractalSynCmp, g_fractalDegCmp,
-              g_fractalBothCmp, g_fractalShapeCmp );
+              g_fractalBothCmp, g_fractalShapeCmp, g_fractalShiftCmp );
       return TA_FRACTAL_VACUOUS;
    }
 
@@ -657,6 +678,122 @@ static ErrorNumber test_fractal_shape( void )
       }
    }
 
+   return TA_TEST_PASS;
+}
+
+/* The abstract query's answer, or 12345 when the call fails or writes nothing. */
+static int fractal_abstract_shift( TA_ParamHolder *holder, int optInLeftBars,
+                                   int optInRightBars, unsigned int outputIdx )
+{
+   TA_Integer shift = 12345;
+
+   if( TA_SetOptInputParamInteger( holder, 0, optInLeftBars ) != TA_SUCCESS
+       || TA_SetOptInputParamInteger( holder, 1, optInRightBars ) != TA_SUCCESS
+       || TA_GetDisplayShift( holder, outputIdx, &shift ) != TA_SUCCESS )
+      return 12345;
+   return shift;
+}
+
+/* (6) The shift is checked against the values, not only as a number: the
+ * series has one strict peak and one strict trough, at different bars, so each
+ * output fires exactly once and the bar it fires at, plus the shift, must be
+ * that pivot. */
+static ErrorNumber test_fractal_display_shift( void )
+{
+   static TA_Real high[FRACTAL_DEG_NB], low[FRACTAL_DEG_NB];
+   static TA_Integer out[2][FRACTAL_DEG_NB];
+   static const int pivot[2] = { FRACTAL_SHIFT_PEAK, FRACTAL_SHIFT_TROUGH };
+   const TA_FuncHandle *handle;
+   TA_ParamHolder *holder;
+   TA_Integer begIdx, nbElement;
+   int k, i, o, L, R, shift, abstractShift, nbFired, firedAt;
+
+   for( i = 0; i < FRACTAL_DEG_NB; i++ )
+   {
+      high[i] = 80.0 - 0.25 * (double)( i < FRACTAL_SHIFT_PEAK ? FRACTAL_SHIFT_PEAK - i : i - FRACTAL_SHIFT_PEAK );
+      low[i]  = 40.0 + 0.25 * (double)( i < FRACTAL_SHIFT_TROUGH ? FRACTAL_SHIFT_TROUGH - i : i - FRACTAL_SHIFT_TROUGH );
+   }
+
+   if( TA_GetFuncHandle( "FRACTAL", &handle ) != TA_SUCCESS
+       || TA_ParamHolderAlloc( handle, &holder ) != TA_SUCCESS )
+   {
+      printf( "FRACTAL display shift Fail: no abstract handle\n" );
+      return TA_TESTUTIL_TFRR_BAD_RETCODE;
+   }
+
+   for( k = 0; k < NB_FRACTAL_SHIFT; k++ )
+   {
+      L = fractalShift[k].optInLeftBars;
+      R = fractalShift[k].optInRightBars;
+      for( o = 0; o < 2; o++ )
+      {
+         shift = TA_FRACTAL_DisplayShift( L, R, o );
+         abstractShift = fractal_abstract_shift( holder, L, R, (unsigned int)o );
+         g_fractalShiftCmp++;
+         if( shift != fractalShift[k].shift || abstractShift != shift )
+         {
+            printf( "FRACTAL display shift Fail [L=%d R=%d output %d]: direct "
+                    "%d, abstract %d, expected %d\n", L, R, o, shift,
+                    abstractShift, fractalShift[k].shift );
+            TA_ParamHolderFree( holder );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+      }
+
+      if( L < 1 || L > 12 || R < 1 || R > 12 )
+         continue;
+      if( TA_FRACTAL( 0, FRACTAL_DEG_NB-1, high, low, L, R,
+                      &begIdx, &nbElement, out[0], out[1] ) != TA_SUCCESS )
+      {
+         printf( "FRACTAL display shift Fail [L=%d R=%d]: the reference call "
+                 "failed\n", L, R );
+         TA_ParamHolderFree( holder );
+         return TA_TESTUTIL_TFRR_BAD_RETCODE;
+      }
+      for( o = 0; o < 2; o++ )
+      {
+         nbFired = 0;
+         firedAt = -1;
+         for( i = 0; i < nbElement; i++ )
+         {
+            if( out[o][i] != 0 )
+            {
+               nbFired++;
+               firedAt = begIdx + i;
+            }
+         }
+         g_fractalShiftCmp++;
+         if( nbFired != 1 || firedAt + fractalShift[k].shift != pivot[o] )
+         {
+            printf( "FRACTAL display shift Fail [L=%d R=%d output %d]: %d "
+                    "flag(s), last at bar %d, which the shift %d does not move "
+                    "to the pivot at bar %d\n", L, R, o, nbFired, firedAt,
+                    fractalShift[k].shift, pivot[o] );
+            TA_ParamHolderFree( holder );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+      }
+   }
+
+   g_fractalShiftCmp += 10;
+   if( TA_FRACTAL_DisplayShift( 2, 0, 0 ) != INT_MIN
+       || TA_FRACTAL_DisplayShift( 2, 100001, 0 ) != INT_MIN
+       || TA_FRACTAL_DisplayShift( 0, 2, 0 ) != INT_MIN
+       || TA_FRACTAL_DisplayShift( 100001, 2, 0 ) != INT_MIN
+       || TA_FRACTAL_DisplayShift( 2, 2, 2 ) != INT_MIN
+       || TA_FRACTAL_DisplayShift( 2, 2, -1 ) != INT_MIN
+       || fractal_abstract_shift( holder, 2, 0, 0 ) != INT_MIN
+       || fractal_abstract_shift( holder, 0, 2, 0 ) != INT_MIN
+       || fractal_abstract_shift( holder, 2, 2, 2 ) != INT_MIN
+       || fractal_abstract_shift( holder, 2, 2, (unsigned int)-1 ) != INT_MIN )
+   {
+      printf( "FRACTAL display shift Fail: an out-of-range arm or an index "
+              "that names no output did not answer INT_MIN\n" );
+      TA_ParamHolderFree( holder );
+      return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+   }
+
+   TA_ParamHolderFree( holder );
    return TA_TEST_PASS;
 }
 

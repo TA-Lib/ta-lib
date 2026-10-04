@@ -52,6 +52,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  090526 MF,CC  Initial version (#371).
+ *  100426 MF,CC  Display shift (#500).
  */
 
 // Import types from parent module
@@ -97,8 +98,6 @@ impl Core {
     /// (negative) of the bar that computed it a chart draws that output. The values are never
     /// shifted.
     ///
-    /// Every output of this function is drawn at its own bar, so the answer is 0.
-    ///
     /// # Arguments
     ///
     /// * `optInLeftBars` — Bars before the pivot that it must strictly dominate (default 2, range
@@ -114,10 +113,23 @@ impl Core {
     #[doc(alias = "TA_FRACTAL_DisplayShift")]
     pub fn fractal_display_shift(&self, mut optInLeftBars: i32, mut optInRightBars: i32, outputIdx: usize) -> Result<i32, RetCode> {
         self.fractal_lookback(optInLeftBars, optInRightBars)?;
+        if ((optInLeftBars) as i32) == (i32::MIN) {
+            optInLeftBars = 2;
+        } else if (((optInLeftBars) as i32) < 1) || (((optInLeftBars) as i32) > 100000) {
+            return Err(RetCode::BadParam);
+        }
+        if ((optInRightBars) as i32) == (i32::MIN) {
+            optInRightBars = 2;
+        } else if (((optInRightBars) as i32) < 1) || (((optInRightBars) as i32) > 100000) {
+            return Err(RetCode::BadParam);
+        }
         if outputIdx >= 2 {
             return Err(RetCode::BadParam);
         }
-        return Ok(0);
+        let outputIdx: i32 = outputIdx as i32;
+        // The flag written at a bar names the pivot this many bars back, which is
+        // where a chart draws it.
+        return Ok(-optInRightBars);
     }
     /// C-shaped body behind [`Core::fractal`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
@@ -223,12 +235,14 @@ impl Core {
     /// strictly exceeds the highs of the `optInLeftBars` bars before it and the `optInRightBars`
     /// bars after it; a swing low is the mirror on the lows. Bill Williams' original is the
     /// symmetric five-candle case; independent left and right arms generalise it. The right arm
-    /// cannot be known until it has closed, so the verdict is reported on the confirmation bar,
-    /// `optInRightBars` bars after the pivot itself. Each output value therefore describes the bar
-    /// `optInRightBars` back, not the bar it is written at: a flag at output index `k` names input
-    /// bar `outBegIdx + k - optInRightBars`, whose price is `inHigh[...]` / `inLow[...]` at that
-    /// index. The two outputs are independent flags rather than one signed value, because an
-    /// outside bar can be a swing high and a swing low at once.
+    /// cannot be known until it has closed, so the value is written on the bar that completes the
+    /// pivot, `optInRightBars` bars after the pivot itself. Each output value therefore describes
+    /// the bar `optInRightBars` back, not the bar it is written at: a flag at output index `k`
+    /// names input bar `outBegIdx + k - optInRightBars`, whose price is `inHigh[...]` /
+    /// `inLow[...]` at that index. The display shift both outputs report, `-optInRightBars`, is
+    /// that offset: a chart draws each flag that many bars to the left. The two outputs are
+    /// independent flags rather than one signed value, because an outside bar can be a swing high
+    /// and a swing low at once.
     ///
     /// Formula and more info at
     /// [ta-lib.org/functions/fractal](https://ta-lib.org/functions/fractal).

@@ -54,6 +54,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  090526 MF,CC  Initial version (#371).
+ *  100426 MF,CC  Display shift (#500).
  */
 
 TA_LIB_API int TA_FRACTAL_Lookback( int optInLeftBars, int optInRightBars )
@@ -73,9 +74,20 @@ TA_LIB_API int TA_FRACTAL_DisplayShift( int optInLeftBars, int optInRightBars, i
 {
    if( TA_FRACTAL_Lookback( optInLeftBars, optInRightBars ) < 0 )
       return INT_MIN;
+   if( (int)optInLeftBars == TA_INTEGER_DEFAULT )
+      optInLeftBars = 2;
+   else if( (int)optInLeftBars < 1 || (int)optInLeftBars > 100000 )
+      return INT_MIN;
+   if( (int)optInRightBars == TA_INTEGER_DEFAULT )
+      optInRightBars = 2;
+   else if( (int)optInRightBars < 1 || (int)optInRightBars > 100000 )
+      return INT_MIN;
    if( outputIdx < 0 || outputIdx >= 2 )
       return INT_MIN;
-   return 0;
+   /* The flag written at a bar names the pivot this many bars back, which is
+    * where a chart draws it.
+    */
+   return -optInRightBars;
 }
 
 TA_LIB_API TA_RetCode TA_FRACTAL( int    startIdx,

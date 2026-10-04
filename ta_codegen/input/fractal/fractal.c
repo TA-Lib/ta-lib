@@ -10,11 +10,20 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  090526 MF,CC  Initial version (#371).
+ *  100426 MF,CC  Display shift (#500).
  */
 
 int fractal_lookback(int optInLeftBars, int optInRightBars)
 {
    return optInLeftBars + optInRightBars;
+}
+
+int fractal_display_shift(int optInLeftBars, int optInRightBars, int outputIdx)
+{
+   /* The flag written at a bar names the pivot this many bars back, which is
+    * where a chart draws it.
+    */
+   return -optInRightBars;
 }
 
 TA_RetCode fractal(int startIdx, int endIdx,

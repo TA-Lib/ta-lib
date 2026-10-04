@@ -5073,6 +5073,7 @@
 		<GroupId>Momentum Indicators</GroupId>
 		<Flags>
 			<Flag>Streaming</Flag>
+			<Flag>Display Shift</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -5118,6 +5119,7 @@
 				<Name>outSwingHigh</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Display Shift</Flag>
 				</Flags>
 			</OutputArgument>
 			<OutputArgument>
@@ -5125,6 +5127,7 @@
 				<Name>outSwingLow</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Display Shift</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
