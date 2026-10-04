@@ -93,4 +93,8 @@ public final class OutputFlags {
    /** Adds level 80: a weaker form of the pattern, on the same bar. */
    public static final int PATTERN_WEAK = 0x00008000;
 
+   /** @deprecated Use {@link #PATTERN_CONFIRM}. */
+   @Deprecated(forRemoval = true)
+   public static final int PATTERN_STRENGTH = PATTERN_CONFIRM;
+
 }

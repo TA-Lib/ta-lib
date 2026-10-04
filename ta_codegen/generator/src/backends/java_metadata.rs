@@ -380,12 +380,18 @@ fn output_type_enum() -> String {
 }
 
 /// A `public static final int` constant block with a doc comment each.
-fn flag_class(name: &str, doc: &str, consts: &[(&str, u32, &str)]) -> String {
+fn flag_class(name: &str, doc: &str, consts: &[(&str, u32, &str)], deprecated: &[(&str, &str)]) -> String {
     let mut s = header("MF,CC");
     let _ = write!(s, "/**\n * {doc}\n */\npublic final class {name} {{\n\n");
     let _ = write!(s, "   private {name}() {{ }}\n\n");
     for (cname, bits, cdoc) in consts {
         let _ = write!(s, "   /** {cdoc} */\n   public static final int {cname} = 0x{bits:08X};\n\n");
+    }
+    for (old, new) in deprecated {
+        let _ = write!(
+            s,
+            "   /** @deprecated Use {{@link #{new}}}. */\n   @Deprecated(forRemoval = true)\n   public static final int {old} = {new};\n\n"
+        );
     }
     s.push_str("}\n");
     s
@@ -425,6 +431,7 @@ fn func_flags_class() -> String {
                  output's display shift is 0.",
             ),
         ],
+        &[],
     )
 }
 
@@ -441,6 +448,7 @@ fn input_flags_class() -> String {
             ("PRICE_VOLUME", 0x0000_0010, "Volume."),
             ("PRICE_OPENINTEREST", 0x0000_0020, "Open interest."),
         ],
+        &[],
     )
 }
 
@@ -454,6 +462,7 @@ fn opt_input_flags_class() -> String {
             ("IS_CURRENCY", 0x0040_0000, "Expressed in currency."),
             ("ADVANCED", 0x0100_0000, "Advanced: hide from a basic UI."),
         ],
+        &[],
     )
 }
 
@@ -499,6 +508,7 @@ fn output_flags_class() -> String {
             ),
             ("PATTERN_WEAK", 0x0000_8000, "Adds level 80: a weaker form of the pattern, on the same bar."),
         ],
+        &[("PATTERN_STRENGTH", "PATTERN_CONFIRM")],
     )
 }
 

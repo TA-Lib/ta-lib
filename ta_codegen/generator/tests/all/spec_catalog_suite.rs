@@ -32,18 +32,26 @@ fn members(text: &str, open: &str, close: &str, what: &str) -> BTreeMap<String, 
     let at = text.find(open).unwrap_or_else(|| panic!("{what}: no `{open}`"));
     let body = &text[at + open.len()..];
     let body = &body[..body.find(close).unwrap_or_else(|| panic!("{what}: no `{close}` after `{open}`"))];
-    let mut out = BTreeMap::new();
-    for line in body.lines().map(str::trim).filter(|l| !l.starts_with(['/', '*'])) {
+    let (mut out, mut aliases) = (BTreeMap::new(), Vec::new());
+    for line in body.lines().map(str::trim).filter(|l| !l.starts_with(['/', '*', '@'])) {
         let Some((name, value)) = line.split_once(" = ") else { continue };
         let name = name.rsplit(' ').next().unwrap();
         // C#'s empty word, which the page states in prose rather than in a row.
         if name == "None" && value.trim_end_matches(',') == "0" {
             continue;
         }
+        let target = value.trim_end_matches([';', ',']);
+        if target.chars().all(|c| c.is_ascii_uppercase() || c == '_') {
+            aliases.push((name, target));
+            continue;
+        }
         let v = hex(value).unwrap_or_else(|| panic!("{what}: `{line}` is not `NAME = 0x...`"));
         out.insert(name.to_string(), v);
     }
     assert!(!out.is_empty(), "{what}: no member parsed");
+    for (name, target) in aliases {
+        assert!(out.contains_key(target), "{what}: `{name}` names `{target}`, which is not a member");
+    }
     out
 }
 
