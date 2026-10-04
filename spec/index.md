@@ -52,7 +52,7 @@ None of these is reported. The caller avoids them, or treats what follows as und
 * [Buffers that partially overlap](/spec/inputs-outputs/#no-overlap), in C.
 * [C used before `TA_Initialize`](/spec/settings-threads/#initialize) or after `TA_Shutdown`, or `TA_Initialize` called twice.
 * [A C setting changed](/spec/settings-threads/#idle-settings) while a TA function is running or a stream is open.
-* [Two threads on one stream handle](/spec/settings-threads/#one-writer), or on one parameter holder or builder (in Rust, the compiler rejects it).
+* [A writer and any other call at once on one stream handle](/spec/settings-threads/#one-writer), or two threads on one parameter holder or builder (in Rust, the compiler rejects it).
 * [C's unstable-period getter](/spec/settings-threads/#rt4) given a wildcard or unknown id: it returns 0.
 * [The state after an allocation failure](/spec/errors/#stop-on-alloc).
 
@@ -88,7 +88,7 @@ Every function has this surface; in Rust, Java and C# the calls are methods of a
 | integer output | `int[]` | `&mut [i32]` | `int[]` | `Span<int>` |
 | integer, real parameter | `int`, `double` | `i32`, `f64` | `int`, `double` | `int`, `double` |
 | MA-type parameter | `TA_MAType` | `MAType` | `MAType` | `MAType` |
-| absent ([rB4](/spec/errors/#rb4)) | `NULL` | not expressible | `null` | a `null` array becomes an empty span |
+| absent ([rB4](/spec/errors/#rb4)) | `NULL` | an empty slice | `null` or an empty array | an empty span, which a `null` array becomes |
 
 | Type | C | Rust | Java | C# |
 |---|---|---|---|---|

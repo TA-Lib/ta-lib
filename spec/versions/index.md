@@ -55,7 +55,7 @@ Everything else is written to give the same bits on every machine: each fused mu
 | a default sentinel and the explicit default | bit-identical | [rP3](/spec/inputs-outputs/#rp3) |
 | an output in place on its input, and in a separate buffer | bit-identical | [rW7](/spec/inputs-outputs/#rw7) |
 | a declinable output declined, and supplied | the other outputs bit-identical | [rW5](/spec/inputs-outputs/#rw5) |
-| a C `float` input, and the `double` call on its widened values | bit-identical | [rP4](/spec/inputs-outputs/#rp4) |
+| a `float` input, and the `double` call on its widened values | bit-identical | [rP4](/spec/inputs-outputs/#rp4) |
 | the same call on two machines | as [across machines](/spec/versions/#machines) describes | |
 | the same bar from batch calls with different `startIdx` | not bit-identical in general | [different starts](/spec/lookback/#start) |
 
@@ -69,6 +69,6 @@ Everything else is written to give the same bits on every machine: each fused mu
 | macOS | install name `libta-lib.N.dylib` | links and runs against a later one without rebuilding |
 | Windows | none: the DLL's name carries no N (`ta-lib.dll` under MSVC) | gets no signal at link or load time when N changes; rebuild against the headers of the DLL you ship |
 
-<a id="rv2"></a>**rV2** No enum member is renumbered, in any language. A retired member keeps its number under a reserved name (`TA_FUNC_UNST_UNUSED_1` and the like) instead of being deleted. `TA_AllCandleSettings` is pinned at 11 and `TA_FUNC_UNST_ALL` at 65535; neither tracks the number of members. A Rust, Java or C# enum may omit C members; each member it has carries C's number. Reading the number: for `RetCode`, see the [hub](/spec/#failures); for the other enums, Rust `as i32`, Java `value()` on `FuncUnstId` and `ordinal()` on `MAType`, `RangeType` and `CandleSettingType`, C# an `(int)` cast.
+<a id="rv2"></a>**rV2** No enum member is renumbered, in any language. `TA_AllCandleSettings` is pinned at 11 and `TA_FUNC_UNST_ALL` at 65535; neither tracks the number of members. A Rust, Java or C# enum may omit C members; each member it has carries C's number. Reading the number: for `RetCode`, see the [hub](/spec/#failures); for the other enums, Rust `as i32`, Java `value()` on `FuncUnstId` and `ordinal()` on `MAType`, `RangeType` and `CandleSettingType`, C# an `(int)` cast.
 
 <a id="rv3"></a>**rV3** A release may add functions, MA types, unstable-period ids, candle settings and return codes, and adding one starts no new N. `TA_MATYPE_MAX` and `TA_FUNC_UNST_COUNT` grow when a member is appended to their enum. Rust marks `RetCode`, `FuncUnstId`, `MAType`, `RangeType` and `CandleSettingType` `#[non_exhaustive]`, so a `match` on one needs a wildcard arm.

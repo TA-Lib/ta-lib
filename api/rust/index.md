@@ -154,11 +154,11 @@ Putting it together, the exact allocation for any TA function:
 let lookback = core.<name>_lookback(..)?;
 
 let temp = lookback.max(startIdx);
-let allocation_size = if temp > endIdx { 0 } else { endIdx - temp + 1 };
+let allocation_size = if temp > endIdx { 1 } else { endIdx - temp + 1 };
 let mut out = vec![0.0; allocation_size];
 ```
 
-Too little data is a success, not an error: a range that ends before the lookback simply produces no values, and the returned range is empty (`count == 0`).
+Too little data is a success, not an error: a range that ends before the lookback simply produces no values, and the returned range is empty (`count == 0`). The output still needs one element on such a call: an empty slice is refused as an absent argument.
 
 ### 3.3 Display Shift {#display_shift}
 
@@ -178,7 +178,7 @@ On success you get an [`OutRange`](https://docs.rs/ta-lib): `beg_idx` is the inp
 
 | Code | Meaning |
 |------|---------|
-| `RetCode::BadParam` | An optional parameter is outside its documented range, or a slice is too short: every input must cover `startIdx..=endIdx`, and every output must hold the number of values produced for that range. |
+| `RetCode::BadParam` | An optional parameter is outside its documented range, or a slice is too short or empty: every input must cover `startIdx..=endIdx`, and every output must hold the number of values produced for that range, and at least one. |
 | `RetCode::OutOfRangeStartIndex` | `startIdx` is above `Core::INDEX_MAX` (100,000,000). |
 | `RetCode::OutOfRangeEndIndex` | `endIdx` is above `Core::INDEX_MAX`, or below `startIdx`. |
 

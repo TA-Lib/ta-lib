@@ -33,7 +33,7 @@ The codes a batch, lookback or stream call can answer:
 | 17 | `TA_INSUFFICIENT_HISTORY` | Stream openers only ([rS8](/spec/streaming/#rs8)). A batch call never returns it. |
 | 5000 to 5999 | `TA_INTERNAL_ERROR` + id | [rB9](/spec/errors/#rb9). |
 
-`TA_RetCode` has further members, declared in `ta_defs.h`. Only `TA_Shutdown` and the abstraction layer return them.
+`TA_RetCode` has further members, declared in `ta_defs.h`. Only the abstraction layer returns them.
 
 ## General rules
 
@@ -52,20 +52,20 @@ A batch call accepts `0 <= startIdx <= endIdx <= TA_INDEX_MAX` ([`TA_INDEX_MAX`]
 | <a id="rb1"></a>**rB1** | `startIdx` is below 0 or above `TA_INDEX_MAX`. | `TA_OUT_OF_RANGE_START_INDEX` | Rust, below 0 (`usize`) |
 | <a id="rb2"></a>**rB2** | `endIdx` is below 0, above `TA_INDEX_MAX`, or below `startIdx`. | `TA_OUT_OF_RANGE_END_INDEX` | Rust, below 0 |
 | <a id="rb3"></a>**rB3** | An optional parameter is outside its accepted values, or the parameters form a combination the function rejects ([rP2](/spec/inputs-outputs/#rp2)). | `TA_BAD_PARAM` | none |
-| <a id="rb4"></a>**rB4** | A required argument is absent: an input, an output, or a range out-parameter. | `TA_BAD_PARAM` | Rust, C# |
+| <a id="rb4"></a>**rB4** | A required argument is absent: an input, an output, or in C a range out-parameter. | `TA_BAD_PARAM` | none |
 | <a id="rb5"></a>**rB5** | A buffer is too short: an input does not reach `endIdx` ([input length](/spec/inputs-outputs/#input-length)), or an output cannot hold the count the call produces ([output size](/spec/inputs-outputs/#output-size)). | `TA_BAD_PARAM` | none; C cannot detect it |
 | <a id="rb6"></a>**rB6** | Two outputs are the same buffer. | `TA_BAD_PARAM` | Rust (safe code) |
-| <a id="rb7"></a>**rB7** | An output is omitted that the function does not let a caller decline ([rW5](/spec/inputs-outputs/#rw5)). | `TA_BAD_PARAM` | Rust: cannot decline. C#: an empty span is a too-short output (rB5) |
+| <a id="rb7"></a>**rB7** | An output is omitted that the function does not let a caller decline ([rW5](/spec/inputs-outputs/#rw5)). | `TA_BAD_PARAM` | Rust: cannot decline |
 | <a id="rb8"></a>**rB8** | A memory allocation failed. | `TA_ALLOC_ERR` (C only) | none |
 | <a id="rb9"></a>**rB9** | The library found an inconsistency in its own state. | `TA_INTERNAL_ERROR` + id | none |
 
-**rB5.** An empty output is accepted on a range that produces no values ([rW2](/spec/inputs-outputs/#rw2)) and rejected on one that does.
+**rB4.** An input or output is absent when it is `NULL` in C, `null` or empty in Java, and empty in Rust and C#, where a `null` array becomes an empty span. It is refused whatever the call would produce, a range that produces no values ([rW2](/spec/inputs-outputs/#rw2)) included. The one exception is how C# declines an output ([rW5](/spec/inputs-outputs/#rw5)): with an empty span.
 
-**rB6.** Identity only: an input reused whole as an output is legal ([rW7](/spec/inputs-outputs/#rw7)), and partial overlap is the caller's to avoid ([no overlap](/spec/inputs-outputs/#no-overlap)). One buffer passed as two outputs is rejected whatever its length, a zero-length array included; two distinct empty outputs never collide. In .NET, `Array.Empty<T>()`, the collection expression `[]` assigned to an array, `ArrayPool<T>.Shared.Rent(0)` and the `ToArray()` of an empty sequence return one shared array, so using them for two outputs passes one buffer twice: allocate a distinct array per output (`new double[n]`), or pass `null` or `default` for an output that may be declined ([rW5](/spec/inputs-outputs/#rw5)).
+**rB6.** Identity only: an input reused whole as an output is legal ([rW7](/spec/inputs-outputs/#rw7)), and partial overlap is the caller's to avoid ([no overlap](/spec/inputs-outputs/#no-overlap)). One buffer passed as two outputs is rejected.
 
 **rB8.** Rust aborts the process, and Java and C# raise their runtime's out-of-memory error.
 
-**rB9.** A bug in TA-Lib, not in the call: report it, with the number in C. Rust, Java and C# report `TA_INTERNAL_ERROR` without an id.
+**rB9.** A bug in TA-Lib, not in the call: report it, with the number in C. C's `TA_SetRetCodeInfo` names every value from 5000 to 5999 `TA_INTERNAL_ERROR`, and a value that is not a `TA_RetCode` member `TA_UNKNOWN_ERR`. Rust, Java and C# report `TA_INTERNAL_ERROR` without an id.
 
 ## Abstraction layer {#abstraction-layer}
 
@@ -82,4 +82,4 @@ How the layer answers a misuse of its own surface (an unknown name, an unbound o
 | Lookback, display shift | [rL2](/spec/lookback/#rl2) rejection signal, [rL3](/spec/lookback/#rl3) agrees with batch, [rL11](/spec/lookback/#rl11) display shift |
 | Stream opening | [rS1](/spec/streaming/#rs1) empty history, [rS2](/spec/streaming/#rs2) too long, [rS3](/spec/streaming/#rs3) parameter, [rS4](/spec/streaming/#rs4) absent, [rS5](/spec/streaming/#rs5) length, [rS6](/spec/streaming/#rs6) one buffer twice, [rS7](/spec/streaming/#rs7) declined output, [rS8](/spec/streaming/#rs8) short history |
 | Stream advancing | [rU1](/spec/streaming/#ru1) absent handle, [rU2](/spec/streaming/#ru2) absent output, [rU3](/spec/streaming/#ru3) non-finite bar, [rU4](/spec/streaming/#ru4) index ceiling, [rU5](/spec/streaming/#ru5) declined output |
-| Settings | [rT2](/spec/settings-threads/#rt2) target, [rT3](/spec/settings-threads/#rt3) unstable period, [rT4](/spec/settings-threads/#rt4) reading, [rT5](/spec/settings-threads/#rt5) range type, [rT6](/spec/settings-threads/#rt6) average, [rT7](/spec/settings-threads/#rt7) NaN factor, [rT8](/spec/settings-threads/#rt8) no change on refusal |
+| Settings | [rT2](/spec/settings-threads/#rt2) target, [rT3](/spec/settings-threads/#rt3) unstable period, [rT4](/spec/settings-threads/#rt4) reading, [rT5](/spec/settings-threads/#rt5) range type, [rT6](/spec/settings-threads/#rt6) average, [rT7](/spec/settings-threads/#rt7) factor, [rT8](/spec/settings-threads/#rt8) no change on refusal |

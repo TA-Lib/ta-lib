@@ -18,7 +18,7 @@ previous `avgPeriod` bars, scaled by `factor`. For each setting type:
   range, or the mean of the upper and lower shadows.
 * **`avgPeriod`** — how many prior bars to average (`0` means "use only the current
   candle", no averaging).
-* **`factor`** — the multiplier applied to that average to form the threshold.
+* **`factor`** — the multiplier applied to that average to form the threshold: finite and not negative.
 
 ::: code-tabs#lang
 

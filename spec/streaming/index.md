@@ -18,7 +18,7 @@ Every function streams ([rH9](/spec/streaming/#rh9)): `Open` or `OpenAndFill` on
 * <a id="history"></a>**Open on at least `lookback + 1` finite bars.** A shorter, non-empty history answers `TA_INSUFFICIENT_HISTORY` ([rS8](/spec/streaming/#rs8)), the one recoverable code: send more bars rather than fix the call. A NaN or infinity inside the history is not detected ([finite inputs](/spec/inputs-outputs/#finite-inputs)).
 * <a id="rejected-bar"></a>**Answer every rejected bar.** A rejected `Update` changed nothing ([rH5](/spec/streaming/#rh5)), so the handle is now one bar behind the feed. Re-feed the bar with a corrected value, or count it with `Advance` ([rH6](/spec/streaming/#rh6)).
 * <a id="ownership"></a>**In C, close every handle exactly once.** `Open`, `OpenAndFill` and `Clone` each return a handle that `Close` frees. Never open or clone into a variable that holds a live handle: a failed call sets it to NULL. Rust drops a handle; Java and C# collect it.
-* <a id="checkpoint"></a>**Keep the bars to resume.** A handle is not serializable and is valid only within the library version that opened it. To restart, reopen on the bars.
+* <a id="checkpoint"></a>**Keep the bars to resume.** A handle is not serializable and is valid only within the library version that opened it. To restart, reopen on the bars, then call `Advance` once for each bar the old handle counted without being fed ([rH6](/spec/streaming/#rh6)).
 * **Give each handle one writer**: [threads](/spec/settings-threads/#one-writer). **In C, change no setting while a stream is open**: [settings](/spec/settings-threads/#idle-settings).
 
 ## Definition
@@ -36,15 +36,15 @@ For `Open` and `OpenAndFill`, the history is the first declared input and `histo
 | <a id="rs1"></a>**rS1** | The history is empty (`historyLen < 1`) | `TA_OUT_OF_RANGE_START_INDEX` | |
 | <a id="rs2"></a>**rS2** | The history holds more than `TA_INDEX_MAX + 1` bars | `TA_OUT_OF_RANGE_END_INDEX` | |
 | <a id="rs3"></a>**rS3** | An optional parameter is outside its accepted values, or the parameters form a combination the function rejects ([rP2](/spec/inputs-outputs/#rp2)) | `TA_BAD_PARAM` | |
-| <a id="rs4"></a>**rS4** | A required argument is absent: the handle out-parameter, an input, an output, or C's `outBegIdx` or `outNBElement` | `TA_BAD_PARAM` | Rust, C#: cannot be absent |
+| <a id="rs4"></a>**rS4** | A required argument is absent ([rB4](/spec/errors/#rb4)): an input, an output, or in C the handle out-parameter, `outBegIdx` or `outNBElement` | `TA_BAD_PARAM` | |
 | <a id="rs5"></a>**rS5** | An input's length differs from `historyLen`, or an `OpenAndFill` output holds fewer than `historyLen - lookback` values | `TA_BAD_PARAM` | C: cannot check ([input length](/spec/inputs-outputs/#input-length)) |
 | <a id="rs6"></a>**rS6** | `OpenAndFill`: an output is the buffer of an input or of another output | `TA_BAD_PARAM` | Rust: cannot alias |
-| <a id="rs7"></a>**rS7** | `OpenAndFill`: an output that is not declinable is declined ([rW5](/spec/inputs-outputs/#rw5)) | `TA_BAD_PARAM` | Rust: cannot decline. C#: an empty span is a too-short output (rS5) |
+| <a id="rs7"></a>**rS7** | `OpenAndFill`: an output that is not declinable is declined ([rW5](/spec/inputs-outputs/#rw5)) | `TA_BAD_PARAM` | Rust: cannot decline |
 | <a id="rs8"></a>**rS8** | The history holds at least one bar, but fewer than [lookback](/spec/lookback/#rl1) `+ 1` | `TA_INSUFFICIENT_HISTORY` | |
 
 A loop that waits for enough history starts at one bar: an empty history is rS1.
 
-<a id="rh3"></a>**rH3** `OpenAndFill` writes what `batch(0, historyLen - 1)` writes, compared as in [rH1](/spec/streaming/#rh1): `historyLen - lookback` values per output from index 0, the first for bar `lookback`, and the same range. It takes no `startIdx`.
+<a id="rh3"></a>**rH3** `OpenAndFill` writes what `batch(0, historyLen - 1)` writes, compared as in [rH1](/spec/streaming/#rh1): `historyLen - lookback` values per output from index 0, the first for bar `lookback`, and the same range. It takes no `startIdx`. The handle it returns then updates as the one `Open` returns on the same history.
 
 ## Advancing
 
@@ -60,12 +60,13 @@ A loop that waits for enough history starts at one bar: an empty history is rS1.
 
 * rU4 never clears: open a new handle on a shorter history. `Peek` counts no bar, so it keeps answering at the ceiling.
 * In C, a declination binds only its own call: the outputs an `Update` or `Peek` declines may differ from the opener's and from the previous call's.
+* An accepted bar whose output is not finite ([rW6](/spec/inputs-outputs/#rw6)) is a success: the call returns that value and the bar is counted.
 
 <a id="rh4"></a>**rH4** `Peek` never advances the stream and never changes the handle, whatever its outcome and however often it is called. Its value is bit-identical to what the next `Update` with the same bar returns.
 
 <a id="rh5"></a>**rH5** A rejected `Update` or `Peek` changes nothing: no state, no value, no range, no output variable written. A re-fed bar counts exactly once. An allocation failure ([rB8](/spec/errors/#rb8)) or an internal error ([rB9](/spec/errors/#rb9)) is outside this rule.
 
-<a id="rh6"></a>**rH6** `Advance` counts one bar the handle was not fed: the range grows by one, and that bar's output is the previous one, held. Later Updates compute over the bars fed, as if the counted bar did not exist; only the range includes it.
+<a id="rh6"></a>**rH6** `Advance` counts one bar the handle was not fed: the range grows by one, and that bar's output is the previous one, held. Later Updates compute over the bars fed, as if the counted bar did not exist; only the range includes it. An index output ([rW4](/spec/inputs-outputs/#rw4)) is a position among the bars fed: a bar fed after k `Advance` calls is named k below its place in `OutRange`.
 
 ## Accessors
 

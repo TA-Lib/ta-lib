@@ -128,7 +128,7 @@ int lookback = Core.DEFAULT.smaLookback(30);    // 29 for a 30-period SMA
 
 Each TA method has a matching `<name>Lookback` method, taking the same optional parameters as the method itself. The lookback is how many inputs are consumed before the first output.
 
-**Too little data is a success, not an error.** A valid range that ends before the lookback simply produces no values: `count()` is 0 and `isEmpty()` is true. No exception is thrown — this matches the C library's `TA_SUCCESS` with `outNBElement == 0`. Nothing is written, so the output array's length is not checked on such a call — it may even be zero-length. The input is still checked, though: an `endIdx` past the end of the series you passed is a mistake worth hearing about in any range, and an empty range would otherwise hide it behind a "no data yet" result.
+**Too little data is a success, not an error.** A valid range that ends before the lookback simply produces no values: `count()` is 0 and `isEmpty()` is true. No exception is thrown — this matches the C library's `TA_SUCCESS` with `outNBElement == 0`. Nothing is written, so the output array owes no length on such a call beyond one element: an empty array is refused like a `null` one. The input is still checked, though: an `endIdx` past the end of the series you passed is a mistake worth hearing about in any range, and an empty range would otherwise hide it behind a "no data yet" result.
 
 ### 3.3 Display Shift {#display_shift}
 
