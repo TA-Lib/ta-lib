@@ -1,8 +1,14 @@
 # Security Policy
 
 ## Reporting a Vulnerability
-Try to contact the devs privately first: https://ta-lib.org/about/
 
-Some can be reached by DM also on Discord: https://ta-lib.org/faq
+Report it privately through GitHub:
+[Report a vulnerability](https://github.com/TA-Lib/ta-lib/security/advisories/new).
+Only you and the TA-Lib maintainers can see the report, and the discussion and
+fix stay private until an advisory is published.
 
-Consider to contact TA-Lib org members at: https://github.com/TA-Lib
+Please do not open a public issue for a vulnerability.
+
+If you cannot use GitHub, message one of the maintainers listed at
+https://ta-lib.org/about/ privately, for example by
+[Discord](https://discord.gg/Erb6SwsVbH) DM.

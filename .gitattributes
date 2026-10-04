@@ -1,0 +1,7 @@
+# GitHub language stats and PR diffs: generated bindings are not counted and
+# collapse by default. The hand-written suites under output/ still count.
+ta_codegen/output/** linguist-generated
+ta_codegen/output/java/library/src/test/** -linguist-generated
+ta_codegen/output/csharp/library/test/** -linguist-generated
+ta_codegen/output/rust/library/tests/** -linguist-generated
+*.g.cs linguist-generated
