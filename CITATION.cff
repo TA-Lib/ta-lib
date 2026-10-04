@@ -1,0 +1,15 @@
+cff-version: 1.2.0
+message: "If you use TA-Lib in your work, please cite it as below."
+type: software
+title: "TA-Lib: Technical Analysis Library"
+authors:
+  - family-names: Fortier
+    given-names: Mario
+license: BSD-3-Clause
+url: "https://ta-lib.org"
+repository-code: "https://github.com/TA-Lib/ta-lib"
+keywords:
+  - technical analysis
+  - finance
+  - indicators
+  - candlestick patterns
