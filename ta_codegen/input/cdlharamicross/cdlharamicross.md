@@ -25,9 +25,9 @@ A two-candle reversal pattern: a long real body followed by a doji whose real bo
 | Value | Meaning |
 |-------|---------|
 | -100 | Bearish Harami Cross: a doji forms inside the prior long white candle — indecision after an advance, a sharper warning than a plain Harami |
-| -80 | Bearish Harami Cross, weaker variant: the doji's edge lines up exactly with one end of the long white candle |
+| -80 | Bearish Harami Cross, weaker variant: one or both of the doji's edges line up exactly with the ends of the long white candle's body |
 | 0 | No pattern |
-| 80 | Bullish Harami Cross, weaker variant: the doji's edge lines up exactly with one end of the long black candle |
+| 80 | Bullish Harami Cross, weaker variant: one or both of the doji's edges line up exactly with the ends of the long black candle's body |
 | 100 | Bullish Harami Cross: a doji forms inside the prior long black candle — indecision after a decline, a sharper warning than a plain Harami |
 
 ## Aliases

@@ -68,8 +68,6 @@ mod tests {
             "TA_FUNC_FLG_VOLUME" => "volume",
             "TA_FUNC_FLG_UNST_PER" => "unstable_period",
             "TA_FUNC_FLG_CANDLESTICK" => "candlestick",
-            // Landed on dev via #127 while this branch was in flight; the
-            // entry is inert until the merged header carries the constant.
             "TA_FUNC_FLG_PATH_DEP" => "path_dependent",
             "TA_FUNC_FLG_NAN_INF_OUT" => "nan_inf_output",
             "TA_FUNC_FLG_PERIOD1_IDENTITY" => "period1_identity",
@@ -84,7 +82,7 @@ mod tests {
             "TA_OUT_HISTO" => "histogram",
             "TA_OUT_PATTERN_BOOL" => "pattern_bool",
             "TA_OUT_PATTERN_BULL_BEAR" => "pattern_bull_bear",
-            "TA_OUT_PATTERN_STRENGTH" => "pattern_strength",
+            "TA_OUT_PATTERN_CONFIRM" => "pattern_confirm",
             "TA_OUT_POSITIVE" => "positive",
             "TA_OUT_NEGATIVE" => "negative",
             "TA_OUT_ZERO" => "zero",
@@ -92,16 +90,20 @@ mod tests {
             "TA_OUT_LOWER_LIMIT" => "lower_limit",
             "TA_OUT_NULLABLE" => "nullable",
             "TA_FUNC_FLG_DISPLAY_SHIFT" | "TA_OUT_DISPLAY_SHIFT" => "display_shift",
+            "TA_OUT_PATTERN_WEAK" => "pattern_weak",
             _ => return None,
         })
     }
 
     /// Parse `#define TA_<prefix>… 0x…` constants out of include/ta_abstract.h.
+    /// A define whose value is another `TA_<prefix>…` name is an alias: it adds
+    /// no flag, but its target must exist.
     fn header_flags(prefix: &str) -> BTreeMap<String, u32> {
         let header = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../include/ta_abstract.h");
         let text = std::fs::read_to_string(&header)
             .unwrap_or_else(|e| panic!("cannot read {}: {e}", header.display()));
         let mut out = BTreeMap::new();
+        let mut aliases = Vec::new();
         for line in text.lines() {
             let mut it = line.split_whitespace();
             if it.next() != Some("#define") {
@@ -117,6 +119,10 @@ mod tests {
             // multi-token expressions) fails LOUDLY — a silently skipped
             // define is exactly the coverage hole this gate exists to close.
             let bare = val.trim_start_matches('(').trim_end_matches(')');
+            if bare.starts_with(prefix) {
+                aliases.push((name.to_string(), bare.to_string()));
+                continue;
+            }
             let parsed = bare
                 .strip_prefix("0x")
                 .and_then(|hex| u32::from_str_radix(hex, 16).ok());
@@ -127,6 +133,9 @@ mod tests {
                 );
             };
             out.insert(name.to_string(), v);
+        }
+        for (name, target) in &aliases {
+            assert!(out.contains_key(target), "`{name}` aliases `{target}`, which the header does not define");
         }
         assert!(
             !out.is_empty(),

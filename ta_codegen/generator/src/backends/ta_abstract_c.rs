@@ -1401,7 +1401,7 @@ pub(crate) fn output_flag_to_c(flag: &str) -> Option<&'static str> {
         "histogram" => Some("TA_OUT_HISTO"),
         "pattern_bool" => Some("TA_OUT_PATTERN_BOOL"),
         "pattern_bull_bear" => Some("TA_OUT_PATTERN_BULL_BEAR"),
-        "pattern_strength" => Some("TA_OUT_PATTERN_STRENGTH"),
+        "pattern_confirm" => Some("TA_OUT_PATTERN_CONFIRM"),
         "positive" => Some("TA_OUT_POSITIVE"),
         "negative" => Some("TA_OUT_NEGATIVE"),
         "zero" => Some("TA_OUT_ZERO"),
@@ -1409,6 +1409,7 @@ pub(crate) fn output_flag_to_c(flag: &str) -> Option<&'static str> {
         "lower_limit" => Some("TA_OUT_LOWER_LIMIT"),
         "nullable" => Some("TA_OUT_NULLABLE"),
         "display_shift" => Some("TA_OUT_DISPLAY_SHIFT"),
+        "pattern_weak" => Some("TA_OUT_PATTERN_WEAK"),
         _ => None,
     }
 }

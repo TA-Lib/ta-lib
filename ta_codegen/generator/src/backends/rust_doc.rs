@@ -736,11 +736,10 @@ fn example_doctest(
 
 /// The claim a generated example makes about the values of one integer output.
 ///
-/// The domain is a property of the individual function, and the metadata does not
-/// carry it: all 69 integer outputs in the corpus declare the same `line` output
-/// flag, which says how to plot the values and nothing about what they are. So the
-/// four shapes are spelled out here — the same way [`unit_domain`] names the three
-/// functions whose example input has to live in `[-1, 1]`.
+/// A pattern output's values come from its flags. For any other integer output the
+/// metadata does not carry the domain, so those shapes are spelled out here — the
+/// same way [`unit_domain`] names the three functions whose example input has to
+/// live in `[-1, 1]`.
 ///
 /// An integer output with no entry here renders no claim, which is the gap #179
 /// E8 records — so `every_integer_output_carries_an_example_claim` sweeps the
@@ -754,6 +753,13 @@ fn integer_domain_claim(
     series: &str,
     period: Option<&str>,
 ) -> Vec<String> {
+    if let Some(values) = output.pattern_values(func.is_candlestick()) {
+        let list = values.iter().map(i32::to_string).collect::<Vec<_>>().join(", ");
+        return vec![
+            "// a pattern output writes only the values its flags declare".to_string(),
+            format!("assert!({var}[..out_range.count].iter().all(|v| [{list}].contains(v)));"),
+        ];
+    }
     match (func.name.to_uppercase().as_str(), output.name.as_str()) {
         ("MAXINDEX", _) | ("MINMAXINDEX", "outMaxIdx") => {
             window_extremum_claim(var, series, period, true)
@@ -784,14 +790,6 @@ fn integer_domain_claim(
         ("HT_TRENDMODE", _) => vec![
             "// the mode is a flag: 1 in a trend, 0 in a cycle".to_string(),
             format!("assert!({var}[..out_range.count].iter().all(|&v| v == 0 || v == 1));"),
-        ],
-        // Every candlestick pattern: 0, or +-80/+-100 for a pattern, or +-200 for
-        // one the next bar confirmed (CDLHIKKAKE, CDLHIKKAKEMOD). The bound is the
-        // one `TA_OUT_PATTERN_STRENGTH` already publishes to a metadata consumer.
-        _ if func.flags.iter().any(|f| f == "candlestick") => vec![
-            "// a candlestick pattern reports 0 where it does not fire, and a signed".to_string(),
-            "// strength -- negative bearish, positive bullish -- where it does".to_string(),
-            format!("assert!({var}[..out_range.count].iter().all(|&v| (-200..=200).contains(&v)));"),
         ],
         _ => Vec::new(),
     }

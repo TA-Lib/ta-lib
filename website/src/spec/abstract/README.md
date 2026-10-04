@@ -103,7 +103,7 @@ What a function or an output supports.
 | C | Rust | Java | C# | Meaning |
 |---|---|---|---|---|
 | `TA_FUNC_FLG_STREAM` | `FuncFlags::STREAM` | `FuncFlags.STREAMING` | `FuncFlags.Stream` | The function has a streaming API. Every function carries it ([rH9](/spec/streaming/#rh9)). |
-| `TA_FUNC_FLG_CANDLESTICK` | `FuncFlags::CANDLESTICK` | `FuncFlags.CANDLESTICK` | `FuncFlags.Candlestick` | A candlestick pattern function (`CDL*`): its lookback can depend on the candle settings ([rL7](/spec/lookback/#rl7)) and its output is an integer ([rW4](/spec/inputs-outputs/#rw4)). |
+| `TA_FUNC_FLG_CANDLESTICK` | `FuncFlags::CANDLESTICK` | `FuncFlags.CANDLESTICK` | `FuncFlags.Candlestick` | A candlestick pattern function (`CDL*`): its lookback can depend on the candle settings ([rL7](/spec/lookback/#rl7)) and every output is an integer pattern output ([rW8](/spec/inputs-outputs/#rw8)). |
 | `TA_OUT_NULLABLE` | `OutputFlags::NULLABLE` | `OutputFlags.NULLABLE` | `OutputFlags.Nullable` | The typed call lets the caller decline this output ([rW5](/spec/inputs-outputs/#rw5)). A holder still needs it bound ([bind all](/spec/abstract/#bind-all)). |
 
 ### Price components {#flags-price}
@@ -130,9 +130,13 @@ What can be said of the values a function writes.
 | `TA_FUNC_FLG_PATH_DEP` | `FuncFlags::PATH_DEPENDENT` | `FuncFlags.PATH_DEPENDENT` | `FuncFlags.PathDependent` | Path-dependent: the value at a bar depends on where the range starts, and never converges ([stability](/spec/lookback/#metadata)). |
 | `TA_FUNC_FLG_NAN_INF_OUT` | `FuncFlags::NAN_INF_OUTPUT` | `FuncFlags.NAN_INF_OUTPUT` | `FuncFlags.NanInfOutput` | A successful call can write NaN or ±Inf on ordinary finite input ([rW6](/spec/inputs-outputs/#rw6)). |
 | `TA_FUNC_FLG_PERIOD1_IDENTITY` | `FuncFlags::PERIOD1_IDENTITY` | `FuncFlags.PERIOD1_IDENTITY` | `FuncFlags.Period1Identity` | At a period of 1 every output value is a bit-for-bit copy of its input ([rL8](/spec/lookback/#rl8)). |
-| `TA_OUT_POSITIVE` | `OutputFlags::POSITIVE` | `OutputFlags.POSITIVE` | `OutputFlags.Positive` | The output can be positive. No function sets it. |
-| `TA_OUT_NEGATIVE` | `OutputFlags::NEGATIVE` | `OutputFlags.NEGATIVE` | `OutputFlags.Negative` | The output can be negative. No function sets it. |
-| `TA_OUT_ZERO` | `OutputFlags::ZERO` | `OutputFlags.ZERO` | `OutputFlags.Zero` | The output can be zero. No function sets it. |
+| `TA_OUT_POSITIVE` | `OutputFlags::POSITIVE` | `OutputFlags.POSITIVE` | `OutputFlags.Positive` | Positive values occur. An output setting any of the three sign flags sets every sign it writes ([rW8](/spec/inputs-outputs/#rw8)). |
+| `TA_OUT_NEGATIVE` | `OutputFlags::NEGATIVE` | `OutputFlags.NEGATIVE` | `OutputFlags.Negative` | Negative values occur ([rW8](/spec/inputs-outputs/#rw8)). |
+| `TA_OUT_ZERO` | `OutputFlags::ZERO` | `OutputFlags.ZERO` | `OutputFlags.Zero` | 0 occurs; on a pattern output, no pattern on that bar ([rW8](/spec/inputs-outputs/#rw8)). |
+| `TA_OUT_PATTERN_BOOL` | `OutputFlags::PATTERN_BOOL` | `OutputFlags.PATTERN_BOOL` | `OutputFlags.PatternBool` | A pattern output whose values are 0 and 100 ([rW8](/spec/inputs-outputs/#rw8)). |
+| `TA_OUT_PATTERN_BULL_BEAR` | `OutputFlags::PATTERN_BULL_BEAR` | `OutputFlags.PATTERN_BULL_BEAR` | `OutputFlags.PatternBullBear` | A pattern output whose sign is a call: + bullish, - bearish ([rW8](/spec/inputs-outputs/#rw8)). |
+| `TA_OUT_PATTERN_WEAK` | `OutputFlags::PATTERN_WEAK` | `OutputFlags.PATTERN_WEAK` | `OutputFlags.PatternWeak` | Adds level 80: a weaker form of the pattern, on the same bar ([rW8](/spec/inputs-outputs/#rw8)). |
+| `TA_OUT_PATTERN_CONFIRM` | `OutputFlags::PATTERN_CONFIRM` | `OutputFlags.PATTERN_CONFIRM` | `OutputFlags.PatternConfirm` | Adds level 200: this bar confirms the output's live pattern ([rW8](/spec/inputs-outputs/#rw8)). |
 
 ### Display hint {#flags-display}
 
@@ -151,9 +155,6 @@ How a chart or a settings dialog should present a function, an output or an opti
 | `TA_OUT_HISTO` | `OutputFlags::HISTO` | `OutputFlags.HISTOGRAM` | `OutputFlags.Histogram` | Draw as a histogram. |
 | `TA_OUT_UPPER_LIMIT` | `OutputFlags::UPPER_LIMIT` | `OutputFlags.UPPER_LIMIT` | `OutputFlags.UpperLimit` | The values are an upper limit, such as the upper line of a band. |
 | `TA_OUT_LOWER_LIMIT` | `OutputFlags::LOWER_LIMIT` | `OutputFlags.LOWER_LIMIT` | `OutputFlags.LowerLimit` | The values are a lower limit, such as the lower line of a band. |
-| `TA_OUT_PATTERN_BOOL` | `OutputFlags::PATTERN_BOOL` | `OutputFlags.PATTERN_BOOL` | `OutputFlags.PatternBool` | A value other than 0 means the pattern is present. No function sets it. |
-| `TA_OUT_PATTERN_BULL_BEAR` | `OutputFlags::PATTERN_BULL_BEAR` | `OutputFlags.PATTERN_BULL_BEAR` | `OutputFlags.PatternBullBear` | A positive value is bullish, a negative one bearish, 0 no pattern. No function sets it. |
-| `TA_OUT_PATTERN_STRENGTH` | `OutputFlags::PATTERN_STRENGTH` | `OutputFlags.PATTERN_STRENGTH` | `OutputFlags.PatternStrength` | 0 is neutral; up to 100 is getting bullish and above it bullish; down to -100 is getting bearish and below it bearish. No function sets it. |
 | `TA_OPTIN_IS_PERCENT` | `OptInputFlags::IS_PERCENT` | `OptInputFlags.IS_PERCENT` | `OptInputFlags.IsPercent` | The parameter is a percentage. |
 | `TA_OPTIN_IS_DEGREE` | `OptInputFlags::IS_DEGREE` | `OptInputFlags.IS_DEGREE` | `OptInputFlags.IsDegree` | The parameter is an angle in degrees. No function sets it. |
 | `TA_OPTIN_IS_CURRENCY` | `OptInputFlags::IS_CURRENCY` | `OptInputFlags.IS_CURRENCY` | `OptInputFlags.IsCurrency` | The parameter is a currency amount. No function sets it. |

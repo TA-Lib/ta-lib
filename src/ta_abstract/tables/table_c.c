@@ -64,6 +64,9 @@ DEF_FUNCTION( CCI,
 /* CCI END */
 
 /* CDL2CROWS BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDL2CROWS_Default =
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_CDL2CROWS_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OHLC,
@@ -72,7 +75,7 @@ static const TA_InputParameterInfo    *TA_CDL2CROWS_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CDL2CROWS_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Integer,
+  &TA_DEF_UI_Output_Integer_CDL2CROWS_Default,
   NULL
 };
 
@@ -87,6 +90,9 @@ DEF_FUNCTION( CDL2CROWS,
 /* CDL2CROWS END */
 
 /* CDL3BLACKCROWS BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDL3BLACKCROWS_Default =
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_CDL3BLACKCROWS_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OHLC,
@@ -95,7 +101,7 @@ static const TA_InputParameterInfo    *TA_CDL3BLACKCROWS_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CDL3BLACKCROWS_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Integer,
+  &TA_DEF_UI_Output_Integer_CDL3BLACKCROWS_Default,
   NULL
 };
 
@@ -110,6 +116,9 @@ DEF_FUNCTION( CDL3BLACKCROWS,
 /* CDL3BLACKCROWS END */
 
 /* CDL3INSIDE BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDL3INSIDE_Default =
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_CDL3INSIDE_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OHLC,
@@ -118,7 +127,7 @@ static const TA_InputParameterInfo    *TA_CDL3INSIDE_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CDL3INSIDE_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Integer,
+  &TA_DEF_UI_Output_Integer_CDL3INSIDE_Default,
   NULL
 };
 
@@ -133,6 +142,9 @@ DEF_FUNCTION( CDL3INSIDE,
 /* CDL3INSIDE END */
 
 /* CDL3LINESTRIKE BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDL3LINESTRIKE_Default =
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_CDL3LINESTRIKE_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OHLC,
@@ -141,7 +153,7 @@ static const TA_InputParameterInfo    *TA_CDL3LINESTRIKE_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CDL3LINESTRIKE_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Integer,
+  &TA_DEF_UI_Output_Integer_CDL3LINESTRIKE_Default,
   NULL
 };
 
@@ -156,6 +168,9 @@ DEF_FUNCTION( CDL3LINESTRIKE,
 /* CDL3LINESTRIKE END */
 
 /* CDL3OUTSIDE BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDL3OUTSIDE_Default =
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_CDL3OUTSIDE_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OHLC,
@@ -164,7 +179,7 @@ static const TA_InputParameterInfo    *TA_CDL3OUTSIDE_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CDL3OUTSIDE_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Integer,
+  &TA_DEF_UI_Output_Integer_CDL3OUTSIDE_Default,
   NULL
 };
 
@@ -179,6 +194,9 @@ DEF_FUNCTION( CDL3OUTSIDE,
 /* CDL3OUTSIDE END */
 
 /* CDL3STARSINSOUTH BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDL3STARSINSOUTH_Default =
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE };
+
 static const TA_InputParameterInfo    *TA_CDL3STARSINSOUTH_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OHLC,
@@ -187,7 +205,7 @@ static const TA_InputParameterInfo    *TA_CDL3STARSINSOUTH_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CDL3STARSINSOUTH_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Integer,
+  &TA_DEF_UI_Output_Integer_CDL3STARSINSOUTH_Default,
   NULL
 };
 
@@ -202,6 +220,9 @@ DEF_FUNCTION( CDL3STARSINSOUTH,
 /* CDL3STARSINSOUTH END */
 
 /* CDL3WHITESOLDIERS BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDL3WHITESOLDIERS_Default =
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE };
+
 static const TA_InputParameterInfo    *TA_CDL3WHITESOLDIERS_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OHLC,
@@ -210,7 +231,7 @@ static const TA_InputParameterInfo    *TA_CDL3WHITESOLDIERS_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CDL3WHITESOLDIERS_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Integer,
+  &TA_DEF_UI_Output_Integer_CDL3WHITESOLDIERS_Default,
   NULL
 };
 
@@ -225,6 +246,9 @@ DEF_FUNCTION( CDL3WHITESOLDIERS,
 /* CDL3WHITESOLDIERS END */
 
 /* CDLABANDONEDBABY BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLABANDONEDBABY_Default =
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_CDLABANDONEDBABY_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OHLC,
@@ -233,7 +257,7 @@ static const TA_InputParameterInfo    *TA_CDLABANDONEDBABY_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CDLABANDONEDBABY_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Integer,
+  &TA_DEF_UI_Output_Integer_CDLABANDONEDBABY_Default,
   NULL
 };
 
@@ -250,6 +274,9 @@ DEF_FUNCTION( CDLABANDONEDBABY,
 /* CDLABANDONEDBABY END */
 
 /* CDLADVANCEBLOCK BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLADVANCEBLOCK_Default =
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_CDLADVANCEBLOCK_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OHLC,
@@ -258,7 +285,7 @@ static const TA_InputParameterInfo    *TA_CDLADVANCEBLOCK_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CDLADVANCEBLOCK_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Integer,
+  &TA_DEF_UI_Output_Integer_CDLADVANCEBLOCK_Default,
   NULL
 };
 
@@ -273,6 +300,9 @@ DEF_FUNCTION( CDLADVANCEBLOCK,
 /* CDLADVANCEBLOCK END */
 
 /* CDLBELTHOLD BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLBELTHOLD_Default =
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_CDLBELTHOLD_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OHLC,
@@ -281,7 +311,7 @@ static const TA_InputParameterInfo    *TA_CDLBELTHOLD_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CDLBELTHOLD_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Integer,
+  &TA_DEF_UI_Output_Integer_CDLBELTHOLD_Default,
   NULL
 };
 
@@ -296,6 +326,9 @@ DEF_FUNCTION( CDLBELTHOLD,
 /* CDLBELTHOLD END */
 
 /* CDLBREAKAWAY BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLBREAKAWAY_Default =
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_CDLBREAKAWAY_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OHLC,
@@ -304,7 +337,7 @@ static const TA_InputParameterInfo    *TA_CDLBREAKAWAY_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CDLBREAKAWAY_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Integer,
+  &TA_DEF_UI_Output_Integer_CDLBREAKAWAY_Default,
   NULL
 };
 
@@ -319,6 +352,9 @@ DEF_FUNCTION( CDLBREAKAWAY,
 /* CDLBREAKAWAY END */
 
 /* CDLCLOSINGMARUBOZU BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLCLOSINGMARUBOZU_Default =
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_CDLCLOSINGMARUBOZU_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OHLC,
@@ -327,7 +363,7 @@ static const TA_InputParameterInfo    *TA_CDLCLOSINGMARUBOZU_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CDLCLOSINGMARUBOZU_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Integer,
+  &TA_DEF_UI_Output_Integer_CDLCLOSINGMARUBOZU_Default,
   NULL
 };
 
@@ -342,6 +378,9 @@ DEF_FUNCTION( CDLCLOSINGMARUBOZU,
 /* CDLCLOSINGMARUBOZU END */
 
 /* CDLCONCEALBABYSWALL BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLCONCEALBABYSWALL_Default =
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE };
+
 static const TA_InputParameterInfo    *TA_CDLCONCEALBABYSWALL_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OHLC,
@@ -350,7 +389,7 @@ static const TA_InputParameterInfo    *TA_CDLCONCEALBABYSWALL_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CDLCONCEALBABYSWALL_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Integer,
+  &TA_DEF_UI_Output_Integer_CDLCONCEALBABYSWALL_Default,
   NULL
 };
 
@@ -365,6 +404,9 @@ DEF_FUNCTION( CDLCONCEALBABYSWALL,
 /* CDLCONCEALBABYSWALL END */
 
 /* CDLCOUNTERATTACK BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLCOUNTERATTACK_Default =
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_CDLCOUNTERATTACK_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OHLC,
@@ -373,7 +415,7 @@ static const TA_InputParameterInfo    *TA_CDLCOUNTERATTACK_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CDLCOUNTERATTACK_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Integer,
+  &TA_DEF_UI_Output_Integer_CDLCOUNTERATTACK_Default,
   NULL
 };
 
@@ -388,6 +430,9 @@ DEF_FUNCTION( CDLCOUNTERATTACK,
 /* CDLCOUNTERATTACK END */
 
 /* CDLDARKCLOUDCOVER BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLDARKCLOUDCOVER_Default =
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_CDLDARKCLOUDCOVER_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OHLC,
@@ -396,7 +441,7 @@ static const TA_InputParameterInfo    *TA_CDLDARKCLOUDCOVER_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CDLDARKCLOUDCOVER_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Integer,
+  &TA_DEF_UI_Output_Integer_CDLDARKCLOUDCOVER_Default,
   NULL
 };
 
@@ -413,6 +458,9 @@ DEF_FUNCTION( CDLDARKCLOUDCOVER,
 /* CDLDARKCLOUDCOVER END */
 
 /* CDLDOJI BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLDOJI_Default =
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BOOL | TA_OUT_ZERO | TA_OUT_POSITIVE };
+
 static const TA_InputParameterInfo    *TA_CDLDOJI_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OHLC,
@@ -421,7 +469,7 @@ static const TA_InputParameterInfo    *TA_CDLDOJI_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CDLDOJI_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Integer,
+  &TA_DEF_UI_Output_Integer_CDLDOJI_Default,
   NULL
 };
 
@@ -436,6 +484,9 @@ DEF_FUNCTION( CDLDOJI,
 /* CDLDOJI END */
 
 /* CDLDOJISTAR BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLDOJISTAR_Default =
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_CDLDOJISTAR_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OHLC,
@@ -444,7 +495,7 @@ static const TA_InputParameterInfo    *TA_CDLDOJISTAR_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CDLDOJISTAR_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Integer,
+  &TA_DEF_UI_Output_Integer_CDLDOJISTAR_Default,
   NULL
 };
 
@@ -459,6 +510,9 @@ DEF_FUNCTION( CDLDOJISTAR,
 /* CDLDOJISTAR END */
 
 /* CDLDRAGONFLYDOJI BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLDRAGONFLYDOJI_Default =
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BOOL | TA_OUT_ZERO | TA_OUT_POSITIVE };
+
 static const TA_InputParameterInfo    *TA_CDLDRAGONFLYDOJI_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OHLC,
@@ -467,7 +521,7 @@ static const TA_InputParameterInfo    *TA_CDLDRAGONFLYDOJI_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CDLDRAGONFLYDOJI_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Integer,
+  &TA_DEF_UI_Output_Integer_CDLDRAGONFLYDOJI_Default,
   NULL
 };
 
@@ -482,6 +536,9 @@ DEF_FUNCTION( CDLDRAGONFLYDOJI,
 /* CDLDRAGONFLYDOJI END */
 
 /* CDLENGULFING BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLENGULFING_Default =
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE | TA_OUT_PATTERN_WEAK };
+
 static const TA_InputParameterInfo    *TA_CDLENGULFING_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OHLC,
@@ -490,7 +547,7 @@ static const TA_InputParameterInfo    *TA_CDLENGULFING_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CDLENGULFING_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Integer,
+  &TA_DEF_UI_Output_Integer_CDLENGULFING_Default,
   NULL
 };
 
@@ -505,6 +562,9 @@ DEF_FUNCTION( CDLENGULFING,
 /* CDLENGULFING END */
 
 /* CDLEVENINGDOJISTAR BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLEVENINGDOJISTAR_Default =
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_CDLEVENINGDOJISTAR_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OHLC,
@@ -513,7 +573,7 @@ static const TA_InputParameterInfo    *TA_CDLEVENINGDOJISTAR_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CDLEVENINGDOJISTAR_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Integer,
+  &TA_DEF_UI_Output_Integer_CDLEVENINGDOJISTAR_Default,
   NULL
 };
 
@@ -530,6 +590,9 @@ DEF_FUNCTION( CDLEVENINGDOJISTAR,
 /* CDLEVENINGDOJISTAR END */
 
 /* CDLEVENINGSTAR BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLEVENINGSTAR_Default =
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_CDLEVENINGSTAR_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OHLC,
@@ -538,7 +601,7 @@ static const TA_InputParameterInfo    *TA_CDLEVENINGSTAR_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CDLEVENINGSTAR_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Integer,
+  &TA_DEF_UI_Output_Integer_CDLEVENINGSTAR_Default,
   NULL
 };
 
@@ -555,6 +618,9 @@ DEF_FUNCTION( CDLEVENINGSTAR,
 /* CDLEVENINGSTAR END */
 
 /* CDLGAPSIDESIDEWHITE BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLGAPSIDESIDEWHITE_Default =
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_CDLGAPSIDESIDEWHITE_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OHLC,
@@ -563,7 +629,7 @@ static const TA_InputParameterInfo    *TA_CDLGAPSIDESIDEWHITE_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CDLGAPSIDESIDEWHITE_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Integer,
+  &TA_DEF_UI_Output_Integer_CDLGAPSIDESIDEWHITE_Default,
   NULL
 };
 
@@ -578,6 +644,9 @@ DEF_FUNCTION( CDLGAPSIDESIDEWHITE,
 /* CDLGAPSIDESIDEWHITE END */
 
 /* CDLGRAVESTONEDOJI BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLGRAVESTONEDOJI_Default =
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BOOL | TA_OUT_ZERO | TA_OUT_POSITIVE };
+
 static const TA_InputParameterInfo    *TA_CDLGRAVESTONEDOJI_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OHLC,
@@ -586,7 +655,7 @@ static const TA_InputParameterInfo    *TA_CDLGRAVESTONEDOJI_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CDLGRAVESTONEDOJI_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Integer,
+  &TA_DEF_UI_Output_Integer_CDLGRAVESTONEDOJI_Default,
   NULL
 };
 
@@ -601,6 +670,9 @@ DEF_FUNCTION( CDLGRAVESTONEDOJI,
 /* CDLGRAVESTONEDOJI END */
 
 /* CDLHAMMER BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLHAMMER_Default =
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE };
+
 static const TA_InputParameterInfo    *TA_CDLHAMMER_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OHLC,
@@ -609,7 +681,7 @@ static const TA_InputParameterInfo    *TA_CDLHAMMER_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CDLHAMMER_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Integer,
+  &TA_DEF_UI_Output_Integer_CDLHAMMER_Default,
   NULL
 };
 
@@ -624,6 +696,9 @@ DEF_FUNCTION( CDLHAMMER,
 /* CDLHAMMER END */
 
 /* CDLHANGINGMAN BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLHANGINGMAN_Default =
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_CDLHANGINGMAN_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OHLC,
@@ -632,7 +707,7 @@ static const TA_InputParameterInfo    *TA_CDLHANGINGMAN_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CDLHANGINGMAN_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Integer,
+  &TA_DEF_UI_Output_Integer_CDLHANGINGMAN_Default,
   NULL
 };
 
@@ -647,6 +722,9 @@ DEF_FUNCTION( CDLHANGINGMAN,
 /* CDLHANGINGMAN END */
 
 /* CDLHARAMI BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLHARAMI_Default =
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE | TA_OUT_PATTERN_WEAK };
+
 static const TA_InputParameterInfo    *TA_CDLHARAMI_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OHLC,
@@ -655,7 +733,7 @@ static const TA_InputParameterInfo    *TA_CDLHARAMI_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CDLHARAMI_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Integer,
+  &TA_DEF_UI_Output_Integer_CDLHARAMI_Default,
   NULL
 };
 
@@ -670,6 +748,9 @@ DEF_FUNCTION( CDLHARAMI,
 /* CDLHARAMI END */
 
 /* CDLHARAMICROSS BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLHARAMICROSS_Default =
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE | TA_OUT_PATTERN_WEAK };
+
 static const TA_InputParameterInfo    *TA_CDLHARAMICROSS_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OHLC,
@@ -678,7 +759,7 @@ static const TA_InputParameterInfo    *TA_CDLHARAMICROSS_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CDLHARAMICROSS_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Integer,
+  &TA_DEF_UI_Output_Integer_CDLHARAMICROSS_Default,
   NULL
 };
 
@@ -693,6 +774,9 @@ DEF_FUNCTION( CDLHARAMICROSS,
 /* CDLHARAMICROSS END */
 
 /* CDLHIGHWAVE BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLHIGHWAVE_Default =
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_CDLHIGHWAVE_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OHLC,
@@ -701,7 +785,7 @@ static const TA_InputParameterInfo    *TA_CDLHIGHWAVE_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CDLHIGHWAVE_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Integer,
+  &TA_DEF_UI_Output_Integer_CDLHIGHWAVE_Default,
   NULL
 };
 
@@ -716,6 +800,9 @@ DEF_FUNCTION( CDLHIGHWAVE,
 /* CDLHIGHWAVE END */
 
 /* CDLHIKKAKE BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLHIKKAKE_Default =
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE | TA_OUT_PATTERN_CONFIRM };
+
 static const TA_InputParameterInfo    *TA_CDLHIKKAKE_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OHLC,
@@ -724,7 +811,7 @@ static const TA_InputParameterInfo    *TA_CDLHIKKAKE_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CDLHIKKAKE_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Integer,
+  &TA_DEF_UI_Output_Integer_CDLHIKKAKE_Default,
   NULL
 };
 
@@ -739,6 +826,9 @@ DEF_FUNCTION( CDLHIKKAKE,
 /* CDLHIKKAKE END */
 
 /* CDLHIKKAKEMOD BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLHIKKAKEMOD_Default =
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE | TA_OUT_PATTERN_CONFIRM };
+
 static const TA_InputParameterInfo    *TA_CDLHIKKAKEMOD_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OHLC,
@@ -747,7 +837,7 @@ static const TA_InputParameterInfo    *TA_CDLHIKKAKEMOD_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CDLHIKKAKEMOD_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Integer,
+  &TA_DEF_UI_Output_Integer_CDLHIKKAKEMOD_Default,
   NULL
 };
 
@@ -762,6 +852,9 @@ DEF_FUNCTION( CDLHIKKAKEMOD,
 /* CDLHIKKAKEMOD END */
 
 /* CDLHOMINGPIGEON BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLHOMINGPIGEON_Default =
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE };
+
 static const TA_InputParameterInfo    *TA_CDLHOMINGPIGEON_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OHLC,
@@ -770,7 +863,7 @@ static const TA_InputParameterInfo    *TA_CDLHOMINGPIGEON_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CDLHOMINGPIGEON_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Integer,
+  &TA_DEF_UI_Output_Integer_CDLHOMINGPIGEON_Default,
   NULL
 };
 
@@ -785,6 +878,9 @@ DEF_FUNCTION( CDLHOMINGPIGEON,
 /* CDLHOMINGPIGEON END */
 
 /* CDLIDENTICAL3CROWS BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLIDENTICAL3CROWS_Default =
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_CDLIDENTICAL3CROWS_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OHLC,
@@ -793,7 +889,7 @@ static const TA_InputParameterInfo    *TA_CDLIDENTICAL3CROWS_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CDLIDENTICAL3CROWS_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Integer,
+  &TA_DEF_UI_Output_Integer_CDLIDENTICAL3CROWS_Default,
   NULL
 };
 
@@ -808,6 +904,9 @@ DEF_FUNCTION( CDLIDENTICAL3CROWS,
 /* CDLIDENTICAL3CROWS END */
 
 /* CDLINNECK BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLINNECK_Default =
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_CDLINNECK_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OHLC,
@@ -816,7 +915,7 @@ static const TA_InputParameterInfo    *TA_CDLINNECK_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CDLINNECK_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Integer,
+  &TA_DEF_UI_Output_Integer_CDLINNECK_Default,
   NULL
 };
 
@@ -831,6 +930,9 @@ DEF_FUNCTION( CDLINNECK,
 /* CDLINNECK END */
 
 /* CDLINVERTEDHAMMER BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLINVERTEDHAMMER_Default =
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE };
+
 static const TA_InputParameterInfo    *TA_CDLINVERTEDHAMMER_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OHLC,
@@ -839,7 +941,7 @@ static const TA_InputParameterInfo    *TA_CDLINVERTEDHAMMER_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CDLINVERTEDHAMMER_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Integer,
+  &TA_DEF_UI_Output_Integer_CDLINVERTEDHAMMER_Default,
   NULL
 };
 
@@ -854,6 +956,9 @@ DEF_FUNCTION( CDLINVERTEDHAMMER,
 /* CDLINVERTEDHAMMER END */
 
 /* CDLKICKING BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLKICKING_Default =
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_CDLKICKING_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OHLC,
@@ -862,7 +967,7 @@ static const TA_InputParameterInfo    *TA_CDLKICKING_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CDLKICKING_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Integer,
+  &TA_DEF_UI_Output_Integer_CDLKICKING_Default,
   NULL
 };
 
@@ -877,6 +982,9 @@ DEF_FUNCTION( CDLKICKING,
 /* CDLKICKING END */
 
 /* CDLKICKINGBYLENGTH BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLKICKINGBYLENGTH_Default =
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_CDLKICKINGBYLENGTH_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OHLC,
@@ -885,7 +993,7 @@ static const TA_InputParameterInfo    *TA_CDLKICKINGBYLENGTH_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CDLKICKINGBYLENGTH_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Integer,
+  &TA_DEF_UI_Output_Integer_CDLKICKINGBYLENGTH_Default,
   NULL
 };
 
@@ -900,6 +1008,9 @@ DEF_FUNCTION( CDLKICKINGBYLENGTH,
 /* CDLKICKINGBYLENGTH END */
 
 /* CDLLADDERBOTTOM BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLLADDERBOTTOM_Default =
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE };
+
 static const TA_InputParameterInfo    *TA_CDLLADDERBOTTOM_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OHLC,
@@ -908,7 +1019,7 @@ static const TA_InputParameterInfo    *TA_CDLLADDERBOTTOM_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CDLLADDERBOTTOM_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Integer,
+  &TA_DEF_UI_Output_Integer_CDLLADDERBOTTOM_Default,
   NULL
 };
 
@@ -923,6 +1034,9 @@ DEF_FUNCTION( CDLLADDERBOTTOM,
 /* CDLLADDERBOTTOM END */
 
 /* CDLLONGLEGGEDDOJI BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLLONGLEGGEDDOJI_Default =
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BOOL | TA_OUT_ZERO | TA_OUT_POSITIVE };
+
 static const TA_InputParameterInfo    *TA_CDLLONGLEGGEDDOJI_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OHLC,
@@ -931,7 +1045,7 @@ static const TA_InputParameterInfo    *TA_CDLLONGLEGGEDDOJI_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CDLLONGLEGGEDDOJI_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Integer,
+  &TA_DEF_UI_Output_Integer_CDLLONGLEGGEDDOJI_Default,
   NULL
 };
 
@@ -946,6 +1060,9 @@ DEF_FUNCTION( CDLLONGLEGGEDDOJI,
 /* CDLLONGLEGGEDDOJI END */
 
 /* CDLLONGLINE BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLLONGLINE_Default =
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_CDLLONGLINE_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OHLC,
@@ -954,7 +1071,7 @@ static const TA_InputParameterInfo    *TA_CDLLONGLINE_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CDLLONGLINE_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Integer,
+  &TA_DEF_UI_Output_Integer_CDLLONGLINE_Default,
   NULL
 };
 
@@ -969,6 +1086,9 @@ DEF_FUNCTION( CDLLONGLINE,
 /* CDLLONGLINE END */
 
 /* CDLMARUBOZU BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLMARUBOZU_Default =
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_CDLMARUBOZU_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OHLC,
@@ -977,7 +1097,7 @@ static const TA_InputParameterInfo    *TA_CDLMARUBOZU_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CDLMARUBOZU_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Integer,
+  &TA_DEF_UI_Output_Integer_CDLMARUBOZU_Default,
   NULL
 };
 
@@ -992,6 +1112,9 @@ DEF_FUNCTION( CDLMARUBOZU,
 /* CDLMARUBOZU END */
 
 /* CDLMATCHINGLOW BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLMATCHINGLOW_Default =
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE };
+
 static const TA_InputParameterInfo    *TA_CDLMATCHINGLOW_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OHLC,
@@ -1000,7 +1123,7 @@ static const TA_InputParameterInfo    *TA_CDLMATCHINGLOW_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CDLMATCHINGLOW_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Integer,
+  &TA_DEF_UI_Output_Integer_CDLMATCHINGLOW_Default,
   NULL
 };
 
@@ -1015,6 +1138,9 @@ DEF_FUNCTION( CDLMATCHINGLOW,
 /* CDLMATCHINGLOW END */
 
 /* CDLMATHOLD BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLMATHOLD_Default =
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE };
+
 static const TA_InputParameterInfo    *TA_CDLMATHOLD_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OHLC,
@@ -1023,7 +1149,7 @@ static const TA_InputParameterInfo    *TA_CDLMATHOLD_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CDLMATHOLD_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Integer,
+  &TA_DEF_UI_Output_Integer_CDLMATHOLD_Default,
   NULL
 };
 
@@ -1040,6 +1166,9 @@ DEF_FUNCTION( CDLMATHOLD,
 /* CDLMATHOLD END */
 
 /* CDLMORNINGDOJISTAR BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLMORNINGDOJISTAR_Default =
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE };
+
 static const TA_InputParameterInfo    *TA_CDLMORNINGDOJISTAR_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OHLC,
@@ -1048,7 +1177,7 @@ static const TA_InputParameterInfo    *TA_CDLMORNINGDOJISTAR_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CDLMORNINGDOJISTAR_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Integer,
+  &TA_DEF_UI_Output_Integer_CDLMORNINGDOJISTAR_Default,
   NULL
 };
 
@@ -1065,6 +1194,9 @@ DEF_FUNCTION( CDLMORNINGDOJISTAR,
 /* CDLMORNINGDOJISTAR END */
 
 /* CDLMORNINGSTAR BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLMORNINGSTAR_Default =
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE };
+
 static const TA_InputParameterInfo    *TA_CDLMORNINGSTAR_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OHLC,
@@ -1073,7 +1205,7 @@ static const TA_InputParameterInfo    *TA_CDLMORNINGSTAR_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CDLMORNINGSTAR_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Integer,
+  &TA_DEF_UI_Output_Integer_CDLMORNINGSTAR_Default,
   NULL
 };
 
@@ -1090,6 +1222,9 @@ DEF_FUNCTION( CDLMORNINGSTAR,
 /* CDLMORNINGSTAR END */
 
 /* CDLONNECK BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLONNECK_Default =
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_CDLONNECK_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OHLC,
@@ -1098,7 +1233,7 @@ static const TA_InputParameterInfo    *TA_CDLONNECK_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CDLONNECK_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Integer,
+  &TA_DEF_UI_Output_Integer_CDLONNECK_Default,
   NULL
 };
 
@@ -1113,6 +1248,9 @@ DEF_FUNCTION( CDLONNECK,
 /* CDLONNECK END */
 
 /* CDLPIERCING BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLPIERCING_Default =
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE };
+
 static const TA_InputParameterInfo    *TA_CDLPIERCING_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OHLC,
@@ -1121,7 +1259,7 @@ static const TA_InputParameterInfo    *TA_CDLPIERCING_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CDLPIERCING_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Integer,
+  &TA_DEF_UI_Output_Integer_CDLPIERCING_Default,
   NULL
 };
 
@@ -1136,6 +1274,9 @@ DEF_FUNCTION( CDLPIERCING,
 /* CDLPIERCING END */
 
 /* CDLRICKSHAWMAN BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLRICKSHAWMAN_Default =
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BOOL | TA_OUT_ZERO | TA_OUT_POSITIVE };
+
 static const TA_InputParameterInfo    *TA_CDLRICKSHAWMAN_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OHLC,
@@ -1144,7 +1285,7 @@ static const TA_InputParameterInfo    *TA_CDLRICKSHAWMAN_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CDLRICKSHAWMAN_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Integer,
+  &TA_DEF_UI_Output_Integer_CDLRICKSHAWMAN_Default,
   NULL
 };
 
@@ -1159,6 +1300,9 @@ DEF_FUNCTION( CDLRICKSHAWMAN,
 /* CDLRICKSHAWMAN END */
 
 /* CDLRISEFALL3METHODS BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLRISEFALL3METHODS_Default =
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_CDLRISEFALL3METHODS_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OHLC,
@@ -1167,7 +1311,7 @@ static const TA_InputParameterInfo    *TA_CDLRISEFALL3METHODS_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CDLRISEFALL3METHODS_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Integer,
+  &TA_DEF_UI_Output_Integer_CDLRISEFALL3METHODS_Default,
   NULL
 };
 
@@ -1182,6 +1326,9 @@ DEF_FUNCTION( CDLRISEFALL3METHODS,
 /* CDLRISEFALL3METHODS END */
 
 /* CDLSEPARATINGLINES BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLSEPARATINGLINES_Default =
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_CDLSEPARATINGLINES_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OHLC,
@@ -1190,7 +1337,7 @@ static const TA_InputParameterInfo    *TA_CDLSEPARATINGLINES_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CDLSEPARATINGLINES_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Integer,
+  &TA_DEF_UI_Output_Integer_CDLSEPARATINGLINES_Default,
   NULL
 };
 
@@ -1205,6 +1352,9 @@ DEF_FUNCTION( CDLSEPARATINGLINES,
 /* CDLSEPARATINGLINES END */
 
 /* CDLSHOOTINGSTAR BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLSHOOTINGSTAR_Default =
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_CDLSHOOTINGSTAR_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OHLC,
@@ -1213,7 +1363,7 @@ static const TA_InputParameterInfo    *TA_CDLSHOOTINGSTAR_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CDLSHOOTINGSTAR_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Integer,
+  &TA_DEF_UI_Output_Integer_CDLSHOOTINGSTAR_Default,
   NULL
 };
 
@@ -1228,6 +1378,9 @@ DEF_FUNCTION( CDLSHOOTINGSTAR,
 /* CDLSHOOTINGSTAR END */
 
 /* CDLSHORTLINE BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLSHORTLINE_Default =
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_CDLSHORTLINE_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OHLC,
@@ -1236,7 +1389,7 @@ static const TA_InputParameterInfo    *TA_CDLSHORTLINE_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CDLSHORTLINE_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Integer,
+  &TA_DEF_UI_Output_Integer_CDLSHORTLINE_Default,
   NULL
 };
 
@@ -1251,6 +1404,9 @@ DEF_FUNCTION( CDLSHORTLINE,
 /* CDLSHORTLINE END */
 
 /* CDLSPINNINGTOP BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLSPINNINGTOP_Default =
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_CDLSPINNINGTOP_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OHLC,
@@ -1259,7 +1415,7 @@ static const TA_InputParameterInfo    *TA_CDLSPINNINGTOP_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CDLSPINNINGTOP_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Integer,
+  &TA_DEF_UI_Output_Integer_CDLSPINNINGTOP_Default,
   NULL
 };
 
@@ -1274,6 +1430,9 @@ DEF_FUNCTION( CDLSPINNINGTOP,
 /* CDLSPINNINGTOP END */
 
 /* CDLSTALLEDPATTERN BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLSTALLEDPATTERN_Default =
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_CDLSTALLEDPATTERN_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OHLC,
@@ -1282,7 +1441,7 @@ static const TA_InputParameterInfo    *TA_CDLSTALLEDPATTERN_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CDLSTALLEDPATTERN_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Integer,
+  &TA_DEF_UI_Output_Integer_CDLSTALLEDPATTERN_Default,
   NULL
 };
 
@@ -1297,6 +1456,9 @@ DEF_FUNCTION( CDLSTALLEDPATTERN,
 /* CDLSTALLEDPATTERN END */
 
 /* CDLSTICKSANDWICH BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLSTICKSANDWICH_Default =
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE };
+
 static const TA_InputParameterInfo    *TA_CDLSTICKSANDWICH_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OHLC,
@@ -1305,7 +1467,7 @@ static const TA_InputParameterInfo    *TA_CDLSTICKSANDWICH_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CDLSTICKSANDWICH_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Integer,
+  &TA_DEF_UI_Output_Integer_CDLSTICKSANDWICH_Default,
   NULL
 };
 
@@ -1320,6 +1482,9 @@ DEF_FUNCTION( CDLSTICKSANDWICH,
 /* CDLSTICKSANDWICH END */
 
 /* CDLTAKURI BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLTAKURI_Default =
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BOOL | TA_OUT_ZERO | TA_OUT_POSITIVE };
+
 static const TA_InputParameterInfo    *TA_CDLTAKURI_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OHLC,
@@ -1328,7 +1493,7 @@ static const TA_InputParameterInfo    *TA_CDLTAKURI_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CDLTAKURI_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Integer,
+  &TA_DEF_UI_Output_Integer_CDLTAKURI_Default,
   NULL
 };
 
@@ -1343,6 +1508,9 @@ DEF_FUNCTION( CDLTAKURI,
 /* CDLTAKURI END */
 
 /* CDLTASUKIGAP BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLTASUKIGAP_Default =
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_CDLTASUKIGAP_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OHLC,
@@ -1351,7 +1519,7 @@ static const TA_InputParameterInfo    *TA_CDLTASUKIGAP_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CDLTASUKIGAP_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Integer,
+  &TA_DEF_UI_Output_Integer_CDLTASUKIGAP_Default,
   NULL
 };
 
@@ -1366,6 +1534,9 @@ DEF_FUNCTION( CDLTASUKIGAP,
 /* CDLTASUKIGAP END */
 
 /* CDLTHRUSTING BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLTHRUSTING_Default =
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_CDLTHRUSTING_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OHLC,
@@ -1374,7 +1545,7 @@ static const TA_InputParameterInfo    *TA_CDLTHRUSTING_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CDLTHRUSTING_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Integer,
+  &TA_DEF_UI_Output_Integer_CDLTHRUSTING_Default,
   NULL
 };
 
@@ -1389,6 +1560,9 @@ DEF_FUNCTION( CDLTHRUSTING,
 /* CDLTHRUSTING END */
 
 /* CDLTRISTAR BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLTRISTAR_Default =
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_CDLTRISTAR_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OHLC,
@@ -1397,7 +1571,7 @@ static const TA_InputParameterInfo    *TA_CDLTRISTAR_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CDLTRISTAR_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Integer,
+  &TA_DEF_UI_Output_Integer_CDLTRISTAR_Default,
   NULL
 };
 
@@ -1412,6 +1586,9 @@ DEF_FUNCTION( CDLTRISTAR,
 /* CDLTRISTAR END */
 
 /* CDLUNIQUE3RIVER BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLUNIQUE3RIVER_Default =
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE };
+
 static const TA_InputParameterInfo    *TA_CDLUNIQUE3RIVER_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OHLC,
@@ -1420,7 +1597,7 @@ static const TA_InputParameterInfo    *TA_CDLUNIQUE3RIVER_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CDLUNIQUE3RIVER_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Integer,
+  &TA_DEF_UI_Output_Integer_CDLUNIQUE3RIVER_Default,
   NULL
 };
 
@@ -1435,6 +1612,9 @@ DEF_FUNCTION( CDLUNIQUE3RIVER,
 /* CDLUNIQUE3RIVER END */
 
 /* CDLUPSIDEGAP2CROWS BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLUPSIDEGAP2CROWS_Default =
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_CDLUPSIDEGAP2CROWS_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OHLC,
@@ -1443,7 +1623,7 @@ static const TA_InputParameterInfo    *TA_CDLUPSIDEGAP2CROWS_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CDLUPSIDEGAP2CROWS_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Integer,
+  &TA_DEF_UI_Output_Integer_CDLUPSIDEGAP2CROWS_Default,
   NULL
 };
 
@@ -1458,6 +1638,9 @@ DEF_FUNCTION( CDLUPSIDEGAP2CROWS,
 /* CDLUPSIDEGAP2CROWS END */
 
 /* CDLXSIDEGAP3METHODS BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLXSIDEGAP3METHODS_Default =
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_CDLXSIDEGAP3METHODS_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OHLC,
@@ -1466,7 +1649,7 @@ static const TA_InputParameterInfo    *TA_CDLXSIDEGAP3METHODS_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CDLXSIDEGAP3METHODS_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Integer,
+  &TA_DEF_UI_Output_Integer_CDLXSIDEGAP3METHODS_Default,
   NULL
 };
 

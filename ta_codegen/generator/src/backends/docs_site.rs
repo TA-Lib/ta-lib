@@ -98,6 +98,7 @@ fn transform_page(
     let desc = extract_summary(body);
     let injected = inject_parameters(body, func, enums);
     let injected = mark_declinable_outputs(&injected, func);
+    let injected = link_output_values(&injected);
     let with_impl = inject_implementation(&injected, func, root);
     let with_flags = inject_flags(&with_impl, func, enums, stability);
     let linked = linkify_see_also(&with_flags, known);
@@ -157,6 +158,24 @@ fn mark_declinable_outputs(body: &str, func: &FuncDef) -> String {
         let sep = if base.ends_with('.') { " " } else { ". " };
         out[last] = format!("{base}{sep}May be declined ([rW5](/spec/inputs-outputs/#rw5)).");
     }
+    let mut s = out.join("\n");
+    if body.ends_with('\n') {
+        s.push('\n');
+    }
+    s
+}
+
+/// Point a pattern output's value table at the rule that reads it.
+fn link_output_values(body: &str) -> String {
+    let lines: Vec<&str> = body.lines().collect();
+    let Some((start, _)) = section_span(&lines, "## Output Values") else {
+        return body.to_string();
+    };
+    let mut out: Vec<String> = lines.iter().map(|l| (*l).to_string()).collect();
+    out.insert(
+        start + 1,
+        "\nHow to read these values from the output's flags: [rW8](/spec/inputs-outputs/#rw8).".to_string(),
+    );
     let mut s = out.join("\n");
     if body.ends_with('\n') {
         s.push('\n');
@@ -422,7 +441,7 @@ fn inject_flags(
         (
             "Candlestick",
             has("candlestick"),
-            "Output is an integer candlestick-pattern signal (e.g. -100 / 0 / +100).",
+            "A candlestick pattern; its values are listed under Output Values.",
         ),
         (
             "Can Output NaN or ±Inf",
@@ -645,6 +664,9 @@ pub fn validate_docs(funcs: &[FuncDef], root: &Path) -> Result<(), Vec<String>> 
         if let Err(e) = validate_outputs(&body, f) {
             errors.push(e);
         }
+        if let Err(e) = validate_output_values(&body, f) {
+            errors.push(e);
+        }
         if let Err(e) = validate_no_bare_urls(&body, f) {
             errors.push(e);
         }
@@ -850,6 +872,84 @@ fn validate_outputs(body: &str, func: &FuncDef) -> Result<(), String> {
              the two must agree in name and order",
             func.name
         ));
+    }
+    Ok(())
+}
+
+/// Check every pattern output's `## Output Values` table against the values its flags
+/// declare, both ways. A function with one pattern output has one table under the
+/// heading; one with several has a `### `outName`` table per output, in call order.
+fn validate_output_values(body: &str, func: &FuncDef) -> Result<(), String> {
+    let candlestick = func.is_candlestick();
+    let patterns: Vec<(&str, Vec<i32>)> = func
+        .outputs
+        .iter()
+        .filter_map(|o| o.pattern_values(candlestick).map(|v| (o.name.as_str(), v)))
+        .collect();
+    let page = format!("{}: {}.md", func.name, func.name.to_lowercase());
+    let lines: Vec<&str> = body.lines().collect();
+    let Some((start, end)) = section_span(&lines, "## Output Values") else {
+        return if patterns.is_empty() {
+            Ok(())
+        } else {
+            Err(format!("{page} has no `## Output Values` section, but has a pattern output"))
+        };
+    };
+    if patterns.is_empty() {
+        return Err(format!(
+            "{page} has `## Output Values`, but no output's flags make it a pattern output"
+        ));
+    }
+    let section = &lines[start + 1..end];
+    let mut blocks: Vec<(Option<String>, Vec<&str>)> = vec![(None, Vec::new())];
+    for line in section {
+        if let Some(h) = line.strip_prefix("### ") {
+            blocks.push((Some(h.trim().trim_matches('`').to_string()), Vec::new()));
+        } else {
+            blocks.last_mut().unwrap().1.push(line);
+        }
+    }
+    if patterns.len() == 1 {
+        if blocks.len() != 1 {
+            return Err(format!("{page}: one pattern output takes one table, with no `###` heading"));
+        }
+    } else {
+        let names: Vec<&str> = blocks[1..].iter().filter_map(|(h, _)| h.as_deref()).collect();
+        let expected: Vec<&str> = patterns.iter().map(|(n, _)| *n).collect();
+        if names != expected || blocks[0].1.iter().any(|l| l.starts_with('|')) {
+            return Err(format!(
+                "{page}: `## Output Values` needs one `### `outName`` table per pattern output, \
+                 in call order: {expected:?}, found {names:?}"
+            ));
+        }
+        blocks.remove(0);
+    }
+    for ((_, block), (out, declared)) in blocks.iter().zip(&patterns) {
+        let rows: Vec<&str> = block.iter().copied().filter(|l| l.starts_with('|')).collect();
+        let cell = |row: &str| row.trim_start_matches('|').split('|').next().unwrap_or("").trim().to_string();
+        if rows.len() < 2 || cell(rows[0]) != "Value" {
+            return Err(format!("{page}: `{out}`: the table needs a `| Value | Meaning |` header"));
+        }
+        let mut listed = Vec::new();
+        for row in &rows[2..] {
+            let c = cell(row);
+            let ok = !c.is_empty() && c.strip_prefix('-').unwrap_or(&c).bytes().all(|b| b.is_ascii_digit());
+            let Some(v) = c.parse::<i32>().ok().filter(|_| ok) else {
+                return Err(format!("{page}: `{out}`: `{c}` is not a plain integer value"));
+            };
+            if listed.contains(&v) {
+                return Err(format!("{page}: `{out}`: the value {v} is listed twice"));
+            }
+            listed.push(v);
+        }
+        let missing: Vec<i32> = declared.iter().copied().filter(|v| !listed.contains(v)).collect();
+        let extra: Vec<i32> = listed.iter().copied().filter(|v| !declared.contains(v)).collect();
+        if !missing.is_empty() || !extra.is_empty() {
+            return Err(format!(
+                "{page}: `{out}`: Output Values lists {listed:?}, but its flags declare {declared:?} \
+                 (missing {missing:?}, extra {extra:?})"
+            ));
+        }
     }
     Ok(())
 }
@@ -1370,6 +1470,83 @@ mod tests {
             })
             .collect();
         f
+    }
+
+    fn pattern_func(flags: &[&str], candlestick: bool, outputs: &[&str]) -> FuncDef {
+        let mut f = func("X", vec![]);
+        if candlestick {
+            f.flags.push("candlestick".to_string());
+        }
+        f.outputs = outputs
+            .iter()
+            .map(|n| Output {
+                name: (*n).to_string(),
+                param_type: ParamType::Integer,
+                flags: flags.iter().map(|s| (*s).to_string()).collect(),
+            })
+            .collect();
+        f
+    }
+
+    const VALUES_HEAD: &str = "## Output Values\n\n| Value | Meaning |\n|-------|---------|\n";
+
+    #[test]
+    fn output_values_matching_the_flags_are_accepted() {
+        let f = pattern_func(&["pattern_bull_bear", "zero", "positive", "negative", "pattern_weak"], true, &["outInteger"]);
+        let body = format!("{VALUES_HEAD}| -100 | a |\n| -80 | b |\n| 0 | c |\n| 80 | d |\n| 100 | e |\n");
+        assert_eq!(validate_output_values(&body, &f), Ok(()));
+    }
+
+    #[test]
+    fn output_values_missing_a_declared_value_are_rejected() {
+        let f = pattern_func(&["pattern_bull_bear", "zero", "positive", "negative", "pattern_weak"], true, &["outInteger"]);
+        let body = format!("{VALUES_HEAD}| -100 | a |\n| 0 | c |\n| 80 | d |\n| 100 | e |\n");
+        let err = validate_output_values(&body, &f).unwrap_err();
+        assert!(err.contains("missing [-80]"), "{err}");
+    }
+
+    #[test]
+    fn output_values_with_an_undeclared_value_are_rejected() {
+        let f = pattern_func(&["pattern_bool", "zero", "positive"], true, &["outInteger"]);
+        let body = format!("{VALUES_HEAD}| -100 | a |\n| 0 | b |\n| 100 | c |\n");
+        let err = validate_output_values(&body, &f).unwrap_err();
+        assert!(err.contains("extra [-100]"), "{err}");
+    }
+
+    #[test]
+    fn output_values_need_a_plain_integer() {
+        let f = pattern_func(&["pattern_bool", "zero", "positive"], true, &["outInteger"]);
+        let body = format!("{VALUES_HEAD}| 0 | a |\n| +100 | b |\n");
+        let err = validate_output_values(&body, &f).unwrap_err();
+        assert!(err.contains("not a plain integer"), "{err}");
+    }
+
+    /// Dropping `candlestick` from a color output leaves no pattern output, and the
+    /// table it still has is what catches that.
+    #[test]
+    fn output_values_without_a_pattern_output_are_rejected() {
+        let f = pattern_func(&["zero", "positive", "negative"], false, &["outInteger"]);
+        let body = format!("{VALUES_HEAD}| -100 | a |\n| 0 | b |\n| 100 | c |\n");
+        let err = validate_output_values(&body, &f).unwrap_err();
+        assert!(err.contains("no output's flags make it a pattern output"), "{err}");
+    }
+
+    #[test]
+    fn a_pattern_output_needs_output_values() {
+        let f = pattern_func(&["pattern_bool", "zero", "positive"], false, &["outInteger"]);
+        let err = validate_output_values("## Outputs\n", &f).unwrap_err();
+        assert!(err.contains("no `## Output Values` section"), "{err}");
+    }
+
+    #[test]
+    fn several_pattern_outputs_take_one_table_each_in_call_order() {
+        let f = pattern_func(&["pattern_bool", "zero", "positive"], false, &["outA", "outB"]);
+        let table = "| Value | Meaning |\n|-------|---------|\n| 0 | a |\n| 100 | b |\n";
+        let ok = format!("## Output Values\n\n### `outA`\n\n{table}\n### `outB`\n\n{table}");
+        assert_eq!(validate_output_values(&ok, &f), Ok(()));
+        let swapped = format!("## Output Values\n\n### `outB`\n\n{table}\n### `outA`\n\n{table}");
+        let err = validate_output_values(&swapped, &f).unwrap_err();
+        assert!(err.contains("in call order"), "{err}");
     }
 
     #[test]

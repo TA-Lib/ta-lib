@@ -26,6 +26,7 @@ mod open_core_suite;
 mod open_validation_suite;
 mod out_range_advance_suite;
 mod peek_suite;
+mod pattern_flags_suite;
 mod period1_suite;
 mod render_features_suite;
 mod ride_along_suite;

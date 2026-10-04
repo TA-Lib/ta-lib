@@ -36029,6 +36029,7 @@ public final class Core {
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  100204 AC   Creation
+ *  100426 MF,CC Fix the comment: the sign is the opposite of the long candle's color
  */
 
    /**
@@ -36135,7 +36136,7 @@ public final class Core {
        * - second candle: star (open gapping up in an uptrend or down in a downtrend) with a doji
        * The meaning of "doji" and "long" is specified with TA_SetCandleSettings
        * outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish;
-       * it's defined bullish when the long candle is white and the star gaps up, bearish when the long candle
+       * it's defined bearish when the long candle is white and the star gaps up, bullish when the long candle
        * is black and the star gaps down; the user should consider that a doji star is bullish when it appears
        * in an uptrend and it's bearish when it appears in a downtrend, so to determine the bullishness or
        * bearishness of the pattern the trend must be analyzed
@@ -36693,7 +36694,7 @@ public final class Core {
        * - second candle: star (open gapping up in an uptrend or down in a downtrend) with a doji
        * The meaning of "doji" and "long" is specified with TA_SetCandleSettings
        * outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish;
-       * it's defined bullish when the long candle is white and the star gaps up, bearish when the long candle
+       * it's defined bearish when the long candle is white and the star gaps up, bullish when the long candle
        * is black and the star gaps down; the user should consider that a doji star is bullish when it appears
        * in an uptrend and it's bearish when it appears in a downtrend, so to determine the bullishness or
        * bearishness of the pattern the trend must be analyzed

@@ -316,7 +316,7 @@ pub(crate) const OUTPUT_FLAGS: &[(&str, &str)] = &[
     ("histogram", "Histogram"),
     ("pattern_bool", "Pattern Bool"),
     ("pattern_bull_bear", "Pattern Bull Bear"),
-    ("pattern_strength", "Pattern Strength"),
+    ("pattern_confirm", "Pattern Confirm"),
     ("positive", "Positive"),
     ("negative", "Negative"),
     ("zero", "Zero"),
@@ -324,6 +324,7 @@ pub(crate) const OUTPUT_FLAGS: &[(&str, &str)] = &[
     ("lower_limit", "Lower Limit"),
     ("nullable", "Nullable"),
     ("display_shift", "Display Shift"),
+    ("pattern_weak", "Pattern Weak"),
 ];
 
 fn write_outputs(out: &mut String, func: &FuncDef) {

@@ -23,9 +23,9 @@ One candle where: upper shadow > real body AND lower shadow > real body AND real
 
 | Value | Meaning |
 |-------|---------|
-| -100 | Matching black spinning top (indecision; color only — not a bearish call) |
+| -100 | Black spinning top (close < open): indecision; the sign is the color only, not a bearish call |
 | 0 | No pattern |
-| 100 | Matching white spinning top (indecision; color only — not a bullish call) |
+| 100 | White spinning top (close >= open): indecision; the sign is the color only, not a bullish call |
 
 ## Aliases
 

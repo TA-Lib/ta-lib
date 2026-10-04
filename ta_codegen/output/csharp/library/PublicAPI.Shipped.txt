@@ -3078,7 +3078,6 @@ TALib.Metadata.OutputFlags.None = 0 -> TALib.Metadata.OutputFlags
 TALib.Metadata.OutputFlags.Nullable = 8192 -> TALib.Metadata.OutputFlags
 TALib.Metadata.OutputFlags.PatternBool = 32 -> TALib.Metadata.OutputFlags
 TALib.Metadata.OutputFlags.PatternBullBear = 64 -> TALib.Metadata.OutputFlags
-TALib.Metadata.OutputFlags.PatternStrength = 128 -> TALib.Metadata.OutputFlags
 TALib.Metadata.OutputFlags.Positive = 256 -> TALib.Metadata.OutputFlags
 TALib.Metadata.OutputFlags.UpperLimit = 2048 -> TALib.Metadata.OutputFlags
 TALib.Metadata.OutputFlags.Zero = 1024 -> TALib.Metadata.OutputFlags

@@ -376,16 +376,20 @@ const OUTPUT_FLAGS: &[(&str, &str, &str)] = &[
     ("dash_line", "DashLine", "Draw as a dashed line."),
     ("dot", "Dot", "Draw as unconnected dots."),
     ("histogram", "Histogram", "Draw as a histogram."),
-    ("pattern_bool", "PatternBool", "A value other than 0 means the pattern is present."),
-    ("pattern_bull_bear", "PatternBullBear", "Positive is bullish, negative bearish, 0 no pattern."),
+    ("pattern_bool", "PatternBool", "0 is no pattern, 100 a pattern; no other value."),
+    ("pattern_bull_bear", "PatternBullBear", "The sign is a call: positive bullish, negative bearish."),
     (
-        "pattern_strength",
-        "PatternStrength",
-        "0 is neutral; up to 100 getting bullish and above it bullish; down to -100 getting bearish and below it bearish.",
+        "pattern_confirm",
+        "PatternConfirm",
+        "Adds level 200: this bar confirms the output's most recent earlier pattern.",
     ),
-    ("positive", "Positive", "The output can be positive."),
-    ("negative", "Negative", "The output can be negative."),
-    ("zero", "Zero", "The output can be zero."),
+    ("positive", "Positive", "Positive values occur."),
+    ("negative", "Negative", "Negative values occur."),
+    (
+        "zero",
+        "Zero",
+        "Zero occurs; on a pattern output, no pattern on this bar. An output setting any of the three sign flags declares all its signs; one setting none declares nothing.",
+    ),
     ("upper_limit", "UpperLimit", "An upper band or limit line."),
     ("lower_limit", "LowerLimit", "A lower band or limit line."),
     (
@@ -398,6 +402,7 @@ const OUTPUT_FLAGS: &[(&str, &str, &str)] = &[
         "DisplayShift",
         "A chart draws it ahead of or behind the bar that computed it, by the bars the display-shift query reports. The values are never shifted.",
     ),
+    ("pattern_weak", "PatternWeak", "Adds level 80: a weaker form of the pattern, on the same bar."),
 ];
 
 /// The six OHLCV components, with the bit `price_bundle` assigns each.
@@ -545,7 +550,7 @@ fn vocabulary(rows: &[FuncRow]) -> String {
     flags_enum(
         &mut s,
         "OutputFlags",
-        "How an output is meant to be drawn, and whether it may be discarded. Values match C's <c>TA_OUT_*</c>.",
+        "How an output is meant to be drawn, whether it may be discarded, and what its values can be. Values match C's <c>TA_OUT_*</c>. A pattern output writes 0 or a sign times a level: the sign flags give its signs, the level flags its levels (100 always).",
         OUTPUT_FLAGS,
         output_flag_bits,
         c.output,

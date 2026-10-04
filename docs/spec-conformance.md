@@ -259,10 +259,14 @@ rP5: `validate_inputs`, `try_inject_parameters` and `validate_outputs`
 (`docs_site.rs`) fail `generate` when a function page's Inputs, Parameters or
 Outputs list differs from the call signature in name or order.
 
-rW4's candlestick values: `test_candle_value_set` (`test_candlestick.c`) holds
-every value a candlestick function writes on its series to the published set,
-and requires each non-zero member to occur and most functions to fire. A
-pattern too rare to fire there is held to nothing.
+rW8: `check_flags` (`parser/yaml.rs`) fails `generate` on a pattern output
+whose flags break its rules, and `validate_output_values` (`docs_site.rs`) on an
+Output Values table that differs from the values the flags declare.
+`test_candle_value_set` (`test_candlestick.c`) holds every value a candlestick
+function writes on its series to the values its output's flags declare, and a
+color output's sign to its candle's color. It requires each of +-80, +-100 and
++-200 to occur, a color output to fire, and most functions to fire. A pattern
+too rare to fire there is held to nothing.
 
 rE3 at a batch call: in C, `abstract_rejected_call_writes_nothing`
 (`test_abstract.c`) paints every output buffer, calls each parameter vector of

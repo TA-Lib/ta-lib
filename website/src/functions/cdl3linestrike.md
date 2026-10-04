@@ -25,6 +25,8 @@ A four-candle pattern: three same-color candles with consecutively higher (or lo
 
 ## Output Values
 
+How to read these values from the output's flags: [rW8](/spec/inputs-outputs/#rw8).
+
 | Value | Meaning |
 |-------|---------|
 | -100 | Bearish Three-Line Strike — three falling candles abruptly erased by one strong reversal bar; classically read as a bearish continuation despite the apparent reversal |
@@ -41,7 +43,7 @@ A four-candle pattern: three same-color candles with consecutively higher (or lo
 | :-- |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Overlap Input</span> |
 | <span class="flag-box">✅</span> **Independent Y-Axis** <span class="flag-tip" tabindex="0" role="note" aria-label="Output is on its own scale, drawn in a separate pane below the price chart." data-tip="Output is on its own scale, drawn in a separate pane below the price chart.">i</span> |
-| <span class="flag-box">✅</span> **Candlestick** <span class="flag-tip" tabindex="0" role="note" aria-label="Output is an integer candlestick-pattern signal (e.g. -100 / 0 / +100)." data-tip="Output is an integer candlestick-pattern signal (e.g. -100 / 0 / +100).">i</span> |
+| <span class="flag-box">✅</span> **Candlestick** <span class="flag-tip" tabindex="0" role="note" aria-label="A candlestick pattern; its values are listed under Output Values." data-tip="A candlestick pattern; its values are listed under Output Values.">i</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Can Output NaN or ±Inf</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Identity at Period 1</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Display Shift</span> |

@@ -848,7 +848,7 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000641)
          ));
    }
 
@@ -860,7 +860,7 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000641)
          ));
    }
 
@@ -872,7 +872,7 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000741)
          ));
    }
 
@@ -884,7 +884,7 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000741)
          ));
    }
 
@@ -896,7 +896,7 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000741)
          ));
    }
 
@@ -908,7 +908,7 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000541)
          ));
    }
 
@@ -920,7 +920,7 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000541)
          ));
    }
 
@@ -938,7 +938,7 @@ public final class Functions {
                0, 0, 0, 0, 0, null)
          ),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000741)
          ));
    }
 
@@ -950,7 +950,7 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000641)
          ));
    }
 
@@ -962,7 +962,7 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000741)
          ));
    }
 
@@ -974,7 +974,7 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000741)
          ));
    }
 
@@ -986,7 +986,7 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000741)
          ));
    }
 
@@ -998,7 +998,7 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000541)
          ));
    }
 
@@ -1010,7 +1010,7 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000741)
          ));
    }
 
@@ -1028,7 +1028,7 @@ public final class Functions {
                0, 0, 0, 0, 0, null)
          ),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000641)
          ));
    }
 
@@ -1040,7 +1040,7 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000521)
          ));
    }
 
@@ -1052,7 +1052,7 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000741)
          ));
    }
 
@@ -1064,7 +1064,7 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000521)
          ));
    }
 
@@ -1076,7 +1076,7 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00008741)
          ));
    }
 
@@ -1094,7 +1094,7 @@ public final class Functions {
                0, 0, 0, 0, 0, null)
          ),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000641)
          ));
    }
 
@@ -1112,7 +1112,7 @@ public final class Functions {
                0, 0, 0, 0, 0, null)
          ),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000641)
          ));
    }
 
@@ -1124,7 +1124,7 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000741)
          ));
    }
 
@@ -1136,7 +1136,7 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000521)
          ));
    }
 
@@ -1148,7 +1148,7 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000541)
          ));
    }
 
@@ -1160,7 +1160,7 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000641)
          ));
    }
 
@@ -1172,7 +1172,7 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00008741)
          ));
    }
 
@@ -1184,7 +1184,7 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00008741)
          ));
    }
 
@@ -1196,7 +1196,7 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000701)
          ));
    }
 
@@ -1208,7 +1208,7 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x000007C1)
          ));
    }
 
@@ -1220,7 +1220,7 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x000007C1)
          ));
    }
 
@@ -1232,7 +1232,7 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000541)
          ));
    }
 
@@ -1244,7 +1244,7 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000641)
          ));
    }
 
@@ -1256,7 +1256,7 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000641)
          ));
    }
 
@@ -1268,7 +1268,7 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000541)
          ));
    }
 
@@ -1280,7 +1280,7 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000741)
          ));
    }
 
@@ -1292,7 +1292,7 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000741)
          ));
    }
 
@@ -1304,7 +1304,7 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000541)
          ));
    }
 
@@ -1316,7 +1316,7 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000521)
          ));
    }
 
@@ -1328,7 +1328,7 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000741)
          ));
    }
 
@@ -1340,7 +1340,7 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000741)
          ));
    }
 
@@ -1352,7 +1352,7 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000541)
          ));
    }
 
@@ -1370,7 +1370,7 @@ public final class Functions {
                0, 0, 0, 0, 0, null)
          ),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000541)
          ));
    }
 
@@ -1388,7 +1388,7 @@ public final class Functions {
                0, 0, 0, 0, 0, null)
          ),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000541)
          ));
    }
 
@@ -1406,7 +1406,7 @@ public final class Functions {
                0, 0, 0, 0, 0, null)
          ),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000541)
          ));
    }
 
@@ -1418,7 +1418,7 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000641)
          ));
    }
 
@@ -1430,7 +1430,7 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000541)
          ));
    }
 
@@ -1442,7 +1442,7 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000521)
          ));
    }
 
@@ -1454,7 +1454,7 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000741)
          ));
    }
 
@@ -1466,7 +1466,7 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000741)
          ));
    }
 
@@ -1478,7 +1478,7 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000641)
          ));
    }
 
@@ -1490,7 +1490,7 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000701)
          ));
    }
 
@@ -1502,7 +1502,7 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000701)
          ));
    }
 
@@ -1514,7 +1514,7 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000641)
          ));
    }
 
@@ -1526,7 +1526,7 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000541)
          ));
    }
 
@@ -1538,7 +1538,7 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000521)
          ));
    }
 
@@ -1550,7 +1550,7 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000741)
          ));
    }
 
@@ -1562,7 +1562,7 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000641)
          ));
    }
 
@@ -1574,7 +1574,7 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000741)
          ));
    }
 
@@ -1586,7 +1586,7 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000541)
          ));
    }
 
@@ -1598,7 +1598,7 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000641)
          ));
    }
 
@@ -1610,7 +1610,7 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000741)
          ));
    }
 

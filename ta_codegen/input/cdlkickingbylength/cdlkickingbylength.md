@@ -19,9 +19,9 @@ A two-candle pattern of two opposite-color marubozu (long body, very short shado
 
 | Value | Meaning |
 |-------|---------|
-| -100 | Bearish Kicking by Length: the longer of the two marubozu closed black |
+| -100 | Bearish Kicking by Length: the longer of the two marubozu (the first, when both are as long) closed black |
 | 0 | No pattern |
-| 100 | Bullish Kicking by Length: the longer of the two marubozu closed white |
+| 100 | Bullish Kicking by Length: the longer of the two marubozu (the first, when both are as long) closed white |
 
 ## Aliases
 

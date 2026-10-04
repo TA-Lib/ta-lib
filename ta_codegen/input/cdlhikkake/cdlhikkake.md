@@ -23,11 +23,11 @@ A 3-bar pattern: an inside bar followed by a false breakout, optionally later co
 
 | Value | Meaning |
 |-------|---------|
-| -200 | Bearish Hikkake confirmed — price breaks down through the setup's low within 3 bars, validating the trap and the move lower |
+| -200 | Bearish Hikkake confirmed: within 3 bars, a close below the inside bar's low validates the trap and the move lower |
 | -100 | Bearish Hikkake — a false upside breakout from a tight, inside-bar range traps buyers before price turns back down |
-| 0 | No pattern, and no trap awaiting confirmation |
+| 0 | No pattern on this bar; a setup may still be awaiting confirmation |
 | 100 | Bullish Hikkake — a false downside breakout from a tight, inside-bar range traps sellers before price turns back up |
-| 200 | Bullish Hikkake confirmed — price breaks up through the setup's high within 3 bars, validating the trap and the move higher |
+| 200 | Bullish Hikkake confirmed: within 3 bars, a close above the inside bar's high validates the trap and the move higher |
 
 ## Aliases
 

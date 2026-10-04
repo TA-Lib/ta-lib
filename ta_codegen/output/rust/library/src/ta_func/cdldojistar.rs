@@ -52,6 +52,7 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  100204 AC   Creation
+ *  100426 MF,CC Fix the comment: the sign is the opposite of the long candle's color
  */
 
 // Import types from parent module
@@ -220,7 +221,7 @@ impl Core {
         // - second candle: star (open gapping up in an uptrend or down in a downtrend) with a doji
         // The meaning of "doji" and "long" is specified with TA_SetCandleSettings
         // outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish;
-        // it's defined bullish when the long candle is white and the star gaps up, bearish when the long candle
+        // it's defined bearish when the long candle is white and the star gaps up, bullish when the long candle
         // is black and the star gaps down; the user should consider that a doji star is bullish when it appears
         // in an uptrend and it's bearish when it appears in a downtrend, so to determine the bullishness or
         // bearishness of the pattern the trend must be analyzed
@@ -376,9 +377,8 @@ impl Core {
     /// let out_range = core.cdldojistar(0, open.len() - 1, &open, &high, &low, &close, &mut out)?;
     /// assert!(out_range.count > 0);
     /// assert_eq!(out_range.beg_idx + out_range.count, open.len());
-    /// // a candlestick pattern reports 0 where it does not fire, and a signed
-    /// // strength -- negative bearish, positive bullish -- where it does
-    /// assert!(out[..out_range.count].iter().all(|&v| (-200..=200).contains(&v)));
+    /// // a pattern output writes only the values its flags declare
+    /// assert!(out[..out_range.count].iter().all(|v| [-100, 0, 100].contains(v)));
     /// # Ok::<(), ta_lib::RetCode>(())
     /// ```
     ///
@@ -737,7 +737,7 @@ impl Core {
         // - second candle: star (open gapping up in an uptrend or down in a downtrend) with a doji
         // The meaning of "doji" and "long" is specified with TA_SetCandleSettings
         // outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish;
-        // it's defined bullish when the long candle is white and the star gaps up, bearish when the long candle
+        // it's defined bearish when the long candle is white and the star gaps up, bullish when the long candle
         // is black and the star gaps down; the user should consider that a doji star is bullish when it appears
         // in an uptrend and it's bearish when it appears in a downtrend, so to determine the bullishness or
         // bearishness of the pattern the trend must be analyzed

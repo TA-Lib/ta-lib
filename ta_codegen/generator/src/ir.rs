@@ -276,6 +276,11 @@ pub const DISPLAY_SHIFT_FLAG: &str = "display_shift";
 pub const DISPLAY_SHIFT_INDEX_PARAM: &str = "outputIdx";
 
 impl FuncDef {
+    #[must_use]
+    pub fn is_candlestick(&self) -> bool {
+        self.flags.iter().any(|f| f == "candlestick")
+    }
+
     /// Indices of the outputs a display-shift body must not be asked about:
     /// the unflagged ones, which answer 0 whatever the body says.
     pub fn unshifted_outputs(&self) -> Vec<usize> {
@@ -635,7 +640,69 @@ pub struct Output {
     pub flags: Vec<String>,
 }
 
+/// What the sign of a pattern output's value means (spec rW8).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PatternSign {
+    /// `pattern_bool`: nothing; the values are 0 and 100.
+    Presence,
+    /// `pattern_bull_bear`: + bullish, - bearish.
+    Call,
+    /// A candlestick output with all three sign flags and neither of the
+    /// above: the color of the bar the value is written on.
+    Color,
+}
+
 impl Output {
+    fn has_flag(&self, flag: &str) -> bool {
+        self.flags.iter().any(|f| f == flag)
+    }
+
+    /// `None` when this is not a pattern output. `candlestick` is the
+    /// function's own flag, the only context in which color exists.
+    #[must_use]
+    pub fn pattern_sign(&self, candlestick: bool) -> Option<PatternSign> {
+        if self.param_type != ParamType::Integer {
+            return None;
+        }
+        if self.has_flag("pattern_bool") {
+            Some(PatternSign::Presence)
+        } else if self.has_flag("pattern_bull_bear") {
+            Some(PatternSign::Call)
+        } else if candlestick && ["zero", "positive", "negative"].iter().all(|f| self.has_flag(f)) {
+            Some(PatternSign::Color)
+        } else {
+            None
+        }
+    }
+
+    /// Every value a pattern output writes, ascending; `None` when this is not
+    /// a pattern output.
+    #[must_use]
+    pub fn pattern_values(&self, candlestick: bool) -> Option<Vec<i32>> {
+        self.pattern_sign(candlestick)?;
+        let mut levels = vec![100];
+        if self.has_flag("pattern_weak") {
+            levels.push(80);
+        }
+        if self.has_flag("pattern_confirm") {
+            levels.push(200);
+        }
+        let mut values = Vec::new();
+        if self.has_flag("zero") {
+            values.push(0);
+        }
+        for level in levels {
+            if self.has_flag("positive") {
+                values.push(level);
+            }
+            if self.has_flag("negative") {
+                values.push(-level);
+            }
+        }
+        values.sort_unstable();
+        Some(values)
+    }
+
     /// A nullable output may be passed `NULL` (C) meaning "compute but don't
     /// write this output". Carried as the `nullable` flag so it surfaces through
     /// `ta_abstract` (`TA_OUT_NULLABLE`), where a binding/introspection consumer

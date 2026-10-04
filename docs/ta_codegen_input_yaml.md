@@ -152,7 +152,7 @@ Each backend renders enums appropriately:
 | `overlap` | Output overlaps the price chart (same scale) | `TA_FUNC_FLG_OVERLAP` |
 | `unstable_period` | Has an initial unstable calculation period | `TA_FUNC_FLG_UNST_PER` |
 | `volume` | Output is based on volume data | `TA_FUNC_FLG_VOLUME` |
-| `candlestick` | Output is a candlestick pattern signal | `TA_FUNC_FLG_CANDLESTICK` |
+| `candlestick` | A candlestick pattern function: every integer output is a pattern output (below) | `TA_FUNC_FLG_CANDLESTICK` |
 | `stream` | Generate the streaming API (Open/Update/Peek/…) | `TA_FUNC_FLG_STREAM` |
 | `path_dependent` | Absolute output depends on `startIdx` and never converges across ranges (a running accumulation seeded at the first bar, or a path-dependent state machine); the same bar computed from a different `startIdx` can differ | `TA_FUNC_FLG_PATH_DEP` |
 | `nan_inf_output` | Some inputs of ordinary magnitude have no finite result, so a successful call can write NaN or ±Inf | `TA_FUNC_FLG_NAN_INF_OUT` |
@@ -233,10 +233,7 @@ would have the metadata promise a call that returns `TA_BAD_PARAM`.
 | `currency` | Value is a currency amount | `TA_OPTIN_IS_CURRENCY` |
 | `advanced` | Rarely-changed parameter (hide in simple UIs) | `TA_OPTIN_ADVANCED` |
 
-An unrecognised flag string in any of the three lists is **dropped silently** —
-`deny_unknown_fields` guards field names, not list values, so a misspelling
-emits flags of 0 in all four backends and every gate that compares C against a
-server still passes, 0 against 0.
+An unrecognised flag string in any of the three lists fails `generate`.
 
 ### Output Flags
 
@@ -250,21 +247,37 @@ server still passes, 0 against 0.
 | `dot` | Individual dots | `TA_OUT_DOT` |
 | `histogram` | Bar chart / histogram | `TA_OUT_HISTO` |
 
-**Pattern hints** (for candlestick pattern outputs):
+**Values** (what the values mean: spec rule rW8, `website/src/spec/inputs-outputs/README.md`):
 
 | Flag | Description | C equivalent |
 |------|-------------|--------------|
-| `pattern_bool` | 0 = no pattern, != 0 = pattern exists | `TA_OUT_PATTERN_BOOL` |
-| `pattern_bull_bear` | >0 = bullish, <0 = bearish, 0 = none | `TA_OUT_PATTERN_BULL_BEAR` |
-| `pattern_strength` | 0 neutral; up to 100 getting bullish, above it bullish; down to -100 getting bearish, below it bearish | `TA_OUT_PATTERN_STRENGTH` |
+| `positive` | Positive values occur | `TA_OUT_POSITIVE` |
+| `negative` | Negative values occur | `TA_OUT_NEGATIVE` |
+| `zero` | 0 occurs | `TA_OUT_ZERO` |
+| `pattern_bool` | Pattern output, values 0 and 100 | `TA_OUT_PATTERN_BOOL` |
+| `pattern_bull_bear` | Pattern output whose sign is a call | `TA_OUT_PATTERN_BULL_BEAR` |
+| `pattern_weak` | Adds level 80 | `TA_OUT_PATTERN_WEAK` |
+| `pattern_confirm` | Adds level 200 | `TA_OUT_PATTERN_CONFIRM` |
+
+An output that sets any of `positive`, `negative`, `zero` lists every sign it
+writes. A pattern output takes one of three shapes, and `generate` rejects
+anything else:
+
+- `pattern_bool, zero, positive`;
+- `pattern_bull_bear, zero` and `positive`, `negative` or both;
+- on a `candlestick` function, `zero, positive, negative` with neither: the sign
+  is the candle's color.
+
+`pattern_weak` goes on a bull/bear or color output, `pattern_confirm` on a
+bull/bear output. Every integer output of a `candlestick` function is a pattern
+output, and only an integer output takes a pattern flag. A pattern output's
+`## Output Values` table lists exactly the values its flags declare
+(`docs/ta_codegen_input_doc.md`).
 
 **Value range hints**:
 
 | Flag | Description | C equivalent |
 |------|-------------|--------------|
-| `positive` | Output can be positive | `TA_OUT_POSITIVE` |
-| `negative` | Output can be negative | `TA_OUT_NEGATIVE` |
-| `zero` | Output can be zero | `TA_OUT_ZERO` |
 | `upper_limit` | Values are upper bounds (e.g., upper Bollinger Band) | `TA_OUT_UPPER_LIMIT` |
 | `lower_limit` | Values are lower bounds (e.g., lower Bollinger Band) | `TA_OUT_LOWER_LIMIT` |
 

@@ -181,7 +181,7 @@ public enum OptInputFlags : uint
     Advanced = 0x01000000,
 }
 
-/// <summary>How an output is meant to be drawn, and whether it may be discarded. Values match C's <c>TA_OUT_*</c>.</summary>
+/// <summary>How an output is meant to be drawn, whether it may be discarded, and what its values can be. Values match C's <c>TA_OUT_*</c>. A pattern output writes 0 or a sign times a level: the sign flags give its signs, the level flags its levels (100 always).</summary>
 [Flags]
 public enum OutputFlags : uint
 {
@@ -203,22 +203,22 @@ public enum OutputFlags : uint
     /// <summary>Draw as a histogram.</summary>
     Histogram = 0x00000010,
 
-    /// <summary>A value other than 0 means the pattern is present. No shipped function sets this bit.</summary>
+    /// <summary>0 is no pattern, 100 a pattern; no other value.</summary>
     PatternBool = 0x00000020,
 
-    /// <summary>Positive is bullish, negative bearish, 0 no pattern. No shipped function sets this bit.</summary>
+    /// <summary>The sign is a call: positive bullish, negative bearish.</summary>
     PatternBullBear = 0x00000040,
 
-    /// <summary>0 is neutral; up to 100 getting bullish and above it bullish; down to -100 getting bearish and below it bearish. No shipped function sets this bit.</summary>
-    PatternStrength = 0x00000080,
+    /// <summary>Adds level 200: this bar confirms the output's most recent earlier pattern.</summary>
+    PatternConfirm = 0x00000080,
 
-    /// <summary>The output can be positive. No shipped function sets this bit.</summary>
+    /// <summary>Positive values occur.</summary>
     Positive = 0x00000100,
 
-    /// <summary>The output can be negative. No shipped function sets this bit.</summary>
+    /// <summary>Negative values occur.</summary>
     Negative = 0x00000200,
 
-    /// <summary>The output can be zero. No shipped function sets this bit.</summary>
+    /// <summary>Zero occurs; on a pattern output, no pattern on this bar. An output setting any of the three sign flags declares all its signs; one setting none declares nothing.</summary>
     Zero = 0x00000400,
 
     /// <summary>An upper band or limit line.</summary>
@@ -232,6 +232,9 @@ public enum OutputFlags : uint
 
     /// <summary>A chart draws it ahead of or behind the bar that computed it, by the bars the display-shift query reports. The values are never shifted.</summary>
     DisplayShift = 0x00004000,
+
+    /// <summary>Adds level 80: a weaker form of the pattern, on the same bar.</summary>
+    PatternWeak = 0x00008000,
 }
 
 /// <summary>What a required input carries. Mirrors C's <c>TA_InputParameterType</c>.</summary>

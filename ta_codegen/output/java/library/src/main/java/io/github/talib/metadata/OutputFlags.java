@@ -39,7 +39,7 @@
 package io.github.talib.metadata;
 
 /**
- * How an output is meant to be drawn, and whether it may be omitted. Values match C's {@code TA_OUT_*}.
+ * How an output is meant to be drawn, whether it may be omitted, and what its values can be. Values match C's {@code TA_OUT_*}. A pattern output writes 0 or a sign times a level: the sign flags give its signs, the level flags its levels (100 always).
  */
 public final class OutputFlags {
 
@@ -60,22 +60,22 @@ public final class OutputFlags {
    /** Draw as a histogram. */
    public static final int HISTOGRAM = 0x00000010;
 
-   /** A value other than 0 means the pattern is present. */
+   /** 0 is no pattern, 100 a pattern; no other value. */
    public static final int PATTERN_BOOL = 0x00000020;
 
-   /** Positive is bullish, negative bearish, 0 no pattern. */
+   /** The sign is a call: positive bullish, negative bearish. */
    public static final int PATTERN_BULL_BEAR = 0x00000040;
 
-   /** 0 is neutral; up to 100 getting bullish and above it bullish; down to -100 getting bearish and below it bearish. */
-   public static final int PATTERN_STRENGTH = 0x00000080;
+   /** Adds level 200: this bar confirms the output's most recent earlier pattern. */
+   public static final int PATTERN_CONFIRM = 0x00000080;
 
-   /** The output can be positive. */
+   /** Positive values occur. */
    public static final int POSITIVE = 0x00000100;
 
-   /** The output can be negative. */
+   /** Negative values occur. */
    public static final int NEGATIVE = 0x00000200;
 
-   /** The output can be zero. */
+   /** Zero occurs; on a pattern output, no pattern on this bar. An output setting any of the three sign flags declares all its signs; one setting none declares nothing. */
    public static final int ZERO = 0x00000400;
 
    /** An upper band/limit line. */
@@ -89,5 +89,8 @@ public final class OutputFlags {
 
    /** A chart draws it ahead of or behind the bar that computed it, by the bars {@code ParamHolder.displayShift} reports. The values are never shifted. */
    public static final int DISPLAY_SHIFT = 0x00004000;
+
+   /** Adds level 80: a weaker form of the pattern, on the same bar. */
+   public static final int PATTERN_WEAK = 0x00008000;
 
 }

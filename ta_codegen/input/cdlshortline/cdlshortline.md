@@ -27,9 +27,9 @@ If matched: output = candle color * 100 (+100 white, -100 black); else 0.
 
 | Value | Meaning |
 |-------|---------|
-| -100 | Matching black short-line candle (color only — not a bearish call) |
+| -100 | Black short-line candle (close < open); the sign is the color only, not a bearish call |
 | 0 | No pattern |
-| 100 | Matching white short-line candle (color only — not a bullish call) |
+| 100 | White short-line candle (close >= open); the sign is the color only, not a bullish call |
 
 ## Aliases
 

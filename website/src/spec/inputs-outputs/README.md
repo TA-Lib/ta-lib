@@ -1,6 +1,6 @@
 ---
 title: Batch Inputs and Outputs
-description: "What a TA-Lib call takes and what a successful call writes: what the caller must pass, index range, optional parameters, output range and size, argument order, integer and declinable outputs, and computing in place."
+description: "What a TA-Lib call takes and what a successful call writes: what the caller must pass, index range, optional parameters, output range and size, argument order, integer, declinable and pattern outputs, and computing in place."
 ---
 
 *Part of TA-Lib's [specification](/spec/), a reference for AI-agent-driven integration.*
@@ -42,7 +42,7 @@ An MA-type parameter accepts every `MAType` member, and a release may add member
 
 <a id="rw4"></a>**rW4** What an integer output holds:
 
-- **Candlestick patterns** (`CDL*`): every value is one of 0, ±80, ±100 and ±200, and 0 means no pattern on that bar. The sign is the pattern's direction (+ bullish, - bearish) or, for some, only the candle's color (+ white, - black). Which values a pattern emits, and what each means, is in the Output Values table on its function page.
+- **Pattern outputs** (every `CDL*` output): [rW8](/spec/inputs-outputs/#rw8).
 - **Index outputs** ([MININDEX](/functions/minindex), [MAXINDEX](/functions/maxindex), [MINMAXINDEX](/functions/minmaxindex)): the position of a bar in the input passed, not relative to `startIdx` or `begIdx`. Which of several tied bars it names is unspecified.
 - **Other integer outputs** (for example [HT_TRENDMODE](/functions/ht_trendmode)): as their function page says.
 
@@ -58,3 +58,17 @@ An MA-type parameter accepts every `MAType` member, and a release may add member
 |---|---|---|---|---|
 | "The same buffer" means | the same pointer | not expressible in safe code | the same array | equal spans: same start and length; at `OpenAndFill`, the same start; a null array is no buffer |
 | Output on an input | allowed | not expressible | allowed | allowed |
+
+## Pattern outputs {#patterns}
+
+<a id="rw8"></a>**rW8** A pattern output writes 0 or a sign times a level. Its [metadata flags](/spec/abstract/#flags) say which values it writes and what they mean, and the Output Values table on its function page says what each value means for that pattern.
+
+- **The values.** `TA_OUT_POSITIVE`, `TA_OUT_NEGATIVE` and `TA_OUT_ZERO` are the signs that occur: an output setting any of them sets every sign it writes, and one setting none declares nothing. The levels are 100, plus 80 with `TA_OUT_PATTERN_WEAK` and 200 with `TA_OUT_PATTERN_CONFIRM`. The output writes every declared sign times every level, 0 when `TA_OUT_ZERO` is set, and nothing else. 0 means no pattern on that bar.
+- **The sign.**
+  - With `TA_OUT_PATTERN_BOOL` it means nothing, and the values are 0 and 100.
+  - With `TA_OUT_PATTERN_BULL_BEAR` it is the pattern's call: + bullish, - bearish. No function checks the trend a pattern's definition presumes.
+  - With neither, on an integer output of a `TA_FUNC_FLG_CANDLESTICK` function that sets all three sign flags, it is the color of the input bar at the value's own index: + when close >= open, - otherwise. A display shift does not move that bar.
+  - Any other output is not a pattern output.
+- **The level.** 100 is the pattern, found on this bar, and 80 a weaker form of it. 200 confirms the output's live pattern: its most recent earlier value of level 100 or 80, which has the same sign. A value of level 100 or 80 ends any earlier live pattern. The confirmed value can lie before the first value the caller received: before `begIdx`, or in the history a stream opened on. A peek value is never one.
+- **Counting.** The patterns found are the values of level 100 or 80; the confirmations are those of level 200.
+- **A flag a program does not know.** A later release may add flags. On a pattern output carrying one, the values listed above may not be all, and the sign keeps its meaning.

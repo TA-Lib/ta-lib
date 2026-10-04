@@ -27,9 +27,9 @@ One candle at index i. Hit when all hold: (1) short real body: real body < the B
 
 | Value | Meaning |
 |-------|---------|
-| -100 | High-Wave candle (black) — sharp indecision after a volatile session; sign marks the candle's color only, not a bullish/bearish call |
+| -100 | High-Wave candle, black (close < open): sharp indecision after a volatile session; the sign marks the candle's color only, not a bullish/bearish call |
 | 0 | No pattern |
-| 100 | High-Wave candle (white) — sharp indecision after a volatile session; sign marks the candle's color only, not a bullish/bearish call |
+| 100 | High-Wave candle, white (close >= open): sharp indecision after a volatile session; the sign marks the candle's color only, not a bullish/bearish call |
 
 ## Aliases
 

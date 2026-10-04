@@ -48,9 +48,11 @@ no doc edit at all** — the render just picks up the new number.
 name and order, so a parameter renamed on one side only cannot ship. Nothing checks a prose
 number against the YAML, and that check cannot be a blanket "no digits in a structured
 section" rule — roughly 80 bullets carry legitimate
-non-YAML numbers (the `CDL*` ±100 sign convention, output domains like WILLR's −100…0,
+non-YAML numbers (output domains like WILLR's −100…0,
 MACDFIX's hard-coded 12/26 constants that live in `macdfix.c`). It has to compare a number
-against the specific YAML field it names.
+against the specific YAML field it names. The one exception is a pattern output's
+`## Output Values` value column, which `generate` checks against the values the output's
+flags declare.
 
 ## File format
 
@@ -68,7 +70,8 @@ Numbers/ranges/defaults are **injected from YAML** at render — never restate t
 | `## Formula` | optional | A **brief, high-level** formula, only when the computation is expressible concisely. Omit for long detection lists (`CDL*`) or long DSP computations (`HT_*`) — that detail lives behind the Implementation source link. **Renders on ta-lib.org only**; the API doc targets link to that page in its place, so the formula may grow notation the four doc renderers could never agree on. |
 | `## Notes` | optional | Bullet list of ONLY variations / specification differences from the original indicator (e.g. rounding disabled, a pattern that does not verify the prior trend it classically assumes). **No** implementation mechanics or internal identifiers — those live behind the source link. **No** survey of how other libraries compute it: that is research for the spec issue, and it goes stale with their releases. **No TeX**: javadoc and the C# XML doc render markup, not notation, so a bullet carrying `$…$` or a `\command` is dropped from those two targets (per bullet — the others still ship). Notation goes in `## Formula`. |
 | `## Inputs` | yes | One short line per **input name**, matching the call signature in name and order (arity/type come from YAML). A `type: price` bundle is documented as its **components** (`inHigh`, `inLow`, `inClose`) — the bundle name is an `ta_abstract` descriptor, never a parameter. Enforced by `docs_site::validate_inputs`. |
-| `## Outputs` | yes | One short line per **output name**; for `CDL*` state the actual sign(s) emitted (+100 / −100 / 0). |
+| `## Outputs` | yes | One short line per **output name**. |
+| `## Output Values` | if a pattern output | A `\| Value \| Meaning \|` table, one row per value the output's flags declare (plain integers, each once), and no other. A function with several pattern outputs gives each its own table under a `###` heading naming the output, in call order. The website links it to spec rule rW8. Enforced by `docs_site::validate_output_values`. |
 | `## Parameters` | if `optional_inputs` | Meaning per optional-input **name** (range / default / `suggested` come from YAML). |
 | `## Implementation` | never | Generated on the website page; see below. `generate` rejects an authored one. |
 | `## Aliases` | optional | Abbreviation expansions / alternative names for SEO, comma-separated. Drop any alias that merely repeats the function name — omit the whole section when nothing else qualifies (e.g. AROON, FLOOR). Feeds rustdoc `#[doc(alias)]` / site search. |

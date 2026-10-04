@@ -554,7 +554,7 @@ pub fn output_flag_bits(flags: &[String]) -> u32 {
             "histogram" => b |= 0x0000_0010,
             "pattern_bool" => b |= 0x0000_0020,
             "pattern_bull_bear" => b |= 0x0000_0040,
-            "pattern_strength" => b |= 0x0000_0080,
+            "pattern_confirm" => b |= 0x0000_0080,
             "positive" => b |= 0x0000_0100,
             "negative" => b |= 0x0000_0200,
             "zero" => b |= 0x0000_0400,
@@ -562,6 +562,7 @@ pub fn output_flag_bits(flags: &[String]) -> u32 {
             "lower_limit" => b |= 0x0000_1000,
             "nullable" => b |= OUT_NULLABLE,
             "display_shift" => b |= 0x0000_4000, // TA_OUT_DISPLAY_SHIFT
+            "pattern_weak" => b |= 0x0000_8000,
             _ => {}
         }
     }

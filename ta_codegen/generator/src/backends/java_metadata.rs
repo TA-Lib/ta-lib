@@ -460,25 +460,30 @@ fn opt_input_flags_class() -> String {
 fn output_flags_class() -> String {
     flag_class(
         "OutputFlags",
-        "How an output is meant to be drawn, and whether it may be omitted. Values match C's \
-         {@code TA_OUT_*}.",
+        "How an output is meant to be drawn, whether it may be omitted, and what its values can be. \
+         Values match C's {@code TA_OUT_*}. A pattern output writes 0 or a sign times a level: the \
+         sign flags give its signs, the level flags its levels (100 always).",
         &[
             ("LINE", 0x0000_0001, "Draw as a continuous line."),
             ("DOT_LINE", 0x0000_0002, "Draw as a dotted line."),
             ("DASH_LINE", 0x0000_0004, "Draw as a dashed line."),
             ("DOT", 0x0000_0008, "Draw as unconnected dots."),
             ("HISTOGRAM", 0x0000_0010, "Draw as a histogram."),
-            ("PATTERN_BOOL", 0x0000_0020, "A value other than 0 means the pattern is present."),
-            ("PATTERN_BULL_BEAR", 0x0000_0040, "Positive is bullish, negative bearish, 0 no pattern."),
+            ("PATTERN_BOOL", 0x0000_0020, "0 is no pattern, 100 a pattern; no other value."),
+            ("PATTERN_BULL_BEAR", 0x0000_0040, "The sign is a call: positive bullish, negative bearish."),
             (
-                "PATTERN_STRENGTH",
+                "PATTERN_CONFIRM",
                 0x0000_0080,
-                "0 is neutral; up to 100 getting bullish and above it bullish; down to -100 \
-                 getting bearish and below it bearish.",
+                "Adds level 200: this bar confirms the output's most recent earlier pattern.",
             ),
-            ("POSITIVE", 0x0000_0100, "The output can be positive."),
-            ("NEGATIVE", 0x0000_0200, "The output can be negative."),
-            ("ZERO", 0x0000_0400, "The output can be zero."),
+            ("POSITIVE", 0x0000_0100, "Positive values occur."),
+            ("NEGATIVE", 0x0000_0200, "Negative values occur."),
+            (
+                "ZERO",
+                0x0000_0400,
+                "Zero occurs; on a pattern output, no pattern on this bar. An output setting any of \
+                 the three sign flags declares all its signs; one setting none declares nothing.",
+            ),
             ("UPPER_LIMIT", 0x0000_0800, "An upper band/limit line."),
             ("LOWER_LIMIT", 0x0000_1000, "A lower band/limit line."),
             (
@@ -492,6 +497,7 @@ fn output_flags_class() -> String {
                 "A chart draws it ahead of or behind the bar that computed it, by the bars \
                  {@code ParamHolder.displayShift} reports. The values are never shifted.",
             ),
+            ("PATTERN_WEAK", 0x0000_8000, "Adds level 80: a weaker form of the pattern, on the same bar."),
         ],
     )
 }

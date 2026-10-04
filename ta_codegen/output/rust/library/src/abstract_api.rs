@@ -678,7 +678,9 @@ flag_newtype!(
 });
 flag_newtype!(
     /// How an output should be drawn, and what its values can be
-    /// (C: the `TA_OUT_*` bits).
+    /// (C: the `TA_OUT_*` bits). A pattern output writes 0 or a sign times a
+    /// level: the sign flags give its signs, the level flags its levels (100
+    /// always).
     OutputFlags {
     /// Suggest displaying as a connected line.
     LINE = 0x0000_0001,
@@ -690,18 +692,20 @@ flag_newtype!(
     DOT = 0x0000_0008,
     /// Suggest displaying as a histogram.
     HISTO = 0x0000_0010,
-    /// The value says whether the pattern exists: non-zero yes, zero no.
+    /// 0 is no pattern, 100 a pattern; no other value.
     PATTERN_BOOL = 0x0000_0020,
-    /// Zero is no pattern, positive is bullish, negative is bearish.
+    /// The sign is a call: positive bullish, negative bearish.
     PATTERN_BULL_BEAR = 0x0000_0040,
-    /// Zero is neutral; `]0..100]` getting bullish, `]100..200]` bullish,
-    /// `[-100..0[` getting bearish, `[-200..-100[` bearish.
-    PATTERN_STRENGTH = 0x0000_0080,
-    /// The output can be positive.
+    /// Adds level 200: this bar confirms the output's most recent earlier
+    /// pattern.
+    PATTERN_CONFIRM = 0x0000_0080,
+    /// Positive values occur.
     POSITIVE = 0x0000_0100,
-    /// The output can be negative.
+    /// Negative values occur.
     NEGATIVE = 0x0000_0200,
-    /// The output can be zero.
+    /// Zero occurs; on a pattern output, no pattern on this bar. An output
+    /// setting any of the three sign flags declares all its signs; one setting
+    /// none declares nothing.
     ZERO = 0x0000_0400,
     /// The values represent an upper limit.
     UPPER_LIMIT = 0x0000_0800,
@@ -715,6 +719,8 @@ flag_newtype!(
     /// by the bars [`ParamHolder::display_shift`] reports. The values are never
     /// shifted.
     DISPLAY_SHIFT = 0x0000_4000,
+    /// Adds level 80: a weaker form of the pattern, on the same bar.
+    PATTERN_WEAK = 0x0000_8000,
 });
 
 /// A required input parameter.
@@ -1120,7 +1126,7 @@ static FUNC_TABLE: [FuncInfo; 228] = [
         flags: FuncFlags(0x12000000),
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
-        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000641) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -1131,7 +1137,7 @@ static FUNC_TABLE: [FuncInfo; 228] = [
         flags: FuncFlags(0x12000000),
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
-        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000641) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -1142,7 +1148,7 @@ static FUNC_TABLE: [FuncInfo; 228] = [
         flags: FuncFlags(0x12000000),
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
-        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000741) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -1153,7 +1159,7 @@ static FUNC_TABLE: [FuncInfo; 228] = [
         flags: FuncFlags(0x12000000),
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
-        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000741) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -1164,7 +1170,7 @@ static FUNC_TABLE: [FuncInfo; 228] = [
         flags: FuncFlags(0x12000000),
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
-        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000741) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -1175,7 +1181,7 @@ static FUNC_TABLE: [FuncInfo; 228] = [
         flags: FuncFlags(0x12000000),
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
-        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000541) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -1186,7 +1192,7 @@ static FUNC_TABLE: [FuncInfo; 228] = [
         flags: FuncFlags(0x12000000),
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
-        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000541) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -1197,7 +1203,7 @@ static FUNC_TABLE: [FuncInfo; 228] = [
         flags: FuncFlags(0x12000000),
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInPenetration", display_name: "Penetration", hint: "Percentage of penetration of a candle within another candle", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 0.0, max: 3e37, precision: 0, default: 0.3, suggested: (0.0, 0.0, 0.0) } }, ],
-        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000741) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -1208,7 +1214,7 @@ static FUNC_TABLE: [FuncInfo; 228] = [
         flags: FuncFlags(0x12000000),
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
-        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000641) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -1219,7 +1225,7 @@ static FUNC_TABLE: [FuncInfo; 228] = [
         flags: FuncFlags(0x12000000),
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
-        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000741) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -1230,7 +1236,7 @@ static FUNC_TABLE: [FuncInfo; 228] = [
         flags: FuncFlags(0x12000000),
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
-        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000741) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -1241,7 +1247,7 @@ static FUNC_TABLE: [FuncInfo; 228] = [
         flags: FuncFlags(0x12000000),
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
-        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000741) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -1252,7 +1258,7 @@ static FUNC_TABLE: [FuncInfo; 228] = [
         flags: FuncFlags(0x12000000),
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
-        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000541) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -1263,7 +1269,7 @@ static FUNC_TABLE: [FuncInfo; 228] = [
         flags: FuncFlags(0x12000000),
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
-        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000741) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -1274,7 +1280,7 @@ static FUNC_TABLE: [FuncInfo; 228] = [
         flags: FuncFlags(0x12000000),
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInPenetration", display_name: "Penetration", hint: "Percentage of penetration of a candle within another candle", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 0.0, max: 3e37, precision: 0, default: 0.5, suggested: (0.0, 0.0, 0.0) } }, ],
-        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000641) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -1285,7 +1291,7 @@ static FUNC_TABLE: [FuncInfo; 228] = [
         flags: FuncFlags(0x12000000),
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
-        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000521) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -1296,7 +1302,7 @@ static FUNC_TABLE: [FuncInfo; 228] = [
         flags: FuncFlags(0x12000000),
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
-        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000741) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -1307,7 +1313,7 @@ static FUNC_TABLE: [FuncInfo; 228] = [
         flags: FuncFlags(0x12000000),
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
-        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000521) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -1318,7 +1324,7 @@ static FUNC_TABLE: [FuncInfo; 228] = [
         flags: FuncFlags(0x12000000),
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
-        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00008741) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -1329,7 +1335,7 @@ static FUNC_TABLE: [FuncInfo; 228] = [
         flags: FuncFlags(0x12000000),
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInPenetration", display_name: "Penetration", hint: "Percentage of penetration of a candle within another candle", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 0.0, max: 3e37, precision: 0, default: 0.3, suggested: (0.0, 0.0, 0.0) } }, ],
-        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000641) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -1340,7 +1346,7 @@ static FUNC_TABLE: [FuncInfo; 228] = [
         flags: FuncFlags(0x12000000),
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInPenetration", display_name: "Penetration", hint: "Percentage of penetration of a candle within another candle", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 0.0, max: 3e37, precision: 0, default: 0.3, suggested: (0.0, 0.0, 0.0) } }, ],
-        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000641) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -1351,7 +1357,7 @@ static FUNC_TABLE: [FuncInfo; 228] = [
         flags: FuncFlags(0x12000000),
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
-        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000741) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -1362,7 +1368,7 @@ static FUNC_TABLE: [FuncInfo; 228] = [
         flags: FuncFlags(0x12000000),
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
-        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000521) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -1373,7 +1379,7 @@ static FUNC_TABLE: [FuncInfo; 228] = [
         flags: FuncFlags(0x12000000),
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
-        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000541) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -1384,7 +1390,7 @@ static FUNC_TABLE: [FuncInfo; 228] = [
         flags: FuncFlags(0x12000000),
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
-        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000641) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -1395,7 +1401,7 @@ static FUNC_TABLE: [FuncInfo; 228] = [
         flags: FuncFlags(0x12000000),
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
-        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00008741) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -1406,7 +1412,7 @@ static FUNC_TABLE: [FuncInfo; 228] = [
         flags: FuncFlags(0x12000000),
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
-        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00008741) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -1417,7 +1423,7 @@ static FUNC_TABLE: [FuncInfo; 228] = [
         flags: FuncFlags(0x12000000),
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
-        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000701) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -1428,7 +1434,7 @@ static FUNC_TABLE: [FuncInfo; 228] = [
         flags: FuncFlags(0x12000000),
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
-        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x000007c1) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -1439,7 +1445,7 @@ static FUNC_TABLE: [FuncInfo; 228] = [
         flags: FuncFlags(0x12000000),
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
-        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x000007c1) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -1450,7 +1456,7 @@ static FUNC_TABLE: [FuncInfo; 228] = [
         flags: FuncFlags(0x12000000),
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
-        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000541) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -1461,7 +1467,7 @@ static FUNC_TABLE: [FuncInfo; 228] = [
         flags: FuncFlags(0x12000000),
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
-        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000641) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -1472,7 +1478,7 @@ static FUNC_TABLE: [FuncInfo; 228] = [
         flags: FuncFlags(0x12000000),
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
-        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000641) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -1483,7 +1489,7 @@ static FUNC_TABLE: [FuncInfo; 228] = [
         flags: FuncFlags(0x12000000),
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
-        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000541) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -1494,7 +1500,7 @@ static FUNC_TABLE: [FuncInfo; 228] = [
         flags: FuncFlags(0x12000000),
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
-        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000741) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -1505,7 +1511,7 @@ static FUNC_TABLE: [FuncInfo; 228] = [
         flags: FuncFlags(0x12000000),
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
-        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000741) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -1516,7 +1522,7 @@ static FUNC_TABLE: [FuncInfo; 228] = [
         flags: FuncFlags(0x12000000),
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
-        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000541) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -1527,7 +1533,7 @@ static FUNC_TABLE: [FuncInfo; 228] = [
         flags: FuncFlags(0x12000000),
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
-        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000521) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -1538,7 +1544,7 @@ static FUNC_TABLE: [FuncInfo; 228] = [
         flags: FuncFlags(0x12000000),
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
-        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000741) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -1549,7 +1555,7 @@ static FUNC_TABLE: [FuncInfo; 228] = [
         flags: FuncFlags(0x12000000),
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
-        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000741) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -1560,7 +1566,7 @@ static FUNC_TABLE: [FuncInfo; 228] = [
         flags: FuncFlags(0x12000000),
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
-        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000541) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -1571,7 +1577,7 @@ static FUNC_TABLE: [FuncInfo; 228] = [
         flags: FuncFlags(0x12000000),
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInPenetration", display_name: "Penetration", hint: "Percentage of penetration of a candle within another candle", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 0.0, max: 3e37, precision: 0, default: 0.5, suggested: (0.0, 0.0, 0.0) } }, ],
-        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000541) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -1582,7 +1588,7 @@ static FUNC_TABLE: [FuncInfo; 228] = [
         flags: FuncFlags(0x12000000),
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInPenetration", display_name: "Penetration", hint: "Percentage of penetration of a candle within another candle", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 0.0, max: 3e37, precision: 0, default: 0.3, suggested: (0.0, 0.0, 0.0) } }, ],
-        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000541) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -1593,7 +1599,7 @@ static FUNC_TABLE: [FuncInfo; 228] = [
         flags: FuncFlags(0x12000000),
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInPenetration", display_name: "Penetration", hint: "Percentage of penetration of a candle within another candle", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 0.0, max: 3e37, precision: 0, default: 0.3, suggested: (0.0, 0.0, 0.0) } }, ],
-        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000541) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -1604,7 +1610,7 @@ static FUNC_TABLE: [FuncInfo; 228] = [
         flags: FuncFlags(0x12000000),
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
-        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000641) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -1615,7 +1621,7 @@ static FUNC_TABLE: [FuncInfo; 228] = [
         flags: FuncFlags(0x12000000),
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
-        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000541) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -1626,7 +1632,7 @@ static FUNC_TABLE: [FuncInfo; 228] = [
         flags: FuncFlags(0x12000000),
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
-        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000521) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -1637,7 +1643,7 @@ static FUNC_TABLE: [FuncInfo; 228] = [
         flags: FuncFlags(0x12000000),
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
-        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000741) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -1648,7 +1654,7 @@ static FUNC_TABLE: [FuncInfo; 228] = [
         flags: FuncFlags(0x12000000),
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
-        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000741) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -1659,7 +1665,7 @@ static FUNC_TABLE: [FuncInfo; 228] = [
         flags: FuncFlags(0x12000000),
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
-        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000641) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -1670,7 +1676,7 @@ static FUNC_TABLE: [FuncInfo; 228] = [
         flags: FuncFlags(0x12000000),
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
-        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000701) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -1681,7 +1687,7 @@ static FUNC_TABLE: [FuncInfo; 228] = [
         flags: FuncFlags(0x12000000),
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
-        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000701) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -1692,7 +1698,7 @@ static FUNC_TABLE: [FuncInfo; 228] = [
         flags: FuncFlags(0x12000000),
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
-        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000641) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -1703,7 +1709,7 @@ static FUNC_TABLE: [FuncInfo; 228] = [
         flags: FuncFlags(0x12000000),
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
-        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000541) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -1714,7 +1720,7 @@ static FUNC_TABLE: [FuncInfo; 228] = [
         flags: FuncFlags(0x12000000),
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
-        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000521) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -1725,7 +1731,7 @@ static FUNC_TABLE: [FuncInfo; 228] = [
         flags: FuncFlags(0x12000000),
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
-        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000741) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -1736,7 +1742,7 @@ static FUNC_TABLE: [FuncInfo; 228] = [
         flags: FuncFlags(0x12000000),
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
-        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000641) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -1747,7 +1753,7 @@ static FUNC_TABLE: [FuncInfo; 228] = [
         flags: FuncFlags(0x12000000),
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
-        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000741) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -1758,7 +1764,7 @@ static FUNC_TABLE: [FuncInfo; 228] = [
         flags: FuncFlags(0x12000000),
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
-        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000541) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -1769,7 +1775,7 @@ static FUNC_TABLE: [FuncInfo; 228] = [
         flags: FuncFlags(0x12000000),
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
-        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000641) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -1780,7 +1786,7 @@ static FUNC_TABLE: [FuncInfo; 228] = [
         flags: FuncFlags(0x12000000),
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
-        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000741) }, ],
         unst_id: None,
     },
     FuncInfo {

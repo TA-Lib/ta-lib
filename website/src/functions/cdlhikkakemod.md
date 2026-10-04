@@ -24,13 +24,15 @@ A four-candle pattern: two successively narrower inside bars, then a breakout ba
 
 ## Output Values
 
+How to read these values from the output's flags: [rW8](/spec/inputs-outputs/#rw8).
+
 | Value | Meaning |
 |-------|---------|
-| -200 | Bearish Modified Hikkake confirmed — price breaks down through the setup's low within 3 bars, confirming the reversal lower |
+| -200 | Bearish Modified Hikkake confirmed: within 3 bars, a close below the last inside bar's low confirms the reversal lower |
 | -100 | Bearish Modified Hikkake — a false upside breakout traps buyers, warning that the uptrend may be topping out |
-| 0 | No pattern, and no trap awaiting confirmation |
+| 0 | No pattern on this bar; a setup may still be awaiting confirmation |
 | 100 | Bullish Modified Hikkake — a false downside breakout traps sellers, warning that the downtrend may be bottoming out |
-| 200 | Bullish Modified Hikkake confirmed — price breaks up through the setup's high within 3 bars, confirming the reversal higher |
+| 200 | Bullish Modified Hikkake confirmed: within 3 bars, a close above the last inside bar's high confirms the reversal higher |
 
 ## Properties
 
@@ -42,7 +44,7 @@ A four-candle pattern: two successively narrower inside bars, then a breakout ba
 | :-- |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Overlap Input</span> |
 | <span class="flag-box">✅</span> **Independent Y-Axis** <span class="flag-tip" tabindex="0" role="note" aria-label="Output is on its own scale, drawn in a separate pane below the price chart." data-tip="Output is on its own scale, drawn in a separate pane below the price chart.">i</span> |
-| <span class="flag-box">✅</span> **Candlestick** <span class="flag-tip" tabindex="0" role="note" aria-label="Output is an integer candlestick-pattern signal (e.g. -100 / 0 / +100)." data-tip="Output is an integer candlestick-pattern signal (e.g. -100 / 0 / +100).">i</span> |
+| <span class="flag-box">✅</span> **Candlestick** <span class="flag-tip" tabindex="0" role="note" aria-label="A candlestick pattern; its values are listed under Output Values." data-tip="A candlestick pattern; its values are listed under Output Values.">i</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Can Output NaN or ±Inf</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Identity at Period 1</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Display Shift</span> |

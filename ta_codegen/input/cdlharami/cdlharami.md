@@ -25,9 +25,9 @@ Two-candle pattern: a long real body followed by a short real body contained wit
 | Value | Meaning |
 |-------|---------|
 | -100 | Bearish Harami: a small real body forms inside the prior long white candle — momentum stalling after an advance |
-| -80 | Bearish Harami, weaker variant: the small body's edge lines up exactly with one end of the long white candle |
+| -80 | Bearish Harami, weaker variant: one or both of the small body's edges line up exactly with the ends of the long white candle's body |
 | 0 | No pattern |
-| 80 | Bullish Harami, weaker variant: the small body's edge lines up exactly with one end of the long black candle |
+| 80 | Bullish Harami, weaker variant: one or both of the small body's edges line up exactly with the ends of the long black candle's body |
 | 100 | Bullish Harami: a small real body forms inside the prior long black candle — momentum stalling after a decline |
 
 ## Aliases

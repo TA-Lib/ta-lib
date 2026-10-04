@@ -25,11 +25,13 @@ A three-candle pattern of three consecutive doji where the middle doji is a star
 
 ## Output Values
 
+How to read these values from the output's flags: [rW8](/spec/inputs-outputs/#rw8).
+
 | Value | Meaning |
 |-------|---------|
-| -100 | Bearish Tristar: the middle doji ("star") sits isolated above its neighbors — an exhaustion signal warning an uptrend may be topping out |
+| -100 | Bearish Tristar: the middle doji ("star") gaps up from the first and the third ends lower; an exhaustion signal warning an uptrend may be topping out |
 | 0 | No pattern (or a doji trio without a qualifying star gap) |
-| 100 | Bullish Tristar: the middle doji ("star") sits isolated below its neighbors — an exhaustion signal warning a downtrend may be bottoming out |
+| 100 | Bullish Tristar: the middle doji ("star") gaps down from the first and the third ends higher; an exhaustion signal warning a downtrend may be bottoming out |
 
 ## Properties
 
@@ -41,7 +43,7 @@ A three-candle pattern of three consecutive doji where the middle doji is a star
 | :-- |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Overlap Input</span> |
 | <span class="flag-box">✅</span> **Independent Y-Axis** <span class="flag-tip" tabindex="0" role="note" aria-label="Output is on its own scale, drawn in a separate pane below the price chart." data-tip="Output is on its own scale, drawn in a separate pane below the price chart.">i</span> |
-| <span class="flag-box">✅</span> **Candlestick** <span class="flag-tip" tabindex="0" role="note" aria-label="Output is an integer candlestick-pattern signal (e.g. -100 / 0 / +100)." data-tip="Output is an integer candlestick-pattern signal (e.g. -100 / 0 / +100).">i</span> |
+| <span class="flag-box">✅</span> **Candlestick** <span class="flag-tip" tabindex="0" role="note" aria-label="A candlestick pattern; its values are listed under Output Values." data-tip="A candlestick pattern; its values are listed under Output Values.">i</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Can Output NaN or ±Inf</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Identity at Period 1</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Display Shift</span> |

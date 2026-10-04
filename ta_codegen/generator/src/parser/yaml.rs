@@ -134,11 +134,72 @@ fn derive_display_shift_flag(name: &str, outputs: &[Output], flags: &mut Vec<Str
     }
 }
 
+/// The pattern-flag rules of `docs/ta_codegen_input_yaml.md`, and an unknown
+/// flag key in any list. Every violation of the function, one line each.
+pub fn check_flags(func: &FuncDef) -> Result<(), Vec<String>> {
+    use crate::backends::func_api_xml::{FUNC_FLAGS, OPT_INPUT_FLAGS, OUTPUT_FLAGS};
+    use crate::ir::PatternSign;
+    let known = |table: &[(&str, &str)], f: &str| table.iter().any(|(k, _)| *k == f);
+    let mut errs = Vec::new();
+    let name = &func.name;
+    for f in func.flags.iter().filter(|f| !known(FUNC_FLAGS, f)) {
+        errs.push(format!("{name}: unknown function flag `{f}`"));
+    }
+    for o in &func.optional_inputs {
+        for f in o.flags.iter().filter(|f| !known(OPT_INPUT_FLAGS, f)) {
+            errs.push(format!("{name}: optional input `{}`: unknown flag `{f}`", o.name));
+        }
+    }
+    let candlestick = func.is_candlestick();
+    for o in &func.outputs {
+        let out = &o.name;
+        let has = |f: &str| o.flags.iter().any(|x| x == f);
+        for f in o.flags.iter().filter(|f| !known(OUTPUT_FLAGS, f)) {
+            errs.push(format!("{name}: output `{out}`: unknown output flag `{f}`"));
+        }
+        let integer = o.param_type == ParamType::Integer;
+        if !integer && o.flags.iter().any(|f| f.starts_with("pattern_")) {
+            errs.push(format!("{name}: output `{out}`: a pattern flag needs an integer output"));
+        }
+        if has("pattern_bool") && (has("pattern_bull_bear") || has("negative") || !has("zero") || !has("positive")) {
+            errs.push(format!(
+                "{name}: output `{out}`: `pattern_bool` takes the sign flags `zero, positive` and no `pattern_bull_bear`"
+            ));
+        }
+        if has("pattern_bull_bear") && !(has("zero") && (has("positive") || has("negative"))) {
+            errs.push(format!(
+                "{name}: output `{out}`: `pattern_bull_bear` needs `zero` and at least one of `positive` / `negative`"
+            ));
+        }
+        let sign = o.pattern_sign(candlestick);
+        if has("pattern_weak") && !matches!(sign, Some(PatternSign::Call | PatternSign::Color)) {
+            errs.push(format!(
+                "{name}: output `{out}`: `pattern_weak` needs `pattern_bull_bear` or a candlestick color output"
+            ));
+        }
+        if has("pattern_confirm") && !has("pattern_bull_bear") {
+            errs.push(format!("{name}: output `{out}`: `pattern_confirm` needs `pattern_bull_bear`"));
+        }
+        if candlestick && integer && sign.is_none() {
+            errs.push(format!(
+                "{name}: output `{out}`: an integer output of a candlestick function is a pattern output: \
+                 `pattern_bool`, `pattern_bull_bear`, or color (`zero, positive, negative`)"
+            ));
+        }
+    }
+    if errs.is_empty() { Ok(()) } else { Err(errs) }
+}
+
 pub fn parse_yaml(path: &Path) -> FuncDef {
     let content = std::fs::read_to_string(path)
         .unwrap_or_else(|e| panic!("Failed to read {}: {}", path.display(), e));
+    parse_yaml_str(&content, path)
+}
 
-    let yaml: YamlFunc = serde_yaml::from_str(&content)
+/// `path` names the file for messages and the directory check; nothing is read
+/// from it.
+pub fn parse_yaml_str(content: &str, path: &Path) -> FuncDef {
+    let yaml: YamlFunc = serde_yaml::from_str(content)
         .unwrap_or_else(|e| panic!("Failed to parse {}: {}", path.display(), e));
 
     // The directory IS the name, lower-cased. Several derivations lean on that —
@@ -234,7 +295,7 @@ pub fn parse_yaml(path: &Path) -> FuncDef {
     // streaming API (it maps to TA_FUNC_FLG_STREAM like every other flag).
     let streaming = flags.iter().any(|f| f == "stream");
 
-    FuncDef {
+    checked(FuncDef {
         name: yaml.name,
         group: yaml.group,
         description: yaml.description,
@@ -255,5 +316,12 @@ pub fn parse_yaml(path: &Path) -> FuncDef {
         streaming,
         alternates: vec![],
         resolved_stream_body: None,
+    }, path)
+}
+
+fn checked(func: FuncDef, path: &Path) -> FuncDef {
+    if let Err(errs) = check_flags(&func) {
+        panic!("{}:\n  {}", path.display(), errs.join("\n  "));
     }
+    func
 }

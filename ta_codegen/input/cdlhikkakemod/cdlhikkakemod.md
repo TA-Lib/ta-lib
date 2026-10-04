@@ -23,11 +23,11 @@ A four-candle pattern: two successively narrower inside bars, then a breakout ba
 
 | Value | Meaning |
 |-------|---------|
-| -200 | Bearish Modified Hikkake confirmed — price breaks down through the setup's low within 3 bars, confirming the reversal lower |
+| -200 | Bearish Modified Hikkake confirmed: within 3 bars, a close below the last inside bar's low confirms the reversal lower |
 | -100 | Bearish Modified Hikkake — a false upside breakout traps buyers, warning that the uptrend may be topping out |
-| 0 | No pattern, and no trap awaiting confirmation |
+| 0 | No pattern on this bar; a setup may still be awaiting confirmation |
 | 100 | Bullish Modified Hikkake — a false downside breakout traps sellers, warning that the downtrend may be bottoming out |
-| 200 | Bullish Modified Hikkake confirmed — price breaks up through the setup's high within 3 bars, confirming the reversal higher |
+| 200 | Bullish Modified Hikkake confirmed: within 3 bars, a close above the last inside bar's high confirms the reversal higher |
 
 ## Aliases
 
