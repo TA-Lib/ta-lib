@@ -53,7 +53,7 @@
  *   The outputs are INTEGER flags, so every comparison below is exact
  *   equality; there is no tolerance anywhere in this file and nothing to
  *   justify. What has to be justified instead is the FIRING SET, and the
- *   goldens are frozen confirmation-bar index lists produced by executing two
+ *   goldens are frozen completing-bar index lists produced by executing two
  *   unrelated libraries.
  *
  *   Legs:
@@ -114,7 +114,7 @@ typedef struct
 {
    int         optInLeftBars;
    int         optInRightBars;
-   const int  *swingHigh;      /* ABSOLUTE confirmation-bar indices */
+   const int  *swingHigh;      /* ABSOLUTE completing-bar indices */
    int         nbSwingHigh;
    const int  *swingLow;
    int         nbSwingLow;
@@ -129,8 +129,8 @@ typedef struct
  *      FractalHighIndicator(series, L, R) / FractalLowIndicator(series, L, R),
  *      reading the Boolean at every bar. ta4j defines that Boolean as "the bar
  *      (index - followingBars) is a confirmed fractal", which is the same
- *      confirmation-bar anchor TA_FRACTAL uses, and its getCountOfUnstableBars()
- *      returned L+R at every pair -- an independent confirmation of the lookback.
+ *      completing-bar anchor TA_FRACTAL uses, and its getCountOfUnstableBars()
+ *      returned L+R at every pair -- an independent check of the lookback.
  *      It is the only arm whose constructor takes the two arms separately.
  *   2. trading-signals 8.3.0 (TypeScript, MIT) -- SwingHigh/SwingLow, whose
  *      window is 2*lookback+1 and whose pivot is rejected on `>= pivot` in

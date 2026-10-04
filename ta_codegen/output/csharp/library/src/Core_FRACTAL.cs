@@ -336,7 +336,7 @@ public partial class Core
    /// <see href="https://ta-lib.org/functions/fractal">ta-lib.org/functions/fractal</see>.
    /// </para>
    /// <list type="bullet">
-   /// <item><description>Strict on both sides: a bar tied with any other bar of its window is not a pivot. TradingView's Pine runtime differs — its <c>ta.pivothigh</c> / <c>ta.pivotlow</c> let a tie with an older bar stand and let a tie with a newer bar cancel, i.e. non-strict left and strict right — so a plateau Pine reports as a pivot is not one here.</description></item>
+   /// <item><description>Strict on both sides: a bar tied with any other bar of its window is not a pivot. TradingView's Pine runtime differs: its <c>ta.pivothigh</c> / <c>ta.pivotlow</c> let a tie with an older bar stand and let a tie with a newer bar cancel, i.e. non-strict left and strict right — so a plateau Pine reports as a pivot is not one here.</description></item>
    /// <item><description>Each output is decided on its own side: a high tied with any other high in the window forces <c>outSwingHigh</c> to 0 while leaving <c>outSwingLow</c> free to fire 100, and the mirror holds. Only a window flat in both series emits 0 on both.</description></item>
    /// </list>
    /// <para>
@@ -442,7 +442,7 @@ public partial class Core
    /// <see href="https://ta-lib.org/functions/fractal">ta-lib.org/functions/fractal</see>.
    /// </para>
    /// <list type="bullet">
-   /// <item><description>Strict on both sides: a bar tied with any other bar of its window is not a pivot. TradingView's Pine runtime differs — its <c>ta.pivothigh</c> / <c>ta.pivotlow</c> let a tie with an older bar stand and let a tie with a newer bar cancel, i.e. non-strict left and strict right — so a plateau Pine reports as a pivot is not one here.</description></item>
+   /// <item><description>Strict on both sides: a bar tied with any other bar of its window is not a pivot. TradingView's Pine runtime differs: its <c>ta.pivothigh</c> / <c>ta.pivotlow</c> let a tie with an older bar stand and let a tie with a newer bar cancel, i.e. non-strict left and strict right — so a plateau Pine reports as a pivot is not one here.</description></item>
    /// <item><description>Each output is decided on its own side: a high tied with any other high in the window forces <c>outSwingHigh</c> to 0 while leaving <c>outSwingLow</c> free to fire 100, and the mirror holds. Only a window flat in both series emits 0 on both.</description></item>
    /// </list>
    /// <para>
