@@ -11,6 +11,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  100126 KL,CC  First version (#486).
+ *  100326 MF,CC  Frozen goldens and range edges (#486).
  */
 
 /* Description:
@@ -65,6 +66,12 @@
  *        settings of it, per row.
  *     5. ALIASING: outReal == inReal.
  *     6. The generic start/end range sweep, all five rows.
+ *     7. GOLDEN: frozen values from a 60-digit evaluation of the same rows and
+ *        seed. The early bars are the only ones that see the seed, and the
+ *        BP rows at its period cap are the only gate that tells its abp from
+ *        the paper's gamma - sqrt(gamma^2 - 1), which is 7e-9 off there.
+ *     8. EDGES: the first period and delta outside each declared range are
+ *        refused.
  *
  *   SERVER_VERIFY: the constant and Nyquist shapes are routed. The --codegen
  *   sweep sends the 252-bar corpus with one parameter moved at a time and
@@ -109,7 +116,9 @@
 #define SWAK_CENTRE_CMP    180000
 #define SWAK_LOOKBACK_CMP      132
 #define SWAK_INPLACE_CMP   114700
-#define SWAK_ROUTE_CMP         10
+#define SWAK_ROUTE_CMP         15
+#define SWAK_GOLDEN_CMP         49
+#define SWAK_EDGE_CMP           16
 
 static double swakIn[SWAK_N_MAX];
 static double swakOut[SWAK_N_MAX];
@@ -121,6 +130,8 @@ static int g_swakCentreCmp;
 static int g_swakLookbackCmp;
 static int g_swakInplaceCmp;
 static int g_swakRouteCmp;
+static int g_swakGoldenCmp;
+static int g_swakEdgeCmp;
 
 static const char * const swakName[SWAK_NB_FUNC] =
    { "SWAK_GAUSS", "SWAK_BUTTER", "SWAK_HP", "SWAK_2PHP", "SWAK_BP" };
@@ -171,6 +182,8 @@ static ErrorNumber  test_swak_centre( void );
 static ErrorNumber  test_swak_lookback( void );
 static ErrorNumber  test_swak_inplace( void );
 static ErrorNumber  test_swak_range( const TA_Real *in );
+static ErrorNumber  test_swak_golden( void );
+static ErrorNumber  test_swak_edges( void );
 
 /**** Global functions definitions. ****/
 ErrorNumber test_func_swak( TA_History *history )
@@ -180,6 +193,7 @@ ErrorNumber test_func_swak( TA_History *history )
    TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
    g_swakDcCmp = g_swakNyqCmp = g_swakCentreCmp = 0;
    g_swakLookbackCmp = g_swakInplaceCmp = g_swakRouteCmp = 0;
+   g_swakGoldenCmp = g_swakEdgeCmp = 0;
 
    err = test_swak_dc();
    if( err == TA_TEST_PASS )
@@ -190,6 +204,10 @@ ErrorNumber test_func_swak( TA_History *history )
       err = test_swak_lookback();
    if( err == TA_TEST_PASS )
       err = test_swak_inplace();
+   if( err == TA_TEST_PASS )
+      err = test_swak_golden();
+   if( err == TA_TEST_PASS )
+      err = test_swak_edges();
 
    TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
 
@@ -203,15 +221,17 @@ ErrorNumber test_func_swak( TA_History *history )
             || g_swakCentreCmp != SWAK_CENTRE_CMP
             || g_swakLookbackCmp != SWAK_LOOKBACK_CMP
             || g_swakInplaceCmp != SWAK_INPLACE_CMP
+            || g_swakGoldenCmp != SWAK_GOLDEN_CMP
+            || g_swakEdgeCmp != SWAK_EDGE_CMP
             || ( server_verify_active() && g_swakRouteCmp != SWAK_ROUTE_CMP ) ) )
    {
       printf( "SWAK Fail: coverage counters (dc %d, nyquist %d, centre %d, lookback %d, "
-              "inplace %d, routed %d) are not what this file was written with "
-              "(%d, %d, %d, %d, %d, %d)\n",
+              "inplace %d, routed %d, golden %d, edges %d) are not what this file was "
+              "written with (%d, %d, %d, %d, %d, %d, %d, %d)\n",
               g_swakDcCmp, g_swakNyqCmp, g_swakCentreCmp, g_swakLookbackCmp,
-              g_swakInplaceCmp, g_swakRouteCmp,
+              g_swakInplaceCmp, g_swakRouteCmp, g_swakGoldenCmp, g_swakEdgeCmp,
               SWAK_DC_CMP, SWAK_NYQ_CMP, SWAK_CENTRE_CMP, SWAK_LOOKBACK_CMP,
-              SWAK_INPLACE_CMP, SWAK_ROUTE_CMP );
+              SWAK_INPLACE_CMP, SWAK_ROUTE_CMP, SWAK_GOLDEN_CMP, SWAK_EDGE_CMP );
       return TA_SWAK_VACUOUS;
    }
 
@@ -724,4 +744,168 @@ static ErrorNumber test_swak_range( const TA_Real *in )
    }
 
    return err;
+}
+
+/* (7) Frozen values. The series is 100 + 10*sin(i/7) + 0.15*i + 2*sin(i/2.3);
+ * every expected value is the same row and seed evaluated in 60-digit decimal
+ * over the doubles of that series. A libm whose sin is an ULP off moves an
+ * input by 1e-16 relative, three orders inside the tightest tolerance here. */
+#define SWAK_GOLDEN_N       1200
+#define SWAK_GOLDEN_ROWS       9
+#define SWAK_COND_N        20000
+#define SWAK_COND_ROWS         4
+
+static const int swakGoldenBar[SWAK_GOLDEN_ROWS] = { 0, 1, 2, 10, 19, 100, 500, 1000, 1199 };
+
+/* P = 20, delta = 0.1. */
+static const double swakGolden[SWAK_NB_FUNC][SWAK_GOLDEN_ROWS] =
+{
+   /* GAUSS  */ { 1.00000000000000000e+02, 1.00352885890122877e+02, 1.01114688108096715e+02,
+                  1.08665021094407507e+02, 1.10303329168047640e+02, 1.22199881282870834e+02,
+                  1.83801722817338145e+02, 2.41768353519822853e+02, 2.86858377267428125e+02 },
+   /* BUTTER */ { 1.00000000000000000e+02, 1.00088221472530719e+02, 1.00455114972085610e+02,
+                  1.08221391743158790e+02, 1.10490383391746562e+02, 1.21686709025691016e+02,
+                  1.84239500074226981e+02, 2.41930430535751697e+02, 2.86109472174069936e+02 },
+   /* HP     */ { 0.00000000000000000e+00, 2.08578750310559435e+00, 3.44083779157216885e+00,
+                  8.99393518790790769e-01, -1.41232732329778310e+00, 1.78589982044724604e+00,
+                  -2.35441575501536171e+00, 2.06178853125851512e-02, 2.57183745360370208e+00 },
+   /* 2PHP   */ { 0.00000000000000000e+00, 1.58098936244228661e+00, 1.83201534137916155e+00,
+                  -7.44889218080521887e-01, -1.13593692970976368e+00, 8.48822166360145292e-02,
+                  -1.55074996769183682e+00, 8.97460181170890103e-01, 1.95163082787267517e-01 },
+   /* BP     */ { 0.00000000000000000e+00, 7.36168740559686036e-02, 2.77334960845761869e-01,
+                  9.25884431552123965e-01, -8.04144579561751893e-01, -5.31168357062935304e-01,
+                  -2.25745496512508775e-01, -1.52703253764034375e-01, -4.23559364649652048e-01 }
+};
+
+/* SWAK_BP at its period cap and narrowest band: P = 2000, delta = 0.05. */
+static const int    swakCondBar[SWAK_COND_ROWS] = { 1000, 5000, 10000, 19999 };
+static const double swakCond[SWAK_COND_ROWS] =
+   { 8.83578336954305676e+00, 6.94599135761044018e+00,
+     3.80275530291380548e+00, 4.57574609786069786e+00 };
+
+static void swakGoldenSeries( int n )
+{
+   int i;
+   for( i = 0; i < n; i++ )
+      swakIn[i] = 100.0 + 10.0*sin( (double)i/7.0 ) + 0.15*(double)i + 2.0*sin( (double)i/2.3 );
+}
+
+static ErrorNumber test_swak_golden( void )
+{
+   int f, k, begIdx, nbElement;
+   TA_RetCode rc;
+   ErrorNumber e;
+
+   swakGoldenSeries( SWAK_GOLDEN_N );
+   for( f = 0; f < SWAK_NB_FUNC; f++ )
+   {
+      rc = swakCall( f, 0, SWAK_GOLDEN_N-1, swakIn, 20, 0.1, &begIdx, &nbElement, swakOut );
+      if( rc != TA_SUCCESS || begIdx != 0 || nbElement != SWAK_GOLDEN_N )
+      {
+         printf( "%s golden Fail: rc=%d (%d,%d)\n", swakName[f], (int)rc, begIdx, nbElement );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+      for( k = 0; k < SWAK_GOLDEN_ROWS; k++ )
+      {
+         double want = swakGolden[f][k];
+         double got  = swakOut[swakGoldenBar[k]];
+         /* The price-level rows are held relative, the zero-centred ones
+          * absolute: their output crosses zero, where a relative bound means
+          * nothing. */
+         double tol  = swakDcUnity[f] ? 1e-13 * fabs( want ) : 1e-12;
+         if( !( fabs( got - want ) <= tol ) )
+         {
+            printf( "%s golden Fail at bar %d: %.17g, expected %.17g\n",
+                    swakName[f], swakGoldenBar[k], got, want );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+         g_swakGoldenCmp++;
+      }
+      e = swakRoute( f, "golden", SWAK_GOLDEN_N, 20, 0.1, rc, begIdx, nbElement );
+      if( e != TA_TEST_PASS )
+         return e;
+   }
+
+   swakGoldenSeries( SWAK_COND_N );
+   rc = TA_SWAK_BP( 0, SWAK_COND_N-1, swakIn, 2000, 0.05, &begIdx, &nbElement, swakOut );
+   if( rc != TA_SUCCESS || begIdx != 0 || nbElement != SWAK_COND_N )
+   {
+      printf( "SWAK_BP conditioning Fail: rc=%d (%d,%d)\n", (int)rc, begIdx, nbElement );
+      return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+   }
+   for( k = 0; k < SWAK_COND_ROWS; k++ )
+   {
+      if( !( fabs( swakOut[swakCondBar[k]] - swakCond[k] ) <= 1e-9 ) )
+      {
+         printf( "SWAK_BP conditioning Fail at bar %d: %.17g, expected %.17g\n",
+                 swakCondBar[k], swakOut[swakCondBar[k]], swakCond[k] );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+      g_swakGoldenCmp++;
+   }
+
+   return TA_TEST_PASS;
+}
+
+/* (8) One step outside each declared range. HP's 4 is the period at which its
+ * alpha rounds to 0 and the row turns into an integrator; BP's 4 with delta
+ * 0.5 puts the half-bandwidth angle on pi/2, where abp divides by cos. */
+static ErrorNumber test_swak_edges( void )
+{
+   static const struct { int f; int P; double delta; } bad[] =
+   {
+      { SWAK_GAUSS,  1, 0.1 }, { SWAK_GAUSS,  10001, 0.1 },
+      { SWAK_BUTTER, 1, 0.1 }, { SWAK_BUTTER, 10001, 0.1 },
+      { SWAK_2PHP,   1, 0.1 }, { SWAK_2PHP,   10001, 0.1 },
+      { SWAK_HP,     4, 0.1 }, { SWAK_HP,    100001, 0.1 },
+      { SWAK_BP,     4, 0.1 }, { SWAK_BP,      2001, 0.1 },
+      { SWAK_BP,    20, 0.049 }, { SWAK_BP,    20, 0.501 }
+   };
+   static const struct { int f; int P; double delta; } good[] =
+   {
+      { SWAK_HP, 5, 0.1 }, { SWAK_BP, 5, 0.5 }, { SWAK_BP, 2000, 0.05 }, { SWAK_GAUSS, 2, 0.1 }
+   };
+   int k, i, begIdx, nbElement;
+   TA_RetCode rc;
+
+   swakGoldenSeries( 400 );
+
+   for( k = 0; k < NB_OF(bad); k++ )
+   {
+      rc = swakCall( bad[k].f, 0, 399, swakIn, bad[k].P, bad[k].delta,
+                     &begIdx, &nbElement, swakOut );
+      if( rc != TA_BAD_PARAM )
+      {
+         printf( "%s edge Fail [P=%d delta=%g]: rc=%d, expected TA_BAD_PARAM\n",
+                 swakName[bad[k].f], bad[k].P, bad[k].delta, (int)rc );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+      g_swakEdgeCmp++;
+   }
+
+   for( k = 0; k < NB_OF(good); k++ )
+   {
+      rc = swakCall( good[k].f, 0, 399, swakIn, good[k].P, good[k].delta,
+                     &begIdx, &nbElement, swakOut );
+      if( rc != TA_SUCCESS || nbElement != 400 )
+      {
+         printf( "%s edge Fail [P=%d delta=%g]: rc=%d nb=%d\n",
+                 swakName[good[k].f], good[k].P, good[k].delta, (int)rc, nbElement );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+      for( i = 0; i < nbElement; i++ )
+      {
+         /* Every row here is stable, so nothing it returns on this series can
+          * leave the series' own scale. */
+         if( !( fabs( swakOut[i] ) < 1000.0 ) )
+         {
+            printf( "%s edge Fail [P=%d delta=%g] at bar %d: %.17g\n",
+                    swakName[good[k].f], good[k].P, good[k].delta, i, swakOut[i] );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+      }
+      g_swakEdgeCmp++;
+   }
+
+   return TA_TEST_PASS;
 }

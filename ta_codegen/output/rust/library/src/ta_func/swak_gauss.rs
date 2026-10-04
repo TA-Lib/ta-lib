@@ -53,6 +53,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  100126 KL,CC  Creation (#486).
+ *  100326 MF,CC  The newest output on one fused step (#486).
  */
 
 // Import types from parent module
@@ -88,8 +89,7 @@ impl Core {
         // No structural lookback. Every term of the recurrence exists at the first
         // bar -- the two history slots are seeded from that bar rather than read
         // from before it -- and there is no callee whose lookback could be
-        // inherited, so the function's own unstable period is the whole of it
-        // (ha.c:16-19 takes the same shape for the same reason).
+        // inherited, so the function's own unstable period is the whole of it.
         return Ok((self.unstable_period[FuncUnstId::SWAK_GAUSS as usize]) as usize);
     }
     /// Display shift of one output of [`Core::swak_gauss`]: how many bars ahead (positive) or
@@ -241,8 +241,10 @@ impl Core {
             let _w0 = &inReal[today..][.._wn];
             let _w1 = &mut outReal[outIdx..][.._wn];
             for _wk in 0.._wn {
-                // The evaluation order is the bit-exactness contract across backends:
-                // the numerator first, then the a1 feedback, then the a2 feedback.
+                // a1*y1 stays the outermost term. y1 is the newest output, so the bar
+                // rate is the latency of whatever y1 crosses to become y: outermost, that
+                // is one fused step. Nested inside, it is three, and every backend's last
+                // bit moves with it.
                 y = (a1 as f64).mul_add(y1, (a2 as f64).mul_add(y2, c0 * _w0[_wk]));
                 y2 = y1;
                 y1 = y;
@@ -405,8 +407,10 @@ struct SwakGaussStreamState {
 impl Core {
     fn swak_gauss_step_impl(sp: &mut SwakGaussStreamState, inReal: f64, outReal: &mut f64) {
         let mut y: f64 = 0.0_f64;
-        // The evaluation order is the bit-exactness contract across backends:
-        // the numerator first, then the a1 feedback, then the a2 feedback.
+        // a1*y1 stays the outermost term. y1 is the newest output, so the bar
+        // rate is the latency of whatever y1 crosses to become y: outermost, that
+        // is one fused step. Nested inside, it is three, and every backend's last
+        // bit moves with it.
         y = (sp.a1 as f64).mul_add(sp.y1, (sp.a2 as f64).mul_add(sp.y2, sp.c0 * inReal));
         sp.y2 = sp.y1;
         sp.y1 = y;
@@ -497,8 +501,10 @@ impl Core {
         }
         outIdx = 0;
         while today <= endIdx {
-            // The evaluation order is the bit-exactness contract across backends:
-            // the numerator first, then the a1 feedback, then the a2 feedback.
+            // a1*y1 stays the outermost term. y1 is the newest output, so the bar
+            // rate is the latency of whatever y1 crosses to become y: outermost, that
+            // is one fused step. Nested inside, it is three, and every backend's last
+            // bit moves with it.
             y = (a1 as f64).mul_add(y1, (a2 as f64).mul_add(y2, c0 * inReal[today]));
             y2 = y1;
             y1 = y;
@@ -686,8 +692,10 @@ impl SwakGaussStream {
             let mut y: f64 = 0.0_f64;
             let mut y1 = sp.y1;
             let mut y2 = sp.y2;
-            // The evaluation order is the bit-exactness contract across backends:
-            // the numerator first, then the a1 feedback, then the a2 feedback.
+            // a1*y1 stays the outermost term. y1 is the newest output, so the bar
+            // rate is the latency of whatever y1 crosses to become y: outermost, that
+            // is one fused step. Nested inside, it is three, and every backend's last
+            // bit moves with it.
             y = (sp.a1 as f64).mul_add(y1, (sp.a2 as f64).mul_add(y2, sp.c0 * inReal));
             y2 = y1;
             y1 = y;

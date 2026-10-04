@@ -11,6 +11,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  100126 KL,CC  Creation (#486).
+ *  100326 MF,CC  The newest output on one fused step (#486).
  */
 
 int swak_gauss_lookback(int optInTimePeriod)
@@ -20,8 +21,7 @@ int swak_gauss_lookback(int optInTimePeriod)
    /* No structural lookback. Every term of the recurrence exists at the first
     * bar -- the two history slots are seeded from that bar rather than read
     * from before it -- and there is no callee whose lookback could be
-    * inherited, so the function's own unstable period is the whole of it
-    * (ha.c:16-19 takes the same shape for the same reason).
+    * inherited, so the function's own unstable period is the whole of it.
     */
    return TA_GetUnstablePeriod(TA_FUNC_UNST_SWAK_GAUSS);
 }
@@ -91,8 +91,10 @@ TA_RetCode swak_gauss(int startIdx, int endIdx,
    outIdx = 0;
    while( today <= endIdx )
    {
-      /* The evaluation order is the bit-exactness contract across backends:
-       * the numerator first, then the a1 feedback, then the a2 feedback.
+      /* a1*y1 stays the outermost term. y1 is the newest output, so the bar
+       * rate is the latency of whatever y1 crosses to become y: outermost, that
+       * is one fused step. Nested inside, it is three, and every backend's last
+       * bit moves with it.
        */
       y  = a1 * y1 + (a2 * y2 + c0 * inReal[today]);
       y2 = y1;

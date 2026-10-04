@@ -55,6 +55,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  100126 KL,CC  Creation (#486).
+ *  100326 MF,CC  The newest output on one fused step (#486).
  */
 
 TA_LIB_API int TA_SWAK_GAUSS_Lookback( int optInTimePeriod )
@@ -66,8 +67,7 @@ TA_LIB_API int TA_SWAK_GAUSS_Lookback( int optInTimePeriod )
    /* No structural lookback. Every term of the recurrence exists at the first
     * bar -- the two history slots are seeded from that bar rather than read
     * from before it -- and there is no callee whose lookback could be
-    * inherited, so the function's own unstable period is the whole of it
-    * (ha.c:16-19 takes the same shape for the same reason).
+    * inherited, so the function's own unstable period is the whole of it.
     */
    return TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_SWAK_GAUSS,Swak_gauss);
 }
@@ -171,8 +171,10 @@ TA_LIB_API TA_RetCode TA_SWAK_GAUSS( int    startIdx,
    outIdx = 0;
    while( today <= endIdx )
    {
-      /* The evaluation order is the bit-exactness contract across backends:
-       * the numerator first, then the a1 feedback, then the a2 feedback.
+      /* a1*y1 stays the outermost term. y1 is the newest output, so the bar
+       * rate is the latency of whatever y1 crosses to become y: outermost, that
+       * is one fused step. Nested inside, it is three, and every backend's last
+       * bit moves with it.
        */
       y = fma(a1, y1, fma(a2, y2, c0 * inReal[today]));
       y2 = y1;
@@ -293,8 +295,10 @@ static TA_FMA_STEP_INLINE void TA_SWAK_GAUSS_StepImpl( struct TA_SWAK_GAUSS_Stre
 {
    double y;
 
-   /* The evaluation order is the bit-exactness contract across backends:
-    * the numerator first, then the a1 feedback, then the a2 feedback.
+   /* a1*y1 stays the outermost term. y1 is the newest output, so the bar
+    * rate is the latency of whatever y1 crosses to become y: outermost, that
+    * is one fused step. Nested inside, it is three, and every backend's last
+    * bit moves with it.
     */
    y = fma(sp->a1, sp->y1, fma(sp->a2, sp->y2, sp->c0 * inReal));
    sp->y2 = sp->y1;
@@ -391,8 +395,10 @@ static TA_RetCode TA_SWAK_GAUSS_OpenImpl( struct TA_SWAK_GAUSS_Stream **stream, 
       outIdx = 0;
       while( today <= endIdx )
       {
-         /* The evaluation order is the bit-exactness contract across backends:
-          * the numerator first, then the a1 feedback, then the a2 feedback.
+         /* a1*y1 stays the outermost term. y1 is the newest output, so the bar
+          * rate is the latency of whatever y1 crosses to become y: outermost, that
+          * is one fused step. Nested inside, it is three, and every backend's last
+          * bit moves with it.
           */
          y = fma(a1, y1, fma(a2, y2, c0 * inReal[today]));
          y2 = y1;
@@ -489,8 +495,10 @@ TA_LIB_API TA_RetCode TA_SWAK_GAUSS_Peek( const TA_SWAK_GAUSS_Stream *stream, do
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    y1 = sp->y1;
    y2 = sp->y2;
-   /* The evaluation order is the bit-exactness contract across backends:
-    * the numerator first, then the a1 feedback, then the a2 feedback.
+   /* a1*y1 stays the outermost term. y1 is the newest output, so the bar
+    * rate is the latency of whatever y1 crosses to become y: outermost, that
+    * is one fused step. Nested inside, it is three, and every backend's last
+    * bit moves with it.
     */
    y = fma(sp->a1, y1, fma(sp->a2, y2, sp->c0 * inReal));
    y2 = y1;

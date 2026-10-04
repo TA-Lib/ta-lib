@@ -55,6 +55,7 @@ public partial class Core
     *  MMDDYY BY     Description
     *  -------------------------------------------------------------------
     *  100126 KL,CC  Creation (#486).
+    *  100326 MF,CC  The newest output on one fused step (#486).
     */
    /// <summary>
    /// Number of leading input bars <c>SwakBp</c> consumes before it can produce
@@ -89,7 +90,7 @@ public partial class Core
       }
       /* No structural lookback: the two input slots and the two output slots are
        * seeded from the first bar rather than read from before it, and there is
-       * no callee whose lookback could be inherited (ha.c:16-19).
+       * no callee whose lookback could be inherited.
        */
       return this._unstablePeriod[(int)FuncUnstId.SWAK_BP] ;
 
@@ -222,11 +223,10 @@ public partial class Core
       }
       outIdx = 0;
       while( today <= endIdx ) {
-         /* The evaluation order is the bit-exactness contract across backends:
-          * the numerator as c0*(x0 - x2), then the a1 feedback, then a2. The
-          * middle tap is zero and dropped rather than added, which costs an
-          * operation per bar and nothing else: adding 0.0*x1 would land on the
-          * same bits, +0.0 for a cancelled numerator included.
+         /* a1*y1 stays the outermost term. y1 is the newest output, so the bar
+          * rate is the latency of whatever y1 crosses to become y: outermost, that
+          * is one fused step. Nested inside, it is three, and every backend's last
+          * bit moves with it.
           */
          x0 = inReal[today];
          y = Math.FusedMultiplyAdd(a1, y1, Math.FusedMultiplyAdd(a2, y2, c0 * (x0 - x2)));
@@ -654,11 +654,10 @@ public partial class Core
          double x2 = sp.x2;
          double y1 = sp.y1;
          double y2 = sp.y2;
-         /* The evaluation order is the bit-exactness contract across backends:
-          * the numerator as c0*(x0 - x2), then the a1 feedback, then a2. The
-          * middle tap is zero and dropped rather than added, which costs an
-          * operation per bar and nothing else: adding 0.0*x1 would land on the
-          * same bits, +0.0 for a cancelled numerator included.
+         /* a1*y1 stays the outermost term. y1 is the newest output, so the bar
+          * rate is the latency of whatever y1 crosses to become y: outermost, that
+          * is one fused step. Nested inside, it is three, and every backend's last
+          * bit moves with it.
           */
          x0 = inReal;
          y = Math.FusedMultiplyAdd(sp.a1, y1, Math.FusedMultiplyAdd(sp.a2, y2, sp.c0 * (x0 - x2)));
@@ -691,11 +690,10 @@ public partial class Core
    {
       double x0 = 0.0;
       double y = 0.0;
-      /* The evaluation order is the bit-exactness contract across backends:
-       * the numerator as c0*(x0 - x2), then the a1 feedback, then a2. The
-       * middle tap is zero and dropped rather than added, which costs an
-       * operation per bar and nothing else: adding 0.0*x1 would land on the
-       * same bits, +0.0 for a cancelled numerator included.
+      /* a1*y1 stays the outermost term. y1 is the newest output, so the bar
+       * rate is the latency of whatever y1 crosses to become y: outermost, that
+       * is one fused step. Nested inside, it is three, and every backend's last
+       * bit moves with it.
        */
       x0 = inReal;
       y = Math.FusedMultiplyAdd(sp.a1, sp.y1, Math.FusedMultiplyAdd(sp.a2, sp.y2, sp.c0 * (x0 - sp.x2)));
@@ -806,11 +804,10 @@ public partial class Core
       }
       outIdx = 0;
       while( today <= endIdx ) {
-         /* The evaluation order is the bit-exactness contract across backends:
-          * the numerator as c0*(x0 - x2), then the a1 feedback, then a2. The
-          * middle tap is zero and dropped rather than added, which costs an
-          * operation per bar and nothing else: adding 0.0*x1 would land on the
-          * same bits, +0.0 for a cancelled numerator included.
+         /* a1*y1 stays the outermost term. y1 is the newest output, so the bar
+          * rate is the latency of whatever y1 crosses to become y: outermost, that
+          * is one fused step. Nested inside, it is three, and every backend's last
+          * bit moves with it.
           */
          x0 = inReal[today];
          y = Math.FusedMultiplyAdd(a1, y1, Math.FusedMultiplyAdd(a2, y2, c0 * (x0 - x2)));

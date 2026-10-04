@@ -55,6 +55,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  100126 KL,CC  Creation (#486).
+ *  100326 MF,CC  The newest output on one fused step (#486).
  */
 
 TA_LIB_API int TA_SWAK_BP_Lookback( int optInTimePeriod, double optInDelta )
@@ -69,7 +70,7 @@ TA_LIB_API int TA_SWAK_BP_Lookback( int optInTimePeriod, double optInDelta )
       return -1;
    /* No structural lookback: the two input slots and the two output slots are
     * seeded from the first bar rather than read from before it, and there is
-    * no callee whose lookback could be inherited (ha.c:16-19).
+    * no callee whose lookback could be inherited.
     */
    return TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_SWAK_BP,Swak_bp);
 }
@@ -191,11 +192,10 @@ TA_LIB_API TA_RetCode TA_SWAK_BP( int    startIdx,
    outIdx = 0;
    while( today <= endIdx )
    {
-      /* The evaluation order is the bit-exactness contract across backends:
-       * the numerator as c0*(x0 - x2), then the a1 feedback, then a2. The
-       * middle tap is zero and dropped rather than added, which costs an
-       * operation per bar and nothing else: adding 0.0*x1 would land on the
-       * same bits, +0.0 for a cancelled numerator included.
+      /* a1*y1 stays the outermost term. y1 is the newest output, so the bar
+       * rate is the latency of whatever y1 crosses to become y: outermost, that
+       * is one fused step. Nested inside, it is three, and every backend's last
+       * bit moves with it.
        */
       x0 = inReal[today];
       y = fma(a1, y1, fma(a2, y2, c0 * (x0 - x2)));
@@ -339,11 +339,10 @@ static TA_FMA_STEP_INLINE void TA_SWAK_BP_StepImpl( struct TA_SWAK_BP_Stream *sp
    double x0;
    double y;
 
-   /* The evaluation order is the bit-exactness contract across backends:
-    * the numerator as c0*(x0 - x2), then the a1 feedback, then a2. The
-    * middle tap is zero and dropped rather than added, which costs an
-    * operation per bar and nothing else: adding 0.0*x1 would land on the
-    * same bits, +0.0 for a cancelled numerator included.
+   /* a1*y1 stays the outermost term. y1 is the newest output, so the bar
+    * rate is the latency of whatever y1 crosses to become y: outermost, that
+    * is one fused step. Nested inside, it is three, and every backend's last
+    * bit moves with it.
     */
    x0 = inReal;
    y = fma(sp->a1, sp->y1, fma(sp->a2, sp->y2, sp->c0 * (x0 - sp->x2)));
@@ -460,11 +459,10 @@ static TA_RetCode TA_SWAK_BP_OpenImpl( struct TA_SWAK_BP_Stream **stream, const 
       outIdx = 0;
       while( today <= endIdx )
       {
-         /* The evaluation order is the bit-exactness contract across backends:
-          * the numerator as c0*(x0 - x2), then the a1 feedback, then a2. The
-          * middle tap is zero and dropped rather than added, which costs an
-          * operation per bar and nothing else: adding 0.0*x1 would land on the
-          * same bits, +0.0 for a cancelled numerator included.
+         /* a1*y1 stays the outermost term. y1 is the newest output, so the bar
+          * rate is the latency of whatever y1 crosses to become y: outermost, that
+          * is one fused step. Nested inside, it is three, and every backend's last
+          * bit moves with it.
           */
          x0 = inReal[today];
          y = fma(a1, y1, fma(a2, y2, c0 * (x0 - x2)));
@@ -572,11 +570,10 @@ TA_LIB_API TA_RetCode TA_SWAK_BP_Peek( const TA_SWAK_BP_Stream *stream, double i
    x2 = sp->x2;
    y1 = sp->y1;
    y2 = sp->y2;
-   /* The evaluation order is the bit-exactness contract across backends:
-    * the numerator as c0*(x0 - x2), then the a1 feedback, then a2. The
-    * middle tap is zero and dropped rather than added, which costs an
-    * operation per bar and nothing else: adding 0.0*x1 would land on the
-    * same bits, +0.0 for a cancelled numerator included.
+   /* a1*y1 stays the outermost term. y1 is the newest output, so the bar
+    * rate is the latency of whatever y1 crosses to become y: outermost, that
+    * is one fused step. Nested inside, it is three, and every backend's last
+    * bit moves with it.
     */
    x0 = inReal;
    y = fma(sp->a1, y1, fma(sp->a2, y2, sp->c0 * (x0 - x2)));

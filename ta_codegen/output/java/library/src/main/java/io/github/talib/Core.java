@@ -193497,6 +193497,7 @@ public final class Core {
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  100126 KL,CC  Creation (#486).
+ *  100326 MF,CC  The newest output on one fused step (#486).
  */
 
    /**
@@ -193523,7 +193524,7 @@ public final class Core {
       }
       /* No structural lookback: the two input slots and the two output slots are
        * seeded from the first bar rather than read from before it, and there is
-       * no callee whose lookback could be inherited (ha.c:16-19).
+       * no callee whose lookback could be inherited.
        */
       return this.unstablePeriod[FuncUnstId.SWAK_2PHP.ordinal()] ;
 
@@ -193639,8 +193640,10 @@ public final class Core {
       }
       outIdx = 0;
       while( today <= endIdx ) {
-         /* The evaluation order is the bit-exactness contract across backends:
-          * the numerator as (x0 - 2*x1) + x2, then the a1 feedback, then a2.
+         /* a1*y1 stays the outermost term. y1 is the newest output, so the bar
+          * rate is the latency of whatever y1 crosses to become y: outermost, that
+          * is one fused step. Nested inside, it is three, and every backend's last
+          * bit moves with it.
           */
          x0 = inReal[today];
          y = Math.fma(a1, y1, Math.fma(a2, y2, c0 * (x0 - 2.0 * x1 + x2)));
@@ -194003,8 +194006,10 @@ public final class Core {
          double x2 = sp.x2;
          double y1 = sp.y1;
          double y2 = sp.y2;
-         /* The evaluation order is the bit-exactness contract across backends:
-          * the numerator as (x0 - 2*x1) + x2, then the a1 feedback, then a2.
+         /* a1*y1 stays the outermost term. y1 is the newest output, so the bar
+          * rate is the latency of whatever y1 crosses to become y: outermost, that
+          * is one fused step. Nested inside, it is three, and every backend's last
+          * bit moves with it.
           */
          x0 = inReal;
          y = Math.fma(sp.a1, y1, Math.fma(sp.a2, y2, sp.c0 * (x0 - 2.0 * x1 + x2)));
@@ -194046,8 +194051,10 @@ public final class Core {
    {
       double x0 = 0.0;
       double y = 0.0;
-      /* The evaluation order is the bit-exactness contract across backends:
-       * the numerator as (x0 - 2*x1) + x2, then the a1 feedback, then a2.
+      /* a1*y1 stays the outermost term. y1 is the newest output, so the bar
+       * rate is the latency of whatever y1 crosses to become y: outermost, that
+       * is one fused step. Nested inside, it is three, and every backend's last
+       * bit moves with it.
        */
       x0 = inReal;
       y = Math.fma(sp.a1, sp.y1, Math.fma(sp.a2, sp.y2, sp.c0 * (x0 - 2.0 * sp.x1 + sp.x2)));
@@ -194146,8 +194153,10 @@ public final class Core {
       }
       outIdx = 0;
       while( today <= endIdx ) {
-         /* The evaluation order is the bit-exactness contract across backends:
-          * the numerator as (x0 - 2*x1) + x2, then the a1 feedback, then a2.
+         /* a1*y1 stays the outermost term. y1 is the newest output, so the bar
+          * rate is the latency of whatever y1 crosses to become y: outermost, that
+          * is one fused step. Nested inside, it is three, and every backend's last
+          * bit moves with it.
           */
          x0 = inReal[today];
          y = Math.fma(a1, y1, Math.fma(a2, y2, c0 * (x0 - 2.0 * x1 + x2)));
@@ -194262,6 +194271,7 @@ public final class Core {
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  100126 KL,CC  Creation (#486).
+ *  100326 MF,CC  The newest output on one fused step (#486).
  */
 
    /**
@@ -194296,7 +194306,7 @@ public final class Core {
       }
       /* No structural lookback: the two input slots and the two output slots are
        * seeded from the first bar rather than read from before it, and there is
-       * no callee whose lookback could be inherited (ha.c:16-19).
+       * no callee whose lookback could be inherited.
        */
       return this.unstablePeriod[FuncUnstId.SWAK_BP.ordinal()] ;
 
@@ -194425,11 +194435,10 @@ public final class Core {
       }
       outIdx = 0;
       while( today <= endIdx ) {
-         /* The evaluation order is the bit-exactness contract across backends:
-          * the numerator as c0*(x0 - x2), then the a1 feedback, then a2. The
-          * middle tap is zero and dropped rather than added, which costs an
-          * operation per bar and nothing else: adding 0.0*x1 would land on the
-          * same bits, +0.0 for a cancelled numerator included.
+         /* a1*y1 stays the outermost term. y1 is the newest output, so the bar
+          * rate is the latency of whatever y1 crosses to become y: outermost, that
+          * is one fused step. Nested inside, it is three, and every backend's last
+          * bit moves with it.
           */
          x0 = inReal[today];
          y = Math.fma(a1, y1, Math.fma(a2, y2, c0 * (x0 - x2)));
@@ -194812,11 +194821,10 @@ public final class Core {
          double x2 = sp.x2;
          double y1 = sp.y1;
          double y2 = sp.y2;
-         /* The evaluation order is the bit-exactness contract across backends:
-          * the numerator as c0*(x0 - x2), then the a1 feedback, then a2. The
-          * middle tap is zero and dropped rather than added, which costs an
-          * operation per bar and nothing else: adding 0.0*x1 would land on the
-          * same bits, +0.0 for a cancelled numerator included.
+         /* a1*y1 stays the outermost term. y1 is the newest output, so the bar
+          * rate is the latency of whatever y1 crosses to become y: outermost, that
+          * is one fused step. Nested inside, it is three, and every backend's last
+          * bit moves with it.
           */
          x0 = inReal;
          y = Math.fma(sp.a1, y1, Math.fma(sp.a2, y2, sp.c0 * (x0 - x2)));
@@ -194858,11 +194866,10 @@ public final class Core {
    {
       double x0 = 0.0;
       double y = 0.0;
-      /* The evaluation order is the bit-exactness contract across backends:
-       * the numerator as c0*(x0 - x2), then the a1 feedback, then a2. The
-       * middle tap is zero and dropped rather than added, which costs an
-       * operation per bar and nothing else: adding 0.0*x1 would land on the
-       * same bits, +0.0 for a cancelled numerator included.
+      /* a1*y1 stays the outermost term. y1 is the newest output, so the bar
+       * rate is the latency of whatever y1 crosses to become y: outermost, that
+       * is one fused step. Nested inside, it is three, and every backend's last
+       * bit moves with it.
        */
       x0 = inReal;
       y = Math.fma(sp.a1, sp.y1, Math.fma(sp.a2, sp.y2, sp.c0 * (x0 - sp.x2)));
@@ -194970,11 +194977,10 @@ public final class Core {
       }
       outIdx = 0;
       while( today <= endIdx ) {
-         /* The evaluation order is the bit-exactness contract across backends:
-          * the numerator as c0*(x0 - x2), then the a1 feedback, then a2. The
-          * middle tap is zero and dropped rather than added, which costs an
-          * operation per bar and nothing else: adding 0.0*x1 would land on the
-          * same bits, +0.0 for a cancelled numerator included.
+         /* a1*y1 stays the outermost term. y1 is the newest output, so the bar
+          * rate is the latency of whatever y1 crosses to become y: outermost, that
+          * is one fused step. Nested inside, it is three, and every backend's last
+          * bit moves with it.
           */
          x0 = inReal[today];
          y = Math.fma(a1, y1, Math.fma(a2, y2, c0 * (x0 - x2)));
@@ -195090,6 +195096,7 @@ public final class Core {
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  100126 KL,CC  Creation (#486).
+ *  100326 MF,CC  The newest output on one fused step (#486).
  */
 
    /**
@@ -195117,7 +195124,7 @@ public final class Core {
       /* No structural lookback: the two input slots and the two output slots are
        * seeded from the first bar rather than read from before it, and there is
        * no callee whose lookback could be inherited, so the function's own
-       * unstable period is the whole of it (ha.c:16-19).
+       * unstable period is the whole of it.
        */
       return this.unstablePeriod[FuncUnstId.SWAK_BUTTER.ordinal()] ;
 
@@ -195232,8 +195239,10 @@ public final class Core {
       }
       outIdx = 0;
       while( today <= endIdx ) {
-         /* The evaluation order is the bit-exactness contract across backends:
-          * the numerator as (x0 + 2*x1) + x2, then the a1 feedback, then a2.
+         /* a1*y1 stays the outermost term. y1 is the newest output, so the bar
+          * rate is the latency of whatever y1 crosses to become y: outermost, that
+          * is one fused step. Nested inside, it is three, and every backend's last
+          * bit moves with it.
           */
          x0 = inReal[today];
          y = Math.fma(a1, y1, Math.fma(a2, y2, c0 * (Math.fma(2.0, x1, x0) + x2)));
@@ -195605,8 +195614,10 @@ public final class Core {
          double x2 = sp.x2;
          double y1 = sp.y1;
          double y2 = sp.y2;
-         /* The evaluation order is the bit-exactness contract across backends:
-          * the numerator as (x0 + 2*x1) + x2, then the a1 feedback, then a2.
+         /* a1*y1 stays the outermost term. y1 is the newest output, so the bar
+          * rate is the latency of whatever y1 crosses to become y: outermost, that
+          * is one fused step. Nested inside, it is three, and every backend's last
+          * bit moves with it.
           */
          x0 = inReal;
          y = Math.fma(sp.a1, y1, Math.fma(sp.a2, y2, sp.c0 * (Math.fma(2.0, x1, x0) + x2)));
@@ -195648,8 +195659,10 @@ public final class Core {
    {
       double x0 = 0.0;
       double y = 0.0;
-      /* The evaluation order is the bit-exactness contract across backends:
-       * the numerator as (x0 + 2*x1) + x2, then the a1 feedback, then a2.
+      /* a1*y1 stays the outermost term. y1 is the newest output, so the bar
+       * rate is the latency of whatever y1 crosses to become y: outermost, that
+       * is one fused step. Nested inside, it is three, and every backend's last
+       * bit moves with it.
        */
       x0 = inReal;
       y = Math.fma(sp.a1, sp.y1, Math.fma(sp.a2, sp.y2, sp.c0 * (Math.fma(2.0, sp.x1, x0) + sp.x2)));
@@ -195747,8 +195760,10 @@ public final class Core {
       }
       outIdx = 0;
       while( today <= endIdx ) {
-         /* The evaluation order is the bit-exactness contract across backends:
-          * the numerator as (x0 + 2*x1) + x2, then the a1 feedback, then a2.
+         /* a1*y1 stays the outermost term. y1 is the newest output, so the bar
+          * rate is the latency of whatever y1 crosses to become y: outermost, that
+          * is one fused step. Nested inside, it is three, and every backend's last
+          * bit moves with it.
           */
          x0 = inReal[today];
          y = Math.fma(a1, y1, Math.fma(a2, y2, c0 * (Math.fma(2.0, x1, x0) + x2)));
@@ -195863,6 +195878,7 @@ public final class Core {
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  100126 KL,CC  Creation (#486).
+ *  100326 MF,CC  The newest output on one fused step (#486).
  */
 
    /**
@@ -195890,8 +195906,7 @@ public final class Core {
       /* No structural lookback. Every term of the recurrence exists at the first
        * bar -- the two history slots are seeded from that bar rather than read
        * from before it -- and there is no callee whose lookback could be
-       * inherited, so the function's own unstable period is the whole of it
-       * (ha.c:16-19 takes the same shape for the same reason).
+       * inherited, so the function's own unstable period is the whole of it.
        */
       return this.unstablePeriod[FuncUnstId.SWAK_GAUSS.ordinal()] ;
 
@@ -195998,8 +196013,10 @@ public final class Core {
       }
       outIdx = 0;
       while( today <= endIdx ) {
-         /* The evaluation order is the bit-exactness contract across backends:
-          * the numerator first, then the a1 feedback, then the a2 feedback.
+         /* a1*y1 stays the outermost term. y1 is the newest output, so the bar
+          * rate is the latency of whatever y1 crosses to become y: outermost, that
+          * is one fused step. Nested inside, it is three, and every backend's last
+          * bit moves with it.
           */
          y = Math.fma(a1, y1, Math.fma(a2, y2, c0 * inReal[today]));
          y2 = y1;
@@ -196353,8 +196370,10 @@ public final class Core {
          double cur_outReal = 0.0;
          double y1 = sp.y1;
          double y2 = sp.y2;
-         /* The evaluation order is the bit-exactness contract across backends:
-          * the numerator first, then the a1 feedback, then the a2 feedback.
+         /* a1*y1 stays the outermost term. y1 is the newest output, so the bar
+          * rate is the latency of whatever y1 crosses to become y: outermost, that
+          * is one fused step. Nested inside, it is three, and every backend's last
+          * bit moves with it.
           */
          y = Math.fma(sp.a1, y1, Math.fma(sp.a2, y2, sp.c0 * inReal));
          y2 = y1;
@@ -196392,8 +196411,10 @@ public final class Core {
    private void swakGaussStepImpl( SwakGaussStream sp, double inReal )
    {
       double y = 0.0;
-      /* The evaluation order is the bit-exactness contract across backends:
-       * the numerator first, then the a1 feedback, then the a2 feedback.
+      /* a1*y1 stays the outermost term. y1 is the newest output, so the bar
+       * rate is the latency of whatever y1 crosses to become y: outermost, that
+       * is one fused step. Nested inside, it is three, and every backend's last
+       * bit moves with it.
        */
       y = Math.fma(sp.a1, sp.y1, Math.fma(sp.a2, sp.y2, sp.c0 * inReal));
       sp.y2 = sp.y1;
@@ -196480,8 +196501,10 @@ public final class Core {
       }
       outIdx = 0;
       while( today <= endIdx ) {
-         /* The evaluation order is the bit-exactness contract across backends:
-          * the numerator first, then the a1 feedback, then the a2 feedback.
+         /* a1*y1 stays the outermost term. y1 is the newest output, so the bar
+          * rate is the latency of whatever y1 crosses to become y: outermost, that
+          * is one fused step. Nested inside, it is three, and every backend's last
+          * bit moves with it.
           */
          y = Math.fma(a1, y1, Math.fma(a2, y2, c0 * inReal[today]));
          y2 = y1;
@@ -196591,6 +196614,7 @@ public final class Core {
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  100126 KL,CC  Creation (#486).
+ *  100326 MF,CC  The newest output on one fused step (#486).
  */
 
    /**
@@ -196617,7 +196641,7 @@ public final class Core {
       }
       /* No structural lookback: the one input slot and the one output slot are
        * seeded from the first bar rather than read from before it, and there is
-       * no callee whose lookback could be inherited (ha.c:16-19).
+       * no callee whose lookback could be inherited.
        */
       return this.unstablePeriod[FuncUnstId.SWAK_HP.ordinal()] ;
 
@@ -196725,11 +196749,10 @@ public final class Core {
       }
       outIdx = 0;
       while( today <= endIdx ) {
-         /* The evaluation order is the bit-exactness contract across backends:
-          * the numerator as c0*(x0 - x1), then the a1 feedback. This row's a2 is
-          * zero and the term is dropped rather than added, which costs an
-          * operation per bar and nothing else: adding 0.0*y2 would land on the
-          * same bits, +0.0 for a cancelled numerator included.
+         /* a1*y1 stays the outermost term. y1 is the newest output, so the bar
+          * rate is the latency of whatever y1 crosses to become y: outermost, that
+          * is one fused step. Nested inside, it is three, and every backend's last
+          * bit moves with it.
           */
          x0 = inReal[today];
          y = Math.fma(a1, y1, c0 * (x0 - x1));
@@ -197072,11 +197095,10 @@ public final class Core {
          double cur_outReal = 0.0;
          double x1 = sp.x1;
          double y1 = sp.y1;
-         /* The evaluation order is the bit-exactness contract across backends:
-          * the numerator as c0*(x0 - x1), then the a1 feedback. This row's a2 is
-          * zero and the term is dropped rather than added, which costs an
-          * operation per bar and nothing else: adding 0.0*y2 would land on the
-          * same bits, +0.0 for a cancelled numerator included.
+         /* a1*y1 stays the outermost term. y1 is the newest output, so the bar
+          * rate is the latency of whatever y1 crosses to become y: outermost, that
+          * is one fused step. Nested inside, it is three, and every backend's last
+          * bit moves with it.
           */
          x0 = inReal;
          y = Math.fma(sp.a1, y1, sp.c0 * (x0 - x1));
@@ -197116,11 +197138,10 @@ public final class Core {
    {
       double x0 = 0.0;
       double y = 0.0;
-      /* The evaluation order is the bit-exactness contract across backends:
-       * the numerator as c0*(x0 - x1), then the a1 feedback. This row's a2 is
-       * zero and the term is dropped rather than added, which costs an
-       * operation per bar and nothing else: adding 0.0*y2 would land on the
-       * same bits, +0.0 for a cancelled numerator included.
+      /* a1*y1 stays the outermost term. y1 is the newest output, so the bar
+       * rate is the latency of whatever y1 crosses to become y: outermost, that
+       * is one fused step. Nested inside, it is three, and every backend's last
+       * bit moves with it.
        */
       x0 = inReal;
       y = Math.fma(sp.a1, sp.y1, sp.c0 * (x0 - sp.x1));
@@ -197209,11 +197230,10 @@ public final class Core {
       }
       outIdx = 0;
       while( today <= endIdx ) {
-         /* The evaluation order is the bit-exactness contract across backends:
-          * the numerator as c0*(x0 - x1), then the a1 feedback. This row's a2 is
-          * zero and the term is dropped rather than added, which costs an
-          * operation per bar and nothing else: adding 0.0*y2 would land on the
-          * same bits, +0.0 for a cancelled numerator included.
+         /* a1*y1 stays the outermost term. y1 is the newest output, so the bar
+          * rate is the latency of whatever y1 crosses to become y: outermost, that
+          * is one fused step. Nested inside, it is three, and every backend's last
+          * bit moves with it.
           */
          x0 = inReal[today];
          y = Math.fma(a1, y1, c0 * (x0 - x1));

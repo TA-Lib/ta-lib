@@ -53,6 +53,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  100126 KL,CC  Creation (#486).
+ *  100326 MF,CC  The newest output on one fused step (#486).
  */
 
 // Import types from parent module
@@ -95,7 +96,7 @@ impl Core {
         }
         // No structural lookback: the two input slots and the two output slots are
         // seeded from the first bar rather than read from before it, and there is
-        // no callee whose lookback could be inherited (ha.c:16-19).
+        // no callee whose lookback could be inherited.
         return Ok((self.unstable_period[FuncUnstId::SWAK_BP as usize]) as usize);
     }
     /// Display shift of one output of [`Core::swak_bp`]: how many bars ahead (positive) or behind
@@ -270,11 +271,10 @@ impl Core {
             let _w0 = &inReal[today..][.._wn];
             let _w1 = &mut outReal[outIdx..][.._wn];
             for _wk in 0.._wn {
-                // The evaluation order is the bit-exactness contract across backends:
-                // the numerator as c0*(x0 - x2), then the a1 feedback, then a2. The
-                // middle tap is zero and dropped rather than added, which costs an
-                // operation per bar and nothing else: adding 0.0*x1 would land on the
-                // same bits, +0.0 for a cancelled numerator included.
+                // a1*y1 stays the outermost term. y1 is the newest output, so the bar
+                // rate is the latency of whatever y1 crosses to become y: outermost, that
+                // is one fused step. Nested inside, it is three, and every backend's last
+                // bit moves with it.
                 x0 = _w0[_wk];
                 y = (a1 as f64).mul_add(y1, (a2 as f64).mul_add(y2, c0 * (x0 - x2)));
                 x2 = x1;
@@ -445,11 +445,10 @@ impl Core {
     fn swak_bp_step_impl(sp: &mut SwakBpStreamState, inReal: f64, outReal: &mut f64) {
         let mut x0: f64 = 0.0_f64;
         let mut y: f64 = 0.0_f64;
-        // The evaluation order is the bit-exactness contract across backends:
-        // the numerator as c0*(x0 - x2), then the a1 feedback, then a2. The
-        // middle tap is zero and dropped rather than added, which costs an
-        // operation per bar and nothing else: adding 0.0*x1 would land on the
-        // same bits, +0.0 for a cancelled numerator included.
+        // a1*y1 stays the outermost term. y1 is the newest output, so the bar
+        // rate is the latency of whatever y1 crosses to become y: outermost, that
+        // is one fused step. Nested inside, it is three, and every backend's last
+        // bit moves with it.
         x0 = inReal;
         y = (sp.a1 as f64).mul_add(sp.y1, (sp.a2 as f64).mul_add(sp.y2, sp.c0 * (x0 - sp.x2)));
         sp.x2 = sp.x1;
@@ -560,11 +559,10 @@ impl Core {
         }
         outIdx = 0;
         while today <= endIdx {
-            // The evaluation order is the bit-exactness contract across backends:
-            // the numerator as c0*(x0 - x2), then the a1 feedback, then a2. The
-            // middle tap is zero and dropped rather than added, which costs an
-            // operation per bar and nothing else: adding 0.0*x1 would land on the
-            // same bits, +0.0 for a cancelled numerator included.
+            // a1*y1 stays the outermost term. y1 is the newest output, so the bar
+            // rate is the latency of whatever y1 crosses to become y: outermost, that
+            // is one fused step. Nested inside, it is three, and every backend's last
+            // bit moves with it.
             x0 = inReal[today];
             y = (a1 as f64).mul_add(y1, (a2 as f64).mul_add(y2, c0 * (x0 - x2)));
             x2 = x1;
@@ -761,11 +759,10 @@ impl SwakBpStream {
             let mut x2 = sp.x2;
             let mut y1 = sp.y1;
             let mut y2 = sp.y2;
-            // The evaluation order is the bit-exactness contract across backends:
-            // the numerator as c0*(x0 - x2), then the a1 feedback, then a2. The
-            // middle tap is zero and dropped rather than added, which costs an
-            // operation per bar and nothing else: adding 0.0*x1 would land on the
-            // same bits, +0.0 for a cancelled numerator included.
+            // a1*y1 stays the outermost term. y1 is the newest output, so the bar
+            // rate is the latency of whatever y1 crosses to become y: outermost, that
+            // is one fused step. Nested inside, it is three, and every backend's last
+            // bit moves with it.
             x0 = inReal;
             y = (sp.a1 as f64).mul_add(y1, (sp.a2 as f64).mul_add(y2, sp.c0 * (x0 - x2)));
             x2 = x1;

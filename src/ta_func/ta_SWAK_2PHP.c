@@ -55,6 +55,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  100126 KL,CC  Creation (#486).
+ *  100326 MF,CC  The newest output on one fused step (#486).
  */
 
 TA_LIB_API int TA_SWAK_2PHP_Lookback( int optInTimePeriod )
@@ -65,7 +66,7 @@ TA_LIB_API int TA_SWAK_2PHP_Lookback( int optInTimePeriod )
       return -1;
    /* No structural lookback: the two input slots and the two output slots are
     * seeded from the first bar rather than read from before it, and there is
-    * no callee whose lookback could be inherited (ha.c:16-19).
+    * no callee whose lookback could be inherited.
     */
    return TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_SWAK_2PHP,Swak_2php);
 }
@@ -178,8 +179,10 @@ TA_LIB_API TA_RetCode TA_SWAK_2PHP( int    startIdx,
    outIdx = 0;
    while( today <= endIdx )
    {
-      /* The evaluation order is the bit-exactness contract across backends:
-       * the numerator as (x0 - 2*x1) + x2, then the a1 feedback, then a2.
+      /* a1*y1 stays the outermost term. y1 is the newest output, so the bar
+       * rate is the latency of whatever y1 crosses to become y: outermost, that
+       * is one fused step. Nested inside, it is three, and every backend's last
+       * bit moves with it.
        */
       x0 = inReal[today];
       y = fma(a1, y1, fma(a2, y2, c0 * (x0 - 2.0 * x1 + x2)));
@@ -317,8 +320,10 @@ static TA_FMA_STEP_INLINE void TA_SWAK_2PHP_StepImpl( struct TA_SWAK_2PHP_Stream
    double x0;
    double y;
 
-   /* The evaluation order is the bit-exactness contract across backends:
-    * the numerator as (x0 - 2*x1) + x2, then the a1 feedback, then a2.
+   /* a1*y1 stays the outermost term. y1 is the newest output, so the bar
+    * rate is the latency of whatever y1 crosses to become y: outermost, that
+    * is one fused step. Nested inside, it is three, and every backend's last
+    * bit moves with it.
     */
    x0 = inReal;
    y = fma(sp->a1, sp->y1, fma(sp->a2, sp->y2, sp->c0 * (x0 - 2.0 * sp->x1 + sp->x2)));
@@ -427,8 +432,10 @@ static TA_RetCode TA_SWAK_2PHP_OpenImpl( struct TA_SWAK_2PHP_Stream **stream, co
       outIdx = 0;
       while( today <= endIdx )
       {
-         /* The evaluation order is the bit-exactness contract across backends:
-          * the numerator as (x0 - 2*x1) + x2, then the a1 feedback, then a2.
+         /* a1*y1 stays the outermost term. y1 is the newest output, so the bar
+          * rate is the latency of whatever y1 crosses to become y: outermost, that
+          * is one fused step. Nested inside, it is three, and every backend's last
+          * bit moves with it.
           */
          x0 = inReal[today];
          y = fma(a1, y1, fma(a2, y2, c0 * (x0 - 2.0 * x1 + x2)));
@@ -535,8 +542,10 @@ TA_LIB_API TA_RetCode TA_SWAK_2PHP_Peek( const TA_SWAK_2PHP_Stream *stream, doub
    x2 = sp->x2;
    y1 = sp->y1;
    y2 = sp->y2;
-   /* The evaluation order is the bit-exactness contract across backends:
-    * the numerator as (x0 - 2*x1) + x2, then the a1 feedback, then a2.
+   /* a1*y1 stays the outermost term. y1 is the newest output, so the bar
+    * rate is the latency of whatever y1 crosses to become y: outermost, that
+    * is one fused step. Nested inside, it is three, and every backend's last
+    * bit moves with it.
     */
    x0 = inReal;
    y = fma(sp->a1, y1, fma(sp->a2, y2, sp->c0 * (x0 - 2.0 * x1 + x2)));

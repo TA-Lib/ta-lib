@@ -11,6 +11,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  100126 KL,CC  Creation (#486).
+ *  100326 MF,CC  The newest output on one fused step (#486).
  */
 
 int swak_2php_lookback(int optInTimePeriod)
@@ -19,7 +20,7 @@ int swak_2php_lookback(int optInTimePeriod)
 
    /* No structural lookback: the two input slots and the two output slots are
     * seeded from the first bar rather than read from before it, and there is
-    * no callee whose lookback could be inherited (ha.c:16-19).
+    * no callee whose lookback could be inherited.
     */
    return TA_GetUnstablePeriod(TA_FUNC_UNST_SWAK_2PHP);
 }
@@ -95,8 +96,10 @@ TA_RetCode swak_2php(int startIdx, int endIdx,
    outIdx = 0;
    while( today <= endIdx )
    {
-      /* The evaluation order is the bit-exactness contract across backends:
-       * the numerator as (x0 - 2*x1) + x2, then the a1 feedback, then a2.
+      /* a1*y1 stays the outermost term. y1 is the newest output, so the bar
+       * rate is the latency of whatever y1 crosses to become y: outermost, that
+       * is one fused step. Nested inside, it is three, and every backend's last
+       * bit moves with it.
        */
       x0 = inReal[today];
       y  = a1 * y1 + (a2 * y2 + c0 * ((x0 - 2.0 * x1) + x2));
