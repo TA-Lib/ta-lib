@@ -11,7 +11,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  100126 KL,CC  First version (#486).
- *  100326 MF,CC  Frozen goldens and range edges (#486).
+ *  100326 MF,CC  Frozen goldens, range edges, LEAN and eSignal bars (#486).
  */
 
 /* Description:
@@ -72,6 +72,12 @@
  *        the paper's gamma - sqrt(gamma^2 - 1), which is 7e-9 off there.
  *     8. EDGES: the first period and delta outside each declared range are
  *        refused.
+ *     9. ORACLE: frozen bars from two other implementations, each taken where
+ *        its different start has decayed below the tolerance. QuantConnect
+ *        LEAN's SwissArmyKnife for GAUSS and BUTTER, and for HP and 2PHP times
+ *        the ratio of the two c0 (LEAN's is (1+a)/2 and (1+a)^2/4). The 2006
+ *        eSignal port, Swak.efs, for HP, 2PHP and BP: the one independent
+ *        implementation of the band-pass row.
  *
  *   SERVER_VERIFY: the constant and Nyquist shapes are routed. The --codegen
  *   sweep sends the 252-bar corpus with one parameter moved at a time and
@@ -119,6 +125,7 @@
 #define SWAK_ROUTE_CMP         15
 #define SWAK_GOLDEN_CMP         49
 #define SWAK_EDGE_CMP           16
+#define SWAK_ORACLE_CMP         28
 
 static double swakIn[SWAK_N_MAX];
 static double swakOut[SWAK_N_MAX];
@@ -132,6 +139,7 @@ static int g_swakInplaceCmp;
 static int g_swakRouteCmp;
 static int g_swakGoldenCmp;
 static int g_swakEdgeCmp;
+static int g_swakOracleCmp;
 
 static const char * const swakName[SWAK_NB_FUNC] =
    { "SWAK_GAUSS", "SWAK_BUTTER", "SWAK_HP", "SWAK_2PHP", "SWAK_BP" };
@@ -184,6 +192,7 @@ static ErrorNumber  test_swak_inplace( void );
 static ErrorNumber  test_swak_range( const TA_Real *in );
 static ErrorNumber  test_swak_golden( void );
 static ErrorNumber  test_swak_edges( void );
+static ErrorNumber  test_swak_oracle( void );
 
 /**** Global functions definitions. ****/
 ErrorNumber test_func_swak( TA_History *history )
@@ -193,7 +202,7 @@ ErrorNumber test_func_swak( TA_History *history )
    TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
    g_swakDcCmp = g_swakNyqCmp = g_swakCentreCmp = 0;
    g_swakLookbackCmp = g_swakInplaceCmp = g_swakRouteCmp = 0;
-   g_swakGoldenCmp = g_swakEdgeCmp = 0;
+   g_swakGoldenCmp = g_swakEdgeCmp = g_swakOracleCmp = 0;
 
    err = test_swak_dc();
    if( err == TA_TEST_PASS )
@@ -208,6 +217,8 @@ ErrorNumber test_func_swak( TA_History *history )
       err = test_swak_golden();
    if( err == TA_TEST_PASS )
       err = test_swak_edges();
+   if( err == TA_TEST_PASS )
+      err = test_swak_oracle();
 
    TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
 
@@ -223,15 +234,17 @@ ErrorNumber test_func_swak( TA_History *history )
             || g_swakInplaceCmp != SWAK_INPLACE_CMP
             || g_swakGoldenCmp != SWAK_GOLDEN_CMP
             || g_swakEdgeCmp != SWAK_EDGE_CMP
+            || g_swakOracleCmp != SWAK_ORACLE_CMP
             || ( server_verify_active() && g_swakRouteCmp != SWAK_ROUTE_CMP ) ) )
    {
       printf( "SWAK Fail: coverage counters (dc %d, nyquist %d, centre %d, lookback %d, "
-              "inplace %d, routed %d, golden %d, edges %d) are not what this file was "
-              "written with (%d, %d, %d, %d, %d, %d, %d, %d)\n",
+              "inplace %d, routed %d, golden %d, edges %d, oracle %d) are not what this "
+              "file was written with (%d, %d, %d, %d, %d, %d, %d, %d, %d)\n",
               g_swakDcCmp, g_swakNyqCmp, g_swakCentreCmp, g_swakLookbackCmp,
-              g_swakInplaceCmp, g_swakRouteCmp, g_swakGoldenCmp, g_swakEdgeCmp,
+              g_swakInplaceCmp, g_swakRouteCmp, g_swakGoldenCmp, g_swakEdgeCmp, g_swakOracleCmp,
               SWAK_DC_CMP, SWAK_NYQ_CMP, SWAK_CENTRE_CMP, SWAK_LOOKBACK_CMP,
-              SWAK_INPLACE_CMP, SWAK_ROUTE_CMP, SWAK_GOLDEN_CMP, SWAK_EDGE_CMP );
+              SWAK_INPLACE_CMP, SWAK_ROUTE_CMP, SWAK_GOLDEN_CMP, SWAK_EDGE_CMP,
+              SWAK_ORACLE_CMP );
       return TA_SWAK_VACUOUS;
    }
 
@@ -905,6 +918,82 @@ static ErrorNumber test_swak_edges( void )
          }
       }
       g_swakEdgeCmp++;
+   }
+
+   return TA_TEST_PASS;
+}
+
+/* (9) Bars frozen from other implementations, over 3000 bars of the golden
+ * series. Bars 1500 and 2999 only: each oracle starts differently (LEAN's
+ * output slots at zero, eSignal's input slots at zero and its band-pass at
+ * zero for four bars), and these are past where any of that is above the
+ * tolerance. LEAN returns a decimal, so its rows carry 15 digits. */
+#define SWAK_ORACLE_N    3000
+#define SWAK_ARM_LEAN       0
+#define SWAK_ARM_LEAN_K     1
+#define SWAK_ARM_ESIGNAL    2
+
+static ErrorNumber test_swak_oracle( void )
+{
+   static const char * const armName[] = { "LEAN", "LEAN x K", "eSignal" };
+   static const struct { int arm; int f; int P; double delta; int bar; double want; } row[] =
+   {
+      { SWAK_ARM_LEAN,   SWAK_GAUSS,   5, 0.1, 1500, 3.28562394307659986e+02 },
+      { SWAK_ARM_LEAN,   SWAK_GAUSS,   5, 0.1, 2999, 5.58738384412170035e+02 },
+      { SWAK_ARM_LEAN,   SWAK_GAUSS,  40, 0.1, 1500, 3.21864541823054992e+02 },
+      { SWAK_ARM_LEAN,   SWAK_GAUSS,  40, 0.1, 2999, 5.51066129489068999e+02 },
+      { SWAK_ARM_LEAN,   SWAK_BUTTER,  5, 0.1, 1500, 3.27340272925321017e+02 },
+      { SWAK_ARM_LEAN,   SWAK_BUTTER,  5, 0.1, 2999, 5.58567166099751944e+02 },
+      { SWAK_ARM_LEAN,   SWAK_BUTTER, 40, 0.1, 1500, 3.20929525882366022e+02 },
+      { SWAK_ARM_LEAN,   SWAK_BUTTER, 40, 0.1, 2999, 5.49803543418992035e+02 },
+      { SWAK_ARM_LEAN_K, SWAK_HP,      5, 0.1, 1500, 9.32993668517707153e-01 },
+      { SWAK_ARM_LEAN_K, SWAK_HP,      5, 0.1, 2999, -5.29813452315126398e-03 },
+      { SWAK_ARM_LEAN_K, SWAK_HP,     40, 0.1, 1500, 6.14218338347589210e+00 },
+      { SWAK_ARM_LEAN_K, SWAK_HP,     40, 0.1, 2999, 6.16192965396030079e+00 },
+      { SWAK_ARM_LEAN_K, SWAK_2PHP,    5, 0.1, 1500, 1.34669354356382387e-01 },
+      { SWAK_ARM_LEAN_K, SWAK_2PHP,    5, 0.1, 2999, -1.80836061609586624e-01 },
+      { SWAK_ARM_LEAN_K, SWAK_2PHP,   40, 0.1, 1500, 6.15801805003232450e-01 },
+      { SWAK_ARM_LEAN_K, SWAK_2PHP,   40, 0.1, 2999, -1.67615004713303128e+00 },
+      { SWAK_ARM_ESIGNAL, SWAK_HP,     10, 0.1, 1500, 1.83979255443937362e+00 },
+      { SWAK_ARM_ESIGNAL, SWAK_HP,     10, 0.1, 2999, 4.57706339989101429e-01 },
+      { SWAK_ARM_ESIGNAL, SWAK_2PHP,   10, 0.1, 1500, 2.42726180103395694e-01 },
+      { SWAK_ARM_ESIGNAL, SWAK_2PHP,   10, 0.1, 2999, -4.92711094032510732e-01 },
+      { SWAK_ARM_ESIGNAL, SWAK_BP,     20, 0.1, 1500, 7.60910708736650454e-01 },
+      { SWAK_ARM_ESIGNAL, SWAK_BP,     20, 0.1, 2999, 1.17927731098047217e+00 },
+      { SWAK_ARM_ESIGNAL, SWAK_BP,     20, 0.3, 1500, 2.25254371809556897e+00 },
+      { SWAK_ARM_ESIGNAL, SWAK_BP,     20, 0.3, 2999, 3.33190903522994741e+00 },
+      { SWAK_ARM_ESIGNAL, SWAK_BP,     10, 0.1, 1500, 4.70839018433414913e-01 },
+      { SWAK_ARM_ESIGNAL, SWAK_BP,     10, 0.1, 2999, -2.55166994385333246e-01 },
+      { SWAK_ARM_ESIGNAL, SWAK_BP,      5, 0.5, 1500, 1.30839332619827142e+00 },
+      { SWAK_ARM_ESIGNAL, SWAK_BP,      5, 0.5, 2999, 7.77053521872017872e-02 }
+   };
+   int k, begIdx, nbElement;
+   TA_RetCode rc;
+
+   swakGoldenSeries( SWAK_ORACLE_N );
+
+   for( k = 0; k < NB_OF(row); k++ )
+   {
+      double got, tol;
+
+      rc = swakCall( row[k].f, 0, SWAK_ORACLE_N-1, swakIn, row[k].P, row[k].delta,
+                     &begIdx, &nbElement, swakOut );
+      if( rc != TA_SUCCESS || begIdx != 0 || nbElement != SWAK_ORACLE_N )
+      {
+         printf( "%s oracle Fail [P=%d]: rc=%d (%d,%d)\n", swakName[row[k].f], row[k].P,
+                 (int)rc, begIdx, nbElement );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+      got = swakOut[row[k].bar];
+      tol = swakDcUnity[row[k].f] ? 1e-13 * fabs( row[k].want ) : 1e-12;
+      if( !( fabs( got - row[k].want ) <= tol ) )
+      {
+         printf( "%s oracle Fail [%s P=%d delta=%g] at bar %d: %.17g, expected %.17g\n",
+                 swakName[row[k].f], armName[row[k].arm], row[k].P, row[k].delta,
+                 row[k].bar, got, row[k].want );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+      g_swakOracleCmp++;
    }
 
    return TA_TEST_PASS;
