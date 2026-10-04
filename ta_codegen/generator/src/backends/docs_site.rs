@@ -916,7 +916,7 @@ fn validate_output_values(body: &str, func: &FuncDef) -> Result<(), String> {
     } else {
         let names: Vec<&str> = blocks[1..].iter().filter_map(|(h, _)| h.as_deref()).collect();
         let expected: Vec<&str> = patterns.iter().map(|(n, _)| *n).collect();
-        if names != expected || blocks[0].1.iter().any(|l| l.starts_with('|')) {
+        if names != expected || blocks[0].1.iter().any(|l| l.contains('|')) {
             return Err(format!(
                 "{page}: `## Output Values` needs one `### `outName`` table per pattern output, \
                  in call order: {expected:?}, found {names:?}"
@@ -1542,6 +1542,15 @@ mod tests {
         let f = pattern_func(&["pattern_bool", "zero", "positive"], true, &["outInteger"]);
         let err = validate_output_values("## Output Values\n\n| Value | Meaning |\n| 0 | a |\n| 100 | b |\n", &f).unwrap_err();
         assert!(err.contains("header and separator"), "{err}");
+    }
+
+    #[test]
+    fn several_pattern_outputs_take_no_table_before_the_first_heading() {
+        let f = pattern_func(&["pattern_bool", "zero", "positive"], false, &["outA", "outB"]);
+        let table = "| Value | Meaning |\n|-------|---------|\n| 0 | a |\n| 100 | b |\n";
+        let body = format!("## Output Values\n\n  Value | Meaning\n\n### `outA`\n\n{table}\n### `outB`\n\n{table}");
+        let err = validate_output_values(&body, &f).unwrap_err();
+        assert!(err.contains("in call order"), "{err}");
     }
 
     #[test]

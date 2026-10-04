@@ -684,6 +684,12 @@ typedef TA_RetCode (*PbCdlFn)(int,int,const double*,const double*,const double*,
  * all -- see pb_check_mcdc_p below. */
 typedef TA_RetCode (*PbCdlFnP)(int,int,const double*,const double*,const double*,const double*,double,int*,int*,int*);
 
+/* Functions a pb_check tape proves to write +-200, which is what a
+ * TA_OUT_PATTERN_CONFIRM output must be (rule rW8). */
+#define PB_MAXCONFIRM 8
+static const char *pbConfirmProven[PB_MAXCONFIRM];
+static int         pbNbConfirmProven;
+
 static ErrorNumber pb_check( const char *name, PbCdlFn fn )
 {
    int out[PB_N], begIdx=0, nb=0, k, fails=0;
@@ -717,6 +723,12 @@ static ErrorNumber pb_check( const char *name, PbCdlFn fn )
       printf("  %s PREDICATE VACUOUS: missing an output class (+100=%d -100=%d +200=%d -200=%d)\n", name, s1,sn1,s2,sn2);
       return TA_TSTCDL_PREDICATE_VACUOUS;
    }
+   if( pbNbConfirmProven >= PB_MAXCONFIRM )
+   {
+      printf("  %s: more than %d confirming patterns; raise PB_MAXCONFIRM\n", name, PB_MAXCONFIRM);
+      return TA_TSTCDL_PREDICATE_VACUOUS;
+   }
+   pbConfirmProven[pbNbConfirmProven++] = name;
 
    /* Cross-language, same as pb_check_mcdc. These tapes are the ONLY bars in
     * the tree that reach the +/-200 confirmation arm, and until now they never
@@ -901,10 +913,6 @@ static ErrorNumber pb_check_totals( void )
    return TA_TEST_PASS;
 }
 
-/* The body shared by pb_check_mcdc and pb_check_mcdc_p -- everything past
- * "call the pattern function", which is the one thing that differs between a
- * parameterless candlestick and one of the seven that take optInPenetration.
- * `out` is read-only here: both callers own their own PB_N buffer. */
 /* Functions whose detects and controls fired exactly the values of level 100
  * and 80 their output's flags declare. */
 static int pbFlagClassChecked;
@@ -931,6 +939,10 @@ static int pb_flag_classes( const char *name, int want[4] )
    return n;
 }
 
+/* The body shared by pb_check_mcdc and pb_check_mcdc_p -- everything past
+ * "call the pattern function", which is the one thing that differs between a
+ * parameterless candlestick and one of the seven that take optInPenetration.
+ * `out` is read-only here: both callers own their own PB_N buffer. */
 static ErrorNumber pb_check_mcdc_finish( const char *name, TA_RetCode rc,
                                           const int out[], int begIdx, int nb,
                                           PbCondFn conds )
@@ -11675,6 +11687,7 @@ typedef struct
    long seen[6];                  /* +80, -80, +100, -100, +200, -200 */
    long colorChecked;             /* non-zero values of color outputs, all series */
    long confirmChecked;           /* +-200 values matched to their pattern */
+   long confirmFlagged;           /* outputs declaring level 200, all series */
 } CvsCtx;
 
 static double cvsOpen[CVS_NB_BAR], cvsHigh[CVS_NB_BAR], cvsLow[CVS_NB_BAR], cvsClose[CVS_NB_BAR];
@@ -11755,6 +11768,20 @@ static void cvs_one_function( const TA_FuncInfo *funcInfo, void *opaque )
    f = outInfo->flags;
    color = !(f & (TA_OUT_PATTERN_BOOL | TA_OUT_PATTERN_BULL_BEAR)) &&
            (f & TA_OUT_ZERO) && (f & TA_OUT_POSITIVE) && (f & TA_OUT_NEGATIVE);
+   {
+      int p;
+      for( p = 0; p < pbNbConfirmProven && strcmp( pbConfirmProven[p], funcInfo->name ) != 0; p++ ) { }
+      if( (p < pbNbConfirmProven) != ((f & TA_OUT_PATTERN_CONFIRM) != 0) )
+      {
+         printf( "\nFail: TA_%s %s\n", funcInfo->name, (f & TA_OUT_PATTERN_CONFIRM)
+                 ? "declares level 200, but no scenario proves it writes +-200"
+                 : "does not declare level 200, but a scenario proves it writes +-200" );
+         TA_ParamHolderFree( paramHolder );
+         ctx->error = TA_CDL_VALUE_SET_FAIL;
+         return;
+      }
+      ctx->confirmFlagged += (f & TA_OUT_PATTERN_CONFIRM) != 0;
+   }
    TA_SetInputParamPricePtr( paramHolder, 0, cvsOpen, cvsHigh, cvsLow, cvsClose, NULL, NULL );
    TA_SetOutputParamIntegerPtr( paramHolder, 0, cvsOut );
    retCode = TA_CallFunc( paramHolder, 0, CVS_NB_BAR - 1, &begIdx, &nbElement );
@@ -11852,6 +11879,11 @@ static ErrorNumber test_candle_value_set( void )
    {
       printf( "\nFail: the MC/DC scenarios of %d of the %d candlestick functions fired "
               "the values their flags declare\n", pbFlagClassChecked, ctx.nbFunc );
+      return TA_CDL_VALUE_SET_VACUOUS;
+   }
+   if( ctx.confirmFlagged == 0 )
+   {
+      printf( "\nFail: no candlestick output declares level 200\n" );
       return TA_CDL_VALUE_SET_VACUOUS;
    }
    if( ctx.confirmChecked == 0 )

@@ -264,8 +264,11 @@ whose flags break its rules, and `validate_output_values` (`docs_site.rs`) on an
 Output Values table that differs from the values the flags declare.
 `test_candle_value_set` (`test_candlestick.c`) holds every value a candlestick
 function writes on its series to the values its output's flags declare, a color
-output's sign to its candle's color, and each +-200 to a live pattern of its
-sign: one before it in the range that no 200 has confirmed. It requires each of
+output's sign to its candle's color, and each +-200 that follows an earlier
+value in the range to a live pattern of its sign that no 200 has confirmed; a
++-200 whose pattern may precede the range is held to nothing. An output declares
+level 200 exactly when `test_hikkake_predicate_coverage` proves it writes +-200.
+It requires each of
 +-80, +-100 and +-200 to occur, a color output to fire, a 200 to be matched, and
 most functions to fire. That every declared value occurs is held per function
 by the MC/DC scenarios (`pb_check_mcdc`), whose firing cases must produce
