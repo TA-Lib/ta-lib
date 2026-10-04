@@ -379,9 +379,9 @@ public partial class Core
    /// <param name="inLow">Low price of each bar.</param>
    /// <param name="inClose">Close price of each bar.</param>
    /// <param name="outInteger">+100 bullish hikkake bar, -100 bearish; +200 confirmed bullish, -200
-   /// confirmed bearish (confirmation adds another +/-100); 0 otherwise. Must
-   /// hold at least <c>endIdx - max(startIdx, CdlhikkakemodLookback(...)) +
-   /// 1</c> values, and never be empty: an empty span is an absent output.</param>
+   /// confirmed bearish; 0 otherwise. Must hold at least <c>endIdx -
+   /// max(startIdx, CdlhikkakemodLookback(...)) + 1</c> values, and never be
+   /// empty: an empty span is an absent output.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
    /// <c>Count</c> how many were written.</returns>
    /// <exception cref="System.ArgumentOutOfRangeException"><c>startIdx</c> or <c>endIdx</c> is negative or above
@@ -470,9 +470,9 @@ public partial class Core
    /// <param name="inLow">Low price of each bar.</param>
    /// <param name="inClose">Close price of each bar.</param>
    /// <param name="outInteger">+100 bullish hikkake bar, -100 bearish; +200 confirmed bullish, -200
-   /// confirmed bearish (confirmation adds another +/-100); 0 otherwise. Must
-   /// hold at least <c>endIdx - max(startIdx, CdlhikkakemodLookback(...)) +
-   /// 1</c> values, and never be empty: an empty span is an absent output.</param>
+   /// confirmed bearish; 0 otherwise. Must hold at least <c>endIdx -
+   /// max(startIdx, CdlhikkakemodLookback(...)) + 1</c> values, and never be
+   /// empty: an empty span is an absent output.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
    /// <c>Count</c> how many were written.</returns>
    /// <exception cref="System.ArgumentOutOfRangeException"><c>startIdx</c> or <c>endIdx</c> is negative or above
@@ -1062,8 +1062,8 @@ public partial class Core
    /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inClose">Close price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="outInteger">+100 bullish hikkake bar, -100 bearish; +200 confirmed bullish, -200
-   /// confirmed bearish (confirmation adds another +/-100); 0 otherwise. Must
-   /// hold at least <c>historyLen - CdlhikkakemodLookback(...)</c> values.</param>
+   /// confirmed bearish; 0 otherwise. Must hold at least <c>historyLen -
+   /// CdlhikkakemodLookback(...)</c> values.</param>
    /// <returns>The open stream handle, with its fill range set.</returns>
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>CdlhikkakemodLookback(...) + 1</c> bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series

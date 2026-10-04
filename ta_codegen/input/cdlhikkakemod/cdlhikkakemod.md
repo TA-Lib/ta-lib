@@ -18,7 +18,7 @@ A four-candle pattern: two successively narrower inside bars, then a breakout ba
 
 ## Outputs
 
-- `outInteger` — +100 bullish hikkake bar, -100 bearish; +200 confirmed bullish, -200 confirmed bearish (confirmation adds another +/-100); 0 otherwise
+- `outInteger` — +100 bullish hikkake bar, -100 bearish; +200 confirmed bullish, -200 confirmed bearish; 0 otherwise
 
 ## Output Values
 

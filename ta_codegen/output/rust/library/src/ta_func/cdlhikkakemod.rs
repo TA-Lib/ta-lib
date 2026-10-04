@@ -467,7 +467,7 @@ impl Core {
     /// * `inLow` — Low price of each bar.
     /// * `inClose` — Close price of each bar.
     /// * `outInteger` — +100 bullish hikkake bar, -100 bearish; +200 confirmed bullish, -200
-    ///   confirmed bearish (confirmation adds another +/-100); 0 otherwise.
+    ///   confirmed bearish; 0 otherwise.
     ///
     /// # Returns
     ///

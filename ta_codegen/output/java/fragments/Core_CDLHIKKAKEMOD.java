@@ -315,8 +315,7 @@
     * @param inLow Low price of each bar.
     * @param inClose Close price of each bar.
     * @param outInteger +100 bullish hikkake bar, -100 bearish; +200 confirmed
-    *        bullish, -200 confirmed bearish (confirmation adds another +/-100); 0
-    *        otherwise. Must hold at least
+    *        bullish, -200 confirmed bearish; 0 otherwise. Must hold at least
     *        {@code endIdx - max(startIdx, cdlhikkakemodLookback(...)) + 1} values, and
     *        never be empty: an empty array is an absent output.
     * @return The range written: {@code begIdx} is the first bar with a value,
@@ -389,8 +388,7 @@
     * @param inLow Low price of each bar.
     * @param inClose Close price of each bar.
     * @param outInteger +100 bullish hikkake bar, -100 bearish; +200 confirmed
-    *        bullish, -200 confirmed bearish (confirmation adds another +/-100); 0
-    *        otherwise. Must hold at least
+    *        bullish, -200 confirmed bearish; 0 otherwise. Must hold at least
     *        {@code endIdx - max(startIdx, cdlhikkakemodLookback(...)) + 1} values, and
     *        never be empty: an empty array is an absent output.
     * @return The range written: {@code begIdx} is the first bar with a value,

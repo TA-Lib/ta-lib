@@ -47098,8 +47098,7 @@ class Core {
         * @param inLow Low price of each bar.
         * @param inClose Close price of each bar.
         * @param outInteger +100 bullish hikkake bar, -100 bearish; +200 confirmed
-        *        bullish, -200 confirmed bearish (confirmation adds another +/-100); 0
-        *        otherwise. Must hold at least
+        *        bullish, -200 confirmed bearish; 0 otherwise. Must hold at least
         *        {@code endIdx - max(startIdx, cdlhikkakemodLookback(...)) + 1} values, and
         *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
@@ -47172,8 +47171,7 @@ class Core {
         * @param inLow Low price of each bar.
         * @param inClose Close price of each bar.
         * @param outInteger +100 bullish hikkake bar, -100 bearish; +200 confirmed
-        *        bullish, -200 confirmed bearish (confirmation adds another +/-100); 0
-        *        otherwise. Must hold at least
+        *        bullish, -200 confirmed bearish; 0 otherwise. Must hold at least
         *        {@code endIdx - max(startIdx, cdlhikkakemodLookback(...)) + 1} values, and
         *        never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
@@ -217426,7 +217424,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "fccce63647606e9e";
+    static final String SPLICED_GENCODE_DIGEST = "59353347ddf02234";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];
